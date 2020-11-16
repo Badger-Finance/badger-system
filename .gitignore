@@ -1,0 +1,15 @@
+__pycache__
+.history
+.hypothesis/
+build/
+artifacts/
+reports/
+node_modules/
+.DS_STORE
+.env
+cache
+run-testnet.sh
+local.json
+.pytest_cache
+docs
+docs/

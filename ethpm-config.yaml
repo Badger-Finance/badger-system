@@ -1,0 +1,6 @@
+package_name: badger
+version: 0.0.1
+settings:
+  deployment_networks:
+    - mainnet
+  include_dependencies: false

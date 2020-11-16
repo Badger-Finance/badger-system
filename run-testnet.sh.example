@@ -1,0 +1,1 @@
+npx ganache-cli --fork {} --deterministic --keepAliveTimeout 0 -e 10000
