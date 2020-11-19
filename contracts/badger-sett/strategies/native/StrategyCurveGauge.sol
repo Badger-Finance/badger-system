@@ -62,6 +62,8 @@ contract StrategyCurveGauge is BaseStrategy {
         performanceFeeStrategist = _feeConfig[1];
         withdrawalFee = _feeConfig[2];
         keepCRV = _feeConfig[3]; // 1000
+
+        IERC20Upgradeable(want).safeApprove(gauge, type(uint256).max);
     }
 
     /// ===== View Functions =====
@@ -89,7 +91,6 @@ contract StrategyCurveGauge is BaseStrategy {
     }
 
     function _deposit(uint256 _want) internal override {
-        _safeApproveHelper(want, gauge, _want);
         ICurveGauge(gauge).deposit(_want);
     }
 
@@ -114,8 +115,7 @@ contract StrategyCurveGauge is BaseStrategy {
         _crv = _crv.sub(_keepCRV);
 
         if (_crv > 0) {
-            IERC20Upgradeable(crv).safeApprove(uniswap, 0);
-            IERC20Upgradeable(crv).safeApprove(uniswap, _crv);
+            _safeApproveHelper(crv, uniswap, _crv);
 
             address[] memory path = new address[](3);
             path[0] = crv;
@@ -126,8 +126,7 @@ contract StrategyCurveGauge is BaseStrategy {
         }
         uint256 _lpComponent = IERC20Upgradeable(lpComponent).balanceOf(address(this));
         if (_lpComponent > 0) {
-            IERC20Upgradeable(lpComponent).safeApprove(curveSwap, 0);
-            IERC20Upgradeable(lpComponent).safeApprove(curveSwap, _lpComponent);
+            _safeApproveHelper(lpComponent, curveSwap, _lpComponent);
             ICurveFi(curveSwap).add_liquidity([0, _lpComponent, 0], 0);
         }
         uint256 _want = IERC20Upgradeable(want).balanceOf(address(this));

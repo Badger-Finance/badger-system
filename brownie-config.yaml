@@ -35,4 +35,8 @@ reports:
   exclude_paths:
     - contracts/test/Token.sol
   exclude_contracts:
-    - SafeMath
+    - SafeMathUpgradeable
+    - AccessControlUpgradeable
+    - EnumerableSetUpgradeable
+    - SafeERC20Upgradeable
+    - ERC20Upgradeable

@@ -110,9 +110,11 @@ uniswap_registry = DotMap(
 harvest_registry = DotMap(
     farmToken="0xa0246c9032bC3A600820415aE600c6388619A14D",
     depositHelper="0xf8ce90c2710713552fb564869694b2505bfc0846",
-    vaults=DotMap(renCrv="0x192E9d29D43db385063799BC239E772c3b6888F3",),
+    vaults=DotMap(renCrv="0x9aa8f427a17d6b0d91b6262989edc7d45d6aedf8"),
     farms=DotMap(
-        fRenCrv="0x5365A2C47b90EE8C9317faC20edC3ce7037384FB",
+        fWBtc="0x917d6480ec60cbddd6cbd0c8ea317bcc709ea77b",
+        fRenCrv="0xa3cf8d1cee996253fad1f8e3d68bdcba7b3a3db5",
+        fRenCrv2="0x5365A2C47b90EE8C9317faC20edC3ce7037384FB",
         farm="0xae024F29C26D6f71Ec71658B1980189956B0546D",
     ),
 )

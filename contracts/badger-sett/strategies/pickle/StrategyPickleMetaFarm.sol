@@ -38,9 +38,6 @@ contract StrategyPickleMetaFarm is BaseStrategy {
     address public curveSwap; // Curve renBtc Swap
     address public lpComponent; // wBTC for renCrv and sCrv
 
-    address public pairToken0;
-    address public pairToken1;
-
     address public constant pickle = 0x429881672B9AE42b8EbA0E26cD9C73711b891Ca5;
     address public constant pickleChef = 0xbD17B1ce622d73bD438b9E658acA5996dc394b0d;
     address public constant pickleStaking = 0xa17a8883dA1aBd57c690DF9Ebf58fC194eDAb66F;
@@ -53,7 +50,7 @@ contract StrategyPickleMetaFarm is BaseStrategy {
 
     uint256 public lastHarvested;
 
-    event NotifyWithdrawMismatch(uint256 expected, uint256 actual);
+    event NotifyWithdrawMismatch(uint256 expected, uint256 actual, uint256 remainingStaked);
     event Tend(uint256 pickleHarvested);
 
     event PickleHarvest(
@@ -94,7 +91,11 @@ contract StrategyPickleMetaFarm is BaseStrategy {
         picklePerformanceFeeStrategist = _feeConfig[1];
         withdrawalFee = _feeConfig[2];
 
-        // Trust Uniswap with unlimited approval for swapping efficiency
+        IERC20Upgradeable(want).safeApprove(pickleJar, type(uint256).max);
+        IERC20Upgradeable(pickleJar).safeApprove(pickleChef, type(uint256).max);
+        IERC20Upgradeable(pickle).safeApprove(pickleStaking, type(uint256).max);
+
+         // Trust Uniswap with unlimited approval for swapping efficiency
         IERC20Upgradeable(pickle).safeApprove(uniswap, type(uint256).max);
     }
 
@@ -138,7 +139,6 @@ contract StrategyPickleMetaFarm is BaseStrategy {
     /// @dev want -> pickleJar, pWant -> pWantFarm (handled in postDeposit hook)
     function _deposit(uint256 _want) internal override {
         if (_want > 0) {
-            _safeApproveHelper(want, pickleJar, _want);
             IPickleJar(pickleJar).deposit(_want);
         }
     }
@@ -185,7 +185,8 @@ contract StrategyPickleMetaFarm is BaseStrategy {
         // TODO: Test code, consider removing to save a little on gas
         uint256 _after = IERC20Upgradeable(want).balanceOf(address(this));
         if (_amount != _after.sub(_before)) {
-            emit NotifyWithdrawMismatch(_amount, _after.sub(_before));
+            (uint256 _stakedAfter, ) = IPickleChef(pickleChef).userInfo(pid, address(this));
+            emit NotifyWithdrawMismatch(_amount, _after.sub(_before), _stakedAfter);
         }
 
         // Return the actual amount withdrawn

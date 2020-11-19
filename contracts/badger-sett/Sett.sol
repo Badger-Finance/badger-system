@@ -27,6 +27,8 @@ contract Sett is ERC20Upgradeable, SettAccessControlDefended {
 
     address public controller;
 
+    mapping (address => uint256) public blockLock;
+
     function initialize(
         address _token,
         address _controller,
@@ -49,7 +51,11 @@ contract Sett is ERC20Upgradeable, SettAccessControlDefended {
     /// ===== Modifiers =====
 
     function _onlyController() internal view {
-        require(msg.sender == controller, "!controller");
+        require(msg.sender == controller, "onlyController");
+    }
+
+    function _blockLocked() internal view {
+        require(blockLock[msg.sender] < block.number, "blockLocked");
     }
 
     /// ===== View Functions =====
@@ -77,6 +83,9 @@ contract Sett is ERC20Upgradeable, SettAccessControlDefended {
     /// @notice Only callable by EOA accounts that pass the _defend() check
     function deposit(uint256 _amount) public {
         _defend();
+        _blockLocked();
+
+        _lockForBlock(msg.sender);
         _deposit(_amount);
     }
 
@@ -84,18 +93,27 @@ contract Sett is ERC20Upgradeable, SettAccessControlDefended {
     /// @notice Only callable by EOA accounts that pass the _defend() check
     function depositAll() external {
         _defend();
+        _blockLocked();
+
+        _lockForBlock(msg.sender);
         _deposit(token.balanceOf(msg.sender));
     }
 
     /// @notice No rebalance implementation for lower fees and faster swaps
     function withdraw(uint256 _shares) public {
         _defend();
+        _blockLocked();
+
+        _lockForBlock(msg.sender);
         _withdraw(_shares);
     }
 
     /// @notice Convenience function: Withdraw all shares of the sender
     function withdrawAll() external {
         _defend();
+        _blockLocked();
+
+        _lockForBlock(msg.sender);
         _withdraw(balanceOf(msg.sender));
     }
 
@@ -175,5 +193,22 @@ contract Sett is ERC20Upgradeable, SettAccessControlDefended {
         }
 
         token.safeTransfer(msg.sender, r);
+    }
+
+    function _lockForBlock(address account) internal {
+        blockLock[account] = block.number;
+    }
+
+    /// ===== ERC20 Overrides =====
+
+    /// @dev Add blockLock to transfers, users cannot transfer tokens in the same block as a deposit or witthdrawal.
+    function transfer(address recipient, uint256 amount) public virtual override returns (bool) {
+        _blockLocked();
+        super.transfer(recipient, amount);
+    }
+
+    function transferFrom(address sender, address recipient, uint256 amount) public virtual override returns (bool) {
+        _blockLocked();
+        super.transferFrom(sender, recipient, amount);
     }
 }

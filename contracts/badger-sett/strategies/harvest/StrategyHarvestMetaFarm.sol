@@ -68,6 +68,14 @@ contract StrategyHarvestMetaFarm is BaseStrategy {
         farmPerformanceFeeGovernance = _feeConfig[0];
         farmPerformanceFeeStrategist = _feeConfig[1];
         withdrawalFee = _feeConfig[2];
+
+        IERC20Upgradeable(want).safeApprove(harvestVault, type(uint256).max);
+        IERC20Upgradeable(want).safeApprove(depositHelper, type(uint256).max);
+        IERC20Upgradeable(harvestVault).safeApprove(vaultFarm, type(uint256).max);
+        IERC20Upgradeable(farm).safeApprove(metaFarm, type(uint256).max);
+
+         // Trust Uniswap with unlimited approval for swapping efficiency
+        IERC20Upgradeable(farm).safeApprove(uniswap, type(uint256).max);
     }
 
     /// ===== View Functions =====
@@ -80,7 +88,8 @@ contract StrategyHarvestMetaFarm is BaseStrategy {
     /// TODO: If this is wrong, it will overvalue our shares (we will get LESS for each share we redeem) This means the user will lose out.
     function balanceOfPool() public view override returns (uint256) {
         uint256 harvestShares = IHarvestVault(harvestVault).balanceOf(address(this));
-        return _fromHarvestVaultTokens(harvestShares);
+        // return _fromHarvestVaultTokens(harvestShares);
+        return harvestShares;
     }
 
     function isTendable() public view override returns (bool) {
@@ -108,7 +117,6 @@ contract StrategyHarvestMetaFarm is BaseStrategy {
 
     function _deposit(uint256 _want) internal override {
         // Deposit want into Harvest vault via deposit helper
-        _safeApproveHelper(want, depositHelper, _want);
 
         uint256[] memory amounts = new uint[](1);
         address[] memory tokens = new address[](1);
@@ -125,7 +133,6 @@ contract StrategyHarvestMetaFarm is BaseStrategy {
 
         // Deposit fWant -> Staking
         if (_fWant > 0) {
-            _safeApproveHelper(harvestVault, vaultFarm, _fWant);
             IRewardPool(vaultFarm).stake(_fWant);
         }
     }
@@ -192,7 +199,6 @@ contract StrategyHarvestMetaFarm is BaseStrategy {
 
         // Deposit gathered FARM into profit sharing
         if (_farm > 0) {
-            _safeApproveHelper(farm, metaFarm, _farm);
             IRewardPool(metaFarm).stake(_farm);
         }
     }
