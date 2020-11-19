@@ -83,6 +83,8 @@ sett_config = DotMap(
             params=DotMap(
                 want=pools.renCrv.token,
                 pickleJar=pickle.jars.renCrv,
+                curveSwap=registry.curve.pool.renCrv.swap,
+                lpComponent=registry.tokens.wbtc,
                 pid=pickle.pids.pRenCrv,
                 performanceFeeStrategist=1000,
                 performanceFeeGovernance=1000,
@@ -96,6 +98,9 @@ sett_config = DotMap(
             strategyName="StrategyHarvestMetaFarm",
             params=DotMap(
                 want=pools.renCrv.token,
+                harvestVault=registry.harvest.vaults.renCrv,
+                vaultFarm=registry.harvest.farms.fRenCrv,
+                metaFarm=registry.harvest.farms.farm,
                 performanceFeeStrategist=1000,
                 performanceFeeGovernance=1000,
                 withdrawalFee=75,
@@ -104,12 +109,16 @@ sett_config = DotMap(
     ),
 )
 
+badger_total_supply = Wei("21000000 ether")
+
 badger_config = DotMap(
-    huntParams=DotMap(startTime=int(time.time())),
+    huntParams=DotMap(
+        startTime=int(time.time()), badgerAmount=badger_total_supply * 15 // 100
+    ),
+    rewardsEscrowBadgerAmount=badger_total_supply * 50 // 100,
     tokenLockParams=DotMap(
-        badgerLockAmount=Wei("10500000 ether"),
+        badgerLockAmount=badger_total_supply * 35 // 100,
         lockDuration=daysToSeconds(30),
-        releaseTime=int((time.time()) + daysToSeconds(30)),
     ),
     teamVestingParams=DotMap(
         startTime=(int(time.time())),
@@ -129,7 +138,7 @@ badger_config = DotMap(
         tokenName="Badger",
         tokenSymbol="BADGER",
         id="badger-finance",
-        initialSupply=Wei("21000000 ether"),
+        initialSupply=badger_total_supply,
         financePeriod=0,
         useAgentAsVault=True,
         supportRequired=Wei("0.5 ether"),
@@ -219,4 +228,3 @@ digg_config = DotMap(
 )
 
 config = DotMap(badger=badger_config, sett=sett_config, digg=digg_config)
-

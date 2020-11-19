@@ -4,11 +4,14 @@ pragma solidity ^0.6.11;
 
 import "deps/@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import "deps/@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
+import "deps/@openzeppelin/contracts-upgradeable/math/MathUpgradeable.sol";
 import "deps/@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "deps/@openzeppelin/contracts-upgradeable/token/ERC20/SafeERC20Upgradeable.sol";
 
-import "interfaces/curve/ICurveFi.sol";
-import "interfaces/curve/ICurveGauge.sol";
+import "interfaces/harvest/IDepositHelper.sol";
+import "interfaces/harvest/IHarvestVault.sol";
+import "interfaces/harvest/IRewardPool.sol";
+
 import "interfaces/uniswap/IUniswapRouterV2.sol";
 
 import "interfaces/badger/IController.sol";
@@ -21,64 +24,191 @@ contract StrategyHarvestMetaFarm is BaseStrategy {
     using AddressUpgradeable for address;
     using SafeMathUpgradeable for uint256;
 
-    address public constant univ2Router2 = 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D; // Uniswap Dex
-    address public constant weth = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2; // Weth Token, used for crv <> weth <> wbtc route
+    address public harvestVault;
+    address public vaultFarm;
+    address public metaFarm;
+    address public rewardsEscrow;
+
+    /// @notice FARM performance fees take a cut of outgoing farm
+    uint256 public farmPerformanceFeeGovernance;
+    uint256 public farmPerformanceFeeStrategist;
+
+    uint256 public lastHarvested;
+
+    address public constant farm = 0xa0246c9032bC3A600820415aE600c6388619A14D; // FARM Token
+    address public constant depositHelper = 0xF8ce90c2710713552fb564869694B2505Bfc0846; // Harvest deposit helper
+    address public constant weth = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2; // Weth Token
+
+    event FarmHarvest(
+        uint256 harvested,
+        uint256 transferred,
+        uint256 governancePerformanceFee,
+        uint256 strategistPerformanceFee,
+        uint256 timestamp,
+        uint256 blockNumber
+    );
+
     function initialize(
         address _governance,
         address _strategist,
         address _controller,
-        address[1] memory _wantConfig,
+        address _keeper,
+        address _guardian,
+        address[5] memory _wantConfig,
         uint256[3] memory _feeConfig
     ) public initializer {
-        governance = _governance;
-        strategist = _strategist;
-        controller = _controller;
+        __BaseStrategy_init(_governance, _strategist, _controller, _keeper, _guardian);
 
         want = _wantConfig[0];
+        harvestVault = _wantConfig[1];
+        vaultFarm = _wantConfig[2];
+        metaFarm = _wantConfig[3];
+        rewardsEscrow = _wantConfig[4];
+
+        farmPerformanceFeeGovernance = _feeConfig[0];
+        farmPerformanceFeeStrategist = _feeConfig[1];
+        withdrawalFee = _feeConfig[2];
     }
+
+    /// ===== View Functions =====
 
     function getName() external override pure returns (string memory) {
         return "StrategyHarvestMetaFarm";
     }
 
-    function deposit() override public {
-        uint256 _want = IERC20Upgradeable(want).balanceOf(address(this));
-        emit Deposit(_want, address(0));
+    /// @dev Realizable balance of our shares
+    /// TODO: If this is wrong, it will overvalue our shares (we will get LESS for each share we redeem) This means the user will lose out.
+    function balanceOfPool() public view override returns (uint256) {
+        uint256 harvestShares = IHarvestVault(harvestVault).balanceOf(address(this));
+        return _fromHarvestVaultTokens(harvestShares);
     }
-    
+
+    function isTendable() public view override returns (bool) {
+        return true;
+    }
+
+    /// ===== Permissioned Actions: Governance =====
+    function setFarmPerformanceFeeGovernance(uint256 _fee) external {
+        _onlyGovernance();
+        farmPerformanceFeeGovernance = _fee;
+    }
+
+    function setFarmPerformanceFeeStrategist(uint256 _fee) external {
+        _onlyGovernance();
+        farmPerformanceFeeStrategist = _fee;
+    }
+
+    /// ===== Internal Core Implementations =====
+
     function _onlyNotProtectedTokens(address _asset) internal override {
         require(address(want) != _asset, "want");
+        require(address(farm) != _asset, "farm");
+        require(address(harvestVault) != _asset, "harvestVault");
     }
 
-    /// @notice Withdraw partial funds, normally used with a vault withdrawal
-    function withdraw(uint256 _amount) external override {
-        _onlyController();
-        emit Withdraw(_amount);
+    function _deposit(uint256 _want) internal override {
+        // Deposit want into Harvest vault via deposit helper
+        _safeApproveHelper(want, depositHelper, _want);
+
+        uint256[] memory amounts = new uint[](1);
+        address[] memory tokens = new address[](1);
+
+        amounts[0] = _want;
+        tokens[0] = harvestVault;
+
+        IDepositHelper(depositHelper).depositAll(amounts, tokens);
     }
 
-    /// @notice Withdraw all funds, normally used when migrating strategies
-    function withdrawAll() external override returns (uint256 balance) {
-        _onlyController();
-        _withdrawAll();
+    /// @notice Deposit other tokens
+    function _postDeposit() internal override {
+        uint256 _fWant = IERC20Upgradeable(harvestVault).balanceOf(address(this));
+
+        // Deposit fWant -> Staking
+        if (_fWant > 0) {
+            _safeApproveHelper(harvestVault, vaultFarm, _fWant);
+            IRewardPool(vaultFarm).stake(_fWant);
+        }
     }
 
-    function _withdrawAll() internal {
+    function _withdrawAll() internal override {
+        IRewardPool(vaultFarm).exit();
+        IHarvestVault(harvestVault).withdrawAll();
     }
 
-    /// @notice Harvest from strategy mechanics, realizing increase in underlying position
-    function harvest() public override {
-        _onlyGovernanceOrStrategist();
-    }
+    function _withdrawSome(uint256 _amount) internal override returns (uint256) {
+        uint256 _preWant = IERC20Upgradeable(want).balanceOf(address(this));
 
-    function _withdrawSome(uint256 _amount) internal returns (uint256) {
+        uint256 _toWithdraw = _amount;
+
+        uint256 _wrappedTotal = IRewardPool(vaultFarm).balanceOf(address(this));
+        uint256 _underlyingTotal = IHarvestVault(harvestVault).balanceOf(address(this));
+
+        if (_wrappedTotal > 0) {
+            uint256 _wrappedToWithdraw = MathUpgradeable.min(_wrappedTotal, _amount);
+            IRewardPool(vaultFarm).withdraw(_wrappedToWithdraw);
+
+            _toWithdraw = _toWithdraw.sub(_wrappedToWithdraw);
+        }
+
+        if (_toWithdraw > 0 && _underlyingTotal > 0) {
+            IHarvestVault(harvestVault).withdraw(_toHarvestVaultTokens(_toWithdraw));
+        }
+
+        uint256 _postWant = IERC20Upgradeable(want).balanceOf(address(this));
         return _amount;
     }
 
-    function balanceOfPool() public view returns (uint256) {
-        return 0;
+    /// @notice Harvest from strategy mechanics, realizing increase in underlying position
+    /// @notice For this strategy, harvest rewards are sent to rewards tree for distribution rather than converted to underlying
+    /// @notice Any APY calculation must consider expected results from harvesting
+    function harvest() external override {
+        _onlyAuthorizedActors();
+
+        uint256 _preFarm = IERC20Upgradeable(farm).balanceOf(address(this));
+        IRewardPool(metaFarm).exit();
+        IRewardPool(vaultFarm).getReward();
+        uint256 _postFarm = IERC20Upgradeable(farm).balanceOf(address(this));
+
+        IERC20Upgradeable(farm).transfer(rewardsEscrow, _postFarm);
+
+        uint256 _governanceFee = _processFee(farm, _postFarm, farmPerformanceFeeGovernance, governance);
+        uint256 _strategistFee = _processFee(farm, _postFarm, farmPerformanceFeeStrategist, strategist);
+
+        lastHarvested = now;
+
+        emit FarmHarvest(_postFarm.sub(_preFarm), _postFarm, _governanceFee, _strategistFee, now, block.number);
     }
 
-    function balanceOf() public view override returns (uint256) {
-        return balanceOfWant().add(balanceOfPool());
+    /// @notice 'Recycle' FARM gained from staking into profit sharing pool for increased APY
+    /// @notice Any excess FARM sitting in the Strategy will be staked as well
+    function tend() external {
+        _onlyAuthorizedActors();
+
+        // No need to check for rewards balance: If we have no rewards available to harvest, will simply do nothing besides emit an event.
+        IRewardPool(metaFarm).getReward();
+        IRewardPool(vaultFarm).getReward();
+
+        uint256 _farm = IERC20Upgradeable(farm).balanceOf(address(this));
+
+        // Deposit gathered FARM into profit sharing
+        if (_farm > 0) {
+            _safeApproveHelper(farm, metaFarm, _farm);
+            IRewardPool(metaFarm).stake(_farm);
+        }
+    }
+
+    /// ===== Internal Helper Functions =====
+
+    /// @dev Convert underlying value into corresponding number of harvest vault shares
+    function _toHarvestVaultTokens(uint256 amount) internal view returns (uint256) {
+        uint256 ppfs = IHarvestVault(harvestVault).getPricePerFullShare();
+        uint256 unit = IHarvestVault(harvestVault).underlyingUnit();
+        return amount.mul(unit).div(ppfs);
+    }
+
+    function _fromHarvestVaultTokens(uint256 amount) internal view returns (uint256) {
+        uint256 ppfs = IHarvestVault(harvestVault).getPricePerFullShare();
+        uint256 unit = IHarvestVault(harvestVault).underlyingUnit();
+        return amount.mul(ppfs).div(unit);
     }
 }

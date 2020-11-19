@@ -1,8 +1,13 @@
-#!/usr/bin/python3
-
-from dotmap import DotMap
+from helpers.proxy_utils import deploy_proxy
 import pytest
+from operator import itemgetter
+from brownie.test import given, strategy
 from brownie import *
+from helpers.gnosis_safe import convert_to_test_mode, exec_direct
+from dotmap import DotMap
+from scripts.deploy.deploy_badger import main
+from helpers.registry import whale_registry
+
 
 @pytest.fixture(scope="function", autouse=True)
 def isolate(fn_isolation):
@@ -11,31 +16,41 @@ def isolate(fn_isolation):
     pass
 
 
-# def timelock_unit(scope="module"):
-#     unlockTime = chain.time() + 1000000
-#     deployer = accounts[0]
-#     team = [accounts[1], accounts[2], accounts[3]]
-#     governor = accounts[5]
-#     minnow = accounts[4]
+@pytest.fixture()
+def badger(accounts):
+    badger_system = main()
 
-#     tokenGifterAmount = Wei("500 ether")
-#     tokenRequestAmount = Wei("100 ether")
-#     transferAmount = Wei("500000 ether")
+    # Distribute Test Assets
 
-#     tokenGifter = TokenGifter.deploy()
-#     ethGifter = EthGifter.deploy()
+    return badger_system
 
-#     gToken = MockToken.deploy([tokenGifter, deployer], [
-#                               tokenGifterAmount * 2, transferAmount * 10])
 
-#     smartTimelock = SmartTimelock.deploy(
-#         gToken.address, team[0], governor, unlockTime)
+def distribute_rewards_escrow(badger, token, recipient, amount):
+    """
+    Distribute Badger from rewardsEscrow
+    """
 
-#     gToken.transfer(smartTimelock.address, transferAmount)
+    # Approve recipient for expenditure
+    if not badger.rewardsEscrow.isApproved(recipient):
+        exec_direct(
+            badger.devMultisig,
+            {
+                "to": badger.rewardsEscrow,
+                "data": badger.rewardsEscrow.approveRecipient.encode_input(recipient),
+            },
+            badger.deployer,
+        )
 
-#     stakingMock = StakingMock.deploy(gToken.address)
+    exec_direct(
+        badger.devMultisig,
+        {
+            "to": badger.rewardsEscrow,
+            "data": badger.rewardsEscrow.transfer.encode_input(
+                token, recipient, amount
+            ),
+        },
+        badger.deployer,
+    )
 
-#     deployer.transfer(ethGifter, Wei("10 ether"))
 
-#     miscToken = MockToken.at([tokenGifter.address, smartTimelock.address], [
-#                              tokenGifterAmount.mul(2), tokenGifterAmount])
+

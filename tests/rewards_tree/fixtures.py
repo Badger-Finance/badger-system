@@ -1,23 +1,28 @@
-#!/usr/bin/python3
-import pytest
-from brownie import *
-from dotmap import DotMap
+# #!/usr/bin/python3
+# import pytest
+# from brownie import *
+# from dotmap import DotMap
 
-@pytest.fixture(scope="module")
-def rewards_tree_unit(scope="module"):
-    deployer = accounts[0]
-    rootUpdater = accounts[1]
-    guardian = accounts[2]
 
-    system = DotMap(
-        badgerTree=BadgerTree.deploy(deployer, rootUpdater, guardian, {'from': deployer}),
-        deployer=accounts[0],
-        rootUpdater=accounts[1],
-        guardian=accounts[2],
-        rewardsTokens=[]
-    )
+# @pytest.fixture(scope="module")
+# def rewards_tree_unit(scope="module"):
+#     deployer = accounts[0]
+#     rootUpdater = accounts[1]
+#     guardian = accounts[2]
 
-    for i in range(0,4):
-        system.rewardsToken.push(MockToken.deploy([deployer], [Wei("100000000 ether")], {'from': deployer}))
+#     system = DotMap(
+#         badgerTree=BadgerTree.deploy(
+#             deployer, rootUpdater, guardian, {"from": deployer}
+#         ),
+#         deployer=accounts[0],
+#         rootUpdater=accounts[1],
+#         guardian=accounts[2],
+#         rewardsTokens=[],
+#     )
 
-    yield system
+#     for i in range(0, 4):
+#         system.rewardsToken.push(
+#             MockToken.deploy([deployer], [Wei("100000000 ether")], {"from": deployer})
+#         )
+
+#     yield system

@@ -17,11 +17,12 @@ from tqdm import tqdm, trange
 from click import secho
 from helpers.constants import ZERO_ADDRESS
 
+
 def calc_geyser_distributions(geyser, startBlock, endBlock):
     startTime = web3.eth.getBlock(startBlock)
     endTime = web3.eth.getBlock(endBlock)
 
-    print('blocks between', startTime, endTime)
+    print("blocks between", startTime, endTime)
     """
     Determine how much of each token is distributed within the specified block window
         - Get the tokens for the geyser
@@ -31,12 +32,14 @@ def calc_geyser_distributions(geyser, startBlock, endBlock):
     
     token -> amount
     """
-    distributions=DotMap()
+    distributions = DotMap()
 
     tokens = geyser.getDistributionTokens()
+    print(tokens)
     for token in tokens:
         amount = 0
         schedules = geyser.getUnlockSchedules(token)
+        print(schedules)
         for schedule in schedules:
             schedule
 

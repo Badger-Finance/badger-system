@@ -21,6 +21,7 @@ interface IHarvestVault {
     function withdrawAll() external;
     function withdraw(uint256 numberOfShares) external;
     function getPricePerFullShare() external view returns (uint256);
+    function underlyingUnit() external view returns (uint256);
 
     function underlyingBalanceWithInvestmentForHolder(address holder) view external returns (uint256);
 

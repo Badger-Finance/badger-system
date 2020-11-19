@@ -19,6 +19,7 @@ import "interfaces/badger/IStrategy.sol";
 
 import "../BaseStrategy.sol";
 import "interfaces/badger/IStrategy.sol";
+import "interfaces/uniswap/IStakingRewards.sol";
 
 /*
     Strategy to compound badger rewards
@@ -35,12 +36,12 @@ contract StrategyBadgerRewards is BaseStrategy {
         address _governance,
         address _strategist,
         address _controller,
+        address _keeper,
+        address _guardian,
         address[2] memory _wantConfig,
         uint256[3] memory _feeConfig
     ) public initializer {
-        governance = _governance;
-        strategist = _strategist;
-        controller = _controller;
+        __BaseStrategy_init(_governance, _strategist, _controller, _keeper, _guardian);
 
         want = _wantConfig[0];
         geyser = _wantConfig[1];
@@ -49,55 +50,61 @@ contract StrategyBadgerRewards is BaseStrategy {
         performanceFeeStrategist = _feeConfig[1];
         withdrawalFee = _feeConfig[2];
     }
-     
-    /// @notice Deposit want into a special vault
-    function deposit() public override {
-        uint256 _want = IERC20Upgradeable(want).balanceOf(address(this));
-        if (_want > 0) {
-            
-        }
-    }
 
+    /// ===== View Functions =====
     function getName() external override pure returns (string memory) {
         return "StrategyBadgerRewards";
     }
 
+    function balanceOfPool() public override view returns (uint256) {
+        return IStakingRewards(geyser).balanceOf(address(this));
+    }
+
+    /// ===== Internal Core Implementations =====
+
     function _onlyNotProtectedTokens(address _asset) internal override {
         require(address(want) != _asset, "want");
+        require(address(geyser) != _asset, "geyser");
     }
 
-    function harvest() external override{
-
+    /// @notice Deposit want into a special rewards contract
+    function _deposit(uint256 _want) internal override {
+        _safeApproveHelper(want, geyser, _want);
+        IStakingRewards(geyser).stake(_want);
     }
 
-
-    /// @notice Withdraw partial funds, normally used with a vault withdrawal
-    /// @notice A portion according to withdrawalFee goes to the rewards  
-    function withdraw(uint256 _amount) external override {
-        _onlyController();
-        emit Withdraw(_amount);
+    function _withdrawAll() internal override {
+        IStakingRewards(geyser).exit();
     }
 
-    /// @notice Withdraw all funds, normally used when migrating strategies
-    /// @notice Does not trigger a withdrawal fee
-    function withdrawAll() external override returns (uint256 balance) {
-        _onlyController();
+    function _withdrawSome(uint256 _amount) internal override returns (uint256) {
+        // Use idle Badger if available
+        uint256 _before = IERC20Upgradeable(want).balanceOf(address(this));
 
-        balance = IERC20Upgradeable(want).balanceOf(address(this));
-        emit WithdrawAll(balance);
-    }
+        if (_before >= _amount) {
+            return _amount;
+        }
 
+        // Use unclaimed rewards to cover, if possible
+        IStakingRewards(geyser).getReward();
+        uint256 _withRewards = IERC20Upgradeable(want).balanceOf(address(this));
 
-    function _withdrawSome(uint256 _amount) internal returns (uint256) {
-        // ICurveGauge(gauge).withdraw(_amount);
+        if (_withRewards >= _amount) {
+            return _amount;
+        }
+
+        // Unstake the remainder from StakingRewards
+        uint256 _remainder = _amount.sub(_withRewards);
+        IStakingRewards(geyser).withdraw(_remainder);
+
         return _amount;
     }
-    
-    function balanceOfPool() public view returns (uint256) {
-        return 0;
-    }
 
-    function balanceOf() public view override returns (uint256) {
-        return balanceOfWant().add(balanceOfPool());
+    function harvest() external override {
+        _onlyAuthorizedActors();
+
+        IStakingRewards(geyser).getReward();
+        uint256 _want = IERC20Upgradeable(want).balanceOf(address(this));
+        _deposit(_want);
     }
 }

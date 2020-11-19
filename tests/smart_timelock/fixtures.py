@@ -3,6 +3,7 @@ import pytest
 from brownie import *
 from dotmap import DotMap
 
+
 @pytest.fixture(scope="module")
 def timelock_unit():
     unlockTime = chain.time() + 1000000
@@ -19,7 +20,10 @@ def timelock_unit():
     ethGifter = EthGifter.deploy({"from": deployer})
 
     gToken = MockToken.deploy(
-        [web3.toChecksumAddress(tokenGifter.address), web3.toChecksumAddress(deployer.address)],
+        [
+            web3.toChecksumAddress(tokenGifter.address),
+            web3.toChecksumAddress(deployer.address),
+        ],
         [tokenGifterAmount * 2, transferAmount * 10],
         {"from": deployer},
     )
@@ -35,7 +39,10 @@ def timelock_unit():
     deployer.transfer(ethGifter, Wei("10 ether"))
 
     miscToken = MockToken.deploy(
-        [web3.toChecksumAddress(tokenGifter.address), web3.toChecksumAddress(smartTimelock.address)],
+        [
+            web3.toChecksumAddress(tokenGifter.address),
+            web3.toChecksumAddress(smartTimelock.address),
+        ],
         [tokenGifterAmount * 2, tokenGifterAmount],
         {"from": deployer},
     )

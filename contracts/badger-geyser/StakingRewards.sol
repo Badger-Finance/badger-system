@@ -24,9 +24,9 @@ contract StakingRewards is Initializable, AccessControlUpgradeable, PausableUpgr
 
     IERC20Upgradeable public rewardsToken;
     IERC20Upgradeable public stakingToken;
-    uint256 public periodFinish = 0;
-    uint256 public rewardRate = 0;
-    uint256 public rewardsDuration = 7 days;
+    uint256 public periodFinish;
+    uint256 public rewardRate;
+    uint256 public rewardsDuration;
     uint256 public lastUpdateTime;
     uint256 public rewardPerTokenStored;
 
@@ -51,8 +51,9 @@ contract StakingRewards is Initializable, AccessControlUpgradeable, PausableUpgr
 
         rewardsToken = IERC20Upgradeable(_rewardsToken);
         stakingToken = IERC20Upgradeable(_stakingToken);
+
+        rewardsDuration = 7 days;
     }
-    
 
     /* ========== VIEWS ========== */
 
@@ -144,10 +145,7 @@ contract StakingRewards is Initializable, AccessControlUpgradeable, PausableUpgr
     function recoverERC20(address tokenAddress, uint256 tokenAmount) external {
         _onlyAdmin();
         // Cannot recover the staking token or the rewards token
-        require(
-            tokenAddress != address(stakingToken) && tokenAddress != address(rewardsToken),
-            "Cannot withdraw the staking or rewards tokens"
-        );
+        require(tokenAddress != address(stakingToken) && tokenAddress != address(rewardsToken), "Cannot withdraw the staking or rewards tokens");
         IERC20Upgradeable(tokenAddress).safeTransfer(getRoleMember(DEFAULT_ADMIN_ROLE, 0), tokenAmount);
         emit Recovered(tokenAddress, tokenAmount);
     }

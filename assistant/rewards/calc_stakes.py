@@ -17,10 +17,13 @@ from tqdm import tqdm, trange
 from click import secho
 from helpers.constants import ZERO_ADDRESS
 
+
 def calc_geyser_stakes(geyser, globalStartBlock, snapshotStartBlock, periodEndBlock):
-    print('geyser initial snapshot for ' + geyser.address)
+    print("geyser initial snapshot for " + geyser.address)
     pre_actions = collect_actions(geyser, globalStartBlock, snapshotStartBlock - 1)
-    pre_snapshot = process_snapshot(pre_actions, globalStartBlock, snapshotStartBlock - 1)
+    pre_snapshot = process_snapshot(
+        pre_actions, globalStartBlock, snapshotStartBlock - 1
+    )
 
     # Construct stakingWeight (rather than just stakingShareSeconds), with values modified by _average_ multiplier for stakes within a periods
     actions = collect_actions(geyser, snapshotStartBlock, periodEndBlock)
@@ -41,16 +44,19 @@ def events_to_stakes(geyser, startBlock, snapshotBlock):
         end = min(start + 999, snapshotBlock)
         logs = contract.events.Staked().getLogs(fromBlock=start, toBlock=end)
         for log in logs:
-            user = log['args']['user']
+            user = log["args"]["user"]
             if user != ZERO_ADDRESS:
                 if not stakes[user]:
                     stakes[user] = []
-                stakes[user].push({
-                    'amount': log['args']['amount'],
-                    'stakedAt': log['args']['timestamp']
-                })
+                stakes[user].push(
+                    {
+                        "amount": log["args"]["amount"],
+                        "stakedAt": log["args"]["timestamp"],
+                    }
+                )
 
     return stakes
+
 
 def collect_actions(geyser, startBlock, endBlock):
     """
@@ -68,36 +74,41 @@ def collect_actions(geyser, startBlock, endBlock):
         end = min(start + 999, endBlock)
         logs = contract.events.Staked().getLogs(fromBlock=start, toBlock=end)
         for log in logs:
-            timestamp = log['args']['timestamp']
-            user = log['args']['args']
+            timestamp = log["args"]["timestamp"]
+            user = log["args"]["args"]
 
             if user != ZERO_ADDRESS:
                 if not actions[user][timestamp]:
                     actions[user][timestamp] = []
-                actions[user][timestamp].push({
-                    'action': 'STAKE',
-                    'amount': log['args']['amount'],
-                    'stakedAt': log['args']['timestamp']
-                })
+                actions[user][timestamp].push(
+                    {
+                        "action": "STAKE",
+                        "amount": log["args"]["amount"],
+                        "stakedAt": log["args"]["timestamp"],
+                    }
+                )
 
     # Add unstake actions
     for start in trange(startBlock, endBlock, 1000):
         end = min(start + 999, endBlock)
         logs = contract.events.Unstaked().getLogs(fromBlock=start, toBlock=end)
         for log in logs:
-            timestamp = log['args']['timestamp']
-            user = log['args']['args']
+            timestamp = log["args"]["timestamp"]
+            user = log["args"]["args"]
 
             if user != ZERO_ADDRESS:
                 if not actions[user][timestamp]:
                     actions[user][timestamp] = []
-                actions[user][timestamp].push({
-                    'action': 'UNSTAKE',
-                    'amount': log['args']['amount'],
-                    'timestamp': log['args']['timestamp']
-                })
+                actions[user][timestamp].push(
+                    {
+                        "action": "UNSTAKE",
+                        "amount": log["args"]["amount"],
+                        "timestamp": log["args"]["timestamp"],
+                    }
+                )
 
     return actions
+
 
 def process_snapshot(actions, startBlock, endBlock):
     """
@@ -106,6 +117,7 @@ def process_snapshot(actions, startBlock, endBlock):
     """
     for action in actions.values():
         print(action)
+
 
 def calculate_stake_weights(stakes, actions):
     """
@@ -117,7 +129,10 @@ def calculate_stake_weights(stakes, actions):
     for action in actions.values():
         print(action)
 
+
 def ensure_archive_node():
-    fresh = web3.eth.call({'to': str(EMN), 'data': EMN.totalSupply.encode_input()})
-    old = web3.eth.call({'to': str(EMN), 'data': EMN.totalSupply.encode_input()}, SNAPSHOT_BLOCK)
-    assert fresh != old, 'this step requires an archive node'
+    fresh = web3.eth.call({"to": str(EMN), "data": EMN.totalSupply.encode_input()})
+    old = web3.eth.call(
+        {"to": str(EMN), "data": EMN.totalSupply.encode_input()}, SNAPSHOT_BLOCK
+    )
+    assert fresh != old, "this step requires an archive node"

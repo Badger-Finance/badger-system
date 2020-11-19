@@ -21,14 +21,14 @@ def namehash(ensDomain):
     return str(web3._mainnet.toHex(web3._mainnet.ens.namehash(ensDomain)))
 
 
-print(
-    'Name Hashes',    
-    namehash("agent.aragonpm.eth"),
-    namehash("vault.aragonpm.eth"),
-    namehash("voting.aragonpm.eth"),
-    namehash("finance.aragonpm.eth"),
-    namehash("token-manager.aragonpm.eth"),
-)
+# print(
+#     'Name Hashes',
+#     namehash("agent.aragonpm.eth"),
+#     namehash("vault.aragonpm.eth"),
+#     namehash("voting.aragonpm.eth"),
+#     namehash("finance.aragonpm.eth"),
+#     namehash("token-manager.aragonpm.eth"),
+# )
 
 artifacts = registry.aragon.artifacts
 apps = {}
@@ -93,21 +93,27 @@ class AragonSystem:
 
         deployed = DotMap()
 
-        print(tx.events["DeployDao"])
-        print(tx.events["DeployToken"])
-        print(tx.events["InstalledApp"])
+        # print(tx.events["DeployDao"])
+        # print(tx.events["DeployToken"])
+        # print(tx.events["InstalledApp"])
 
-        daoAddress = tx.events["DeployDao"][0]['dao']
-        tokenAddress = tx.events["DeployToken"][0]['token']
+        daoAddress = tx.events["DeployDao"][0]["dao"]
+        tokenAddress = tx.events["DeployToken"][0]["token"]
 
-        deployed.kernel = Contract.from_abi("Kernel", daoAddress, artifacts.Kernel['abi'])
+        deployed.kernel = Contract.from_abi(
+            "Kernel", daoAddress, artifacts.Kernel["abi"]
+        )
 
-        deployed.token = Contract.from_abi("MiniMeToken", tokenAddress, artifacts.MiniMeToken['abi'])
+        deployed.token = Contract.from_abi(
+            "MiniMeToken", tokenAddress, artifacts.MiniMeToken["abi"]
+        )
 
         for appEvent in tx.events["InstalledApp"]:
             appData = get_app_by_id(str(appEvent["appId"]))
             # eg: deployed.agent = Agent.at(<event proxy>)
             deployed[appData["name"]] = Contract.from_abi(
-                appData["contractName"], appEvent["appProxy"], appData["artifact"]["abi"]
+                appData["contractName"],
+                appEvent["appProxy"],
+                appData["artifact"]["abi"],
             )
         return deployed

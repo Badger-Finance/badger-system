@@ -16,6 +16,7 @@ from toolz import valfilter, valmap
 from tqdm import tqdm, trange
 from click import secho
 
+
 class MerkleTree:
     def __init__(self, elements):
         self.elements = sorted(set(web3.keccak(hexstr=el) for el in elements))
@@ -45,7 +46,10 @@ class MerkleTree:
 
     @staticmethod
     def get_next_layer(elements):
-        return [MerkleTree.combined_hash(a, b) for a, b in zip_longest(elements[::2], elements[1::2])]
+        return [
+            MerkleTree.combined_hash(a, b)
+            for a, b in zip_longest(elements[::2], elements[1::2])
+        ]
 
     @staticmethod
     def combined_hash(a, b):
@@ -53,4 +57,4 @@ class MerkleTree:
             return b
         if b is None:
             return a
-        return web3.keccak(b''.join(sorted([a, b])))
+        return web3.keccak(b"".join(sorted([a, b])))

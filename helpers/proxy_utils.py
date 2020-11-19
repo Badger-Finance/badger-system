@@ -32,7 +32,6 @@ def deploy_proxy(contractName, logicAbi, logic, proxyAdmin, initializer, deploye
 
     # print(str(acct.address))
     web3.eth.defaultAccount = str(accounts[0])
-    print(accounts[0])
 
     ProxyAdmin = web3.eth.contract(abi=abi, bytecode=bytecode)
 

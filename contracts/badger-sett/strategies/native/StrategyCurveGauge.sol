@@ -25,7 +25,7 @@ contract StrategyCurveGauge is BaseStrategy {
     // address public constant gauge = 0xB1F2cdeC61db658F091671F5f199635aEF202CAC; // Curve renBtc Gauge
     // address public constant mintr = 0xd061D61a4d941c39E5453435B6345Dc261C2fcE0; // Curve CRV Minter
     // address public constant crv = 0xD533a949740bb3306d119CC777fa900bA034cd52; // CRV token
-    // address public constant univ2Router2 = 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D; // Uniswap Dex
+    // address public constant uniswap = 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D; // Uniswap Dex
     // address public constant weth = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2; // Weth Token, used for crv <> weth <> wbtc route
 
     // address public constant wbtc = 0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599; // wBTC Token
@@ -37,9 +37,7 @@ contract StrategyCurveGauge is BaseStrategy {
     address public lpComponent; // wBTC for renCrv and sCrv
 
     address public constant crv = 0xD533a949740bb3306d119CC777fa900bA034cd52; // CRV token
-    address public constant univ2Router2 = 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D; // Uniswap Dex
     address public constant weth = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2; // Weth Token, used for crv <> weth <> wbtc route
-
 
     uint256 public keepCRV;
 
@@ -47,12 +45,12 @@ contract StrategyCurveGauge is BaseStrategy {
         address _governance,
         address _strategist,
         address _controller,
+        address _keeper,
+        address _guardian,
         address[5] memory _wantConfig,
         uint256[4] memory _feeConfig
     ) public initializer {
-        governance = _governance;
-        strategist = _strategist;
-        controller = _controller;
+        __BaseStrategy_init(_governance, _strategist, _controller, _keeper, _guardian);
 
         want = _wantConfig[0];
         gauge = _wantConfig[1];
@@ -66,65 +64,47 @@ contract StrategyCurveGauge is BaseStrategy {
         keepCRV = _feeConfig[3]; // 1000
     }
 
-    function setKeepCRV(uint256 _keepCRV) external {
-        _onlyGovernance();
-        keepCRV = _keepCRV;
-    }
+    /// ===== View Functions =====
 
     function getName() external override pure returns (string memory) {
         return "StrategyCurveGauge";
     }
 
-    function deposit() public override {
-        uint256 _want = IERC20Upgradeable(want).balanceOf(address(this));
-        if (_want > 0) {
-            IERC20Upgradeable(want).safeApprove(gauge, 0);
-            IERC20Upgradeable(want).safeApprove(gauge, _want);
-            ICurveGauge(gauge).deposit(_want);
-        }
-        emit Deposit(_want, address(gauge));
+    function balanceOfPool() public override view returns (uint256) {
+        return ICurveGauge(gauge).balanceOf(address(this));
     }
 
+    /// ===== Permissioned Actions: Governance =====
+    function setKeepCRV(uint256 _keepCRV) external {
+        _onlyGovernance();
+        keepCRV = _keepCRV;
+    }
+
+    /// ===== Internal Core Implementations =====
+    
     function _onlyNotProtectedTokens(address _asset) internal override {
         require(address(want) != _asset, "want");
         require(lpComponent != _asset, "lpComponent");
         require(crv != _asset, "crv");
     }
 
-    /// @notice Controller-only function to Withdraw partial funds, normally used with a vault withdrawal
-    function withdraw(uint256 _amount) external override {
-        _onlyController();
-
-        uint256 _balance = IERC20Upgradeable(want).balanceOf(address(this));
-
-        // Withdraw some from activities if needed to cover withdrawal
-        if (_balance < _amount) {
-            _amount = _withdrawSome(_amount.sub(_balance));
-            _amount = _amount.add(_balance);
-        }
-
-        // Process withdrawal fee
-        uint256 _fee = _processWithdrawalFee(_amount);
-
-        // Transfer remaining to Vault to handle withdrawal
-        _transferToVault(_amount.sub(_fee));
+    function _deposit(uint256 _want) internal override {
+        _safeApproveHelper(want, gauge, _want);
+        ICurveGauge(gauge).deposit(_want);
     }
 
-    /// @notice Withdraw all funds to Vault, normally used when migrating strategies
-    function withdrawAll() external override returns (uint256 balance) {
-        _onlyController();
-
-        _withdrawAll();
-        _transferToVault(IERC20Upgradeable(want).balanceOf(address(this)));
-    }
-
-    function _withdrawAll() internal {
+    function _withdrawAll() internal override {
         ICurveGauge(gauge).withdraw(ICurveGauge(gauge).balanceOf(address(this)));
     }
 
+    function _withdrawSome(uint256 _amount) internal override returns (uint256) {
+        ICurveGauge(gauge).withdraw(_amount);
+        return _amount;
+    }
+
     /// @notice Harvest from strategy mechanics, realizing increase in underlying position
-    function harvest() public override {
-        _onlyGovernanceOrStrategist();
+    function harvest() external override {
+        _onlyAuthorizedActors();
 
         IMintr(mintr).mint(address(gauge));
         uint256 _crv = IERC20Upgradeable(crv).balanceOf(address(this));
@@ -134,15 +114,15 @@ contract StrategyCurveGauge is BaseStrategy {
         _crv = _crv.sub(_keepCRV);
 
         if (_crv > 0) {
-            IERC20Upgradeable(crv).safeApprove(univ2Router2, 0);
-            IERC20Upgradeable(crv).safeApprove(univ2Router2, _crv);
+            IERC20Upgradeable(crv).safeApprove(uniswap, 0);
+            IERC20Upgradeable(crv).safeApprove(uniswap, _crv);
 
             address[] memory path = new address[](3);
             path[0] = crv;
             path[1] = weth;
             path[2] = lpComponent;
 
-            IUniswapRouterV2(univ2Router2).swapExactTokensForTokens(_crv, uint256(0), path, address(this), now.add(1800));
+            IUniswapRouterV2(uniswap).swapExactTokensForTokens(_crv, uint256(0), path, address(this), now.add(1800));
         }
         uint256 _lpComponent = IERC20Upgradeable(lpComponent).balanceOf(address(this));
         if (_lpComponent > 0) {
@@ -160,18 +140,5 @@ contract StrategyCurveGauge is BaseStrategy {
 
             deposit();
         }
-    }
-
-    function _withdrawSome(uint256 _amount) internal returns (uint256) {
-        ICurveGauge(gauge).withdraw(_amount);
-        return _amount;
-    }
-
-    function balanceOfPool() public view returns (uint256) {
-        return ICurveGauge(gauge).balanceOf(address(this));
-    }
-
-    function balanceOf() public view override returns (uint256) {
-        return balanceOfWant().add(balanceOfPool());
     }
 }

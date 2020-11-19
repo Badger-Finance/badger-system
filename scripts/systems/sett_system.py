@@ -1,15 +1,18 @@
 from helpers.proxy_utils import deploy_proxy
 from brownie import *
-from helpers.constants import AddressZero
+from helpers.constants import *
 from helpers.registry import registry
 from config.badger_config import sett_config
-from dotmap import DotMap
+from dotmap import DotMap, pprint
 from enum import Enum, auto
 
 """
 Sett is a subsystem of badger.
 Requires the BadgerDAO infrastructure & multisig to be deployed
 """
+
+curve = registry.curve
+tokens = registry.tokens
 
 
 def deploy_sett(badger, sett, token, controller, name, symbol, deployer):
@@ -18,6 +21,7 @@ def deploy_sett(badger, sett, token, controller, name, symbol, deployer):
     """
     proxyAdmin = badger.devProxyAdmin
     governance = deployer
+    keeper = deployer
 
     return deploy_proxy(
         "Sett",
@@ -25,7 +29,7 @@ def deploy_sett(badger, sett, token, controller, name, symbol, deployer):
         sett.logic.Sett.address,
         proxyAdmin.address,
         sett.logic.Sett.initialize.encode_input(
-            token, controller, governance, name, symbol
+            token, controller, governance, keeper, name, symbol
         ),
         deployer,
     )
@@ -33,7 +37,9 @@ def deploy_sett(badger, sett, token, controller, name, symbol, deployer):
 
 def deploy_strategy(badger, sett, strategyName, controller, params, deployer):
     governance = deployer
-    strategist = badger.devMultisig
+    strategist = deployer
+    keeper = deployer
+    guardian = deployer
     proxyAdmin = badger.devProxyAdmin
 
     if strategyName == "StrategyCurveGauge":
@@ -46,6 +52,8 @@ def deploy_strategy(badger, sett, strategyName, controller, params, deployer):
                 governance,
                 strategist,
                 controller,
+                keeper,
+                guardian,
                 [
                     params.want,
                     params.gauge,
@@ -63,6 +71,7 @@ def deploy_strategy(badger, sett, strategyName, controller, params, deployer):
             deployer,
         )
     if strategyName == "StrategyPickleMetaFarm":
+        print(params)
         return deploy_proxy(
             "StrategyPickleMetaFarm",
             StrategyPickleMetaFarm.abi,
@@ -72,8 +81,9 @@ def deploy_strategy(badger, sett, strategyName, controller, params, deployer):
                 governance,
                 strategist,
                 controller,
-                params.want,
-                params.pickleJar,
+                keeper,
+                guardian,
+                [params.want, params.pickleJar, curve.pools.renCrv.swap, tokens.wbtc],
                 params.pid,
                 [
                     params.performanceFeeGovernance,
@@ -93,7 +103,15 @@ def deploy_strategy(badger, sett, strategyName, controller, params, deployer):
                 governance,
                 strategist,
                 controller,
-                [params.want],
+                keeper,
+                guardian,
+                [
+                    params.want,
+                    params.harvestVault,
+                    params.vaultFarm,
+                    params.metaFarm,
+                    params.rewardsEscrow,
+                ],
                 [
                     params.performanceFeeGovernance,
                     params.performanceFeeStrategist,
@@ -108,7 +126,19 @@ def deploy_strategy(badger, sett, strategyName, controller, params, deployer):
             StrategyBadgerLpMetaFarm.abi,
             sett.logic.StrategyBadgerLpMetaFarm.address,
             proxyAdmin.address,
-            sett.logic.StrategyBadgerLpMetaFarm.initialize.encode_input(),
+            sett.logic.StrategyBadgerLpMetaFarm.initialize.encode_input(
+                governance,
+                strategist,
+                controller,
+                keeper,
+                guardian,
+                [params.want, params.geyser, badger.token],
+                [
+                    params.performanceFeeGovernance,
+                    params.performanceFeeStrategist,
+                    params.withdrawalFee,
+                ],
+            ),
             deployer,
         )
     if strategyName == "StrategyBadgerRewards":
@@ -121,7 +151,9 @@ def deploy_strategy(badger, sett, strategyName, controller, params, deployer):
                 governance,
                 strategist,
                 controller,
-                [params.want, params.geyser],
+                keeper,
+                guardian,
+                [badger.token, params.geyser],
                 [
                     params.performanceFeeGovernance,
                     params.performanceFeeStrategist,
@@ -133,8 +165,10 @@ def deploy_strategy(badger, sett, strategyName, controller, params, deployer):
 
 
 def deploy_controller(badger, sett, deployer):
+    # TODO: Change to prod config
     governance = deployer
     strategist = deployer
+    keeper = deployer
     rewards = badger.dao.agent
     proxyAdmin = badger.devProxyAdmin
 
@@ -143,7 +177,9 @@ def deploy_controller(badger, sett, deployer):
         Controller.abi,
         sett.logic.Controller.address,
         proxyAdmin.address,
-        sett.logic.Controller.initialize.encode_input(governance, strategist, rewards),
+        sett.logic.Controller.initialize.encode_input(
+            governance, strategist, keeper, rewards
+        ),
         deployer,
     )
 
@@ -195,7 +231,7 @@ def deploy_sett_system(badger, deployer):
         sett,
         sett_config.native.sbtcCrv.params.want,
         sett.native.controller,
-        "Badger Sett renCrv",
+        "Badger Sett sbtcCrv",
         "bSbtcCrv",
         deployer,
     )
@@ -225,7 +261,7 @@ def deploy_sett_system(badger, deployer):
         sett,
         sett_config.pickle.renCrv.params.want,
         sett.pickle.controller,
-        "Badger SuperSett Pickle renCrv",
+        "Badger SuperSett renCrv (Pickle)",
         "bSuperRenCrv (Pickle)",
         deployer,
     )
@@ -234,8 +270,8 @@ def deploy_sett_system(badger, deployer):
         badger,
         sett,
         sett_config.harvest.renCrv.params.want,
-        sett.pickle.controller,
-        "Badger SuperSett Harvest renCrv",
+        sett.harvest.controller,
+        "Badger SuperSett renCrv (Harvest)",
         "bSuperRenCrv (Harvest)",
         deployer,
     )
@@ -259,12 +295,7 @@ def deploy_sett_system(badger, deployer):
     params.want = badger.token
     params.geyser = sett.rewards.badger
     sett.native.strategies.badger = deploy_strategy(
-        badger,
-        sett,
-        "StrategyBadgerRewards",
-        sett.native.controller,
-        params,
-        deployer,
+        badger, sett, "StrategyBadgerRewards", sett.native.controller, params, deployer,
     )
 
     sett.native.strategies.sbtcCrv = deploy_strategy(
@@ -294,6 +325,7 @@ def deploy_sett_system(badger, deployer):
         deployer,
     )
 
+    params = sett_config.pickle.renCrv.params
     sett.pickle.strategies.renCrv = deploy_strategy(
         badger,
         sett,
@@ -303,6 +335,8 @@ def deploy_sett_system(badger, deployer):
         deployer,
     )
 
+    params = sett_config.harvest.renCrv.params
+    params.rewardsEscrow = badger.rewardsEscrow
     sett.harvest.strategies.renCrv = deploy_strategy(
         badger,
         sett,
@@ -398,4 +432,15 @@ def deploy_sett_system(badger, deployer):
         {"from": deployer},
     )
 
+    # Approve Setts on specific
+    sett.rewards.badger.grantRole(
+        APPROVED_STAKER_ROLE, sett.native.strategies.badger, {"from": deployer}
+    )
+
     return sett
+
+
+def deploy_lp_rewards(token):
+    """
+    Deploy LP rewards Strategy for given Badger<>X LP Token
+    """

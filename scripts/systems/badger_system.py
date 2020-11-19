@@ -13,9 +13,6 @@ def deploy_geyser(badger, stakingToken):
     pool_input = DotMap(
         stakingToken=stakingToken.address,
         initialDistributionToken=badger.token.address,
-        initialSharesPerToken=badger_config.geyserParams.initialSharesPerToken,
-        founderRewardAddress=badger.devMultisig.address,
-        founderRewardPercentage=badger_config.geyserParams.founderRewardPercentage,
     )
 
     return deploy_proxy(
@@ -26,10 +23,9 @@ def deploy_geyser(badger, stakingToken):
         badger.logic.BadgerGeyser.initialize.encode_input(
             pool_input["stakingToken"],
             pool_input["initialDistributionToken"],
-            pool_input["initialSharesPerToken"],
             badger_config.geyserParams.badgerDistributionStart,
-            pool_input["founderRewardAddress"],
-            pool_input["founderRewardPercentage"],
+            badger.devMultisig.address,
+            badger.rewardsEscrow.address,
         ),
         badger.deployer,
     )
@@ -119,7 +115,12 @@ def deploy_badger(systems, deployer):
     Deploy fresh badger system
     """
     badger = BadgerSystem(badger_config, systems)
+
+    # TODO: Replace with prod values
     badger.deployer = deployer
+    badger.keeper = deployer
+    badger.guardian = deployer
+
     badger.devProxyAdmin = deploy_proxy_admin()
     badger.daoProxyAdmin = deploy_proxy_admin()
     badger.proxyAdmin = badger.devProxyAdmin
@@ -144,7 +145,7 @@ def deploy_badger(systems, deployer):
     badger.logic = DotMap(
         SmartVesting=SmartVesting.deploy({"from": deployer}),
         SmartTimelock=SmartTimelock.deploy({"from": deployer}),
-        BadgerGeyserEscrow=BadgerGeyserEscrow.deploy({"from": deployer}),
+        RewardsEscrow=RewardsEscrow.deploy({"from": deployer}),
         BadgerGeyser=BadgerGeyser.deploy({"from": deployer}),
         BadgerTree=BadgerTree.deploy({"from": deployer}),
         BadgerHunt=BadgerHunt.deploy({"from": deployer}),
@@ -154,6 +155,15 @@ def deploy_badger(systems, deployer):
     # Deploy Rewards
     guardian = deployer
     updater = deployer
+
+    badger.rewardsEscrow = deploy_proxy(
+        "RewardsEscrow",
+        RewardsEscrow.abi,
+        badger.logic.RewardsEscrow.address,
+        badger.devProxyAdmin.address,
+        badger.logic.RewardsEscrow.initialize.encode_input(badger.devMultisig),
+        deployer,
+    )
 
     badger.badgerTree = deploy_proxy(
         "BadgerTree",
@@ -177,7 +187,7 @@ def deploy_badger(systems, deployer):
         badger.logic.SimpleTimelock.address,
         AddressZero,
         badger.logic.SimpleTimelock.initialize.encode_input(
-            badger.token, badger.dao.agent, badger_config.tokenLockParams.releaseTime
+            badger.token, badger.dao.agent, badger_config.tokenLockParams.lockDuration
         ),
         badger.deployer,
     )
@@ -224,19 +234,43 @@ def deploy_badger(systems, deployer):
             daysToSeconds(1),
             2000,
             badger_config.huntParams.startTime,
+            daysToSeconds(1),
+            badger.rewardsEscrow,
         ),
         badger.deployer,
     )
 
     print_to_file(badger, "local.json")
 
-    # print("Transfer Token")
+    return badger
+
+
+def config_badger(badger):
+    """
+    Set initial conditions on immediate post-deploy Badger
+    """
+    deployer = badger.deployer
+
     # Distribute initial Badger supply
-    # badger.token.transfer(
-    #     badger.daoBadgerTimelock,
-    #     badger_config.tokenLockParams.badgerLockAmount,
-    #     {"from": deployer},
-    # )
+
+    # DAO Timelock
+    badger.token.transfer(
+        badger.daoBadgerTimelock,
+        badger_config.tokenLockParams.badgerLockAmount,
+        {"from": deployer},
+    )
+
+    # Rewards Escrow
+    badger.token.transfer(
+        badger.rewardsEscrow,
+        badger_config.rewardsEscrowBadgerAmount,
+        {"from": deployer},
+    )
+
+    # Badger Hunt
+    badger.token.transfer(
+        badger.badgerHunt, badger_config.huntParams.badgerAmount, {"from": deployer},
+    )
 
 
 def connect_badger(registry):
@@ -250,4 +284,3 @@ class BadgerSystem:
     def __init__(self, config, systems):
         self.config = config
         self.systems = systems
-

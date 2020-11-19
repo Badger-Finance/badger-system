@@ -1,6 +1,7 @@
 import pytest
-from brownie import * 
+from brownie import *
 from dotmap import DotMap
+
 
 def get_token_balances(accounts, tokens):
     balances = DotMap()

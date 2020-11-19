@@ -1,10 +1,21 @@
 
 # use Ganache's forked mainnet mode as the default network
 networks:
-  default: forknet
+  default: mainnet-fork
+  mainnet-fork:
+    explorer: https://api.etherscan.io/api
+    cmd_settings:
+      db: null
+      unlock:
+        - 0x193991827e291599a262e7fa7d212ff1ae31d110
+        - 0x97ca371d59bbfefdb391aa6dcbdf4455fec361f2
+        - 0x3d24d77bec08549d7ea86c4e9937204c11e153f1
+  mainnet:
+    gas_price: 0
+  
 
 project_structure:
-  contracts: contracts-upgradeable
+  contracts: contracts
   # contracts: contracts
 
 # automatically fetch contract sources from Etherscan

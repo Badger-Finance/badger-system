@@ -10,14 +10,15 @@ import "deps/@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.s
  * Used in cases when a staking asset address is not known at the time of staking geyser creation.
  * Owner must be trusted to set the correct staking asset and distribute the tokens to the geyser.
  */
-contract BadgerGeyserEscrow is OwnableUpgradeable {
-    mapping(address => bool) isApproved;
+contract RewardsEscrow is OwnableUpgradeable {
+    mapping(address => bool) public isApproved;
 
     event Approve(address recipient);
     event RevokeApproval(address recipient);
 
-    function initialize() public initializer {
+    function initialize(address owner_) public initializer {
         __Ownable_init();
+        transferOwnership(owner_);
     }
 
     function approveRecipient(address recipient) external onlyOwner {

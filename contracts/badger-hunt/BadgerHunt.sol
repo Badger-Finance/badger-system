@@ -7,51 +7,73 @@ import "deps/@openzeppelin/contracts-upgradeable/cryptography/MerkleProofUpgrade
 import "interfaces/badger/IMerkleDistributor.sol";
 import "./MerkleDistributor.sol";
 
-/*
-    Gamified Merkle Distributor
-
-    * Specified recipient of an amount can claim their tokens at any point
-    * After a grace period (specified in constructor), any account can claim the tokens of 
-*/
 contract BadgerHunt is MerkleDistributor {
     using SafeMathUpgradeable for uint256;
     uint256 public constant MAX_BPS = 10000;
 
     uint256 public claimsStart;
-    uint256 public numClaimEpochs;
+    uint256 public gracePeriod;
+
     uint256 public epochDuration;
     uint256 public rewardReductionPerEpoch;
-
-    uint256 public currentClaimEpoch;
     uint256 public currentRewardRate;
 
-    uint256 public gracePeriodEnd;
+    address public rewardsEscrow;
+
+    event Hunt(uint256 index, address indexed account, uint256 amount, uint256 userClaim, uint256 rewardsEscrowClaim);
 
     function initialize(
         address token_,
         bytes32 merkleRoot_,
         uint256 epochDuration_,
         uint256 rewardReductionPerEpoch_,
-        uint256 claimsStart_
+        uint256 claimsStart_,
+        uint256 gracePeriod_,
+        address rewardsEscrow_
     ) public initializer {
         __MerkleDistributor_init(token_, merkleRoot_);
 
         epochDuration = epochDuration_;
         rewardReductionPerEpoch = rewardReductionPerEpoch_;
         claimsStart = claimsStart_;
+        gracePeriod = gracePeriod_;
+
+        rewardsEscrow = rewardsEscrow_;
 
         currentRewardRate = 10000;
     }
 
-    /// @dev Update the current epoch. If after the final epoch end, no need to update
-    function _updateEpoch() internal {
-        // Ensure we're not in the final epoch
-        if (currentClaimEpoch.add(1) < numClaimEpochs) {}
+    /// ===== View Functions =====
+
+    function getNextEpochStart() public view returns (uint256) {
+        uint256 gracePeriodEnd = claimsStart.add(gracePeriod);
+        uint256 epoch = getCurrentEpoch();
+
+        if (epoch == 0) {
+            return claimsStart.add(gracePeriod);
+        } else {
+            return claimsStart.add(gracePeriod).add(epochDuration.mul(epoch));
+        }
     }
 
-    function _getNextEpochStartTime() internal view returns (uint256) {
-        return 0;
+    function getCurrentEpoch() public view returns (uint256) {
+        uint256 gracePeriodEnd = claimsStart.add(gracePeriod);
+
+        if (now < gracePeriodEnd) {
+            return 0;
+        }
+        uint256 secondsPastGracePeriod = now.sub(gracePeriodEnd);
+        return (secondsPastGracePeriod / epochDuration).add(1);
     }
+
+    function getCurrentRewardsRate() public view returns (uint256) {
+        uint256 epoch = getCurrentEpoch();
+        if (epoch == 0) return MAX_BPS;
+        if (epoch > 4) return 0;
+        else return MAX_BPS.sub(epoch.mul(rewardReductionPerEpoch));
+    }
+
+    /// ===== Public Actions =====
 
     function claim(
         uint256 index,
@@ -68,7 +90,15 @@ contract BadgerHunt is MerkleDistributor {
         // Mark it claimed and send the token.
         _setClaimed(index);
 
-        require(IERC20Upgradeable(token).transfer(account, amount), "BadgerDistributor: Transfer failed.");
-        emit Claimed(index, account, amount);
+        uint256 claimable = amount.mul(getCurrentRewardsRate()).div(MAX_BPS);
+
+        require(IERC20Upgradeable(token).transfer(account, claimable), "Transfer to user failed.");
+
+        // Transfer any remainder to rewards escrow
+        if (claimable != amount) {
+            require(IERC20Upgradeable(token).transfer(rewardsEscrow, claimable), "Transfer to rewardsEscrow failed.");
+        }
+
+        emit Hunt(index, account, amount, claimable, amount.sub(claimable));
     }
 }

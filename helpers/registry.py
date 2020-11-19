@@ -89,8 +89,11 @@ token_registry = DotMap(
     weth="0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
     wbtc="0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599",
     crv="0xD533a949740bb3306d119CC777fa900bA034cd52",
-    tbtc="0x8daebade922df735c38c80c7ebd708af50815faa"
+    tbtc="0x8daebade922df735c38c80c7ebd708af50815faa",
 )
+
+
+onesplit_registry = DotMap(contract="0x50FDA034C0Ce7a8f7EFDAebDA7Aa7cA21CC1267e")
 
 uniswap_registry = DotMap(
     routerV2="0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D",
@@ -104,7 +107,15 @@ uniswap_registry = DotMap(
     ),
 )
 
-harvest_registry = DotMap()
+harvest_registry = DotMap(
+    farmToken="0xa0246c9032bC3A600820415aE600c6388619A14D",
+    depositHelper="0xf8ce90c2710713552fb564869694b2505bfc0846",
+    vaults=DotMap(renCrv="0x192E9d29D43db385063799BC239E772c3b6888F3",),
+    farms=DotMap(
+        fRenCrv="0x5365A2C47b90EE8C9317faC20edC3ce7037384FB",
+        farm="0xae024F29C26D6f71Ec71658B1980189956B0546D",
+    ),
+)
 
 pickle_registry = DotMap(
     pickleToken="0x429881672B9AE42b8EbA0E26cD9C73711b891Ca5",
@@ -137,13 +148,32 @@ curve_registry = DotMap(
     artifacts=DotMap(),
 )
 
+
+whale_registry = DotMap(
+    sbtcCrv=DotMap(
+        whale="0x193991827e291599a262e7fa7d212ff1ae31d110",
+        token=curve_registry.pools.sbtcCrv.token,
+    ),
+    renCrv=DotMap(
+        whale="0x97ca371d59bbfefdb391aa6dcbdf4455fec361f2",
+        token=curve_registry.pools.renCrv.token,
+    ),
+    tbtcCrv=DotMap(
+        whale="0x3d24d77bec08549d7ea86c4e9937204c11e153f1",
+        token=curve_registry.pools.tbtcCrv.token,
+    )
+)
+
+
 registry = DotMap(
     curve=curve_registry,
     uniswap=uniswap_registry,
     open_zeppelin=open_zeppelin_registry,
     aragon=aragon_registry,
     gnosis_safe=gnosis_safe_registry,
+    onesplit=gnosis_safe_registry,
     pickle=pickle_registry,
     harvest=harvest_registry,
-    tokens=token_registry
+    tokens=token_registry,
+    whales=whale_registry,
 )
