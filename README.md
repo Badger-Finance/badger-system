@@ -18,7 +18,7 @@ If you're not familiar with brownie, see the [quickstart guide](https://eth-brow
 
 ### Install
 ```bash
-git clone https://github.com/badger-finance/badger-system
+git clone https://github.com/Badger-Finance/badger-system
 cd badger-system
 yarn install --lock-file
 ```
@@ -32,13 +32,13 @@ brownie compile
 ### Test
 
 ```bash
-brownie test -n auto
+brownie test
 ```
 
 ### Add coverage and gas profiling
 
 ```bash
-brownie test --coverage --gas -n auto
+brownie test --coverage --gas
 ```
 
 ### Documentation
