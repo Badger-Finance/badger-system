@@ -189,8 +189,8 @@ contract StrategyPickleMetaFarm is BaseStrategy {
             emit NotifyWithdrawMismatch(_amount, _after.sub(_before), _stakedAfter);
         }
 
-        // Return the actual amount withdrawn
-        return _amount;
+        // Return the actual amount withdrawn if less than requested
+        return MathUpgradeable.min(_after.sub(_before), _amount);
     }
 
     /// @notice Harvest from strategy mechanics, realizing increase in underlying position
