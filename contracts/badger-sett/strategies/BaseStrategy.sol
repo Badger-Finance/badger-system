@@ -63,7 +63,10 @@ abstract contract BaseStrategy is PausableUpgradeable, SettAccessControl {
     }
 
     function _onlyAuthorizedActorsOrController() internal view {
-        require(msg.sender == keeper || msg.sender == strategist || msg.sender == governance || msg.sender == controller, "_onlyAuthorizedActorsOrController");
+        require(
+            msg.sender == keeper || msg.sender == strategist || msg.sender == governance || msg.sender == controller,
+            "_onlyAuthorizedActorsOrController"
+        );
     }
 
     function _onlyAuthorizedPausers() internal view {
@@ -82,7 +85,7 @@ abstract contract BaseStrategy is PausableUpgradeable, SettAccessControl {
         return balanceOfWant().add(balanceOfPool());
     }
 
-    function isTendable() public view virtual returns (bool) {
+    function isTendable() public virtual view returns (bool) {
         return false;
     }
 
@@ -270,9 +273,10 @@ abstract contract BaseStrategy is PausableUpgradeable, SettAccessControl {
     function harvest() external virtual;
 
     /// @dev User-friendly name for this strategy for purposes of convenient reading
-    function getName() external pure virtual returns (string memory);
+    function getName() external virtual pure returns (string memory);
 
     /// @dev Balance of want currently held in strategy positions
-    function balanceOfPool() public view virtual returns (uint256);
+    function balanceOfPool() public virtual view returns (uint256);
+
     uint256[50] private __gap;
 }

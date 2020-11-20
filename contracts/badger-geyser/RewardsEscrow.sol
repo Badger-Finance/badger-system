@@ -4,6 +4,7 @@ pragma solidity ^0.6.0;
 
 import "deps/@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "deps/@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
+import "interfaces/badger/IBadgerGeyser.sol";
 
 /**
  * @title A holder of tokens to be distributed via a Geyser.
@@ -21,6 +22,13 @@ contract RewardsEscrow is OwnableUpgradeable {
         transferOwnership(owner_);
     }
 
+    /// ===== Modifiers =====
+    function _onlyApprovedRecipients(address recipient) internal view {
+        require(isApproved[recipient] == true, "Recipient not approved");
+    }
+
+    /// ===== Permissioned Functions: Owner =====
+
     function approveRecipient(address recipient) external onlyOwner {
         isApproved[recipient] = true;
         emit Approve(recipient);
@@ -31,13 +39,24 @@ contract RewardsEscrow is OwnableUpgradeable {
         emit RevokeApproval(recipient);
     }
 
-    /// @notice Add tokens into the distribution pool
+    /// @notice Send tokens to a distribution pool
     function transfer(
         address token,
         address recipient,
         uint256 amount
     ) external onlyOwner {
-        require(isApproved[recipient] == true, "Recipient not approved");
+        _onlyApprovedRecipients(recipient);
         IERC20Upgradeable(token).transfer(recipient, amount);
+    }
+
+    function signalTokenLock(
+        address geyser,
+        address token,
+        uint256 amount,
+        uint256 durationSec,
+        uint256 startTime
+    ) external onlyOwner {
+        _onlyApprovedRecipients(geyser);
+        IBadgerGeyser(geyser).signalTokenLock(token, amount, durationSec, startTime);
     }
 }

@@ -25,6 +25,7 @@ contract BadgerTree is Initializable, AccessControlUpgradeable, ICumulativeMulti
     bytes32 public merkleRoot;
     bytes32 public merkleContentHash;
 
+    uint256 public pendingCycle;
     bytes32 public pendingMerkleRoot;
     bytes32 public pendingMerkleContentHash;
 
@@ -64,6 +65,10 @@ contract BadgerTree is Initializable, AccessControlUpgradeable, ICumulativeMulti
         return MerkleData(merkleRoot, merkleContentHash);
     }
 
+    function hasPendingRoot() external view returns (bool) {
+        return pendingCycle == currentCycle.add(1);
+    }
+
     /// @notice Claim accumulated rewards for a set of tokens at a given cycle number
     function claim(
         address[] calldata tokens,
@@ -90,34 +95,37 @@ contract BadgerTree is Initializable, AccessControlUpgradeable, ICumulativeMulti
             require(claimed[msg.sender][tokens[i]] == cumulativeAmounts[i], "Claimed amount mismatch");
             require(IERC20Upgradeable(tokens[i]).transfer(msg.sender, cumulativeAmounts[i]), "Transfer failed");
 
-            emit Claimed(msg.sender, tokens[i], cumulativeAmounts[i], cycle, now);
+            emit Claimed(msg.sender, tokens[i], cumulativeAmounts[i], cycle, now, block.number);
         }
     }
 
     // ===== Root Updater Restricted =====
 
     /// @notice Propose a new root and content hash, which will be stored as pending until approved
-    function publishRoot(bytes32 root, bytes32 contentHash) external whenNotPaused {
+    function publishRoot(bytes32 root, bytes32 contentHash, uint256 cycle) external whenNotPaused {
         _onlyRootUpdater();
+        require(cycle == currentCycle.add(1), "Incorrect cycle");
 
+        pendingCycle = cycle;
         pendingMerkleRoot = root;
         pendingMerkleContentHash = contentHash;
 
-        emit RootProposed(currentCycle.add(1), pendingMerkleRoot, pendingMerkleContentHash, now);
+        emit RootProposed(cycle, pendingMerkleRoot, pendingMerkleContentHash, now, block.number);
     }
 
     /// ===== Guardian Restricted =====
 
     /// @notice Approve the current pending root and content hash
-    function approveRoot(bytes32 root, bytes32 contentHash) external {
+    function approveRoot(bytes32 root, bytes32 contentHash, uint256 cycle) external {
         require(root == pendingMerkleRoot, "Incorrect root");
         require(contentHash == pendingMerkleContentHash, "Incorrect content hash");
+        require(cycle == pendingCycle, "Incorrect cycle");
 
         currentCycle = currentCycle.add(1);
         merkleRoot = root;
         merkleContentHash = contentHash;
 
-        emit RootUpdated(currentCycle, root, contentHash, now);
+        emit RootUpdated(currentCycle, root, contentHash, now, block.number);
     }
 
     /// @notice Pause publishing of new roots

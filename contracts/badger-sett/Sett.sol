@@ -201,7 +201,7 @@ contract Sett is ERC20Upgradeable, SettAccessControlDefended {
 
     /// ===== ERC20 Overrides =====
 
-    /// @dev Add blockLock to transfers, users cannot transfer tokens in the same block as a deposit or witthdrawal.
+    /// @dev Add blockLock to transfers, users cannot transfer tokens in the same block as a deposit or withdrawal.
     function transfer(address recipient, uint256 amount) public virtual override returns (bool) {
         _blockLocked();
         super.transfer(recipient, amount);

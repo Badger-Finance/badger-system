@@ -104,7 +104,10 @@ contract StrategyBadgerRewards is BaseStrategy {
         _onlyAuthorizedActors();
 
         IStakingRewards(geyser).getReward();
+        
         uint256 _want = IERC20Upgradeable(want).balanceOf(address(this));
-        _deposit(_want);
+        if (_want > 0) {
+            _deposit(_want);
+        }
     }
 }

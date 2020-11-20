@@ -116,6 +116,8 @@ contract StrategyBadgerLpMetaFarm is BaseStrategy {
 
         uint256 _afterLp = IERC20Upgradeable(want).balanceOf(address(this));
 
+        _deposit(_afterLp);
+
         emit Harvest(_beforeBadger, _harvested, _beforeLp, _afterLp.sub(_beforeLp));
     }
 }

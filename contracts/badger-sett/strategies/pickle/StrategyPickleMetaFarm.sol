@@ -233,6 +233,11 @@ contract StrategyPickleMetaFarm is BaseStrategy {
         uint256 _lpComponent = IERC20Upgradeable(lpComponent).balanceOf(address(this));
         ICurveFi(curveSwap).add_liquidity([0, _lpComponent, 0], 0);
 
+        uint256 _want = IERC20Upgradeable(want).balanceOf(address(this));
+        if (_want > 0) {
+            _deposit(_want);
+        }
+
         // TODO: Add LPComponent to Event
         emit PickleHarvest(_pickle, _remaining, _governanceFee, _strategistFee, now, block.number);
     }

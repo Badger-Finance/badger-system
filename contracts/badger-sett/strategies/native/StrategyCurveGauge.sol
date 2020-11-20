@@ -137,7 +137,7 @@ contract StrategyCurveGauge is BaseStrategy {
             IERC20Upgradeable(want).safeTransfer(strategist, _strategistFee);
             IERC20Upgradeable(want).safeTransfer(IController(controller).rewards(), _governanceFee);
 
-            deposit();
+            _deposit(_want);
         }
     }
 }
