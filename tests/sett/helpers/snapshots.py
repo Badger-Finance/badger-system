@@ -15,6 +15,8 @@ from brownie.utils import color
 # seed random number generator
 seed(1)
 
+def is_curve_gauge_variant(name):
+    return name == "StrategyCurveGaugeRenBtcCrv" or name == "StrategyCurveGaugeSbtcCrv" or name == "StrategyCurveGaugeTbtcCrv"
 
 def sett_snapshot(sett, strategy, account):
     want = interface.IERC20(strategy.want())
@@ -56,25 +58,27 @@ def add_strategy_components(snapshot):
         pickleJar = interface.IPickleJar(strategy.pickleJar())
         pickleChef = interface.IPickleChef(strategy.pickleChef())
         stakingRewards = interface.IStakingRewards(strategy.pickleStaking())
-        
+
         result.strategy.pickleBalance = pickle.balanceOf(strategy)
         result.strategy.pickleJar.stakedShares = pickleJar.balanceOf(strategy)
         result.strategy.pickleChef.stakedShares = pickleChef.userInfo(
             strategy.pid(), strategy
         )[0]
-        result.strategy.stakingRewards.stakedPickle = stakingRewards.balanceOf(
-            strategy
-        )
+        result.strategy.stakingRewards.stakedPickle = stakingRewards.balanceOf(strategy)
         result.strategy.stakingRewards.earnedWeth = stakingRewards.earned(strategy)
 
     if name == "StrategyHarvestMetaFarm":
         farm = interface.IERC20(strategy.farm())
         harvestVault = interface.IHarvestVault(strategy.harvestVault())
-        harvestVaultToken = interface.IERC20(strategy.harvestVault())
         vaultFarm = interface.IRewardPool(strategy.harvestVault())
         metaFarm = interface.IRewardPool(strategy.harvestVault())
+        badgerTree = interface.IERC20(strategy.badgerTree())
 
-        result.vaultFarm.contract = interface.IRewardPool(strategy.harvestVault())
+        result.contracts.harvestVault = harvestVault
+        result.contracts.farm = farm
+        result.contracts.vaultFarm = vaultFarm
+        result.contracts.metaFarm = metaFarm
+        result.contracts.badgerTree = badgerTree
 
         result.strategy.farmBalance = farm.balanceOf(strategy)
 
@@ -84,6 +88,7 @@ def add_strategy_components(snapshot):
             harvestVault.getPricePerFullShare()
         )
         result.strategy.metaFarm.stakedFarm = metaFarm.balanceOf(strategy)
+        result.badgerTree.farm = farm.balanceOf(badgerTree)
     return result
 
 
@@ -226,6 +231,7 @@ def confirm_harvest_harvest(before, after):
     assert after.strategy.farmBalance == 0
     # assert after.strategy.vaultFarm.contract.earned() == 0
     assert after.strategy.metaFarm.stakedFarm == 0
+    assert after.badgerTree.farm > before.badgerTree.farm
 
 
 def confirm_harvest_pickle(before, after):
@@ -238,10 +244,7 @@ def confirm_harvest_pickle(before, after):
     """
     assert after.strategy.balanceOf > before.strategy.balanceOf
     assert after.strategy.pickleBalance == 0
-    assert (
-        after.strategy.stakingRewards.stakedPickle
-        > before.strategy.stakingRewards.stakedPickle
-    )
+    assert after.strategy.stakingRewards.stakedPickle == 0
     if before.sett.pricePerFullShare:
         assert after.sett.pricePerFullShare > before.sett.pricePerFullShare
 
@@ -297,10 +300,55 @@ def confirm_harvest(before, after, user):
         confirm_harvest_harvest(before, after)
     if name == "StrategyPickleMetaFarm":
         confirm_harvest_pickle(before, after)
-    if name == "StrategyCurveGauge":
+    if is_curve_gauge_variant(name):
         confirm_harvest_curve_gauge(before, after)
     if name == "StrategyBadgerRewards":
         confirm_harvest_badger_rewards(before, after)
     if name == "StrategyBadgerLpMetaFarm":
         confirm_harvest_badger_lp(before, after)
+
+def confirm_migrate_harvest(before, after):
+    """
+    - Send all FARM to the badgerTree
+    - Leave no FARM in Strategy or staking contracts
+    """
+    assert False
+def confirm_migrate_pickle(before, after):
+    """
+    - Send all Pickle to rewards
+    - Send all Weth to rewards
+    - Leave no Pickle in Strategy or staking contracts
+    - Leave no Weth in Strategy or staking contracts
+    """
+    assert False
+def confirm_migrate_curve_gauge(before, after):
+    assert False
+def confirm_migrate_badger_rewards(before, after):
+    """
+    Leave no Badger in StakingRewards or unharvested
+    """
+    assert False
+def confirm_migrate_badger_lp(before, after):
+    assert False
+
+def confirm_migrate(before, after):
+    name = before.strategy.name
+    """
+    Migrate Should;
+    - Increase the want asset in the Sett
+    - Leave no want in the Strategy
+    """
+
+    if name == "StrategyHarvestMetaFarm":
+        confirm_harvest_harvest(before, after)
+    if name == "StrategyPickleMetaFarm":
+        confirm_harvest_pickle(before, after)
+    if is_curve_gauge_variant(name):
+        confirm_harvest_curve_gauge(before, after)
+    if name == "StrategyBadgerRewards":
+        confirm_harvest_badger_rewards(before, after)
+    if name == "StrategyBadgerLpMetaFarm":
+        confirm_harvest_badger_lp(before, after)
+
+    
 

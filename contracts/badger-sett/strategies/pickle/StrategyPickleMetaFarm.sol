@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 
 pragma solidity ^0.6.11;
+pragma experimental ABIEncoderV2;
 
 import "deps/@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import "deps/@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
@@ -52,22 +53,43 @@ contract StrategyPickleMetaFarm is BaseStrategy {
     uint256 public lastHarvested;
 
     event NotifyWithdrawMismatch(uint256 expected, uint256 actual, uint256 remainingStaked);
-    event Tend(uint256 tended, uint256 wethHarvested);
-    event WethConverted(uint256 amount);
+    event Tend(uint256 pickleTended, uint256 wethConverted);
 
     event PickleHarvest(
-        uint256 preExistingPickle,
-        uint256 fromStakingRewards,
-        uint256 totalHarvested,
+        uint256 pickleFromStakingRewards,
+        uint256 pickleFromHarvest,
+        uint256 totalPickleToConvert,
+        uint256 pickleRecycled,
         uint256 ethConverted,
         uint256 wethHarvested,
-        uint256 wbtcDeposited,
-        uint256 want,
+        uint256 lpComponentDeposited,
+        uint256 lpDeposited,
         uint256 governancePerformanceFee,
         uint256 strategistPerformanceFee,
         uint256 timestamp,
         uint256 blockNumber
     );
+
+    struct HarvestData {
+        uint256 preExistingWant;
+        uint256 preExistingPickle;
+        uint256 pickleFromStakingRewards;
+        uint256 pickleFromHarvest;
+        uint256 totalPickleToConvert;
+        uint256 pickleRecycled;
+        uint256 ethConverted;
+        uint256 wethHarvested;
+        uint256 lpComponentDeposited;
+        uint256 lpDeposited;
+        uint256 lpPositionIncrease;
+        uint256 governancePerformanceFee;
+        uint256 strategistPerformanceFee;
+    }
+
+    struct TendData {
+        uint256 pickleTended;
+        uint256 wethConverted;
+    }
 
     function initialize(
         address _governance,
@@ -199,120 +221,141 @@ contract StrategyPickleMetaFarm is BaseStrategy {
     }
 
     /// @notice Harvest from strategy mechanics, realizing increase in underlying position
-    function harvest() external override whenNotPaused {
+    function harvest() external whenNotPaused returns (HarvestData memory) {
         _onlyAuthorizedActors();
 
-        uint256 _before = IERC20Upgradeable(want).balanceOf(address(this));
-        uint256 _beforeEth = address(this).balance;
+        HarvestData memory harvestData;
+
+        harvestData.preExistingWant = IERC20Upgradeable(want).balanceOf(address(this));
+        harvestData.preExistingPickle = IERC20Upgradeable(pickle).balanceOf(address(this));
 
         // Harvest WETH Rewards & Unstake Pickle
         IPickleStaking(pickleStaking).exit();
 
         uint256 _afterPickleStakingExit = IERC20Upgradeable(pickle).balanceOf(address(this));
+        harvestData.pickleFromStakingRewards = _afterPickleStakingExit.sub(harvestData.preExistingPickle);
 
         // Harvest WETH gains
         IPickleStaking(pickleStaking).getReward();
 
         // Harvest Pickle gains
         _harvestPickle();
-        uint256 _pickle = IERC20Upgradeable(pickle).balanceOf(address(this));
+
+        harvestData.totalPickleToConvert = IERC20Upgradeable(pickle).balanceOf(address(this));
+
+        harvestData.pickleFromHarvest = harvestData.totalPickleToConvert.sub(
+            harvestData.pickleFromStakingRewards.sub(harvestData.preExistingPickle)
+        );
 
         lastHarvested = now;
 
-        uint256 _governanceFee = 0;
-        uint256 _strategistFee = 0;
-
         // Convert any Pickle to ETH, after fees
-        if (_pickle > 0) {
-            _governanceFee = _processFee(pickle, _pickle, picklePerformanceFeeGovernance, governance);
-            _strategistFee = _processFee(pickle, _pickle, picklePerformanceFeeStrategist, strategist);
+        if (harvestData.totalPickleToConvert > 0) {
+            harvestData.governancePerformanceFee = _processFee(
+                pickle,
+                harvestData.totalPickleToConvert,
+                picklePerformanceFeeGovernance,
+                governance
+            );
+            harvestData.strategistPerformanceFee = _processFee(
+                pickle,
+                harvestData.totalPickleToConvert,
+                picklePerformanceFeeStrategist,
+                strategist
+            );
 
-            uint256 _remaining = IERC20Upgradeable(pickle).balanceOf(address(this));
+            harvestData.pickleRecycled = IERC20Upgradeable(pickle).balanceOf(address(this));
 
             address[] memory path = new address[](2);
             path[0] = pickle;
             path[1] = weth;
 
-            _swapEthOut(pickle, _remaining, path);
+            _swapEthOut(pickle, harvestData.pickleRecycled, path);
         }
 
-        uint256 _weth = IERC20Upgradeable(pickle).balanceOf(address(this));
-        if (_weth > 0) {
-            IWETH(weth).withdraw(_weth);
+        harvestData.wethHarvested = IERC20Upgradeable(pickle).balanceOf(address(this));
+        if (harvestData.wethHarvested > 0) {
+            IWETH(weth).withdraw(harvestData.wethHarvested);
         }
 
-        uint256 _eth = address(this).balance;
+        harvestData.ethConverted = address(this).balance;
 
         // Unwrap WETH to ETH, convert to WBTC in order to add to LP position
-        if (_eth > 0) {
-            _eth = address(this).balance;
-
+        if (harvestData.ethConverted > 0) {
             address[] memory path = new address[](2);
             path[0] = weth;
             path[1] = wbtc;
 
-            _swapEthIn(_eth, path);
+            _swapEthIn(harvestData.ethConverted, path);
         }
 
         // Add wBTC to increase LP position
-        uint256 _lpComponent = IERC20Upgradeable(wbtc).balanceOf(address(this));
-        if (_lpComponent > 0) {
-            _safeApproveHelper(wbtc, curveSwap, _lpComponent);
-            ICurveFi(curveSwap).add_liquidity([0, _lpComponent], 0);
+        harvestData.lpComponentDeposited = IERC20Upgradeable(wbtc).balanceOf(address(this));
+        if (harvestData.lpComponentDeposited > 0) {
+            _safeApproveHelper(wbtc, curveSwap, harvestData.lpComponentDeposited);
+            ICurveFi(curveSwap).add_liquidity([0, harvestData.lpComponentDeposited], 0);
         }
 
         // Deposit new want into position
-        uint256 _want = IERC20Upgradeable(want).balanceOf(address(this));
-        if (_want > 0) {
-            _deposit(_want);
+        harvestData.lpDeposited = IERC20Upgradeable(want).balanceOf(address(this));
+        if (harvestData.lpDeposited > 0) {
+            _deposit(harvestData.lpDeposited);
+            _postDeposit();
         }
 
+        harvestData.lpPositionIncrease = harvestData.lpDeposited.sub(harvestData.preExistingWant);
+
         emit PickleHarvest(
-            _before,
-            _afterPickleStakingExit.sub(_before),
-            _pickle,
-            _eth.sub(_beforeEth),
-            _weth,
-            _lpComponent,
-            _want,
-            _governanceFee,
-            _strategistFee,
+            harvestData.pickleFromStakingRewards,
+            harvestData.pickleFromHarvest,
+            harvestData.totalPickleToConvert,
+            harvestData.pickleRecycled,
+            harvestData.ethConverted,
+            harvestData.wethHarvested,
+            harvestData.lpComponentDeposited,
+            harvestData.lpDeposited,
+            harvestData.governancePerformanceFee,
+            harvestData.strategistPerformanceFee,
             now,
             block.number
         );
-        emit Harvest(_want.sub(_before), block.number);
+        emit Harvest(harvestData.lpPositionIncrease, block.number);
+
+        return harvestData;
     }
 
     /// @notice Compound PICKLE and WETH gained from farms into more pickle for staking rewards
     /// @notice Any excess PICKLE sitting in the Strategy will be staked as well
-    function tend() external whenNotPaused returns (uint256) {
+    function tend() external whenNotPaused returns (TendData memory) {
         _onlyAuthorizedActors();
+
+        TendData memory tendData;
 
         // Harvest WETH gains
         IPickleStaking(pickleStaking).getReward();
-        uint256 _weth = IERC20Upgradeable(pickle).balanceOf(address(this));
+        tendData.wethConverted = IERC20Upgradeable(pickle).balanceOf(address(this));
 
         // Convert WETH into Pickle
-        if (_weth > 0) {
+        if (tendData.wethConverted > 0) {
             address[] memory path = new address[](2);
             path[0] = weth;
             path[1] = pickle;
 
-            _swap(weth, _weth, path);
+            _swap(weth, tendData.wethConverted, path);
         }
 
         // Harvest Pickle from Chef
         _harvestPickle();
-        uint256 _pickle = IERC20Upgradeable(pickle).balanceOf(address(this));
+        tendData.pickleTended = IERC20Upgradeable(pickle).balanceOf(address(this));
 
         // Deposit gathered PICKLE into staking to increase WETH
-        if (_pickle > 0) {
-            _safeApproveHelper(pickle, pickleStaking, _pickle);
-            IPickleStaking(pickleStaking).stake(_pickle);
+        if (tendData.pickleTended > 0) {
+            _safeApproveHelper(pickle, pickleStaking, tendData.pickleTended);
+            IPickleStaking(pickleStaking).stake(tendData.pickleTended);
         }
 
-        emit Tend(_pickle, _weth);
-        return _pickle;
+        emit Tend(tendData.pickleTended, tendData.wethConverted);
+        return tendData;
     }
 
     /// ===== Internal Helper Functions =====

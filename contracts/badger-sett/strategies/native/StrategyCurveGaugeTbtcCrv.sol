@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 
 pragma solidity ^0.6.11;
+pragma experimental ABIEncoderV2;
 
 import "deps/@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 import "deps/@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
@@ -16,7 +17,7 @@ contract StrategyCurveGaugeTbtcCrv is StrategyCurveGaugeBase {
     /// ===== Internal Helper Functions =====
 
     /// @dev Expects lpComponent to be wBTC
-    function _add_liquidity_curve (uint256 _amount) internal override {
+    function _add_liquidity_curve(uint256 _amount) internal override {
         ICurveFi(curveSwap).add_liquidity([0, 0, _amount, 0], 0);
     }
 }

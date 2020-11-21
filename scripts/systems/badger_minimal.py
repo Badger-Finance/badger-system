@@ -16,7 +16,9 @@ def deploy_badger_minimal(deployer):
     badger.token.transfer(deployer, badger_total_supply, {'from': badger_config.dao.initialOwner})
     badger.deploy_sett_core_logic()
     badger.add_logic("RewardsEscrow", RewardsEscrow)
+    badger.add_logic("BadgerTree", BadgerTree)
     badger.deploy_rewards_escrow()
+    badger.deploy_badger_tree()
 
 
     return badger

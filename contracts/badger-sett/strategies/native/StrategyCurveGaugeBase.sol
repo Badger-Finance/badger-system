@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 
 pragma solidity ^0.6.11;
+pragma experimental ABIEncoderV2;
 
 import "deps/@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import "deps/@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
@@ -34,8 +35,25 @@ contract StrategyCurveGaugeBase is BaseStrategy {
 
     event CurveHarvest(
         uint256 crvHarvested,
-        uint256 lpComponent
+        uint256 keepCrv,
+        uint256 crvRecycled,
+        uint256 lpComponentDeposited,
+        uint256 wantProcessed,
+        uint256 wantDeposited,
+        uint256 governancePerformanceFee,
+        uint256 strategistPerformanceFee
     );
+
+    struct HarvestData {
+        uint256 crvHarvested;
+        uint256 keepCrv;
+        uint256 crvRecycled;
+        uint256 lpComponentDeposited;
+        uint256 wantProcessed;
+        uint256 wantDeposited;
+        uint256 governancePerformanceFee;
+        uint256 strategistPerformanceFee;
+    }
 
     function initialize(
         address _governance,
@@ -79,7 +97,7 @@ contract StrategyCurveGaugeBase is BaseStrategy {
     }
 
     /// ===== Internal Core Implementations =====
-    
+
     function _onlyNotProtectedTokens(address _asset) internal override {
         require(address(want) != _asset, "want");
         require(lpComponent != _asset, "lpComponent");
@@ -100,8 +118,10 @@ contract StrategyCurveGaugeBase is BaseStrategy {
     }
 
     /// @notice Harvest from strategy mechanics, realizing increase in underlying position
-    function harvest() external override whenNotPaused {
+    function harvest() external whenNotPaused returns (HarvestData memory) {
         _onlyAuthorizedActors();
+
+        HarvestData memory harvestData;
 
         uint256 _before = IERC20Upgradeable(want).balanceOf(address(this));
         uint256 _beforeCrv = IERC20Upgradeable(want).balanceOf(address(this));
@@ -109,47 +129,65 @@ contract StrategyCurveGaugeBase is BaseStrategy {
         // Harvest from Gauge
         IMintr(mintr).mint(address(gauge));
         uint256 _afterCrv = IERC20Upgradeable(crv).balanceOf(address(this));
+
+        harvestData.crvHarvested = _afterCrv.sub(_beforeCrv);
         uint256 _crv = _afterCrv;
 
         // Transfer CRV to keep to Rewards
-        uint256 _keepCRV = _crv.mul(keepCRV).div(MAX_FEE);
-        IERC20Upgradeable(crv).safeTransfer(IController(controller).rewards(), _keepCRV);
-        _crv = _crv.sub(_keepCRV);
+        harvestData.keepCrv = _crv.mul(keepCRV).div(MAX_FEE);
+        IERC20Upgradeable(crv).safeTransfer(IController(controller).rewards(), harvestData.keepCrv);
+
+        harvestData.crvRecycled = _crv.sub(harvestData.keepCrv);
 
         // Convert remaining CRV to lpComponent
-        if (_crv > 0) {
+        if (harvestData.crvRecycled > 0) {
             address[] memory path = new address[](3);
             path[0] = crv;
             path[1] = weth;
             path[2] = lpComponent;
-            _swap(crv, _crv, path);
+            _swap(crv, harvestData.crvRecycled, path);
         }
 
         // Deposit into Curve to increase LP position
-        uint256 _lpComponent = IERC20Upgradeable(lpComponent).balanceOf(address(this));
-        if (_lpComponent > 0) {
-            _safeApproveHelper(lpComponent, curveSwap, _lpComponent);
-            _add_liquidity_curve(_lpComponent);
+        harvestData.lpComponentDeposited = IERC20Upgradeable(lpComponent).balanceOf(address(this));
+        if (harvestData.lpComponentDeposited > 0) {
+            _safeApproveHelper(lpComponent, curveSwap, harvestData.lpComponentDeposited);
+            _add_liquidity_curve(harvestData.lpComponentDeposited);
         }
 
         // Take fees from want increase and deposit remaining into Gauge
-        uint256 _want = IERC20Upgradeable(want).balanceOf(address(this));
-        if (_want > 0) {
-            uint256 _strategistFee = _want.mul(performanceFeeStrategist).div(MAX_FEE);
-            uint256 _governanceFee = _want.mul(performanceFeeGovernance).div(MAX_FEE);
+        harvestData.wantProcessed = IERC20Upgradeable(want).balanceOf(address(this));
+        if (harvestData.wantProcessed > 0) {
+            uint256 _strategistFee = harvestData.wantProcessed.mul(performanceFeeStrategist).div(MAX_FEE);
+            uint256 _governanceFee = harvestData.wantProcessed.mul(performanceFeeGovernance).div(MAX_FEE);
 
-            _processFee(want, _want, performanceFeeStrategist, strategist);
-            _processFee(want, _want, performanceFeeGovernance, IController(controller).rewards());
+            harvestData.governancePerformanceFee = _processFee(
+                want,
+                harvestData.wantDeposited,
+                performanceFeeGovernance,
+                IController(controller).rewards()
+            );
 
-            uint256 _remaining = IERC20Upgradeable(want).balanceOf(address(this));
+            harvestData.strategistPerformanceFee = _processFee(want, harvestData.wantDeposited, performanceFeeStrategist, strategist);
 
-            if (_remaining > 0) {
-                _deposit(_remaining);
+            harvestData.wantDeposited = IERC20Upgradeable(want).balanceOf(address(this));
+
+            if (harvestData.wantDeposited > 0) {
+                _deposit(harvestData.wantDeposited);
             }
         }
 
-    emit CurveHarvest(_afterCrv.sub(_beforeCrv), _lpComponent);
-    emit Harvest(_want.sub(_before), block.number);
+        emit CurveHarvest(
+            harvestData.crvHarvested,
+            harvestData.keepCrv,
+            harvestData.crvRecycled,
+            harvestData.lpComponentDeposited,
+            harvestData.wantProcessed,
+            harvestData.wantDeposited,
+            harvestData.governancePerformanceFee,
+            harvestData.strategistPerformanceFee
+        );
+        emit Harvest(harvestData.wantProcessed.sub(_before), block.number);
     }
 
     /// ===== Internal Helper Functions =====

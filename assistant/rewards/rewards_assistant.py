@@ -11,6 +11,15 @@ from assistant.rewards.calc_stakes import calc_geyser_stakes
 def run(badger, startBlock, endBlock):
     main(badger, startBlock, endBlock)
 
+def calc_geyser_rewards(badger, startBlock, endBlock):
+    assert False
+
+def calc_harvest_meta_farm_rewards(badger, startBlock, endBlock):
+    assert False
+
+def calc_early_contributor_rewards(badger, startBlock, endBlock):
+    assert False
+
 def main(badger, startBlock, endBlock):
     merkle_allocations = DotMap()
 

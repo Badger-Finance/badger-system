@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 
 pragma solidity ^0.6.11;
+pragma experimental ABIEncoderV2;
 
 import "deps/@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import "deps/@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
@@ -27,7 +28,7 @@ contract StrategyHarvestMetaFarm is BaseStrategy {
     address public harvestVault;
     address public vaultFarm;
     address public metaFarm;
-    address public rewardsEscrow;
+    address public badgerTree;
 
     /// @notice FARM performance fees take a cut of outgoing farm
     uint256 public farmPerformanceFeeGovernance;
@@ -39,16 +40,27 @@ contract StrategyHarvestMetaFarm is BaseStrategy {
     address public constant depositHelper = 0xF8ce90c2710713552fb564869694B2505Bfc0846; // Harvest deposit helper
     address public constant weth = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2; // Weth Token
 
-    event Tend(uint256 tended);
+    event Tend(uint256 farmTended);
 
     event FarmHarvest(
-        uint256 harvested,
-        uint256 transferred,
+        uint256 totalFarmHarvested,
+        uint256 farmToRewards,
         uint256 governancePerformanceFee,
         uint256 strategistPerformanceFee,
         uint256 timestamp,
         uint256 blockNumber
     );
+
+    struct HarvestData {
+        uint256 totalFarmHarvested;
+        uint256 farmToRewards;
+        uint256 governancePerformanceFee;
+        uint256 strategistPerformanceFee;
+    }
+
+    struct TendData {
+        uint256 farmTended;
+    }
 
     function initialize(
         address _governance,
@@ -65,7 +77,7 @@ contract StrategyHarvestMetaFarm is BaseStrategy {
         harvestVault = _wantConfig[1];
         vaultFarm = _wantConfig[2];
         metaFarm = _wantConfig[3];
-        rewardsEscrow = _wantConfig[4];
+        badgerTree = _wantConfig[4];
 
         farmPerformanceFeeGovernance = _feeConfig[0];
         farmPerformanceFeeStrategist = _feeConfig[1];
@@ -174,44 +186,60 @@ contract StrategyHarvestMetaFarm is BaseStrategy {
     /// @notice Harvest from strategy mechanics, realizing increase in underlying position
     /// @notice For this strategy, harvest rewards are sent to rewards tree for distribution rather than converted to underlying
     /// @notice Any APY calculation must consider expected results from harvesting
-    function harvest() external override whenNotPaused {
+    function harvest() external whenNotPaused returns (HarvestData memory) {
         _onlyAuthorizedActors();
 
-        uint256 _preFarm = IERC20Upgradeable(farm).balanceOf(address(this));
+        HarvestData memory harvestData;
+
+        // Unstake all FARM from metaFarm, harvesting rewards in the process
         IRewardPool(metaFarm).exit();
+
+        // Harvest rewards from vaultFarm
         IRewardPool(vaultFarm).getReward();
-        uint256 _postFarm = IERC20Upgradeable(farm).balanceOf(address(this));
 
-        uint256 _governanceFee = _processFee(farm, _postFarm, farmPerformanceFeeGovernance, governance);
-        uint256 _strategistFee = _processFee(farm, _postFarm, farmPerformanceFeeStrategist, strategist);
+        harvestData.totalFarmHarvested = IERC20Upgradeable(farm).balanceOf(address(this));
 
-        uint256 _postFeeFarm = IERC20Upgradeable(farm).balanceOf(address(this));
-        IERC20Upgradeable(farm).transfer(rewardsEscrow, _postFeeFarm);
+        // Take strategist fees on FARM
+        harvestData.governancePerformanceFee = _processFee(farm, harvestData.totalFarmHarvested, farmPerformanceFeeGovernance, governance);
+        harvestData.strategistPerformanceFee = _processFee(farm, harvestData.totalFarmHarvested, farmPerformanceFeeStrategist, strategist);
+
+        // Distribute remaining FARM rewards to rewardsTree
+        harvestData.farmToRewards = IERC20Upgradeable(farm).balanceOf(address(this));
+        IERC20Upgradeable(farm).transfer(badgerTree, harvestData.farmToRewards);
 
         lastHarvested = now;
 
-        emit FarmHarvest(_postFarm.sub(_preFarm), _postFeeFarm, _governanceFee, _strategistFee, now, block.number);
+        emit Harvest(0, block.number);
+        emit FarmHarvest(
+            harvestData.totalFarmHarvested,
+            harvestData.farmToRewards,
+            harvestData.governancePerformanceFee,
+            harvestData.strategistPerformanceFee,
+            now,
+            block.number
+        );
     }
 
     /// @notice 'Recycle' FARM gained from staking into profit sharing pool for increased APY
     /// @notice Any excess FARM sitting in the Strategy will be staked as well
-    function tend() external {
+    function tend() external returns (TendData memory) {
         _onlyAuthorizedActors();
 
-        uint256 _preFarm = IERC20Upgradeable(farm).balanceOf(address(this));
+        TendData memory tendData;
 
         // No need to check for rewards balance: If we have no rewards available to harvest, will simply do nothing besides emit an event.
         IRewardPool(metaFarm).getReward();
         IRewardPool(vaultFarm).getReward();
 
-        uint256 _postFarm = IERC20Upgradeable(farm).balanceOf(address(this));
+        tendData.farmTended = IERC20Upgradeable(farm).balanceOf(address(this));
 
         // Deposit gathered FARM into profit sharing
-        if (_postFarm > 0) {
-            IRewardPool(metaFarm).stake(_postFarm);
+        if (tendData.farmTended > 0) {
+            IRewardPool(metaFarm).stake(tendData.farmTended);
         }
 
-        emit Tend(_postFarm.sub(_preFarm));
+        emit Tend(tendData.farmTended);
+        return tendData;
     }
 
     /// ===== Internal Helper Functions =====

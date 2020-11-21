@@ -21,11 +21,12 @@ import pytest
     "settId",
     [
         "native.badger",
-        "native.renCrv",
-        "native.sbtcCrv",
-        "native.tbtcCrv",
-        "pickle.renCrv",
-        "harvest.renCrv",
+        # "native.renCrv",
+        # "native.sbtcCrv",
+        # "native.tbtcCrv",
+        # "pickle.renCrv",
+        # "harvest.renCrv",
+        # "native.uniBadgerWbtc"
     ],
 )
 def test_deposit_withdraw_single_user_flow(settId):
@@ -90,7 +91,7 @@ def test_deposit_withdraw_single_user_flow(settId):
     confirm_withdraw(before, after, deployer)
 
 
-# @pytest.mark.skip()
+@pytest.mark.skip()
 @pytest.mark.parametrize(
     "settId",
     [
@@ -100,6 +101,7 @@ def test_deposit_withdraw_single_user_flow(settId):
         "native.tbtcCrv",
         "pickle.renCrv",
         "harvest.renCrv",
+        "native.uniBadgerWbtc",
     ],
 )
 def test_single_user_harvest_flow(settId):
@@ -151,7 +153,6 @@ def test_single_user_harvest_flow(settId):
 
     deployer = badger.deployer
     randomUser = accounts[6]
-    
 
     tendable = strategy.isTendable()
 
@@ -209,14 +210,27 @@ def test_single_user_harvest_flow(settId):
     tx = strategy.harvest({"from": deployer})
     after = sett_snapshot(sett, strategy, deployer)
     testRecorder.add_record(EventRecord("Harvest", tx.events, tx.timestamp))
-    testRecorder.print_to_file(suiteName + '.json')
+    testRecorder.print_to_file(suiteName + ".json")
 
     confirm_harvest(before, after, deployer)
 
     after_harvest = sett_snapshot(sett, strategy, deployer)
 
-    assert after_harvest.sett.pricePerFullShare > before_harvest.sett.pricePerFullShare
-    assert after_harvest.strategy.balanceOf > before_harvest.strategy.balanceOf
+    # Harvesting on the HarvestMetaFarm does not increase the underlying position, it sends rewards to the rewardsTree
+    # For HarvestMetaFarm, we expect FARM rewards to be distributed to rewardsTree
+    if settId == "harvest.renCrv":
+        assert (
+            after_harvest.sett.pricePerFullShare
+            == before_harvest.sett.pricePerFullShare
+        )
+        assert after_harvest.strategy.balanceOf == before_harvest.strategy.balanceOf
+        assert after_harvest.badgerTree.farm > before_harvest.badgerTree.farm
+    # For most Setts, harvesting should increase the underlying position
+    else:
+        assert (
+            after_harvest.sett.pricePerFullShare > before_harvest.sett.pricePerFullShare
+        )
+        assert after_harvest.strategy.balanceOf > before_harvest.strategy.balanceOf
 
     chain.sleep(daysToSeconds(1))
     chain.mine()
@@ -234,10 +248,12 @@ def test_single_user_harvest_flow(settId):
     testRecorder.add_record(EventRecord("Harvest", tx.events, tx.timestamp))
 
     harvested = tx.events["Harvest"][0]["harvested"]
-    assert harvested > 0
-
-    assert after_harvest.sett.pricePerFullShare > before_harvest.sett.pricePerFullShare
-    assert after_harvest.strategy.balanceOf > before_harvest.strategy.balanceOf
+    if settId != "harvest.renCrv":
+        assert harvested > 0
+        assert (
+            after_harvest.sett.pricePerFullShare > before_harvest.sett.pricePerFullShare
+        )
+        assert after_harvest.strategy.balanceOf > before_harvest.strategy.balanceOf
 
     sett.withdrawAll({"from": deployer})
 
@@ -250,20 +266,22 @@ def test_single_user_harvest_flow(settId):
     }
 
     # testRecorder.add_record(EventRecord("Final Report", report, 0))
-    testRecorder.print_to_file(suiteName + '.json')
+    testRecorder.print_to_file(suiteName + ".json")
 
     # assert endingBalance > startingBalance
 
-@pytest.mark.skip()
+
+# @pytest.mark.skip()
 @pytest.mark.parametrize(
     "settId",
     [
-        "native.renCrv",
-        "native.badger",
-        "native.sbtcCrv",
-        "native.tbtcCrv",
+        # "native.renCrv",
+        # "native.badger",
+        # "native.sbtcCrv",
+        # "native.tbtcCrv",
         "pickle.renCrv",
         "harvest.renCrv",
+        # "native.uniBadgerWbtc"
     ],
 )
 def test_migrate_single_user(settId):
@@ -282,17 +300,75 @@ def test_migrate_single_user(settId):
     assert startingBalance >= depositAmount
 
     # Deposit
-    before = sett_snapshot(sett, strategy, deployer)
     want.approve(sett, MaxUint256, {"from": deployer})
     sett.deposit(depositAmount, {"from": deployer})
     after = sett_snapshot(sett, strategy, deployer)
 
-    # single_user_harvest_flow(shared_setup, settId)
+    chain.sleep(15)
+    chain.mine()
+
+    sett.earn({"from": deployer})
+
+    chain.sleep(daysToSeconds(2))
+    chain.mine()
+
+    before = {"settWant": want.balanceOf(sett), "stratWant": want.balanceOf(strategy)}
+
     with brownie.reverts():
         controller.withdrawAll(strategy.want(), {"from": randomUser})
 
-    chain.snapshot()
     controller.withdrawAll(strategy.want(), {"from": deployer})
 
-    chain.revert()
-    chain.snapshot()
+    after = {"settWant": want.balanceOf(sett), "stratWant": want.balanceOf(strategy)}
+
+    assert after["settWant"] > before["settWant"]
+    assert after["stratWant"] < before["stratWant"]
+    assert after["stratWant"] == 0
+
+@pytest.mark.skip()
+@pytest.mark.parametrize(
+    "settId",
+    [
+        # "native.renCrv",
+        # "native.badger",
+        # "native.sbtcCrv",
+        # "native.tbtcCrv",
+        # "pickle.renCrv",
+        # "harvest.renCrv",
+        # "native.uniBadgerWbtc"
+    ],
+)
+def test_withdraw_other(settId):
+    """
+    - Controller should be able to withdraw other tokens
+    - Controller should not be able to withdraw core tokens
+    - Non-controller shouldn't be able to do either
+    """
+    badger = badger_single_sett(settId)
+    controller = badger.getController(settId)
+    sett = badger.getSett(settId)
+    strategy = badger.getStrategy(settId)
+    want = badger.getStrategyWant(settId)
+
+    deployer = badger.deployer
+    randomUser = accounts[6]
+
+    startingBalance = want.balanceOf(deployer)
+
+    depositAmount = Wei("1 ether")
+    assert startingBalance >= depositAmount
+
+    # Deposit
+    want.approve(sett, MaxUint256, {"from": deployer})
+    sett.deposit(depositAmount, {"from": deployer})
+    after = sett_snapshot(sett, strategy, deployer)
+
+    chain.sleep(15)
+    chain.mine()
+
+    sett.earn({"from": deployer})
+
+    chain.sleep(daysToSeconds(1))
+    chain.mine()
+    assert False
+

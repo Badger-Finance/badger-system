@@ -1,3 +1,5 @@
+from scripts.systems.badger_system import deploy_badger
+from scripts.systems.uniswap_system import UniswapSystem, connect_uniswap
 from _pytest.config import get_config
 from scripts.systems.badger_minimal import deploy_badger_minimal
 import pytest
@@ -7,7 +9,7 @@ from scripts.deploy.deploy_badger import main
 from helpers.registry import whale_registry
 from helpers.constants import *
 from config.badger_config import sett_config, badger_config
-
+from helpers.registry import registry
 
 @pytest.fixture(scope="function", autouse=True)
 def isolate(fn_isolation):
@@ -44,6 +46,7 @@ def badger_single_sett(settId):
 def sett_native_badger():
     deployer = accounts[0]
     badger = deploy_badger_minimal(deployer)
+    distribute_from_whales(badger, deployer)
 
     badger.add_logic("StrategyBadgerRewards", StrategyBadgerRewards)
     controller = badger.add_controller("native.badger")
@@ -106,7 +109,7 @@ def sett_harvest_meta_farm():
     want = sett_config.harvest.renCrv.params.want
 
     badger = deploy_badger_minimal(deployer)
-    params.rewardsEscrow = badger.rewardsEscrow
+    params.badgerTree = badger.badgerTree
     distribute_from_whales(badger, deployer)
 
     badger.add_logic("StrategyHarvestMetaFarm", StrategyHarvestMetaFarm)
@@ -199,13 +202,22 @@ def sett_curve_gauge_tbtc():
 def sett_badger_lp_rewards():
     deployer = accounts[0]
 
-    params = sett_config.native.uniBadgerWbtc.params
-
     # TODO: Deploy UNI pool and add liquidity in order to get want
-    want = sett_config.native.uniBadgerWbtc.params.want
 
     badger = deploy_badger_minimal(deployer)
     distribute_from_whales(badger, deployer)
+
+    pair = create_uniswap_pair(badger.token.address, registry.tokens.wbtc, deployer)
+
+    badger.pair = pair
+    want = pair
+
+    rewards = badger.deploy_sett_staking_rewards(
+        "native.uniBadgerWbtc", pair.address, badger.token
+    )
+
+    assert rewards.rewardsToken() == badger.token
+    assert rewards.stakingToken() == pair
 
     badger.add_logic("StrategyBadgerLpMetaFarm", StrategyBadgerLpMetaFarm)
     controller = badger.add_controller("native.uniBadgerWbtc")
@@ -213,11 +225,26 @@ def sett_badger_lp_rewards():
         "native.uniBadgerWbtc", want, controller, "Badger Sett badger", "bBadger"
     )
 
+    params = sett_config.native.uniBadgerWbtc.params
+    params.want = badger.pair
+    params.geyser = rewards
+
     strategy = badger.add_strategy(
         "native.uniBadgerWbtc", "StrategyBadgerLpMetaFarm", controller, params
     )
 
     badger.wire_up_sett(vault, strategy, controller)
+
+    wbtc = interface.IERC20(registry.tokens.wbtc)
+
+    # Grant deployer LP tokens
+    badger.uniswap.addMaxLiquidity(badger.token, wbtc, deployer)
+
+    badger.distribute_staking_rewards(
+        rewards, badger_config.geyserParams.unlockSchedules.uniBadgerWbtc[0].amount
+    )
+
+    rewards.grantRole(APPROVED_STAKER_ROLE, strategy, {"from": deployer})
 
     return badger
 
@@ -230,6 +257,12 @@ def badger(accounts):
 
     return badger_system
 
+def create_uniswap_pair(token0, token1, signer):
+    uniswap = UniswapSystem()
+    if not uniswap.hasPair(token0, token1):
+        uniswap.createPair(token0, token1, signer)
+    
+    return uniswap.getPair(token0, token1)
 
 def distribute_from_whales(badger, recipient):
     print(len(whale_registry.items()))

@@ -1,12 +1,14 @@
 // SPDX-License-Identifier: MIT
 
 pragma solidity ^0.6.11;
+pragma experimental ABIEncoderV2;
 
 import "deps/@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import "deps/@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 import "deps/@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "deps/@openzeppelin/contracts-upgradeable/token/ERC20/SafeERC20Upgradeable.sol";
 import "interfaces/uniswap/IUniswapRouterV2.sol";
+import "interfaces/uniswap/IUniswapV2Factory.sol";
 import "interfaces/badger/IBadgerGeyser.sol";
 
 import "interfaces/curve/ICurveFi.sol";
@@ -34,7 +36,25 @@ contract StrategyBadgerLpMetaFarm is BaseStrategy {
     address public constant wbtc = 0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599; // wBTC Token
     address public constant weth = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2; // Weth Token, used for crv <> weth <> wbtc route
 
-    event HarvestLpMetaFarm(uint256 preBadgerBalance, uint256 harvestedBadger, uint256 preWantBalance, uint256 liquidityAdded);
+    event HarvestLpMetaFarm(
+        uint256 badgerHarvested,
+        uint256 totalBadger,
+        uint256 badgerConvertedToWbtc,
+        uint256 wtbcFromConversion,
+        uint256 lpGained,
+        uint256 lpDeposited,
+        uint256 timestamp,
+        uint256 blockNumber
+    );
+
+    struct HarvestData {
+        uint256 badgerHarvested;
+        uint256 totalBadger;
+        uint256 badgerConvertedToWbtc;
+        uint256 wtbcFromConversion;
+        uint256 lpGained;
+        uint256 lpDeposited;
+    }
 
     function initialize(
         address _governance,
@@ -74,20 +94,27 @@ contract StrategyBadgerLpMetaFarm is BaseStrategy {
 
     /// @dev Deposit Badger into the staking contract
     function _deposit(uint256 _want) internal override {
+        _safeApproveHelper(want, geyser, _want);
         IStakingRewards(geyser).stake(_want);
     }
 
+    /// @dev Exit stakingRewards position
     /// @dev Harvest all Badger and sent to controller
     function _withdrawAll() internal override {
         IStakingRewards(geyser).exit();
+
+        // Send non-native rewards to controller
+        uint256 _badger = IERC20Upgradeable(badger).balanceOf(address(this));
+        IERC20Upgradeable(badger).safeTransfer(IController(controller).rewards(), _badger);
     }
 
     /// @dev Withdraw from staking rewards, using earnings first
     function _withdrawSome(uint256 _amount) internal override returns (uint256) {
-        uint256 _earned = IStakingRewards(geyser).earned(address(this));
+        uint256 _want = IERC20Upgradeable(want).balanceOf(address(this));
 
-        if (_earned < _amount) {
-            IStakingRewards(geyser).withdraw(_amount.sub(_earned));
+        if (_want < _amount) {
+            uint256 _toWithdraw = _amount.sub(_want);
+            IStakingRewards(geyser).withdraw(_toWithdraw);
         }
 
         return _amount;
@@ -95,33 +122,54 @@ contract StrategyBadgerLpMetaFarm is BaseStrategy {
 
     /// @dev Harvest accumulated badger rewards and convert them to LP tokens
     /// @dev Restake the gained LP tokens in the Geyser
-    function harvest() external override whenNotPaused {
+    function harvest() external whenNotPaused returns (HarvestData memory) {
         _onlyAuthorizedActors();
 
+        HarvestData memory harvestData;
+
         uint256 _beforeBadger = IERC20Upgradeable(badger).balanceOf(address(this));
+        uint256 _beforeLp = IERC20Upgradeable(want).balanceOf(address(this));
 
         // Harvest rewards from Geyser
         IStakingRewards(geyser).getReward();
 
-        uint256 _afterBadger = IERC20Upgradeable(badger).balanceOf(address(this));
-        uint256 _harvested = _afterBadger.sub(_beforeBadger);
+        harvestData.totalBadger = IERC20Upgradeable(badger).balanceOf(address(this));
+        harvestData.badgerHarvested = harvestData.totalBadger.sub(_beforeBadger);
 
-        // Swap half of harvested badger for wBTC
-        address[] memory path = new address[](3);
-        path[0] = badger; // Badger
-        path[1] = wbtc;
+        // Swap half of harvested badger for wBTC in liquidity pool
+        if (harvestData.totalBadger > 0) {
+            harvestData.badgerConvertedToWbtc = harvestData.badgerHarvested.div(2);
+            if (harvestData.badgerConvertedToWbtc > 0) {
+                address[] memory path = new address[](2);
+                path[0] = badger; // Badger
+                path[1] = wbtc;
 
-        uint256 _beforeLp = IERC20Upgradeable(want).balanceOf(address(this));
+                _swap(badger, harvestData.badgerConvertedToWbtc, path);
 
-        _swap(badger, _harvested.div(2), path);
+                // Add Badger and wBTC as liquidity if any to add
+                _add_max_liquidity_uniswap(badger, wbtc);
+            }
+        }
 
-        // Add Badger and wBTC as liquidity
-        _add_liquidity(badger, wbtc);
+        // Deposit gained LP position into staking rewards
+        harvestData.lpDeposited = IERC20Upgradeable(want).balanceOf(address(this));
+        harvestData.lpGained = harvestData.lpDeposited.sub(_beforeLp);
+        if (harvestData.lpGained > 0) {
+            _deposit(harvestData.lpGained);
+        }
 
-        uint256 _afterLp = IERC20Upgradeable(want).balanceOf(address(this));
-        _deposit(_afterLp);
+        emit HarvestLpMetaFarm(
+            harvestData.badgerHarvested,
+            harvestData.totalBadger,
+            harvestData.badgerConvertedToWbtc,
+            harvestData.wtbcFromConversion,
+            harvestData.lpGained,
+            harvestData.lpDeposited,
+            block.timestamp,
+            block.number
+        );
+        emit Harvest(harvestData.lpGained, block.number);
 
-        emit HarvestLpMetaFarm(_beforeBadger, _harvested, _beforeLp, _afterLp.sub(_beforeLp));
-        emit Harvest(_afterLp.sub(_beforeLp), block.number);
+        return harvestData;
     }
 }

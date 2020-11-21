@@ -28,7 +28,6 @@ sett_config = DotMap(
             params=DotMap(
                 # Note: Will not be able to be deployed until the LP token is created
                 # want = Uni Badger<>Wbtc LP
-                # rewardsSett = badger native Sett
                 performanceFeeStrategist=0,
                 performanceFeeGovernance=0,
                 withdrawalFee=0,
@@ -171,7 +170,7 @@ badger_config = DotMap(
                     duration=daysToSeconds(7),  # 1 week
                 )
             ],
-            badgerWbtcUni=[
+            uniBadgerWbtc=[
                 DotMap(
                     amount=Wei("130000 ether"),
                     duration=daysToSeconds(7),  # 1 week

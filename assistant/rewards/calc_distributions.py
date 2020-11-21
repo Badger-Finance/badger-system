@@ -17,21 +17,22 @@ from tqdm import tqdm, trange
 from click import secho
 from helpers.constants import *
 
+"""
+Determine how much of each token is distributed within the specified block window
+    - Get the tokens for the geyser
+    - Read the unlock schedules for each token
+        - For each schedule, determine how many tokens should be distributed during the window
+        - Sum the schedule amounts for an overall distribution for the token
+
+token -> amount
+"""
 
 def calc_geyser_distributions(geyser, startBlock, endBlock):
     startTime = web3.eth.getBlock(startBlock)
     endTime = web3.eth.getBlock(endBlock)
 
     print("blocks between", startTime, endTime)
-    """
-    Determine how much of each token is distributed within the specified block window
-        - Get the tokens for the geyser
-        - Read the unlock schedules for each token
-            - For each schedule, determine how many tokens should be distributed during the window
-            - Sum the schedule amounts for an overall distribution for the token
     
-    token -> amount
-    """
     distributions = DotMap()
 
     tokens = geyser.getDistributionTokens()

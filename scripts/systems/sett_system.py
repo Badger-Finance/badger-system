@@ -167,7 +167,7 @@ def deploy_strategy(badger, strategyName, controller, params, deployer):
                     params.harvestVault,
                     params.vaultFarm,
                     params.metaFarm,
-                    params.rewardsEscrow,
+                    params.badgerTree,
                 ],
                 [
                     params.performanceFeeGovernance,

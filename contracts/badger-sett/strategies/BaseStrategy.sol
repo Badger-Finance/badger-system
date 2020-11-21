@@ -253,12 +253,18 @@ abstract contract BaseStrategy is PausableUpgradeable, SettAccessControl {
     }
 
     /// @notice Add liquidity to uniswap for specified token pair, utilizing the maximum balance possible
-    function _add_liquidity(address token0, address token1) internal {
+    function _add_max_liquidity_uniswap(address token0, address token1) internal {
+        uint256 _token0Balance = IERC20Upgradeable(token0).balanceOf(address(this));
+        uint256 _token1Balance = IERC20Upgradeable(token1).balanceOf(address(this));
+
+        _safeApproveHelper(token0, uniswap, _token0Balance);
+        _safeApproveHelper(token1, uniswap, _token1Balance);
+
         IUniswapRouterV2(uniswap).addLiquidity(
             token0,
             token1,
-            IERC20Upgradeable(token0).balanceOf(address(this)),
-            IERC20Upgradeable(token1).balanceOf(address(this)),
+            _token0Balance,
+            _token1Balance,
             0,
             0,
             address(this),
@@ -288,7 +294,8 @@ abstract contract BaseStrategy is PausableUpgradeable, SettAccessControl {
     /// @dev Realize returns from positions
     /// @dev Returns can be reinvested into positions, or distributed in another fashion
     /// @dev Performance fees should also be implemented in this function
-    function harvest() external virtual;
+    /// @dev Override function stub is removed as each strategy can have it's own return signature for STATICCALL
+    // function harvest() external virtual;
 
     /// @dev User-friendly name for this strategy for purposes of convenient reading
     function getName() external virtual pure returns (string memory);

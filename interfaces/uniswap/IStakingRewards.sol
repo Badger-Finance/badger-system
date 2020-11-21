@@ -2,6 +2,10 @@
 pragma solidity >=0.5.0 <0.8.0;
 
 interface IStakingRewards {
+    function stakingToken() external view returns (address);
+
+    function rewardsToken() external view returns (address);
+
     function withdraw(uint256) external;
 
     function getReward() external;

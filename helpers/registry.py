@@ -92,7 +92,6 @@ token_registry = DotMap(
     tbtc="0x8daebade922df735c38c80c7ebd708af50815faa",
 )
 
-
 onesplit_registry = DotMap(contract="0x50FDA034C0Ce7a8f7EFDAebDA7Aa7cA21CC1267e")
 
 uniswap_registry = DotMap(
@@ -165,6 +164,10 @@ whale_registry = DotMap(
         whale="0x3d24d77bec08549d7ea86c4e9937204c11e153f1",
         token=curve_registry.pools.tbtcCrv.token,
     ),
+    wbtc=DotMap(
+        whale="0x2bf792ffe8803585f74e06907900c2dc2c29adcb",
+        token=token_registry.wbtc
+    )
 )
 
 

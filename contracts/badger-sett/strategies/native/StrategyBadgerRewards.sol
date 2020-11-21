@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 
 pragma solidity ^0.6.11;
+pragma experimental ABIEncoderV2;
 
 import "deps/@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import "deps/@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
@@ -31,6 +32,11 @@ contract StrategyBadgerRewards is BaseStrategy {
     using SafeMathUpgradeable for uint256;
 
     address public geyser;
+
+    struct HarvestData {
+        uint256 wantIncrease;
+        uint256 wantDeposited;
+    }
 
     function initialize(
         address _governance,
@@ -73,6 +79,8 @@ contract StrategyBadgerRewards is BaseStrategy {
         IStakingRewards(geyser).stake(_want);
     }
 
+    /// @dev Exit staking rewards
+    /// @dev All claimed rewards are in want so no further actions needed
     function _withdrawAll() internal override {
         IStakingRewards(geyser).exit();
     }
@@ -85,25 +93,39 @@ contract StrategyBadgerRewards is BaseStrategy {
             return _amount;
         }
 
+        // Rewards are cheap to harvest in this case, go ahead and use earnings to cover withdraw
+        IStakingRewards(geyser).getReward();
+        uint256 _afterHarvest = IERC20Upgradeable(want).balanceOf(address(this));
+
+        if (_afterHarvest >= _amount) {
+            return _amount;
+        }
+
         // Unstake the remainder from StakingRewards
-        uint256 _remainder = _amount.sub(_before);
+        uint256 _remainder = _amount.sub(_afterHarvest);
         IStakingRewards(geyser).withdraw(_remainder);
 
         return _amount;
     }
 
-    function harvest() external override whenNotPaused {
+    function harvest() external whenNotPaused returns (HarvestData memory) {
         _onlyAuthorizedActors();
+
+        HarvestData memory harvestData;
 
         uint256 _before = IERC20Upgradeable(want).balanceOf(address(this));
 
         IStakingRewards(geyser).getReward();
-        
-        uint256 _want = IERC20Upgradeable(want).balanceOf(address(this));
-        if (_want > 0) {
-            _deposit(_want);
+
+        harvestData.wantDeposited = IERC20Upgradeable(want).balanceOf(address(this));
+        if (harvestData.wantDeposited > 0) {
+            _deposit(harvestData.wantDeposited);
         }
 
-        emit Harvest(_want.sub(_before), block.number);
+        harvestData.wantIncrease = harvestData.wantDeposited.sub(_before);
+
+        emit Harvest(harvestData.wantIncrease, block.number);
+
+        return harvestData;
     }
 }

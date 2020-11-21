@@ -1,4 +1,5 @@
 import json
+from scripts.systems.uniswap_system import UniswapSystem, connect_uniswap
 from scripts.systems.gnosis_safe_system import connect_gnosis_safe
 from helpers.time_utils import daysToSeconds
 from helpers.proxy_utils import deploy_proxy, deploy_proxy_admin
@@ -489,6 +490,7 @@ class BadgerSystem:
 
         self.connect_dao()
         self.connect_multisig()
+        self.connect_uniswap()
 
     def track_contract_static(self, contract):
         self.contracts_static.append(contract)
@@ -530,6 +532,11 @@ class BadgerSystem:
 
         print("Deploy Dev Multisig")
         self.devMultisig = connect_gnosis_safe(badger_config.multisig.address)
+        self.updater = deployer
+        self.guardian = deployer
+
+    def connect_uniswap(self):
+        self.uniswap = UniswapSystem()
 
     # ===== Deployers =====
 
@@ -578,7 +585,7 @@ class BadgerSystem:
             self.logic.BadgerTree.address,
             self.devProxyAdmin.address,
             self.logic.BadgerTree.initialize.encode_input(
-                self.devMultisig, updater, guardian
+                self.devMultisig, self.updater, self.guardian
             ),
             deployer,
         )
@@ -687,7 +694,7 @@ class BadgerSystem:
     def deploy_sett_staking_rewards(self, id, stakingToken, distToken):
         deployer = self.deployer
 
-        print(deployer, stakingToken, distToken)
+        print(deployer, distToken, stakingToken)
 
         rewards = deploy_proxy(
             "StakingRewards",
@@ -695,7 +702,7 @@ class BadgerSystem:
             self.logic.StakingRewards.address,
             self.devProxyAdmin.address,
             self.logic.StakingRewards.initialize.encode_input(
-                deployer, stakingToken, distToken
+                deployer, distToken, stakingToken
             ),
             deployer,
         )
