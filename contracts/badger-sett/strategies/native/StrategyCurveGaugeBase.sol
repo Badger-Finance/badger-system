@@ -16,20 +16,10 @@ import "interfaces/badger/IMintr.sol";
 import "interfaces/badger/IStrategy.sol";
 import "../BaseStrategy.sol";
 
-contract StrategyCurveGauge is BaseStrategy {
+contract StrategyCurveGaugeBase is BaseStrategy {
     using SafeERC20Upgradeable for IERC20Upgradeable;
     using AddressUpgradeable for address;
     using SafeMathUpgradeable for uint256;
-
-    // IERC20Upgradeable public want = 0x49849C98ae39Fff122806C06791Fa73784FB3675; // Want: Curve.fi renBTC/wBTC (crvRenWBTC) LP token
-    // address public constant gauge = 0xB1F2cdeC61db658F091671F5f199635aEF202CAC; // Curve renBtc Gauge
-    // address public constant mintr = 0xd061D61a4d941c39E5453435B6345Dc261C2fcE0; // Curve CRV Minter
-    // address public constant crv = 0xD533a949740bb3306d119CC777fa900bA034cd52; // CRV token
-    // address public constant uniswap = 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D; // Uniswap Dex
-    // address public constant weth = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2; // Weth Token, used for crv <> weth <> wbtc route
-
-    // address public constant wbtc = 0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599; // wBTC Token
-    // address public constant curveSwap = 0x93054188d876f558f4a66B2EF1d97d16eDf0895B; // Curve renBtc Swap
 
     address public gauge; // Curve renBtc Gauge
     address public mintr; // Curve CRV Minter
@@ -38,8 +28,14 @@ contract StrategyCurveGauge is BaseStrategy {
 
     address public constant crv = 0xD533a949740bb3306d119CC777fa900bA034cd52; // CRV token
     address public constant weth = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2; // Weth Token, used for crv <> weth <> wbtc route
+    address public constant wbtc = 0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599; // Wbtc Token
 
     uint256 public keepCRV;
+
+    event CurveHarvest(
+        uint256 crvHarvested,
+        uint256 lpComponent
+    );
 
     function initialize(
         address _governance,
@@ -104,40 +100,62 @@ contract StrategyCurveGauge is BaseStrategy {
     }
 
     /// @notice Harvest from strategy mechanics, realizing increase in underlying position
-    function harvest() external override {
+    function harvest() external override whenNotPaused {
         _onlyAuthorizedActors();
 
-        IMintr(mintr).mint(address(gauge));
-        uint256 _crv = IERC20Upgradeable(crv).balanceOf(address(this));
+        uint256 _before = IERC20Upgradeable(want).balanceOf(address(this));
+        uint256 _beforeCrv = IERC20Upgradeable(want).balanceOf(address(this));
 
+        // Harvest from Gauge
+        IMintr(mintr).mint(address(gauge));
+        uint256 _afterCrv = IERC20Upgradeable(crv).balanceOf(address(this));
+        uint256 _crv = _afterCrv;
+
+        // Transfer CRV to keep to Rewards
         uint256 _keepCRV = _crv.mul(keepCRV).div(MAX_FEE);
         IERC20Upgradeable(crv).safeTransfer(IController(controller).rewards(), _keepCRV);
         _crv = _crv.sub(_keepCRV);
 
+        // Convert remaining CRV to lpComponent
         if (_crv > 0) {
-            _safeApproveHelper(crv, uniswap, _crv);
-
             address[] memory path = new address[](3);
             path[0] = crv;
             path[1] = weth;
             path[2] = lpComponent;
-
-            IUniswapRouterV2(uniswap).swapExactTokensForTokens(_crv, uint256(0), path, address(this), now.add(1800));
+            _swap(crv, _crv, path);
         }
+
+        // Deposit into Curve to increase LP position
         uint256 _lpComponent = IERC20Upgradeable(lpComponent).balanceOf(address(this));
         if (_lpComponent > 0) {
             _safeApproveHelper(lpComponent, curveSwap, _lpComponent);
-            ICurveFi(curveSwap).add_liquidity([0, _lpComponent, 0], 0);
+            _add_liquidity_curve(_lpComponent);
         }
+
+        // Take fees from want increase and deposit remaining into Gauge
         uint256 _want = IERC20Upgradeable(want).balanceOf(address(this));
         if (_want > 0) {
             uint256 _strategistFee = _want.mul(performanceFeeStrategist).div(MAX_FEE);
             uint256 _governanceFee = _want.mul(performanceFeeGovernance).div(MAX_FEE);
 
-            IERC20Upgradeable(want).safeTransfer(strategist, _strategistFee);
-            IERC20Upgradeable(want).safeTransfer(IController(controller).rewards(), _governanceFee);
+            _processFee(want, _want, performanceFeeStrategist, strategist);
+            _processFee(want, _want, performanceFeeGovernance, IController(controller).rewards());
 
-            _deposit(_want);
+            uint256 _remaining = IERC20Upgradeable(want).balanceOf(address(this));
+
+            if (_remaining > 0) {
+                _deposit(_remaining);
+            }
         }
+
+    emit CurveHarvest(_afterCrv.sub(_beforeCrv), _lpComponent);
+    emit Harvest(_want.sub(_before), block.number);
+    }
+
+    /// ===== Internal Helper Functions =====
+
+    /// @dev Handle the particular function variant for CurveSwap
+    function _add_liquidity_curve(uint256 _amount) internal virtual {
+        // e.g. ICurveFi(curveSwap).add_liquidity([0, _amount, 0], 0);
     }
 }

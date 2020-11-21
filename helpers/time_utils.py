@@ -4,4 +4,4 @@ ONE_YEAR = 1 * 365 * ONE_DAY
 
 
 def daysToSeconds(days):
-    return days * 86400
+    return int(days * 86400.0)

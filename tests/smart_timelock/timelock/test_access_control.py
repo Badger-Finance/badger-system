@@ -1,205 +1,120 @@
-# import pytest
-# from brownie import *
-# import brownie
+import pytest
+from brownie import *
+import brownie
+from helpers.constants import *
+from tests.smart_timelock.fixtures import timelock_unit
+
+@pytest.fixture(scope="module", autouse="True")
+def setup(timelock_unit):
+    yield timelock_unit
 
 
-# @pytest.fixture(scope="module", autouse="True")
-# def setup(timelock_unit):
-#     yield timelock_unit
+def test_check_initial_params():
+  """
+  Initial parameters should match deploy parameters
+  """
+  token = setup.smartTimelock.token()
+  beneficiary = setup.smartTimelock.beneficiary()
+  release = setup.smartTimelock.releaseTime()
+
+  assert token == setup.gToken
+  assert beneficiary == setup.team[0]
+  assert release == setup.unlockTime
 
 
-# def check_initial_params_test():
-#   """
-#   Initial parameters should match deploy parameters
-#   """
-#   token = setup.smartTimelock.token()
-#   beneficiary = setup.smartTimelock.beneficiary()
-#   release = setup.smartTimelock.releaseTime()
-
-#   assert token == setup.gToken
-#   assert beneficiary == setup.team[0]
-#   assert release == setup.unlockTime
+def test_release_funds_before_allowed():
+  with brownie.reverts():
+    setup.gToken.transfer(setup.smartTimelock, setup.params.releaseAmount, {
+                          'from': setup.deployer})
 
 
-# def release_funds_before_allowed_test():
-#   with brownie.reverts():
-#     setup.gToken.transfer(setup.smartTimelock, setup.params.releaseAmount, {
-#                           'from': setup.deployer})
+def test_release_funds_after_expiration():
+  gToken = setup.gToken
+  smartTimelock = setup.smartTimelock
+  team = setup.team
+  tokenGifter = setup.tokenGifter
+  params = setup.params
 
+  releaseAmount = setup.params.transferAmount
+  gToken.transfer(smartTimelock, releaseAmount)
+  smartTimelock.release()
 
-# def release_funds_after_expiration_test():
-#   gToken = setup.gToken
-#   smartTimelock = setup.smartTimelock
-#   team = setup.team
-#   tokenGifter = setup.tokenGifter
-#   params = setup.params
+  beneficiaryPostBalance = gToken.balanceOf(team[0])
+  timelockPostBalance = gToken.balanceOf(smartTimelock)
 
-#   releaseAmount = setup.params.transferAmount
-#   gToken.transfer(smartTimelock, releaseAmount)
-#   smartTimelock.release()
+  assert beneficiaryPostBalance == releaseAmount
+  assert timelockPostBalance == 0
 
-#   beneficiaryPostBalance = gToken.balanceOf(team[0])
-#   timelockPostBalance = gToken.balanceOf(smartTimelock)
+  preBalance = gToken.balanceOf(smartTimelock)
 
-#   assert beneficiaryPostBalance == releaseAmount
-#   assert timelockPostBalance == 0
+  smartTimelock.call(tokenGifter, 0, tokenGifter.requestTransfer.encode_input(
+      gToken, params.tokenRequestAmount))
 
-#   preBalance = gToken.balanceOf(smartTimelock)
+  postBalance = gToken.balanceOf(smartTimelock)
 
-#   smartTimelock.call(tokenGifter, 0, tokenGifter.requestTransfer.encode_input(
-#       gToken, params.tokenRequestAmount))
+  assert preBalance + params.tokenRequestAmount == postBalance
 
-#   postBalance = gToken.balanceOf(smartTimelock)
+def test_invalid_transfer_lock_token():
+  """
+  Should not be able to transfer locked tokens using call function
+  """
+  gToken = setup.gToken
+  smartTimelock = setup.smartTimelock
+  team = setup.team
+  tokenGifter = setup.tokenGifter
+  stakingMock = setup.stakingMock
+  params = setup.params
+  governor = setup.governor
+  miscToken = setup.miscToken
+  tokenGifterAmount = setup.tokenGifterAmount
 
-#   assert preBalance + params.tokenRequestAmount == postBalance
+  transferAction = miscToken.transfer.encode_input(team[0], tokenGifterAmount)
 
-# def test_invalid_transfer_lock_token():
-#   """
-#   Should not be able to transfer locked tokens using call function
-#   """
+  with brownie.reverts():
+    smartTimelock.call(gToken, 0, transferAction, {'from': team[0]})
 
-#   transferAction = mockToken.transfer.encode_input(team[0], tokenGifterAmount)
+  preBalance=miscToken.balanceOf(smartTimelock)
+  smartTimelock.call(miscToken, 0, transferAction, {'from': team[0]})
+  postBalance=miscToken.balanceOf(smartTimelock)
+  assert postBalance == preBalance - tokenGifterAmount
 
-#   with brownie.reverts():
+  with brownie.reverts("smart-timelock/no-locked-token-claim"):
+    smartTimelock.claimToken(gToken, {'from': team[0]})
 
-#   assert smartTimelock.connect(team[0]).call(gToken.address, 0, transferAction)
-#   ).to.be.revertedWith("smart-timelock/locked-balance-check")
-# })
+  smartTimelock.claimToken(miscToken, {'from': team[0]})
+  postBalance=miscToken.balanceOf(smartTimelock.address)
+  assert postBalance == 0
 
-#     it("Should be able to transfer other tokens using call function", async function() {
-#       transferAction=iERC20.encodeFunctionData("transfer", [
-#         team[0],
-#         tokenGifterAmount,
-#       ])
+  stakingAmount = Wei("100 ether")
+  approveAction = miscToken.approve.encode_input(stakingMock, MaxUint256)
+  stakeAction = stakingMock.stake.encode_input(stakingAmount)
 
-#       preBalance=miscToken.balanceOf(smartTimelock.address)
+  smartTimelock.call(gToken, 0, approveAction, {'from': team[0]})
 
-#       (
-#         smartTimelock
-#           .connect(team[0])
-#           .call(miscToken.address, 0, transferAction)
-#       ).wait()
+  with brownie.reverts():
+    smartTimelock.call(stakingMock, 0, stakeAction)
 
-#       postBalance=miscToken.balanceOf(smartTimelock.address)
+  # Governor should be able to approve contracts
+  smartTimelock.approveTransfer(stakingMock, {'from': governor})
 
-#       assert postBalance=preBalance.sub(tokenGifterAmount))
-#     })
+  # Governor should be able to revoke approved contracts
+  tx = smartTimelock.revokeTransfer(stakingMock, {'from': governor})
+  assert len(tx.events["RevokeTransfer"]) > 0
+  assert tx.events["RevokeTransfer"][0].to == stakingMock
 
-#     it("Should not be able to claim locked tokens using claimToken()", async function() {
-#       assert
-#         smartTimelock.connect(team[0]).claimToken(gToken.address)
-#       ).to.be.revertedWith("smart-timelock/no-locked-token-claim")
-#     })
+  # Non-Governor should not be able to approve contracts
+  with brownie.reverts("smart-timelock/only-governor"):
+    smartTimelock.approveTransfer(stakingMock, {'from': team[0]})
 
-#     it("Should be able to claim other tokens using claimToken()", async function() {
-#       (
-#         smartTimelock.connect(team[0]).claimToken(miscToken.address)
-#       ).wait()
+  # Non-Governor should not be able to revoke approved contracts
+  with brownie.reverts("smart-timelock/only-governor"):
+    smartTimelock.revokeTransfer(stakingMock, {'from': team[0]})
 
-#       postBalance=miscToken.balanceOf(smartTimelock.address)
-#       assert postBalance=0)
-#     })
+  # Staking on approved contract
+  stakingAmount = Wei("100 ether")
+  smartTimelock.approveTransfer(stakingMock, {'from': governor })
+  smartTimelock.call(gToken, 0, miscToken.approve.encode_input(stakingMock, MaxUint256), {'from': team[0]})
 
-#     it("Should not be able to transfer locked tokens to contract without approval", async function() {
-#       (
-#         smartTimelock
-#           .connect(team[0])
-#           .call(
-#             gToken.address,
-#             0,
-#             iERC20.encodeFunctionData("approve", [
-#               stakingMock.address,
-#               ethers.constants.MaxUint256,
-#             ])
-#           )
-#       ).wait()
-#       let stakingAmount=utils.parseEther("100")
-#       assert
-#         smartTimelock
-#           .connect(team[0])
-#           .call(
-#             stakingMock.address,
-#             0,
-#             iStakingMock.encodeFunctionData("stake", [stakingAmount])
-#           )
-#       ).to.be.reverted
-#     })
-
-#     it("Governor should be able to approve contracts", async function() {
-#       (
-#         smartTimelock
-#           .connect(governor)
-#           .approveTransfer(stakingMock.address)
-#       ).wait()
-
-#       // Check event emission
-#       approveEvent=smartTimelock.queryFilter(
-#         smartTimelock.filters.ApproveTransfer(),
-#         "latest"
-#       )
-
-#       assert approveEvent[0].args?.to=stakingMock.address)
-#     })
-
-#     it("Governor should be able to revoke approved contracts", async function() {
-#       (
-#         smartTimelock
-#           .connect(governor)
-#           .approveTransfer(stakingMock.address)
-#       ).wait()
-
-#       (
-#         smartTimelock
-#           .connect(governor)
-#           .revokeTransfer(stakingMock.address)
-#       ).wait()
-
-#       // Check event emission
-#       revokeEvent=smartTimelock.queryFilter(
-#         smartTimelock.filters.RevokeTransfer(),
-#         "latest"
-#       )
-
-#       assert revokeEvent[0].args?.to=stakingMock.address)
-#     })
-
-#     it("Non-Governor should not be able to approve contracts", async function() {
-#       assert
-#         smartTimelock.connect(team[0]).approveTransfer(stakingMock.address)
-#       ).to.been.revertedWith("smart-timelock/only-governor")
-#     })
-
-#     it("Non-Governor should not be able to revoke approved contracts", async function() {
-#       assert
-#         smartTimelock.connect(team[0]).revokeTransfer(stakingMock.address)
-#       ).to.been.revertedWith("smart-timelock/only-governor")
-#     })
-
-#     describe("Staking on approved contract", function() {
-#       let stakingAmount=utils.parseEther("100")
-#       beforeEach(async function() {
-#         // Approve contract on governor
-#         (
-#           smartTimelock
-#             .connect(governor)
-#             .approveTransfer(stakingMock.address)
-#         ).wait()
-#         // Approve staking pool to spend tokens
-#         (
-#           smartTimelock
-#             .connect(team[0])
-#             .call(
-#               gToken.address,
-#               0,
-#               iERC20.encodeFunctionData("approve", [
-#                 stakingMock.address,
-#                 ethers.constants.MaxUint256,
-#               ])
-#             )
-#         ).wait()
-#       })
-
-#       it("Should be able to transfer & retrieve locked tokens to contract with active approval", async function() {
 #         // Send tokens to staking pool
 #         preBalances=getTokenBalances(
 #           provider,

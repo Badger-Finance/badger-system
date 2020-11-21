@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
 from scripts.systems.gnosis_safe_system import connect_gnosis_safe
-from scripts.systems.badger_system import deploy_badger, config_badger
+from scripts.systems.badger_system import deploy_badger, config_badger, start_rewards
 from brownie import *
 from config.badger_config import config
 from helpers.registry import registry
@@ -24,5 +24,6 @@ def main():
     badger = deploy_badger(systems, accounts[0])
     print("Badger System Deployed")
     config_badger(badger)
+    start_rewards(badger)
     print("Badger System Setup Complete")
     return badger

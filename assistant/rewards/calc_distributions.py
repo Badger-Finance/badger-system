@@ -15,7 +15,7 @@ from eth_utils import encode_hex
 from toolz import valfilter, valmap
 from tqdm import tqdm, trange
 from click import secho
-from helpers.constants import ZERO_ADDRESS
+from helpers.constants import *
 
 
 def calc_geyser_distributions(geyser, startBlock, endBlock):

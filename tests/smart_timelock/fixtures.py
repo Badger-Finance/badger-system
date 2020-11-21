@@ -19,7 +19,8 @@ def timelock_unit():
     tokenGifter = TokenGifter.deploy({"from": deployer})
     ethGifter = EthGifter.deploy({"from": deployer})
 
-    gToken = MockToken.deploy(
+    gToken = MockToken.deploy({"from": deployer})
+    gToken.initialize(
         [
             web3.toChecksumAddress(tokenGifter.address),
             web3.toChecksumAddress(deployer.address),
@@ -28,17 +29,18 @@ def timelock_unit():
         {"from": deployer},
     )
 
-    smartTimelock = SmartTimelock.deploy(
-        gToken, team[0], governor, unlockTime, {"from": deployer}
-    )
+    smartTimelock = SmartTimelock.deploy({"from": deployer})
+    smartTimelock.initialize(gToken, team[0], governor, unlockTime, {"from": deployer})
 
     gToken.transfer(smartTimelock, transferAmount)
 
-    stakingMock = StakingMock.deploy(gToken, {"from": deployer})
+    stakingMock = StakingMock.deploy({"from": deployer})
+    stakingMock.initialize(gToken, {"from": deployer})
 
     deployer.transfer(ethGifter, Wei("10 ether"))
 
-    miscToken = MockToken.deploy(
+    miscToken = MockToken.deploy({"from": deployer})
+    miscToken.initialize(
         [
             web3.toChecksumAddress(tokenGifter.address),
             web3.toChecksumAddress(smartTimelock.address),

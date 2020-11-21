@@ -15,7 +15,7 @@ curve = registry.curve
 tokens = registry.tokens
 
 
-def deploy_sett(badger, sett, token, controller, name, symbol, deployer):
+def deploy_sett(badger, token, controller, name, symbol, deployer):
     """
     Deploy Sett Instance
     """
@@ -23,32 +23,90 @@ def deploy_sett(badger, sett, token, controller, name, symbol, deployer):
     governance = deployer
     keeper = deployer
 
+    print(token, controller, governance, keeper, name, symbol)
+
     return deploy_proxy(
         "Sett",
         Sett.abi,
-        sett.logic.Sett.address,
+        badger.logic.Sett.address,
         proxyAdmin.address,
-        sett.logic.Sett.initialize.encode_input(
+        badger.logic.Sett.initialize.encode_input(
             token, controller, governance, keeper, name, symbol
         ),
         deployer,
     )
 
 
-def deploy_strategy(badger, sett, strategyName, controller, params, deployer):
+def deploy_strategy(badger, strategyName, controller, params, deployer):
     governance = deployer
     strategist = deployer
     keeper = deployer
     guardian = deployer
     proxyAdmin = badger.devProxyAdmin
 
-    if strategyName == "StrategyCurveGauge":
+    if strategyName == "StrategyCurveGaugeRenBtcCrv":
         return deploy_proxy(
-            "StrategyCurveGauge",
-            StrategyCurveGauge.abi,
-            sett.logic.StrategyCurveGauge.address,
+            "StrategyCurveGaugeRenBtcCrv",
+            StrategyCurveGaugeRenBtcCrv.abi,
+            badger.logic.StrategyCurveGaugeRenBtcCrv.address,
             proxyAdmin.address,
-            sett.logic.StrategyCurveGauge.initialize.encode_input(
+            badger.logic.StrategyCurveGaugeRenBtcCrv.initialize.encode_input(
+                governance,
+                strategist,
+                controller,
+                keeper,
+                guardian,
+                [
+                    params.want,
+                    params.gauge,
+                    params.minter,
+                    params.swap,
+                    params.lpComponent,
+                ],
+                [
+                    params.performanceFeeGovernance,
+                    params.performanceFeeStrategist,
+                    params.withdrawalFee,
+                    params.keepCRV,
+                ],
+            ),
+            deployer,
+        )
+    if strategyName == "StrategyCurveGaugeSbtcCrv":
+        return deploy_proxy(
+            "StrategyCurveGaugeSbtcCrv",
+            StrategyCurveGaugeSbtcCrv.abi,
+            badger.logic.StrategyCurveGaugeSbtcCrv.address,
+            proxyAdmin.address,
+            badger.logic.StrategyCurveGaugeSbtcCrv.initialize.encode_input(
+                governance,
+                strategist,
+                controller,
+                keeper,
+                guardian,
+                [
+                    params.want,
+                    params.gauge,
+                    params.minter,
+                    params.swap,
+                    params.lpComponent,
+                ],
+                [
+                    params.performanceFeeGovernance,
+                    params.performanceFeeStrategist,
+                    params.withdrawalFee,
+                    params.keepCRV,
+                ],
+            ),
+            deployer,
+        )
+    if strategyName == "StrategyCurveGaugeTbtcCrv":
+        return deploy_proxy(
+            "StrategyCurveGaugeTbtcCrv",
+            StrategyCurveGaugeTbtcCrv.abi,
+            badger.logic.StrategyCurveGaugeTbtcCrv.address,
+            proxyAdmin.address,
+            badger.logic.StrategyCurveGaugeTbtcCrv.initialize.encode_input(
                 governance,
                 strategist,
                 controller,
@@ -71,13 +129,12 @@ def deploy_strategy(badger, sett, strategyName, controller, params, deployer):
             deployer,
         )
     if strategyName == "StrategyPickleMetaFarm":
-        print(params)
         return deploy_proxy(
             "StrategyPickleMetaFarm",
             StrategyPickleMetaFarm.abi,
-            sett.logic.StrategyPickleMetaFarm.address,
+            badger.logic.StrategyPickleMetaFarm.address,
             proxyAdmin.address,
-            sett.logic.StrategyPickleMetaFarm.initialize.encode_input(
+            badger.logic.StrategyPickleMetaFarm.initialize.encode_input(
                 governance,
                 strategist,
                 controller,
@@ -97,9 +154,9 @@ def deploy_strategy(badger, sett, strategyName, controller, params, deployer):
         return deploy_proxy(
             "StrategyHarvestMetaFarm",
             StrategyHarvestMetaFarm.abi,
-            sett.logic.StrategyHarvestMetaFarm.address,
+            badger.logic.StrategyHarvestMetaFarm.address,
             proxyAdmin.address,
-            sett.logic.StrategyHarvestMetaFarm.initialize.encode_input(
+            badger.logic.StrategyHarvestMetaFarm.initialize.encode_input(
                 governance,
                 strategist,
                 controller,
@@ -124,9 +181,9 @@ def deploy_strategy(badger, sett, strategyName, controller, params, deployer):
         return deploy_proxy(
             "StrategyBadgerLpMetaFarm",
             StrategyBadgerLpMetaFarm.abi,
-            sett.logic.StrategyBadgerLpMetaFarm.address,
+            badger.logic.StrategyBadgerLpMetaFarm.address,
             proxyAdmin.address,
-            sett.logic.StrategyBadgerLpMetaFarm.initialize.encode_input(
+            badger.logic.StrategyBadgerLpMetaFarm.initialize.encode_input(
                 governance,
                 strategist,
                 controller,
@@ -145,9 +202,9 @@ def deploy_strategy(badger, sett, strategyName, controller, params, deployer):
         return deploy_proxy(
             "StrategyBadgerRewards",
             StrategyBadgerRewards.abi,
-            sett.logic.StrategyBadgerRewards.address,
+            badger.logic.StrategyBadgerRewards.address,
             proxyAdmin.address,
-            sett.logic.StrategyBadgerRewards.initialize.encode_input(
+            badger.logic.StrategyBadgerRewards.initialize.encode_input(
                 governance,
                 strategist,
                 controller,
@@ -164,7 +221,7 @@ def deploy_strategy(badger, sett, strategyName, controller, params, deployer):
         )
 
 
-def deploy_controller(badger, sett, deployer):
+def deploy_controller(badger, deployer):
     # TODO: Change to prod config
     governance = deployer
     strategist = deployer
@@ -172,16 +229,265 @@ def deploy_controller(badger, sett, deployer):
     rewards = badger.dao.agent
     proxyAdmin = badger.devProxyAdmin
 
+    print(badger.logic.Controller, proxyAdmin, governance, strategist, keeper, rewards)
+
     return deploy_proxy(
         "Controller",
         Controller.abi,
-        sett.logic.Controller.address,
+        badger.logic.Controller.address,
         proxyAdmin.address,
-        sett.logic.Controller.initialize.encode_input(
+        badger.logic.Controller.initialize.encode_input(
             governance, strategist, keeper, rewards
         ),
         deployer,
     )
+
+
+def deploy_sett_common_logic(deployer):
+    return DotMap(
+        Controller=Controller.deploy({"from": deployer}),
+        Sett=Sett.deploy({"from": deployer}),
+        StakingRewards=StakingRewards.deploy({"from": deployer}),
+    )
+
+
+def deploy_sett_logic(deployer):
+    return DotMap(
+        StrategyCurveGauge=StrategyCurveGauge.deploy({"from": deployer}),
+        StrategyPickleMetaFarm=StrategyPickleMetaFarm.deploy({"from": deployer}),
+        StrategyHarvestMetaFarm=StrategyHarvestMetaFarm.deploy({"from": deployer}),
+        StrategyBadgerLpMetaFarm=StrategyBadgerLpMetaFarm.deploy({"from": deployer}),
+        StrategyBadgerRewards=StrategyBadgerRewards.deploy({"from": deployer}),
+        Controller=Controller.deploy({"from": deployer}),
+        Sett=Sett.deploy({"from": deployer}),
+        StakingRewards=StakingRewards.deploy({"from": deployer}),
+    )
+
+
+def configure_sett(sett, deployer):
+    want = sett.strategy.want()
+
+    sett.controller.setVault(want, sett.sett, {"from": deployer})
+
+    sett.controller.approveStrategy(
+        want, sett.strategy, {"from": deployer},
+    )
+
+    sett.controller.setStrategy(
+        want, sett.strategy, {"from": deployer},
+    )
+
+
+def deploy_sett_native_badger(badger, deployer):
+    badger.add_controller("native")
+    badger.add_sett("native")
+    sett = DotMap(logic=deploy_sett_common_logic(deployer))
+    sett.logic.StrategyBadgerRewards = StrategyBadgerRewards.deploy({"from": deployer})
+
+    sett.controller = deploy_controller(badger, sett, deployer)
+
+    sett.sett = deploy_sett(
+        badger,
+        sett,
+        badger.token,
+        sett.controller,
+        "Badger Sett badger",
+        "bBadger",
+        deployer,
+    )
+
+    sett.rewards = deploy_proxy(
+        "StakingRewards",
+        StakingRewards.abi,
+        sett.logic.StakingRewards.address,
+        badger.devProxyAdmin.address,
+        sett.logic.StakingRewards.initialize.encode_input(
+            deployer, badger.token, badger.token
+        ),
+        deployer,
+    )
+
+    params = sett_config.native.badger.params
+    params.want = badger.token
+    params.geyser = sett.rewards
+
+    sett.strategy = deploy_strategy(
+        badger, sett, "StrategyBadgerRewards", sett.controller, params, deployer,
+    )
+
+    sett.want = interface.IERC20(sett.strategy.want())
+
+    configure_sett(sett, deployer)
+
+    # Approve Setts on specific
+    sett.rewards.grantRole(APPROVED_STAKER_ROLE, sett.strategy, {"from": deployer})
+
+    return sett
+
+
+def deploy_sett_native_renbtc(badger, deployer):
+    sett = DotMap(logic=deploy_sett_common_logic(deployer))
+    sett.logic.StrategyCurveGauge = StrategyCurveGauge.deploy({"from": deployer})
+
+    sett.controller = deploy_controller(badger, sett, deployer)
+
+    sett.sett = deploy_sett(
+        badger,
+        sett,
+        sett_config.native.renCrv.params.want,
+        sett.controller,
+        "Badger Sett renCrv",
+        "bRenCrv",
+        deployer,
+    )
+
+    sett.strategy = deploy_strategy(
+        badger,
+        sett,
+        "StrategyCurveGauge",
+        sett.controller,
+        sett_config.native.renCrv.params,
+        deployer,
+    )
+
+    sett.want = interface.IERC20(sett.strategy.want())
+
+    configure_sett(sett, deployer)
+
+    return sett
+
+
+def deploy_sett_native_sbtccrv(badger, deployer):
+    sett = DotMap(logic=deploy_sett_common_logic(deployer))
+    sett.logic.StrategyCurveGauge = StrategyCurveGauge.deploy({"from": deployer})
+
+    sett.controller = deploy_controller(badger, sett, deployer)
+
+    sett.sett = deploy_sett(
+        badger,
+        sett,
+        sett_config.native.sbtcCrv.params.want,
+        sett.controller,
+        "Badger Sett sbtcCrv",
+        "bSbtcCrv",
+        deployer,
+    )
+
+    sett.strategy = deploy_strategy(
+        badger,
+        sett,
+        "StrategyCurveGauge",
+        sett.controller,
+        sett_config.native.sbtcCrv.params,
+        deployer,
+    )
+
+    sett.want = interface.IERC20(sett.strategy.want())
+
+    configure_sett(sett, deployer)
+
+    return sett
+
+
+def deploy_sett_native_tbtccrv(badger, deployer):
+    sett = DotMap(logic=deploy_sett_common_logic(deployer))
+    sett.logic.StrategyCurveGauge = StrategyCurveGauge.deploy({"from": deployer})
+    sett.controller = deploy_controller(badger, sett, deployer)
+
+    sett.sett = deploy_sett(
+        badger,
+        sett,
+        sett_config.native.tbtcCrv.params.want,
+        sett.controller,
+        "Badger Sett tbtcCrv",
+        "bTbtcCrv",
+        deployer,
+    )
+
+    sett.strategy = deploy_strategy(
+        badger,
+        sett,
+        "StrategyCurveGauge",
+        sett.controller,
+        sett_config.native.tbtcCrv.params,
+        deployer,
+    )
+
+    sett.want = interface.IERC20(sett.strategy.want())
+
+    configure_sett(sett, deployer)
+
+    return sett
+
+
+def deploy_sett_harvest_renbtc(badger, deployer):
+    sett = DotMap(logic=deploy_sett_common_logic(deployer))
+    sett.logic.StrategyHarvestMetaFarm = StrategyHarvestMetaFarm.deploy(
+        {"from": deployer}
+    )
+    sett.controller = deploy_controller(badger, sett, deployer)
+
+    sett.sett = deploy_sett(
+        badger,
+        sett,
+        sett_config.harvest.renCrv.params.want,
+        sett.controller,
+        "Badger SuperSett renCrv (Harvest)",
+        "bSuperRenCrv (Harvest)",
+        deployer,
+    )
+
+    params = sett_config.harvest.renCrv.params
+    params.rewardsEscrow = badger.rewardsEscrow
+    sett.strategy = deploy_strategy(
+        badger,
+        sett,
+        "StrategyHarvestMetaFarm",
+        sett.controller,
+        sett_config.harvest.renCrv.params,
+        deployer,
+    )
+
+    sett.want = interface.IERC20(sett.strategy.want())
+
+    configure_sett(sett, deployer)
+
+    return sett
+
+
+def deploy_sett_pickle_renbtc(badger, deployer):
+    sett = DotMap(logic=deploy_sett_common_logic(deployer))
+    sett.logic.StrategyPickleMetaFarm = StrategyPickleMetaFarm.deploy(
+        {"from": deployer}
+    )
+
+    sett.controller = deploy_controller(badger, sett, deployer)
+
+    sett.sett = deploy_sett(
+        badger,
+        sett,
+        sett_config.pickle.renCrv.params.want,
+        sett.controller,
+        "Badger SuperSett renCrv (Pickle)",
+        "bSuperRenCrv (Pickle)",
+        deployer,
+    )
+
+    params = sett_config.pickle.renCrv.params
+    sett.strategy = deploy_strategy(
+        badger,
+        sett,
+        "StrategyPickleMetaFarm",
+        sett.controller,
+        sett_config.pickle.renCrv.params,
+        deployer,
+    )
+
+    sett.want = interface.IERC20(sett.strategy.want())
+
+    configure_sett(sett, deployer)
+
+    return sett
 
 
 def deploy_sett_system(badger, deployer):
@@ -189,20 +495,7 @@ def deploy_sett_system(badger, deployer):
     deployer = badger.deployer
 
     # Logic
-    sett = DotMap(
-        logic=DotMap(
-            StrategyCurveGauge=StrategyCurveGauge.deploy({"from": deployer}),
-            StrategyPickleMetaFarm=StrategyPickleMetaFarm.deploy({"from": deployer}),
-            StrategyHarvestMetaFarm=StrategyHarvestMetaFarm.deploy({"from": deployer}),
-            StrategyBadgerLpMetaFarm=StrategyBadgerLpMetaFarm.deploy(
-                {"from": deployer}
-            ),
-            StrategyBadgerRewards=StrategyBadgerRewards.deploy({"from": deployer}),
-            Controller=Controller.deploy({"from": deployer}),
-            Sett=Sett.deploy({"from": deployer}),
-            StakingRewards=StakingRewards.deploy({"from": deployer}),
-        )
-    )
+    sett = DotMap(logic=deploy_sett_logic(deployer))
 
     # Controllers
     sett.native.controller = deploy_controller(badger, sett, deployer)

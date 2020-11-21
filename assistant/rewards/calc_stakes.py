@@ -15,7 +15,7 @@ from eth_utils import encode_hex
 from toolz import valfilter, valmap
 from tqdm import tqdm, trange
 from click import secho
-from helpers.constants import ZERO_ADDRESS
+from helpers.constants import AddressZero
 
 
 def calc_geyser_stakes(geyser, globalStartBlock, snapshotStartBlock, periodEndBlock):
@@ -45,7 +45,7 @@ def events_to_stakes(geyser, startBlock, snapshotBlock):
         logs = contract.events.Staked().getLogs(fromBlock=start, toBlock=end)
         for log in logs:
             user = log["args"]["user"]
-            if user != ZERO_ADDRESS:
+            if user != AddressZero:
                 if not stakes[user]:
                     stakes[user] = []
                 stakes[user].push(
@@ -77,7 +77,7 @@ def collect_actions(geyser, startBlock, endBlock):
             timestamp = log["args"]["timestamp"]
             user = log["args"]["args"]
 
-            if user != ZERO_ADDRESS:
+            if user != AddressZero:
                 if not actions[user][timestamp]:
                     actions[user][timestamp] = []
                 actions[user][timestamp].push(
@@ -96,7 +96,7 @@ def collect_actions(geyser, startBlock, endBlock):
             timestamp = log["args"]["timestamp"]
             user = log["args"]["args"]
 
-            if user != ZERO_ADDRESS:
+            if user != AddressZero:
                 if not actions[user][timestamp]:
                     actions[user][timestamp] = []
                 actions[user][timestamp].push(

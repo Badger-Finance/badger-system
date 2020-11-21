@@ -34,7 +34,7 @@ contract StrategyBadgerLpMetaFarm is BaseStrategy {
     address public constant wbtc = 0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599; // wBTC Token
     address public constant weth = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2; // Weth Token, used for crv <> weth <> wbtc route
 
-    event Harvest(uint256 preBadgerBalance, uint256 harvestedBadger, uint256 preWantBalance, uint256 liquidityAdded);
+    event HarvestLpMetaFarm(uint256 preBadgerBalance, uint256 harvestedBadger, uint256 preWantBalance, uint256 liquidityAdded);
 
     function initialize(
         address _governance,
@@ -94,30 +94,34 @@ contract StrategyBadgerLpMetaFarm is BaseStrategy {
     }
 
     /// @dev Harvest accumulated badger rewards and convert them to LP tokens
-    function harvest() external override {
+    /// @dev Restake the gained LP tokens in the Geyser
+    function harvest() external override whenNotPaused {
         _onlyAuthorizedActors();
 
         uint256 _beforeBadger = IERC20Upgradeable(badger).balanceOf(address(this));
+
+        // Harvest rewards from Geyser
         IStakingRewards(geyser).getReward();
 
         uint256 _afterBadger = IERC20Upgradeable(badger).balanceOf(address(this));
         uint256 _harvested = _afterBadger.sub(_beforeBadger);
 
+        // Swap half of harvested badger for wBTC
         address[] memory path = new address[](3);
         path[0] = badger; // Badger
-        path[1] = weth;
-        path[2] = wbtc;
+        path[1] = wbtc;
 
         uint256 _beforeLp = IERC20Upgradeable(want).balanceOf(address(this));
 
-        // Swap half of harvested badger for wBTC and add as liquidity
         _swap(badger, _harvested.div(2), path);
-        _add_liquidity(want, wbtc);
+
+        // Add Badger and wBTC as liquidity
+        _add_liquidity(badger, wbtc);
 
         uint256 _afterLp = IERC20Upgradeable(want).balanceOf(address(this));
-
         _deposit(_afterLp);
 
-        emit Harvest(_beforeBadger, _harvested, _beforeLp, _afterLp.sub(_beforeLp));
+        emit HarvestLpMetaFarm(_beforeBadger, _harvested, _beforeLp, _afterLp.sub(_beforeLp));
+        emit Harvest(_afterLp.sub(_beforeLp), block.number);
     }
 }

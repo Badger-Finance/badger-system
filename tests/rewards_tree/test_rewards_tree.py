@@ -1,175 +1,187 @@
-# import pytest
-# from brownie import *
-# import brownie
-# from tests.rewards_tree.fixtures import rewards_tree_unit
-# import secrets
+import pytest
+from brownie import *
+import brownie
+from tests.rewards_tree.fixtures import rewards_tree_unit
+import secrets
+from assistant.rewards import rewards_assistant
+from helpers.constants import *
 
 
-# def random_32_bytes():
-#     return "0x" + secrets.token_hex(32)
+def random_32_bytes():
+    return "0x" + secrets.token_hex(32)
 
 
-# @pytest.fixture(scope="function", autouse="True")
-# def setup(rewards_tree_unit):
-#     return rewards_tree_unit
+@pytest.fixture(scope="function", autouse="True")
+def setup(rewards_tree_unit):
+    return rewards_tree_unit
 
 
-# def test_root_publish(setup):
-#     badgerTree = setup.badgerTree
-#     guardian = setup.guardian
-#     rootUpdater = setup.rootUpdater
-#     user = accounts[4]
+def test_root_publish(setup):
+    badgerTree = setup.badgerTree
+    guardian = setup.guardian
+    rootUpdater = setup.rootUpdater
+    user = accounts[4]
 
-#     startingCycle = badgerTree.currentCycle()
-#     assert startingCycle == 0
+    startingCycle = badgerTree.currentCycle()
+    assert startingCycle == 0
 
-#     root = random_32_bytes()
-#     contentHash = random_32_bytes()
+    root = random_32_bytes()
+    contentHash = random_32_bytes()
 
-#     # Ensure non-root updater cannot update root
-#     with brownie.reverts():
-#         badgerTree.publishRoot(root, contentHash, {"from": guardian})
+    # Ensure non-root updater cannot update root
+    with brownie.reverts():
+        badgerTree.publishRoot(root, contentHash, {"from": guardian})
 
-#     # Ensure root updater can update root
-#     badgerTree.publishRoot(root, contentHash, {"from": rootUpdater})
+    # Ensure root updater can propose new root, but not update
+    badgerTree.publishRoot(root, contentHash, {"from": rootUpdater})
 
-#     assert badgerTree.getCurrentMerkleData()[0] == root
-#     assert badgerTree.getCurrentMerkleData()[1] == contentHash
+    assert badgerTree.getCurrentMerkleData()[0] == EmptyBytes32
+    assert badgerTree.getCurrentMerkleData()[1] == EmptyBytes32
+    assert badgerTree.currentCycle() == startingCycle
 
-#     assert badgerTree.currentCycle() == startingCycle + 1
-
-#     assert badgerTree.getMerkleData(0)[0] == root
-#     assert badgerTree.getMerkleData(0)[1] == contentHash
-
-#     oldRoot = root
-#     oldContentHash = contentHash
-
-#     root = random_32_bytes()
-#     contentHash = random_32_bytes()
-
-#     # Ensure root updater can update another root
-#     badgerTree.publishRoot(root, contentHash, {"from": rootUpdater})
-
-#     assert badgerTree.getCurrentMerkleData(0)[0] == root
-#     assert badgerTree.getCurrentMerkleData(0)[1] == contentHash
-
-#     assert badgerTree.currentCycle() == startingCycle + 2
-
-#     assert badgerTree.getMerkleData(1)[0] == root
-#     assert badgerTree.getMerkleData(1)[1] == contentHash
-
-#     assert badgerTree.getMerkleData(0)[0] == oldRoot
-#     assert badgerTree.getMerkleData(0)[1] == oldContentHash
+    assert badgerTree.pendingMerkleRoot() == root
+    assert badgerTree.pendingMerkleContentHash() == contentHash
 
 
-# def test_guardian_pause(setup):
-#     badgerTree = setup.badgerTree
-#     guardian = setup.guardian
-#     rootUpdater = setup.rootUpdater
-#     user = accounts[4]
+    # Ensure non-root approver cannot approve root
+    with brownie.reverts():
+        badgerTree.approveRoot(root, contentHash, {"from": guardian})
 
-#     # Ensure non-guardian cannot pause
-#     with brownie.reverts():
-#         badgerTree.pauseUpdates({"from": user})
+    badgerTree.approveRoot(root, contentHash, {"from": guardian})
 
-#     # Ensure guardian can pause
-#     badgerTree.pauseUpdates({"from": guardian})
+    assert badgerTree.getCurrentMerkleData()[0] == root
+    assert badgerTree.getCurrentMerkleData()[1] == contentHash
+    assert badgerTree.currentCycle() == startingCycle + 1
 
-#     # Ensure root updater cannot update root while paused
-#     with brownie.reverts():
-#         badgerTree.publishRoot(
-#             random_32_bytes(), random_32_bytes(), {"from": rootUpdater}
-#         )
+    oldRoot = root
+    oldContentHash = contentHash
 
-#     # Ensure non-root updater cannot update root while paused
-#     with brownie.reverts():
-#         badgerTree.publishRoot(random_32_bytes(), random_32_bytes(), {"from": user})
+    root = random_32_bytes()
+    contentHash = random_32_bytes()
 
-#     # Ensure non-guardian cannot unpause
-#     with brownie.reverts():
-#         badgerTree.unpauseUpdates({"from": user})
+    # Ensure root updater can update another root
+    badgerTree.publishRoot(root, contentHash, {"from": rootUpdater})
 
-#     # Ensure guardian can unpause
-#     badgerTree.pauseUpdates({"from": guardian})
+    assert badgerTree.getCurrentMerkleData()[0] == root
+    assert badgerTree.getCurrentMerkleData()[1] == contentHash
 
-#     # Ensure non-root updater cannot update root after unpause
-#     root = random_32_bytes()
-#     contentHash = random_32_bytes()
-#     with brownie.reverts():
-#         badgerTree.publishRoot(root, contentHash, {"from": user})
+    assert badgerTree.currentCycle() == startingCycle + 2
 
-#     # Ensure root updater can update root after unpause
-#     badgerTree.publishRoot(root, contentHash, {"from": rootUpdater})
+    assert badgerTree.getMerkleData(1)[0] == root
+    assert badgerTree.getMerkleData(1)[1] == contentHash
 
-#     assert badgerTree.getCurrentMerkleData()[0] == root
-#     assert badgerTree.getCurrentMerkleData()[1] == contentHash
+    assert badgerTree.getMerkleData(0)[0] == oldRoot
+    assert badgerTree.getMerkleData(0)[1] == oldContentHash
 
 
-# def test_claim():
-#     # Generate root with single user with sample intermediate staking data
+def test_guardian_pause(setup):
+    badgerTree = setup.badgerTree
+    guardian = setup.guardian
+    rootUpdater = setup.rootUpdater
+    user = accounts[4]
 
-#     # Add multiple tokens on second root
+    # Ensure non-guardian cannot pause
+    with brownie.reverts():
+        badgerTree.pause({"from": user})
 
-#     # Ensure can't claim more than allowed
+    # Ensure guardian can pause
+    badgerTree.pause({"from": guardian})
 
-#     assert False
+    # Ensure root updater cannot update root while paused
+    with brownie.reverts():
+        badgerTree.publishRoot(
+            random_32_bytes(), random_32_bytes(), 1, {"from": rootUpdater}
+        )
+
+    # Ensure non-root updater cannot update root while paused
+    with brownie.reverts():
+        badgerTree.publishRoot(random_32_bytes(), random_32_bytes(), 1, {"from": user})
+
+    # Ensure non-guardian cannot unpause
+    with brownie.reverts():
+        badgerTree.unpause({"from": user})
+
+    # Ensure guardian can unpause
+    badgerTree.pause({"from": guardian})
+
+    # Ensure non-root updater cannot update root after unpause
+    root = random_32_bytes()
+    contentHash = random_32_bytes()
+    with brownie.reverts():
+        badgerTree.publishRoot(root, contentHash, {"from": user})
+
+    # Ensure root updater can update root after unpause
+    badgerTree.publishRoot(root, contentHash, {"from": rootUpdater})
+
+    assert badgerTree.getCurrentMerkleData()[0] == root
+    assert badgerTree.getCurrentMerkleData()[1] == contentHash
 
 
-# def test_token_claim_limits():
-#     # Generate root with massive claimable
-#     # Ensure claim is stopped by the invariant check
-#     # Pause root
-#     # Upload fixed root
-#     #
-#     assert False
+def test_claim():
+    # Generate root with single user with sample intermediate staking data
+
+    # Add multiple tokens on second root
+
+    # Ensure can't claim more than allowed
+
+    assert False
 
 
-# def test_token_claim_e2e():
-#     """
-#     TODO: Finish all unit tests first
-#     """
-#     # Generate realistic data using staking actions
-#     # Ensure expected results for each user match claimed
-#     assert False
+def test_token_claim_limits():
+    # Generate root with massive claimable
+    # Ensure claim is stopped by the invariant check
+    # Pause root
+    # Upload fixed root
+    #
+    assert False
 
 
-# def test_override_cycle():
-#     assert False
+def test_token_claim_e2e():
+    """
+    TODO: Finish all unit tests first
+    """
+    # Generate realistic data using staking actions
+    # Ensure expected results for each user match claimed
+    assert False
 
 
-# def test_recieve_eth(setup):
-#     smartTimelock = setup.smartTimelock
-#     deployer = setup.deployer
-#     team = setup.team
+def test_override_cycle():
+    assert False
 
-#     ethAmount = Wei("1 ether")
 
-#     preBalances = {
-#         "timelock": smartTimelock.balance(),
-#         "deployer": deployer.balance(),
-#     }
+def test_recieve_eth(setup):
+    smartTimelock = setup.smartTimelock
+    deployer = setup.deployer
+    team = setup.team
 
-#     deployer.transfer(smartTimelock, ethAmount)
+    ethAmount = Wei("1 ether")
 
-#     postBalances = {
-#         "timelock": smartTimelock.balance(),
-#         "deployer": deployer.balance(),
-#     }
+    preBalances = {
+        "timelock": smartTimelock.balance(),
+        "deployer": deployer.balance(),
+    }
 
-#     assert postBalances["deployer"] <= preBalances["deployer"] - ethAmount
-#     assert postBalances["timelock"] == preBalances["timelock"] + ethAmount
+    deployer.transfer(smartTimelock, ethAmount)
 
-#     preBalances = {
-#         "team0": team[0].balance(),
-#         "deployer": deployer.balance(),
-#     }
+    postBalances = {
+        "timelock": smartTimelock.balance(),
+        "deployer": deployer.balance(),
+    }
 
-#     smartTimelock.call(deployer, ethAmount, "0x", {"from": team[0], "value": ethAmount})
+    assert postBalances["deployer"] <= preBalances["deployer"] - ethAmount
+    assert postBalances["timelock"] == preBalances["timelock"] + ethAmount
 
-#     postBalances = {
-#         "team0": team[0].balance(),
-#         "deployer": deployer.balance(),
-#     }
+    preBalances = {
+        "team0": team[0].balance(),
+        "deployer": deployer.balance(),
+    }
 
-#     assert postBalances["deployer"] == preBalances["deployer"] + ethAmount
-#     assert postBalances["team0"] <= preBalances["team0"] - ethAmount
+    smartTimelock.call(deployer, ethAmount, "0x", {"from": team[0], "value": ethAmount})
+
+    postBalances = {
+        "team0": team[0].balance(),
+        "deployer": deployer.balance(),
+    }
+
+    assert postBalances["deployer"] == preBalances["deployer"] + ethAmount
+    assert postBalances["team0"] <= preBalances["team0"] - ethAmount

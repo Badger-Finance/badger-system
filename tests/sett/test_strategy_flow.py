@@ -1,127 +1,59 @@
-from tests.sett.strategy_test_config import confirm_deposit, confirm_earn, confirm_withdraw
-from tests.conftest import distribute_rewards_escrow
+from tests.test_recorder import EventRecord, TestRecorder
+from tests.conftest import badger_single_sett
+from scripts.systems.badger_system import BadgerSystem
+from tests.sett.helpers.snapshots import (
+    confirm_deposit,
+    confirm_earn,
+    confirm_harvest,
+    confirm_tend,
+    confirm_withdraw,
+    sett_snapshot,
+)
 from helpers.time_utils import daysToSeconds
 import brownie
-from helpers.proxy_utils import deploy_proxy
-import pytest
-from operator import itemgetter
-from brownie.test import given, strategy
 from brownie import *
 from helpers.constants import *
-from helpers.gnosis_safe import convert_to_test_mode, exec_direct
-from dotmap import DotMap
-from scripts.deploy.deploy_badger import main
-from helpers.registry import whale_registry
+import pytest
 
-"""
-E2E isolated tests for StrategyBadgerRewards
-This strategy stakes it's assets in the special rewards pool, increasing it's badger position.
-"""
 
-def distribute_from_whales(badger, recipient):
-    print (len(whale_registry.items()))
-    for key, whale in whale_registry.items():
-        print(whale.token)
-        if whale.token:
-            token = interface.IERC20(whale.token)
-            token.transfer(recipient, token.balanceOf(whale.whale), {"from": whale.whale})
-
-def sett_snapshot(sett, strategy, account):
-    want = interface.IERC20(strategy.want())
-
-    return DotMap(
-        want=DotMap(
-            userBalance=want.balanceOf(account)
-        ),
-        sett=DotMap(
-            totalSupply=sett.totalSupply(),
-            userBalance=sett.balanceOf(account),
-            wantReserve=want.balanceOf(sett),
-            available=sett.available(),
-            balance=sett.balance(),
-            # pricePerFullShare=sett.getPricePerFullShare()
-        ),
-        strategy=DotMap(
-            balanceOf=strategy.balanceOf(),
-            balanceOfWant=strategy.balanceOfWant(),
-            balanceOfPool=strategy.balanceOfPool(),
-            performanceFeeGovernance=strategy.performanceFeeGovernance(),
-            performanceFeeStrategist=strategy.performanceFeeStrategist(),
-            withdrawalFee=strategy.withdrawalFee(),
-        )
-    )
-
-# def get_strategy_pool_balance(strategy):
-#     strategyName = strategy.getName()
-
-#     if strategyName == "StrategyCurveGauge":
-#     if strategyName == "StrategyPickleMetaFarm":
-#     if strategyName == "StrategyHarvestMetaFarm":
-#     if strategyName == "StrategyBadgerLpMetaFarm":
-#     if strategyName == "StrategyBadgerRewards":
-
-def get_sett_by_id(badger, id):
-    contracts=DotMap()
-
-    if id == 'native.renCrv':
-        contracts.sett = badger.sett.native.renCrv
-        contracts.strategy = badger.sett.native.strategies.renCrv
-    if id == 'native.badger':
-        contracts.sett = badger.sett.native.badger
-        contracts.strategy = badger.sett.native.strategies.badger
-    if id == 'native.sbtcCrv':
-        contracts.sett = badger.sett.native.sbtcCrv
-        contracts.strategy = badger.sett.native.strategies.sbtcCrv
-    if id == 'native.tbtcCrv':
-        contracts.sett = badger.sett.native.tbtcCrv
-        contracts.strategy = badger.sett.native.strategies.tbtcCrv
-    if id == 'harvest.renCrv':
-        contracts.sett = badger.sett.harvest.renCrv
-        contracts.strategy = badger.sett.harvest.strategies.renCrv
-    if id == 'pickle.renCrv':
-        contracts.sett = badger.sett.pickle.renCrv
-        contracts.strategy = badger.sett.pickle.strategies.renCrv
-
-    contracts.controller = interface.IController(contracts.sett.controller())
-    contracts.want = interface.IERC20(contracts.strategy.want())
-
-    return contracts
-
-@pytest.fixture()
-def shared_setup(badger):
-    distribute_rewards_escrow(badger, badger.token, badger.deployer, Wei("100000 ether"))
-    distribute_from_whales(badger, badger.deployer)
-    return badger
-
-@pytest.mark.parametrize('settId', ['native.renCrv', 'native.badger', 'native.sbtcCrv', 'native.tbtcCrv'])
-# @pytest.mark.parametrize('settId', ['pickle.renCrv'])
-def test_deposit_withdraw_single_user(shared_setup, settId):
-    badger = shared_setup
-    settConfig = get_sett_by_id(badger, settId)
-
-    controller = settConfig.controller
-    sett = settConfig.sett
-    strategy = settConfig.strategy
-    want = settConfig.want
+# @pytest.mark.skip()
+@pytest.mark.parametrize(
+    "settId",
+    [
+        "native.badger",
+        "native.renCrv",
+        "native.sbtcCrv",
+        "native.tbtcCrv",
+        "pickle.renCrv",
+        "harvest.renCrv",
+    ],
+)
+def test_deposit_withdraw_single_user_flow(settId):
+    badger = badger_single_sett(settId)
+    controller = badger.getController(settId)
+    sett = badger.getSett(settId)
+    strategy = badger.getStrategy(settId)
+    want = badger.getStrategyWant(settId)
 
     deployer = badger.deployer
     randomUser = accounts[6]
 
+    print(want, want.address, want.totalSupply(), deployer)
+
     # Deposit
-    
     depositAmount = Wei("1 ether")
     assert want.balanceOf(deployer) >= depositAmount
-    want.approve(sett, MaxUint256, {'from': deployer})
+    want.approve(sett, MaxUint256, {"from": deployer})
 
     before = sett_snapshot(sett, strategy, deployer)
-    sett.deposit(depositAmount, {'from': deployer})
+    sett.deposit(depositAmount, {"from": deployer})
     after = sett_snapshot(sett, strategy, deployer)
 
     confirm_deposit(before, after, deployer, depositAmount)
 
     # Earn
     with brownie.reverts("onlyAuthorizedActors"):
-        sett.earn({'from': randomUser})
+        sett.earn({"from": randomUser})
 
     min = sett.min()
     max = sett.max()
@@ -129,9 +61,13 @@ def test_deposit_withdraw_single_user(shared_setup, settId):
 
     assert sett.keeper() == deployer
 
+    print("balanceOfPool() before", strategy.balanceOfPool())
+
     before = sett_snapshot(sett, strategy, deployer)
-    sett.earn({'from': deployer})
+    sett.earn({"from": deployer})
     after = sett_snapshot(sett, strategy, deployer)
+
+    print("balanceOfPool() after", strategy.balanceOfPool())
 
     confirm_earn(before, after)
 
@@ -139,22 +75,34 @@ def test_deposit_withdraw_single_user(shared_setup, settId):
     chain.mine(1)
 
     before = sett_snapshot(sett, strategy, deployer)
-    sett.withdraw(depositAmount // 2, {'from': deployer})
+    sett.withdraw(depositAmount // 2, {"from": deployer})
     after = sett_snapshot(sett, strategy, deployer)
 
     confirm_withdraw(before, after, deployer)
 
-    chain.sleep(15)
+    chain.sleep(10000)
     chain.mine(1)
 
     before = sett_snapshot(sett, strategy, deployer)
-    sett.withdrawAll({'from': deployer})
+    sett.withdrawAll({"from": deployer})
     after = sett_snapshot(sett, strategy, deployer)
 
     confirm_withdraw(before, after, deployer)
 
-@pytest.mark.skip(reason="no way of currently testing this")
-def single_user_harvest_flow(shared_setup):
+
+# @pytest.mark.skip()
+@pytest.mark.parametrize(
+    "settId",
+    [
+        "native.renCrv",
+        "native.badger",
+        "native.sbtcCrv",
+        "native.tbtcCrv",
+        "pickle.renCrv",
+        "harvest.renCrv",
+    ],
+)
+def test_single_user_harvest_flow(settId):
     """
     After each action, run the usual checks.
 
@@ -192,39 +140,78 @@ def single_user_harvest_flow(shared_setup):
         - Price per full share should NOT have inceased as we never realized gains
 
     """
-    badger = shared_setup
-    controller = badger.sett.native.controller
-    sett = badger.sett.native.badger
-    strategy = badger.sett.native.strategies.badger
+    suiteName = "test_single_user_harvest_flow" + ": " + settId
+    testRecorder = TestRecorder(suiteName)
+
+    badger = badger_single_sett(settId)
+    controller = badger.getController(settId)
+    sett = badger.getSett(settId)
+    strategy = badger.getStrategy(settId)
+    want = badger.getStrategyWant(settId)
+
     deployer = badger.deployer
     randomUser = accounts[6]
+    
+
     tendable = strategy.isTendable()
 
+    startingBalance = want.balanceOf(deployer)
+
+    depositAmount = Wei("1 ether")
+    assert startingBalance >= depositAmount
+
+    # Deposit
     before = sett_snapshot(sett, strategy, deployer)
-    depositAmount = Wei("1 ether")
-    sett.deposit(depositAmount, {'from': deployer})
+    want.approve(sett, MaxUint256, {"from": deployer})
+    sett.deposit(depositAmount, {"from": deployer})
     after = sett_snapshot(sett, strategy, deployer)
+
     confirm_deposit(before, after, deployer, depositAmount)
-    
+
+    # Earn
+    before = sett_snapshot(sett, strategy, deployer)
+    sett.earn({"from": deployer})
+    after = sett_snapshot(sett, strategy, deployer)
+
+    confirm_earn(before, after)
+
     before_harvest = sett_snapshot(sett, strategy, deployer)
 
-    if (tendable):
-        with brownie.reverts('onlyAuthorizedActors'):
-            strategy.tend({'from': randomUser})
-        strategy.tend({'from': deployer})
+    if tendable:
+        with brownie.reverts("onlyAuthorizedActors"):
+            strategy.tend({"from": randomUser})
+
+        before = sett_snapshot(sett, strategy, deployer)
+        tx = strategy.tend({"from": deployer})
+        after = sett_snapshot(sett, strategy, deployer)
+        testRecorder.add_record(EventRecord("Tend", tx.events, tx.timestamp))
+
+        confirm_tend(before, after, deployer)
+
+    chain.sleep(daysToSeconds(0.5))
+    chain.mine()
+
+    if tendable:
+        before = sett_snapshot(sett, strategy, deployer)
+        tx = strategy.tend({"from": deployer})
+        after = sett_snapshot(sett, strategy, deployer)
+        testRecorder.add_record(EventRecord("Tend", tx.events, tx.timestamp))
+
+        confirm_tend(before, after, deployer)
 
     chain.sleep(daysToSeconds(1))
     chain.mine()
 
-    if (tendable):
-        strategy.tend({'from': deployer})
+    with brownie.reverts("onlyAuthorizedActors"):
+        strategy.harvest({"from": randomUser})
 
-    chain.sleep(daysToSeconds(1))
-    chain.mine()
+    before = sett_snapshot(sett, strategy, deployer)
+    tx = strategy.harvest({"from": deployer})
+    after = sett_snapshot(sett, strategy, deployer)
+    testRecorder.add_record(EventRecord("Harvest", tx.events, tx.timestamp))
+    testRecorder.print_to_file(suiteName + '.json')
 
-    with brownie.reverts('onlyAuthorizedActors'):
-        strategy.harvest({'from': randomUser})
-    strategy.harvest({'from': deployer})
+    confirm_harvest(before, after, deployer)
 
     after_harvest = sett_snapshot(sett, strategy, deployer)
 
@@ -234,96 +221,78 @@ def single_user_harvest_flow(shared_setup):
     chain.sleep(daysToSeconds(1))
     chain.mine()
 
-    if (tendable):
-        strategy.tend({'from': deployer})
+    if tendable:
+        tx = strategy.tend({"from": deployer})
+        testRecorder.add_record(EventRecord("Tend", tx.events, tx.timestamp))
 
-    chain.sleep(daysToSeconds(1))
+    chain.sleep(daysToSeconds(3))
     chain.mine()
 
     before_harvest = sett_snapshot(sett, strategy, deployer)
-    strategy.harvest({'from': deployer})
+    tx = strategy.harvest({"from": deployer})
     after_harvest = sett_snapshot(sett, strategy, deployer)
+    testRecorder.add_record(EventRecord("Harvest", tx.events, tx.timestamp))
+
+    harvested = tx.events["Harvest"][0]["harvested"]
+    assert harvested > 0
 
     assert after_harvest.sett.pricePerFullShare > before_harvest.sett.pricePerFullShare
     assert after_harvest.strategy.balanceOf > before_harvest.strategy.balanceOf
 
-@pytest.mark.skip(reason="no way of currently testing this")
-def test_harvest_single_user(shared_setup):
-    badger = shared_setup
-    controller = badger.sett.native.controller
-    sett = badger.sett.native.badger
-    strategy = badger.sett.native.strategies.badger
+    sett.withdrawAll({"from": deployer})
+
+    endingBalance = want.balanceOf(deployer)
+
+    report = {
+        "time": "4 days",
+        "gains": endingBalance - startingBalance,
+        "gainsPercentage": (endingBalance - startingBalance) / startingBalance,
+    }
+
+    # testRecorder.add_record(EventRecord("Final Report", report, 0))
+    testRecorder.print_to_file(suiteName + '.json')
+
+    # assert endingBalance > startingBalance
+
+@pytest.mark.skip()
+@pytest.mark.parametrize(
+    "settId",
+    [
+        "native.renCrv",
+        "native.badger",
+        "native.sbtcCrv",
+        "native.tbtcCrv",
+        "pickle.renCrv",
+        "harvest.renCrv",
+    ],
+)
+def test_migrate_single_user(settId):
+    badger = badger_single_sett(settId)
+    controller = badger.getController(settId)
+    sett = badger.getSett(settId)
+    strategy = badger.getStrategy(settId)
+    want = badger.getStrategyWant(settId)
+
     deployer = badger.deployer
     randomUser = accounts[6]
+
+    startingBalance = want.balanceOf(deployer)
 
     depositAmount = Wei("1 ether")
+    assert startingBalance >= depositAmount
 
-    single_user_harvest_flow(badger)
+    # Deposit
+    before = sett_snapshot(sett, strategy, deployer)
+    want.approve(sett, MaxUint256, {"from": deployer})
+    sett.deposit(depositAmount, {"from": deployer})
+    after = sett_snapshot(sett, strategy, deployer)
 
-    sett.withdraw(depositAmount // 2, {'from': deployer})
-    sett.withdrawAll({'from': deployer})
-
-@pytest.mark.skip(reason="no way of currently testing this")
-def test_migrate_single_user(shared_setup):
-    badger = shared_setup
-    controller = badger.sett.native.controller
-    sett = badger.sett.native.badger
-    strategy = badger.sett.native.strategies.badger
-    deployer = badger.deployer
-    randomUser = accounts[6]
-    """
-    --Setup--
-    User deposits into Sett
-    Deposit into Strat via earn()
-    tend()
-    harvest()
-
-    withdrawAll
-        - Ensure only appropriate parties can call (roll back between each call)
-    """
-    controller = badger.sett.native.controller
-    sett = badger.sett.native.badger
-    strategy = badger.sett.native.strategies.badger
-    deployer = badger.deployer
-    randomUser = accounts[6]
-
-    single_user_harvest_flow(badger)
+    # single_user_harvest_flow(shared_setup, settId)
     with brownie.reverts():
-        controller.withdrawAll(strategy.want(), {'from': randomUser})
-        
-    controller.withdrawAll(strategy.want(), {'from': deployer})
+        controller.withdrawAll(strategy.want(), {"from": randomUser})
 
-@pytest.mark.skip(reason="no way of currently testing this")
-def test_action_flow(badger):
-    assert True
-    # # TODO: Get token randomly from selection
-    # sett = badger.sett.native.badger
-    # controller = Controller.at(sett.controller())
-    # strategy = controller.getStrategy(sett.token())
-    # want = strategy.want()
+    chain.snapshot()
+    controller.withdrawAll(strategy.want(), {"from": deployer})
 
-    # assert sett.token() == strategy.want()
-    
-    # users = [badger.deployer, accounts[2], accounts[3], accounts[4]]
-    # distribute_test_asset(badger, users)
-    # approve_assets(badger, users)
-
-    # rounds = 100
-
-    # user = get_random_user(users)
-
-    # # Initial deposit
-    # user = get_random_user(users)
-    # amount = get_random_amount(want, user)
-    # sett.deposit(amount, {'from': user})
-
-    # for round in range(rounds):
-    #     # Take user action
-    #     take_keeper_action(badger, sett, strategy, user)
-
-    #     user = get_random_user(users)
-    #     take_user_action(badger, sett, strategy, user)
-
-    #     take_keeper_action(badger, sett, strategy, user)
-
-
+    chain.revert()
+    chain.snapshot()

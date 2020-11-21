@@ -19,6 +19,7 @@ import "interfaces/badger/IStrategy.sol";
 import "interfaces/pickle/IPickleJar.sol";
 import "interfaces/pickle/IPickleChef.sol";
 import "interfaces/pickle/IPickleStaking.sol";
+import "interfaces/erc20/IWETH.sol";
 
 import "../BaseStrategy.sol";
 
@@ -51,11 +52,17 @@ contract StrategyPickleMetaFarm is BaseStrategy {
     uint256 public lastHarvested;
 
     event NotifyWithdrawMismatch(uint256 expected, uint256 actual, uint256 remainingStaked);
-    event Tend(uint256 pickleHarvested);
+    event Tend(uint256 tended, uint256 wethHarvested);
+    event WethConverted(uint256 amount);
 
     event PickleHarvest(
-        uint256 harvested,
-        uint256 transferred,
+        uint256 preExistingPickle,
+        uint256 fromStakingRewards,
+        uint256 totalHarvested,
+        uint256 ethConverted,
+        uint256 wethHarvested,
+        uint256 wbtcDeposited,
+        uint256 want,
         uint256 governancePerformanceFee,
         uint256 strategistPerformanceFee,
         uint256 timestamp,
@@ -91,12 +98,10 @@ contract StrategyPickleMetaFarm is BaseStrategy {
         picklePerformanceFeeStrategist = _feeConfig[1];
         withdrawalFee = _feeConfig[2];
 
+        // Grant infinite approval to Pickle
         IERC20Upgradeable(want).safeApprove(pickleJar, type(uint256).max);
         IERC20Upgradeable(pickleJar).safeApprove(pickleChef, type(uint256).max);
         IERC20Upgradeable(pickle).safeApprove(pickleStaking, type(uint256).max);
-
-         // Trust Uniswap with unlimited approval for swapping efficiency
-        IERC20Upgradeable(pickle).safeApprove(uniswap, type(uint256).max);
     }
 
     /// ===== View Functions =====
@@ -194,57 +199,93 @@ contract StrategyPickleMetaFarm is BaseStrategy {
     }
 
     /// @notice Harvest from strategy mechanics, realizing increase in underlying position
-    function harvest() external override {
+    function harvest() external override whenNotPaused {
         _onlyAuthorizedActors();
+
+        uint256 _before = IERC20Upgradeable(want).balanceOf(address(this));
+        uint256 _beforeEth = address(this).balance;
 
         // Harvest WETH Rewards & Unstake Pickle
         IPickleStaking(pickleStaking).exit();
 
+        uint256 _afterPickleStakingExit = IERC20Upgradeable(pickle).balanceOf(address(this));
+
+        // Harvest WETH gains
+        IPickleStaking(pickleStaking).getReward();
+
+        // Harvest Pickle gains
         _harvestPickle();
         uint256 _pickle = IERC20Upgradeable(pickle).balanceOf(address(this));
 
         lastHarvested = now;
 
-        // Convert Pickle to wETH
-        uint256 _remaining = IERC20Upgradeable(pickle).balanceOf(address(this));
+        uint256 _governanceFee = 0;
+        uint256 _strategistFee = 0;
 
-        address[] memory path = new address[](2);
-        path[0] = pickle;
-        path[1] = weth;
+        // Convert any Pickle to ETH, after fees
+        if (_pickle > 0) {
+            _governanceFee = _processFee(pickle, _pickle, picklePerformanceFeeGovernance, governance);
+            _strategistFee = _processFee(pickle, _pickle, picklePerformanceFeeStrategist, strategist);
 
-        _swap(pickle, _remaining, path);
+            uint256 _remaining = IERC20Upgradeable(pickle).balanceOf(address(this));
 
-        uint256 _weth = IERC20Upgradeable(pickle).balanceOf(address(this));
+            address[] memory path = new address[](2);
+            path[0] = pickle;
+            path[1] = weth;
 
-        uint256 _governanceFee = _processFee(weth, _weth, picklePerformanceFeeGovernance, governance);
-        uint256 _strategistFee = _processFee(weth, _weth, picklePerformanceFeeStrategist, strategist);
-
-        // Convert WETH to WBTC in order to add to LP position
-        if (_weth > 0) {
-            _weth = IERC20Upgradeable(pickle).balanceOf(address(this));
-
-            path = new address[](2);
-            path[0] = weth;
-            path[1] = lpComponent;
-
-            _swap(weth, _weth, path);
+            _swapEthOut(pickle, _remaining, path);
         }
 
-        uint256 _lpComponent = IERC20Upgradeable(lpComponent).balanceOf(address(this));
-        ICurveFi(curveSwap).add_liquidity([0, _lpComponent, 0], 0);
+        uint256 _weth = IERC20Upgradeable(pickle).balanceOf(address(this));
+        if (_weth > 0) {
+            IWETH(weth).withdraw(_weth);
+        }
 
+        uint256 _eth = address(this).balance;
+
+        // Unwrap WETH to ETH, convert to WBTC in order to add to LP position
+        if (_eth > 0) {
+            _eth = address(this).balance;
+
+            address[] memory path = new address[](2);
+            path[0] = weth;
+            path[1] = wbtc;
+
+            _swapEthIn(_eth, path);
+        }
+
+        // Add wBTC to increase LP position
+        uint256 _lpComponent = IERC20Upgradeable(wbtc).balanceOf(address(this));
+        if (_lpComponent > 0) {
+            _safeApproveHelper(wbtc, curveSwap, _lpComponent);
+            ICurveFi(curveSwap).add_liquidity([0, _lpComponent], 0);
+        }
+
+        // Deposit new want into position
         uint256 _want = IERC20Upgradeable(want).balanceOf(address(this));
         if (_want > 0) {
             _deposit(_want);
         }
 
-        // TODO: Add LPComponent to Event
-        emit PickleHarvest(_pickle, _remaining, _governanceFee, _strategistFee, now, block.number);
+        emit PickleHarvest(
+            _before,
+            _afterPickleStakingExit.sub(_before),
+            _pickle,
+            _eth.sub(_beforeEth),
+            _weth,
+            _lpComponent,
+            _want,
+            _governanceFee,
+            _strategistFee,
+            now,
+            block.number
+        );
+        emit Harvest(_want.sub(_before), block.number);
     }
 
     /// @notice Compound PICKLE and WETH gained from farms into more pickle for staking rewards
     /// @notice Any excess PICKLE sitting in the Strategy will be staked as well
-    function tend() external returns (uint256) {
+    function tend() external whenNotPaused returns (uint256) {
         _onlyAuthorizedActors();
 
         // Harvest WETH gains
@@ -270,7 +311,7 @@ contract StrategyPickleMetaFarm is BaseStrategy {
             IPickleStaking(pickleStaking).stake(_pickle);
         }
 
-        emit Tend(_pickle);
+        emit Tend(_pickle, _weth);
         return _pickle;
     }
 
@@ -280,4 +321,10 @@ contract StrategyPickleMetaFarm is BaseStrategy {
     function _harvestPickle() internal {
         IPickleChef(pickleChef).deposit(pid, 0);
     }
+
+    /// @dev PickleMetaFarm needs to be able to recieve ETH to execute Uni trades.
+    /// @dev Only Uniswap Router is able to send ETH
+    receive() external payable {}
+
+    // require(msg.sender == uniswap, "Only accept ETH from Uniswap");
 }

@@ -85,23 +85,17 @@ contract StrategyBadgerRewards is BaseStrategy {
             return _amount;
         }
 
-        // Use unclaimed rewards to cover, if possible
-        IStakingRewards(geyser).getReward();
-        uint256 _withRewards = IERC20Upgradeable(want).balanceOf(address(this));
-
-        if (_withRewards >= _amount) {
-            return _amount;
-        }
-
         // Unstake the remainder from StakingRewards
-        uint256 _remainder = _amount.sub(_withRewards);
+        uint256 _remainder = _amount.sub(_before);
         IStakingRewards(geyser).withdraw(_remainder);
 
         return _amount;
     }
 
-    function harvest() external override {
+    function harvest() external override whenNotPaused {
         _onlyAuthorizedActors();
+
+        uint256 _before = IERC20Upgradeable(want).balanceOf(address(this));
 
         IStakingRewards(geyser).getReward();
         
@@ -109,5 +103,7 @@ contract StrategyBadgerRewards is BaseStrategy {
         if (_want > 0) {
             _deposit(_want);
         }
+
+        emit Harvest(_want.sub(_before), block.number);
     }
 }

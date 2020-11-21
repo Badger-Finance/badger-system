@@ -10,6 +10,7 @@ networks:
         - 0x193991827e291599a262e7fa7d212ff1ae31d110
         - 0x97ca371d59bbfefdb391aa6dcbdf4455fec361f2
         - 0x3d24d77bec08549d7ea86c4e9937204c11e153f1
+        - 0xcD9e6Df80169b6a2CFfDaE613fAbC3F7C3647B14
   mainnet:
     gas_price: 0
   

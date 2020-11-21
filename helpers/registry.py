@@ -142,7 +142,8 @@ curve_registry = DotMap(
             gauge="0xB1F2cdeC61db658F091671F5f199635aEF202CAC",
         ),
         tbtcCrv=DotMap(
-            swap="0xC25099792E9349C7DD09759744ea681C7de2cb66",
+            swap="0xaa82ca713d94bba7a89ceab55314f9effeddc78c",
+            # swap="0xC25099792E9349C7DD09759744ea681C7de2cb66",
             token="0x64eda51d3Ad40D56b9dFc5554E06F94e1Dd786Fd",
             gauge="0x6828bcF74279eE32f2723eC536c22c51Eed383C6",
         ),
@@ -163,7 +164,7 @@ whale_registry = DotMap(
     tbtcCrv=DotMap(
         whale="0x3d24d77bec08549d7ea86c4e9937204c11e153f1",
         token=curve_registry.pools.tbtcCrv.token,
-    )
+    ),
 )
 
 

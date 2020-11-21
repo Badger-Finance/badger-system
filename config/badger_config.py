@@ -69,7 +69,7 @@ sett_config = DotMap(
                 gauge=pools.tbtcCrv.gauge,
                 swap=pools.tbtcCrv.swap,
                 minter=curve.minter,
-                lpComponent=registry.tokens.tbtc,
+                lpComponent=registry.tokens.wbtc,
                 performanceFeeStrategist=1000,
                 performanceFeeGovernance=1000,
                 withdrawalFee=75,
@@ -111,7 +111,21 @@ sett_config = DotMap(
 
 badger_total_supply = Wei("21000000 ether")
 
+multisig_config = DotMap(
+    address="0x28Ae60E4EFdFb4F0b0CC501b2DEDCa6acF3eA629",
+    owners=["0x66aB6D9362d4F35596279692F0251Db635165871"]
+)
+
+dao_config = DotMap(
+    initialOwner="0xcD9e6Df80169b6a2CFfDaE613fAbC3F7C3647B14",
+    token="0xa24d4966a753a72411cc11228e3a066f44ece326",
+    kernel="0x3E3ABAe73F459dA1747D3cf891798eee54CD5ed7",
+    agent="0x292f498041423035d6ed66fc4873dc466f5959b8"
+)
+
 badger_config = DotMap(
+    multisig=multisig_config,
+    dao=dao_config,
     huntParams=DotMap(
         startTime=int(time.time()), badgerAmount=badger_total_supply * 15 // 100
     ),
@@ -153,51 +167,44 @@ badger_config = DotMap(
         unlockSchedules=DotMap(
             badger=[
                 DotMap(
-                    amount=Wei("2000000 ether"),
-                    duration=daysToSeconds(8 * 7),  # 8 weeks
-                    rewardMultiplier=1,
+                    amount=Wei("90000 ether"),
+                    duration=daysToSeconds(7),  # 1 week
                 )
             ],
             badgerWbtcUni=[
                 DotMap(
-                    amount=Wei("2000000 ether"),
-                    duration=daysToSeconds(8 * 7),  # 8 weeks
-                    rewardMultiplier=1,
+                    amount=Wei("130000 ether"),
+                    duration=daysToSeconds(7),  # 1 week
                 )
             ],
             bSbtcCrv=[
                 DotMap(
-                    amount=Wei("2000000 ether"),
-                    rewardMultiplier=1,
-                    duration=daysToSeconds(8 * 7),  # 8 weeks
+                    amount=Wei("76750 ether"),
+                    duration=daysToSeconds(7),  # 1 week
                 )
             ],
             bRenCrv=[
                 DotMap(
-                    amount=Wei("2000000 ether"),
-                    duration=daysToSeconds(8 * 7),  # 8 weeks
-                    rewardMultiplier=1,
+                    amount=Wei("76750 ether"),
+                    duration=daysToSeconds(7),  # 1 week
                 )
             ],
             bTbtcCrv=[
                 DotMap(
-                    amount=Wei("2000000 ether"),
-                    duration=daysToSeconds(8 * 7),  # 8 weeks
-                    rewardMultiplier=1,
+                    amount=Wei("76750 ether"),
+                    duration=daysToSeconds(7),  # 1 week
                 )
             ],
-            bSuperSbtcCrv=[
+            bSuperRenCrvPickle=[
                 DotMap(
-                    amount=Wei("2000000 ether"),
-                    duration=daysToSeconds(8 * 7),  # 8 weeks
-                    rewardMultiplier=1.2,
+                    amount=Wei("76750 ether"),
+                    duration=daysToSeconds(7),  # 1 week
                 )
             ],
-            bSuperRenCrv=[
+            bSuperRenCrvHarvest=[
                 DotMap(
-                    amount=Wei("2000000 ether"),
-                    duration=daysToSeconds(8 * 7),  # 8 weeks
-                    rewardMultiplier=1.2,
+                    amount=Wei("76750 ether"),
+                    duration=daysToSeconds(7),  # 1 week
                 )
             ],
         ),

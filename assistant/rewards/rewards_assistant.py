@@ -8,6 +8,8 @@ from assistant.rewards.calc_distributions import (
 )
 from assistant.rewards.calc_stakes import calc_geyser_stakes
 
+def run(badger, startBlock, endBlock):
+    main(badger, startBlock, endBlock)
 
 def main(badger, startBlock, endBlock):
     merkle_allocations = DotMap()
@@ -18,7 +20,6 @@ def main(badger, startBlock, endBlock):
         badger.pools.sett.native.renCrv,
         badger.pools.sett.native.sbtcCrv,
         badger.pools.sett.native.tbtcCrv,
-        badger.pools.sett.native.badger,
         badger.pools.sett.pickle.renCrv,
         badger.pools.sett.harvest.renCrv,
     ]

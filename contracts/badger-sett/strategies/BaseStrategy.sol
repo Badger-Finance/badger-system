@@ -28,6 +28,7 @@ abstract contract BaseStrategy is PausableUpgradeable, SettAccessControl {
     event SetWithdrawalFee(uint256 withdrawalFee);
     event SetPerformanceFeeStrategist(uint256 performanceFeeStrategist);
     event SetPerformanceFeeGovernance(uint256 performanceFeeGovernance);
+    event Harvest(uint256 harvested, uint256 indexed blockNumber);
 
     address public want; // Want: Curve.fi renBTC/wBTC (crvRenWBTC) LP token
 
@@ -128,7 +129,8 @@ abstract contract BaseStrategy is PausableUpgradeable, SettAccessControl {
     // ===== Permissioned Actions: Controller =====
 
     /// @notice Withdraw all funds, normally used when migrating strategies
-    function withdrawAll() external virtual returns (uint256 balance) {
+    function withdrawAll() external virtual whenNotPaused returns (uint256 balance)
+     {
         _onlyController();
 
         _withdrawAll();
@@ -137,7 +139,7 @@ abstract contract BaseStrategy is PausableUpgradeable, SettAccessControl {
     }
 
     /// @notice Controller-only function to Withdraw partial funds, normally used with a vault withdrawal
-    function withdraw(uint256 _amount) external virtual {
+    function withdraw(uint256 _amount) external virtual whenNotPaused {
         _onlyController();
 
         uint256 _balance = IERC20Upgradeable(want).balanceOf(address(this));
@@ -157,7 +159,7 @@ abstract contract BaseStrategy is PausableUpgradeable, SettAccessControl {
 
     // NOTE: must exclude any tokens used in the yield
     // Controller role - withdraw should return to Controller
-    function withdrawOther(address _asset) external virtual returns (uint256 balance) {
+    function withdrawOther(address _asset) external virtual whenNotPaused returns (uint256 balance) {
         _onlyController();
         _onlyNotProtectedTokens(_asset);
 
@@ -232,6 +234,22 @@ abstract contract BaseStrategy is PausableUpgradeable, SettAccessControl {
     ) internal {
         _safeApproveHelper(startToken, uniswap, balance);
         IUniswapRouterV2(uniswap).swapExactTokensForTokens(balance, 0, path, address(this), now);
+    }
+
+    function _swapEthIn(
+        uint256 balance,
+        address[] memory path
+    ) internal {
+        IUniswapRouterV2(uniswap).swapExactETHForTokens{value: balance}(0, path, address(this), now);
+    }
+
+    function _swapEthOut(
+        address startToken,
+        uint256 balance,
+        address[] memory path
+    ) internal {
+        _safeApproveHelper(startToken, uniswap, balance);
+        IUniswapRouterV2(uniswap).swapExactTokensForETH(balance, 0, path, address(this), now);
     }
 
     /// @notice Add liquidity to uniswap for specified token pair, utilizing the maximum balance possible

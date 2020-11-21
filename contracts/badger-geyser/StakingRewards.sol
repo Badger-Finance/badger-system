@@ -134,6 +134,7 @@ contract StakingRewards is Initializable, AccessControlUpgradeable, PausableUpgr
         // very high values of rewardRate in the earned and rewardsPerToken functions;
         // Reward + leftover must be less than 2^256 / 10^18 to avoid overflow.
         uint256 balance = rewardsToken.balanceOf(address(this));
+        emit Test(rewardRate, balance, reward, rewardsDuration);
         require(rewardRate <= balance.div(rewardsDuration), "Provided reward too high");
 
         lastUpdateTime = block.timestamp;
@@ -188,6 +189,7 @@ contract StakingRewards is Initializable, AccessControlUpgradeable, PausableUpgr
     }
 
     /* ========== EVENTS ========== */
+    event Test(uint256 rate, uint256 balance, uint256 reward, uint256 duration);
 
     event RewardAdded(uint256 reward);
     event Staked(address indexed user, uint256 amount);
