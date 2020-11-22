@@ -10,6 +10,7 @@ import "deps/@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.so
 import "deps/@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 import "interfaces/badger/IController.sol";
+import "interfaces/erc20/IERC20Detailed.sol";
 import "./SettAccessControlDefended.sol";
 
 /* 
@@ -29,20 +30,39 @@ contract Sett is ERC20Upgradeable, SettAccessControlDefended {
 
     mapping (address => uint256) public blockLock;
 
+    string internal constant _defaultNamePrefix="Badger Sett ";
+    string internal constant _symbolSymbolPrefix="b";
+
     function initialize(
         address _token,
         address _controller,
         address _governance,
         address _keeper,
-        string memory name,
-        string memory symbol
+        bool _overrideTokenName,
+        string memory _namePrefix,
+        string memory _symbolPrefix
     ) public initializer {
+        IERC20Detailed namedToken = IERC20Detailed(_token);
+        string memory tokenName = namedToken.name();
+        string memory tokenSymbol = namedToken.symbol();
+
+        string memory name;
+        string memory symbol;
+
+        if (_overrideTokenName) {
+            name = string(abi.encodePacked(_namePrefix, tokenName));
+            symbol = string(abi.encodePacked(_symbolPrefix, tokenSymbol));
+        } else {
+            name = string(abi.encodePacked(_defaultNamePrefix, tokenName));
+            symbol = string(abi.encodePacked(_symbolSymbolPrefix, tokenSymbol));
+        }
+
         __ERC20_init(name, symbol);
+
+        token = IERC20Upgradeable(_token);
         governance = _governance;
         strategist = address(0);
         keeper = _keeper;
-
-        token = IERC20Upgradeable(_token);
         controller = _controller;
 
         min = 9500;

@@ -41,13 +41,16 @@ def deploy_geyser(badger, stakingToken):
 def print_to_file(badger, path):
     system = {
         "deployer": badger.deployer.address,
+        "guardian": badger.guardian.address,
+        "keeper": badger.keeper.address,
         "devProxyAdmin": badger.devProxyAdmin.address,
         "daoProxyAdmin": badger.daoProxyAdmin.address,
         "devMultisig": badger.devMultisig.address,
         "token": badger.token.address,
+        "logic": {},
         "dao": {},
         "pools": {},
-        "sett": {},
+        "sett_system": {},
         "daoBadgerTimelock": badger.daoBadgerTimelock.address,
         "teamVesting": badger.teamVesting.address,
         "badgerHunt": badger.badgerHunt.address,
@@ -56,62 +59,36 @@ def print_to_file(badger, path):
 
     print(badger.dao)
 
-    # DAO
+    # == DAO ==
     for key, value in badger.dao.items():
         system["dao"][key] = value.address
 
-    # Pools
-    system["pools"]["sett"] = {}
-    system["pools"]["sett"]["native"] = {}
-    system["pools"]["sett"]["pickle"] = {}
-    system["pools"]["sett"]["harvest"] = {}
+    # == Pools ==
+    system["geysers"] = {}
 
-    for key, value in badger.pools.sett.native.items():
-        system["pools"]["sett"]["native"][key] = value.address
+    for key, value in badger.geysers.items():
+        system["geysers"][key] = value.address
 
-    for key, value in badger.pools.sett.pickle.items():
-        system["pools"]["sett"]["pickle"][key] = value.address
+    for key, value in badger.logic.items():
+        system["logic"][key] = value.address
 
-    for key, value in badger.pools.sett.harvest.items():
-        system["pools"]["sett"]["harvest"][key] = value.address
+    # == Sett ==
+    system["sett_system"]["controllers"] = {}
+    system["sett_system"]["vaults"] = {}
+    system["sett_system"]["strategies"] = {}
+    system["sett_system"]["rewards"] = {}
 
-    # Sett
-    system["sett"]["logic"] = {}
-    system["sett"]["native"] = {}
-    system["sett"]["pickle"] = {}
-    system["sett"]["harvest"] = {}
-    system["sett"]["rewards"] = {}
+    for key, value in badger.sett_system.controllers.items():
+        system["sett_system"]["controllers"][key] = value.address
 
-    for key, value in badger.sett.logic.items():
-        system["sett"]["logic"][key] = value.address
+    for key, value in badger.sett_system.vaults.items():
+        system["sett_system"]["vaults"][key] = value.address
 
-    for key, value in badger.sett.native.items():
-        if key is not "strategies":
-            system["sett"]["native"][key] = value.address
+    for key, value in badger.sett_system.strategies.items():
+        system["sett_system"]["strategies"][key] = value.address
 
-    for key, value in badger.sett.pickle.items():
-        if key is not "strategies":
-            system["sett"]["pickle"][key] = value.address
-
-    for key, value in badger.sett.harvest.items():
-        if key is not "strategies":
-            system["sett"]["harvest"][key] = value.address
-
-    for key, value in badger.sett.rewards.items():
-        system["sett"]["harvest"][key] = value.address
-
-    system["sett"]["native"]["strategies"] = {}
-    system["sett"]["pickle"]["strategies"] = {}
-    system["sett"]["harvest"]["strategies"] = {}
-
-    for key, value in badger.sett.native.strategies.items():
-        system["sett"]["native"]["strategies"][key] = value.address
-
-    for key, value in badger.sett.pickle.strategies.items():
-        system["sett"]["pickle"]["strategies"][key] = value.address
-
-    for key, value in badger.sett.harvest.strategies.items():
-        system["sett"]["harvest"]["strategies"][key] = value.address
+    for key, value in badger.sett_system.rewards.items():
+        system["sett_system"]["rewards"][key] = value.address
 
     with open(path, "w") as outfile:
         json.dump(system, outfile)
@@ -307,159 +284,6 @@ def deploy_badger(systems, deployer):
     return badger
 
 
-def config_badger(badger):
-    """
-    Set initial conditions on immediate post-deploy Badger
-
-    Transfer tokens to thier initial locations
-        - Rewards Escrow (50%, minus tokens initially distributed via Sett Special StakingRewards)
-        - Badger Hurt (15%)
-        - DAO Timelock (35%)
-    """
-    deployer = badger.deployer
-
-    # Distribute initial Badger supply
-
-    # DAO Timelock
-    badger.token.transfer(
-        badger.daoBadgerTimelock,
-        badger_config.tokenLockParams.badgerLockAmount,
-        {"from": deployer},
-    )
-
-    # Geyser Signals
-    """
-        These signals are used to calculate the rewards distributions distributed via BadgerTree. The tokens are actually held in the RewardsEscrow and sent to the BadgerTree as needed.
-
-        The escrow will only send 1-2 days worth of rewards at a time to the RewardsTree as another failsafe mechanism.
-
-        renbtcCRV — 76750 $BADGER
-        sbtcCRV — 76,750 $BADGER
-        tbtcCRV — 76,750 $BADGER
-        Badger — 90,000 $BADGER
-        Badger <>wBTC Uniswap LP — 130,000 $BADGER
-        Super Sett
-        Pickle renbtcCRV — 76,750 $BADGER
-        Harvest renbtc CRV — 76,750 $BADGER
-    """
-    startTime = badger_config.geyserParams.badgerDistributionStart
-
-    # params = badger_config.geyserParams.unlockSchedules.badger[0]
-    # badger.pools.sett.native.badger.signalTokenLock(badger.token, params.amount, params.duration, startTime)
-
-    # Approve Recipients on RewardsEscrow
-    badger.rewardsEscrow.approveRecipient(
-        badger.pools.sett.native.sbtcCrv, {"from": deployer}
-    )
-
-    badger.rewardsEscrow.approveRecipient(
-        badger.pools.sett.native.renCrv, {"from": deployer}
-    )
-
-    badger.rewardsEscrow.approveRecipient(
-        badger.pools.sett.native.tbtcCrv, {"from": deployer}
-    )
-
-    badger.rewardsEscrow.approveRecipient(
-        badger.pools.sett.pickle.renCrv, {"from": deployer}
-    )
-
-    badger.rewardsEscrow.approveRecipient(
-        badger.pools.sett.harvest.renCrv, {"from": deployer}
-    )
-
-    # Signal Locks
-    params = badger_config.geyserParams.unlockSchedules.bSbtcCrv[0]
-
-    badger.rewardsEscrow.signalTokenLock(
-        badger.pools.sett.native.sbtcCrv,
-        badger.token,
-        params.amount,
-        params.duration,
-        startTime,
-        {"from": deployer},
-    )
-
-    params = badger_config.geyserParams.unlockSchedules.bRenCrv[0]
-    badger.rewardsEscrow.signalTokenLock(
-        badger.pools.sett.native.renCrv,
-        badger.token,
-        params.amount,
-        params.duration,
-        startTime,
-        {"from": deployer},
-    )
-
-    params = badger_config.geyserParams.unlockSchedules.bTbtcCrv[0]
-    badger.rewardsEscrow.signalTokenLock(
-        badger.pools.sett.native.tbtcCrv,
-        badger.token,
-        params.amount,
-        params.duration,
-        startTime,
-        {"from": deployer},
-    )
-
-    params = badger_config.geyserParams.unlockSchedules.bSuperRenCrvPickle[0]
-    badger.rewardsEscrow.signalTokenLock(
-        badger.pools.sett.pickle.renCrv,
-        badger.token,
-        params.amount,
-        params.duration,
-        startTime,
-        {"from": deployer},
-    )
-
-    params = badger_config.geyserParams.unlockSchedules.bSuperRenCrvHarvest[0]
-    badger.rewardsEscrow.signalTokenLock(
-        badger.pools.sett.harvest.renCrv,
-        badger.token,
-        params.amount,
-        params.duration,
-        startTime,
-        {"from": deployer},
-    )
-
-    # Staking Rewards Pools
-
-    params = badger_config.geyserParams.unlockSchedules.badger[0]
-    toEscrow = badger_config.rewardsEscrowBadgerAmount
-
-    badger.token.transfer(
-        badger.sett.rewards.badger, params.amount, {"from": deployer},
-    )
-
-    badger.sett.rewards.badger.notifyRewardAmount(params.amount, {"from": deployer})
-
-    toEscrow = toEscrow - params.amount
-
-    # Rewards Escrow
-    badger.token.transfer(
-        badger.rewardsEscrow, toEscrow, {"from": deployer},
-    )
-
-    # Badger Hunt
-    badger.token.transfer(
-        badger.badgerHunt, badger_config.huntParams.badgerAmount, {"from": deployer},
-    )
-
-
-def start_rewards(badger):
-    deployer = badger.deployer
-
-    # Start Rewards on StakingEscrow contracts
-    params = badger_config.geyserParams.unlockSchedules.badger[0]
-
-    badger.token.transfer(
-        badger.sett.rewards.badger, params.amount, {"from": deployer},
-    )
-
-    assert badger.token.balanceOf(badger.sett.rewards.badger) >= params.amount
-    assert badger.sett.rewards.badger.rewardsToken() == badger.token
-
-    badger.sett.rewards.badger.notifyRewardAmount(params.amount, {"from": deployer})
-
-
 def connect_badger(registry):
     """
     Connect to existing badger deployment
@@ -491,6 +315,9 @@ class BadgerSystem:
         self.connect_dao()
         self.connect_multisig()
         self.connect_uniswap()
+
+        self.globalStartTime = badger_config.globalStartTime
+        print("globalStartTime", self.globalStartTime)
 
     def track_contract_static(self, contract):
         self.contracts_static.append(contract)
@@ -564,6 +391,31 @@ class BadgerSystem:
         self.logic.Controller = Controller.deploy({"from": deployer})
         self.logic.Sett = Sett.deploy({"from": deployer})
         self.logic.StakingRewards = StakingRewards.deploy({"from": deployer})
+
+    def deploy_sett_strategy_logic(self):
+        deployer = self.deployer
+        self.logic.StrategyBadgerRewards = StrategyBadgerRewards.deploy(
+            {"from": deployer}
+        )
+        self.logic.StrategyBadgerLpMetaFarm = StrategyBadgerLpMetaFarm.deploy(
+            {"from": deployer}
+        )
+        self.logic.StrategyHarvestMetaFarm = StrategyHarvestMetaFarm.deploy(
+            {"from": deployer}
+        )
+        self.logic.StrategyPickleMetaFarm = StrategyPickleMetaFarm.deploy(
+            {"from": deployer}
+        )
+
+        self.logic.StrategyCurveGaugeTbtcCrv = StrategyCurveGaugeTbtcCrv.deploy(
+            {"from": deployer}
+        )
+        self.logic.StrategyCurveGaugeSbtcCrv = StrategyCurveGaugeSbtcCrv.deploy(
+            {"from": deployer}
+        )
+        self.logic.StrategyCurveGaugeRenBtcCrv = StrategyCurveGaugeRenBtcCrv.deploy(
+            {"from": deployer}
+        )
 
     def deploy_rewards_escrow(self):
         deployer = self.deployer
@@ -652,13 +504,30 @@ class BadgerSystem:
         deployer = self.deployer
         self.logic[name] = BrownieArtifact.deploy({"from": deployer})
 
-    def add_sett(self, id, token, controller, name, symbol):
+    def add_sett(
+        self,
+        id,
+        token,
+        controller,
+        namePrefixOverride=False,
+        namePrefix="",
+        symbolPrefix="",
+    ):
         deployer = self.deployer
         proxyAdmin = self.devProxyAdmin
         governance = deployer
         keeper = deployer
 
-        print(token, controller, governance, keeper, name, symbol)
+        print(
+            "add_sett",
+            token,
+            controller,
+            governance,
+            keeper,
+            namePrefixOverride,
+            namePrefix,
+            symbolPrefix,
+        )
 
         sett = deploy_proxy(
             "Sett",
@@ -666,7 +535,13 @@ class BadgerSystem:
             self.logic.Sett.address,
             proxyAdmin.address,
             self.logic.Sett.initialize.encode_input(
-                token, controller, governance, keeper, name, symbol
+                token,
+                controller,
+                governance,
+                keeper,
+                namePrefixOverride,
+                namePrefix,
+                symbolPrefix,
             ),
             deployer,
         )
@@ -678,7 +553,7 @@ class BadgerSystem:
         # TODO: Replace with prod permissions config
         deployer = self.deployer
 
-        strategy = deploy_strategy(self, strategyName, controller, params, deployer,)
+        strategy = deploy_strategy(self, strategyName, controller, params, deployer)
 
         self.sett_system.strategies[id] = strategy
         self.track_contract_upgradeable(strategy)
@@ -731,8 +606,9 @@ class BadgerSystem:
             want, strategy, {"from": deployer},
         )
 
-    def distribute_staking_rewards(self, rewards, amount):
+    def distribute_staking_rewards(self, id, amount, notify=False):
         deployer = self.deployer
+        rewards = self.getSettRewards(id)
 
         self.token.transfer(
             rewards, amount, {"from": deployer},
@@ -740,7 +616,8 @@ class BadgerSystem:
 
         assert self.token.balanceOf(rewards) >= amount
         assert rewards.rewardsToken() == self.token
-        rewards.notifyRewardAmount(amount, {"from": deployer})
+        if notify:
+            rewards.notifyRewardAmount(amount, {"from": deployer})
 
     def signal_initial_geyser_rewards(self, id, params):
         deployer = self.deployer
@@ -751,6 +628,117 @@ class BadgerSystem:
 
         self.rewardsEscrow.signalTokenLock(
             self.token, params.amount, params.duration, startTime, {"from": deployer},
+        )
+
+    # ===== Strategy Macros =====
+    def deploy_strategy_preconfigured(self, id):
+        if id == "native.badger":
+            self.deploy_strategy_native_badger()
+        if id == "native.renCrv":
+            self.deploy_strategy_native_rencrv()
+        if id == "native.sbtcCrv":
+            self.deploy_strategy_native_sbtccrv()
+        if id == "native.tbtcCrv":
+            self.deploy_strategy_native_tbtccrv()
+        if id == "native.uniBadgerWbtc":
+            self.deploy_strategy_native_uniBadgerWbtc()
+        if id == "pickle.renCrv":
+            self.deploy_strategy_pickle_rencrv()
+        if id == "harvest.renCrv":
+            self.deploy_strategy_harvest_rencrv()
+
+    def deploy_strategy_native_badger(self):
+        sett = self.getSett("native.badger")
+        controller = self.getController("native")
+        params = sett_config.native.badger.params
+        params.want = self.token
+        params.geyser = self.getSettRewards("native.badger")
+
+        strategy = self.add_strategy(
+            "native.badger", "StrategyBadgerRewards", controller, params
+        )
+
+        self.wire_up_sett(sett, strategy, controller)
+
+    def deploy_strategy_native_rencrv(self):
+        sett = self.getSett("native.renCrv")
+        controller = self.getController("native")
+        params = sett_config.native.renCrv.params
+
+        strategy = self.add_strategy(
+            "native.renCrv", "StrategyCurveGaugeRenBtcCrv", controller, params
+        )
+
+        self.wire_up_sett(sett, strategy, controller)
+
+    def deploy_strategy_native_sbtccrv(self):
+        sett = self.getSett("native.sbtcCrv")
+        controller = self.getController("native")
+        params = sett_config.native.sbtcCrv.params
+
+        strategy = self.add_strategy(
+            "native.sbtcCrv", "StrategyCurveGaugeSbtcCrv", controller, params
+        )
+
+        self.wire_up_sett(sett, strategy, controller)
+
+    def deploy_strategy_native_tbtccrv(self):
+        sett = self.getSett("native.tbtcCrv")
+        controller = self.getController("native")
+        params = sett_config.native.tbtcCrv.params
+
+        strategy = self.add_strategy(
+            "native.tbtcCrv", "StrategyCurveGaugeTbtcCrv", controller, params
+        )
+
+        self.wire_up_sett(sett, strategy, controller)
+
+    def deploy_strategy_native_uniBadgerWbtc(self):
+        sett = self.getSett("native.uniBadgerWbtc")
+        controller = self.getController("native")
+        params = sett_config.native.uniBadgerWbtc.params
+        params.want = self.pair
+        params.geyser = self.getSettRewards("native.uniBadgerWbtc")
+
+        strategy = self.add_strategy(
+            "native.uniBadgerWbtc", "StrategyBadgerLpMetaFarm", controller, params
+        )
+
+        self.wire_up_sett(sett, strategy, controller)
+
+    def deploy_strategy_pickle_rencrv(self):
+        sett = self.getSett("pickle.renCrv")
+        controller = self.getController("pickle")
+        params = sett_config.pickle.renCrv.params
+
+        strategy = self.add_strategy(
+            "pickle.renCrv", "StrategyPickleMetaFarm", controller, params
+        )
+
+        self.wire_up_sett(sett, strategy, controller)
+
+    def deploy_strategy_harvest_rencrv(self):
+        sett = self.getSett("harvest.renCrv")
+        controller = self.getController("harvest")
+        params = sett_config.harvest.renCrv.params
+        params.badgerTree = self.badgerTree
+
+        strategy = self.add_strategy(
+            "harvest.renCrv", "StrategyHarvestMetaFarm", controller, params
+        )
+
+        self.wire_up_sett(sett, strategy, controller)
+
+    def signal_token_lock(self, id, params):
+        geyser = self.getGeyser(id)
+        print('signal_token_lock', id, params, geyser, self.globalStartTime)
+        self.rewardsEscrow.signalTokenLock(
+            geyser,
+            self.token,
+            params.amount,
+            params.duration,
+            self.globalStartTime,
+            {"from": self.deployer},
         )
 
     # ===== Getters =====

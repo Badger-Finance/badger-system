@@ -60,13 +60,13 @@ abstract contract BaseStrategy is PausableUpgradeable, SettAccessControl {
     // ===== Modifiers =====
 
     function _onlyController() internal view {
-        require(msg.sender == controller, "!controller");
+        require(msg.sender == controller, "onlyController");
     }
 
     function _onlyAuthorizedActorsOrController() internal view {
         require(
             msg.sender == keeper || msg.sender == strategist || msg.sender == governance || msg.sender == controller,
-            "_onlyAuthorizedActorsOrController"
+            "onlyAuthorizedActorsOrController"
         );
     }
 
@@ -283,6 +283,8 @@ abstract contract BaseStrategy is PausableUpgradeable, SettAccessControl {
 
     /// @notice Specify tokens used in yield process, should not be available to withdraw via withdrawOther()
     function _onlyNotProtectedTokens(address _asset) internal virtual;
+
+    function getProtectedTokens() external view virtual returns (address[] memory);
 
     /// @dev Internal logic for strategy migration. Should exit positions as efficiently as possible
     function _withdrawAll() internal virtual;

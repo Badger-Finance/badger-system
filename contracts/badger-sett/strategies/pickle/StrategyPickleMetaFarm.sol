@@ -142,6 +142,15 @@ contract StrategyPickleMetaFarm is BaseStrategy {
         return true;
     }
 
+    function getProtectedTokens() external view override returns (address[] memory) {
+        address[] memory protectedTokens = new address[](3);
+        protectedTokens[0] = want;
+        protectedTokens[1] = pickleJar;
+        protectedTokens[2] = pickle;
+        return protectedTokens;
+    }
+
+
     /// ===== Permissioned Actions: Governance =====
 
     function setPicklePerformanceFeeStrategist(uint256 _picklePerformanceFeeStrategist) external {
@@ -179,12 +188,23 @@ contract StrategyPickleMetaFarm is BaseStrategy {
 
     /// @dev Transfer non-harvested rewards directly to rewards contract
     function _withdrawAll() internal override {
-        IPickleStaking(pickleStaking).getReward();
-        IPickleStaking(pickleStaking).exit();
+        uint256 _stakedPickle = IPickleStaking(pickleStaking).balanceOf(address(this));
 
-        (uint256 _staked, ) = IPickleChef(pickleChef).userInfo(pid, address(this));
-        IPickleChef(pickleChef).withdraw(pid, _staked);
+        if (_stakedPickle > 0) {
+            IPickleStaking(pickleStaking).exit();
+        }
 
+        // Unstake all pWant from Chef
+        (uint256 _pSharesStaked, ) = IPickleChef(pickleChef).userInfo(pid, address(this));
+
+        if (_pSharesStaked > 0) {
+            IPickleChef(pickleChef).withdraw(pid, _pSharesStaked);
+        }
+
+        // Withdraw from pickle vault
+        IPickleJar(pickleJar).withdrawAll();
+
+        // Send un-harvested rewards to rewards contract
         uint256 _weth = IERC20Upgradeable(weth).balanceOf(address(this));
         uint256 _pickle = IERC20Upgradeable(pickle).balanceOf(address(this));
 
@@ -229,8 +249,12 @@ contract StrategyPickleMetaFarm is BaseStrategy {
         harvestData.preExistingWant = IERC20Upgradeable(want).balanceOf(address(this));
         harvestData.preExistingPickle = IERC20Upgradeable(pickle).balanceOf(address(this));
 
+        uint256 _stakedPickle = IPickleStaking(pickleStaking).balanceOf(address(this));
+
         // Harvest WETH Rewards & Unstake Pickle
-        IPickleStaking(pickleStaking).exit();
+        if (_stakedPickle > 0) {
+            IPickleStaking(pickleStaking).exit();
+        }
 
         uint256 _afterPickleStakingExit = IERC20Upgradeable(pickle).balanceOf(address(this));
         harvestData.pickleFromStakingRewards = _afterPickleStakingExit.sub(harvestData.preExistingPickle);

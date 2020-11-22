@@ -90,6 +90,14 @@ contract StrategyCurveGaugeBase is BaseStrategy {
         return ICurveGauge(gauge).balanceOf(address(this));
     }
 
+    function getProtectedTokens() external view override returns (address[] memory) {
+        address[] memory protectedTokens = new address[](3);
+        protectedTokens[0] = want;
+        protectedTokens[1] = lpComponent;
+        protectedTokens[2] = crv;
+        return protectedTokens;
+    }
+
     /// ===== Permissioned Actions: Governance =====
     function setKeepCRV(uint256 _keepCRV) external {
         _onlyGovernance();

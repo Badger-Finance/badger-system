@@ -125,8 +125,9 @@ dao_config = DotMap(
 badger_config = DotMap(
     multisig=multisig_config,
     dao=dao_config,
+    globalStartTime=int((time.time())),
     huntParams=DotMap(
-        startTime=int(time.time()), badgerAmount=badger_total_supply * 15 // 100
+        startTime=int(time.time()), badgerAmount=badger_total_supply * 15 // 100, gracePeriod=daysToSeconds(2), epochDuration=daysToSeconds(1)
     ),
     rewardsEscrowBadgerAmount=badger_total_supply * 50 // 100,
     tokenLockParams=DotMap(
@@ -161,7 +162,7 @@ badger_config = DotMap(
     geyserParams=DotMap(
         initialSharesPerToken=10 ** 6,
         founderRewardPercentage=10,
-        badgerDistributionStart=int((time.time()) + daysToSeconds(1)),
+        badgerDistributionStart=int((time.time())),
         diggDistributionStart=int((time.time()) + daysToSeconds(15)),
         unlockSchedules=DotMap(
             badger=[

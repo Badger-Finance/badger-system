@@ -85,11 +85,20 @@ contract StrategyBadgerLpMetaFarm is BaseStrategy {
         return IStakingRewards(geyser).balanceOf(address(this));
     }
 
+    function getProtectedTokens() external view override returns (address[] memory) {
+        address[] memory protectedTokens = new address[](3);
+        protectedTokens[0] = want;
+        protectedTokens[1] = geyser;
+        protectedTokens[2] = badger;
+        return protectedTokens;
+    }
+
     /// ===== Internal Core Implementations =====
 
     function _onlyNotProtectedTokens(address _asset) internal override {
         require(address(want) != _asset, "want");
         require(address(geyser) != _asset, "geyser");
+        require(address(badger) != _asset, "geyser");
     }
 
     /// @dev Deposit Badger into the staking contract

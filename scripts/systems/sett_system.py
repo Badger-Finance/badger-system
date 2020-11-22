@@ -44,6 +44,8 @@ def deploy_strategy(badger, strategyName, controller, params, deployer):
     guardian = deployer
     proxyAdmin = badger.devProxyAdmin
 
+    print("deploy strategy", badger, strategyName, controller, params, deployer)
+
     if strategyName == "StrategyCurveGaugeRenBtcCrv":
         return deploy_proxy(
             "StrategyCurveGaugeRenBtcCrv",
@@ -199,6 +201,25 @@ def deploy_strategy(badger, strategyName, controller, params, deployer):
             deployer,
         )
     if strategyName == "StrategyBadgerRewards":
+        print(
+            badger.logic.StrategyBadgerRewards,
+            badger.logic.StrategyBadgerRewards.address,
+        )
+        print(
+            (
+                governance,
+                strategist,
+                controller,
+                keeper,
+                guardian,
+                [badger.token, params.geyser],
+                [
+                    params.performanceFeeGovernance,
+                    params.performanceFeeStrategist,
+                    params.withdrawalFee,
+                ],
+            )
+        )
         return deploy_proxy(
             "StrategyBadgerRewards",
             StrategyBadgerRewards.abi,

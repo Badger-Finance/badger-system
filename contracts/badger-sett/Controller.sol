@@ -159,38 +159,6 @@ contract Controller is SettAccessControl {
         IStrategy(_strategy).withdrawOther(_token);
     }
 
-    /// @notice Gather yield of non-core strategy tokens
-    /// @dev Only allows to withdraw non-core strategy tokens ~ this is over and above normal yield
-    function harvestExtraRewards(
-        address _strategy,
-        address _token,
-        uint256 parts
-    ) public {
-        _onlyGovernanceOrStrategist();
-        // This contract should never have value in it, but just incase since this is a public call
-        uint256 _before = IERC20Upgradeable(_token).balanceOf(address(this));
-        IStrategy(_strategy).withdrawOther(_token);
-        uint256 _after = IERC20Upgradeable(_token).balanceOf(address(this));
-        if (_after > _before) {
-            uint256 _amount = _after.sub(_before);
-            address _want = IStrategy(_strategy).want();
-            uint256[] memory _distribution;
-            uint256 _expected;
-            _before = IERC20Upgradeable(_want).balanceOf(address(this));
-            IERC20Upgradeable(_token).safeApprove(onesplit, 0);
-            IERC20Upgradeable(_token).safeApprove(onesplit, _amount);
-            (_expected, _distribution) = IOneSplitAudit(onesplit).getExpectedReturn(_token, _want, _amount, parts, 0);
-            IOneSplitAudit(onesplit).swap(_token, _want, _amount, _expected, _distribution, 0);
-            _after = IERC20Upgradeable(_want).balanceOf(address(this));
-            if (_after > _before) {
-                _amount = _after.sub(_before);
-                uint256 _reward = _amount.mul(split).div(max);
-                earn(_want, _amount.sub(_reward));
-                IERC20Upgradeable(_want).safeTransfer(rewards, _reward);
-            }
-        }
-    }
-
     // ==== Permissioned Actions: Only Approved Actors =====
 
     /// @notice Deposit given token to strategy, converting it to the strategies' want first (if required).

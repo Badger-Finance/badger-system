@@ -66,6 +66,13 @@ contract StrategyBadgerRewards is BaseStrategy {
         return IStakingRewards(geyser).balanceOf(address(this));
     }
 
+    function getProtectedTokens() external view override returns (address[] memory) {
+        address[] memory protectedTokens = new address[](2);
+        protectedTokens[0] = want;
+        protectedTokens[1] = geyser;
+        return protectedTokens;
+    }
+
     /// ===== Internal Core Implementations =====
 
     function _onlyNotProtectedTokens(address _asset) internal override {
@@ -93,16 +100,8 @@ contract StrategyBadgerRewards is BaseStrategy {
             return _amount;
         }
 
-        // Rewards are cheap to harvest in this case, go ahead and use earnings to cover withdraw
-        IStakingRewards(geyser).getReward();
-        uint256 _afterHarvest = IERC20Upgradeable(want).balanceOf(address(this));
-
-        if (_afterHarvest >= _amount) {
-            return _amount;
-        }
-
         // Unstake the remainder from StakingRewards
-        uint256 _remainder = _amount.sub(_afterHarvest);
+        uint256 _remainder = _amount.sub(_before);
         IStakingRewards(geyser).withdraw(_remainder);
 
         return _amount;

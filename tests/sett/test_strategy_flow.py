@@ -16,17 +16,17 @@ from helpers.constants import *
 import pytest
 
 
-# @pytest.mark.skip()
+@pytest.mark.skip()
 @pytest.mark.parametrize(
     "settId",
     [
         "native.badger",
-        # "native.renCrv",
-        # "native.sbtcCrv",
-        # "native.tbtcCrv",
-        # "pickle.renCrv",
-        # "harvest.renCrv",
-        # "native.uniBadgerWbtc"
+        "native.renCrv",
+        "native.sbtcCrv",
+        "native.tbtcCrv",
+        "pickle.renCrv",
+        "harvest.renCrv",
+        "native.uniBadgerWbtc",
     ],
 )
 def test_deposit_withdraw_single_user_flow(settId):
@@ -271,17 +271,17 @@ def test_single_user_harvest_flow(settId):
     # assert endingBalance > startingBalance
 
 
-# @pytest.mark.skip()
+@pytest.mark.skip()
 @pytest.mark.parametrize(
     "settId",
     [
-        # "native.renCrv",
-        # "native.badger",
-        # "native.sbtcCrv",
-        # "native.tbtcCrv",
+        "native.renCrv",
+        "native.badger",
+        "native.sbtcCrv",
+        "native.tbtcCrv",
         "pickle.renCrv",
         "harvest.renCrv",
-        # "native.uniBadgerWbtc"
+        "native.uniBadgerWbtc",
     ],
 )
 def test_migrate_single_user(settId):
@@ -309,33 +309,84 @@ def test_migrate_single_user(settId):
 
     sett.earn({"from": deployer})
 
+    chain.snapshot()
+
+    # Test no harvests
     chain.sleep(daysToSeconds(2))
     chain.mine()
 
-    before = {"settWant": want.balanceOf(sett), "stratWant": want.balanceOf(strategy)}
+    before = {"settWant": want.balanceOf(sett), "stratWant": strategy.balanceOf()}
 
     with brownie.reverts():
         controller.withdrawAll(strategy.want(), {"from": randomUser})
 
     controller.withdrawAll(strategy.want(), {"from": deployer})
 
-    after = {"settWant": want.balanceOf(sett), "stratWant": want.balanceOf(strategy)}
+    after = {"settWant": want.balanceOf(sett), "stratWant": strategy.balanceOf()}
 
     assert after["settWant"] > before["settWant"]
     assert after["stratWant"] < before["stratWant"]
     assert after["stratWant"] == 0
 
-@pytest.mark.skip()
+    # Test tend only
+    if strategy.isTendable():
+        chain.revert()
+
+        chain.sleep(daysToSeconds(2))
+        chain.mine()
+
+        strategy.tend({"from": deployer})
+
+        before = {"settWant": want.balanceOf(sett), "stratWant": strategy.balanceOf()}
+
+        with brownie.reverts():
+            controller.withdrawAll(strategy.want(), {"from": randomUser})
+
+        controller.withdrawAll(strategy.want(), {"from": deployer})
+
+        after = {"settWant": want.balanceOf(sett), "stratWant": strategy.balanceOf()}
+
+        assert after["settWant"] > before["settWant"]
+        assert after["stratWant"] < before["stratWant"]
+        assert after["stratWant"] == 0
+
+    # Test harvest, with tend if tendable
+    chain.revert()
+
+    chain.sleep(daysToSeconds(1))
+    chain.mine()
+
+    if strategy.isTendable():
+        strategy.tend({"from": deployer})
+
+    chain.sleep(daysToSeconds(1))
+    chain.mine()
+
+    before = {"settWant": want.balanceOf(sett), "stratWant": strategy.balanceOf()}
+
+    with brownie.reverts():
+        controller.withdrawAll(strategy.want(), {"from": randomUser})
+
+    controller.withdrawAll(strategy.want(), {"from": deployer})
+
+    after = {"settWant": want.balanceOf(sett), "stratWant": strategy.balanceOf()}
+
+    assert after["settWant"] > before["settWant"]
+    assert after["stratWant"] < before["stratWant"]
+    assert after["stratWant"] == 0
+
+
+# @pytest.mark.skip()
 @pytest.mark.parametrize(
     "settId",
     [
-        # "native.renCrv",
-        # "native.badger",
-        # "native.sbtcCrv",
-        # "native.tbtcCrv",
-        # "pickle.renCrv",
-        # "harvest.renCrv",
-        # "native.uniBadgerWbtc"
+        "native.renCrv",
+        "native.badger",
+        "native.sbtcCrv",
+        "native.tbtcCrv",
+        "pickle.renCrv",
+        "harvest.renCrv",
+        "native.uniBadgerWbtc",
     ],
 )
 def test_withdraw_other(settId):
@@ -368,7 +419,50 @@ def test_withdraw_other(settId):
 
     sett.earn({"from": deployer})
 
-    chain.sleep(daysToSeconds(1))
+    chain.sleep(daysToSeconds(0.5))
     chain.mine()
-    assert False
 
+    if strategy.isTendable():
+        strategy.tend({"from": deployer})
+
+    strategy.harvest({"from": deployer})
+
+    chain.sleep(daysToSeconds(0.5))
+    chain.mine()
+
+    mockAmount = Wei("1000 ether")
+    mockToken = MockToken.deploy({"from": deployer})
+    mockToken.initialize([strategy], [mockAmount], {"from": deployer})
+
+    assert mockToken.balanceOf(strategy) == mockAmount
+
+    # Should not be able to withdraw protected tokens
+    protectedTokens = strategy.getProtectedTokens()
+    print(protectedTokens)
+    for token in protectedTokens:
+        with brownie.reverts():
+            controller.inCaseStrategyTokenGetStuck(strategy, token, {"from": deployer})
+
+    # Should send balance of non-protected token to sender
+    controller.inCaseStrategyTokenGetStuck(strategy, mockToken, {"from": deployer})
+
+    with brownie.reverts():
+        controller.inCaseStrategyTokenGetStuck(strategy, mockToken, {"from": randomUser})
+
+    assert mockToken.balanceOf(controller) == mockAmount
+
+@pytest.mark.skip()
+@pytest.mark.parametrize(
+    "settId",
+    [
+        "native.renCrv",
+        "native.badger",
+        "native.sbtcCrv",
+        "native.tbtcCrv",
+        "pickle.renCrv",
+        "harvest.renCrv",
+        "native.uniBadgerWbtc",
+    ],
+)
+def test_single_user_harvest_flow_remove_fees(settId):
+    assert False

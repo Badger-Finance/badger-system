@@ -111,6 +111,14 @@ contract StrategyHarvestMetaFarm is BaseStrategy {
         return true;
     }
 
+    function getProtectedTokens() external view override returns (address[] memory) {
+        address[] memory protectedTokens = new address[](3);
+        protectedTokens[0] = want;
+        protectedTokens[1] = farm;
+        protectedTokens[2] = harvestVault;
+        return protectedTokens;
+    }
+
     /// ===== Permissioned Actions: Governance =====
     function setFarmPerformanceFeeGovernance(uint256 _fee) external {
         _onlyGovernance();
@@ -153,8 +161,30 @@ contract StrategyHarvestMetaFarm is BaseStrategy {
     }
 
     function _withdrawAll() internal override {
-        IRewardPool(vaultFarm).exit();
-        IHarvestVault(harvestVault).withdrawAll();
+        uint256 _stakedFarm = IRewardPool(metaFarm).balanceOf(address(this));
+
+        if (_stakedFarm > 0) {
+            IRewardPool(metaFarm).exit();
+        }
+
+        uint256 _stakedShares = IRewardPool(vaultFarm).balanceOf(address(this));
+
+        if (_stakedShares > 0) {
+            IRewardPool(vaultFarm).exit();
+        }
+
+        uint256 _fShares = IHarvestVault(harvestVault).balanceOf(address(this));
+
+        if (_fShares > 0) {
+            IHarvestVault(harvestVault).withdraw(_fShares);
+        }
+
+        // Send any unproessed FARM to rewards
+        uint256 _farm = IERC20Upgradeable(farm).balanceOf(address(this));
+
+        if (_farm > 0) {
+            IERC20Upgradeable(farm).transfer(IController(controller).rewards(), _farm);
+        }
     }
 
     /// @dev Withdraw vaultTokens from vaultFarm first, followed by harvestVault

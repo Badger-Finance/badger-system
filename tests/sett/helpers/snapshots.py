@@ -309,8 +309,11 @@ def confirm_harvest(before, after, user):
 
 def confirm_migrate_harvest(before, after):
     """
-    - Send all FARM to the badgerTree
-    - Leave no FARM in Strategy or staking contracts
+    - Send all FARM to the rewards
+    - Leave no FARM in Strategy
+    - Leave no FARM in MetaFarm
+    - Leave no FARM in VaultFarm
+    - Leave no fShares in VaultFarm
     """
     assert False
 def confirm_migrate_pickle(before, after):
