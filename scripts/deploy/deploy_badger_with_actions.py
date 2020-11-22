@@ -115,3 +115,4 @@ def deploy_with_actions():
 
 def main():
     deploy_with_actions()
+    time.sleep(daysToSeconds(1))
