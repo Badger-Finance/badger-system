@@ -4,6 +4,7 @@ import pytest
 from brownie import *
 from dotmap import DotMap
 from helpers.registry import whale_registry
+from tabulate import tabulate
 
 def get_token_balances(accounts, tokens):
     balances = DotMap()
@@ -63,4 +64,28 @@ def distribute_rewards_escrow(badger, token, recipient, amount):
             ),
         },
         badger.deployer,
-    )
+        )
+
+def getTokenMetadata(address):
+    token = interface.IERC20(address)
+    name = token.name()
+    symbol = token.symbol()
+    return (name, symbol, address)
+
+def balances(contracts, tokens):
+        # Headers
+        headers = []
+        headers.append("contract")
+
+        for token in tokens:
+            headers.append(token.symbol())
+
+        # Balances
+        data = []
+        for name, c in contracts.items():
+            cData = []
+            cData.append(name)
+            for token in tokens:
+                cData.append(token.balanceOf(c) / 1e18)
+            data.append(cData)
+        print(tabulate(data, headers=headers))

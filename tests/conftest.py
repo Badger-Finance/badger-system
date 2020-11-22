@@ -11,6 +11,7 @@ from helpers.registry import whale_registry
 from helpers.constants import *
 from config.badger_config import sett_config, badger_config
 from helpers.registry import registry
+from scripts.deploy.deploy_badger_with_actions import deploy_with_actions
 
 @pytest.fixture(scope="function", autouse=True)
 def isolate(fn_isolation):
@@ -250,4 +251,8 @@ def badger(accounts):
     # Distribute Test Assets
 
     return badger_system
+
+@pytest.fixture()
+def badger_with_actions(accounts):
+    return deploy_with_actions()
 

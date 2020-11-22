@@ -222,8 +222,12 @@ contract StrategyHarvestMetaFarm is BaseStrategy {
         HarvestData memory harvestData;
 
         // Unstake all FARM from metaFarm, harvesting rewards in the process
-        IRewardPool(metaFarm).exit();
-
+        uint256 _farmStaked = IRewardPool(metaFarm).balanceOf(address(this));
+        
+        if (_farmStaked > 0) {
+            IRewardPool(metaFarm).exit();
+        }
+        
         // Harvest rewards from vaultFarm
         IRewardPool(vaultFarm).getReward();
 

@@ -1,5 +1,7 @@
 #!/usr/bin/python3
 
+import time
+from helpers.time_utils import daysToSeconds
 from helpers.constants import APPROVED_STAKER_ROLE
 from tests.conftest import create_uniswap_pair, distribute_from_whales
 from scripts.systems.badger_system import (
@@ -60,7 +62,7 @@ def test_deploy():
 
     print("Deploy & configure native Sett strategies")
     # Deploy vault-specific staking rewards
-    badger.deploy_sett_staking_rewards("native.badger", pair.address, badger.token)
+    badger.deploy_sett_staking_rewards("native.badger", badger.token, badger.token)
 
     badger.deploy_sett_staking_rewards(
         "native.uniBadgerWbtc", pair.address, badger.token
@@ -225,6 +227,7 @@ def start_staking_rewards(badger: BadgerSystem):
         badger.token.balanceOf(rewards)
         >= badger_config.geyserParams.unlockSchedules.badger[0].amount
     )
+    assert rewards.stakingToken() == badger.token
     assert rewards.rewardsToken() == badger.token
 
     rewards.notifyRewardAmount(
@@ -240,6 +243,7 @@ def start_staking_rewards(badger: BadgerSystem):
         badger.token.balanceOf(rewards)
         >= badger_config.geyserParams.unlockSchedules.uniBadgerWbtc[0].amount
     )
+    assert rewards.stakingToken() == badger.pair
     assert rewards.rewardsToken() == badger.token
 
     rewards.notifyRewardAmount(
