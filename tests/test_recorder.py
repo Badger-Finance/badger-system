@@ -8,11 +8,13 @@ class EventRecord:
         self.result = result
         self.timestamp = timestamp
 
+
 class SnapshotRecord:
     def __init__(self, name, snapshot, timestamp):
         self.name = name
         self.snapshot = snapshot
         self.timestamp = timestamp
+
 
 class TestRecorder:
     def __init__(self, name):
@@ -48,10 +50,7 @@ class TestRecorder:
             if name != "(unknown)" and name != "Transfer" and name != "Approval":
                 for item in items:
                     parsedItems.append(dict(item))
-                parsed.append({
-                    'name': name,
-                    'items': parsedItems
-                })
+                parsed.append({"name": name, "items": parsedItems})
         return parsed
 
     def print_to_file(self, path):

@@ -5,3 +5,6 @@ ONE_YEAR = 1 * 365 * ONE_DAY
 
 def daysToSeconds(days):
     return int(days * 86400.0)
+
+def hours(hours):
+    return int(hours * 3600.0)

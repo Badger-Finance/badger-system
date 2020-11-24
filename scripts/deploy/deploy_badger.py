@@ -54,11 +54,11 @@ def test_deploy():
 
     print("Deploy native Sett vaults")
     controller = badger.getController("native")
-    badger.add_sett("native.badger", badger.token, controller)
-    badger.add_sett("native.renCrv", registry.curve.pools.renCrv.token, controller)
-    badger.add_sett("native.sbtcCrv", registry.curve.pools.sbtcCrv.token, controller)
-    badger.add_sett("native.tbtcCrv", registry.curve.pools.tbtcCrv.token, controller)
-    badger.add_sett("native.uniBadgerWbtc", badger.pair.address, controller)
+    badger.deploy_sett("native.badger", badger.token, controller)
+    badger.deploy_sett("native.renCrv", registry.curve.pools.renCrv.token, controller)
+    badger.deploy_sett("native.sbtcCrv", registry.curve.pools.sbtcCrv.token, controller)
+    badger.deploy_sett("native.tbtcCrv", registry.curve.pools.tbtcCrv.token, controller)
+    badger.deploy_sett("native.uniBadgerWbtc", badger.pair.address, controller)
 
     print("Deploy & configure native Sett strategies")
     # Deploy vault-specific staking rewards
@@ -76,7 +76,7 @@ def test_deploy():
 
     print("Deploy harvest Sett vaults")
     controller = badger.getController("harvest")
-    badger.add_sett(
+    badger.deploy_sett(
         "harvest.renCrv",
         registry.curve.pools.renCrv.token,
         controller,
@@ -89,12 +89,12 @@ def test_deploy():
     badger.deploy_strategy_harvest_rencrv()
 
     print("Deploy reward geysers")
-    badger.add_geyser(badger.token, "native.badger")
-    badger.add_geyser(badger.token, "native.renCrv")
-    badger.add_geyser(badger.token, "native.sbtcCrv")
-    badger.add_geyser(badger.token, "native.tbtcCrv")
-    badger.add_geyser(badger.token, "native.uniBadgerWbtc")
-    badger.add_geyser(badger.token, "harvest.renCrv")
+    badger.deploy_geyser(badger.token, "native.badger")
+    badger.deploy_geyser(badger.token, "native.renCrv")
+    badger.deploy_geyser(badger.token, "native.sbtcCrv")
+    badger.deploy_geyser(badger.token, "native.tbtcCrv")
+    badger.deploy_geyser(badger.token, "native.uniBadgerWbtc")
+    badger.deploy_geyser(badger.token, "harvest.renCrv")
 
     # Transfer ownership of all sett Rewards contracts to multisig
     # Transfer proxyAdmin to multisig

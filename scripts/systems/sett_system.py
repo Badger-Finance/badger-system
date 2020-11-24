@@ -301,7 +301,7 @@ def configure_sett(sett, deployer):
 
 def deploy_sett_native_badger(badger, deployer):
     badger.add_controller("native")
-    badger.add_sett("native")
+    badger.deploy_sett("native")
     sett = DotMap(logic=deploy_sett_common_logic(deployer))
     sett.logic.StrategyBadgerRewards = StrategyBadgerRewards.deploy({"from": deployer})
 

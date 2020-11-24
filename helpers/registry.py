@@ -153,20 +153,21 @@ curve_registry = DotMap(
 
 whale_registry = DotMap(
     sbtcCrv=DotMap(
-        whale="0x193991827e291599a262e7fa7d212ff1ae31d110",
+        whale="0x13c1542a468319688b89e323fe9a3be3a90ebb27",
         token=curve_registry.pools.sbtcCrv.token,
     ),
     renCrv=DotMap(
-        whale="0x97ca371d59bbfefdb391aa6dcbdf4455fec361f2",
+        whale="0x8476f427cb7d20c9e40aea63a482359c14adce0a",
         token=curve_registry.pools.renCrv.token,
     ),
     tbtcCrv=DotMap(
-        whale="0x3d24d77bec08549d7ea86c4e9937204c11e153f1",
+        whale="0xaf379f0228ad0d46bb7b4f38f9dc9bcc1ad0360c",
         token=curve_registry.pools.tbtcCrv.token,
+        whaleType="CurveRewards"
     ),
     wbtc=DotMap(
         whale="0x2bf792ffe8803585f74e06907900c2dc2c29adcb",
-        token=token_registry.wbtc
+        token=token_registry.wbtc,
     )
 )
 

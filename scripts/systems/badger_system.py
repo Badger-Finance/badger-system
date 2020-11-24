@@ -7,7 +7,12 @@ from brownie import *
 from helpers.constants import AddressZero, EmptyBytes32
 from helpers.registry import registry
 from dotmap import DotMap
-from config.badger_config import badger_config, sett_config, badger_total_supply
+from config.badger_config import (
+    badger_config,
+    sett_config,
+    badger_total_supply,
+    dao_config,
+)
 from scripts.systems.sett_system import (
     deploy_controller,
     deploy_sett,
@@ -284,11 +289,14 @@ def deploy_badger(systems, deployer):
     return badger
 
 
-def connect_badger(registry):
+def connect_badger(badger_deploy):
+    deployer = accounts[0]
     """
     Connect to existing badger deployment
     """
-    assert False
+    badger = BadgerSystem(badger_config, None, deployer)
+
+    return badger
 
 
 class BadgerSystem:
@@ -500,11 +508,11 @@ class BadgerSystem:
         )
         self.track_contract_upgradeable(self.teamVesting)
 
-    def add_logic(self, name, BrownieArtifact):
+    def deploy_logic(self, name, BrownieArtifact):
         deployer = self.deployer
         self.logic[name] = BrownieArtifact.deploy({"from": deployer})
 
-    def add_sett(
+    def deploy_sett(
         self,
         id,
         token,
@@ -549,7 +557,7 @@ class BadgerSystem:
         self.track_contract_upgradeable(sett)
         return sett
 
-    def add_strategy(self, id, strategyName, controller, params):
+    def deploy_strategy(self, id, strategyName, controller, params):
         # TODO: Replace with prod permissions config
         deployer = self.deployer
 
@@ -559,7 +567,7 @@ class BadgerSystem:
         self.track_contract_upgradeable(strategy)
         return strategy
 
-    def add_geyser(self, distToken, id):
+    def deploy_geyser(self, distToken, id):
         deployer = self.deployer
         geyser = deploy_geyser(self, distToken)
         self.geysers[id] = geyser
@@ -610,6 +618,8 @@ class BadgerSystem:
         deployer = self.deployer
         rewards = self.getSettRewards(id)
 
+        print(rewards, amount)
+
         self.token.transfer(
             rewards, amount, {"from": deployer},
         )
@@ -654,7 +664,7 @@ class BadgerSystem:
         params.want = self.token
         params.geyser = self.getSettRewards("native.badger")
 
-        strategy = self.add_strategy(
+        strategy = self.deploy_strategy(
             "native.badger", "StrategyBadgerRewards", controller, params
         )
 
@@ -665,7 +675,7 @@ class BadgerSystem:
         controller = self.getController("native")
         params = sett_config.native.renCrv.params
 
-        strategy = self.add_strategy(
+        strategy = self.deploy_strategy(
             "native.renCrv", "StrategyCurveGaugeRenBtcCrv", controller, params
         )
 
@@ -676,7 +686,7 @@ class BadgerSystem:
         controller = self.getController("native")
         params = sett_config.native.sbtcCrv.params
 
-        strategy = self.add_strategy(
+        strategy = self.deploy_strategy(
             "native.sbtcCrv", "StrategyCurveGaugeSbtcCrv", controller, params
         )
 
@@ -687,7 +697,7 @@ class BadgerSystem:
         controller = self.getController("native")
         params = sett_config.native.tbtcCrv.params
 
-        strategy = self.add_strategy(
+        strategy = self.deploy_strategy(
             "native.tbtcCrv", "StrategyCurveGaugeTbtcCrv", controller, params
         )
 
@@ -700,7 +710,7 @@ class BadgerSystem:
         params.want = self.pair
         params.geyser = self.getSettRewards("native.uniBadgerWbtc")
 
-        strategy = self.add_strategy(
+        strategy = self.deploy_strategy(
             "native.uniBadgerWbtc", "StrategyBadgerLpMetaFarm", controller, params
         )
 
@@ -711,7 +721,7 @@ class BadgerSystem:
         controller = self.getController("pickle")
         params = sett_config.pickle.renCrv.params
 
-        strategy = self.add_strategy(
+        strategy = self.deploy_strategy(
             "pickle.renCrv", "StrategyPickleMetaFarm", controller, params
         )
 
@@ -723,7 +733,7 @@ class BadgerSystem:
         params = sett_config.harvest.renCrv.params
         params.badgerTree = self.badgerTree
 
-        strategy = self.add_strategy(
+        strategy = self.deploy_strategy(
             "harvest.renCrv", "StrategyHarvestMetaFarm", controller, params
         )
 
@@ -731,7 +741,7 @@ class BadgerSystem:
 
     def signal_token_lock(self, id, params):
         geyser = self.getGeyser(id)
-        print('signal_token_lock', id, params, geyser, self.globalStartTime)
+        print("signal_token_lock", id, params, geyser, self.globalStartTime)
         self.rewardsEscrow.signalTokenLock(
             geyser,
             self.token,
@@ -740,6 +750,54 @@ class BadgerSystem:
             self.globalStartTime,
             {"from": self.deployer},
         )
+
+    # ===== Connectors =====
+    def connect_strategy(self, id, address, StrategyArtifact):
+        strategy = StrategyArtifact.at(address)
+        self.sett_system.strategies[id] = strategy
+        self.track_contract_upgradeable(strategy)
+
+    def connect_sett(self, id, address):
+        sett = Sett.at(address)
+        self.sett_system.vaults[id] = sett
+        self.track_contract_upgradeable(sett)
+
+    def connect_controller(self, id, address):
+        controller = Controller.at(address)
+        self.sett_system.controllers[id] = controller
+        self.track_contract_upgradeable(controller)
+
+    def connect_geyser(logic):
+        assert False
+        self.track_contract_upgradeable()
+
+    def connect_rewards_escrow():
+        assert False
+        self.track_contract_upgradeable()
+
+    def connect_badger_tree():
+        assert False
+        self.track_contract_upgradeable()
+
+    def connect_badger_hunt():
+        assert False
+        self.track_contract_upgradeable()
+
+    def connect_dao_badger_timelock():
+        assert False
+        self.track_contract_upgradeable()
+
+    def connect_dao_digg_timelock():
+        assert False
+        self.track_contract_upgradeable()
+
+    def connect_team_vesting():
+        assert False
+        self.track_contract_upgradeable()
+
+    def connect_sett_staking_rewards():
+        assert False
+        self.track_contract_upgradeable()
 
     # ===== Getters =====
 
