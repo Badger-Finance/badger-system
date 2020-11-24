@@ -89,12 +89,12 @@ def test_deploy():
     badger.deploy_strategy_harvest_rencrv()
 
     print("Deploy reward geysers")
-    badger.deploy_geyser(badger.token, "native.badger")
-    badger.deploy_geyser(badger.token, "native.renCrv")
-    badger.deploy_geyser(badger.token, "native.sbtcCrv")
-    badger.deploy_geyser(badger.token, "native.tbtcCrv")
-    badger.deploy_geyser(badger.token, "native.uniBadgerWbtc")
-    badger.deploy_geyser(badger.token, "harvest.renCrv")
+    badger.deploy_geyser(badger.getSett("native.badger"), "native.badger")
+    badger.deploy_geyser(badger.getSett("native.renCrv"), "native.renCrv")
+    badger.deploy_geyser(badger.getSett("native.sbtcCrv"), "native.sbtcCrv")
+    badger.deploy_geyser(badger.getSett("native.tbtcCrv"), "native.tbtcCrv")
+    badger.deploy_geyser(badger.getSett("native.uniBadgerWbtc"), "native.uniBadgerWbtc")
+    badger.deploy_geyser(badger.getSett("harvest.renCrv"), "harvest.renCrv")
 
     # Transfer ownership of all sett Rewards contracts to multisig
     # Transfer proxyAdmin to multisig

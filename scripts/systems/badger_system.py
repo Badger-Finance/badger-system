@@ -567,9 +567,9 @@ class BadgerSystem:
         self.track_contract_upgradeable(strategy)
         return strategy
 
-    def deploy_geyser(self, distToken, id):
+    def deploy_geyser(self, stakingToken, id):
         deployer = self.deployer
-        geyser = deploy_geyser(self, distToken)
+        geyser = deploy_geyser(self, stakingToken)
         self.geysers[id] = geyser
         self.track_contract_upgradeable(geyser)
         return geyser

@@ -45,6 +45,7 @@ def sett_native_badger():
     distribute_from_whales(badger, deployer)
 
     badger.deploy_logic("StrategyBadgerRewards", StrategyBadgerRewards)
+    badger.deploy_logic("BadgerGeyser", BadgerGeyser)
     controller = badger.add_controller("native.badger")
     vault = badger.deploy_sett("native.badger", badger.token, controller)
     rewards = badger.deploy_sett_staking_rewards(
@@ -69,6 +70,8 @@ def sett_native_badger():
     # Approve Setts on specific
     rewards.grantRole(APPROVED_STAKER_ROLE, strategy, {"from": deployer})
 
+    badger.deploy_geyser(badger.getSett("native.badger"), "native.badger")
+
     return badger
 
 
@@ -82,6 +85,7 @@ def sett_pickle_meta_farm():
     distribute_from_whales(badger, deployer)
 
     badger.deploy_logic("StrategyPickleMetaFarm", StrategyPickleMetaFarm)
+    badger.deploy_logic("BadgerGeyser", BadgerGeyser)
     controller = badger.add_controller("pickle.renCrv")
     vault = badger.deploy_sett("pickle.renCrv", want, controller)
 
@@ -105,6 +109,7 @@ def sett_harvest_meta_farm():
     distribute_from_whales(badger, deployer)
 
     badger.deploy_logic("StrategyHarvestMetaFarm", StrategyHarvestMetaFarm)
+    badger.deploy_logic("BadgerGeyser", BadgerGeyser)
     controller = badger.add_controller("harvest.renCrv")
     vault = badger.deploy_sett("harvest.renCrv", want, controller)
 
@@ -113,6 +118,8 @@ def sett_harvest_meta_farm():
     )
 
     badger.wire_up_sett(vault, strategy, controller)
+
+    badger.deploy_geyser(badger.getSett("harvest.renCrv"), "harvest.renCrv")
 
     return badger
 
@@ -127,6 +134,7 @@ def sett_curve_gauge_renbtc():
     distribute_from_whales(badger, deployer)
 
     badger.deploy_logic("StrategyCurveGaugeRenBtcCrv", StrategyCurveGaugeRenBtcCrv)
+    badger.deploy_logic("BadgerGeyser", BadgerGeyser)
     controller = badger.add_controller("native.renCrv")
     vault = badger.deploy_sett("native.renCrv", want, controller)
 
@@ -135,6 +143,8 @@ def sett_curve_gauge_renbtc():
     )
 
     badger.wire_up_sett(vault, strategy, controller)
+
+    badger.deploy_geyser(badger.getSett("native.renCrv"), "native.renCrv")
 
     return badger
 
@@ -149,6 +159,7 @@ def sett_curve_gauge_sbtc():
     distribute_from_whales(badger, deployer)
 
     badger.deploy_logic("StrategyCurveGaugeSbtcCrv", StrategyCurveGaugeSbtcCrv)
+    badger.deploy_logic("BadgerGeyser", BadgerGeyser)
     controller = badger.add_controller("native.sbtcCrv")
     vault = badger.deploy_sett("native.sbtcCrv", want, controller)
 
@@ -157,6 +168,8 @@ def sett_curve_gauge_sbtc():
     )
 
     badger.wire_up_sett(vault, strategy, controller)
+
+    badger.deploy_geyser(badger.getSett("native.sbtcCrv"), "native.sbtcCrv")
 
     return badger
 
@@ -171,6 +184,7 @@ def sett_curve_gauge_tbtc():
     distribute_from_whales(badger, deployer)
 
     badger.deploy_logic("StrategyCurveGaugeTbtcCrv", StrategyCurveGaugeTbtcCrv)
+    badger.deploy_logic("BadgerGeyser", BadgerGeyser)
     controller = badger.add_controller("native.tbtcCrv")
     vault = badger.deploy_sett("native.tbtcCrv", want, controller)
 
@@ -179,6 +193,8 @@ def sett_curve_gauge_tbtc():
     )
 
     badger.wire_up_sett(vault, strategy, controller)
+
+    badger.deploy_geyser(badger.getSett("native.tbtcCrv"), "native.tbtcCrv")
 
     return badger
 
@@ -204,6 +220,7 @@ def sett_badger_lp_rewards():
     assert rewards.stakingToken() == pair
 
     badger.deploy_logic("StrategyBadgerLpMetaFarm", StrategyBadgerLpMetaFarm)
+    badger.deploy_logic("BadgerGeyser", BadgerGeyser)
     controller = badger.add_controller("native.uniBadgerWbtc")
     vault = badger.deploy_sett("native.uniBadgerWbtc", want, controller)
 
@@ -227,6 +244,8 @@ def sett_badger_lp_rewards():
     )
 
     rewards.grantRole(APPROVED_STAKER_ROLE, strategy, {"from": deployer})
+
+    badger.deploy_geyser(badger.getSett("native.uniBadgerWbtc"), "native.uniBadgerWbtc")
 
     return badger
 

@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 
+from helpers.utils import Eth
 from tests.helpers import balances, getTokenMetadata
 import time
 from helpers.time_utils import daysToSeconds
@@ -21,7 +22,7 @@ from scripts.deploy.deploy_badger import (
 from helpers.registry import whale_registry
 
 
-def distribute_assets_to_users(badger, users):
+def distribute_assets_to_users(badger, users, distributePair=True):
     deployer = badger.deployer
     numUsers = len(users) + 1
 
@@ -34,7 +35,10 @@ def distribute_assets_to_users(badger, users):
                     user, token.balanceOf(deployer) // numUsers, {"from": deployer}
                 )
 
-    assets = [badger.token, badger.pair]
+    assets = [badger.token]
+
+    if distributePair:
+        assets.append(badger.pair)
 
     for asset in assets:
         for user in users:
@@ -57,8 +61,7 @@ def run_system_to_state(badger: BadgerSystem, users):
         for user in users:
             balance = want.balanceOf(user)
             want.approve(sett, balance, {"from": user})
-            tx = sett.deposit(balance // 3, {"from": user}) 
-            
+            tx = sett.deposit(balance // 3, {"from": user})
 
         balances(
             {
@@ -72,7 +75,12 @@ def run_system_to_state(badger: BadgerSystem, users):
 
         print(deployer, accounts[1], accounts[2], sett.address)
 
-        print(want.symbol(), key, getTokenMetadata(sett.token()), getTokenMetadata(want.address))
+        print(
+            want.symbol(),
+            key,
+            getTokenMetadata(sett.token()),
+            getTokenMetadata(want.address),
+        )
         assert want.balanceOf(sett) > 0
 
         sett.earn({"from": deployer})
@@ -110,6 +118,17 @@ def deploy_with_actions():
     print("Test: Run simulation")
     run_system_to_state(badger, [accounts[1], accounts[2]])
     print("Test: Setup complete")
+    setts = [
+        "native.renCrv",
+        "native.badger",
+        "native.sbtcCrv",
+        "native.tbtcCrv",
+        "harvest.renCrv"
+    ]
+    for settId in setts:
+        sett = badger.getSett(settId)
+        ppfs = sett.getPricePerFullShare()
+        print("Initial PPFS ", Eth(ppfs))
     return badger
 
 

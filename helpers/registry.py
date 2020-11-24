@@ -153,7 +153,7 @@ curve_registry = DotMap(
 
 whale_registry = DotMap(
     sbtcCrv=DotMap(
-        whale="0x13c1542a468319688b89e323fe9a3be3a90ebb27",
+        whale="0xc25099792e9349c7dd09759744ea681c7de2cb66",
         token=curve_registry.pools.sbtcCrv.token,
     ),
     renCrv=DotMap(

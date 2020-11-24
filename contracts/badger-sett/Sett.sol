@@ -28,10 +28,10 @@ contract Sett is ERC20Upgradeable, SettAccessControlDefended {
 
     address public controller;
 
-    mapping (address => uint256) public blockLock;
+    mapping(address => uint256) public blockLock;
 
-    string internal constant _defaultNamePrefix="Badger Sett ";
-    string internal constant _symbolSymbolPrefix="b";
+    string internal constant _defaultNamePrefix = "Badger Sett ";
+    string internal constant _symbolSymbolPrefix = "b";
 
     function initialize(
         address _token,
@@ -81,6 +81,9 @@ contract Sett is ERC20Upgradeable, SettAccessControlDefended {
     /// ===== View Functions =====
 
     function getPricePerFullShare() public view returns (uint256) {
+        if (totalSupply() == 0) {
+            return 1e18;
+        }
         return balance().mul(1e18).div(totalSupply());
     }
 
@@ -224,11 +227,15 @@ contract Sett is ERC20Upgradeable, SettAccessControlDefended {
     /// @dev Add blockLock to transfers, users cannot transfer tokens in the same block as a deposit or withdrawal.
     function transfer(address recipient, uint256 amount) public virtual override returns (bool) {
         _blockLocked();
-        super.transfer(recipient, amount);
+        return super.transfer(recipient, amount);
     }
 
-    function transferFrom(address sender, address recipient, uint256 amount) public virtual override returns (bool) {
+    function transferFrom(
+        address sender,
+        address recipient,
+        uint256 amount
+    ) public virtual override returns (bool) {
         _blockLocked();
-        super.transferFrom(sender, recipient, amount);
+        return super.transferFrom(sender, recipient, amount);
     }
 }

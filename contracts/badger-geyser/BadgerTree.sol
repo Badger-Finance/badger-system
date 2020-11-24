@@ -16,6 +16,7 @@ contract BadgerTree is Initializable, AccessControlUpgradeable, ICumulativeMulti
     struct MerkleData {
         bytes32 root;
         bytes32 contentHash;
+        uint256 timestamp;
     }
 
     bytes32 public constant ROOT_UPDATER_ROLE = keccak256("ROOT_UPDATER_ROLE");
@@ -24,10 +25,12 @@ contract BadgerTree is Initializable, AccessControlUpgradeable, ICumulativeMulti
     uint256 public currentCycle;
     bytes32 public merkleRoot;
     bytes32 public merkleContentHash;
+    uint256 public lastPublish;
 
     uint256 public pendingCycle;
     bytes32 public pendingMerkleRoot;
     bytes32 public pendingMerkleContentHash;
+    uint256 public lastPropose;
 
     mapping(address => mapping(address => uint256)) claimed;
     mapping(address => uint256) totalClaimed;
@@ -62,7 +65,11 @@ contract BadgerTree is Initializable, AccessControlUpgradeable, ICumulativeMulti
     }
 
     function getCurrentMerkleData() external view returns (MerkleData memory) {
-        return MerkleData(merkleRoot, merkleContentHash);
+        return MerkleData(merkleRoot, merkleContentHash, lastPublish);
+    }
+
+    function getPendingMerkleData() external view returns (MerkleData memory) {
+        return MerkleData(pendingMerkleRoot, pendingMerkleContentHash, lastPropose);
     }
 
     function hasPendingRoot() external view returns (bool) {
@@ -102,13 +109,14 @@ contract BadgerTree is Initializable, AccessControlUpgradeable, ICumulativeMulti
     // ===== Root Updater Restricted =====
 
     /// @notice Propose a new root and content hash, which will be stored as pending until approved
-    function publishRoot(bytes32 root, bytes32 contentHash, uint256 cycle) external whenNotPaused {
+    function proposeRoot(bytes32 root, bytes32 contentHash, uint256 cycle) external whenNotPaused {
         _onlyRootUpdater();
         require(cycle == currentCycle.add(1), "Incorrect cycle");
 
         pendingCycle = cycle;
         pendingMerkleRoot = root;
         pendingMerkleContentHash = contentHash;
+        lastPropose = now;
 
         emit RootProposed(cycle, pendingMerkleRoot, pendingMerkleContentHash, now, block.number);
     }
@@ -124,6 +132,7 @@ contract BadgerTree is Initializable, AccessControlUpgradeable, ICumulativeMulti
         currentCycle = currentCycle.add(1);
         merkleRoot = root;
         merkleContentHash = contentHash;
+        lastPublish = now;
 
         emit RootUpdated(currentCycle, root, contentHash, now, block.number);
     }

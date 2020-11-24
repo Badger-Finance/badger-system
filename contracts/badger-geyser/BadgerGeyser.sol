@@ -5,6 +5,7 @@ pragma experimental ABIEncoderV2;
 
 import "deps/@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 import "deps/@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
+import "deps/@openzeppelin/contracts-upgradeable/token/ERC20/SafeERC20Upgradeable.sol";
 import "deps/@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "deps/@openzeppelin/contracts-upgradeable/utils/EnumerableSetUpgradeable.sol";
 
@@ -16,6 +17,7 @@ import "deps/@openzeppelin/contracts-upgradeable/utils/EnumerableSetUpgradeable.
  */
 
 contract BadgerGeyser is Initializable, AccessControlUpgradeable {
+    using SafeERC20Upgradeable for IERC20Upgradeable;
     using SafeMathUpgradeable for uint256;
     using EnumerableSetUpgradeable for EnumerableSetUpgradeable.AddressSet;
 
@@ -228,8 +230,7 @@ contract BadgerGeyser is Initializable, AccessControlUpgradeable {
         // 2. Global Accounting
         totalStaked = totalStaked.add(amount);
 
-        // interactions
-        require(_stakingToken.transferFrom(staker, address(this), amount), "BadgerGeyser: staking transfer failed");
+        _stakingToken.safeTransferFrom(staker, address(this), amount);
 
         emit Staked(beneficiary, amount, totalStakedFor(beneficiary), now, block.number, "");
     }
@@ -251,11 +252,9 @@ contract BadgerGeyser is Initializable, AccessControlUpgradeable {
         totalStaked = totalStaked.sub(amount);
 
         // interactions
-        require(_stakingToken.transfer(user, amount), "BadgerGeyser: unstake transfer failed");
+        _stakingToken.safeTransfer(user, amount);
 
         emit Unstaked(user, amount, totalStakedFor(user), now, block.number, "");
-
-        require(totalStaked == 0 || totalStaked > 0, "BadgerGeyser: Error unstaking. Staking shares exist, but no staking tokens do");
     }
 
     function _signalTokenLock(
