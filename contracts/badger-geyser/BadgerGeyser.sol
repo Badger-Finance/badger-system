@@ -140,6 +140,10 @@ contract BadgerGeyser is Initializable, AccessControlUpgradeable {
         return unlockSchedules[token].length;
     }
 
+    function getUnlockSchedulesFor(address token) public view returns (UnlockSchedule[] memory) {
+        return unlockSchedules[token];
+    }
+
     /// ===== Public Actions =====
 
     /**
