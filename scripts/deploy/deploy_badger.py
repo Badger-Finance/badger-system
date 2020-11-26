@@ -1,21 +1,69 @@
 #!/usr/bin/python3
 
-import time
-from helpers.time_utils import daysToSeconds
-from helpers.constants import APPROVED_STAKER_ROLE
-from tests.conftest import create_uniswap_pair, distribute_from_whales
-from scripts.systems.badger_system import (
-    BadgerSystem,
-    print_to_file,
-)
 from brownie import *
-from helpers.registry import registry
-from dotmap import DotMap
 from config.badger_config import badger_config, badger_total_supply
+from dotmap import DotMap
+from helpers.constants import APPROVED_STAKER_ROLE
+from helpers.registry import registry
+from helpers.time_utils import daysToSeconds
+from rich.console import Console
+from scripts.systems.badger_system import BadgerSystem, print_to_file
+from tests.conftest import create_uniswap_pair, distribute_from_whales
+
+console = Console()
 
 
 def test_deploy():
     deployer = accounts[0]
+
+    # Ganache Accounts
+    accounts.at("0x90F8bf6A479f320ead074411a4B0e7944Ea8c9C1", force=True)
+    accounts.at("0xFFcf8FDEE72ac11b5c542428B35EEF5769C409f0", force=True)
+    accounts.at("0x22d491Bde2303f2f43325b2108D26f1eAbA1e32b", force=True)
+    accounts.at("0xE11BA2b4D45Eaed5996Cd0823791E0C93114882d", force=True)
+    accounts.at("0xd03ea8624C8C5987235048901fB614fDcA89b117", force=True)
+    accounts.at("0x95cED938F7991cd0dFcb48F0a06a40FA1aF46EBC", force=True)
+    accounts.at("0x3E5e9111Ae8eB78Fe1CC3bb8915d5D461F3Ef9A9", force=True)
+    accounts.at("0x28a8746e75304c0780E011BEd21C72cD78cd535E", force=True)
+    accounts.at("0xACa94ef8bD5ffEE41947b4585a84BdA5a3d3DA6E", force=True)
+    accounts.at("0x1dF62f291b2E969fB0849d99D9Ce41e2F137006e", force=True)
+
+    # Unlocked Accounts
+    accounts.at(
+        web3.toChecksumAddress("0x193991827e291599a262e7fa7d212ff1ae31d110"), force=True
+    )
+    accounts.at(
+        web3.toChecksumAddress("0x97ca371d59bbfefdb391aa6dcbdf4455fec361f2"), force=True
+    )
+    accounts.at(
+        web3.toChecksumAddress("0x3d24d77bec08549d7ea86c4e9937204c11e153f1"), force=True
+    )
+    accounts.at(
+        web3.toChecksumAddress("0xcD9e6Df80169b6a2CFfDaE613fAbC3F7C3647B14"), force=True
+    )
+    accounts.at(
+        web3.toChecksumAddress("0xaf379f0228ad0d46bb7b4f38f9dc9bcc1ad0360c"), force=True
+    )
+    accounts.at(
+        web3.toChecksumAddress("0xc25099792e9349c7dd09759744ea681c7de2cb66"), force=True
+    )
+    accounts.at(
+        web3.toChecksumAddress("0xb1f2cdec61db658f091671f5f199635aef202cac"), force=True
+    )
+    accounts.at(
+        web3.toChecksumAddress("0x2bf792ffe8803585f74e06907900c2dc2c29adcb"), force=True
+    )
+
+    # Test Accounts
+    accounts.at(
+        web3.toChecksumAddress("0xe7bab002A39f9672a1bD0E949d3128eeBd883575"), force=True
+    )
+    accounts.at(
+        web3.toChecksumAddress("0x482c741b0711624d1f462E56EE5D8f776d5970dC"), force=True
+    )
+
+    for account in accounts:
+        console.log(account)
 
     print("Initialize Badger System")
     badger = BadgerSystem(badger_config, None, deployer)
@@ -118,6 +166,14 @@ def post_deploy_config(badger: BadgerSystem):
     badger.rewardsEscrow.approveRecipient(badger.badgerTree, {"from": deployer})
 
     badger.rewardsEscrow.approveRecipient(
+        badger.getGeyser("native.badger"), {"from": deployer}
+    )
+
+    badger.rewardsEscrow.approveRecipient(
+        badger.getGeyser("native.uniBadgerWbtc"), {"from": deployer}
+    )
+
+    badger.rewardsEscrow.approveRecipient(
         badger.getGeyser("native.renCrv"), {"from": deployer}
     )
 
@@ -142,12 +198,26 @@ def post_deploy_config(badger: BadgerSystem):
         renbtcCRV — 76750 $BADGER
         sbtcCRV — 76,750 $BADGER
         tbtcCRV — 76,750 $BADGER
-        Badger — 90,000 $BADGER
-        Badger <>wBTC Uniswap LP — 130,000 $BADGER
+        Badger — 90,000 $BADGER / 2
+            - 45000 in Sett StakingRewards
+            - 45000 in Geyser
+        Badger <>wBTC Uniswap LP — 130,000 $BADGER / 2
+            - 65000 in Sett StakingRewards
+            - 65000 in Geyser
         Super Sett
         Pickle renbtcCRV — 76,750 $BADGER
         Harvest renbtc CRV — 76,750 $BADGER
     """
+
+    badger.signal_token_lock(
+        "native.badger", badger_config.geyserParams.unlockSchedules.badger[0]
+    )
+
+    badger.signal_token_lock(
+        "native.uniBadgerWbtc",
+        badger_config.geyserParams.unlockSchedules.uniBadgerWbtc[0],
+    )
+
     badger.signal_token_lock(
         "native.renCrv", badger_config.geyserParams.unlockSchedules.bRenCrv[0]
     )
@@ -220,8 +290,6 @@ def start_staking_rewards(badger: BadgerSystem):
     # == Badger ==
     deployer = badger.deployer
     rewards = badger.getSettRewards("native.badger")
-
-    print(rewards)
 
     assert (
         badger.token.balanceOf(rewards)

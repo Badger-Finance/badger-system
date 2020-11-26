@@ -29,9 +29,13 @@ def create_uniswap_pair(token0, token1, signer):
     return uniswap.getPair(token0, token1)
 
 def distribute_from_whales(badger, recipient):
+    
     print(len(whale_registry.items()))
     for key, whale in whale_registry.items():
-        print(whale.token)
+        print("transferring from whale", whale.toDict())
+        forceEther = ForceEther.deploy({'from': recipient})
+        recipient.transfer(forceEther, Wei("1 ether"))
+        forceEther.forceSend(whale.whale, {'from': recipient})
         if whale.token:
             token = interface.IERC20(whale.token)
             token.transfer(

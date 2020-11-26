@@ -309,8 +309,7 @@ def test_confirm_setup_sett(badger):
 
     confirm_strategy_common_params(badger.sett.native.strategies.badger, params)
     confirm_strategy_badger_rewards_params(
-        badger.sett.native.strategies.badger,
-        DotMap(geyser=badger.sett.rewards.badger),
+        badger.sett.native.strategies.badger, DotMap(geyser=badger.sett.rewards.badger),
     )
 
     params = common_strategy_params

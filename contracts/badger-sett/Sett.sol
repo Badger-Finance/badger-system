@@ -33,6 +33,8 @@ contract Sett is ERC20Upgradeable, SettAccessControlDefended {
     string internal constant _defaultNamePrefix = "Badger Sett ";
     string internal constant _symbolSymbolPrefix = "b";
 
+    event FullPricePerShareUpdated(uint256 value, uint256 indexed timestamp, uint256 indexed blockNumber);
+
     function initialize(
         address _token,
         address _controller,
@@ -66,6 +68,8 @@ contract Sett is ERC20Upgradeable, SettAccessControlDefended {
         controller = _controller;
 
         min = 9500;
+
+        emit FullPricePerShareUpdated(getPricePerFullShare(), now, block.number);
     }
 
     /// ===== Modifiers =====
@@ -177,6 +181,13 @@ contract Sett is ERC20Upgradeable, SettAccessControlDefended {
         uint256 _bal = available();
         token.safeTransfer(controller, _bal);
         IController(controller).earn(address(token), _bal);
+    }
+
+    /// @dev Emit event tracking current full price per share
+    /// @dev Provides a pure on-chain way of approximating APY
+    function trackFullPricePerShare() external {
+        _onlyAuthorizedActors();
+        emit FullPricePerShareUpdated(getPricePerFullShare(), now, block.number);
     }
 
     /// ===== Internal Implementations =====

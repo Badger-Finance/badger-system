@@ -3,7 +3,7 @@
 from helpers.utils import Eth
 from tests.helpers import balances, getTokenMetadata
 import time
-from helpers.time_utils import daysToSeconds
+from helpers.time_utils import daysToSeconds, hours
 from helpers.constants import APPROVED_STAKER_ROLE
 from tests.conftest import create_uniswap_pair, distribute_from_whales
 from scripts.systems.badger_system import (
@@ -55,6 +55,7 @@ def run_system_to_state(badger: BadgerSystem, users):
 
     for key, sett in badger.sett_system.vaults.items():
         want = badger.getStrategyWant(key)
+        farm = badger.getGeyser(key)
         assert want == sett.token()
 
         # Deposit into Setts
@@ -73,6 +74,12 @@ def run_system_to_state(badger: BadgerSystem, users):
             [want, badger.token, sett],
         )
 
+        # Deposit into Farms
+        for user in users:
+            shares = sett.balanceOf(user)
+            sett.approve(farm, shares, {"from": user})
+            farm.stake(shares // 2, "0x", {"from": user})
+
         print(deployer, accounts[1], accounts[2], sett.address)
 
         print(
@@ -88,10 +95,12 @@ def run_system_to_state(badger: BadgerSystem, users):
     chain.sleep(daysToSeconds(2))
     chain.mine()
 
+    # Tend and harvest
     for key, sett in badger.sett_system.vaults.items():
         strategy = badger.getStrategy(key)
         if strategy.isTendable():
             strategy.tend({"from": deployer})
+            chain.sleep(hours(0.5))
             chain.mine()
         strategy.harvest({"from": deployer})
 
@@ -102,6 +111,7 @@ def run_system_to_state(badger: BadgerSystem, users):
         strategy = badger.getStrategy(key)
         if strategy.isTendable():
             strategy.tend({"from": deployer})
+            chain.sleep(hours(0.5))
             chain.mine()
         strategy.harvest({"from": deployer})
 
@@ -115,15 +125,30 @@ def deploy_with_actions():
     print("Printing contract addresses to local.json")
     print_to_file(badger, "local.json")
 
+    testAccounts = [
+        accounts[1],
+        accounts.at(
+            web3.toChecksumAddress("0xe7bab002A39f9672a1bD0E949d3128eeBd883575"),
+            force=False,
+        ),
+        accounts.at(
+            web3.toChecksumAddress("0x482c741b0711624d1f462E56EE5D8f776d5970dC"),
+            force=False,
+        ),
+    ]
+
+    for account in testAccounts:
+        badger.deployer.transfer(account, Wei("10 ether"))
+
     print("Test: Run simulation")
-    run_system_to_state(badger, [accounts[1], accounts[2]])
+    run_system_to_state(badger, testAccounts)
     print("Test: Setup complete")
     setts = [
         "native.renCrv",
         "native.badger",
         "native.sbtcCrv",
         "native.tbtcCrv",
-        "harvest.renCrv"
+        "harvest.renCrv",
     ]
     for settId in setts:
         sett = badger.getSett(settId)
