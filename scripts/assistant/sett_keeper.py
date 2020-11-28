@@ -68,6 +68,7 @@ def main():
         if test:
             chain.mine()
         check_harvest(vault, strategy, keeper)
+        vault.trackFullPricePerShare({"from": keeper})
 
     if test:
         chain.sleep(daysToSeconds(1))

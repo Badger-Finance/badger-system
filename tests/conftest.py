@@ -1,13 +1,11 @@
 from tests.helpers import create_uniswap_pair, distribute_from_whales
-from scripts.systems.badger_system import deploy_badger
 from scripts.systems.uniswap_system import UniswapSystem, connect_uniswap
 from _pytest.config import get_config
 from scripts.systems.badger_minimal import deploy_badger_minimal
 import pytest
 from brownie import *
 from helpers.gnosis_safe import exec_direct
-from scripts.deploy.deploy_badger import main
-from helpers.registry import whale_registry
+from scripts.deploy.deploy_badger import deploy_flow
 from helpers.constants import *
 from config.badger_config import sett_config, badger_config
 from helpers.registry import registry
@@ -74,6 +72,18 @@ def sett_native_badger():
 
     return badger
 
+@pytest.fixture(scope="function")
+def badger_hunt_unit():
+    deployer = accounts[0]
+    badger = deploy_badger_minimal(deployer)
+    distribute_from_whales(badger, deployer)
+
+    badger.deploy_logic("BadgerHunt", BadgerHunt)
+    badger.deploy_badger_hunt()
+    
+    badger.token.transfer(badger.badgerHunt, badger_config.huntParams.badgerAmount, {'from': deployer})
+
+    return badger
 
 def sett_pickle_meta_farm():
     deployer = accounts[0]
@@ -252,10 +262,9 @@ def sett_badger_lp_rewards():
 
 @pytest.fixture()
 def badger(accounts):
-    badger_system = main()
+    badger_system = deploy_flow()
 
     # Distribute Test Assets
-
     return badger_system
 
 

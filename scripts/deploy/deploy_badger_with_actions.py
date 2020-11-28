@@ -1,25 +1,21 @@
 #!/usr/bin/python3
 
-from helpers.utils import Eth
-from tests.helpers import balances, getTokenMetadata
 import time
-from helpers.time_utils import daysToSeconds, hours
-from helpers.constants import APPROVED_STAKER_ROLE
-from tests.conftest import create_uniswap_pair, distribute_from_whales
-from scripts.systems.badger_system import (
-    BadgerSystem,
-    print_to_file,
-)
+
 from brownie import *
-from helpers.registry import registry
-from dotmap import DotMap
 from config.badger_config import badger_config, badger_total_supply
+from dotmap import DotMap
+from helpers.registry import registry, whale_registry
+from helpers.time_utils import daysToSeconds, hours
+from helpers.utils import Eth
 from scripts.deploy.deploy_badger import (
-    test_deploy,
-    start_staking_rewards,
+    deploy_flow,
     post_deploy_config,
+    start_staking_rewards,
+    test_deploy,
 )
-from helpers.registry import whale_registry
+from scripts.systems.badger_system import BadgerSystem, print_to_file
+from tests.helpers import balances, getTokenMetadata
 
 
 def distribute_assets_to_users(badger, users, distributePair=True):
@@ -54,6 +50,8 @@ def run_system_to_state(badger: BadgerSystem, users):
     deployer = badger.deployer
 
     for key, sett in badger.sett_system.vaults.items():
+        if key == "native.badger":
+            continue
         want = badger.getStrategyWant(key)
         farm = badger.getGeyser(key)
         assert want == sett.token()
@@ -108,6 +106,8 @@ def run_system_to_state(badger: BadgerSystem, users):
     chain.mine()
 
     for key, sett in badger.sett_system.vaults.items():
+        if key == "native.badger":
+            continue
         strategy = badger.getStrategy(key)
         if strategy.isTendable():
             strategy.tend({"from": deployer})
@@ -117,15 +117,10 @@ def run_system_to_state(badger: BadgerSystem, users):
 
 
 def deploy_with_actions():
-    badger = test_deploy()
-    print("Test: Badger System Deployed")
-    post_deploy_config(badger)
-    start_staking_rewards(badger)
-    print("Test: Badger System Setup Complete")
-    print("Printing contract addresses to local.json")
-    print_to_file(badger, "local.json")
+    badger = deploy_flow(test=True, print=True)
 
     testAccounts = [
+        badger.deployer,
         accounts[1],
         accounts.at(
             web3.toChecksumAddress("0xe7bab002A39f9672a1bD0E949d3128eeBd883575"),
@@ -138,7 +133,7 @@ def deploy_with_actions():
     ]
 
     for account in testAccounts:
-        badger.deployer.transfer(account, Wei("10 ether"))
+        accounts[0].transfer(account, Wei("10 ether"))
 
     print("Test: Run simulation")
     run_system_to_state(badger, testAccounts)

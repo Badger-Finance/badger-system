@@ -126,196 +126,6 @@ def strategy_name_to_artifact(name):
     return name_to_artifact[name]
 
 
-def deploy_badger(systems, deployer):
-    """
-    Deploy fresh badger system
-    """
-    badger = BadgerSystem(badger_config, systems)
-
-    # TODO: Replace with prod values
-    badger.deployer = deployer
-    badger.keeper = deployer
-    badger.guardian = deployer
-
-    badger.devProxyAdmin = deploy_proxy_admin()
-    badger.daoProxyAdmin = deploy_proxy_admin()
-    badger.proxyAdmin = badger.devProxyAdmin
-
-    # Deploy Dev Multisig (Later Connect)
-    multisigParams = badger_config["devMultisigParams"]
-    multisigParams.owners = [deployer.address]
-
-    print("Deploy Dev Multisig")
-    badger.devMultisig = systems.gnosis_safe.deployGnosisSafe(multisigParams, deployer)
-
-    print("Connect to DAO")
-    badger.dao = DotMap(
-        token=Contract.from_abi(
-            "MiniMeToken",
-            dao_config.token,
-            registry.aragon.artifacts.MiniMeToken["abi"],
-            deployer,
-        ),
-        kernel=Contract.from_abi(
-            "Agent", dao_config.kernel, registry.aragon.artifacts.Agent["abi"], deployer
-        ),
-        agent=Contract.from_abi(
-            "Agent", dao_config.agent, registry.aragon.artifacts.Agent["abi"], deployer
-        ),
-    )
-
-    # badger.dao = systems.aragon.deployCompanyDao(daoParams, deployer)
-
-    # Alias for badger token
-    badger.token = badger.dao.token
-
-    # Requires ganache --unlock for initial owner
-    badger.token.transfer(
-        deployer, badger_total_supply, {"from": dao_config.initialOwner}
-    )
-
-    # Deploy necessary logic contracts
-    print("Deploy Logic Contracts")
-    badger.logic = DotMap(
-        SmartVesting=SmartVesting.deploy({"from": deployer}),
-        SmartTimelock=SmartTimelock.deploy({"from": deployer}),
-        RewardsEscrow=RewardsEscrow.deploy({"from": deployer}),
-        BadgerGeyser=BadgerGeyser.deploy({"from": deployer}),
-        BadgerTree=BadgerTree.deploy({"from": deployer}),
-        BadgerHunt=BadgerHunt.deploy({"from": deployer}),
-        SimpleTimelock=SimpleTimelock.deploy({"from": deployer}),
-    )
-
-    # Deploy Rewards
-    guardian = deployer
-    updater = deployer
-
-    print("Deploy Rewards Infrastructure")
-    # TODO: Should be owned by devMultisig
-    badger.rewardsEscrow = deploy_proxy(
-        "RewardsEscrow",
-        RewardsEscrow.abi,
-        badger.logic.RewardsEscrow.address,
-        badger.devProxyAdmin.address,
-        badger.logic.RewardsEscrow.initialize.encode_input(deployer),
-        deployer,
-    )
-
-    badger.badgerTree = deploy_proxy(
-        "BadgerTree",
-        BadgerTree.abi,
-        badger.logic.BadgerTree.address,
-        badger.devProxyAdmin.address,
-        badger.logic.BadgerTree.initialize.encode_input(
-            badger.devMultisig, updater, guardian
-        ),
-        deployer,
-    )
-
-    # Deploy Sett Subsystem
-    print("Deploy Sett")
-    badger.sett = deploy_sett_system(badger, deployer)
-
-    # Deploy timelocks & vesting
-    # DAO Badger Vesting
-    print("Deploy Locks & Vesting")
-    badger.daoBadgerTimelock = deploy_proxy(
-        "SimpleTimelock",
-        SimpleTimelock.abi,
-        badger.logic.SimpleTimelock.address,
-        AddressZero,
-        badger.logic.SimpleTimelock.initialize.encode_input(
-            badger.token, badger.dao.agent, badger_config.tokenLockParams.lockDuration
-        ),
-        badger.deployer,
-    )
-
-    # Team Badger Vesting
-    badger.teamVesting = deploy_proxy(
-        "SmartVesting",
-        SmartVesting.abi,
-        badger.logic.SmartVesting.address,
-        AddressZero,
-        badger.logic.SmartVesting.initialize.encode_input(
-            badger.token,
-            badger.devMultisig,
-            badger.dao.agent,
-            badger_config.teamVestingParams.startTime,
-            badger_config.teamVestingParams.cliffDuration,
-            badger_config.teamVestingParams.totalDuration,
-        ),
-        badger.deployer,
-    )
-
-    print("Deploy Rewards Pools")
-    badger.pools = DotMap(
-        sett=DotMap(native=DotMap(), pickle=DotMap(), harvest=DotMap())
-    )
-
-    # Deploy staking pools
-    badger.pools.sett.native.renCrv = deploy_geyser(badger, badger.sett.native.renCrv)
-    badger.pools.sett.native.sbtcCrv = deploy_geyser(badger, badger.sett.native.sbtcCrv)
-    badger.pools.sett.native.tbtcCrv = deploy_geyser(badger, badger.sett.native.tbtcCrv)
-    badger.pools.sett.native.badger = deploy_geyser(badger, badger.sett.native.badger)
-
-    badger.pools.sett.pickle.renCrv = deploy_geyser(badger, badger.sett.pickle.renCrv)
-    badger.pools.sett.harvest.renCrv = deploy_geyser(badger, badger.sett.harvest.renCrv)
-
-    print("Deploy Airdrop")
-    # Deploy Hunt
-    badger.badgerHunt = deploy_proxy(
-        "BadgerHunt",
-        BadgerHunt.abi,
-        badger.logic.BadgerHunt.address,
-        badger.devProxyAdmin.address,
-        badger.logic.BadgerHunt.initialize.encode_input(
-            badger.token,
-            EmptyBytes32,
-            daysToSeconds(1),
-            2000,
-            badger_config.huntParams.startTime,
-            daysToSeconds(1),
-            badger.rewardsEscrow,
-        ),
-        badger.deployer,
-    )
-
-    print("Printing contract addresses to local.json")
-    print_to_file(badger, "local.json")
-
-    # Upgradeable Contracts
-    badger.contracts = [
-        badger.badgerTree,
-        badger.badgerHunt,
-        badger.rewardsEscrow,
-        badger.sett.native.controller,
-        badger.sett.harvest.controller,
-        badger.sett.pickle.controller,
-        badger.sett.native.badger,
-        badger.sett.native.renCrv,
-        badger.sett.native.sBtcCrv,
-        badger.sett.native.tBtcCrv,
-        badger.sett.harvest.renCrv,
-        badger.sett.pickle.renCrv,
-        badger.sett.native.strategies.badger,
-        badger.sett.native.strategies.renCrv,
-        badger.sett.native.strategies.sBtcCrv,
-        badger.sett.native.strategies.tBtcCrv,
-        badger.sett.harvest.strategies.renCrv,
-        badger.sett.pickle.strategies.renCrv,
-        badger.sett.rewards.badger,
-        badger.teamVesting,
-        badger.daoBadgerTimelock,
-        badger.pools.sett.native.renCrv,
-        badger.pools.sett.native.sBtcCrv,
-        badger.pools.sett.native.tBtcCrv,
-        badger.pools.sett.harvest.renCrv,
-        badger.pools.sett.pickle.renCrv,
-    ]
-
-    return badger
-
-
 def connect_badger(badger_deploy_file):
     badger_deploy = {}
     with open(badger_deploy_file) as f:
@@ -537,14 +347,15 @@ class BadgerSystem:
             self.devProxyAdmin.address,
             self.logic.BadgerHunt.initialize.encode_input(
                 self.token,
-                EmptyBytes32,
-                daysToSeconds(1),
-                2000,
+                badger_config.huntParams.merkleRoot,
+                badger_config.huntParams.epochDuration,
+                badger_config.huntParams.claimReductionPerEpoch,
                 badger_config.huntParams.startTime,
-                daysToSeconds(1),
+                badger_config.huntParams.gracePeriod,
                 self.rewardsEscrow,
+                self.devMultisig,
             ),
-            self.deployer,
+            deployer,
         )
         self.track_contract_upgradeable(self.badgerHunt)
 
@@ -944,4 +755,4 @@ class BadgerSystem:
 
     def getStrategyArtifactName(self, id):
         return self.strategy_artifacts[id]["artifactName"]
-    
+

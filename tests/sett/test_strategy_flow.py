@@ -1,3 +1,4 @@
+from tests.helpers import getTokenMetadata
 from tests.test_recorder import EventRecord, TestRecorder
 from tests.conftest import badger_single_sett
 from scripts.systems.badger_system import BadgerSystem
@@ -407,6 +408,7 @@ def test_withdraw_other(settId):
     startingBalance = want.balanceOf(deployer)
 
     depositAmount = Wei("1 ether")
+    print(getTokenMetadata(want.address), startingBalance)
     assert startingBalance >= depositAmount
 
     # Deposit

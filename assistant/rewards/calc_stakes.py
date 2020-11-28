@@ -1,61 +1,84 @@
-import json
-import os
-from collections import Counter, defaultdict
-from concurrent.futures import ThreadPoolExecutor
-from fractions import Fraction
-from functools import partial, wraps
-from itertools import zip_longest
-from pathlib import Path
+from assistant.rewards.BadgerGeyserMock import BadgerGeyserMock
+from brownie import *
 from dotmap import DotMap
-import toml
-from brownie import MerkleDistributor, Wei, accounts, interface, rpc, web3
-from eth_abi import decode_single, encode_single
-from eth_abi.packed import encode_abi_packed
-from eth_utils import encode_hex
-from toolz import valfilter, valmap
-from tqdm import tqdm, trange
-from click import secho
 from helpers.constants import AddressZero
+from rich.console import Console
+from tqdm import trange
+
+console = Console()
 
 
 def calc_geyser_stakes(geyser, globalStartBlock, snapshotStartBlock, periodEndBlock):
-    print("geyser initial snapshot for " + geyser.address)
-    pre_actions = collect_actions(geyser, globalStartBlock, snapshotStartBlock - 1)
-    pre_snapshot = process_snapshot(
-        pre_actions, globalStartBlock, snapshotStartBlock - 1
+    console.print(" Geyser initial snapshot for " + geyser.address, {
+        'from': snapshotStartBlock,
+        'to': periodEndBlock
+    })
+
+    globalStartTime = web3.eth.getBlock(globalStartBlock)["timestamp"]
+    snapshotStartTime = web3.eth.getBlock(snapshotStartBlock)["timestamp"]
+    periodEndTime = web3.eth.getBlock(periodEndBlock)["timestamp"]
+
+    geyserMock = BadgerGeyserMock()
+    geyserMock.set_current_period(snapshotStartTime, periodEndTime)
+
+    console.log(
+        "blocks between",
+        {
+            "globalStartBlock": globalStartBlock,
+            "snapshotStartBlock": snapshotStartBlock,
+            "periodEndBlock": periodEndBlock,
+            "globalStartTime": globalStartTime,
+            "snapshotStartTime": snapshotStartTime,
+            "periodEndTime": periodEndTime,
+        },
     )
 
-    # Construct stakingWeight (rather than just stakingShareSeconds), with values modified by _average_ multiplier for stakes within a periods
+    # Collect actions from the past, and generate the initial state of stakes
+    console.print("\n[grey]Collect Actions: Historical[/grey]")
+    pre_actions = collect_actions(geyser, globalStartBlock, snapshotStartBlock - 1)
+    console.print("\n[grey]Process Actions: Historical[/grey]")
+    geyserMock = process_snapshot(
+        geyserMock, pre_actions, globalStartBlock, snapshotStartBlock - 1
+    )
+
+    # Collect actions from the claim period
+    console.print("\n[grey]Collect Actions: Claim Period[/grey]")
     actions = collect_actions(geyser, snapshotStartBlock, periodEndBlock)
-    stake_weights = calculate_stake_weights(pre_snapshot, actions)
-    print(stake_weights)
-    return stake_weights
+
+    # Process shareSeconds from the claims period
+    console.print("\n[grey]Process Actions: Claim Period[/grey]")
+    geyserMock = process_actions(geyserMock, actions)
+    console.log(geyserMock.getUserWeights())
+
+    return calculate_token_distributions(
+        geyser, geyserMock, snapshotStartTime, periodEndTime
+    )
 
 
-def events_to_stakes(geyser, startBlock, snapshotBlock):
+def calculate_token_distributions(
+    geyser, geyserMock: BadgerGeyserMock, snapshotStartTime, periodEndTime
+):
     """
-    Get the current stakes of a user at a given snapshot block
-    user -> stake[]
-    stake:{amount, stakedAt}
+    Tokens to Distribute:
+    - get all distribution tokens
+    - for each token, determine how many tokens will be distritbuted between the times specified
+        - ((timeInClaimPeriod / totalTime) * initialLocked)
     """
-    stakes = DotMap()
-    contract = web3.eth.contract(geyser.address, abi=BadgerGeyser.abi)
-    for start in trange(startBlock, snapshotBlock, 1000):
-        end = min(start + 999, snapshotBlock)
-        logs = contract.events.Staked().getLogs(fromBlock=start, toBlock=end)
-        for log in logs:
-            user = log["args"]["user"]
-            if user != AddressZero:
-                if not stakes[user]:
-                    stakes[user] = []
-                stakes[user].push(
-                    {
-                        "amount": log["args"]["amount"],
-                        "stakedAt": log["args"]["timestamp"],
-                    }
-                )
+    distributionTokens = geyser.getDistributionTokens()
+    for token in distributionTokens:
+        geyserMock.add_distribution_token(token)
+        unlockSchedules = geyser.getUnlockSchedulesFor(token)
+        for schedule in unlockSchedules:
+            console.log(schedule)
+            geyserMock.add_unlock_schedule(token, schedule)
 
-    return stakes
+    tokenDistributions = geyserMock.calc_token_distributions_in_range(
+        snapshotStartTime, periodEndTime
+    )
+    console.log("tokenDistributions", tokenDistributions)
+    userDistributions = geyserMock.calc_user_distributions(tokenDistributions)
+    console.log("userDistributions", userDistributions)
+    return userDistributions
 
 
 def collect_actions(geyser, startBlock, endBlock):
@@ -75,17 +98,20 @@ def collect_actions(geyser, startBlock, endBlock):
         logs = contract.events.Staked().getLogs(fromBlock=start, toBlock=end)
         for log in logs:
             timestamp = log["args"]["timestamp"]
-            user = log["args"]["args"]
-
+            user = log["args"]["user"]
+            console.log("Staked", log["args"])
             if user != AddressZero:
                 if not actions[user][timestamp]:
                     actions[user][timestamp] = []
-                actions[user][timestamp].push(
-                    {
-                        "action": "STAKE",
-                        "amount": log["args"]["amount"],
-                        "stakedAt": log["args"]["timestamp"],
-                    }
+                actions[user][timestamp].append(
+                    DotMap(
+                        user=user,
+                        action="Stake",
+                        amount=log["args"]["amount"],
+                        userTotal=log["args"]["total"],
+                        stakedAt=log["args"]["timestamp"],
+                        timestamp=log["args"]["timestamp"],
+                    )
                 )
 
     # Add unstake actions
@@ -94,45 +120,73 @@ def collect_actions(geyser, startBlock, endBlock):
         logs = contract.events.Unstaked().getLogs(fromBlock=start, toBlock=end)
         for log in logs:
             timestamp = log["args"]["timestamp"]
-            user = log["args"]["args"]
-
+            user = log["args"]["user"]
+            console.log("Unstaked", log["args"])
             if user != AddressZero:
                 if not actions[user][timestamp]:
                     actions[user][timestamp] = []
-                actions[user][timestamp].push(
-                    {
-                        "action": "UNSTAKE",
-                        "amount": log["args"]["amount"],
-                        "timestamp": log["args"]["timestamp"],
-                    }
+                actions[user][timestamp].append(
+                    DotMap(
+                        user=user,
+                        action="Unstake",
+                        amount=log["args"]["amount"],
+                        userTotal=log["args"]["total"],
+                        timestamp=log["args"]["timestamp"],
+                    )
                 )
-
+    console.log("actions from events", actions.toDict())
     return actions
 
 
-def process_snapshot(actions, startBlock, endBlock):
+def process_snapshot(geyserMock, actions, startBlock, endBlock):
+    """
+    Generate current set of Stakes from historical data
+    """
+    startTime = web3.eth.getBlock(startBlock)["timestamp"]
+    endTime = web3.eth.getBlock(endBlock)["timestamp"]
+
+    console.print("[green]== Processing to Snapshot ==[/green]\n")
+    console.log("Processing actions for Snapshot", actions.toDict())
+    for user, data in actions.items():
+        console.log(" processing user", user)
+        for timestamp in data.values():
+            for action in timestamp:
+                if action.action == "Stake":
+                    geyserMock.stake(action.user, action, trackShareSeconds=False)
+                if action.action == "Unstake":
+                    geyserMock.unstake(action.user, action, trackShareSeconds=False)
+
+    console.print("= User stakes at pre-snapshot =", style="dim cyan")
+    geyserMock.printState()
+    return geyserMock
+
+
+def process_actions(geyserMock: BadgerGeyserMock, actions):
     """
     Add stakes
     Remove stakes according to unstaking rules (LIFO)
     """
-    for action in actions.values():
-        print(action)
+    console.print("[green]== Processing Claim Period Actions ==[/green]\n")
+    console.log("Processing actions for Claim Period", actions.toDict())
+    for user, userData in actions.items():
+        console.log(" processing User", user)
+        for timestamp, timestampEntries in userData.items():
+            console.log(" timestamp collection", timestamp, timestampEntries)
+            for action in timestampEntries:
+                if action.action == "Stake":
+                    geyserMock.stake(action.user, action)
+                if action.action == "Unstake":
+                    geyserMock.unstake(action.user, action)
+
+    geyserMock.calc_end_share_seconds()
+    console.print("= User stakes after actions =", style="dim cyan")
+    geyserMock.printState()
+    return geyserMock
 
 
-def calculate_stake_weights(stakes, actions):
-    """
-    Add stakes
-    Remove stakes according to unstaking rules (LIFO)
-    Calculate the "stake weight" of each user
-    user -> stakeWeight
-    """
-    for action in actions.values():
-        print(action)
-
-
-def ensure_archive_node():
-    fresh = web3.eth.call({"to": str(EMN), "data": EMN.totalSupply.encode_input()})
-    old = web3.eth.call(
-        {"to": str(EMN), "data": EMN.totalSupply.encode_input()}, SNAPSHOT_BLOCK
-    )
-    assert fresh != old, "this step requires an archive node"
+# def ensure_archive_node():
+#     fresh = web3.eth.call({"to": str(EMN), "data": EMN.totalSupply.encode_input()})
+#     old = web3.eth.call(
+#         {"to": str(EMN), "data": EMN.totalSupply.encode_input()}, SNAPSHOT_BLOCK
+#     )
+#     assert fresh != old, "this step requires an archive node"

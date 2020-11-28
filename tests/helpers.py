@@ -32,15 +32,16 @@ def distribute_from_whales(badger, recipient):
     
     print(len(whale_registry.items()))
     for key, whale in whale_registry.items():
-        print("transferring from whale", whale.toDict())
-        forceEther = ForceEther.deploy({'from': recipient})
-        recipient.transfer(forceEther, Wei("1 ether"))
-        forceEther.forceSend(whale.whale, {'from': recipient})
-        if whale.token:
-            token = interface.IERC20(whale.token)
-            token.transfer(
-                recipient, token.balanceOf(whale.whale), {"from": whale.whale}
-            )
+        if key != "_pytestfixturefunction":
+            print("transferring from whale", key, whale.toDict())
+            forceEther = ForceEther.deploy({'from': recipient})
+            recipient.transfer(forceEther, Wei("1 ether"))
+            forceEther.forceSend(whale.whale, {'from': recipient})
+            if whale.token:
+                token = interface.IERC20(whale.token)
+                token.transfer(
+                    recipient, token.balanceOf(whale.whale), {"from": whale.whale}
+                )
 
 
 def distribute_rewards_escrow(badger, token, recipient, amount):

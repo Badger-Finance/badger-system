@@ -163,12 +163,11 @@ whale_registry = DotMap(
     tbtcCrv=DotMap(
         whale="0xaf379f0228ad0d46bb7b4f38f9dc9bcc1ad0360c",
         token=curve_registry.pools.tbtcCrv.token,
-        whaleType="CurveRewards"
+        whaleType="CurveRewards",
     ),
     wbtc=DotMap(
-        whale="0x2bf792ffe8803585f74e06907900c2dc2c29adcb",
-        token=token_registry.wbtc,
-    )
+        whale="0x2bf792ffe8803585f74e06907900c2dc2c29adcb", token=token_registry.wbtc,
+    ),
 )
 
 
