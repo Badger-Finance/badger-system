@@ -46,6 +46,7 @@ def deploy_geyser(badger, stakingToken):
 
 def print_to_file(badger, path):
     system = {
+        "globalStartBlock": badger.globalStartBlock,
         "deployer": badger.deployer.address,
         "guardian": badger.guardian.address,
         "keeper": badger.keeper.address,
@@ -128,13 +129,17 @@ def strategy_name_to_artifact(name):
 
 def connect_badger(badger_deploy_file):
     badger_deploy = {}
+    print("Connecting to deploy at " + badger_deploy_file)
     with open(badger_deploy_file) as f:
         badger_deploy = json.load(f)
 
+    accounts.at(badger_deploy["deployer"], force=True)
     """
     Connect to existing badger deployment
     """
     badger = BadgerSystem(badger_config, None, badger_deploy["deployer"], deploy=False)
+
+    badger.globalStartBlock = badger_deploy["globalStartBlock"]
 
     deployer = badger.deployer
 

@@ -117,7 +117,7 @@ def run_system_to_state(badger: BadgerSystem, users):
 
 
 def deploy_with_actions():
-    badger = deploy_flow(test=True, print=True)
+    badger = deploy_flow(test=True, outputToFile=True)
 
     testAccounts = [
         badger.deployer,

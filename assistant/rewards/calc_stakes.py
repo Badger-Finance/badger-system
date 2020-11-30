@@ -9,10 +9,10 @@ console = Console()
 
 
 def calc_geyser_stakes(geyser, globalStartBlock, snapshotStartBlock, periodEndBlock):
-    console.print(" Geyser initial snapshot for " + geyser.address, {
-        'from': snapshotStartBlock,
-        'to': periodEndBlock
-    })
+    console.print(
+        " Geyser initial snapshot for " + geyser.address,
+        {"from": snapshotStartBlock, "to": periodEndBlock},
+    )
 
     globalStartTime = web3.eth.getBlock(globalStartBlock)["timestamp"]
     snapshotStartTime = web3.eth.getBlock(snapshotStartBlock)["timestamp"]
@@ -47,7 +47,9 @@ def calc_geyser_stakes(geyser, globalStartBlock, snapshotStartBlock, periodEndBl
 
     # Process shareSeconds from the claims period
     console.print("\n[grey]Process Actions: Claim Period[/grey]")
-    geyserMock = process_actions(geyserMock, actions)
+    geyserMock = process_actions(
+        geyserMock, actions, snapshotStartBlock, periodEndBlock
+    )
     console.log(geyserMock.getUserWeights())
 
     return calculate_token_distributions(
@@ -75,9 +77,7 @@ def calculate_token_distributions(
     tokenDistributions = geyserMock.calc_token_distributions_in_range(
         snapshotStartTime, periodEndTime
     )
-    console.log("tokenDistributions", tokenDistributions)
     userDistributions = geyserMock.calc_user_distributions(tokenDistributions)
-    console.log("userDistributions", userDistributions)
     return userDistributions
 
 
@@ -146,7 +146,11 @@ def process_snapshot(geyserMock, actions, startBlock, endBlock):
     endTime = web3.eth.getBlock(endBlock)["timestamp"]
 
     console.print("[green]== Processing to Snapshot ==[/green]\n")
-    console.log("Processing actions for Snapshot", actions.toDict())
+    console.log(
+        "Processing actions for Snapshot",
+        {"startTime": startTime, "endTime": endTime},
+        actions.toDict(),
+    )
     for user, data in actions.items():
         console.log(" processing user", user)
         for timestamp in data.values():
@@ -161,13 +165,22 @@ def process_snapshot(geyserMock, actions, startBlock, endBlock):
     return geyserMock
 
 
-def process_actions(geyserMock: BadgerGeyserMock, actions):
+def process_actions(
+    geyserMock: BadgerGeyserMock, actions, snapshotStartBlock, periodEndBlock
+):
     """
     Add stakes
     Remove stakes according to unstaking rules (LIFO)
     """
+    startTime = web3.eth.getBlock(snapshotStartBlock)["timestamp"]
+    endTime = web3.eth.getBlock(periodEndBlock)["timestamp"]
+
     console.print("[green]== Processing Claim Period Actions ==[/green]\n")
-    console.log("Processing actions for Claim Period", actions.toDict())
+    console.log(
+        "Processing actions for Claim Period",
+        {"startTime": startTime, "endTime": endTime},
+        actions.toDict(),
+    )
     for user, userData in actions.items():
         console.log(" processing User", user)
         for timestamp, timestampEntries in userData.items():

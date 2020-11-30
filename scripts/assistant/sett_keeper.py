@@ -44,8 +44,8 @@ def main():
     # else:
     #     priv = os.environ.get('VAULT_KEEPER_PRIV')
     #     sender = accounts.add(priv) if priv else accounts.load(input('brownie account: '))
-
-    badger = connect_badger("local.json")
+    fileName = "deploy-" + str(chain.id) + ".json"
+    badger = connect_badger(fileName)
     keeper = badger.keeper
 
     # TODO Load keeper account from file

@@ -262,7 +262,7 @@ def sett_badger_lp_rewards():
 
 @pytest.fixture()
 def badger(accounts):
-    badger_system = deploy_flow()
+    badger_system = deploy_flow(test=True, outputToFile=False)
 
     # Distribute Test Assets
     return badger_system

@@ -55,7 +55,7 @@ contract BadgerHunt is MerkleDistributor, OwnableUpgradeable {
     /// @dev Get grace period end timestamp
     function getGracePeriodEnd() public view returns (uint256) {
         return claimsStart.add(gracePeriod);
-    }  
+    }
 
     /// @dev Get claims start timestamp
     function getClaimsStartTime() public view returns (uint256) {
@@ -110,6 +110,7 @@ contract BadgerHunt is MerkleDistributor, OwnableUpgradeable {
         bytes32[] calldata merkleProof
     ) external virtual override {
         require(account == msg.sender, "BadgerDistributor: Can only claim for own account.");
+        require(getCurrentRewardsRate() > 0, "BadgerDistributor: Past rewards claim period.");
         require(!isClaimed(index), "BadgerDistributor: Drop already claimed.");
 
         // Verify the merkle proof.
@@ -122,18 +123,12 @@ contract BadgerHunt is MerkleDistributor, OwnableUpgradeable {
         uint256 claimable = amount.mul(getCurrentRewardsRate()).div(MAX_BPS);
 
         require(IERC20Upgradeable(token).transfer(account, claimable), "Transfer to user failed.");
-
-        // Transfer any remainder to rewards escrow
-        if (claimable != amount) {
-            require(IERC20Upgradeable(token).transfer(rewardsEscrow, claimable), "Transfer to rewardsEscrow failed.");
-        }
-
         emit Hunt(index, account, amount, claimable, amount.sub(claimable));
     }
 
     /// ===== Gated Actions: Owner =====
 
-    /// @notice After hunt is complete, transfer excess funds to rewardsEscrow 
+    /// @notice After hunt is complete, transfer excess funds to rewardsEscrow
     function recycleExcess() external onlyOwner {
         require(getCurrentRewardsRate() == 0 && getCurrentEpoch() > finalEpoch, "Hunt period not finished");
         uint256 remainingBalance = IERC20Upgradeable(token).balanceOf(address(this));

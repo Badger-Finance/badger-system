@@ -484,14 +484,14 @@ def start_staking_rewards(badger: BadgerSystem):
     )
 
 
-def deploy_flow(test=False, print=False):
+def deploy_flow(test=False, outputToFile=True):
     badger = test_deploy(test=test)
     print("Test: Badger System Deployed")
     post_deploy_config(badger)
     start_staking_rewards(badger)
     print("Test: Badger System Setup Complete")
-    if print:
-        fileName = "deploy-", chain.id + ".json"
+    if outputToFile:
+        fileName = "deploy-" + str(chain.id) + ".json"
         print("Printing contract addresses to ", fileName)
         print_to_file(badger, fileName)
     return badger

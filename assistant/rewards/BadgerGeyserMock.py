@@ -47,26 +47,23 @@ class BadgerGeyserMock:
         return False
 
     def add_distribution_token(self, token):
-        console.log("Added distribution token", token)
         self.distributionTokens.append(token)
 
     def add_unlock_schedule(self, token, unlockSchedule):
-
         if not self.unlockSchedules[str(token)]:
             self.unlockSchedules[str(token)] = []
-        self.unlockSchedules[str(token)].append(
-            DotMap(
-                initialTokensLocked=unlockSchedule[0],
-                endTime=unlockSchedule[1],
-                duration=unlockSchedule[2],
-                startTime=unlockSchedule[3],
-            )
+
+        parsedSchedule = DotMap(
+            initialTokensLocked=unlockSchedule[0],
+            endTime=unlockSchedule[1],
+            duration=unlockSchedule[2],
+            startTime=unlockSchedule[3],
         )
+
+        self.unlockSchedules[str(token)].append(parsedSchedule)
+
         console.log(
-            "add_unlock_schedule",
-            str(token),
-            unlockSchedule,
-            self.unlockSchedules[str(token)],
+            "add_unlock_schedule for", str(token), parsedSchedule.toDict(),
         )
 
     def get_distributed_for_token(self, token, startTime, endTime):
@@ -124,11 +121,12 @@ class BadgerGeyserMock:
         Each user should get their proportional share of each token
         """
         totalShareSecondsUsed = 0
+        console.log("tokenDistributions", tokenDistributions.toDict())
+
         for user, userData in self.users.items():
             userDistributions[user] = {}
-            console.log("tokenDistributions", tokenDistributions)
+            console.log("user, userData", user, userData.toDict())
             for token, tokenAmount in tokenDistributions.items():
-
                 if not "shareSeconds" in userData:
                     userDistributions[user][token] = 0
                 else:
@@ -137,16 +135,19 @@ class BadgerGeyserMock:
                         {
                             "user": user,
                             "userData": userData,
-                            "calc": int(
-                                tokenAmount
-                                * userData.shareSeconds
-                                // self.totalShareSeconds
-                            ),
                             "self.totalShareSeconds": self.totalShareSeconds,
                             "userData.shareSeconds": userData.shareSeconds,
                             "token": tokenAmount,
                             "tokenAmount": tokenAmount,
                         },
+                    )
+                    console.log(
+                        "user share seconds",
+                        int(
+                            tokenAmount
+                            * userData.shareSeconds
+                            // self.totalShareSeconds
+                        ),
                     )
                     userShare = int(
                         tokenAmount * userData.shareSeconds // self.totalShareSeconds
@@ -279,7 +280,7 @@ class BadgerGeyserMock:
 
         toAdd = self.users[user].total * timeSinceLastAction
         # If user has share seconds, add
-        if self.users[user].shareSeconds:
+        if "shareSeconds" in self.users[user]:
             self.users[user].shareSeconds += toAdd
             self.totalShareSeconds += toAdd
 
@@ -299,7 +300,7 @@ class BadgerGeyserMock:
     # ===== Getters =====
 
     def didUserAct(self, user):
-        if self.users[user].actedDuringPeriod:
+        if "actedDuringPeriod" in self.users[user]:
             return self.users[user].actedDuringPeriod
         else:
             return False
@@ -321,7 +322,7 @@ class BadgerGeyserMock:
         """
         weights = DotMap()
         for user, userData in self.users.items():
-            if userData.shareSeconds:
+            if "shareSeconds" in userData:
                 weights[user] = userData.shareSeconds
             else:
                 weights[user] = 0

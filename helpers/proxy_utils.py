@@ -25,6 +25,25 @@ def deploy_proxy_admin():
         "ProxyAdmin", web3.toChecksumAddress(proxyAdmin.address), abi,
     )
 
+def deploy_from_bytecode(contractName, abi, bytecode, deployer):
+    # print(str(acct.address))
+    # web3.eth.defaultAccount = str(accounts[0])
+
+    # ProxyAdmin = web3.eth.contract(abi=abi, bytecode=bytecode)
+
+    # tx_hash = ProxyAdmin.constructor(
+    #     logic, proxyAdmin, web3.toBytes(hexstr=initializer)
+    # ).transact()
+
+    # tx_receipt = web3.eth.waitForTransactionReceipt(tx_hash)
+    # transaction = web3.eth.getTransaction(tx_hash)
+
+    # contract = web3.eth.contract(address=tx_receipt.contractAddress, abi=abi)
+
+    # return Contract.from_abi(contractName, contract.address, logicAbi)
+    return False
+
+
 
 def deploy_proxy(contractName, logicAbi, logic, proxyAdmin, initializer, deployer):
     abi = registry.open_zeppelin.artifacts["AdminUpgradeabilityProxy"]["abi"]

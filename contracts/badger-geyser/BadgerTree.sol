@@ -35,8 +35,8 @@ contract BadgerTree is Initializable, AccessControlUpgradeable, ICumulativeMulti
     uint256 public lastProposeTimestamp;
     uint256 public lastProposeBlockNumber;
 
-    mapping(address => mapping(address => uint256)) claimed;
-    mapping(address => uint256) totalClaimed;
+    mapping(address => mapping(address => uint256)) public claimed;
+    mapping(address => uint256) public totalClaimed;
 
     function initialize(
         address admin,
@@ -79,6 +79,14 @@ contract BadgerTree is Initializable, AccessControlUpgradeable, ICumulativeMulti
         return pendingCycle == currentCycle.add(1);
     }
 
+    function getClaimedFor(address user, address[] memory tokens) public view returns(address[] memory, uint256[] memory) {
+        uint256[] memory userClaimed = new uint256[](tokens.length);
+        for (uint256 i = 0; i < tokens.length; i++) {
+            userClaimed[i] = claimed[user][tokens[i]];
+        }
+        return (tokens, userClaimed);
+    }
+
     /// @notice Claim accumulated rewards for a set of tokens at a given cycle number
     function claim(
         address[] calldata tokens,
@@ -95,7 +103,6 @@ contract BadgerTree is Initializable, AccessControlUpgradeable, ICumulativeMulti
 
         // Claim each token
         for (uint256 i = 0; i < tokens.length; i++) {
-
             uint256 claimable = cumulativeAmounts[i].sub(claimed[msg.sender][tokens[i]]);
 
             require(claimable > 0, "Excessive claim");
@@ -112,7 +119,11 @@ contract BadgerTree is Initializable, AccessControlUpgradeable, ICumulativeMulti
     // ===== Root Updater Restricted =====
 
     /// @notice Propose a new root and content hash, which will be stored as pending until approved
-    function proposeRoot(bytes32 root, bytes32 contentHash, uint256 cycle) external whenNotPaused {
+    function proposeRoot(
+        bytes32 root,
+        bytes32 contentHash,
+        uint256 cycle
+    ) external whenNotPaused {
         _onlyRootUpdater();
         require(cycle == currentCycle.add(1), "Incorrect cycle");
 
@@ -128,7 +139,11 @@ contract BadgerTree is Initializable, AccessControlUpgradeable, ICumulativeMulti
     /// ===== Guardian Restricted =====
 
     /// @notice Approve the current pending root and content hash
-    function approveRoot(bytes32 root, bytes32 contentHash, uint256 cycle) external {
+    function approveRoot(
+        bytes32 root,
+        bytes32 contentHash,
+        uint256 cycle
+    ) external {
         require(root == pendingMerkleRoot, "Incorrect root");
         require(contentHash == pendingMerkleContentHash, "Incorrect content hash");
         require(cycle == pendingCycle, "Incorrect cycle");

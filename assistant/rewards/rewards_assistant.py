@@ -1,9 +1,10 @@
 import json
+import boto3
 
 from eth_utils.hexadecimal import encode_hex
 
 from assistant.rewards.calc_stakes import calc_geyser_stakes
-from assistant.rewards.config import config
+from assistant.rewards.config import rewards_config
 from assistant.rewards.merkle_tree import rewards_to_merkle_tree
 from brownie import *
 from dotmap import DotMap
@@ -11,6 +12,7 @@ from helpers.constants import EmptyBytes32, GUARDIAN_ROLE
 from rich.console import Console
 from scripts.systems.badger_system import connect_badger
 from eth_abi.packed import encode_abi_packed
+from assistant.rewards.script_config import env_config
 
 console = Console()
 
@@ -78,8 +80,8 @@ class RewardsList:
             )
         )
 
-        console.log('nodeEntry', nodeEntry)
-        console.log('encoded', encoded)
+        console.log("nodeEntry", nodeEntry)
+        console.log("encoded", encoded)
         return (nodeEntry, encoded)
 
     def to_merkle_format(self):
@@ -133,8 +135,6 @@ def calc_geyser_rewards(badger, startBlock, endBlock, cycle):
         rewardsByGeyser[key] = geyserRewards
 
     console.log("rewardsByGeyser", rewardsByGeyser)
-    
-
 
     return sum_rewards(rewardsByGeyser, cycle)
 
@@ -158,17 +158,57 @@ def guardian(badger, endBlock):
 
     (In case of a one-off failure, Script will be attempted again at the guardianInterval)
     """
-    badgerTree = badger.badgerTree
-    guardian = badgerTree.getRoleMember(GUARDIAN_ROLE, 0)
-    # TODO prod: accounts.add(private_key=ENV Variable)
-    assert guardian == badger.guardian
+    # badgerTree = badger.badgerTree
+    # guardian = badgerTree.getRoleMember(GUARDIAN_ROLE, 0)
+    # # TODO prod: accounts.add(private_key=ENV Variable)
+    # assert guardian == badger.guardian
 
-    # Check latest root proposal
-    proposed = badgerTree.getPendingMerkleData()
+    # # Check latest root proposal
+    # proposed = badgerTree.getPendingMerkleData()
+    # nextCycle = badgerTree.currentCycle() + 1
+
+    # console.log(proposed, nextCycle)
+
+    # badger.badgerTree.approveRoot(
+    #     proposed[0], proposed[1], nextCycle, {"from": guardian}
+    # )
+    # chain.mine()
+
+    # merkleContent = load_content_file(proposed[1])
+
+    badgerTree = badger.badgerTree
+    guardian = badger.guardian
+
+    console.print("\n[bold cyan]===== Guardian =====[/bold cyan]\n")
+
+    hasPendingRoot = badgerTree.hasPendingRoot()
+    if not hasPendingRoot:
+        console.print("[bold yellow]===== Result: No Pending Root =====[/bold yellow]")
+        return False
+
+    pendingMerkleData = badgerTree.getPendingMerkleData()
     nextCycle = badgerTree.currentCycle() + 1
 
-    badger.badgerTree.approveRoot(proposed[0], proposed[1], nextCycle, {'from': guardian})
+    startBlock = max(badger.globalStartBlock, badgerTree.lastPublishBlockNumber() + 1)
+    endBlock = pendingMerkleData[3]
+
+    console.log("pendingMerkleData", pendingMerkleData)
+
+    geyserRewards = calc_geyser_rewards(badger, startBlock, endBlock, nextCycle)
+    # metaFarmRewards = calc_harvest_meta_farm_rewards(badger, startBlock, endBlock)
+    # earlyContributorRewards = calc_early_contributor_rewards(badger, startBlock, endBlock)
+
+    totalRewards = geyserRewards
+    merkleTree = rewards_to_merkle_tree(totalRewards)
+
+    # Publish data
+    rootHash = web3.toHex(web3.keccak(text=merkleTree["merkleRoot"]))
+    badger.badgerTree.approveRoot(
+        merkleTree["merkleRoot"], rootHash, merkleTree["cycle"], {"from": keeper}
+    )
     chain.mine()
+
+    contentFileName = content_hash_to_filename(rootHash)
 
 
 def rootUpdater(badger, endBlock):
@@ -189,8 +229,17 @@ def rootUpdater(badger, endBlock):
     console.print("\n[bold cyan]===== Root Updater =====[/bold cyan]\n")
 
     console.log("currentMerkleData", currentMerkleData)
-    timestamp = currentMerkleData[2]
+    lastUpdateTime = currentMerkleData[2]
     blockNumber = currentMerkleData[3]
+
+    currentTime = chain.time()
+
+    timeSinceLastupdate = currentTime - lastUpdateTime
+    if timeSinceLastupdate < rewards_config.rootUpdateInterval:
+        console.print(
+            "[bold yellow]===== Result: Last Update too Recent =====[/bold yellow]"
+        )
+        return False
 
     # Start after the previous snapshot, or globalStartBlock
     startBlock = max(badger.globalStartBlock, blockNumber + 1)
@@ -203,13 +252,29 @@ def rootUpdater(badger, endBlock):
     merkleTree = rewards_to_merkle_tree(totalRewards)
 
     # Publish data
-    badger.badgerTree.proposeRoot(merkleTree['merkleRoot'], EmptyBytes32, merkleTree['cycle'], {'from': keeper})
-    chain.mine()
-    
+    rootHash = web3.toHex(web3.keccak(text=merkleTree["merkleRoot"]))
+    badger.badgerTree.proposeRoot(
+        merkleTree["merkleRoot"], rootHash, merkleTree["cycle"], {"from": keeper}
+    )
 
-    with open("merkle-test.json", "w") as outfile:
+    chain.mine()
+    contentFileName = content_hash_to_filename(rootHash)
+
+    print(
+        {
+            "merkleRoot": merkleTree["merkleRoot"],
+            "rootHash": str(rootHash),
+            "contentFile": contentFileName,
+        }
+    )
+
+    print("Uploading to file " + contentFileName)
+
+    # TODO: Upload file to AWS & serve from server
+    with open(contentFileName, "w") as outfile:
         json.dump(merkleTree, outfile)
-    return totalRewards
+    upload(contentFileName)
+    return True
 
 
 def watchdog(badger, endBlock):
@@ -266,3 +331,32 @@ def main(args):
     #     allocations = add_allocations(distributions, stakeWeights)
 
     # Confirm that totals don't exceed the expected - one safeguard against expensive invalid roots on the non-contract side
+
+
+def content_hash_to_filename(contentHash):
+    return "rewards-" + str(chain.id) + "-" + str(contentHash) + ".json"
+
+
+def load_content_file(contentHash):
+    fileName = content_hash_to_filename(contentHash)
+    f = open(fileName,)
+    return json.load(f)
+
+
+def upload(fileName):
+    upload_bucket = "badger-json"
+    upload_file_key = "rewards/" + fileName
+    name = "rewards-1337-<hash>.json"
+
+    # f = open(fileName,)
+    # contentFile = json.load(f)
+
+    print("Uploading file to s3/" + upload_file_key)
+
+    s3 = boto3.client(
+        "s3",
+        aws_access_key_id=env_config.aws_access_key_id,
+        aws_secret_access_key=env_config.aws_secret_access_key,
+    )
+    s3.upload_file(fileName, upload_bucket, upload_file_key)
+
