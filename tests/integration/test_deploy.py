@@ -4,6 +4,12 @@ from dotmap import DotMap
 from helpers.constants import *
 from helpers.registry import registry
 from config.badger_config import badger_config
+from scripts.systems.badger_system import BadgerSystem
+from rich.console import Console
+import pytest
+import brownie
+
+console = Console()
 
 """
 Ensure everything is configured as expected immediately post-deploy
@@ -28,6 +34,8 @@ def confirm_sett_params(sett, params):
     assert sett.strategist() == params.strategist
     assert sett.keeper() == params.keeper
 
+    console.log(sett.name(), sett.symbol())
+
     assert sett.controller() == params.controller
     assert sett.token() == params.token
     assert sett.name() == params.name
@@ -39,7 +47,7 @@ def confirm_sett_params(sett, params):
 
 def confirm_strategy_common_params(strategy, params):
     assert strategy.governance() == params.governance
-    assert strategy.strategist() == params.strategist
+    # assert strategy.strategist() == params.strategist
     assert strategy.keeper() == params.keeper
 
     assert strategy.controller() == params.controller
@@ -59,7 +67,7 @@ def confirm_strategy_harvest_meta_farm_params(strategy, params):
     assert strategy.harvestVault() == params.harvestVault
     assert strategy.vaultFarm() == params.vaultFarm
     assert strategy.metaFarm() == params.metaFarm
-    assert strategy.rewardsTree() == params.rewardsTree
+    assert strategy.badgerTree() == params.badgerTree
 
     assert strategy.farm() == registry.harvest.farmToken
     assert strategy.depositHelper() == registry.harvest.depositHelper
@@ -71,7 +79,6 @@ def confirm_strategy_harvest_meta_farm_params(strategy, params):
     assert (
         strategy.farmPerformanceFeeStrategist() == params.farmPerformanceFeeStrategist
     )
-    assert strategy.lastHarvested() == 0
 
 
 def confirm_strategy_pickle_meta_farm_params(strategy, params):
@@ -127,7 +134,7 @@ def confirm_staking_rewards_params(rewards, params):
 def confirm_simple_timelock_params(timelock, params):
     assert timelock.token() == params.token
     assert timelock.beneficiary() == params.beneficiary
-    assert timelock.duration() == params.duration
+    assert timelock.releaseTime() == params.releaseTime
 
 
 def confirm_smart_vesting_params(vesting, params):
@@ -158,7 +165,7 @@ def confirm_badger_geyser_params(geyser, params):
     assert geyser.getDistributionTokens()[0] == params.initialDistributionToken
 
 
-def confirm_badger_tree_params(tree, params):
+def confirm_badger_tree_params(badger, tree, params):
     assert tree.DEFAULT_ADMIN_ROLE() == DEFAULT_ADMIN_ROLE
     assert tree.getRoleMemberCount(DEFAULT_ADMIN_ROLE) == 1
     print(tree.getRoleMember(DEFAULT_ADMIN_ROLE, 0))
@@ -173,9 +180,11 @@ def confirm_badger_tree_params(tree, params):
     assert tree.currentCycle() == 0
     assert tree.merkleRoot() == EmptyBytes32
     assert tree.merkleContentHash() == EmptyBytes32
+    assert badger.token.balanceOf(tree) == params.initialBalance
 
 
-def test_confirm_setup_sett(badger):
+def test_confirm_setup_sett(badger_prod: BadgerSystem):
+    badger = badger_prod
     common_controller_params = DotMap(
         governance=badger.deployer,
         strategist=badger.deployer,
@@ -184,49 +193,47 @@ def test_confirm_setup_sett(badger):
         rewards=badger.dao.agent,
     )
 
+    # ===== Confirm Controller =====
+
     # Native Controller
     params = common_controller_params
+
     params.setts = [
-        [badger.token, badger.sett.native.badger, badger.sett.native.strategies.badger],
+        [
+            badger.token,
+            badger.getSett("native.badger"),
+            badger.getStrategy("native.badger"),
+        ],
         [
             registry.curve.pools.sbtcCrv.token,
-            badger.sett.native.sbtcCrv,
-            badger.sett.native.strategies.sbtcCrv,
+            badger.getSett("native.sbtcCrv"),
+            badger.getStrategy("native.sbtcCrv"),
         ],
         [
             registry.curve.pools.renCrv.token,
-            badger.sett.native.renCrv,
-            badger.sett.native.strategies.renCrv,
+            badger.getSett("native.renCrv"),
+            badger.getStrategy("native.renCrv"),
         ],
         [
             registry.curve.pools.tbtcCrv.token,
-            badger.sett.native.tbtcCrv,
-            badger.sett.native.strategies.tbtcCrv,
+            badger.getSett("native.tbtcCrv"),
+            badger.getStrategy("native.tbtcCrv"),
         ],
     ]
-    confirm_controller_params(badger.sett.native.controller, params)
+    confirm_controller_params(badger.getController("native"), params)
 
     # Harvest Controller
     params = common_controller_params
     params.setts = [
         [
             registry.curve.pools.renCrv.token,
-            badger.sett.harvest.renCrv,
-            badger.sett.harvest.strategies.renCrv,
+            badger.getSett("harvest.renCrv"),
+            badger.getStrategy("harvest.renCrv"),
         ]
     ]
-    confirm_controller_params(badger.sett.harvest.controller, params)
+    confirm_controller_params(badger.getController("harvest"), params)
 
-    # Pickle Controller
-    params = common_controller_params
-    params.setts = [
-        [
-            registry.curve.pools.renCrv.token,
-            badger.sett.pickle.renCrv,
-            badger.sett.pickle.strategies.renCrv,
-        ]
-    ]
-    confirm_controller_params(badger.sett.pickle.controller, params)
+    # ===== Confirm Setts =====
 
     # Native Setts
     # TODO: Change governance and strategist to prod values
@@ -234,72 +241,63 @@ def test_confirm_setup_sett(badger):
         governance=badger.deployer,
         strategist=AddressZero,
         keeper=badger.deployer,
-        controller=badger.sett.native.controller,
+        controller=badger.getController("native"),
         min=9500,
     )
 
     params = common_native_sett_params
     params.token = badger.token
-    params.name = "Badger Sett badger"
-    params.symbol = "bBadger"
-    confirm_sett_params(badger.sett.native.badger, params)
+    params.name = "Badger Sett Badger"
+    params.symbol = "bBADGER"
+    confirm_sett_params(badger.getSett("native.badger"), params)
 
     params = common_native_sett_params
     params.token = registry.curve.pools.sbtcCrv.token
-    params.name = "Badger Sett sbtcCrv"
-    params.symbol = "bSbtcCrv"
-    confirm_sett_params(badger.sett.native.sbtcCrv, params)
+    params.name = "Badger Sett Curve.fi renBTC/wBTC/sBTC"
+    params.symbol = "bcrvRenWSBTC"
+    confirm_sett_params(badger.getSett("native.sbtcCrv"), params)
 
     params = common_native_sett_params
     params.token = registry.curve.pools.renCrv.token
-    params.name = "Badger Sett renCrv"
-    params.symbol = "bRenCrv"
-    confirm_sett_params(badger.sett.native.renCrv, params)
+    params.name = "Badger Sett Curve.fi renBTC/wBTC"
+    params.symbol = "bcrvRenWBTC"
+    confirm_sett_params(badger.getSett("native.renCrv"), params)
 
     params = common_native_sett_params
     params.token = registry.curve.pools.tbtcCrv.token
-    params.name = "Badger Sett tbtcCrv"
-    params.symbol = "bTbtcCrv"
-    confirm_sett_params(badger.sett.native.tbtcCrv, params)
+    params.name = "Badger Sett Curve.fi tBTC/sbtcCrv"
+    params.symbol = "btbtc/sbtcCrv"
+    confirm_sett_params(badger.getSett("native.tbtcCrv"), params)
 
     # Harvest Setts
     harvest_sett_params = DotMap(
         governance=badger.deployer,
         strategist=AddressZero,
         keeper=badger.deployer,
-        controller=badger.sett.harvest.controller,
+        controller=badger.getController("harvest"),
         min=9500,
         token=registry.curve.pools.renCrv.token,
-        name="Badger SuperSett renCrv (Harvest)",
-        symbol="bSuperRenCrv (Harvest)",
+        name="Badger SuperSett (Harvest) Curve.fi renBTC/wBTC",
+        symbol="bSupercrvRenWBTC",
     )
-    confirm_sett_params(badger.sett.harvest.renCrv, harvest_sett_params)
+    confirm_sett_params(badger.getSett("harvest.renCrv"), harvest_sett_params)
 
-    # Pickle Setts
-    pickle_sett_params = DotMap(
-        governance=badger.deployer,
-        strategist=AddressZero,
-        keeper=badger.deployer,
-        controller=badger.sett.pickle.controller,
-        min=9500,
-        token=registry.curve.pools.renCrv.token,
-        name="Badger SuperSett renCrv (Pickle)",
-        symbol="bSuperRenCrv (Pickle)",
-    )
-    confirm_sett_params(badger.sett.pickle.renCrv, pickle_sett_params)
+    # ===== Confirm Strategies =====
 
     common_strategy_params = DotMap(
         governance=badger.deployer,
         strategist=badger.deployer,
         keeper=badger.keeper,
-        controller=badger.sett.native.controller,
+        controller=badger.getController("native"),
         guardian=badger.guardian,
         performanceFeeGovernance=1000,
         performanceFeeStrategist=1000,
         withdrawalFee=75,
     )
 
-    # Native Strategies
+    # ===== Native Strategies =====
+
+    # == Badger Native ==
     params = common_strategy_params
     params.name = "StrategyBadgerRewards"
     params.want = badger.token
@@ -307,12 +305,29 @@ def test_confirm_setup_sett(badger):
     params.performanceFeeStrategist = 0
     params.withdrawalFee = 0
 
-    confirm_strategy_common_params(badger.sett.native.strategies.badger, params)
+    confirm_strategy_common_params(badger.getStrategy("native.badger"), params)
+
     confirm_strategy_badger_rewards_params(
-        badger.sett.native.strategies.badger,
-        DotMap(geyser=badger.sett.rewards.badger),
+        badger.getStrategy("native.badger"),
+        DotMap(geyser=badger.getSettRewards("native.badger")),
     )
 
+    # == Badger LP ==
+    params = common_strategy_params
+    params.name = "StrategyBadgerLpMetaFarm"
+    params.want = badger.pair
+    params.performanceFeeGovernance = 0
+    params.performanceFeeStrategist = 0
+    params.withdrawalFee = 0
+
+    confirm_strategy_common_params(badger.getStrategy("native.uniBadgerWbtc"), params)
+
+    confirm_strategy_badger_rewards_params(
+        badger.getStrategy("native.uniBadgerWbtc"),
+        DotMap(geyser=badger.getSettRewards("native.uniBadgerWbtc")),
+    )
+
+    # == Native SbtcCrv ==
     params = common_strategy_params
     params.name = "StrategyCurveGauge"
     params.want = registry.curve.pools.sbtcCrv.token
@@ -320,39 +335,88 @@ def test_confirm_setup_sett(badger):
     params.performanceFeeStrategist = 1000
     params.withdrawalFee = 75
 
-    confirm_strategy_common_params(badger.sett.native.strategies.sbtcCrv, params)
+    confirm_strategy_common_params(badger.getStrategy("native.sbtcCrv"), params)
 
     params = common_strategy_params
     params.name = "StrategyCurveGauge"
     params.want = registry.curve.pools.renCrv.token
+    params.performanceFeeGovernance = 1000
+    params.performanceFeeStrategist = 1000
+    params.withdrawalFee = 75
 
-    confirm_strategy_common_params(badger.sett.native.strategies.renCrv, params)
+    confirm_strategy_common_params(badger.getStrategy("native.renCrv"), params)
 
     params = common_strategy_params
     params.name = "StrategyCurveGauge"
     params.want = registry.curve.pools.tbtcCrv.token
+    params.performanceFeeGovernance = 1000
+    params.performanceFeeStrategist = 1000
+    params.withdrawalFee = 75
 
-    confirm_strategy_common_params(badger.sett.native.strategies.tbtcCrv, params)
+    confirm_strategy_common_params(badger.getStrategy("native.tbtcCrv"), params)
 
     # Harvest Strategies
+    params.name = "StrategyHarvestMetaFarm"
+    params.controller = badger.getController('harvest')
+    params.want = registry.curve.pools.renCrv.token
+    params.performanceFeeGovernance = 0
+    params.performanceFeeStrategist = 0
+    params.farmPerformanceFeeGovernance = 1000
+    params.farmPerformanceFeeStrategist = 1000
+    params.withdrawalFee = 75
+    params.harvestVault = registry.harvest.vaults.renCrv
+    params.vaultFarm = registry.harvest.farms.fRenCrv
+    params.metaFarm = registry.harvest.farms.farm
+    params.badgerTree = badger.badgerTree
 
-    # Pickle Strategies
+    confirm_strategy_common_params(badger.getStrategy("harvest.renCrv"), params)
+    confirm_strategy_harvest_meta_farm_params(
+        badger.getStrategy("harvest.renCrv"), params
+    )
+
+    """
+    def confirm_strategy_harvest_meta_farm_params(strategy, params):
+    assert strategy.harvestVault() == params.harvestVault
+    assert strategy.vaultFarm() == params.vaultFarm
+    assert strategy.metaFarm() == params.metaFarm
+    assert strategy.badgerTree() == params.badgerTree
+
+    assert strategy.farm() == registry.harvest.farmToken
+    assert strategy.depositHelper() == registry.harvest.depositHelper
+    assert strategy.weth() == registry.tokens.weth
+
+    assert (
+        strategy.farmPerformanceFeeGovernance() == params.farmPerformanceFeeGovernance
+    )
+    assert (
+        strategy.farmPerformanceFeeStrategist() == params.farmPerformanceFeeStrategist
+    )
+    """
 
     # Supporting Infrastructure: Rewards
     confirm_staking_rewards_params(
-        badger.sett.rewards.badger,
-        DotMap(approvedStaker=badger.sett.native.strategies.badger),
+        badger.getSettRewards("native.badger"),
+        DotMap(approvedStaker=badger.getStrategy("native.badger")),
+    )
+
+    confirm_staking_rewards_params(
+        badger.getSettRewards("native.uniBadgerWbtc"),
+        DotMap(approvedStaker=badger.getStrategy("native.uniBadgerWbtc")),
     )
 
 
-def test_confirm_setup_rewards(badger):
+# @pytest.mark.skip()
+def test_confirm_setup_rewards(badger_prod):
+    badger = badger_prod
     # Badger Tree
     confirm_badger_tree_params(
+        badger,
         badger.badgerTree,
         DotMap(
             admin=badger.devMultisig,
             rootUpdater=badger.deployer,
             guardian=badger.deployer,
+            initialBalance=badger.initialBadgerTreeBalance,
         ),
     )
 
@@ -370,7 +434,7 @@ def test_confirm_setup_rewards(badger):
             epochDuration=daysToSeconds(1),
             rewardReductionPerEpoch=2000,
             claimsStart=badger_config.huntParams.startTime,
-            gracePeriod=daysToSeconds(1),
+            gracePeriod=daysToSeconds(2),
             rewardsEscrow=badger.rewardsEscrow,
             currentRewardRate=10000,
         ),
@@ -384,28 +448,32 @@ def test_confirm_setup_rewards(badger):
     )
 
     params = common_geyser_params
-    params.stakingToken = badger.sett.native.renCrv
-    confirm_badger_geyser_params(badger.pools.sett.native.renCrv, params)
+    params.stakingToken = badger.getSett("native.renCrv")
+    confirm_badger_geyser_params(badger.getGeyser("native.renCrv"), params)
 
-    params.stakingToken = badger.sett.native.sbtcCrv
-    confirm_badger_geyser_params(badger.pools.sett.native.sbtcCrv, params)
+    params.stakingToken = badger.getSett("native.sbtcCrv")
+    confirm_badger_geyser_params(badger.getGeyser("native.sbtcCrv"), params)
 
-    params.stakingToken = badger.sett.native.tbtcCrv
-    confirm_badger_geyser_params(badger.pools.sett.native.tbtcCrv, params)
+    params.stakingToken = badger.getSett("native.tbtcCrv")
+    confirm_badger_geyser_params(badger.getGeyser("native.tbtcCrv"), params)
 
-    params.stakingToken = badger.sett.native.badger
-    confirm_badger_geyser_params(badger.pools.sett.native.badger, params)
+    params.stakingToken = badger.getSett("native.badger")
+    confirm_badger_geyser_params(badger.getGeyser("native.badger"), params)
 
-    params.stakingToken = badger.sett.pickle.renCrv
-    confirm_badger_geyser_params(badger.pools.sett.pickle.renCrv, params)
+    params.stakingToken = badger.getSett("harvest.renCrv")
+    confirm_badger_geyser_params(badger.getGeyser("harvest.renCrv"), params)
 
-    params.stakingToken = badger.sett.harvest.renCrv
-    confirm_badger_geyser_params(badger.pools.sett.harvest.renCrv, params)
+    # Ensure staking not possible
+    for key, geyser in badger.geysers.items():
+        with brownie.reverts("BadgerGeyser: Distribution not started"):
+            geyser.stake(0, '0x', {'from': badger.deployer})
+            geyser.stakeFor(0, '0x', badger.deployer, {'from': badger.deployer})
 
     # Badger Balances
+    # Some of the initial supply is distributed to Sett special StakingRewards pools & BadgerTree
     assert (
         badger.token.balanceOf(badger.rewardsEscrow)
-        == badger_config.rewardsEscrowBadgerAmount
+        == badger.initialRewardsEscrowBalance
     )
 
     assert (
@@ -419,14 +487,17 @@ def test_confirm_setup_rewards(badger):
     )
 
 
-def test_confirm_setup_locking_infra(badger):
+# @pytest.mark.skip()
+def test_confirm_setup_locking_infra(badger_prod):
+    badger = badger_prod
     # DAO Timelock
     confirm_simple_timelock_params(
         badger.daoBadgerTimelock,
         DotMap(
             token=badger.token,
             beneficiary=badger.dao.agent,
-            duration=badger_config.tokenLockParams.lockDuration,
+            releaseTime=badger_config.globalStartTime
+            + badger_config.tokenLockParams.lockDuration,
         ),
     )
 

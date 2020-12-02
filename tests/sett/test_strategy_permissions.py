@@ -17,7 +17,7 @@ from dotmap import DotMap
         "native.badger",
         "native.sbtcCrv",
         "native.tbtcCrv",
-        "pickle.renCrv",
+        # "pickle.renCrv",
         "harvest.renCrv",
         "native.uniBadgerWbtc",
     ],

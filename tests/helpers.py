@@ -29,14 +29,19 @@ def create_uniswap_pair(token0, token1, signer):
     return uniswap.getPair(token0, token1)
 
 def distribute_from_whales(badger, recipient):
+    
     print(len(whale_registry.items()))
     for key, whale in whale_registry.items():
-        print(whale.token)
-        if whale.token:
-            token = interface.IERC20(whale.token)
-            token.transfer(
-                recipient, token.balanceOf(whale.whale), {"from": whale.whale}
-            )
+        if key != "_pytestfixturefunction":
+            print("transferring from whale", key, whale.toDict())
+            forceEther = ForceEther.deploy({'from': recipient})
+            recipient.transfer(forceEther, Wei("1 ether"))
+            forceEther.forceSend(whale.whale, {'from': recipient})
+            if whale.token:
+                token = interface.IERC20(whale.token)
+                token.transfer(
+                    recipient, token.balanceOf(whale.whale), {"from": whale.whale}
+                )
 
 
 def distribute_rewards_escrow(badger, token, recipient, amount):

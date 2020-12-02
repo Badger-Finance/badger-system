@@ -21,6 +21,7 @@ If you're not familiar with brownie, see the [quickstart guide](https://eth-brow
 git clone https://github.com/Badger-Finance/badger-system
 cd badger-system
 yarn install --lock-file
+pip install -r requirements-dev.txt
 ```
 
 ### Compile

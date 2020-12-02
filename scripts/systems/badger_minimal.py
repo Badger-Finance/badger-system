@@ -11,12 +11,12 @@ from config.badger_config import badger_config, sett_config, badger_total_supply
 from scripts.systems.sett_system import deploy_sett_system
 
 def deploy_badger_minimal(deployer):
-    badger = BadgerSystem(badger_config, None, deployer)
+    badger = BadgerSystem(badger_config, None, deployer, deployer, deployer)
 
     badger.token.transfer(deployer, badger_total_supply, {'from': badger_config.dao.initialOwner})
     badger.deploy_sett_core_logic()
-    badger.add_logic("RewardsEscrow", RewardsEscrow)
-    badger.add_logic("BadgerTree", BadgerTree)
+    badger.deploy_logic("RewardsEscrow", RewardsEscrow)
+    badger.deploy_logic("BadgerTree", BadgerTree)
     badger.deploy_rewards_escrow()
     badger.deploy_badger_tree()
 

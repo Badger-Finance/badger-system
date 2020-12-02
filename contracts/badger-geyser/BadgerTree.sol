@@ -16,6 +16,8 @@ contract BadgerTree is Initializable, AccessControlUpgradeable, ICumulativeMulti
     struct MerkleData {
         bytes32 root;
         bytes32 contentHash;
+        uint256 timestamp;
+        uint256 blockNumber;
     }
 
     bytes32 public constant ROOT_UPDATER_ROLE = keccak256("ROOT_UPDATER_ROLE");
@@ -24,13 +26,17 @@ contract BadgerTree is Initializable, AccessControlUpgradeable, ICumulativeMulti
     uint256 public currentCycle;
     bytes32 public merkleRoot;
     bytes32 public merkleContentHash;
+    uint256 public lastPublishTimestamp;
+    uint256 public lastPublishBlockNumber;
 
     uint256 public pendingCycle;
     bytes32 public pendingMerkleRoot;
     bytes32 public pendingMerkleContentHash;
+    uint256 public lastProposeTimestamp;
+    uint256 public lastProposeBlockNumber;
 
-    mapping(address => mapping(address => uint256)) claimed;
-    mapping(address => uint256) totalClaimed;
+    mapping(address => mapping(address => uint256)) public claimed;
+    mapping(address => uint256) public totalClaimed;
 
     function initialize(
         address admin,
@@ -62,11 +68,33 @@ contract BadgerTree is Initializable, AccessControlUpgradeable, ICumulativeMulti
     }
 
     function getCurrentMerkleData() external view returns (MerkleData memory) {
-        return MerkleData(merkleRoot, merkleContentHash);
+        return MerkleData(merkleRoot, merkleContentHash, lastPublishTimestamp, lastProposeBlockNumber);
+    }
+
+    function getPendingMerkleData() external view returns (MerkleData memory) {
+        return MerkleData(pendingMerkleRoot, pendingMerkleContentHash, lastProposeTimestamp, lastProposeBlockNumber);
     }
 
     function hasPendingRoot() external view returns (bool) {
         return pendingCycle == currentCycle.add(1);
+    }
+
+    function getClaimedFor(address user, address[] memory tokens) public view returns (address[] memory, uint256[] memory) {
+        uint256[] memory userClaimed = new uint256[](tokens.length);
+        for (uint256 i = 0; i < tokens.length; i++) {
+            userClaimed[i] = claimed[user][tokens[i]];
+        }
+        return (tokens, userClaimed);
+    }
+
+    function encodeClaim(
+        address[] calldata tokens,
+        uint256[] calldata cumulativeAmounts,
+        uint256 index,
+        uint256 cycle
+    ) public view returns (bytes memory encoded, bytes32 hash) {
+        encoded = abi.encodePacked(index, msg.sender, cycle, tokens, cumulativeAmounts);
+        hash = keccak256(encoded);
     }
 
     /// @notice Claim accumulated rewards for a set of tokens at a given cycle number
@@ -85,7 +113,6 @@ contract BadgerTree is Initializable, AccessControlUpgradeable, ICumulativeMulti
 
         // Claim each token
         for (uint256 i = 0; i < tokens.length; i++) {
-
             uint256 claimable = cumulativeAmounts[i].sub(claimed[msg.sender][tokens[i]]);
 
             require(claimable > 0, "Excessive claim");
@@ -102,13 +129,19 @@ contract BadgerTree is Initializable, AccessControlUpgradeable, ICumulativeMulti
     // ===== Root Updater Restricted =====
 
     /// @notice Propose a new root and content hash, which will be stored as pending until approved
-    function publishRoot(bytes32 root, bytes32 contentHash, uint256 cycle) external whenNotPaused {
+    function proposeRoot(
+        bytes32 root,
+        bytes32 contentHash,
+        uint256 cycle
+    ) external whenNotPaused {
         _onlyRootUpdater();
         require(cycle == currentCycle.add(1), "Incorrect cycle");
 
         pendingCycle = cycle;
         pendingMerkleRoot = root;
         pendingMerkleContentHash = contentHash;
+        lastProposeTimestamp = now;
+        lastProposeBlockNumber = block.number;
 
         emit RootProposed(cycle, pendingMerkleRoot, pendingMerkleContentHash, now, block.number);
     }
@@ -116,7 +149,12 @@ contract BadgerTree is Initializable, AccessControlUpgradeable, ICumulativeMulti
     /// ===== Guardian Restricted =====
 
     /// @notice Approve the current pending root and content hash
-    function approveRoot(bytes32 root, bytes32 contentHash, uint256 cycle) external {
+    function approveRoot(
+        bytes32 root,
+        bytes32 contentHash,
+        uint256 cycle
+    ) external {
+        _onlyGuardian();
         require(root == pendingMerkleRoot, "Incorrect root");
         require(contentHash == pendingMerkleContentHash, "Incorrect content hash");
         require(cycle == pendingCycle, "Incorrect cycle");
@@ -124,6 +162,8 @@ contract BadgerTree is Initializable, AccessControlUpgradeable, ICumulativeMulti
         currentCycle = currentCycle.add(1);
         merkleRoot = root;
         merkleContentHash = contentHash;
+        lastPublishTimestamp = now;
+        lastPublishBlockNumber = block.number;
 
         emit RootUpdated(currentCycle, root, contentHash, now, block.number);
     }

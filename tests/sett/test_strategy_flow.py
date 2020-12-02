@@ -1,3 +1,4 @@
+from tests.helpers import getTokenMetadata
 from tests.test_recorder import EventRecord, TestRecorder
 from tests.conftest import badger_single_sett
 from scripts.systems.badger_system import BadgerSystem
@@ -16,7 +17,7 @@ from helpers.constants import *
 import pytest
 
 
-@pytest.mark.skip()
+# @pytest.mark.skip()
 @pytest.mark.parametrize(
     "settId",
     [
@@ -24,7 +25,7 @@ import pytest
         "native.renCrv",
         "native.sbtcCrv",
         "native.tbtcCrv",
-        "pickle.renCrv",
+        # "pickle.renCrv",
         "harvest.renCrv",
         "native.uniBadgerWbtc",
     ],
@@ -91,7 +92,7 @@ def test_deposit_withdraw_single_user_flow(settId):
     confirm_withdraw(before, after, deployer)
 
 
-@pytest.mark.skip()
+# @pytest.mark.skip()
 @pytest.mark.parametrize(
     "settId",
     [
@@ -99,7 +100,7 @@ def test_deposit_withdraw_single_user_flow(settId):
         "native.badger",
         "native.sbtcCrv",
         "native.tbtcCrv",
-        "pickle.renCrv",
+        # "pickle.renCrv",
         "harvest.renCrv",
         "native.uniBadgerWbtc",
     ],
@@ -271,7 +272,7 @@ def test_single_user_harvest_flow(settId):
     # assert endingBalance > startingBalance
 
 
-@pytest.mark.skip()
+# @pytest.mark.skip()
 @pytest.mark.parametrize(
     "settId",
     [
@@ -279,7 +280,7 @@ def test_single_user_harvest_flow(settId):
         "native.badger",
         "native.sbtcCrv",
         "native.tbtcCrv",
-        "pickle.renCrv",
+        # "pickle.renCrv",
         "harvest.renCrv",
         "native.uniBadgerWbtc",
     ],
@@ -384,7 +385,7 @@ def test_migrate_single_user(settId):
         "native.badger",
         "native.sbtcCrv",
         "native.tbtcCrv",
-        "pickle.renCrv",
+        # "pickle.renCrv",
         "harvest.renCrv",
         "native.uniBadgerWbtc",
     ],
@@ -407,6 +408,7 @@ def test_withdraw_other(settId):
     startingBalance = want.balanceOf(deployer)
 
     depositAmount = Wei("1 ether")
+    print(getTokenMetadata(want.address), startingBalance)
     assert startingBalance >= depositAmount
 
     # Deposit
@@ -459,7 +461,7 @@ def test_withdraw_other(settId):
         "native.badger",
         "native.sbtcCrv",
         "native.tbtcCrv",
-        "pickle.renCrv",
+        # "pickle.renCrv",
         "harvest.renCrv",
         "native.uniBadgerWbtc",
     ],

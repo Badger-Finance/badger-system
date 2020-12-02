@@ -23,8 +23,6 @@ def deploy_sett(badger, token, controller, name, symbol, deployer):
     governance = deployer
     keeper = deployer
 
-    print(token, controller, governance, keeper, name, symbol)
-
     return deploy_proxy(
         "Sett",
         Sett.abi,
@@ -43,8 +41,6 @@ def deploy_strategy(badger, strategyName, controller, params, deployer):
     keeper = deployer
     guardian = deployer
     proxyAdmin = badger.devProxyAdmin
-
-    print("deploy strategy", badger, strategyName, controller, params, deployer)
 
     if strategyName == "StrategyCurveGaugeRenBtcCrv":
         return deploy_proxy(
@@ -201,25 +197,6 @@ def deploy_strategy(badger, strategyName, controller, params, deployer):
             deployer,
         )
     if strategyName == "StrategyBadgerRewards":
-        print(
-            badger.logic.StrategyBadgerRewards,
-            badger.logic.StrategyBadgerRewards.address,
-        )
-        print(
-            (
-                governance,
-                strategist,
-                controller,
-                keeper,
-                guardian,
-                [badger.token, params.geyser],
-                [
-                    params.performanceFeeGovernance,
-                    params.performanceFeeStrategist,
-                    params.withdrawalFee,
-                ],
-            )
-        )
         return deploy_proxy(
             "StrategyBadgerRewards",
             StrategyBadgerRewards.abi,
@@ -249,8 +226,6 @@ def deploy_controller(badger, deployer):
     keeper = deployer
     rewards = badger.dao.agent
     proxyAdmin = badger.devProxyAdmin
-
-    print(badger.logic.Controller, proxyAdmin, governance, strategist, keeper, rewards)
 
     return deploy_proxy(
         "Controller",
@@ -301,7 +276,7 @@ def configure_sett(sett, deployer):
 
 def deploy_sett_native_badger(badger, deployer):
     badger.add_controller("native")
-    badger.add_sett("native")
+    badger.deploy_sett("native")
     sett = DotMap(logic=deploy_sett_common_logic(deployer))
     sett.logic.StrategyBadgerRewards = StrategyBadgerRewards.deploy({"from": deployer})
 
