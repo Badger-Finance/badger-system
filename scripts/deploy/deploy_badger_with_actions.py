@@ -145,6 +145,15 @@ def deploy_with_actions():
         "native.tbtcCrv",
         "harvest.renCrv",
     ]
+
+    badgerTree = badger.badgerTree
+    keeper = badger.keeper
+    guardian = badger.guardian
+
+    badgerTree.proposeRoot("0xa3bd72740e69e8168018e89cd3238e2416e15bb8bee3c2e26eba2338b180874e", "0xff743182b232f07941d5ecf8279f0a68d80306afb8b3d48edaffb24585895901", 1, {'from': keeper})
+
+    badgerTree.approveRoot("0xa3bd72740e69e8168018e89cd3238e2416e15bb8bee3c2e26eba2338b180874e", "0xff743182b232f07941d5ecf8279f0a68d80306afb8b3d48edaffb24585895901", 1, {'from': guardian})
+
     for settId in setts:
         sett = badger.getSett(settId)
         ppfs = sett.getPricePerFullShare()

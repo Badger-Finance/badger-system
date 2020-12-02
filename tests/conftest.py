@@ -84,6 +84,20 @@ def badger_hunt_unit():
     badger.token.transfer(badger.badgerHunt, badger_config.huntParams.badgerAmount, {'from': deployer})
 
     return badger
+    
+@pytest.fixture(scope="function")
+def badger_tree_unit():
+    deployer = accounts[0]
+    badger = deploy_badger_minimal(deployer)
+    distribute_from_whales(badger, deployer)
+
+    badger.deploy_logic("BadgerHunt", BadgerHunt)
+    badger.deploy_badger_hunt()
+    
+    badger.token.transfer(badger.badgerHunt, badger_config.huntParams.badgerAmount, {'from': deployer})
+
+    return badger
+
 
 def sett_pickle_meta_farm():
     deployer = accounts[0]
@@ -243,7 +257,6 @@ def sett_badger_lp_rewards():
     )
 
     badger.wire_up_sett(vault, strategy, controller)
-
     wbtc = interface.IERC20(registry.tokens.wbtc)
 
     # Grant deployer LP tokens
@@ -263,6 +276,13 @@ def sett_badger_lp_rewards():
 @pytest.fixture()
 def badger(accounts):
     badger_system = deploy_flow(test=True, outputToFile=False)
+
+    # Distribute Test Assets
+    return badger_system
+
+@pytest.fixture()
+def badger_prod(accounts):
+    badger_system = deploy_flow(test=True, outputToFile=True, uniswap=False)
 
     # Distribute Test Assets
     return badger_system

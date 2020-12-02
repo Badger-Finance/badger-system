@@ -64,13 +64,22 @@ contract BadgerHunt is MerkleDistributor, OwnableUpgradeable {
 
     /// @dev Get the next epoch start
     function getNextEpochStart() public view returns (uint256) {
-        uint256 gracePeriodEnd = claimsStart.add(gracePeriod);
         uint256 epoch = getCurrentEpoch();
 
         if (epoch == 0) {
-            return claimsStart.add(gracePeriod);
+            return getGracePeriodEnd();
         } else {
-            return claimsStart.add(gracePeriod).add(epochDuration.mul(epoch));
+            return getGracePeriodEnd().add(epochDuration.mul(epoch));
+        }
+    }
+
+    function getTimeUntilNextEpoch() public view returns (uint256) {
+        uint256 epoch = getCurrentEpoch();
+
+        if (epoch == 0) {
+            return getGracePeriodEnd().sub(now);
+        } else {
+            return (getGracePeriodEnd().add(epochDuration.mul(epoch))).sub(now);
         }
     }
 
@@ -109,6 +118,7 @@ contract BadgerHunt is MerkleDistributor, OwnableUpgradeable {
         uint256 amount,
         bytes32[] calldata merkleProof
     ) external virtual override {
+        require(now >= claimsStart, "BadgerDistributor: Before claim start.");
         require(account == msg.sender, "BadgerDistributor: Can only claim for own account.");
         require(getCurrentRewardsRate() > 0, "BadgerDistributor: Past rewards claim period.");
         require(!isClaimed(index), "BadgerDistributor: Drop already claimed.");

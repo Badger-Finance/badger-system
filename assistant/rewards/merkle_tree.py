@@ -1,3 +1,4 @@
+import hashlib
 import json
 import os
 from collections import Counter, defaultdict
@@ -6,18 +7,18 @@ from fractions import Fraction
 from functools import partial, wraps
 from itertools import zip_longest
 from pathlib import Path
-from dotmap import DotMap
+
 import toml
 from brownie import *
+from click import secho
+from dotmap import DotMap
 from eth_abi import decode_single, encode_single
 from eth_abi.packed import encode_abi_packed
 from eth_utils import encode_hex
+from helpers.constants import *
+from rich.console import Console
 from toolz import valfilter, valmap
 from tqdm import tqdm, trange
-from click import secho
-from helpers.constants import *
-import hashlib
-from rich.console import Console
 
 console = Console()
 
@@ -72,8 +73,7 @@ class MerkleTree:
 
 
 def rewards_to_merkle_tree(rewards):
-    (nodes, encodedNodes) = rewards.to_merkle_format()
-    console.log(nodes, encodedNodes)
+    (nodes, encodedNodes, entries) = rewards.to_merkle_format()
 
     # For each user, encode their data into a node
 
@@ -95,7 +95,9 @@ def rewards_to_merkle_tree(rewards):
         "claims": {},
     }
 
-    for node in nodes:
+    for entry in entries:
+        node = entry['node']
+        encoded = entry['encoded']
         console.log(node)
         distribution["claims"][node["user"]] = {
             "index": hex(node["index"]),
@@ -104,6 +106,7 @@ def rewards_to_merkle_tree(rewards):
             "tokens": node["tokens"],
             "cumulativeAmounts": node["cumulativeAmounts"],
             "proof": tree.get_proof(encodedNodes[node["index"]]),
+            "node": encoded,
         }
 
     print(f"merkle root: {encode_hex(tree.root)}")

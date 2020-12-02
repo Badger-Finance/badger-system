@@ -53,7 +53,6 @@ def deploy_proxy(contractName, logicAbi, logic, proxyAdmin, initializer, deploye
     web3.eth.defaultAccount = str(accounts[0])
 
     ProxyAdmin = web3.eth.contract(abi=abi, bytecode=bytecode)
-
     tx_hash = ProxyAdmin.constructor(
         logic, proxyAdmin, web3.toBytes(hexstr=initializer)
     ).transact()

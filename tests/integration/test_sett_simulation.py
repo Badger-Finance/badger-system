@@ -33,7 +33,7 @@ from scripts.deploy.deploy_badger import main
 from helpers.registry import whale_registry
 from scripts.deploy.deploy_badger_with_actions import distribute_assets_to_users
 
-
+@pytest.mark.skip()
 @pytest.mark.parametrize(
     "settId",
     [

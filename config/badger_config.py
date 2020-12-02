@@ -117,7 +117,13 @@ badger_total_supply = Wei("21000000 ether")
 
 multisig_config = DotMap(
     address="0xB65cef03b9B89f99517643226d76e286ee999e77",
-    owners=["0xe24b6bF43d4624B2E146D3F871e19b7ECb811208", "0x211b82242076792A07C7554A5B968F0DE4414938", "0xe7bab002A39f9672a1bD0E949d3128eeBd883575", "0x59c68A651a1f49C26145666E9D5647B1472912A9", "0x15b8Fe651C268cfb5b519cC7E98bd45C162313C2"],
+    owners=[
+        "0xe24b6bF43d4624B2E146D3F871e19b7ECb811208",
+        "0x211b82242076792A07C7554A5B968F0DE4414938",
+        "0xe7bab002A39f9672a1bD0E949d3128eeBd883575",
+        "0x59c68A651a1f49C26145666E9D5647B1472912A9",
+        "0x15b8Fe651C268cfb5b519cC7E98bd45C162313C2",
+    ],
 )
 
 dao_config = DotMap(
@@ -127,18 +133,19 @@ dao_config = DotMap(
     agent="0x8de82c4c968663a0284b01069dde6ef231d0ef9b",
 )
 
+globalStartTime = 1607014800
+
 badger_config = DotMap(
     multisig=multisig_config,
     dao=dao_config,
-    globalStartTime=int((time.time())),
-    globalStartBlock=11355736,
+    globalStartTime=globalStartTime,
     huntParams=DotMap(
         startTime=int(time.time()),
         badgerAmount=badger_total_supply * 15 // 100,
         gracePeriod=daysToSeconds(2),
         epochDuration=daysToSeconds(1),
         merkleRoot=Airdrop["merkleRoot"],
-        claimReductionPerEpoch=2000
+        claimReductionPerEpoch=2000,
     ),
     founderRewardsAmount=badger_total_supply * 10 // 100,
     rewardsEscrowBadgerAmount=badger_total_supply * 40 // 100,
@@ -147,7 +154,7 @@ badger_config = DotMap(
         lockDuration=daysToSeconds(30),
     ),
     teamVestingParams=DotMap(
-        startTime=(int(time.time())),
+        startTime=globalStartTime,
         cliffDuration=daysToSeconds(30),
         totalDuration=daysToSeconds(365),
     ),
@@ -169,13 +176,13 @@ badger_config = DotMap(
         useAgentAsVault=True,
         supportRequired=Wei("0.5 ether"),
         minAcceptanceQuorum=Wei("0.05 ether"),
-        voteDuration=daysToSeconds(7),
+        voteDuration=daysToSeconds(3),
     ),
     geyserParams=DotMap(
         initialSharesPerToken=10 ** 6,
         founderRewardPercentage=10,
-        badgerDistributionStart=int((time.time())),
-        diggDistributionStart=int((time.time()) + daysToSeconds(15)),
+        badgerDistributionStart=globalStartTime,
+        diggDistributionStart=globalStartTime + daysToSeconds(15),
         unlockSchedules=DotMap(
             badger=[
                 DotMap(amount=Wei("45000 ether"), duration=daysToSeconds(7),)  # 1 week

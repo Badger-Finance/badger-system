@@ -1,4 +1,5 @@
 from operator import itemgetter
+from scripts.systems.badger_system import BadgerSystem
 from tests.helpers import getTokenMetadata
 from tests.sett.helpers.simulation import take_rewards_action
 
@@ -31,67 +32,78 @@ console = Console()
 """
 Test emission schedules of DAO Timelock & Dev Vesting
 """
-def test_team_vesting(badger):
+def test_team_vesting(badger_prod: BadgerSystem):
+    badger = badger_prod
     deployer = badger.deployer
     multisig = badger.devMultisig
     teamVesting = badger.teamVesting
     daoTimelock = badger.daoBadgerTimelock
     signer = accounts.at(multisig_config.owners[0], force=True)
+
+    convert_to_test_mode(multisig)
     
     # Should not be able to claim locked token
     with brownie.reverts("smart-timelock/only-beneficiary"):
         teamVesting.claimToken(badger.token, {'from': deployer})
 
-    with brownie.reverts("smart-timelock/no-locked-token-claim"):
-        tx = exec_direct(
-                badger.devMultisig,
-                {
-                    "to": teamVesting,
-                    "data": teamVesting.claimToken.encode_input(badger.token),
-                },
-                signer,
-            )
-        console.log(tx)
+    # with brownie.reverts("smart-timelock/no-locked-token-claim"):
+    tx = exec_direct(
+            badger.devMultisig,
+            {
+                "to": teamVesting,
+                "data": teamVesting.claimToken.encode_input(badger.token),
+            },
+            signer,
+        )
+    assert len(tx.events['ExecutionFailure']) > 0
 
 
     # Should not be able to release tokens before unlock time
-    with brownie.reverts("TokenVesting: no tokens are due"):
-        exec_direct(
-                badger.devMultisig,
-                {
-                    "to": teamVesting,
-                    "data": teamVesting.release.encode_input(),
-                },
-                signer,
-            )
+    tx = exec_direct(
+            badger.devMultisig,
+            {
+                "to": teamVesting,
+                "data": teamVesting.release.encode_input(),
+            },
+            signer,
+        )
+    assert len(tx.events['ExecutionFailure']) > 0
+
 
     with brownie.reverts("TokenVesting: no tokens are due"):
         teamVesting.release({'from': deployer})
     
+        chain.sleep(daysToSeconds(15))
+
     chain.sleep(daysToSeconds(15))
     chain.mine()
 
     # Should not be able to claim locked token
-    with brownie.reverts("smart-timelock/no-locked-token-claim"):
+    with brownie.reverts("smart-timelock/only-beneficiary"):
         teamVesting.claimToken(badger.token, {'from': deployer})
 
     # Should not be able to release tokens before unlock time
-    with brownie.reverts("TokenVesting: no tokens are due"):
-        exec_direct(
-                badger.devMultisig,
-                {
-                    "to": teamVesting,
-                    "data": teamVesting.release.encode_input(),
-                },
-                signer,
-            )
+    #with brownie.reverts("TokenVesting: no tokens are due"):
+    tx = exec_direct(
+            badger.devMultisig,
+            {
+                "to": teamVesting,
+                "data": teamVesting.release.encode_input(),
+            },
+            signer,
+        )
+    assert len(tx.events['ExecutionFailure']) > 0
 
     with brownie.reverts("TokenVesting: no tokens are due"):
         teamVesting.release({'from': deployer})
 
     chain.sleep(daysToSeconds(15))
     chain.mine()
-
+    
+    if chain.time() < teamVesting.cliff():
+        chain.sleep(teamVesting.cliff() - chain.time())
+        chain.mine()
+    
     # Should be able to release 1st month after cliff
     preBalance = badger.token.balanceOf(multisig)
     totalLocked = badger_config.founderRewardsAmount
@@ -100,16 +112,21 @@ def test_team_vesting(badger):
     vestDuration = teamVesting.duration()
     vestEnd = vestStart + vestDuration
 
-    exec_direct(
+    assert chain.time() >= teamVesting.cliff()
+
+    tx = exec_direct(
         multisig,
         {
             "to": teamVesting,
             "data": teamVesting.release.encode_input(),
         },
-        badger.deployer,
+        signer,
     )
+    print(tx.events)
+    assert len(tx.events['ExecutionSuccess']) > 0
 
-    timePassed = clain.time() - vestStart
+
+    timePassed = chain.time() - vestStart
     proportionPassed = timePassed / vestDuration
 
     expectReleased = int(totalLocked * proportionPassed)
@@ -119,7 +136,8 @@ def test_team_vesting(badger):
 
     assert approx(preBalance + expectReleased, postBalance, 1)
 
-def test_dao_timelock(badger):
+def test_dao_timelock(badger_prod: BadgerSystem):
+    badger = badger_prod
     deployer = badger.deployer
     multisig = badger.devMultisig
     daoTimelock = badger.daoBadgerTimelock
@@ -128,14 +146,15 @@ def test_dao_timelock(badger):
     
     with brownie.reverts("TokenTimelock: current time is before release time"):
         daoTimelock.release({'from': deployer})
-
+    if badger_config.globalStartTime - chain.time() > 0:
+        chain.sleep(badger_config.globalStartTime - chain.time())
     chain.sleep(daysToSeconds(15))
     chain.mine()
 
     with brownie.reverts("TokenTimelock: current time is before release time"):
         daoTimelock.release({'from': deployer})
 
-    chain.sleep(daysToSeconds(15))
+    chain.sleep(daysToSeconds(15) + 1)
     chain.mine()
 
     # Should be able to release after 30 days
@@ -144,6 +163,8 @@ def test_dao_timelock(badger):
     expectReleased = badger.token.balanceOf(daoTimelock)
 
     console.log(locals())
+
+    assert chain.time() >= daoTimelock.releaseTime()
 
     assert expectReleased == totalLocked
 

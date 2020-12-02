@@ -1,3 +1,4 @@
+from assistant.subgraph.client import fetch_geyser_events
 from assistant.rewards.BadgerGeyserMock import BadgerGeyserMock
 from brownie import *
 from dotmap import DotMap
@@ -82,6 +83,51 @@ def calculate_token_distributions(
 
 
 def collect_actions(geyser, startBlock, endBlock):
+    actions = DotMap()
+    # == Process Unstaked ==
+    (staked, unstaked) = fetch_geyser_events(geyser, startBlock, endBlock)
+    console.pirnt("Processing {} Staked events for Geyser {} ...", len(staked), geyser)
+    for event in staked:
+        timestamp = event["timestamp"]
+        user = event["user"]
+        console.log("Staked", event)
+        if user != AddressZero:
+            if not actions[user][timestamp]:
+                actions[user][timestamp] = []
+            actions[user][timestamp].append(
+                DotMap(
+                    user=user,
+                    action="Stake",
+                    amount=event["amount"],
+                    userTotal=event["total"],
+                    stakedAt=event["timestamp"],
+                    timestamp=event["timestamp"],
+                )
+            )
+    # == Process Unstaked ==
+    console.print(
+        "Processing {} Unstaked events for Geyser {} ...", len(unstaked), geyser
+    )
+    for event in unstaked:
+        timestamp = event["timestamp"]
+        user = event["user"]
+        console.log("Unstaked", event)
+        if user != AddressZero:
+            if not actions[user][timestamp]:
+                actions[user][timestamp] = []
+            actions[user][timestamp].append(
+                DotMap(
+                    user=user,
+                    action="Unstake",
+                    amount=event["amount"],
+                    userTotal=event["total"],
+                    stakedAt=event["timestamp"],
+                    timestamp=event["timestamp"],
+                )
+            )
+
+
+def collect_actions_from_events(geyser, startBlock, endBlock):
     """
     Construct a sequence of stake and unstake actions from events
     Unstakes for a given block are ALWAYS processed after the stakes, as we aren't tracking the transaction order within a block

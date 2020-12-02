@@ -104,6 +104,7 @@ def test_claims_e2e(setup):
 
         assert preBalance + expectedRewards == postBalance
 
+
 @pytest.mark.skip()
 def test_all_claims_full_amount(setup):
     badger = setup.token
@@ -163,7 +164,7 @@ def read_badger_hunt(hunt):
         "nextEpochRewardsRate": hunt.getNextEpochRewardsRate(),
     }
 
-@pytest.mark.skip()
+
 def test_epoch_evolution(setup):
     """
     * Ensure each epoch updates at expected times

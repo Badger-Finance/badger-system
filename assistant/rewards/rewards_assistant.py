@@ -1,6 +1,5 @@
 import json
 import boto3
-
 from eth_utils.hexadecimal import encode_hex
 
 from assistant.rewards.calc_stakes import calc_geyser_stakes
@@ -13,97 +12,9 @@ from rich.console import Console
 from scripts.systems.badger_system import connect_badger
 from eth_abi.packed import encode_abi_packed
 from assistant.rewards.script_config import env_config
+from assistant.rewards.RewardsList import RewardsList
 
 console = Console()
-
-
-class RewardsList:
-    def __init__(self, cycle) -> None:
-        self.claims = DotMap()
-        self.tokens = DotMap()
-        self.totals = DotMap()
-        self.cycle = cycle
-
-    def increase_user_rewards(self, user, token, toAdd):
-        """
-        If user has rewards, increase. If not, set their rewards to this initial value
-        """
-        if user in self.claims and token in self.claims[user]:
-            self.claims[user][token] += toAdd
-        else:
-            self.claims[user][token] = toAdd
-
-        if token in self.totals:
-            self.totals[token] += toAdd
-        else:
-            self.totals[token] = toAdd
-
-    def printState(self):
-        console.log("claims", self.claims.toDict())
-        console.log("tokens", self.tokens.toDict())
-        console.log("cycle", self.cycle)
-
-    def hasToken(self, token):
-        if self.tokens[token]:
-            return self.tokens[token]
-        else:
-            return False
-
-    def getTokenRewards(self, user, token):
-        if self.claims[user][token]:
-            return self.claims[user][token]
-        else:
-            return 0
-
-    def to_node_entry(self, user, userData, cycle, index):
-        nodeEntry = {
-            "user": user,
-            "tokens": [],
-            "cumulativeAmounts": [],
-            "cycle": cycle,
-            "index": index,
-        }
-        for tokenAddress, cumulativeAmount in userData.items():
-            nodeEntry["tokens"].append(tokenAddress)
-            nodeEntry["cumulativeAmounts"].append(cumulativeAmount)
-
-        encoded = encode_hex(
-            encode_abi_packed(
-                ["uint", "address", "uint", "address[]", "uint[]"],
-                (
-                    nodeEntry["index"],
-                    nodeEntry["user"],
-                    nodeEntry["cycle"],
-                    nodeEntry["tokens"],
-                    nodeEntry["cumulativeAmounts"],
-                ),
-            )
-        )
-
-        console.log("nodeEntry", nodeEntry)
-        console.log("encoded", encoded)
-        return (nodeEntry, encoded)
-
-    def to_merkle_format(self):
-        """
-        - Sort users into alphabetical order
-        - Node entry = [cycle, user, index, token[], cumulativeAmount[]]
-        """
-        cycle = self.cycle
-        dict = self.claims.toDict()
-
-        nodeEntries = []
-        encodedEntries = []
-
-        index = 0
-
-        for user, userData in self.claims.items():
-            (nodeEntry, encoded) = self.to_node_entry(user, userData, cycle, index)
-            nodeEntries.append(nodeEntry)
-            encodedEntries.append(encoded)
-            index += 1
-
-        return (nodeEntries, encodedEntries)
 
 
 def sum_rewards(rewardsList, cycle):
@@ -125,6 +36,11 @@ def sum_rewards(rewardsList, cycle):
 
 
 def calc_geyser_rewards(badger, startBlock, endBlock, cycle):
+    """
+    Calculate rewards for each geyser, and sum them
+    userRewards = (userShareSeconds / totalShareSeconds) / tokensReleased
+    (For each token, for the time period)
+    """
     rewardsByGeyser = {}
 
     # For each Geyser, get a list of user to weights
@@ -135,7 +51,6 @@ def calc_geyser_rewards(badger, startBlock, endBlock, cycle):
         rewardsByGeyser[key] = geyserRewards
 
     console.log("rewardsByGeyser", rewardsByGeyser)
-
     return sum_rewards(rewardsByGeyser, cycle)
 
 
@@ -204,7 +119,7 @@ def guardian(badger, endBlock):
     # Publish data
     rootHash = web3.toHex(web3.keccak(text=merkleTree["merkleRoot"]))
     badger.badgerTree.approveRoot(
-        merkleTree["merkleRoot"], rootHash, merkleTree["cycle"], {"from": keeper}
+        merkleTree["merkleRoot"], rootHash, merkleTree["cycle"], {"from": guardian}
     )
     chain.mine()
 
@@ -269,6 +184,33 @@ def rootUpdater(badger, endBlock):
     )
 
     print("Uploading to file " + contentFileName)
+
+    # TODO: Upload file to AWS & serve from server
+    with open(contentFileName, "w") as outfile:
+        json.dump(merkleTree, outfile)
+    upload(contentFileName)
+    return True
+
+
+def rootUpdaterMock(badger, endBlock):
+    mockData = {
+        "0x66ab6d9362d4f35596279692f0251db635165871": 85626748830336749923869,
+        "0xDA25ee226E534d868f0Dd8a459536b03fEE9079b": 144964735957825140271492,
+        "0x33A4622B82D4c04a53e170c638B944ce27cffce3": 56626748830336749923869,
+        "0xe7bab002A39f9672a1bD0E949d3128eeBd883575": 45301378029056871262233,
+        "0x482c741b0711624d1f462E56EE5D8f776d5970dC": 36241085595479651240806,
+    }
+
+    token = "0x3472A5A71965499acd81997a54BBA8D852C6E53d"
+
+    rewards = RewardsList(1)
+    for user, amount in mockData.items():
+        rewards.increase_user_rewards(user, token, amount)
+
+    merkleTree = rewards_to_merkle_tree(rewards)
+    rootHash = web3.toHex(web3.keccak(text=merkleTree["merkleRoot"]))
+
+    contentFileName = content_hash_to_filename(rootHash)
 
     # TODO: Upload file to AWS & serve from server
     with open(contentFileName, "w") as outfile:

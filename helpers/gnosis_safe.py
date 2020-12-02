@@ -65,8 +65,9 @@ def exec_transaction(contract, params, signer):
         params["signatures"],
         {"from": signer, "gas_limit": 6000000},
     )
+    return tx
 
 
 def exec_direct(contract, params, signer):
     params["signatures"] = generate_approve_hash_signature(signer)
-    exec_transaction(contract, params, signer)
+    return exec_transaction(contract, params, signer)

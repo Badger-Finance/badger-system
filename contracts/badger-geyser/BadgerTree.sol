@@ -79,12 +79,22 @@ contract BadgerTree is Initializable, AccessControlUpgradeable, ICumulativeMulti
         return pendingCycle == currentCycle.add(1);
     }
 
-    function getClaimedFor(address user, address[] memory tokens) public view returns(address[] memory, uint256[] memory) {
+    function getClaimedFor(address user, address[] memory tokens) public view returns (address[] memory, uint256[] memory) {
         uint256[] memory userClaimed = new uint256[](tokens.length);
         for (uint256 i = 0; i < tokens.length; i++) {
             userClaimed[i] = claimed[user][tokens[i]];
         }
         return (tokens, userClaimed);
+    }
+
+    function encodeClaim(
+        address[] calldata tokens,
+        uint256[] calldata cumulativeAmounts,
+        uint256 index,
+        uint256 cycle
+    ) public view returns (bytes memory encoded, bytes32 hash) {
+        encoded = abi.encodePacked(index, msg.sender, cycle, tokens, cumulativeAmounts);
+        hash = keccak256(encoded);
     }
 
     /// @notice Claim accumulated rewards for a set of tokens at a given cycle number
@@ -144,6 +154,7 @@ contract BadgerTree is Initializable, AccessControlUpgradeable, ICumulativeMulti
         bytes32 contentHash,
         uint256 cycle
     ) external {
+        _onlyGuardian();
         require(root == pendingMerkleRoot, "Incorrect root");
         require(contentHash == pendingMerkleContentHash, "Incorrect content hash");
         require(cycle == pendingCycle, "Incorrect cycle");

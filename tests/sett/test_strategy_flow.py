@@ -17,7 +17,7 @@ from helpers.constants import *
 import pytest
 
 
-@pytest.mark.skip()
+# @pytest.mark.skip()
 @pytest.mark.parametrize(
     "settId",
     [
@@ -25,7 +25,7 @@ import pytest
         "native.renCrv",
         "native.sbtcCrv",
         "native.tbtcCrv",
-        "pickle.renCrv",
+        # "pickle.renCrv",
         "harvest.renCrv",
         "native.uniBadgerWbtc",
     ],
@@ -92,7 +92,7 @@ def test_deposit_withdraw_single_user_flow(settId):
     confirm_withdraw(before, after, deployer)
 
 
-@pytest.mark.skip()
+# @pytest.mark.skip()
 @pytest.mark.parametrize(
     "settId",
     [
@@ -100,7 +100,7 @@ def test_deposit_withdraw_single_user_flow(settId):
         "native.badger",
         "native.sbtcCrv",
         "native.tbtcCrv",
-        "pickle.renCrv",
+        # "pickle.renCrv",
         "harvest.renCrv",
         "native.uniBadgerWbtc",
     ],
@@ -272,7 +272,7 @@ def test_single_user_harvest_flow(settId):
     # assert endingBalance > startingBalance
 
 
-@pytest.mark.skip()
+# @pytest.mark.skip()
 @pytest.mark.parametrize(
     "settId",
     [
@@ -280,7 +280,7 @@ def test_single_user_harvest_flow(settId):
         "native.badger",
         "native.sbtcCrv",
         "native.tbtcCrv",
-        "pickle.renCrv",
+        # "pickle.renCrv",
         "harvest.renCrv",
         "native.uniBadgerWbtc",
     ],
@@ -385,7 +385,7 @@ def test_migrate_single_user(settId):
         "native.badger",
         "native.sbtcCrv",
         "native.tbtcCrv",
-        "pickle.renCrv",
+        # "pickle.renCrv",
         "harvest.renCrv",
         "native.uniBadgerWbtc",
     ],
@@ -461,7 +461,7 @@ def test_withdraw_other(settId):
         "native.badger",
         "native.sbtcCrv",
         "native.tbtcCrv",
-        "pickle.renCrv",
+        # "pickle.renCrv",
         "harvest.renCrv",
         "native.uniBadgerWbtc",
     ],

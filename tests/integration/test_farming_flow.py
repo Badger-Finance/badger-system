@@ -23,7 +23,7 @@ from tests.sett.helpers.snapshots import (
     sett_snapshot,
 )
 
-
+@pytest.mark.skip()
 @pytest.mark.parametrize(
     "settId",
     [
@@ -108,7 +108,7 @@ def test_farming_flow_single_user(settId):
     farm.stake(shares, '0x', {'from': user})
     chain.mine()
 
-    take_rewards_action(badger, chain.height, "rootUpdater")
+    # take_rewards_action(badger, chain.height, "rootUpdater")
     # take_rewards_action(badger, chain.height, "guardian")
 
     

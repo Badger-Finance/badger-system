@@ -256,7 +256,7 @@ contract StrategyHarvestMetaFarm is BaseStrategy {
 
     /// @notice 'Recycle' FARM gained from staking into profit sharing pool for increased APY
     /// @notice Any excess FARM sitting in the Strategy will be staked as well
-    function tend() external returns (TendData memory) {
+    function tend() external whenNotPaused returns (TendData memory) {
         _onlyAuthorizedActors();
 
         TendData memory tendData;
