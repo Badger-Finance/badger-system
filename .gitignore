@@ -14,3 +14,12 @@ local.json
 docs
 docs/
 contracts-temporary
+merkle/
+badger_deployer_keystore.json
+badger_guardian_keystore.json
+badger_keeper_keystore.json
+
+rewards-*.json
+rewards_output.log
+keeper.sh
+rewards.sh

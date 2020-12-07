@@ -6,19 +6,14 @@ networks:
     explorer: https://api.etherscan.io/api
     cmd_settings:
       db: null
-      unlock:
-        - 0x193991827e291599a262e7fa7d212ff1ae31d110
-        - 0x97ca371d59bbfefdb391aa6dcbdf4455fec361f2
-        - 0x3d24d77bec08549d7ea86c4e9937204c11e153f1
-        - 0xcD9e6Df80169b6a2CFfDaE613fAbC3F7C3647B14
-        - 0xaf379f0228ad0d46bb7b4f38f9dc9bcc1ad0360c
-        - 0xc25099792e9349c7dd09759744ea681c7de2cb66
-        - 0xb1f2cdec61db658f091671f5f199635aef202cac
-        - 0x2bf792ffe8803585f74e06907900c2dc2c29adcb
-        - 0xDA25ee226E534d868f0Dd8a459536b03fEE9079b
   mainnet:
-    gas_price: 0
-  
+    gas_price: 44
+  live:
+      gas_limit: 6000000
+      gas_buffer: 1.1
+      gas_price: 40000000000
+      reverting_tx_gas_limit: false
+      default_contract_owner: false
 
 project_structure:
   contracts: contracts

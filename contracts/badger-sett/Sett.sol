@@ -2,15 +2,15 @@
 
 pragma solidity ^0.6.11;
 
-import "deps/@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
-import "deps/@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
-import "deps/@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
-import "deps/@openzeppelin/contracts-upgradeable/token/ERC20/SafeERC20Upgradeable.sol";
-import "deps/@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
-import "deps/@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "../../deps/@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
+import "../../deps/@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
+import "../../deps/@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
+import "../../deps/@openzeppelin/contracts-upgradeable/token/ERC20/SafeERC20Upgradeable.sol";
+import "../../deps/@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
+import "../../deps/@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
-import "interfaces/badger/IController.sol";
-import "interfaces/erc20/IERC20Detailed.sol";
+import "../../interfaces/badger/IController.sol";
+import "../../interfaces/erc20/IERC20Detailed.sol";
 import "./SettAccessControlDefended.sol";
 
 /* 

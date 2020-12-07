@@ -33,6 +33,7 @@ contract SmartVesting is SingleTokenVestingNonRevocable, Executor, ReentrancyGua
         uint256 duration
     ) public initializer {
         __SingleTokenVestingNonRevocable_init(token, beneficiary, start, cliffDuration, duration);
+        __ReentrancyGuard_init_unchained();
         _governor = governor;
     }
 

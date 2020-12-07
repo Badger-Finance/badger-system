@@ -3,12 +3,12 @@
 pragma solidity ^0.6.0;
 pragma experimental ABIEncoderV2;
 
-import "deps/@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
-import "deps/@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
-import "deps/@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
-import "deps/@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
-import "deps/@openzeppelin/contracts-upgradeable/cryptography/MerkleProofUpgradeable.sol";
-import "interfaces/badger/ICumulativeMultiTokenMerkleDistributor.sol";
+import "../../deps/@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
+import "../../deps/@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
+import "../../deps/@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import "../../deps/@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
+import "../../deps/@openzeppelin/contracts-upgradeable/cryptography/MerkleProofUpgradeable.sol";
+import "../../interfaces/badger/ICumulativeMultiTokenMerkleDistributor.sol";
 
 contract BadgerTree is Initializable, AccessControlUpgradeable, ICumulativeMultiTokenMerkleDistributor, PausableUpgradeable {
     using SafeMathUpgradeable for uint256;
@@ -120,9 +120,9 @@ contract BadgerTree is Initializable, AccessControlUpgradeable, ICumulativeMulti
             claimed[msg.sender][tokens[i]] = claimed[msg.sender][tokens[i]].add(claimable);
 
             require(claimed[msg.sender][tokens[i]] == cumulativeAmounts[i], "Claimed amount mismatch");
-            require(IERC20Upgradeable(tokens[i]).transfer(msg.sender, cumulativeAmounts[i]), "Transfer failed");
+            require(IERC20Upgradeable(tokens[i]).transfer(msg.sender, claimable), "Transfer failed");
 
-            emit Claimed(msg.sender, tokens[i], cumulativeAmounts[i], cycle, now, block.number);
+            emit Claimed(msg.sender, tokens[i], claimable, cycle, now, block.number);
         }
     }
 

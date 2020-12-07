@@ -1,3 +1,7 @@
+from assistant.rewards.rewards_checker import compare_rewards
+from helpers.tx_utils import send
+from helpers.time_utils import hours
+from assistant.rewards.early_contributors import calc_early_contributor_rewards
 import json
 import boto3
 from eth_utils.hexadecimal import encode_hex
@@ -16,26 +20,36 @@ from assistant.rewards.RewardsList import RewardsList
 
 console = Console()
 
+globalStartBlock = 11381158
 
-def sum_rewards(rewardsList, cycle):
+
+def sum_rewards(sources, cycle, badgerTree):
     """
     Sum rewards from all given set of rewards' list, returning a single rewards list
     """
-    totals = RewardsList(cycle)
-
+    totals = RewardsList(cycle, badgerTree)
+    total = 0
     # For each rewards list entry
-    for key, rewardsSet in rewardsList.items():
+    for key, rewardsSet in sources.items():
         # Get the claims data
         claims = rewardsSet["claims"]
+        metadata = rewardsSet["metadata"]
+
+        # Add values from each user
         for user, userData in claims.items():
+            totals.track_user_metadata(user, metadata)
+
             # For each token
             for token, tokenAmount in userData.items():
                 totals.increase_user_rewards(user, token, tokenAmount)
-    totals.printState()
+
+                total += tokenAmount
+    totals.badgerSum = total
+    # totals.printState()
     return totals
 
 
-def calc_geyser_rewards(badger, startBlock, endBlock, cycle):
+def calc_geyser_rewards(badger, periodStartBlock, endBlock, cycle):
     """
     Calculate rewards for each geyser, and sum them
     userRewards = (userShareSeconds / totalShareSeconds) / tokensReleased
@@ -45,26 +59,55 @@ def calc_geyser_rewards(badger, startBlock, endBlock, cycle):
 
     # For each Geyser, get a list of user to weights
     for key, geyser in badger.geysers.items():
-        geyserRewards = calc_geyser_stakes(
-            geyser, badger.globalStartBlock, startBlock, endBlock
-        )
+        geyserRewards = calc_geyser_stakes(key, geyser, periodStartBlock, endBlock)
         rewardsByGeyser[key] = geyserRewards
 
-    console.log("rewardsByGeyser", rewardsByGeyser)
-    return sum_rewards(rewardsByGeyser, cycle)
+    return sum_rewards(rewardsByGeyser, cycle, badger.badgerTree)
 
 
 def calc_harvest_meta_farm_rewards(badger, startBlock, endBlock):
-    # TODO: Add harvest rewards
+    # TODO: Add harvest reward
     return RewardsList()
 
 
-def calc_early_contributor_rewards(badger, startBlock, endBlock):
-    # TODO: Add earky contributor rewards
-    return False
+def process_cumulative_rewards(current, new: RewardsList):
+    result = RewardsList(new.cycle, new.badgerTree)
+
+    # Add new rewards
+    for user, claims in new.claims.items():
+        for token, claim in claims.items():
+            result.increase_user_rewards(user, token, claim)
+
+    # Add existing rewards
+    for user, userData in current["claims"].items():
+        for i in range(len(userData["tokens"])):
+            token = userData["tokens"][i]
+            amount = userData["cumulativeAmounts"][i]
+            # print(user, token, amount)
+            result.increase_user_rewards(user, token, int(amount))
+
+    # result.printState()
+    return result
 
 
-def guardian(badger, endBlock):
+def combine_rewards(list, cycle, badgerTree):
+    totals = RewardsList(cycle, badgerTree)
+    total = 0
+    # For each rewards list entry
+    for key, rewardsSet in list.items():
+        # Get the claims data
+        # claims = rewardsSet["claims"]
+        for user, userData in rewardsSet.claims.items():
+            # For each token
+            for token, tokenAmount in userData.items():
+                totals.increase_user_rewards(user, token, tokenAmount)
+                total += tokenAmount
+    totals.badgerSum = total
+    # totals.printState()
+    return totals
+
+
+def guardian(badger, startBlock, endBlock, test=False):
     """
     Guardian Role
     - Check if there is a new proposed root
@@ -73,60 +116,139 @@ def guardian(badger, endBlock):
 
     (In case of a one-off failure, Script will be attempted again at the guardianInterval)
     """
-    # badgerTree = badger.badgerTree
-    # guardian = badgerTree.getRoleMember(GUARDIAN_ROLE, 0)
-    # # TODO prod: accounts.add(private_key=ENV Variable)
-    # assert guardian == badger.guardian
 
-    # # Check latest root proposal
-    # proposed = badgerTree.getPendingMerkleData()
-    # nextCycle = badgerTree.currentCycle() + 1
-
-    # console.log(proposed, nextCycle)
-
-    # badger.badgerTree.approveRoot(
-    #     proposed[0], proposed[1], nextCycle, {"from": guardian}
-    # )
-    # chain.mine()
-
-    # merkleContent = load_content_file(proposed[1])
+    print("Guardian", startBlock, endBlock)
 
     badgerTree = badger.badgerTree
     guardian = badger.guardian
+    nextCycle = getNextCycle(badger)
 
     console.print("\n[bold cyan]===== Guardian =====[/bold cyan]\n")
 
-    hasPendingRoot = badgerTree.hasPendingRoot()
-    if not hasPendingRoot:
+    if not badgerTree.hasPendingRoot():
         console.print("[bold yellow]===== Result: No Pending Root =====[/bold yellow]")
         return False
 
     pendingMerkleData = badgerTree.getPendingMerkleData()
-    nextCycle = badgerTree.currentCycle() + 1
 
-    startBlock = max(badger.globalStartBlock, badgerTree.lastPublishBlockNumber() + 1)
-    endBlock = pendingMerkleData[3]
+    currentMerkleData = fetchCurrentMerkleData(badger)
+    currentRewards = fetch_current_rewards_tree(badger)
+    currentContentHash = currentMerkleData["contentHash"]
+    # blockNumber = currentMerkleData["blockNumber"]
 
-    console.log("pendingMerkleData", pendingMerkleData)
-
+    console.print("\n[bold cyan]===== Verifying Rewards =====[/bold cyan]\n")
+    print("Geyser Rewards", startBlock, endBlock, nextCycle)
     geyserRewards = calc_geyser_rewards(badger, startBlock, endBlock, nextCycle)
-    # metaFarmRewards = calc_harvest_meta_farm_rewards(badger, startBlock, endBlock)
-    # earlyContributorRewards = calc_early_contributor_rewards(badger, startBlock, endBlock)
 
-    totalRewards = geyserRewards
-    merkleTree = rewards_to_merkle_tree(totalRewards)
+    newRewards = geyserRewards
 
-    # Publish data
-    rootHash = web3.toHex(web3.keccak(text=merkleTree["merkleRoot"]))
-    badger.badgerTree.approveRoot(
-        merkleTree["merkleRoot"], rootHash, merkleTree["cycle"], {"from": guardian}
+    cumulativeRewards = process_cumulative_rewards(currentRewards, newRewards)
+
+    # Take metadata from geyserRewards
+    console.print("Processing to merkle tree")
+    merkleTree = rewards_to_merkle_tree(
+        cumulativeRewards, startBlock, endBlock, geyserRewards
     )
-    chain.mine()
 
+    # ===== Re-Publish data for redundancy ======
+    rootHash = hash(merkleTree["merkleRoot"])
     contentFileName = content_hash_to_filename(rootHash)
 
+    assert pendingMerkleData["root"] == merkleTree["merkleRoot"]
+    assert pendingMerkleData["contentHash"] == rootHash
 
-def rootUpdater(badger, endBlock):
+    console.log(
+        {
+            "merkleRoot": merkleTree["merkleRoot"],
+            "rootHash": str(rootHash),
+            "contentFile": contentFileName,
+            "startBlock": startBlock,
+            "endBlock": endBlock,
+            "currentContentHash": currentContentHash,
+        }
+    )
+
+    print("Uploading to file " + contentFileName)
+
+    # TODO: Upload file to AWS & serve from server
+    with open(contentFileName, "w") as outfile:
+        json.dump(merkleTree, outfile)
+    # upload(contentFileName)
+
+    with open(contentFileName) as f:
+        after_file = json.load(f)
+
+    compare_rewards(
+        badger, startBlock, endBlock, currentRewards, after_file, currentContentHash
+    )
+
+    console.print("===== Guardian Complete =====")
+
+    if not test:
+        upload(contentFileName)
+
+        send(
+            badgerTree,
+            badgerTree.approveRoot.encode_input(
+                merkleTree["merkleRoot"], rootHash, merkleTree["cycle"]
+            ),
+            "guardian",
+        )
+
+
+def fetchCurrentMerkleData(badger):
+    currentMerkleData = badger.badgerTree.getCurrentMerkleData()
+    root = str(currentMerkleData[0])
+    contentHash = str(currentMerkleData[1])
+    lastUpdateTime = currentMerkleData[2]
+    blockNumber = badger.badgerTree.lastPublishBlockNumber()
+
+    return {
+        "root": root,
+        "contentHash": contentHash,
+        "lastUpdateTime": lastUpdateTime,
+        "blockNumber": int(blockNumber),
+    }
+
+
+def getNextCycle(badger):
+    return badger.badgerTree.currentCycle() + 1
+
+
+def hash(value):
+    return web3.toHex(web3.keccak(text=value))
+
+
+def fetch_current_rewards_tree(badger):
+    # TODO Files should be hashed and signed by keeper to prevent tampering
+    # TODO How will we upload addresses securely?
+    # We will check signature before posting
+    merkle = fetchCurrentMerkleData(badger)
+    pastFile = "rewards-1-" + str(merkle["contentHash"]) + ".json"
+
+    console.print(
+        "[bold yellow]===== Loading Past Rewards " + pastFile + " =====[/bold yellow]"
+    )
+
+    with open(pastFile) as f:
+        currentTree = json.load(f)
+
+    # Invariant: File shoulld have same root as latest
+    assert currentTree["merkleRoot"] == merkle["root"]
+
+    lastUpdateOnChain = merkle["blockNumber"]
+    lastUpdate = int(currentTree["endBlock"])
+
+    print("lastUpdateOnChain ", lastUpdateOnChain, " lastUpdate ", lastUpdate)
+    # Ensure file tracks block within 100 of previous upload
+    assert abs(lastUpdate - lastUpdateOnChain) < 100
+
+    # Ensure upload was after file tracked
+    assert lastUpdateOnChain >= lastUpdate
+    return currentTree
+
+
+def rootUpdater(badger, startBlock, endBlock, test=False):
     """
     Root Updater Role
     - Check how much time has passed since the last published update
@@ -137,85 +259,84 @@ def rootUpdater(badger, endBlock):
     """
     badgerTree = badger.badgerTree
     keeper = badger.keeper
-    guardian = badger.guardian
-    currentMerkleData = badgerTree.getCurrentMerkleData()
-    nextCycle = badgerTree.currentCycle() + 1
+    nextCycle = getNextCycle(badger)
+
+    assert keeper == badger.keeper
 
     console.print("\n[bold cyan]===== Root Updater =====[/bold cyan]\n")
-
-    console.log("currentMerkleData", currentMerkleData)
-    lastUpdateTime = currentMerkleData[2]
-    blockNumber = currentMerkleData[3]
+    currentMerkleData = fetchCurrentMerkleData(badger)
+    currentRewards = fetch_current_rewards_tree(badger)
 
     currentTime = chain.time()
 
-    timeSinceLastupdate = currentTime - lastUpdateTime
-    if timeSinceLastupdate < rewards_config.rootUpdateInterval:
+    timeSinceLastupdate = currentTime - currentMerkleData["lastUpdateTime"]
+    if timeSinceLastupdate < hours(1.8):
         console.print(
             "[bold yellow]===== Result: Last Update too Recent =====[/bold yellow]"
         )
         return False
 
-    # Start after the previous snapshot, or globalStartBlock
-    startBlock = max(badger.globalStartBlock, blockNumber + 1)
+    if badgerTree.hasPendingRoot():
+        console.print(
+            "[bold yellow]===== Result: Pending Root Since Last Update =====[/bold yellow]"
+        )
+        return False
+    print("Geyser Rewards", startBlock, endBlock, nextCycle)
 
     geyserRewards = calc_geyser_rewards(badger, startBlock, endBlock, nextCycle)
     # metaFarmRewards = calc_harvest_meta_farm_rewards(badger, startBlock, endBlock)
-    # earlyContributorRewards = calc_early_contributor_rewards(badger, startBlock, endBlock)
+    newRewards = geyserRewards
 
-    totalRewards = geyserRewards
-    merkleTree = rewards_to_merkle_tree(totalRewards)
+    cumulativeRewards = process_cumulative_rewards(currentRewards, newRewards)
 
-    # Publish data
-    rootHash = web3.toHex(web3.keccak(text=merkleTree["merkleRoot"]))
-    badger.badgerTree.proposeRoot(
-        merkleTree["merkleRoot"], rootHash, merkleTree["cycle"], {"from": keeper}
+    # Take metadata from geyserRewards
+    console.print("Processing to merkle tree")
+    merkleTree = rewards_to_merkle_tree(
+        cumulativeRewards, startBlock, endBlock, geyserRewards
     )
 
-    chain.mine()
+    # Publish data
+    rootHash = hash(merkleTree["merkleRoot"])
     contentFileName = content_hash_to_filename(rootHash)
 
-    print(
+    console.log(
         {
             "merkleRoot": merkleTree["merkleRoot"],
             "rootHash": str(rootHash),
             "contentFile": contentFileName,
+            "startBlock": startBlock,
+            "endBlock": endBlock,
+            "currentContentHash": currentMerkleData["contentHash"],
         }
     )
 
     print("Uploading to file " + contentFileName)
-
     # TODO: Upload file to AWS & serve from server
     with open(contentFileName, "w") as outfile:
         json.dump(merkleTree, outfile)
-    upload(contentFileName)
-    return True
 
+    with open(contentFileName) as f:
+        after_file = json.load(f)
 
-def rootUpdaterMock(badger, endBlock):
-    mockData = {
-        "0x66ab6d9362d4f35596279692f0251db635165871": 85626748830336749923869,
-        "0xDA25ee226E534d868f0Dd8a459536b03fEE9079b": 144964735957825140271492,
-        "0x33A4622B82D4c04a53e170c638B944ce27cffce3": 56626748830336749923869,
-        "0xe7bab002A39f9672a1bD0E949d3128eeBd883575": 45301378029056871262233,
-        "0x482c741b0711624d1f462E56EE5D8f776d5970dC": 36241085595479651240806,
-    }
+    compare_rewards(
+        badger,
+        startBlock,
+        endBlock,
+        currentRewards,
+        after_file,
+        currentMerkleData["contentHash"],
+    )
+    console.print("===== Root Updater Complete =====")
+    if not test:
+        upload(contentFileName)
+        send(
+            badgerTree,
+            badgerTree.proposeRoot.encode_input(
+                merkleTree["merkleRoot"], rootHash, merkleTree["cycle"]
+            ),
+            "keeper",
+        )
 
-    token = "0x3472A5A71965499acd81997a54BBA8D852C6E53d"
-
-    rewards = RewardsList(1)
-    for user, amount in mockData.items():
-        rewards.increase_user_rewards(user, token, amount)
-
-    merkleTree = rewards_to_merkle_tree(rewards)
-    rootHash = web3.toHex(web3.keccak(text=merkleTree["merkleRoot"]))
-
-    contentFileName = content_hash_to_filename(rootHash)
-
-    # TODO: Upload file to AWS & serve from server
-    with open(contentFileName, "w") as outfile:
-        json.dump(merkleTree, outfile)
-    upload(contentFileName)
     return True
 
 
@@ -230,9 +351,9 @@ def watchdog(badger, endBlock):
 
 def run_action(badger, args):
     if args["action"] == "rootUpdater":
-        return rootUpdater(badger, args["endBlock"])
+        return rootUpdater(badger, args["startBlock"], args["endBlock"])
     if args["action"] == "guardian":
-        return guardian(badger, args["endBlock"])
+        return guardian(badger, args["startBlock"], args["endBlock"])
     if args["action"] == "watchdog":
         return watchdog(badger)
     return False
@@ -240,7 +361,7 @@ def run_action(badger, args):
 
 def main(args):
     # Load Badger system from config
-    badger = connect_badger("local.json")
+    badger = connect_badger("deploy-1.json")
 
     # Attempt node connection.
     # If primary fails, try the backup
@@ -302,3 +423,20 @@ def upload(fileName):
     )
     s3.upload_file(fileName, upload_bucket, upload_file_key)
 
+
+def confirmUpload(fileName):
+    upload_bucket = "badger-json"
+    upload_file_key = "rewards/" + fileName
+    name = "rewards-1337-<hash>.json"
+
+    # f = open(fileName,)
+    # contentFile = json.load(f)
+
+    print("Uploading file to s3/" + upload_file_key)
+
+    s3 = boto3.client(
+        "s3",
+        aws_access_key_id=env_config.aws_access_key_id,
+        aws_secret_access_key=env_config.aws_secret_access_key,
+    )
+    s3.read(fileName, upload_bucket, upload_file_key)

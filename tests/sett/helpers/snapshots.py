@@ -20,8 +20,13 @@ def is_curve_gauge_variant(name):
 
 def sett_snapshot(sett, strategy, account):
     want = interface.IERC20(strategy.want())
+    controller = Controller.at(sett.controller())
+
     snapshot = DotMap(
-        want=DotMap(contract=want, userBalance=want.balanceOf(account)),
+        want=DotMap(contract=want, userBalance=want.balanceOf(account), controllerRewardsBalance=want.balanceOf(controller.rewards())),
+        controller=DotMap(
+            contract=controller
+        ),
         sett=DotMap(
             contract=sett,
             totalSupply=sett.totalSupply(),
@@ -154,6 +159,10 @@ def confirm_withdraw(before, after, user):
         + before.sett.wantReserve
     )
 
+    # Controller rewards should earn
+    if after.strategy.contract.withdrawalFee() > 0:
+        assert after.want.controllerRewardsBalance > before.want.controllerRewardsBalance
+
 
 def confirm_tend_harvest(before, after):
     """
@@ -256,7 +265,7 @@ def confirm_harvest_curve_gauge(before, after):
     - Increase the ppfs on sett
     """
 
-    assert after.strategy.balanceOf > before.strategy.balanceOf
+    assert after.strategy.balanceOf >= before.strategy.balanceOf
     if before.sett.pricePerFullShare:
         assert after.sett.pricePerFullShare > before.sett.pricePerFullShare
 
@@ -269,7 +278,7 @@ def confirm_harvest_badger_rewards(before, after):
     - Increase the ppfs on sett
     """
 
-    assert after.strategy.balanceOf > before.strategy.balanceOf
+    assert after.strategy.balanceOf >= before.strategy.balanceOf
     if before.sett.pricePerFullShare:
         assert after.sett.pricePerFullShare > before.sett.pricePerFullShare
 
@@ -282,7 +291,7 @@ def confirm_harvest_badger_lp(before, after):
     - Increase the ppfs on sett
     """
 
-    assert after.strategy.balanceOf > before.strategy.balanceOf
+    assert after.strategy.balanceOf >= before.strategy.balanceOf
     if before.sett.pricePerFullShare:
         assert after.sett.pricePerFullShare > before.sett.pricePerFullShare
 

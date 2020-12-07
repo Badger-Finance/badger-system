@@ -1,60 +1,48 @@
-from assistant.subgraph.client import fetch_geyser_events
+from collections import OrderedDict
+
+from tabulate import tabulate
+from assistant.subgraph.client import fetch_all_geyser_events
 from assistant.rewards.BadgerGeyserMock import BadgerGeyserMock
 from brownie import *
 from dotmap import DotMap
 from helpers.constants import AddressZero
 from rich.console import Console
 from tqdm import trange
+import json
+import sys
 
 console = Console()
 
+globalStartBlock = 11381000
 
-def calc_geyser_stakes(geyser, globalStartBlock, snapshotStartBlock, periodEndBlock):
+
+def calc_geyser_stakes(key, geyser, periodStartBlock, periodEndBlock):
     console.print(
         " Geyser initial snapshot for " + geyser.address,
-        {"from": snapshotStartBlock, "to": periodEndBlock},
+        {"from": globalStartBlock, "to": periodEndBlock},
+    )
+    console.print(
+        " Rewards for " + geyser.address,
+        {"from": periodStartBlock, "to": periodEndBlock},
     )
 
     globalStartTime = web3.eth.getBlock(globalStartBlock)["timestamp"]
-    snapshotStartTime = web3.eth.getBlock(snapshotStartBlock)["timestamp"]
+    periodStartTime = web3.eth.getBlock(periodStartBlock)["timestamp"]
     periodEndTime = web3.eth.getBlock(periodEndBlock)["timestamp"]
 
-    geyserMock = BadgerGeyserMock()
-    geyserMock.set_current_period(snapshotStartTime, periodEndTime)
+    geyserMock = BadgerGeyserMock(key)
+    geyserMock.set_current_period(periodStartTime, periodEndTime)
 
-    console.log(
-        "blocks between",
-        {
-            "globalStartBlock": globalStartBlock,
-            "snapshotStartBlock": snapshotStartBlock,
-            "periodEndBlock": periodEndBlock,
-            "globalStartTime": globalStartTime,
-            "snapshotStartTime": snapshotStartTime,
-            "periodEndTime": periodEndTime,
-        },
-    )
+    # Collect actions from the total history
+    console.print("\n[grey]Collect Actions: Entire History[/grey]")
+    actions = collect_actions_from_events(geyser, globalStartBlock, periodEndBlock)
 
-    # Collect actions from the past, and generate the initial state of stakes
-    console.print("\n[grey]Collect Actions: Historical[/grey]")
-    pre_actions = collect_actions(geyser, globalStartBlock, snapshotStartBlock - 1)
-    console.print("\n[grey]Process Actions: Historical[/grey]")
-    geyserMock = process_snapshot(
-        geyserMock, pre_actions, globalStartBlock, snapshotStartBlock - 1
-    )
-
-    # Collect actions from the claim period
-    console.print("\n[grey]Collect Actions: Claim Period[/grey]")
-    actions = collect_actions(geyser, snapshotStartBlock, periodEndBlock)
-
-    # Process shareSeconds from the claims period
-    console.print("\n[grey]Process Actions: Claim Period[/grey]")
-    geyserMock = process_actions(
-        geyserMock, actions, snapshotStartBlock, periodEndBlock
-    )
-    console.log(geyserMock.getUserWeights())
+    # Process actions from the total history
+    console.print("\n[grey]Process Actions: Entire History[/grey]")
+    geyserMock = process_actions(geyserMock, actions, globalStartBlock, periodEndBlock)
 
     return calculate_token_distributions(
-        geyser, geyserMock, snapshotStartTime, periodEndTime
+        geyser, geyserMock, periodStartTime, periodEndTime
     )
 
 
@@ -79,18 +67,25 @@ def calculate_token_distributions(
         snapshotStartTime, periodEndTime
     )
     userDistributions = geyserMock.calc_user_distributions(tokenDistributions)
+    geyserMock.tokenDistributions = tokenDistributions
+    geyserMock.userDistributions = userDistributions
+    # geyserMock.printState()
     return userDistributions
 
 
-def collect_actions(geyser, startBlock, endBlock):
+def collect_actions(geyser):
     actions = DotMap()
     # == Process Unstaked ==
-    (staked, unstaked) = fetch_geyser_events(geyser, startBlock, endBlock)
-    console.pirnt("Processing {} Staked events for Geyser {} ...", len(staked), geyser)
+    data = fetch_all_geyser_events(geyser)
+    staked = data["stakes"]
+    unstaked = data["unstakes"]
+
+    console.print(
+        "Processing {} Staked events for Geyser {} ...".format(len(staked), geyser)
+    )
     for event in staked:
         timestamp = event["timestamp"]
         user = event["user"]
-        console.log("Staked", event)
         if user != AddressZero:
             if not actions[user][timestamp]:
                 actions[user][timestamp] = []
@@ -98,20 +93,19 @@ def collect_actions(geyser, startBlock, endBlock):
                 DotMap(
                     user=user,
                     action="Stake",
-                    amount=event["amount"],
-                    userTotal=event["total"],
-                    stakedAt=event["timestamp"],
-                    timestamp=event["timestamp"],
+                    amount=int(event["amount"]),
+                    userTotal=int(event["total"]),
+                    stakedAt=int(event["timestamp"]),
+                    timestamp=int(event["timestamp"]),
                 )
             )
     # == Process Unstaked ==
     console.print(
-        "Processing {} Unstaked events for Geyser {} ...", len(unstaked), geyser
+        "Processing {} Unstaked events for Geyser {} ...".format(len(unstaked), geyser)
     )
     for event in unstaked:
         timestamp = event["timestamp"]
         user = event["user"]
-        console.log("Unstaked", event)
         if user != AddressZero:
             if not actions[user][timestamp]:
                 actions[user][timestamp] = []
@@ -119,12 +113,13 @@ def collect_actions(geyser, startBlock, endBlock):
                 DotMap(
                     user=user,
                     action="Unstake",
-                    amount=event["amount"],
-                    userTotal=event["total"],
-                    stakedAt=event["timestamp"],
-                    timestamp=event["timestamp"],
+                    amount=int(event["amount"]),
+                    userTotal=int(event["total"]),
+                    stakedAt=int(event["timestamp"]),
+                    timestamp=int(event["timestamp"]),
                 )
             )
+    return actions
 
 
 def collect_actions_from_events(geyser, startBlock, endBlock):
@@ -145,9 +140,11 @@ def collect_actions_from_events(geyser, startBlock, endBlock):
         for log in logs:
             timestamp = log["args"]["timestamp"]
             user = log["args"]["user"]
-            console.log("Staked", log["args"])
+            # console.log("Staked", log["args"])
             if user != AddressZero:
-                if not actions[user][timestamp]:
+                if not actions[user]:
+                    actions[user] = OrderedDict()
+                if not timestamp in actions[user]:
                     actions[user][timestamp] = []
                 actions[user][timestamp].append(
                     DotMap(
@@ -167,9 +164,11 @@ def collect_actions_from_events(geyser, startBlock, endBlock):
         for log in logs:
             timestamp = log["args"]["timestamp"]
             user = log["args"]["user"]
-            console.log("Unstaked", log["args"])
+            # console.log("Unstaked", log["args"])
             if user != AddressZero:
-                if not actions[user][timestamp]:
+                if not actions[user]:
+                    actions[user] = OrderedDict()
+                if not timestamp in actions[user]:
                     actions[user][timestamp] = []
                 actions[user][timestamp].append(
                     DotMap(
@@ -180,35 +179,11 @@ def collect_actions_from_events(geyser, startBlock, endBlock):
                         timestamp=log["args"]["timestamp"],
                     )
                 )
-    console.log("actions from events", actions.toDict())
+    # Sort timestamps within each user
+    for user, timestamps in actions.items():
+        sortedDict = OrderedDict(sorted(timestamps.items()))
+        actions[user] = sortedDict
     return actions
-
-
-def process_snapshot(geyserMock, actions, startBlock, endBlock):
-    """
-    Generate current set of Stakes from historical data
-    """
-    startTime = web3.eth.getBlock(startBlock)["timestamp"]
-    endTime = web3.eth.getBlock(endBlock)["timestamp"]
-
-    console.print("[green]== Processing to Snapshot ==[/green]\n")
-    console.log(
-        "Processing actions for Snapshot",
-        {"startTime": startTime, "endTime": endTime},
-        actions.toDict(),
-    )
-    for user, data in actions.items():
-        console.log(" processing user", user)
-        for timestamp in data.values():
-            for action in timestamp:
-                if action.action == "Stake":
-                    geyserMock.stake(action.user, action, trackShareSeconds=False)
-                if action.action == "Unstake":
-                    geyserMock.unstake(action.user, action, trackShareSeconds=False)
-
-    console.print("= User stakes at pre-snapshot =", style="dim cyan")
-    geyserMock.printState()
-    return geyserMock
 
 
 def process_actions(
@@ -218,28 +193,36 @@ def process_actions(
     Add stakes
     Remove stakes according to unstaking rules (LIFO)
     """
-    startTime = web3.eth.getBlock(snapshotStartBlock)["timestamp"]
-    endTime = web3.eth.getBlock(periodEndBlock)["timestamp"]
-
     console.print("[green]== Processing Claim Period Actions ==[/green]\n")
-    console.log(
-        "Processing actions for Claim Period",
-        {"startTime": startTime, "endTime": endTime},
-        actions.toDict(),
-    )
     for user, userData in actions.items():
-        console.log(" processing User", user)
+        table = []
+        # console.print("\n= Processing actions for user: ", user + " =")
+        latestTimestamp = 0
+
+        # Iterate over actions, grouped by timestamp
         for timestamp, timestampEntries in userData.items():
-            console.log(" timestamp collection", timestamp, timestampEntries)
+            assert int(timestamp) > latestTimestamp
             for action in timestampEntries:
                 if action.action == "Stake":
+                    table.append(['stake', action['amount'], action['timestamp']])
                     geyserMock.stake(action.user, action)
                 if action.action == "Unstake":
+                    table.append(['unstake', action['amount'], action['timestamp']])
                     geyserMock.unstake(action.user, action)
+            latestTimestamp = int(timestamp)
 
-    geyserMock.calc_end_share_seconds()
-    console.print("= User stakes after actions =", style="dim cyan")
-    geyserMock.printState()
+        # End accounting for user
+        geyserMock.calc_end_share_seconds_for(user)
+
+        # Print results
+        # print(tabulate(table, headers=["action", "amount", "timestamp"]))
+        # print("\n")
+        user = geyserMock.users[user]
+        table = []
+        table.append([user.shareSecondsInRange, user.shareSeconds, user.total])
+        # print(tabulate(table, headers=["shareSecondsInRange", "shareSeconds", "total"]))
+
+    
     return geyserMock
 
 

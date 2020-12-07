@@ -1,11 +1,39 @@
+from brownie import *
+from dotmap import DotMap
+from rich.console import Console
+from eth_utils.hexadecimal import encode_hex
+from tabulate import tabulate
+
+console = Console()
+
+
 class RewardsList:
-    def __init__(self, cycle) -> None:
+    def __init__(self, cycle, badgerTree) -> None:
         self.claims = DotMap()
         self.tokens = DotMap()
         self.totals = DotMap()
         self.cycle = cycle
+        self.badgerTree = badgerTree
+        self.metadata = DotMap()
+        self.sources = DotMap()
+        self.sourceMetadata = DotMap()
+
+    def increase_user_rewards_source(self, source, user, token, toAdd):
+        if not self.sources[source][user][token]:
+            self.sources[source][user][token] = 0
+        self.sources[source][user][token] += toAdd
+
+    def track_user_metadata_source(self, source, user, metadata):
+        if not self.sourceMetadata[source][user][metadata]:
+            self.sourceMetadata[source][user][metadata] = DotMap()
+        self.sourceMetadata[source][user][metadata] = metadata
+            
 
     def increase_user_rewards(self, user, token, toAdd):
+        if toAdd < 0:
+            print("NEGATIVE to ADD")
+            toAdd = 0
+
         """
         If user has rewards, increase. If not, set their rewards to this initial value
         """
@@ -19,10 +47,45 @@ class RewardsList:
         else:
             self.totals[token] = toAdd
 
+    def track_user_metadata(self, user, metadata):
+        if user in self.metadata:
+            self.metadata[user].shareSeconds += metadata[user]["shareSeconds"]
+            self.metadata[user].shareSecondsInRange += metadata[user][
+                "shareSecondsInRange"
+            ]
+        else:
+            self.metadata[user] = DotMap()
+            self.metadata[user].shareSeconds = metadata[user]["shareSeconds"]
+            self.metadata[user].shareSecondsInRange = metadata[user][
+                "shareSecondsInRange"
+            ]
+
     def printState(self):
-        console.log("claims", self.claims.toDict())
-        console.log("tokens", self.tokens.toDict())
-        console.log("cycle", self.cycle)
+        # console.log("claims", self.claims.toDict())
+        # console.log("tokens", self.tokens.toDict())
+        # console.log("cycle", self.cycle)
+        table = []
+        # console.log("User State", self.users.toDict(), self.totalShareSeconds)
+        for user, data in self.claims.items():
+            shareSeconds = 0
+            shareSecondsInRange = 0
+            if user in self.metadata:
+                shareSeconds = self.metadata[user].shareSeconds
+                shareSecondsInRange = self.metadata[user].shareSecondsInRange
+            table.append(
+                [
+                    user,
+                    data["0x3472A5A71965499acd81997a54BBA8D852C6E53d"],
+                    shareSeconds,
+                    shareSecondsInRange,
+                ]
+            )
+        print("REWARDS LIST")
+        print(
+            tabulate(
+                table, headers=["user", "badger", "shareSeconds", "shareSecondsInRange"]
+            )
+        )
 
     def hasToken(self, token):
         if self.tokens[token]:
@@ -46,23 +109,37 @@ class RewardsList:
         }
         for tokenAddress, cumulativeAmount in userData.items():
             nodeEntry["tokens"].append(tokenAddress)
-            nodeEntry["cumulativeAmounts"].append(cumulativeAmount)
+            nodeEntry["cumulativeAmounts"].append(str(cumulativeAmount))
 
-        encoded = encode_hex(
-            encode_abi_packed(
-                ["uint", "address", "uint", "address[]", "uint[]"],
-                (
-                    nodeEntry["index"],
-                    nodeEntry["user"],
-                    nodeEntry["cycle"],
-                    nodeEntry["tokens"],
-                    nodeEntry["cumulativeAmounts"],
-                ),
-            )
-        )
+        # encoded = encode_hex(
+        #     encode_abi_packed(
+        #         ["uint", "address", "uint", "address[]", "uint[]"],
+        #         (
+        #             nodeEntry["index"],
+        #             nodeEntry["user"],
+        #             nodeEntry["cycle"],
+        #             nodeEntry["tokens"],
+        #             nodeEntry["cumulativeAmounts"],
+        #         ),
+        #     )
+        # )
 
-        console.log("nodeEntry", nodeEntry)
-        console.log("encoded", encoded)
+        encoder = ClaimEncoder.at("0x19be80e976cb397ae584d350153914ced7c1b1d2")
+
+        claim = encoder.encodeClaim(
+            nodeEntry["tokens"],
+            nodeEntry["cumulativeAmounts"],
+            nodeEntry["index"],
+            nodeEntry["cycle"],
+            nodeEntry["user"],
+        )[0]
+
+        # print ('claim', claim)
+
+        encoded = encode_hex(claim)
+
+        # console.log("nodeEntry", nodeEntry)
+        # console.log("encoded", encoded)
         return (nodeEntry, encoded)
 
     def to_merkle_format(self):

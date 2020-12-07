@@ -1,4 +1,6 @@
+from helpers.gnosis_safe import convert_to_test_mode, exec_direct
 import json
+from scripts.systems.badger_system import connect_badger
 import secrets
 
 import brownie
@@ -21,15 +23,35 @@ with open("merkle/airdrop.json") as f:
 def setup(badger_hunt_unit):
     return badger_hunt_unit
 
+def upgrade_hunt():
+    system = connect_badger("deploy-final.json")
+    deployer = system.deployer
+    multisig = system.devMultisig
+    admin = system.devProxyAdmin
+    contract = system.badgerHunt
+    
+    newLogic = BadgerHunt.deploy({"from": deployer})
+    encoded = admin.upgrade.encode_input(contract, newLogic)
+
+    convert_to_test_mode(multisig)
+    exec_direct(multisig, {
+        'to': admin.address,
+        "data": encoded
+    }, deployer)
+
+    return system
 
 # @pytest.mark.skip()
 def test_initial_parameters(setup):
     """
     Ensure all values are written correctly
     """
-    hunt = setup.badgerHunt
+    connect = upgrade_hunt()
+    hunt = connect.badgerHunt
+    badger = connect.token
+    deployer = connect.deployer
 
-    assert hunt.owner() == setup.devMultisig
+    assert hunt.owner() == connect.devMultisig
     assert hunt.token() == setup.token
     assert hunt.rewardsEscrow() == setup.rewardsEscrow
     assert hunt.epochDuration() == daysToSeconds(1)
@@ -37,7 +59,6 @@ def test_initial_parameters(setup):
     assert hunt.rewardReductionPerEpoch() == 2000
     assert hunt.currentRewardRate() == 10000
     assert hunt.finalEpoch() == 4
-
 
 # @pytest.mark.skip()
 def test_claims_e2e(setup):
@@ -52,14 +73,13 @@ def test_claims_e2e(setup):
     - Epochs, times, and reward percentages should update correctly with the passage of time
     - Excess rewards should go to RewardsEscrow
     """
-    hunt = setup.badgerHunt
-    badger = setup.token
-    deployer = setup.deployer
+    connect = upgrade_hunt()
+    hunt = connect.badgerHunt
+    badger = connect.token
+    deployer = connect.deployer
 
     users = [
-        "0x97137466Bc8018531795217f0EcC4Ba24Dcba5c1",
-        "0x36cc7B13029B5DEe4034745FB4F24034f3F2ffc6",
-        "0xC845594A546Af8cAAC5e2C85971CfCe4CFb250A6",
+        "0x0e66CF7a7E7A7F4574670f6c2c9d463e1478a06C",
     ]
 
     MAX_BPS = hunt.MAX_BPS()
@@ -92,11 +112,16 @@ def test_claims_e2e(setup):
 
         preBalance = badger.balanceOf(user)
 
+        assert badger.balanceOf(hunt) > amount
+
         hunt.claim(index, user, amount, proof, {"from": user})
 
         # Should not be able to claim twice
         with brownie.reverts():
             hunt.claim(index, user, amount, proof, {"from": user})
+
+        with brownie.reverts():
+            hunt.setGracePeriod(daysToSeconds(3), {'from': user})
 
         postBalance = badger.balanceOf(user)
         rewardsRate = hunt.currentRewardRate()
@@ -104,6 +129,74 @@ def test_claims_e2e(setup):
 
         assert preBalance + expectedRewards == postBalance
 
+        
+
+def test_claims_e2e_after_extension(setup):
+    connect = upgrade_hunt()
+    hunt = connect.badgerHunt
+    badger = connect.token
+    deployer = connect.deployer
+
+    users = [
+        "0x0e66CF7a7E7A7F4574670f6c2c9d463e1478a06C"
+    ]
+
+    MAX_BPS = hunt.MAX_BPS()
+
+    exec_direct(connect.devMultisig, {
+        'to': hunt.address,
+        'data': hunt.setGracePeriod.encode_input(daysToSeconds(3))
+    }, deployer)
+    # hunt.setGracePeriod(daysToSeconds(3), {'from': deployer})
+    assert hunt.gracePeriod() == daysToSeconds(3)
+
+    for user in users:
+        accounts.at(user, force=True)
+
+        if (hunt.isClaimed(user)):
+            print ("Skip ", user)
+            continue
+
+        claim = Airdrop["claims"][user]
+        index = claim["index"]
+        amount = int(claim["amount"], 16)
+        proof = claim["proof"]
+
+        console.log(locals())
+
+        # Should not be able to claim with invalid address
+        with brownie.reverts():
+            hunt.claim(index, deployer.address, amount, proof, {"from": user})
+
+        # Should not be able to claim with invalid index
+        with brownie.reverts():
+            hunt.claim(index + 1, user, amount, proof, {"from": user})
+
+        # Should not be able to claim with invalid amount
+        with brownie.reverts():
+            hunt.claim(index, user, amount + 1, proof, {"from": user})
+
+        # Should not be able to claim from another account
+        with brownie.reverts():
+            hunt.claim(index, user, amount, proof, {"from": deployer})
+
+        preBalance = badger.balanceOf(user)
+
+        hunt.claim(index, user, amount, proof, {"from": user})
+
+        # Should not be able to claim twice
+        with brownie.reverts():
+            hunt.claim(index, user, amount, proof, {"from": user})
+
+        with brownie.reverts():
+            hunt.setGracePeriod(daysToSeconds(3), {'from': user})
+
+        postBalance = badger.balanceOf(user)
+        rewardsRate = hunt.currentRewardRate()
+        assert hunt.currentRewardRate() == MAX_BPS
+        expectedRewards = int(amount * rewardsRate // MAX_BPS)
+
+        assert preBalance + expectedRewards == postBalance
 
 @pytest.mark.skip()
 def test_all_claims_full_amount(setup):
@@ -177,14 +270,15 @@ def test_epoch_evolution(setup):
 
     # Static reads
     startTime = hunt.claimsStart()
-    gracePeriod = hunt.gracePeriod()
+    
     epochDuration = hunt.epochDuration()
     rewardReductionPerEpoch = hunt.rewardReductionPerEpoch()
     currentRewardRate = hunt.currentRewardRate()
     finalEpoch = hunt.finalEpoch()
     rewardsEscrow = hunt.rewardsEscrow()
-
-    assert gracePeriod == daysToSeconds(2)
+    hunt.setGracePeriod(daysToSeconds(3), {'from': deployer})
+    gracePeriod = hunt.gracePeriod()
+    assert gracePeriod == daysToSeconds(3)
     assert epochDuration == daysToSeconds(1)
     assert rewardReductionPerEpoch == 2000
     assert currentRewardRate == 10000

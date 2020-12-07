@@ -3,7 +3,7 @@ import json
 from scripts.systems.badger_system import connect_badger
 import warnings
 from tabulate import tabulate
-from brownie import interface, accounts, rpc, VaultKeeper
+from brownie import interface, accounts, rpc
 
 with open("local.json") as f:
     badger_deploy = json.load(f)

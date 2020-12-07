@@ -23,6 +23,7 @@ from tests.sett.helpers.snapshots import (
     sett_snapshot,
 )
 
+
 @pytest.mark.skip()
 @pytest.mark.parametrize(
     "settId",
@@ -82,20 +83,20 @@ def test_farming_flow_single_user(settId):
 
     shares = sett.balanceOf(user)
 
-    sett.earn({'from': keeper})
+    sett.earn({"from": keeper})
     chain.sleep(hours(2))
 
     chain.sleep(hours(6))
     chain.mine()
 
-    sett.approve(farm, shares, {'from': user})
+    sett.approve(farm, shares, {"from": user})
 
-    farm.stake(shares, '0x', {'from': user})
+    farm.stake(shares, "0x", {"from": user})
 
     chain.sleep(hours(12))
     chain.mine()
 
-    farm.unstake(shares / 2, '0x', {'from': user})
+    farm.unstake(shares / 2, "0x", {"from": user})
 
     chain.sleep(hours(12))
     chain.mine()
@@ -104,14 +105,10 @@ def test_farming_flow_single_user(settId):
     # take_rewards_action(badger, chain.height, "guardian")
 
     shares = sett.balanceOf(user)
-    sett.approve(farm, shares, {'from': user})
-    farm.stake(shares, '0x', {'from': user})
+    sett.approve(farm, shares, {"from": user})
+    farm.stake(shares, "0x", {"from": user})
     chain.mine()
 
     # take_rewards_action(badger, chain.height, "rootUpdater")
     # take_rewards_action(badger, chain.height, "guardian")
-
-    
-
-    
 

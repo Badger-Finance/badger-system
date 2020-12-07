@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 
+from scripts.deploy.confirm_deploy import confirm_deploy
 import time
 
 from brownie import *
@@ -18,5 +19,7 @@ from scripts.systems.badger_system import BadgerSystem, print_to_file
 from tests.helpers import balances, getTokenMetadata
 
 def main():
-    return deploy_flow(test=False, outputToFile=True, uniswap=False)
+    badger = deploy_flow(test=False, outputToFile=True, uniswap=False)
+    # confirm_deploy(badger)
+    time.sleep(daysToSeconds(1))
 

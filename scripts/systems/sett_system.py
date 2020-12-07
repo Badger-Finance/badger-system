@@ -21,7 +21,7 @@ def deploy_sett(badger, token, controller, name, symbol, deployer):
     """
     proxyAdmin = badger.devProxyAdmin
     governance = deployer
-    keeper = deployer
+    keeper = badger.keeper
 
     return deploy_proxy(
         "Sett",
@@ -38,8 +38,8 @@ def deploy_sett(badger, token, controller, name, symbol, deployer):
 def deploy_strategy(badger, strategyName, controller, params, deployer):
     governance = deployer
     strategist = deployer
-    keeper = deployer
-    guardian = deployer
+    keeper = badger.keeper
+    guardian = badger.guardian
     proxyAdmin = badger.devProxyAdmin
 
     if strategyName == "StrategyCurveGaugeRenBtcCrv":
@@ -223,7 +223,7 @@ def deploy_controller(badger, deployer):
     # TODO: Change to prod config
     governance = deployer
     strategist = deployer
-    keeper = deployer
+    keeper = badger.keeper
     rewards = badger.dao.agent
     proxyAdmin = badger.devProxyAdmin
 

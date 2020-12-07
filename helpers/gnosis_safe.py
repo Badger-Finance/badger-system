@@ -69,5 +69,6 @@ def exec_transaction(contract, params, signer):
 
 
 def exec_direct(contract, params, signer):
+    signer = accounts.at(contract.getOwners()[0], force=True)
     params["signatures"] = generate_approve_hash_signature(signer)
     return exec_transaction(contract, params, signer)

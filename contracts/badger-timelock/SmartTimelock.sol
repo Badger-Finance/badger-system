@@ -1,9 +1,9 @@
 //SPDX-License-Identifier: Unlicense
 pragma solidity ^0.6.8;
 
-import "deps/@openzeppelin/contracts-upgradeable/token/ERC20/TokenTimelockUpgradeable.sol";
-import "deps/@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
-import "deps/@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
+import "../../deps/@openzeppelin/contracts-upgradeable/token/ERC20/TokenTimelockUpgradeable.sol";
+import "../../deps/@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
+import "../../deps/@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 
 import "./Executor.sol";
 
@@ -28,6 +28,7 @@ contract SmartTimelock is TokenTimelockUpgradeable, Executor, ReentrancyGuardUpg
         uint256 releaseTime
     ) public initializer {
         __TokenTimelock_init(token, beneficiary, releaseTime);
+        __ReentrancyGuard_init_unchained();
         _governor = governor;
     }
 

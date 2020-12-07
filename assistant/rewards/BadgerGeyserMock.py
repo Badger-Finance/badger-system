@@ -16,16 +16,27 @@ from dotmap import DotMap
 from eth_abi import decode_single, encode_single
 from eth_abi.packed import encode_abi_packed
 from eth_utils import encode_hex
+from toolz.itertoolz import last
 from helpers.constants import AddressZero
 from rich.console import Console
 from toolz import valfilter, valmap
 from tqdm import tqdm, trange
+from tabulate import tabulate
 
 console = Console()
 
 
+def val(amount):
+    return "{:,.6f}".format(amount / 1e18)
+
+
+def sec(amount):
+    return "{:,.1f}".format(amount / 1e12)
+
+
 class BadgerGeyserMock:
-    def __init__(self):
+    def __init__(self, key):
+        self.key = key
         self.events = DotMap()
         self.stakes = DotMap()
         self.totalShareSeconds = 0
@@ -33,6 +44,7 @@ class BadgerGeyserMock:
         self.unlockSchedules = DotMap()
         self.distributionTokens = []
         self.totalDistributions = DotMap()
+        self.totalShareSecondsInRange = 0
 
     # ===== Setters =====
 
@@ -66,7 +78,7 @@ class BadgerGeyserMock:
             "add_unlock_schedule for", str(token), parsedSchedule.toDict(),
         )
 
-    def get_distributed_for_token(self, token, startTime, endTime):
+    def get_distributed_for_token_at(self, token, endTime):
         """
         Get total distribution for token within range, across unlock schedules
         """
@@ -74,32 +86,43 @@ class BadgerGeyserMock:
 
         unlockSchedules = self.unlockSchedules[token]
         for schedule in unlockSchedules:
-            rangeDuration = endTime - startTime
+            rangeDuration = endTime - schedule.startTime
             toDistribute = min(
                 schedule.initialTokensLocked,
                 int(schedule.initialTokensLocked * rangeDuration // schedule.duration),
             )
+            # TODO: May need to add af few % here
 
             totalToDistribute += toDistribute
         return totalToDistribute
 
     def calc_token_distributions_in_range(self, startTime, endTime):
+        tokenDistributions = DotMap()
+        for token in self.distributionTokens:
+            tokenDistributions[token] = int((self.get_distributed_for_token_at(
+                token, endTime
+            ) - self.get_distributed_for_token_at(token, startTime)))
+            self.totalDistributions[token] = tokenDistributions[token]
+
+        return tokenDistributions
+
+    def calc_token_distributions_at_time(self, endTime):
         """
         For each distribution token tracked by this Geyser, determine how many tokens should be distributed in the specified range.
         This is found by summing the values from all unlockSchedules during the range for this token
         """
         tokenDistributions = DotMap()
         console.print("[cyan]== Calculate Token Distributions ==[/cyan]")
-        console.log(
-            {
-                "startTime": startTime,
-                "endTime": endTime,
-                "tokens": self.distributionTokens,
-            }
-        )
+        # console.log(
+        #     {
+        #         "startTime": startTime,
+        #         "endTime": endTime,
+        #         "tokens": self.distributionTokens,
+        #     }
+        # )
         for token in self.distributionTokens:
-            tokenDistributions[token] = self.get_distributed_for_token(
-                token, startTime, endTime
+            tokenDistributions[token] = self.get_distributed_for_token_at(
+                token, endTime
             )
             self.totalDistributions[token] = tokenDistributions[token]
 
@@ -117,108 +140,91 @@ class BadgerGeyserMock:
 
     def calc_user_distributions(self, tokenDistributions):
         userDistributions = {}
+        userMetadata = {}
         """
         Each user should get their proportional share of each token
         """
         totalShareSecondsUsed = 0
-        console.log("tokenDistributions", tokenDistributions.toDict())
+        # console.log("tokenDistributions", tokenDistributions.toDict())
 
         for user, userData in self.users.items():
             userDistributions[user] = {}
-            console.log("user, userData", user, userData.toDict())
+            userMetadata[user] = {}
             for token, tokenAmount in tokenDistributions.items():
+                # Record total share seconds
                 if not "shareSeconds" in userData:
-                    userDistributions[user][token] = 0
+                    userMetadata[user]["shareSeconds"] = 0
                 else:
-                    console.log(
-                        "calc_user_distributions",
-                        {
-                            "user": user,
-                            "userData": userData,
-                            "self.totalShareSeconds": self.totalShareSeconds,
-                            "userData.shareSeconds": userData.shareSeconds,
-                            "token": tokenAmount,
-                            "tokenAmount": tokenAmount,
-                        },
-                    )
-                    console.log(
-                        "user share seconds",
-                        int(
-                            tokenAmount
-                            * userData.shareSeconds
-                            // self.totalShareSeconds
-                        ),
-                    )
+                    userMetadata[user]["shareSeconds"] = userData.shareSeconds
+
+                # Track Distribution based on seconds in range
+                if "shareSecondsInRange" in userData:
+                    userMetadata[user][
+                        "shareSecondsInRange"
+                    ] = userData.shareSecondsInRange
+                    totalShareSecondsUsed += userData.shareSecondsInRange
                     userShare = int(
-                        tokenAmount * userData.shareSeconds // self.totalShareSeconds
+                        tokenAmount
+                        * userData.shareSecondsInRange
+                        // self.totalShareSecondsInRange
                     )
                     userDistributions[user][token] = userShare
-                    totalShareSecondsUsed += userData.shareSeconds
 
-        console.log("Confirm User Distributions", userDistributions)
+                else:
+                    userDistributions[user][token] = 0
+                    userMetadata[user]["shareSecondsInRange"] = 0
 
-        console.log(
-            "Share Seconds Assertion",
-            totalShareSecondsUsed / 1e18,
-            self.totalShareSeconds / 1e18,
-            abs(totalShareSecondsUsed - self.totalShareSeconds) / 1e18,
-        )
-        assert totalShareSecondsUsed == self.totalShareSeconds
-
+        assert totalShareSecondsUsed == self.totalShareSecondsInRange
         tokenTotals = self.get_token_totals_from_user_dists(userDistributions)
-
-        console.log("Token Totals", tokenTotals, self.totalDistributions.toDict())
+        # self.printState()
 
         # Check values vs total for each token
         for token, totalAmount in tokenTotals.items():
-            print(
-                totalAmount,
-                self.totalDistributions[token],
-                abs(self.totalDistributions[token] - totalAmount),
-            )
             # NOTE The total distributed should be less than or equal to the actual tokens distributed. Rounding dust will go to DAO
             # NOTE The value of the distributed should only be off by a rounding error
+            print("duration ", (self.endTime - self.startTime) / 3600)
+            print("totalAmount ", totalAmount / 1e18)
+            print("self.totalDistributions ", self.totalDistributions[token] / 1e18)
+            print("totalAmount ", totalAmount)
+            print("self.totalDistributions ", self.totalDistributions[token])
+            print("leftover", abs(self.totalDistributions[token] - totalAmount))
             assert totalAmount <= self.totalDistributions[token]
-            assert abs(self.totalDistributions[token] - totalAmount) < 10
+            assert abs(self.totalDistributions[token] - totalAmount) < 30000
 
-        return {"claims": userDistributions, "totals": tokenTotals}
+        return {
+            "claims": userDistributions,
+            "totals": tokenTotals,
+            "metadata": userMetadata,
+        }
 
-    def unstake(self, user, unstake, trackShareSeconds=True):
+    def unstake(self, user, unstake):
         # Update share seconds on unstake
-        if trackShareSeconds:
-            self.process_share_seconds(user, unstake.timestamp)
-            self.users[user].unstakedDuringPeriod = True
-            self.users[user].actedDuringPeriod = True
+        self.process_share_seconds(user, unstake.timestamp)
 
         # Process unstakes from individual stakes
-        # TODO:
-        toUnstake = unstake.amount
+        toUnstake = int(unstake.amount)
         while toUnstake > 0:
-            console.log(
-                "unstaking",
-                {"toUnstake": toUnstake, "unstake.amount": unstake.amount},
-                self.users[user].stakes,
-            )
             stake = self.users[user].stakes[-1]
-            # TODO: Start at the end
+
+            # This stake won't cover, remove
             if toUnstake >= stake["amount"]:
                 self.users[user].stakes.pop()
                 toUnstake -= stake["amount"]
+
+            # This stake will cover the unstaked amount, reduce
             else:
-                toUnstake -= self.users[user].stakes[-1]["amount"]
                 self.users[user].stakes[-1]["amount"] -= toUnstake
+                toUnstake = 0
 
         # Update globals
         self.users[user].total = unstake.userTotal
         self.users[user].lastUpdate = unstake.timestamp
 
-        console.log("unstake", self.users[user].toDict(), unstake, self.users[user])
+        # console.log("unstake", self.users[user].toDict(), unstake, self.users[user])
 
-    def stake(self, user, stake, trackShareSeconds=True):
+    def stake(self, user, stake):
         # Update share seconds for previous stakes on stake
-        if trackShareSeconds:
-            self.process_share_seconds(user, stake.timestamp)
-            self.users[user].actedDuringPeriod = True
+        self.process_share_seconds(user, stake.timestamp)
 
         # Add Stake
         self.addStake(user, stake)
@@ -227,14 +233,16 @@ class BadgerGeyserMock:
         self.users[user].lastUpdate = stake.timestamp
         self.users[user].total = stake.userTotal
 
-        console.log("stake", self.users[user].toDict(), stake, self.users[user])
-
     def addStake(self, user, stake):
         if not self.users[user].stakes:
             self.users[user].stakes = []
         self.users[user].stakes.append(
             {"amount": stake.amount, "stakedAt": stake.stakedAt}
         )
+
+    def calc_end_share_seconds_for(self, user):
+        self.process_share_seconds(user, self.endTime)
+        self.users[user].lastUpdate = self.endTime
 
     def calc_end_share_seconds(self):
         """
@@ -243,67 +251,54 @@ class BadgerGeyserMock:
         """
 
         for user in self.users:
-            lastUpdate = self.getLastUpdate(user)
-            acted = self.didUserAct(user)
-            console.log(
-                "calc_end_share_seconds",
-                user,
-                acted,
-                lastUpdate,
-                self.endTime,
-                acted and lastUpdate < self.endTime,
-            )
+            self.process_share_seconds(user, self.endTime)
 
-            # If the user acted during the claim period and did not calculate share seconds up to end time
-            if acted and lastUpdate < self.endTime:
-                self.process_share_seconds(user, self.endTime)
-
-    def process_share_seconds(self, user, end):
-        """
-        Calculate how many shareSeconds to add to the user
-        - How much time has past since the users' stake was calculated?
-        - What is their current total staked?
-        shareSecondsToAdd = timeSince * totalStaked
-
-        (If the user has no share seconds, set)
-        (If the user has shares seconds, add)
-        """
+    def process_share_seconds(self, user, timestamp):
+        data = self.users[user]
 
         # Return 0 if user has no tokens
-        if not self.users[user].total:
+        if not "total" in data:
             return 0
 
-        # Get time since last update
         lastUpdate = self.getLastUpdate(user)
-        timeSinceLastAction = end - lastUpdate
-        console.log("timeSinceLastAction", end, lastUpdate, timeSinceLastAction)
 
-        toAdd = self.users[user].total * timeSinceLastAction
+        # Either cycle start or last update, whichever comes later
+        lastUpdateRangeGated = max(self.startTime, int(lastUpdate))
+
+        timeSinceLastAction = int(timestamp) - int(lastUpdate)
+        timeSinceLastActionRangeGated = int(timestamp) - int(lastUpdateRangeGated)
+
+        if timeSinceLastAction == 0:
+            return 0
+
+        toAdd = 0
+        toAddInRange = 0
+
+        for stake in data.stakes:
+            toAdd += stake["amount"] * int(timeSinceLastAction)
+            if timestamp > self.startTime:
+                toAddInRange += stake["amount"] * int(timeSinceLastActionRangeGated)
+        assert toAdd >= 0
+
         # If user has share seconds, add
-        if "shareSeconds" in self.users[user]:
-            self.users[user].shareSeconds += toAdd
+        if "shareSeconds" in data:
+            data.shareSeconds += toAdd
             self.totalShareSeconds += toAdd
 
         # If user has no share seconds, set
-        # NOTE This should only be the case if the user took no actions during the claim period. In this case their stake is the same as the pre-snapshot stake * total claim period time
         else:
-            self.users[user].shareSeconds = toAdd
+            data.shareSeconds = toAdd
             self.totalShareSeconds += toAdd
 
-        console.log(
-            "processed_share_seconds",
-            self.users[user].toDict(),
-            end,
-            timeSinceLastAction,
-        )
+        if "shareSecondsInRange" in data:
+            data.shareSecondsInRange += toAddInRange
+        else:
+            data.shareSecondsInRange = toAddInRange
+        self.totalShareSecondsInRange += toAddInRange
+
+        self.users[user] = data
 
     # ===== Getters =====
-
-    def didUserAct(self, user):
-        if "actedDuringPeriod" in self.users[user]:
-            return self.users[user].actedDuringPeriod
-        else:
-            return False
 
     def getLastUpdate(self, user):
         """
@@ -314,18 +309,43 @@ class BadgerGeyserMock:
         return self.users[user].lastUpdate
 
     def printState(self):
-        console.log("User State", self.users.toDict(), self.totalShareSeconds)
+        table = []
+        # console.log("User State", self.users.toDict(), self.totalShareSeconds)
+        for user, data in self.users.items():
 
-    def getUserWeights(self):
-        """
-        User -> shareSeconds
-        """
-        weights = DotMap()
-        for user, userData in self.users.items():
-            if "shareSeconds" in userData:
-                weights[user] = userData.shareSeconds
-            else:
-                weights[user] = 0
-        console.log("weights", weights.toDict())
-        return weights
+            rewards = self.userDistributions["claims"][user]["0x3472A5A71965499acd81997a54BBA8D852C6E53d"]
+            data.shareSecondsInRange
 
+            sharesPerReward = 0
+            if rewards > 0:
+                sharesPerReward = data.shareSecondsInRange / rewards
+
+            table.append(
+                [
+                    user,
+                    val(rewards),
+                    sec(data.shareSecondsInRange),
+                    sharesPerReward,
+                    sec(data.shareSeconds),
+                    data.total,
+                    data.lastUpdate,
+                ]
+            )
+        print("GEYSER " + self.key)
+        print(
+            tabulate(
+                table,
+                headers=[
+                    "user",
+                    "rewards",
+                    "shareSecondsInRange",
+                    "shareSeconds/reward",
+                    "shareSeconds",
+                    "totalStaked",
+                    "lastUpdate",
+                ],
+            )
+        )
+        print(self.userDistributions["totals"]['0x3472A5A71965499acd81997a54BBA8D852C6E53d'] / 1e18)
+
+        # console.log('printState')
