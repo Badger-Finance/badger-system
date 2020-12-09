@@ -1,37 +1,58 @@
-import json
-import os
-from collections import Counter, defaultdict
-from concurrent.futures import ThreadPoolExecutor
-from fractions import Fraction
-from functools import partial, wraps
-from itertools import zip_longest
-from os import times
-from pathlib import Path
-
-import toml
-from brownie import MerkleDistributor, Wei, accounts, interface, rpc, web3
-from brownie.utils import color
-from click import secho
+from helpers.time_utils import days
 from dotmap import DotMap
-from eth_abi import decode_single, encode_single
-from eth_abi.packed import encode_abi_packed
-from eth_utils import encode_hex
-from toolz.itertoolz import last
-from helpers.constants import AddressZero
 from rich.console import Console
-from toolz import valfilter, valmap
-from tqdm import tqdm, trange
 from tabulate import tabulate
+from config.badger_config import badger_config
 
 console = Console()
 
 
-def val(amount):
-    return "{:,.6f}".format(amount / 1e18)
+class Point:
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
 
 
-def sec(amount):
-    return "{:,.1f}".format(amount / 1e12)
+class LinearLogic:
+    """
+    Linearly increasing rewards between two points. No further increase in rate after end point.
+    Time on X axis, must start at 0
+    """
+
+    def __init__(self, start, end):
+        assert start["x"] == 0
+        self.start = Point(start["x"], start["y"])
+        self.end = Point(end["x"], end["y"])
+        print(start, end)
+        self.slope = (end["y"] - start["y"]) / (end["x"] - start["x"])
+        self.intercept = start["y"]
+
+    def y(self, x):
+        start = self.start
+        end = self.end
+        slope = self.slope
+        intercept = self.intercept
+
+        if x < start.x:
+            assert False  # No negative values
+
+        if x > end.x:
+            return end.y
+
+        else:
+            y = (slope * x) + intercept
+
+    def integral(self, x1, x2):
+        y1 = self.y(x1)
+        y2 = self.y(x2)
+
+        xDiff = x2 - x1
+        yDiff = y2 - y1
+
+        console.log("multiplier at start time {} is {}".format(x1, y1))
+        console.log("multiplier at end time {} is {}".format(x2, y2))
+
+        return (xDiff * yDiff) / 2
 
 
 class BadgerGeyserMock:
@@ -45,6 +66,10 @@ class BadgerGeyserMock:
         self.distributionTokens = []
         self.totalDistributions = DotMap()
         self.totalShareSecondsInRange = 0
+        self.logic = LinearLogic(
+            {"x": 0, "y": badger_config.startMultiplier},
+            {"x": days(7 * 8), "y": badger_config.endMultiplier},
+        )
 
     # ===== Setters =====
 
@@ -99,9 +124,12 @@ class BadgerGeyserMock:
     def calc_token_distributions_in_range(self, startTime, endTime):
         tokenDistributions = DotMap()
         for token in self.distributionTokens:
-            tokenDistributions[token] = int((self.get_distributed_for_token_at(
-                token, endTime
-            ) - self.get_distributed_for_token_at(token, startTime)))
+            tokenDistributions[token] = int(
+                (
+                    self.get_distributed_for_token_at(token, endTime)
+                    - self.get_distributed_for_token_at(token, startTime)
+                )
+            )
             self.totalDistributions[token] = tokenDistributions[token]
 
         return tokenDistributions
@@ -253,6 +281,12 @@ class BadgerGeyserMock:
         for user in self.users:
             self.process_share_seconds(user, self.endTime)
 
+    def calculate_weighted_seconds(self, stake, lastUpdate, timestamp):
+        """
+        Get "weightedShareSeconds" in range
+        """
+        return int(timestamp - lastUpdate)
+
     def process_share_seconds(self, user, timestamp):
         data = self.users[user]
 
@@ -275,9 +309,13 @@ class BadgerGeyserMock:
         toAddInRange = 0
 
         for stake in data.stakes:
-            toAdd += stake["amount"] * int(timeSinceLastAction)
+            toAdd += stake["amount"] * self.calculate_weighted_seconds(
+                stake, timeSinceLastAction, timestamp
+            )
             if timestamp > self.startTime:
-                toAddInRange += stake["amount"] * int(timeSinceLastActionRangeGated)
+                toAddInRange += stake["amount"] * self.calculate_weighted_seconds(
+                    stake, timeSinceLastActionRangeGated, timestamp
+                )
         assert toAdd >= 0
 
         # If user has share seconds, add
@@ -313,7 +351,9 @@ class BadgerGeyserMock:
         # console.log("User State", self.users.toDict(), self.totalShareSeconds)
         for user, data in self.users.items():
 
-            rewards = self.userDistributions["claims"][user]["0x3472A5A71965499acd81997a54BBA8D852C6E53d"]
+            rewards = self.userDistributions["claims"][user][
+                "0x3472A5A71965499acd81997a54BBA8D852C6E53d"
+            ]
             data.shareSecondsInRange
 
             sharesPerReward = 0
@@ -346,6 +386,11 @@ class BadgerGeyserMock:
                 ],
             )
         )
-        print(self.userDistributions["totals"]['0x3472A5A71965499acd81997a54BBA8D852C6E53d'] / 1e18)
+        print(
+            self.userDistributions["totals"][
+                "0x3472A5A71965499acd81997a54BBA8D852C6E53d"
+            ]
+            / 1e18
+        )
 
         # console.log('printState')

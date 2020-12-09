@@ -1,15 +1,12 @@
 from collections import OrderedDict
 
-from tabulate import tabulate
-from assistant.subgraph.client import fetch_all_geyser_events
 from assistant.rewards.BadgerGeyserMock import BadgerGeyserMock
+from assistant.subgraph.client import fetch_all_geyser_events
 from brownie import *
 from dotmap import DotMap
 from helpers.constants import AddressZero
 from rich.console import Console
 from tqdm import trange
-import json
-import sys
 
 console = Console()
 
@@ -204,10 +201,10 @@ def process_actions(
             assert int(timestamp) > latestTimestamp
             for action in timestampEntries:
                 if action.action == "Stake":
-                    table.append(['stake', action['amount'], action['timestamp']])
+                    table.append(["stake", action["amount"], action["timestamp"]])
                     geyserMock.stake(action.user, action)
                 if action.action == "Unstake":
-                    table.append(['unstake', action['amount'], action['timestamp']])
+                    table.append(["unstake", action["amount"], action["timestamp"]])
                     geyserMock.unstake(action.user, action)
             latestTimestamp = int(timestamp)
 
@@ -222,7 +219,6 @@ def process_actions(
         table.append([user.shareSecondsInRange, user.shareSeconds, user.total])
         # print(tabulate(table, headers=["shareSecondsInRange", "shareSeconds", "total"]))
 
-    
     return geyserMock
 
 

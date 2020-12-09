@@ -1,14 +1,13 @@
 #!/usr/bin/python3
 import json
+
 from brownie import *
 from config.badger_config import badger_config, badger_total_supply
-from dotmap import DotMap
 from helpers.constants import APPROVED_STAKER_ROLE
 from helpers.registry import registry
-from helpers.time_utils import daysToSeconds
 from rich.console import Console
 from scripts.systems.badger_system import BadgerSystem, print_to_file
-from tests.helpers import create_uniswap_pair, distribute_from_whales
+from tests.helpers import distribute_from_whales
 
 console = Console()
 
@@ -126,7 +125,7 @@ def test_deploy(test=False, uniswap=True):
     badger = BadgerSystem(badger_config, None, deployer, keeper, guardian, deploy=False)
     badger.test = test
 
-    badger_deploy_file = "deploy-1.json"
+    badger_deploy_file = "deploy-final.json"
     print("Connecting to deploy at " + badger_deploy_file)
     with open(badger_deploy_file) as f:
         badger_deploy = json.load(f)
@@ -311,12 +310,14 @@ def test_deploy(test=False, uniswap=True):
     # badger.deploy_geyser(badger.getSett("harvest.renCrv"), "harvest.renCrv")
 
     print("Connect reward geysers")
-    badger.connect_geyser("native.badger", badger_deploy['geysers']['native.badger'])
-    badger.connect_geyser("native.renCrv", badger_deploy['geysers']['native.renCrv'])
-    badger.connect_geyser("native.sbtcCrv", badger_deploy['geysers']['native.sbtcCrv'])
-    badger.connect_geyser("native.tbtcCrv", badger_deploy['geysers']['native.tbtcCrv'])
-    badger.connect_geyser("native.uniBadgerWbtc", badger_deploy['geysers']['native.uniBadgerWbtc'])
-    badger.connect_geyser("harvest.renCrv", badger_deploy['geysers']['harvest.renCrv'])
+    badger.connect_geyser("native.badger", badger_deploy["geysers"]["native.badger"])
+    badger.connect_geyser("native.renCrv", badger_deploy["geysers"]["native.renCrv"])
+    badger.connect_geyser("native.sbtcCrv", badger_deploy["geysers"]["native.sbtcCrv"])
+    badger.connect_geyser("native.tbtcCrv", badger_deploy["geysers"]["native.tbtcCrv"])
+    badger.connect_geyser(
+        "native.uniBadgerWbtc", badger_deploy["geysers"]["native.uniBadgerWbtc"]
+    )
+    badger.connect_geyser("harvest.renCrv", badger_deploy["geysers"]["harvest.renCrv"])
 
     # Transfer ownership of all sett Rewards contracts to multisig
     # Transfer proxyAdmin to multisig
@@ -645,12 +646,12 @@ def deploy_flow(test=False, outputToFile=True, uniswap=False):
         fileName = "deploy-" + str(chain.id) + "final" + ".json"
         print("Printing contract addresses to ", fileName)
         print_to_file(badger, fileName)
-    post_deploy_config(badger)
-    start_staking_rewards(badger)
+    if not test:
+        post_deploy_config(badger)
+        start_staking_rewards(badger)
     print("Test: Badger System Setup Complete")
     return badger
 
 
 def main():
     return deploy_flow(test=True, outputToFile=False)
-

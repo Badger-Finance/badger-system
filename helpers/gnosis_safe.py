@@ -1,12 +1,12 @@
-from brownie import *
-from brownie.utils import color
 from enum import Enum
+
+from brownie import *
 
 """
 Gnosis safe helpers
 
 Encode, track signatures, and execute transactions for a Gnosis safe.
-On test networks leveraging Ganache --unlock, take control of a Gnosis safe by without ownership of corresponding accounts by:
+On test networks leveraging Ganache --unlock, take control of a Gnosis safe without ownership of corresponding accounts by:
     - Setting threshold to 1
     - Leveraging approved hash voting
 """

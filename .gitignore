@@ -8,18 +8,17 @@ node_modules/
 .DS_STORE
 .env
 cache
-run-testnet.sh
 local.json
 .pytest_cache
 docs
 docs/
 contracts-temporary
-merkle/
-badger_deployer_keystore.json
-badger_guardian_keystore.json
-badger_keeper_keystore.json
 
-rewards-*.json
-rewards_output.log
+run-testnet.sh
 keeper.sh
 rewards.sh
+
+rewards_output_test.log
+rewards-*.json
+
+deploy-1337final.json

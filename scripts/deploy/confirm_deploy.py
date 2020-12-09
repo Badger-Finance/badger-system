@@ -1,22 +1,10 @@
-import os
-import json
-from scripts.systems.badger_system import connect_badger
-import warnings
-from tabulate import tabulate
-from brownie import interface, accounts, rpc
-from dotmap import DotMap
-from helpers.registry import registry
-
-from helpers.time_utils import daysToSeconds
 from brownie import *
+from config.badger_config import badger_config
 from dotmap import DotMap
 from helpers.constants import *
 from helpers.registry import registry
-from config.badger_config import badger_config
-from scripts.systems.badger_system import BadgerSystem
 from rich.console import Console
-import pytest
-import brownie
+from scripts.systems.badger_system import BadgerSystem, connect_badger
 
 console = Console()
 
@@ -39,7 +27,7 @@ def confirm_controller_params(controller, params):
 
 
 def confirm_sett_params(sett, params):
-    print (params, sett.strategist())
+    print(params, sett.strategist())
     assert sett.governance() == params.governance
     assert sett.strategist() == params.strategist
     assert sett.keeper() == params.keeper
@@ -450,10 +438,10 @@ def confirm_setup_rewards(badger: BadgerSystem):
         DotMap(
             token=badger.token,
             merkleRoot=EmptyBytes32,
-            epochDuration=daysToSeconds(1),
+            epochDuration=days(1),
             rewardReductionPerEpoch=2000,
             claimsStart=badger_config.globalStartTime,
-            gracePeriod=daysToSeconds(2),
+            gracePeriod=days(2),
             rewardsEscrow=badger.rewardsEscrow,
             currentRewardRate=10000,
         ),
@@ -531,20 +519,13 @@ def confirm_setup_locking_infra(badger: BadgerSystem):
         ),
     )
 
-def confirm_deploy(badger):
-    # with open("deploy-1.json") as f:
-    #     badger_deploy = json.load(f)
 
+def confirm_deploy(badger):
     confirm_setup_sett(badger)
     confirm_setup_rewards(badger)
     confirm_setup_locking_infra(badger)
 
 
 def main():
-    # with open("deploy-1.json") as f:
-    #     badger_deploy = json.load(f)
-
-    badger = connect_badger("deploy-final.json")
-    confirm_setup_sett(badger)
-    confirm_setup_rewards(badger)
-    confirm_setup_locking_infra(badger)
+    badger = connect_badger(badger_config.prod_json)
+    confirm_deploy(badger)

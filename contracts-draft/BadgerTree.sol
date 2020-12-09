@@ -38,6 +38,26 @@ contract BadgerTree is Initializable, AccessControlUpgradeable, ICumulativeMulti
     mapping(address => mapping(address => uint256)) public claimed;
     mapping(address => uint256) public totalClaimed;
 
+    struct ExpectedClaimable {
+        uint256 base;
+        uint256 rate;
+        uint256 startTime;
+    }
+
+    struct Claim {
+        address[] tokens;
+        uint256[] cumulativeAmounts;
+        address account;
+        uint256 index;
+        uint256 cycle;
+    }
+
+    mapping(address => ExpectedClaimable) public expectedClaimable;
+
+    event ExpectedClaimableSet(address indexed token, uint256 base, uint256 rate);
+
+    uint256 public constant ONE_DAY = 86400; // One day in seconds
+
     function initialize(
         address admin,
         address initialUpdater,
@@ -53,7 +73,7 @@ contract BadgerTree is Initializable, AccessControlUpgradeable, ICumulativeMulti
 
     /// ===== Modifiers =====
 
-    /// @notice Admins can approve new root updaters or admins
+    /// @notice Admins can approve or revoke new root updaters, guardians, or admins
     function _onlyAdmin() internal view {
         require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "onlyAdmin");
     }
@@ -63,13 +83,12 @@ contract BadgerTree is Initializable, AccessControlUpgradeable, ICumulativeMulti
         require(hasRole(ROOT_UPDATER_ROLE, msg.sender), "onlyRootUpdater");
     }
 
+    /// @notice Guardians can approve the root
     function _onlyGuardian() internal view {
         require(hasRole(GUARDIAN_ROLE, msg.sender), "onlyGuardian");
     }
 
-    function _rewardsRateInvariant(address token, uint256 claim) {
-        require(totalClaimed + claim <= getTotalRewardsInvariant(token), "Invariant Check Failed");
-    }
+    // ===== Read Functions =====
 
     function getCurrentMerkleData() external view returns (MerkleData memory) {
         return MerkleData(merkleRoot, merkleContentHash, lastPublishTimestamp, lastProposeBlockNumber);
@@ -83,7 +102,7 @@ contract BadgerTree is Initializable, AccessControlUpgradeable, ICumulativeMulti
         return pendingCycle == currentCycle.add(1);
     }
 
-    function getClaimedFor(address user, address[] memory tokens) public view returns (address[] memory, uint256[] memory) {
+    function getClaimedFor(address user, address[] memory tokens) external view returns (address[] memory, uint256[] memory) {
         uint256[] memory userClaimed = new uint256[](tokens.length);
         for (uint256 i = 0; i < tokens.length; i++) {
             userClaimed[i] = claimed[user][tokens[i]];
@@ -91,47 +110,35 @@ contract BadgerTree is Initializable, AccessControlUpgradeable, ICumulativeMulti
         return (tokens, userClaimed);
     }
 
-    function getTotalRewardsInvariant(address token) {
-        rewardsBase[token].add(rewardsRate[token])
+    function getExpectedTotalClaimable(address token) public view returns (uint256) {
+        uint256 sinceStart = now.sub(expectedClaimable[token].startTime);
+        uint256 rateEmissions = expectedClaimable[token].rate.mul(sinceStart).div(ONE_DAY);
+        return expectedClaimable[token].base.add(rateEmissions);
     }
 
-    function encodeClaim(
-        address[] calldata tokens,
-        uint256[] calldata cumulativeAmounts,
-        address account,
-        uint256 index,
-        uint256 cycle
-    ) public view returns (bytes memory encoded, bytes32 hash) {
-        encoded = abi.encodePacked(index, account, cycle, tokens, cumulativeAmounts);
+    /// @dev Convenience function for encoding claim data
+    function encodeClaim(Claim calldata claim) external pure returns (bytes memory encoded, bytes32 hash) {
+        encoded = abi.encodePacked(claim.index, claim.account, claim.cycle, claim.claim.tokens, claim.cumulativeAmounts);
         hash = keccak256(encoded);
     }
 
+    // ===== Public Actions =====
+
     /// @notice Claim accumulated rewards for a set of tokens at a given cycle number
+    /// @dev The primary reason to claim partially is to not claim for tokens that are of 'dust' values, saving gas for those token transfers
+    /// @dev Amounts are made partial as well for flexibility. Perhaps a rewards program could rewards leaving assets unclaimed.
     function claim(
-        address[] calldata tokens,
-        uint256[] calldata cumulativeAmounts,
-        uint256 index,
-        uint256 cycle,
+        address[] calldata tokensToClaim,
+        uint256[] calldata amountsToClaim,
+        Claim calldata claim,
         bytes32[] calldata merkleProof
     ) external whenNotPaused {
         require(cycle == currentCycle, "Invalid cycle");
-
-        // Verify the merkle proof.
-        bytes32 node = keccak256(abi.encodePacked(index, msg.sender, cycle, tokens, cumulativeAmounts));
-        require(MerkleProofUpgradeable.verify(merkleProof, merkleRoot, node), "Invalid proof");
+        _verifyClaimProof(claim, merkleProof);
 
         // Claim each token
-        for (uint256 i = 0; i < tokens.length; i++) {
-            uint256 claimable = cumulativeAmounts[i].sub(claimed[msg.sender][tokens[i]]);
-
-            require(claimable > 0, "Excessive claim");
-
-            claimed[msg.sender][tokens[i]] = claimed[msg.sender][tokens[i]].add(claimable);
-
-            require(claimed[msg.sender][tokens[i]] == cumulativeAmounts[i], "Claimed amount mismatch");
-            require(IERC20Upgradeable(tokens[i]).transfer(msg.sender, claimable), "Transfer failed");
-
-            emit Claimed(msg.sender, tokens[i], claimable, cycle, now, block.number);
+        for (uint256 i = 0; i < claim.tokensToClaim.length; i++) {
+            _tryClaim(claim.tokensToClaim[i], account, amountsToClaim[i], claim.cumulativeAmounts[i]);
         }
     }
 
@@ -141,7 +148,8 @@ contract BadgerTree is Initializable, AccessControlUpgradeable, ICumulativeMulti
     function proposeRoot(
         bytes32 root,
         bytes32 contentHash,
-        uint256 cycle
+        uint256 cycle,
+        uint256 blockNumber
     ) external whenNotPaused {
         _onlyRootUpdater();
         require(cycle == currentCycle.add(1), "Incorrect cycle");
@@ -149,10 +157,12 @@ contract BadgerTree is Initializable, AccessControlUpgradeable, ICumulativeMulti
         pendingCycle = cycle;
         pendingMerkleRoot = root;
         pendingMerkleContentHash = contentHash;
-        lastProposeTimestamp = endTimestamp;
-        lastProposeBlockNumber = endBlock;
+        pendingBlockNumber = blockNumber;
 
-        emit RootProposed(cycle, pendingMerkleRoot, pendingMerkleContentHash, endTimestamp, endBlock);
+        lastProposeTimestamp = now;
+        lastProposeBlockNumber = block.number;
+
+        emit RootProposed(cycle, pendingMerkleRoot, pendingMerkleContentHash, now, block.number);
     }
 
     /// ===== Guardian Restricted =====
@@ -162,21 +172,22 @@ contract BadgerTree is Initializable, AccessControlUpgradeable, ICumulativeMulti
         bytes32 root,
         bytes32 contentHash,
         uint256 cycle,
-        uint256 endBlock,
-        uint256 endTimestamp
+        uint256 blockNumber
     ) external {
         _onlyGuardian();
         require(root == pendingMerkleRoot, "Incorrect root");
         require(contentHash == pendingMerkleContentHash, "Incorrect content hash");
         require(cycle == pendingCycle, "Incorrect cycle");
 
-        currentCycle = currentCycle.add(1);
+        currentCycle = cycle;
         merkleRoot = root;
         merkleContentHash = contentHash;
-        lastPublishTimestamp = endTimestamp;
-        lastPublishBlockNumber = endBlock;
+        publishBlockNumber = blockNumber;
 
-        emit RootUpdated(currentCycle, root, contentHash, endTimestamp, endBlock);
+        lastPublishTimestamp = now;
+        lastPublishBlockNumber = block.number;
+
+        emit RootUpdated(currentCycle, root, contentHash, now, block.number);
     }
 
     /// @notice Pause publishing of new roots
@@ -189,5 +200,81 @@ contract BadgerTree is Initializable, AccessControlUpgradeable, ICumulativeMulti
     function unpause() external {
         _onlyGuardian();
         _unpause();
+    }
+
+    // ===== Admin Restricted =====
+
+    /// @notice Set the expected release rate for a given token
+    /// @param token Asset address
+    /// @param base Base amount of token expected to be releasable.
+    /// @param rate Daily rate of expected emissions
+    /// @dev When updating emission schedule, set the base to the the cumulative claimable from the previous rate, and set the new rate as indended.
+    /// @dev The startTime will be the current time, tracking the new rate into the future.
+    function setExpectedClaimable(
+        address token,
+        uint256 base,
+        uint256 rate
+    ) external {
+        _onlyAdmin();
+        expectedClaimable[token] = ExpectedClaimable(base, rate, now);
+        ExpectedClaimableSet(token, base, rate);
+    }
+
+    function initializeTotalClaimed(address token, uint256 claimed) {
+        _onlyAdmin();
+        require(totalClaimed[token] == 0, "Already has value");
+        totalClaimed[token] = claimed;
+    }
+
+    // ===== Internal helper functions =====
+    function _verifyClaimProof(
+        address[] calldata tokens,
+        uint256[] calldata cumulativeAmounts,
+        uint256 index,
+        uint256 cycle,
+        bytes32[] calldata merkleProof
+    ) internal {
+        // Verify the merkle proof.
+        bytes32 node = keccak256(abi.encodePacked(index, msg.sender, cycle, tokens, cumulativeAmounts));
+        require(MerkleProofUpgradeable.verify(merkleProof, merkleRoot, node), "Invalid proof");
+    }
+
+    function _getClaimed(address token, address account) internal returns (uint256) {
+        return claimed[account][token];
+    }
+
+    function _setClaimed(
+        address token,
+        address account,
+        unit256 amount
+    ) internal {
+        claimed[account][token] = claimed[account][token].add(amount);
+    }
+
+    function _addTotalClaimed(address token, uint256 amount) internal {
+        totalClaimed[token] = totalClaimed[token].add(amount);
+    }
+
+    function _verifyTotalClaimed(address token) internal {
+        require(totalClaimed[token] <= _getExpectedTotalClaimable(token));
+    }
+
+    function _tryClaim(
+        address token,
+        address account,
+        uint256 amount,
+        uint256 maxCumulativeAmount
+    ) internal {
+        uint256 claimed = _getClaimed(token, account);
+        uint256 afterClaim = _setClaimed(token, account, claimed.add(amount));
+
+        require(afterClaim <= maxCumulativeAmount, "Excessive claim");
+
+        IERC20Upgradeable(tokens[i]).safeTransfer(account, amount);
+
+        _addTotalClaimed(amount);
+        _verifyTotalClaimed(token, amount);
+
+        emit Claimed(account, token, amount, cycle, now, block.number);
     }
 }

@@ -1,5 +1,3 @@
-#!/usr/bin/python3
-from helpers.time_utils import daysToSeconds
 import pytest
 from brownie import *
 from dotmap import DotMap
@@ -72,8 +70,8 @@ def timelock_unit():
 @pytest.fixture(scope="module")
 def vesting_unit():
     start = chain.time + 1000
-    cliffDuration = daysToSeconds(30)
-    duration = daysToSeconds(335)
+    cliffDuration = days(30)
+    duration = days(335)
     deployer = accounts[0]
     team = [accounts[1], accounts[2], accounts[3]]
     governor = accounts[5]

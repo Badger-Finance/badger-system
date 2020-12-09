@@ -1,25 +1,10 @@
-import hashlib
-import json
-import os
-from collections import Counter, defaultdict
-from concurrent.futures import ThreadPoolExecutor
-from fractions import Fraction
-from functools import partial, wraps
 from itertools import zip_longest
-from pathlib import Path
-from eth_utils.hexadecimal import encode_hex
 
-import toml
 from brownie import *
-from click import secho
-from dotmap import DotMap
-from eth_abi import decode_single, encode_single
-from eth_abi.packed import encode_abi_packed
 from eth_utils import encode_hex
+from eth_utils.hexadecimal import encode_hex
 from helpers.constants import *
 from rich.console import Console
-from toolz import valfilter, valmap
-from tqdm import tqdm, trange
 
 console = Console()
 
@@ -96,7 +81,7 @@ def rewards_to_merkle_tree(rewards, startBlock, endBlock, geyserRewards):
         "endBlock": str(endBlock),
         "tokenTotals": rewards.totals.toDict(),
         "claims": {},
-        "metadata": {}
+        "metadata": {},
     }
 
     for entry in entries:
@@ -112,7 +97,7 @@ def rewards_to_merkle_tree(rewards, startBlock, endBlock, geyserRewards):
             "proof": tree.get_proof(encodedNodes[node["index"]]),
             "node": encoded,
         }
-    
+
     for user, data in geyserRewards.metadata.items():
         distribution["metadata"][user] = data.toDict()
 

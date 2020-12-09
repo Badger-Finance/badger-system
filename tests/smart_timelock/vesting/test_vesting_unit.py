@@ -52,9 +52,9 @@
 #     assert smartVesting.token() == team[0]
 #     assert smartVesting.cliff() == setup.params.start + setup.params.cliff
 #     assert smartVesting.start() == setup.params.start
-#     assert smartVesting.duration() == setup.params.duration 
+#     assert smartVesting.duration() == setup.params.duration
 
-    
+
 # def test_initial_release(setup):
 #     deployer = setup.deployer
 #     gToken = setup.gToken
@@ -115,7 +115,6 @@
 #     team = setup.team
 #     # Sleep until actions are possible
 #     chain.sleep(smartVesting.cliff - chain.time())
-
 
 
 # """
@@ -290,16 +289,7 @@
 #       ).to.be.revertedWith("smart-vesting/locked-balance-check");
 #     });
 #     """
-    
 
-    
-
-    
-
-    
-    
-
-    
 
 #     """
 #     """
@@ -385,8 +375,8 @@
 #       expect(approveEvent[0].args?.to).to.be.equal(stakingMock.address);
 #     });
 
-#     """ 
-    
+#     """
+
 #     """
 #     it("Governor should be able to revoke approved contracts", async function () {
 #       await (

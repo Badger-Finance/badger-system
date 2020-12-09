@@ -1,5 +1,3 @@
-from helpers.tx_utils import send
-from helpers.time_utils import daysToSeconds
 from tabulate import tabulate
 from assistant.rewards.BadgerGeyserMock import BadgerGeyserMock
 from scripts.systems.badger_system import BadgerSystem
@@ -100,10 +98,10 @@ def compare_rewards(
     periodEndTime = web3.eth.getBlock(endBlock)["timestamp"]
 
     duration = periodEndTime - periodStartTime
-    expectedInRange = totalExpected * duration // daysToSeconds(7)
+    expectedInRange = totalExpected * duration // days(7)
 
     durationFromStart = periodEndTime - globalStartTime
-    expectedFromStart = totalExpected * durationFromStart // daysToSeconds(7)
+    expectedFromStart = totalExpected * durationFromStart // days(7)
 
     print("totalExpected: ", totalExpected)
     print("duration: ", duration)
@@ -226,22 +224,22 @@ def push_rewards(badger: BadgerSystem, afterContentHash):
     with open("rewards-1-" + afterContentHash + ".json") as f:
         after_file = json.load(f)
 
+    keeper = badger.keeper
+
     claims = after_file["claims"]
-    # upload("rewards-1-" + afterContentHash + ".json")
-    # send(
-    #     badger.badgerTree,
-    #     badger.badgerTree.proposeRoot.encode_input(
-    #         after_file["merkleRoot"], afterContentHash, after_file["cycle"]
-    #     ),
-    #     "keeper",
-    # )
-    send(
-        badger.badgerTree,
-        badger.badgerTree.approveRoot.encode_input(
-            after_file["merkleRoot"], afterContentHash, after_file["cycle"]
-        ),
-        "guardian",
-    )
+    upload("rewards-1-" + afterContentHash + ".json")
+    badger.badgerTree.proposeRoot(
+        after_file["merkleRoot"],
+        afterContentHash,
+        after_file["cycle"],
+        {"from": keeper},
+    ),
+    badger.badgerTree.approveRoot(
+        after_file["merkleRoot"],
+        afterContentHash,
+        after_file["cycle"],
+        {"from": keeper},
+    ),
 
 
 def test_claims(badger: BadgerSystem, startBlock, endBlock, before_file, after_file):

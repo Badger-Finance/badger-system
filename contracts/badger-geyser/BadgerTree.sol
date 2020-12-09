@@ -159,7 +159,7 @@ contract BadgerTree is Initializable, AccessControlUpgradeable, ICumulativeMulti
         require(contentHash == pendingMerkleContentHash, "Incorrect content hash");
         require(cycle == pendingCycle, "Incorrect cycle");
 
-        currentCycle = currentCycle.add(1);
+        currentCycle = cycle;
         merkleRoot = root;
         merkleContentHash = contentHash;
         lastPublishTimestamp = now;

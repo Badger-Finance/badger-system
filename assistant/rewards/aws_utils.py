@@ -1,17 +1,15 @@
 import boto3
 from brownie import *
 from rich.console import Console
-from assistant.rewards.script_config import env_config
+
+from config.env_config import env_config
 
 console = Console()
+
 
 def upload(fileName):
     upload_bucket = "badger-json"
     upload_file_key = "rewards/" + fileName
-    name = "rewards-1337-<hash>.json"
-
-    # f = open(fileName,)
-    # contentFile = json.load(f)
 
     print("Uploading file to s3/" + upload_file_key)
 

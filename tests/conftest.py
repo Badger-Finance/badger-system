@@ -1,15 +1,12 @@
-from tests.helpers import create_uniswap_pair, distribute_from_whales
-from scripts.systems.uniswap_system import UniswapSystem, connect_uniswap
-from _pytest.config import get_config
-from scripts.systems.badger_minimal import deploy_badger_minimal
 import pytest
 from brownie import *
-from helpers.gnosis_safe import exec_direct
+from config.badger_config import badger_config, sett_config
 from scripts.deploy.deploy_badger import deploy_flow
+from scripts.systems.badger_minimal import deploy_badger_minimal
+
 from helpers.constants import *
-from config.badger_config import sett_config, badger_config
 from helpers.registry import registry
-from scripts.deploy.deploy_badger_with_actions import deploy_with_actions
+from tests.helpers import create_uniswap_pair, distribute_from_whales
 
 
 @pytest.fixture(scope="function", autouse=True)
@@ -71,9 +68,11 @@ def sett_native_badger():
     # Approve Setts on specific
     rewards.grantRole(APPROVED_STAKER_ROLE, strategy, {"from": deployer})
 
+    print(badger.getSett("native.badger"))
     badger.deploy_geyser(badger.getSett("native.badger"), "native.badger")
 
     return badger
+
 
 @pytest.fixture(scope="function")
 def badger_hunt_unit():
@@ -85,11 +84,12 @@ def badger_hunt_unit():
     badger.deploy_badger_hunt()
 
     source = accounts.at("0x394DCfbCf25C5400fcC147EbD9970eD34A474543", force=True)
-    
-    badger.token.transfer(badger.badgerHunt, Wei("100000 ether"), {'from': source})
+
+    badger.token.transfer(badger.badgerHunt, Wei("100000 ether"), {"from": source})
 
     return badger
-    
+
+
 @pytest.fixture(scope="function")
 def badger_tree_unit():
     deployer = accounts[0]
@@ -98,8 +98,10 @@ def badger_tree_unit():
 
     badger.deploy_logic("BadgerHunt", BadgerHunt)
     badger.deploy_badger_hunt()
-    
-    badger.token.transfer(badger.badgerHunt, badger_config.huntParams.badgerAmount, {'from': deployer})
+
+    badger.token.transfer(
+        badger.badgerHunt, badger_config.huntParams.badgerAmount, {"from": deployer}
+    )
 
     return badger
 
@@ -281,10 +283,11 @@ def sett_badger_lp_rewards():
     wbtc = interface.IERC20(registry.tokens.wbtc)
 
     # Grant deployer LP tokens
-    badger.uniswap.addMaxLiquidity(badger.token, wbtc, deployer)
+    # badger.uniswap.addMaxLiquidity(badger.token, wbtc, deployer)
 
     badger.distribute_staking_rewards(
-        "native.uniBadgerWbtc", badger_config.geyserParams.unlockSchedules.uniBadgerWbtc[0].amount
+        "native.uniBadgerWbtc",
+        badger_config.geyserParams.unlockSchedules.uniBadgerWbtc[0].amount,
     )
 
     rewards.grantRole(APPROVED_STAKER_ROLE, strategy, {"from": deployer})
@@ -301,15 +304,10 @@ def badger(accounts):
     # Distribute Test Assets
     return badger_system
 
+
 @pytest.fixture()
 def badger_prod(accounts):
     badger_system = deploy_flow(test=True, outputToFile=True, uniswap=False)
 
     # Distribute Test Assets
     return badger_system
-
-
-@pytest.fixture()
-def badger_with_actions(accounts):
-    return deploy_with_actions()
-

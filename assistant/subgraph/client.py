@@ -5,7 +5,6 @@ from rich.console import Console
 console = Console()
 
 url = subgraph_config["url"]
-headers = {"Authorization": "bearer TOKEN"}
 
 
 def fetch_all_geyser_events(geyserId):
@@ -48,7 +47,7 @@ def fetch_all_geyser_events(geyserId):
     # console.log(result['data'])
     return {
         "id": geyserId,
-        'unstakes': unstakes,
-        'stakes': stakes,
-        'totalStaked': totalStaked
+        "unstakes": unstakes,
+        "stakes": stakes,
+        "totalStaked": totalStaked,
     }

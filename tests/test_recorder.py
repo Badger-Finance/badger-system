@@ -1,5 +1,4 @@
 import json
-from dotmap import DotMap
 
 
 class EventRecord:

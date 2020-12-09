@@ -1,27 +1,15 @@
-from helpers.time_utils import daysToSeconds
-import os
-import json
-from scripts.systems.badger_system import connect_badger
-import warnings
-from tabulate import tabulate
 from brownie import *
+from config.badger_config import badger_config
 from helpers.registry import registry
+from scripts.systems.badger_system import connect_badger
+from tabulate import tabulate
+from helpers.utils import val
 
-warnings.simplefilter("ignore")
-# keeper = accounts.load("keeper")
-
-def val(amount):
-    return "∫{:,.2f}".format(amount / 1e18)
 
 def main():
-    test = True
-    # if rpc.is_active():
-    #     sender = accounts[0]
-    # else:
-    #     priv = os.environ.get('VAULT_KEEPER_PRIV')
-    #     sender = accounts.add(priv) if priv else accounts.load(input('brownie account: '))
-    fileName = "deploy-" + "final" + ".json"
+    fileName = badger_config.prod_file
     badger = connect_badger(fileName)
+
     token = badger.token
 
     table = []
@@ -58,7 +46,7 @@ def main():
 
         table.append(data)
 
-    table.append(['total', val(total), '-'])
+    table.append(["total", val(total), "-"])
 
     print(tabulate(table, headers=["contract", "badger", "farm"]))
 
@@ -69,6 +57,6 @@ def main():
     #     print("no vaults to poke, exiting")
 
     table = []
-    table.append(['beneficiary', badger.teamVesting.beneficiary()])
-    table.append(['beneficiary', badger.daoBadgerTimelock.beneficiary()])
+    table.append(["beneficiary", badger.teamVesting.beneficiary()])
+    table.append(["beneficiary", badger.daoBadgerTimelock.beneficiary()])
     print(tabulate(table, headers=["param", "value"]))

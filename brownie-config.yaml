@@ -4,16 +4,6 @@ networks:
   default: mainnet-fork
   mainnet-fork:
     explorer: https://api.etherscan.io/api
-    cmd_settings:
-      db: null
-  mainnet:
-    gas_price: 44
-  live:
-      gas_limit: 6000000
-      gas_buffer: 1.1
-      gas_price: 40000000000
-      reverting_tx_gas_limit: false
-      default_contract_owner: false
 
 project_structure:
   contracts: contracts

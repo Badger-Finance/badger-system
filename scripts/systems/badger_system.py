@@ -2,7 +2,7 @@ import json
 from tests.helpers import create_uniswap_pair, distribute_from_whales
 from scripts.systems.uniswap_system import UniswapSystem, connect_uniswap
 from scripts.systems.gnosis_safe_system import connect_gnosis_safe
-from helpers.time_utils import daysToSeconds
+from helpers.time_utils import days
 from helpers.proxy_utils import deploy_proxy, deploy_proxy_admin
 from brownie import *
 from helpers.constants import AddressZero, EmptyBytes32
@@ -137,7 +137,14 @@ def connect_badger(badger_deploy_file):
     """
     Connect to existing badger deployment
     """
-    badger = BadgerSystem(badger_config, None, badger_deploy["deployer"], badger_deploy["keeper"], badger_deploy["guardian"], deploy=False)
+    badger = BadgerSystem(
+        badger_config,
+        None,
+        badger_deploy["deployer"],
+        badger_deploy["keeper"],
+        badger_deploy["guardian"],
+        deploy=False,
+    )
 
     badger.globalStartBlock = badger_deploy["globalStartBlock"]
 
@@ -183,13 +190,13 @@ class BadgerSystem:
         self.contracts_static = []
         self.contracts_upgradeable = {}
 
-        # TODO: Replace with prod values
-        self.deployer = accounts.at(deployer, force=True)
-        self.keeper = accounts.at(keeper, force=True)
-        self.guardian = accounts.at(guardian, force=True)
+        if badger_config.test_mode:
+            self.deployer = accounts.at(deployer, force=True)
+            self.keeper = accounts.at(keeper, force=True)
+            self.guardian = accounts.at(guardian, force=True)
         if deploy:
-            self.devProxyAdmin = deploy_proxy_admin()
-            self.daoProxyAdmin = deploy_proxy_admin()
+            self.devProxyAdmin = deploy_proxy_admin(deployer)
+            self.daoProxyAdmin = deploy_proxy_admin(deployer)
             self.proxyAdmin = self.devProxyAdmin
         else:
             abi = registry.open_zeppelin.artifacts["ProxyAdmin"]["abi"]
@@ -330,7 +337,7 @@ class BadgerSystem:
 
     def deploy_rewards_escrow(self):
         deployer = self.deployer
-        print('deployer', deployer)
+        print("deployer", deployer)
         self.rewardsEscrow = deploy_proxy(
             "RewardsEscrow",
             RewardsEscrow.abi,
@@ -343,7 +350,13 @@ class BadgerSystem:
 
     def deploy_badger_tree(self):
         deployer = self.deployer
-        print(self.logic.BadgerTree.address, self.devProxyAdmin.address, self.devMultisig, self.keeper, self.guardian)
+        print(
+            self.logic.BadgerTree.address,
+            self.devProxyAdmin.address,
+            self.devMultisig,
+            self.keeper,
+            self.guardian,
+        )
         self.badgerTree = deploy_proxy(
             "BadgerTree",
             BadgerTree.abi,
@@ -464,6 +477,7 @@ class BadgerSystem:
         )
         self.sett_system.vaults[id] = sett
         self.track_contract_upgradeable(id + ".sett", sett)
+        print("tracked", sett)
         return sett
 
     def deploy_strategy(self, id, strategyName, controller, params):
@@ -480,6 +494,7 @@ class BadgerSystem:
         return strategy
 
     def deploy_geyser(self, stakingToken, id):
+        print(stakingToken)
         deployer = self.deployer
         geyser = deploy_geyser(self, stakingToken)
         self.geysers[id] = geyser
@@ -529,6 +544,8 @@ class BadgerSystem:
     def distribute_staking_rewards(self, id, amount, notify=False):
         deployer = self.deployer
         rewards = self.getSettRewards(id)
+
+        assert self.token.balanceOf(deployer) >= amount
 
         self.token.transfer(
             rewards, amount, {"from": deployer},
@@ -771,17 +788,25 @@ class BadgerSystem:
         return self.sett_system.controllers[id]
 
     def getControllerFor(self, id):
-        controllerId = id.split('.', 1)[0]
+        controllerId = id.split(".", 1)[0]
         print(controllerId)
         return self.sett_system.controllers[id]
 
     def getSett(self, id):
+        if not id in self.sett_system.vaults.keys():
+            console.print("[bold red]Sett not found:[/bold red] {}".format(id))
+            raise NameError
+
         return self.sett_system.vaults[id]
 
     def getSettRewards(self, id):
         return self.sett_system.rewards[id]
 
     def getStrategy(self, id):
+        if not id in self.sett_system.strategies.keys():
+            console.print("[bold red]Strategy not found:[/bold red] {}".format(id))
+            raise NameError
+
         return self.sett_system.strategies[id]
 
     def getStrategyWant(self, id):
@@ -792,4 +817,3 @@ class BadgerSystem:
 
     def getStrategyArtifactName(self, id):
         return self.strategy_artifacts[id]["artifactName"]
-

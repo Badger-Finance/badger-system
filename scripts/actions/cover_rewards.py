@@ -1,5 +1,5 @@
 from helpers.gnosis_safe import convert_to_test_mode, exec_direct
-from helpers.time_utils import daysToSeconds, hours
+from helpers.time_utils import days, hours
 import os
 import json
 from scripts.systems.badger_system import connect_badger
@@ -12,21 +12,13 @@ from rich.console import Console
 console = Console()
 
 
-def confirm_blacksmith_contract(contract):
-    return False
-
-
-def confirm_balances(badger, blacksmith):
-    return False
-
-
 def main():
     test = True
     fileName = "deploy-" + "final" + ".json"
     badger = connect_badger(fileName)
 
     coverage_expire_timestamp = 1614470400  # 2/28/2021 12:00 AM UTC
-    rewards_expire_timestamp = coverage_expire_timestamp - daysToSeconds(
+    rewards_expire_timestamp = coverage_expire_timestamp - days(
         1
     )  # 2/27/2021 12:00 AM UTC
     print(rewards_expire_timestamp, 1614384000)
@@ -83,7 +75,7 @@ def main():
 
     startTime = 1607293800
     endTime = rewards_expire_timestamp
-    print (chain.time())
+    print(chain.time())
     assert startTime - chain.time() > 0
     assert startTime - chain.time() < hours(2)
 
@@ -119,4 +111,3 @@ def main():
     print(data)
 
     assert badger.token.balanceOf(blacksmith) == total
-

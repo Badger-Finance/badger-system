@@ -27,7 +27,6 @@ class RewardsList:
         if not self.sourceMetadata[source][user][metadata]:
             self.sourceMetadata[source][user][metadata] = DotMap()
         self.sourceMetadata[source][user][metadata] = metadata
-            
 
     def increase_user_rewards(self, user, token, toAdd):
         if toAdd < 0:
@@ -134,7 +133,15 @@ class RewardsList:
             nodeEntry["user"],
         )[0]
 
-        # print ('claim', claim)
+        local = encoder.encodeClaim.encode_input(
+            nodeEntry["tokens"],
+            nodeEntry["cumulativeAmounts"],
+            nodeEntry["index"],
+            nodeEntry["cycle"],
+            nodeEntry["user"],
+        )
+
+        console.log("claimcheck", claim, local)
 
         encoded = encode_hex(claim)
 
