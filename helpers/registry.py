@@ -1,4 +1,5 @@
 import json
+
 from dotmap import DotMap
 
 with open("dependency-artifacts/aragon/Agent.json") as f:
@@ -36,6 +37,9 @@ with open("dependency-artifacts/open-zeppelin/TokenTimelock.json") as f:
 
 with open("dependency-artifacts/open-zeppelin-upgrades/ProxyAdmin.json") as f:
     ProxyAdmin = json.load(f)
+
+with open("dependency-artifacts/multicall/Multicall.json") as f:
+    Multicall = json.load(f)
 
 with open(
     "dependency-artifacts/open-zeppelin-upgrades/AdminUpgradeabilityProxy.json"
@@ -106,6 +110,11 @@ uniswap_registry = DotMap(
     ),
 )
 
+multicall_registry = DotMap(
+    multicall="0xeefba1e63905ef1d7acba5a8513c70307c1ce441",
+    artifacts=DotMap(multicall={"abi": Multicall}),
+)
+
 harvest_registry = DotMap(
     farmToken="0xa0246c9032bC3A600820415aE600c6388619A14D",
     depositHelper="0xf8ce90c2710713552fb564869694b2505bfc0846",
@@ -152,6 +161,14 @@ curve_registry = DotMap(
 
 
 whale_registry = DotMap(
+    badger=DotMap(
+        whale="0x19d099670a21bC0a8211a89B84cEdF59AbB4377F",
+        token="0x3472A5A71965499acd81997a54BBA8D852C6E53d",
+    ),
+    uniBadgerWbtc=DotMap(
+        whale="0x235c9e24D3FB2FAFd58a2E49D454Fdcd2DBf7FF1",
+        token="0xcD7989894bc033581532D2cd88Da5db0A4b12859",
+    ),
     sbtcCrv=DotMap(
         whale="0xc25099792e9349c7dd09759744ea681c7de2cb66",
         token=curve_registry.pools.sbtcCrv.token,
@@ -182,4 +199,5 @@ registry = DotMap(
     harvest=harvest_registry,
     tokens=token_registry,
     whales=whale_registry,
+    multicall=multicall_registry,
 )

@@ -1,20 +1,12 @@
-from tests.helpers import getTokenMetadata
-from tests.test_recorder import EventRecord, TestRecorder
-from tests.conftest import badger_single_sett
-from scripts.systems.badger_system import BadgerSystem
-from tests.sett.helpers.snapshots import (
-    confirm_deposit,
-    confirm_earn,
-    confirm_harvest,
-    confirm_tend,
-    confirm_withdraw,
-    sett_snapshot,
-)
-from helpers.time_utils import daysToSeconds
+from helpers.time_utils import days
 import brownie
+import pytest
 from brownie import *
 from helpers.constants import *
-import pytest
+from helpers.sett.SnapshotManager import SnapshotManager
+from tests.conftest import badger_single_sett
+from tests.helpers import getTokenMetadata
+from tests.test_recorder import EventRecord, TestRecorder
 
 
 # @pytest.mark.skip()
@@ -37,21 +29,18 @@ def test_deposit_withdraw_single_user_flow(settId):
     strategy = badger.getStrategy(settId)
     want = badger.getStrategyWant(settId)
 
+    snap = SnapshotManager(badger, settId)
+
     deployer = badger.deployer
     randomUser = accounts[6]
 
     print(want, want.address, want.totalSupply(), deployer)
 
     # Deposit
-    depositAmount = Wei("1 ether")
-    assert want.balanceOf(deployer) >= depositAmount
+    depositAmount = int(want.balanceOf(deployer) * 0.8)
+
     want.approve(sett, MaxUint256, {"from": deployer})
-
-    before = sett_snapshot(sett, strategy, deployer)
-    sett.deposit(depositAmount, {"from": deployer})
-    after = sett_snapshot(sett, strategy, deployer)
-
-    confirm_deposit(before, after, deployer, depositAmount)
+    snap.settDeposit(depositAmount, {"from": deployer})
 
     # Earn
     with brownie.reverts("onlyAuthorizedActors"):
@@ -63,36 +52,20 @@ def test_deposit_withdraw_single_user_flow(settId):
 
     assert sett.keeper() == deployer
 
-    print("balanceOfPool() before", strategy.balanceOfPool())
-
-    before = sett_snapshot(sett, strategy, deployer)
-    sett.earn({"from": deployer})
-    after = sett_snapshot(sett, strategy, deployer)
-
-    print("balanceOfPool() after", strategy.balanceOfPool())
-
-    confirm_earn(before, after)
+    snap.settEarn({"from": deployer})
 
     chain.sleep(15)
     chain.mine(1)
 
-    before = sett_snapshot(sett, strategy, deployer)
-    sett.withdraw(depositAmount // 2, {"from": deployer})
-    after = sett_snapshot(sett, strategy, deployer)
-
-    confirm_withdraw(before, after, deployer)
+    snap.settWithdraw(depositAmount // 2, {"from": deployer})
 
     chain.sleep(10000)
     chain.mine(1)
 
-    before = sett_snapshot(sett, strategy, deployer)
-    sett.withdrawAll({"from": deployer})
-    after = sett_snapshot(sett, strategy, deployer)
-
-    confirm_withdraw(before, after, deployer)
+    snap.settWithdrawAll({"from": deployer})
 
 
-# @pytest.mark.skip()
+@pytest.mark.skip()
 @pytest.mark.parametrize(
     "settId",
     [
@@ -106,43 +79,6 @@ def test_deposit_withdraw_single_user_flow(settId):
     ],
 )
 def test_single_user_harvest_flow(settId):
-    """
-    After each action, run the usual checks.
-
-    --Setup--
-    User deposits into Sett
-    Deposit into Strat via earn()
-
-    Wait some time and tend()
-    - Expect call to return the tendable amount properly
-    - Expect pickle balance in PickleJar to increase
-    - Confirm Tend() event with real values
-    - Expect no Pickle idle in Strat
-
-    Wait some time and tend()
-    - Expect call to return the tendable amount properly
-    - Expect pickle balance in PickleJar to increase
-    - Confirm Tend() event with real values
-    - Expect no Pickle idle in Strat
-
-    Wait some time and harvest()
-    - Expect no Pickle staked in PickleStaking
-    - Expect no Pickle staked in PickleChef
-    - Expect underlying position to increase (represented by pTokens)
-
-    Wait some time and tend()
-    Wait some time and harvest()
-
-    User withdraws very small amount that is covered by Sett reserves
-
-    User withdraws partially
-
-    Wait some time and tend()
-
-    User withdraws remainder
-        - Price per full share should NOT have inceased as we never realized gains
-
-    """
     suiteName = "test_single_user_harvest_flow" + ": " + settId
     testRecorder = TestRecorder(suiteName)
 
@@ -151,6 +87,8 @@ def test_single_user_harvest_flow(settId):
     sett = badger.getSett(settId)
     strategy = badger.getStrategy(settId)
     want = badger.getStrategyWant(settId)
+
+    snap = SnapshotManager(badger, settId)
 
     deployer = badger.deployer
     randomUser = accounts[6]
@@ -163,116 +101,50 @@ def test_single_user_harvest_flow(settId):
     assert startingBalance >= depositAmount
 
     # Deposit
-    before = sett_snapshot(sett, strategy, deployer)
     want.approve(sett, MaxUint256, {"from": deployer})
-    sett.deposit(depositAmount, {"from": deployer})
-    after = sett_snapshot(sett, strategy, deployer)
-
-    confirm_deposit(before, after, deployer, depositAmount)
+    snap.settDeposit(depositAmount, {"from": deployer})
 
     # Earn
-    before = sett_snapshot(sett, strategy, deployer)
-    sett.earn({"from": deployer})
-    after = sett_snapshot(sett, strategy, deployer)
-
-    confirm_earn(before, after)
-
-    before_harvest = sett_snapshot(sett, strategy, deployer)
+    snap.settEarn(depositAmount, {"from": deployer})
 
     if tendable:
         with brownie.reverts("onlyAuthorizedActors"):
             strategy.tend({"from": randomUser})
 
-        before = sett_snapshot(sett, strategy, deployer)
-        tx = strategy.tend({"from": deployer})
-        after = sett_snapshot(sett, strategy, deployer)
-        testRecorder.add_record(EventRecord("Tend", tx.events, tx.timestamp))
+        snap.settTend({"from": deployer})
 
-        confirm_tend(before, after, deployer)
-
-    chain.sleep(daysToSeconds(0.5))
+    chain.sleep(days(0.5))
     chain.mine()
 
     if tendable:
-        before = sett_snapshot(sett, strategy, deployer)
-        tx = strategy.tend({"from": deployer})
-        after = sett_snapshot(sett, strategy, deployer)
-        testRecorder.add_record(EventRecord("Tend", tx.events, tx.timestamp))
+        snap.settTend({"from": deployer})
 
-        confirm_tend(before, after, deployer)
-
-    chain.sleep(daysToSeconds(1))
+    chain.sleep(days(1))
     chain.mine()
 
     with brownie.reverts("onlyAuthorizedActors"):
         strategy.harvest({"from": randomUser})
 
-    before = sett_snapshot(sett, strategy, deployer)
-    tx = strategy.harvest({"from": deployer})
-    after = sett_snapshot(sett, strategy, deployer)
-    testRecorder.add_record(EventRecord("Harvest", tx.events, tx.timestamp))
-    testRecorder.print_to_file(suiteName + ".json")
+    snap.settHarvest({"from": deployer})
 
-    confirm_harvest(before, after, deployer)
-
-    after_harvest = sett_snapshot(sett, strategy, deployer)
-
-    # Harvesting on the HarvestMetaFarm does not increase the underlying position, it sends rewards to the rewardsTree
-    # For HarvestMetaFarm, we expect FARM rewards to be distributed to rewardsTree
-    if settId == "harvest.renCrv":
-        assert (
-            after_harvest.sett.pricePerFullShare
-            == before_harvest.sett.pricePerFullShare
-        )
-        assert after_harvest.strategy.balanceOf == before_harvest.strategy.balanceOf
-        assert after_harvest.badgerTree.farm > before_harvest.badgerTree.farm
-    # For most Setts, harvesting should increase the underlying position
-    else:
-        assert (
-            after_harvest.sett.pricePerFullShare > before_harvest.sett.pricePerFullShare
-        )
-        assert after_harvest.strategy.balanceOf > before_harvest.strategy.balanceOf
-
-    chain.sleep(daysToSeconds(1))
+    chain.sleep(days(1))
     chain.mine()
 
     if tendable:
-        tx = strategy.tend({"from": deployer})
-        testRecorder.add_record(EventRecord("Tend", tx.events, tx.timestamp))
+        snap.settTend({"from": deployer})
 
-    chain.sleep(daysToSeconds(3))
+    chain.sleep(days(3))
     chain.mine()
 
-    before_harvest = sett_snapshot(sett, strategy, deployer)
-    tx = strategy.harvest({"from": deployer})
-    after_harvest = sett_snapshot(sett, strategy, deployer)
-    testRecorder.add_record(EventRecord("Harvest", tx.events, tx.timestamp))
+    snap.settHarvest({"from": deployer})
 
-    harvested = tx.events["Harvest"][0]["harvested"]
-    if settId != "harvest.renCrv":
-        assert harvested > 0
-        assert (
-            after_harvest.sett.pricePerFullShare > before_harvest.sett.pricePerFullShare
-        )
-        assert after_harvest.strategy.balanceOf > before_harvest.strategy.balanceOf
-
-    sett.withdrawAll({"from": deployer})
+    snap.settWithdrawAll({"from": deployer})
 
     endingBalance = want.balanceOf(deployer)
-
-    report = {
-        "time": "4 days",
-        "gains": endingBalance - startingBalance,
-        "gainsPercentage": (endingBalance - startingBalance) / startingBalance,
-    }
-
-    # testRecorder.add_record(EventRecord("Final Report", report, 0))
-    testRecorder.print_to_file(suiteName + ".json")
-
-    # assert endingBalance > startingBalance
+    assert endingBalance > startingBalance
 
 
-# @pytest.mark.skip()
+@pytest.mark.skip()
 @pytest.mark.parametrize(
     "settId",
     [
@@ -313,7 +185,7 @@ def test_migrate_single_user(settId):
     chain.snapshot()
 
     # Test no harvests
-    chain.sleep(daysToSeconds(2))
+    chain.sleep(days(2))
     chain.mine()
 
     before = {"settWant": want.balanceOf(sett), "stratWant": strategy.balanceOf()}
@@ -333,7 +205,7 @@ def test_migrate_single_user(settId):
     if strategy.isTendable():
         chain.revert()
 
-        chain.sleep(daysToSeconds(2))
+        chain.sleep(days(2))
         chain.mine()
 
         strategy.tend({"from": deployer})
@@ -354,16 +226,20 @@ def test_migrate_single_user(settId):
     # Test harvest, with tend if tendable
     chain.revert()
 
-    chain.sleep(daysToSeconds(1))
+    chain.sleep(days(1))
     chain.mine()
 
     if strategy.isTendable():
         strategy.tend({"from": deployer})
 
-    chain.sleep(daysToSeconds(1))
+    chain.sleep(days(1))
     chain.mine()
 
-    before = {"settWant": want.balanceOf(sett), "stratWant": strategy.balanceOf()}
+    before = {
+        "settWant": want.balanceOf(sett),
+        "stratWant": strategy.balanceOf(),
+        "rewardsWant": want.balanceOf(controller.rewards()),
+    }
 
     with brownie.reverts():
         controller.withdrawAll(strategy.want(), {"from": randomUser})
@@ -377,7 +253,7 @@ def test_migrate_single_user(settId):
     assert after["stratWant"] == 0
 
 
-# @pytest.mark.skip()
+@pytest.mark.skip()
 @pytest.mark.parametrize(
     "settId",
     [
@@ -421,7 +297,7 @@ def test_withdraw_other(settId):
 
     sett.earn({"from": deployer})
 
-    chain.sleep(daysToSeconds(0.5))
+    chain.sleep(days(0.5))
     chain.mine()
 
     if strategy.isTendable():
@@ -429,7 +305,7 @@ def test_withdraw_other(settId):
 
     strategy.harvest({"from": deployer})
 
-    chain.sleep(daysToSeconds(0.5))
+    chain.sleep(days(0.5))
     chain.mine()
 
     mockAmount = Wei("1000 ether")
@@ -449,9 +325,12 @@ def test_withdraw_other(settId):
     controller.inCaseStrategyTokenGetStuck(strategy, mockToken, {"from": deployer})
 
     with brownie.reverts():
-        controller.inCaseStrategyTokenGetStuck(strategy, mockToken, {"from": randomUser})
+        controller.inCaseStrategyTokenGetStuck(
+            strategy, mockToken, {"from": randomUser}
+        )
 
     assert mockToken.balanceOf(controller) == mockAmount
+
 
 @pytest.mark.skip()
 @pytest.mark.parametrize(
@@ -467,4 +346,110 @@ def test_withdraw_other(settId):
     ],
 )
 def test_single_user_harvest_flow_remove_fees(settId):
-    assert False
+    suiteName = "test_single_user_harvest_flow_remove_fees" + ": " + settId
+    testRecorder = TestRecorder(suiteName)
+
+    badger = badger_single_sett(settId)
+    controller = badger.getController(settId)
+    sett = badger.getSett(settId)
+    strategy = badger.getStrategy(settId)
+    want = badger.getStrategyWant(settId)
+
+    deployer = badger.deployer
+    randomUser = accounts[6]
+
+    tendable = strategy.isTendable()
+
+    startingBalance = want.balanceOf(deployer)
+
+    depositAmount = Wei("1 ether")
+    assert startingBalance >= depositAmount
+
+    # Deposit
+    before = sett_snapshot(sett, strategy, deployer)
+    want.approve(sett, MaxUint256, {"from": deployer})
+    sett.deposit(depositAmount, {"from": deployer})
+    after = sett_snapshot(sett, strategy, deployer)
+
+    confirm_deposit(before, after, deployer, depositAmount)
+
+    # Earn
+    before = sett_snapshot(sett, strategy, deployer)
+    sett.earn({"from": deployer})
+    after = sett_snapshot(sett, strategy, deployer)
+
+    confirm_earn(before, after)
+
+    chain.sleep(days(0.5))
+    chain.mine()
+
+    if tendable:
+        before = sett_snapshot(sett, strategy, deployer)
+        tx = strategy.tend({"from": deployer})
+        after = sett_snapshot(sett, strategy, deployer)
+        testRecorder.add_record(EventRecord("Tend", tx.events, tx.timestamp))
+
+        confirm_tend(before, after, deployer)
+
+    chain.sleep(days(1))
+    chain.mine()
+
+    with brownie.reverts("onlyAuthorizedActors"):
+        strategy.harvest({"from": randomUser})
+
+    before = sett_snapshot(sett, strategy, deployer)
+    tx = strategy.harvest({"from": deployer})
+    after = sett_snapshot(sett, strategy, deployer)
+    testRecorder.add_record(EventRecord("Harvest", tx.events, tx.timestamp))
+    testRecorder.print_to_file(suiteName + ".json")
+
+    confirm_harvest(before, after, deployer)
+
+    after_harvest = sett_snapshot(sett, strategy, deployer)
+
+    print("tx.events", tx.events)
+
+    # Harvesting on the HarvestMetaFarm does not increase the underlying position, it sends rewards to the rewardsTree
+    # For HarvestMetaFarm, we expect FARM rewards to be distributed to rewardsTree
+    if settId == "harvest.renCrv":
+        assert want.balanceOf(controller.rewards() > 0)
+
+    # For most Setts, harvesting should increase the underlying position
+    else:
+        assert want.balanceOf(controller.rewards() > 0)
+
+    chain.sleep(days(1))
+    chain.mine()
+
+    if tendable:
+        tx = strategy.tend({"from": deployer})
+        testRecorder.add_record(EventRecord("Tend", tx.events, tx.timestamp))
+
+    chain.sleep(days(3))
+    chain.mine()
+
+    before_harvest = sett_snapshot(sett, strategy, deployer)
+    tx = strategy.harvest({"from": deployer})
+    after_harvest = sett_snapshot(sett, strategy, deployer)
+    testRecorder.add_record(EventRecord("Harvest", tx.events, tx.timestamp))
+
+    harvested = tx.events["Harvest"][0]["harvested"]
+    if settId != "harvest.renCrv":
+        assert harvested > 0
+        assert (
+            after_harvest.sett.pricePerFullShare > before_harvest.sett.pricePerFullShare
+        )
+        assert after_harvest.strategy.balanceOf > before_harvest.strategy.balanceOf
+
+    sett.withdrawAll({"from": deployer})
+
+    endingBalance = want.balanceOf(deployer)
+
+    report = {
+        "time": "4 days",
+        "gains": endingBalance - startingBalance,
+        "gainsPercentage": (endingBalance - startingBalance) / startingBalance,
+    }
+
+    # testRecorder.add_record(EventRecord("Final Report", report, 0))
+    testRecorder.print_to_file(suiteName + ".json")

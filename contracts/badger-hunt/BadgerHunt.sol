@@ -130,6 +130,7 @@ contract BadgerHunt is MerkleDistributor, OwnableUpgradeable {
         // Mark it claimed and send the token.
         _setClaimed(index);
 
+        require(getCurrentRewardsRate() <= MAX_BPS, "Excessive Rewards Rate");
         uint256 claimable = amount.mul(getCurrentRewardsRate()).div(MAX_BPS);
 
         require(IERC20Upgradeable(token).transfer(account, claimable), "Transfer to user failed.");
@@ -143,5 +144,9 @@ contract BadgerHunt is MerkleDistributor, OwnableUpgradeable {
         require(getCurrentRewardsRate() == 0 && getCurrentEpoch() > finalEpoch, "Hunt period not finished");
         uint256 remainingBalance = IERC20Upgradeable(token).balanceOf(address(this));
         IERC20Upgradeable(token).transfer(rewardsEscrow, remainingBalance);
+    }
+
+    function setGracePeriod(uint256 duration) external onlyOwner {
+        gracePeriod = duration;
     }
 }

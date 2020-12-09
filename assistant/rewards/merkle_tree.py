@@ -1,24 +1,10 @@
-import hashlib
-import json
-import os
-from collections import Counter, defaultdict
-from concurrent.futures import ThreadPoolExecutor
-from fractions import Fraction
-from functools import partial, wraps
 from itertools import zip_longest
-from pathlib import Path
 
-import toml
 from brownie import *
-from click import secho
-from dotmap import DotMap
-from eth_abi import decode_single, encode_single
-from eth_abi.packed import encode_abi_packed
 from eth_utils import encode_hex
+from eth_utils.hexadecimal import encode_hex
 from helpers.constants import *
 from rich.console import Console
-from toolz import valfilter, valmap
-from tqdm import tqdm, trange
 
 console = Console()
 
@@ -32,7 +18,7 @@ class MerkleTree:
         self.elements = sorted(set(web3.keccak(hexstr=el) for el in elements))
         self.layers = MerkleTree.get_layers(self.elements)
 
-        console.log(self.elements, self.layers)
+        # console.log(self.elements, self.layers)
 
     @property
     def root(self):
@@ -72,7 +58,7 @@ class MerkleTree:
         return web3.keccak(b"".join(sorted([a, b])))
 
 
-def rewards_to_merkle_tree(rewards):
+def rewards_to_merkle_tree(rewards, startBlock, endBlock, geyserRewards):
     (nodes, encodedNodes, entries) = rewards.to_merkle_format()
 
     # For each user, encode their data into a node
@@ -91,14 +77,17 @@ def rewards_to_merkle_tree(rewards):
     distribution = {
         "merkleRoot": encode_hex(tree.root),
         "cycle": nodes[0]["cycle"],
+        "startBlock": str(startBlock),
+        "endBlock": str(endBlock),
         "tokenTotals": rewards.totals.toDict(),
         "claims": {},
+        "metadata": {},
     }
 
     for entry in entries:
-        node = entry['node']
-        encoded = entry['encoded']
-        console.log(node)
+        node = entry["node"]
+        encoded = entry["encoded"]
+        # console.log(node)
         distribution["claims"][node["user"]] = {
             "index": hex(node["index"]),
             "user": node["user"],
@@ -109,11 +98,14 @@ def rewards_to_merkle_tree(rewards):
             "node": encoded,
         }
 
+    for user, data in geyserRewards.metadata.items():
+        distribution["metadata"][user] = data.toDict()
+
     print(f"merkle root: {encode_hex(tree.root)}")
 
     # Print to file with content hash
     # hash(distribution)
 
-    console.log(distribution)
+    # console.log(distribution)
 
     return distribution

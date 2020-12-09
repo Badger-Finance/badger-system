@@ -111,7 +111,7 @@ contract StrategyHarvestMetaFarm is BaseStrategy {
         return true;
     }
 
-    function getProtectedTokens() external view override returns (address[] memory) {
+    function getProtectedTokens() external override view returns (address[] memory) {
         address[] memory protectedTokens = new address[](3);
         protectedTokens[0] = want;
         protectedTokens[1] = farm;
@@ -223,19 +223,18 @@ contract StrategyHarvestMetaFarm is BaseStrategy {
 
         // Unstake all FARM from metaFarm, harvesting rewards in the process
         uint256 _farmStaked = IRewardPool(metaFarm).balanceOf(address(this));
-        
+
         if (_farmStaked > 0) {
             IRewardPool(metaFarm).exit();
         }
-        
+
         // Harvest rewards from vaultFarm
         IRewardPool(vaultFarm).getReward();
 
         harvestData.totalFarmHarvested = IERC20Upgradeable(farm).balanceOf(address(this));
 
         // Take strategist fees on FARM
-        harvestData.governancePerformanceFee = _processFee(farm, harvestData.totalFarmHarvested, farmPerformanceFeeGovernance, governance);
-        harvestData.strategistPerformanceFee = _processFee(farm, harvestData.totalFarmHarvested, farmPerformanceFeeStrategist, strategist);
+        (harvestData.governancePerformanceFee, harvestData.strategistPerformanceFee) = _processPerformanceFees(harvestData.totalFarmHarvested);
 
         // Distribute remaining FARM rewards to rewardsTree
         harvestData.farmToRewards = IERC20Upgradeable(farm).balanceOf(address(this));
@@ -252,6 +251,8 @@ contract StrategyHarvestMetaFarm is BaseStrategy {
             now,
             block.number
         );
+
+        return harvestData;
     }
 
     /// @notice 'Recycle' FARM gained from staking into profit sharing pool for increased APY
@@ -277,6 +278,12 @@ contract StrategyHarvestMetaFarm is BaseStrategy {
     }
 
     /// ===== Internal Helper Functions =====
+
+    function _processPerformanceFees(uint256 _amount) internal returns (uint256 governancePerformanceFee, uint256 strategistPerformanceFee) {
+        governancePerformanceFee = _processFee(farm, _amount, farmPerformanceFeeGovernance, IController(controller).rewards());
+        strategistPerformanceFee = _processFee(farm, _amount, farmPerformanceFeeStrategist, strategist);
+        return (governancePerformanceFee, strategistPerformanceFee);
+    }
 
     /// @dev Convert underlying value into corresponding number of harvest vault shares
     function _toHarvestVaultTokens(uint256 amount) internal view returns (uint256) {

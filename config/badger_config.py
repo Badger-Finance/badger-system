@@ -5,7 +5,7 @@ from brownie import Wei, web3
 from dotmap import DotMap
 from helpers.constants import AddressZero
 from helpers.registry import registry
-from helpers.time_utils import daysToSeconds
+from helpers.time_utils import days, days, hours
 
 with open("merkle/airdrop.json") as f:
     Airdrop = json.load(f)
@@ -136,27 +136,29 @@ dao_config = DotMap(
 globalStartTime = 1607014800
 
 badger_config = DotMap(
+    prod_json="deploy-final.json",
+    test_mode=True,
+    startMultiplier=1,
+    endMultiplier=3,
     multisig=multisig_config,
     dao=dao_config,
     globalStartTime=globalStartTime,
     huntParams=DotMap(
         startTime=int(time.time()),
-        badgerAmount=badger_total_supply * 15 // 100,
-        gracePeriod=daysToSeconds(2),
-        epochDuration=daysToSeconds(1),
+        badgerAmount=badger_total_supply * 10 // 100,
+        gracePeriod=days(2),
+        epochDuration=days(1),
         merkleRoot=Airdrop["merkleRoot"],
         claimReductionPerEpoch=2000,
     ),
     founderRewardsAmount=badger_total_supply * 10 // 100,
+    initialHuntAmount=badger_total_supply * 5 // 100,
     rewardsEscrowBadgerAmount=badger_total_supply * 40 // 100,
     tokenLockParams=DotMap(
-        badgerLockAmount=badger_total_supply * 35 // 100,
-        lockDuration=daysToSeconds(30),
+        badgerLockAmount=badger_total_supply * 35 // 100, lockDuration=days(30),
     ),
     teamVestingParams=DotMap(
-        startTime=globalStartTime,
-        cliffDuration=daysToSeconds(30),
-        totalDuration=daysToSeconds(365),
+        startTime=globalStartTime, cliffDuration=days(30), totalDuration=days(365),
     ),
     devMultisigParams=DotMap(
         threshold=1,
@@ -176,38 +178,52 @@ badger_config = DotMap(
         useAgentAsVault=True,
         supportRequired=Wei("0.5 ether"),
         minAcceptanceQuorum=Wei("0.05 ether"),
-        voteDuration=daysToSeconds(3),
+        voteDuration=days(3),
     ),
     geyserParams=DotMap(
         initialSharesPerToken=10 ** 6,
         founderRewardPercentage=10,
         badgerDistributionStart=globalStartTime,
-        diggDistributionStart=globalStartTime + daysToSeconds(15),
+        diggDistributionStart=globalStartTime + days(15),
         unlockSchedules=DotMap(
-            badger=[
-                DotMap(amount=Wei("45000 ether"), duration=daysToSeconds(7),)  # 1 week
-            ],
+            badger=[DotMap(amount=Wei("45000 ether"), duration=days(7),)],  # 1 week
             uniBadgerWbtc=[
-                DotMap(amount=Wei("65000 ether"), duration=daysToSeconds(7),)  # 1 week
+                DotMap(amount=Wei("65000 ether"), duration=days(7),)  # 1 week
             ],
-            bSbtcCrv=[
-                DotMap(amount=Wei("76750 ether"), duration=daysToSeconds(7),)  # 1 week
-            ],
-            bRenCrv=[
-                DotMap(amount=Wei("76750 ether"), duration=daysToSeconds(7),)  # 1 week
-            ],
-            bTbtcCrv=[
-                DotMap(amount=Wei("76750 ether"), duration=daysToSeconds(7),)  # 1 week
-            ],
+            bSbtcCrv=[DotMap(amount=Wei("76750 ether"), duration=days(7),)],  # 1 week
+            bRenCrv=[DotMap(amount=Wei("76750 ether"), duration=days(7),)],  # 1 week
+            bTbtcCrv=[DotMap(amount=Wei("76750 ether"), duration=days(7),)],  # 1 week
             bSuperRenCrvPickle=[
-                DotMap(amount=Wei("76750 ether"), duration=daysToSeconds(7),)  # 1 week
+                DotMap(amount=Wei("76750 ether"), duration=days(7),)  # 1 week
             ],
             bSuperRenCrvHarvest=[
-                DotMap(amount=Wei("76750 ether"), duration=daysToSeconds(7),)  # 1 week
+                DotMap(amount=Wei("76750 ether"), duration=days(7),)  # 1 week
             ],
         ),
     ),
 )
+
+# trial_badger_config = badger_config
+# trial_badger_config.globalStartTime = 1606957257
+# trial_badger_config.tokenLockParams.lockDuration = hours(1.5)  # Unlock to DAO
+# trial_badger_config.teamVestingParams.cliffDuration = hours(
+#     1.5
+# )  # Unlock to founders, cliff
+# trial_badger_config.teamVestingParams.totalDuration = hours(6)
+# trial_badger_config.geyserParams.badgerDistributionStart = 1606951800
+
+
+"""
+    tokenLockParams=DotMap(
+        badgerLockAmount=badger_total_supply * 35 // 100,
+        lockDuration=days(30),
+    ),
+    teamVestingParams=DotMap(
+        startTime=globalStartTime,
+        cliffDuration=days(30),
+        totalDuration=days(365),
+    ),
+"""
 
 digg_config = DotMap(
     initialSupply=6250 * (10 ** 9),
@@ -227,9 +243,7 @@ digg_config = DotMap(
     centralizedOracleParams=DotMap(
         owners=[AddressZero, AddressZero, AddressZero], threshold=1,
     ),
-    tokenLockParams=DotMap(
-        diggLockAmount=3125 * (10 ** 9), lockDuration=daysToSeconds(30),
-    ),
+    tokenLockParams=DotMap(diggLockAmount=3125 * (10 ** 9), lockDuration=days(30),),
 )
 
 config = DotMap(badger=badger_config, sett=sett_config, digg=digg_config)

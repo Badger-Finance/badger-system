@@ -163,21 +163,15 @@ contract StrategyCurveGaugeBase is BaseStrategy {
             _add_liquidity_curve(harvestData.lpComponentDeposited);
         }
 
-        // Take fees from want increase and deposit remaining into Gauge
+        // Take fees from LP increase, and deposit remaining into Gauge
         harvestData.wantProcessed = IERC20Upgradeable(want).balanceOf(address(this));
         if (harvestData.wantProcessed > 0) {
             uint256 _strategistFee = harvestData.wantProcessed.mul(performanceFeeStrategist).div(MAX_FEE);
             uint256 _governanceFee = harvestData.wantProcessed.mul(performanceFeeGovernance).div(MAX_FEE);
 
-            harvestData.governancePerformanceFee = _processFee(
-                want,
-                harvestData.wantDeposited,
-                performanceFeeGovernance,
-                IController(controller).rewards()
-            );
+            (harvestData.governancePerformanceFee, harvestData.strategistPerformanceFee) = _processPerformanceFees(harvestData.wantProcessed);
 
-            harvestData.strategistPerformanceFee = _processFee(want, harvestData.wantDeposited, performanceFeeStrategist, strategist);
-
+            // Deposit remaining want into Gauge
             harvestData.wantDeposited = IERC20Upgradeable(want).balanceOf(address(this));
 
             if (harvestData.wantDeposited > 0) {
@@ -196,6 +190,8 @@ contract StrategyCurveGaugeBase is BaseStrategy {
             harvestData.strategistPerformanceFee
         );
         emit Harvest(harvestData.wantProcessed.sub(_before), block.number);
+
+        return harvestData;
     }
 
     /// ===== Internal Helper Functions =====
@@ -203,5 +199,16 @@ contract StrategyCurveGaugeBase is BaseStrategy {
     /// @dev Handle the particular function variant for CurveSwap
     function _add_liquidity_curve(uint256 _amount) internal virtual {
         // e.g. ICurveFi(curveSwap).add_liquidity([0, _amount, 0], 0);
+    }
+
+    function _processPerformanceFees(uint256 _amount) internal returns(uint256 governancePerformanceFee, uint256 strategistPerformanceFee) {
+            governancePerformanceFee = _processFee(
+                want,
+                _amount,
+                performanceFeeGovernance,
+                IController(controller).rewards()
+            );
+
+            strategistPerformanceFee = _processFee(want, _amount, performanceFeeStrategist, strategist);
     }
 }

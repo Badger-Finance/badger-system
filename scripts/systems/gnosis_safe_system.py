@@ -6,10 +6,9 @@ from dotmap import DotMap
 
 def connect_gnosis_safe(address):
     return Contract.from_abi(
-            "GnosisSafe",
-            address,
-            registry.gnosis_safe.artifacts.GnosisSafe["abi"],
-        )
+        "GnosisSafe", address, registry.gnosis_safe.artifacts.GnosisSafe["abi"],
+    )
+
 
 class GnosisSafeSystem:
     def __init__(self):
