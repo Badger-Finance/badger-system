@@ -142,14 +142,13 @@ contract StrategyPickleMetaFarm is BaseStrategy {
         return true;
     }
 
-    function getProtectedTokens() external view override returns (address[] memory) {
+    function getProtectedTokens() external override view returns (address[] memory) {
         address[] memory protectedTokens = new address[](3);
         protectedTokens[0] = want;
         protectedTokens[1] = pickleJar;
         protectedTokens[2] = pickle;
         return protectedTokens;
     }
-
 
     /// ===== Permissioned Actions: Governance =====
 

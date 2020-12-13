@@ -129,8 +129,7 @@ abstract contract BaseStrategy is PausableUpgradeable, SettAccessControl {
     // ===== Permissioned Actions: Controller =====
 
     /// @notice Withdraw all funds, normally used when migrating strategies
-    function withdrawAll() external virtual whenNotPaused returns (uint256 balance)
-     {
+    function withdrawAll() external virtual whenNotPaused returns (uint256 balance) {
         _onlyController();
 
         _withdrawAll();
@@ -236,10 +235,7 @@ abstract contract BaseStrategy is PausableUpgradeable, SettAccessControl {
         IUniswapRouterV2(uniswap).swapExactTokensForTokens(balance, 0, path, address(this), now);
     }
 
-    function _swapEthIn(
-        uint256 balance,
-        address[] memory path
-    ) internal {
+    function _swapEthIn(uint256 balance, address[] memory path) internal {
         IUniswapRouterV2(uniswap).swapExactETHForTokens{value: balance}(0, path, address(this), now);
     }
 
@@ -260,16 +256,7 @@ abstract contract BaseStrategy is PausableUpgradeable, SettAccessControl {
         _safeApproveHelper(token0, uniswap, _token0Balance);
         _safeApproveHelper(token1, uniswap, _token1Balance);
 
-        IUniswapRouterV2(uniswap).addLiquidity(
-            token0,
-            token1,
-            _token0Balance,
-            _token1Balance,
-            0,
-            0,
-            address(this),
-            block.timestamp
-        );
+        IUniswapRouterV2(uniswap).addLiquidity(token0, token1, _token0Balance, _token1Balance, 0, 0, address(this), block.timestamp);
     }
 
     // ===== Abstract Functions: To be implemented by specific Strategies =====
@@ -284,7 +271,7 @@ abstract contract BaseStrategy is PausableUpgradeable, SettAccessControl {
     /// @notice Specify tokens used in yield process, should not be available to withdraw via withdrawOther()
     function _onlyNotProtectedTokens(address _asset) internal virtual;
 
-    function getProtectedTokens() external view virtual returns (address[] memory);
+    function getProtectedTokens() external virtual view returns (address[] memory);
 
     /// @dev Internal logic for strategy migration. Should exit positions as efficiently as possible
     function _withdrawAll() internal virtual;

@@ -66,7 +66,7 @@ contract StrategyBadgerRewards is BaseStrategy {
         return IStakingRewards(geyser).balanceOf(address(this));
     }
 
-    function getProtectedTokens() external view override returns (address[] memory) {
+    function getProtectedTokens() external override view returns (address[] memory) {
         address[] memory protectedTokens = new address[](2);
         protectedTokens[0] = want;
         protectedTokens[1] = geyser;

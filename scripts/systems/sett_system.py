@@ -35,12 +35,34 @@ def deploy_sett(badger, token, controller, name, symbol, deployer):
     )
 
 
-def deploy_strategy(badger, strategyName, controller, params, deployer):
-    governance = deployer
-    strategist = deployer
-    keeper = badger.keeper
-    guardian = badger.guardian
+def deploy_strategy(
+    badger,
+    strategyName,
+    controller,
+    params,
+    deployer,
+    governance=None,
+    strategist=None,
+    keeper=None,
+    guardian=None,
+):
+    if not governance:
+        governance = deployer
+
+    if not strategist:
+        strategist = deployer
+
+    if not keeper:
+        keeper = badger.keeper
+
+    if not guardian:
+        guardian = badger.guardian
+
     proxyAdmin = badger.devProxyAdmin
+
+    # print(
+    #     "Deploy Strategy", governance, strategist, controller, keeper, guardian, params
+    # )
 
     if strategyName == "StrategyCurveGaugeRenBtcCrv":
         return deploy_proxy(

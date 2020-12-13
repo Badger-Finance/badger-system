@@ -10,8 +10,9 @@ def Eth(value):
 
 
 def val(amount):
-    return "∫{:,.2f}".format(amount / 1e18)
+    return "{:,.2f}".format(amount / 1e18)
 
 
 def sec(amount):
     return "{:,.1f}".format(amount / 1e12)
+

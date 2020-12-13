@@ -43,7 +43,7 @@ contract BadgerGeyser is Initializable, AccessControlUpgradeable {
 
     event Staked(address indexed user, uint256 amount, uint256 total, uint256 indexed timestamp, uint256 indexed blockNumber, bytes data);
     event Unstaked(address indexed user, uint256 amount, uint256 total, uint256 indexed timestamp, uint256 indexed blockNumber, bytes data);
-    event UnlockScheduleSet(address token, uint256 initialLocked, uint256 durationSec, uint256 startTime, uint256 endTime);
+    event UnlockScheduleSet(address token, uint256 index, uint256 initialLocked, uint256 durationSec, uint256 startTime, uint256 endTime);
     event TokensLocked(
         address indexed token,
         uint256 amount,
@@ -182,10 +182,24 @@ contract BadgerGeyser is Initializable, AccessControlUpgradeable {
     }
 
     /// ===== Permissioned Actions: Admins =====
-    
+
     function addDistributionToken(address token) external {
         _onlyAdmin();
         distributionTokens.add(token);
+    }
+
+    function modifyTokenLock(
+        address token,
+        uint256 index,
+        uint256 amount,
+        uint256 durationSec,
+        uint256 startTime
+    ) external {
+        _onlyTokenLocker();
+        require(startTime >= globalStartTime, "BadgerGeyser: Schedule cannot start before global start time");
+        require(distributionTokens.contains(token), "BadgerGeyser: Token not approved by admin");
+
+        _modifyTokenLock(token, index, amount, durationSec, startTime);
     }
 
     /// ===== Permissioned Actions: Token Lockers =====
@@ -205,10 +219,10 @@ contract BadgerGeyser is Initializable, AccessControlUpgradeable {
         uint256 durationSec,
         uint256 startTime
     ) external {
-        _onlyTokenLocker();   
+        _onlyTokenLocker();
         require(startTime >= globalStartTime, "BadgerGeyser: Schedule cannot start before global start time");
         require(distributionTokens.contains(token), "BadgerGeyser: Token not approved by admin");
-     
+
         _signalTokenLock(token, amount, durationSec, startTime);
     }
 
@@ -267,7 +281,6 @@ contract BadgerGeyser is Initializable, AccessControlUpgradeable {
         uint256 durationSec,
         uint256 startTime
     ) internal {
-
         UnlockSchedule memory schedule;
         schedule.initialLocked = amount;
         schedule.endAtSec = startTime.add(durationSec);
@@ -276,5 +289,23 @@ contract BadgerGeyser is Initializable, AccessControlUpgradeable {
         unlockSchedules[token].push(schedule);
 
         emit TokensLocked(token, amount, durationSec, startTime, schedule.endAtSec, now, "");
+        emit UnlockScheduleSet(token, unlockSchedules[token].length, amount, durationSec, startTime, schedule.endAtSec);
+    }
+
+    function _modifyTokenLock(
+        address token,
+        uint256 index,
+        uint256 amount,
+        uint256 durationSec,
+        uint256 startTime
+    ) internal {
+        UnlockSchedule storage schedule = unlockSchedules[token][index];
+
+        schedule.initialLocked = amount;
+        schedule.endAtSec = startTime.add(durationSec);
+        schedule.durationSec = durationSec;
+        schedule.startTime = startTime;
+
+        emit UnlockScheduleSet(token, index, amount, durationSec, startTime, startTime.add(durationSec));
     }
 }

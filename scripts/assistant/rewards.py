@@ -29,12 +29,20 @@ def main():
 
     print("Claim Section", startBlock, claimAt)
 
+    test = False
+
+    print("TestMode", test)
+
     # If sufficient time has passed since last root proposal, propose a new root
     rootProposed = run_action(
-        badger, {"action": "rootUpdater", "startBlock": startBlock, "endBlock": claimAt}
+        badger,
+        {"action": "rootUpdater", "startBlock": startBlock, "endBlock": claimAt},
+        test,
     )
 
     # If there is a pending root, approve after independently verifying it
     rootApproved = run_action(
-        badger, {"action": "guardian", "startBlock": startBlock, "endBlock": claimAt}
+        badger,
+        {"action": "guardian", "startBlock": startBlock, "endBlock": claimAt},
+        test,
     )

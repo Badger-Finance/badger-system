@@ -1,8 +1,12 @@
+from tests.conftest import badger
+from time import time
+from helpers.utils import sec, val
 from helpers.time_utils import days
 from dotmap import DotMap
 from rich.console import Console
 from tabulate import tabulate
 from config.badger_config import badger_config
+from statistics import mean
 
 console = Console()
 
@@ -20,12 +24,12 @@ class LinearLogic:
     """
 
     def __init__(self, start, end):
-        assert start["x"] == 0
         self.start = Point(start["x"], start["y"])
         self.end = Point(end["x"], end["y"])
         print(start, end)
         self.slope = (end["y"] - start["y"]) / (end["x"] - start["x"])
         self.intercept = start["y"]
+        self.duration = end["x"] - start["x"]
 
     def y(self, x):
         start = self.start
@@ -40,19 +44,23 @@ class LinearLogic:
             return end.y
 
         else:
-            y = (slope * x) + intercept
+            sinceStart = x - self.start.x
+            y = (slope * sinceStart) + intercept
+        return y
 
     def integral(self, x1, x2):
         y1 = self.y(x1)
         y2 = self.y(x2)
 
         xDiff = x2 - x1
-        yDiff = y2 - y1
+        yAverage = mean([y2, y1])
 
-        console.log("multiplier at start time {} is {}".format(x1, y1))
-        console.log("multiplier at end time {} is {}".format(x2, y2))
+        # print("integral", x1, x2, xDiff, y1, y2, yAverage, xDiff * yAverage)
 
-        return (xDiff * yDiff) / 2
+        # console.log("multiplier at start time is {}".format(y1))
+        # console.log("multiplier at end time is {}".format(y2))
+
+        return xDiff * yAverage
 
 
 class BadgerGeyserMock:
@@ -68,7 +76,7 @@ class BadgerGeyserMock:
         self.totalShareSecondsInRange = 0
         self.logic = LinearLogic(
             {"x": 0, "y": badger_config.startMultiplier},
-            {"x": days(7 * 8), "y": badger_config.endMultiplier},
+            {"x": days(7 * 8), "y": badger_config.endMultiplier,},
         )
 
     # ===== Setters =====
@@ -103,22 +111,51 @@ class BadgerGeyserMock:
             "add_unlock_schedule for", str(token), parsedSchedule.toDict(),
         )
 
-    def get_distributed_for_token_at(self, token, endTime):
+    def get_distributed_for_token_at(self, token, endTime, read=False):
         """
         Get total distribution for token within range, across unlock schedules
         """
         totalToDistribute = 0
 
         unlockSchedules = self.unlockSchedules[token]
+        index = 0
         for schedule in unlockSchedules:
-            rangeDuration = endTime - schedule.startTime
-            toDistribute = min(
-                schedule.initialTokensLocked,
-                int(schedule.initialTokensLocked * rangeDuration // schedule.duration),
-            )
-            # TODO: May need to add af few % here
+
+            if endTime < schedule.startTime:
+                toDistribute = 0
+                rangeDuration = endTime - schedule.startTime
+            else:
+                rangeDuration = endTime - schedule.startTime
+                toDistribute = min(
+                    schedule.initialTokensLocked,
+                    int(
+                        schedule.initialTokensLocked
+                        * rangeDuration
+                        // schedule.duration
+                    ),
+                )
+            if read:
+                console.print(
+                    "\n[blue] == Schedule {} for {} == [/blue]".format(index, self.key)
+                )
+
+                console.log(
+                    "Distributed by: {} tokens for Schedule that starts at {}, out of {} total.".format(
+                        val(toDistribute),
+                        schedule.startTime,
+                        val(schedule.initialTokensLocked),
+                    )
+                )
+                console.log(
+                    "Duration covered is {}, or {}% of schedule duration.".format(
+                        rangeDuration, rangeDuration / schedule.duration
+                    )
+                )
+
+                console.log("\n")
 
             totalToDistribute += toDistribute
+            index += 1
         return totalToDistribute
 
     def calc_token_distributions_in_range(self, startTime, endTime):
@@ -126,8 +163,15 @@ class BadgerGeyserMock:
         for token in self.distributionTokens:
             tokenDistributions[token] = int(
                 (
-                    self.get_distributed_for_token_at(token, endTime)
+                    self.get_distributed_for_token_at(token, endTime, read=True)
                     - self.get_distributed_for_token_at(token, startTime)
+                )
+            )
+            console.log(
+                "We're distributing the amount released in the range for {}, {} of {} total".format(
+                    self.key,
+                    val(tokenDistributions[token]),
+                    val(self.get_distributed_for_token_at(token, startTime)),
                 )
             )
             self.totalDistributions[token] = tokenDistributions[token]
@@ -216,8 +260,7 @@ class BadgerGeyserMock:
             print("totalAmount ", totalAmount)
             print("self.totalDistributions ", self.totalDistributions[token])
             print("leftover", abs(self.totalDistributions[token] - totalAmount))
-            assert totalAmount <= self.totalDistributions[token]
-            assert abs(self.totalDistributions[token] - totalAmount) < 30000
+            assert abs(self.totalDistributions[token] - totalAmount) < 1e10
 
         return {
             "claims": userDistributions,
@@ -281,11 +324,66 @@ class BadgerGeyserMock:
         for user in self.users:
             self.process_share_seconds(user, self.endTime)
 
+    def caclulate_multiplier(self, stake, timestamp):
+        start = 0
+        end = timestamp - stake["stakedAt"]
+
+        mult0 = self.logic.y(start)
+        mult2 = self.logic.y(end)
+
+        return mean([mult0, mult2])
+
     def calculate_weighted_seconds(self, stake, lastUpdate, timestamp):
         """
         Get "weightedShareSeconds" in range
         """
-        return int(timestamp - lastUpdate)
+        # table = []
+
+        start = 0
+        previous = lastUpdate - stake["stakedAt"]
+        end = timestamp - stake["stakedAt"]
+
+        # print("startY", start, self.logic.y(start))
+        # print("lastUpdateY", previous, self.logic.y(previous))
+        # print("timestampY", end, self.logic.y(end))
+
+        integral = self.logic.integral(previous, end)
+        weighted = int(timestamp - lastUpdate)
+
+        mult0 = self.logic.y(start)
+        mult1 = self.logic.y(previous)
+        mult2 = self.logic.y(end)
+
+        # table.append(
+        #     [
+        #         stake["amount"],
+        #         stake["stakedAt"],
+        #         lastUpdate,
+        #         timestamp,
+        #         weighted,
+        #         integral,
+        #         mult0,
+        #         mult1,
+        #         mult2,
+        #     ]
+        # )
+        # print(
+        #     tabulate(
+        #         table,
+        #         headers=[
+        #             "amount",
+        #             "stakedAt",
+        #             "lastUpdate",
+        #             "timestamp",
+        #             "weighted",
+        #             "integral",
+        #             "mult0",
+        #             "mult1",
+        #             "mult2",
+        #         ],
+        #     )
+        # )
+        return int(integral)
 
     def process_share_seconds(self, user, timestamp):
         data = self.users[user]
@@ -309,12 +407,13 @@ class BadgerGeyserMock:
         toAddInRange = 0
 
         for stake in data.stakes:
+            stakeMultiplier = self.caclulate_multiplier(stake, timestamp)
             toAdd += stake["amount"] * self.calculate_weighted_seconds(
-                stake, timeSinceLastAction, timestamp
+                stake, lastUpdate, timestamp
             )
             if timestamp > self.startTime:
                 toAddInRange += stake["amount"] * self.calculate_weighted_seconds(
-                    stake, timeSinceLastActionRangeGated, timestamp
+                    stake, lastUpdateRangeGated, timestamp
                 )
         assert toAdd >= 0
 
@@ -343,7 +442,7 @@ class BadgerGeyserMock:
         Get the last time the specified user took an action
         """
         if not self.users[user].lastUpdate:
-            return 0
+            return badger_config.globalStartTime
         return self.users[user].lastUpdate
 
     def printState(self):

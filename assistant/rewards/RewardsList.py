@@ -2,6 +2,8 @@ from brownie import *
 from dotmap import DotMap
 from rich.console import Console
 from eth_utils.hexadecimal import encode_hex
+from eth_abi import decode_single, encode_single, encode_abi
+from eth_abi.packed import encode_abi_packed
 from tabulate import tabulate
 
 console = Console()
@@ -106,48 +108,74 @@ class RewardsList:
             "cycle": cycle,
             "index": index,
         }
+        intAmounts = []
         for tokenAddress, cumulativeAmount in userData.items():
             nodeEntry["tokens"].append(tokenAddress)
             nodeEntry["cumulativeAmounts"].append(str(cumulativeAmount))
+            intAmounts.append(int(cumulativeAmount))
 
-        # encoded = encode_hex(
-        #     encode_abi_packed(
-        #         ["uint", "address", "uint", "address[]", "uint[]"],
-        #         (
-        #             nodeEntry["index"],
-        #             nodeEntry["user"],
-        #             nodeEntry["cycle"],
-        #             nodeEntry["tokens"],
-        #             nodeEntry["cumulativeAmounts"],
-        #         ),
-        #     )
+        # print(
+        #     int(nodeEntry["index"]),
+        #     nodeEntry["user"],
+        #     int(nodeEntry["cycle"]),
+        #     nodeEntry["tokens"],
+        #     intAmounts,
         # )
 
-        encoder = ClaimEncoder.at("0x19be80e976cb397ae584d350153914ced7c1b1d2")
+        address = nodeEntry["tokens"][0]
+        # print(address, address[2:])
 
-        claim = encoder.encodeClaim(
-            nodeEntry["tokens"],
-            nodeEntry["cumulativeAmounts"],
-            nodeEntry["index"],
-            nodeEntry["cycle"],
-            nodeEntry["user"],
-        )[0]
+        bytearray.fromhex(address[2:])
 
-        local = encoder.encodeClaim.encode_input(
-            nodeEntry["tokens"],
-            nodeEntry["cumulativeAmounts"],
-            nodeEntry["index"],
-            nodeEntry["cycle"],
-            nodeEntry["user"],
+        encoded = encode_hex(
+            encode_abi_packed(
+                ["uint", "address", "uint", "address", "uint[]"],
+                (
+                    int(nodeEntry["index"]),
+                    nodeEntry["user"],
+                    int(nodeEntry["cycle"]),
+                    address,
+                    intAmounts,
+                ),
+            )
         )
 
-        console.log("claimcheck", claim, local)
+        surgeryIndex = 64 + 40 + 64 + 2
 
-        encoded = encode_hex(claim)
+        after = encoded[surgeryIndex:]
+        before = encoded[0:surgeryIndex]
+        before = before + "000000000000000000000000"
+
+        postSurgery = before + after
+        # print("post", postSurgery)
+
+        # encoder = ClaimEncoder.at("0x19be80e976cb397ae584d350153914ced7c1b1d2")
+
+        # claim = encoder.encodeClaim(
+        #     nodeEntry["tokens"],
+        #     nodeEntry["cumulativeAmounts"],
+        #     nodeEntry["index"],
+        #     nodeEntry["cycle"],
+        #     nodeEntry["user"],
+        # )[0]
+
+        # local = encoder.encodeClaim.encode_input(
+        #     nodeEntry["tokens"],
+        #     nodeEntry["cumulativeAmounts"],
+        #     nodeEntry["index"],
+        #     nodeEntry["cycle"],
+        #     nodeEntry["user"],
+        # )
+
+        # print("claim", claim)
+        # print("encoded", encoded)
+
+        # encoded = encode_hex(postSurgery)
+        # print("encoded", encoded)
 
         # console.log("nodeEntry", nodeEntry)
         # console.log("encoded", encoded)
-        return (nodeEntry, encoded)
+        return (nodeEntry, postSurgery)
 
     def to_merkle_format(self):
         """

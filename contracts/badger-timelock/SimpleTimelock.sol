@@ -7,6 +7,7 @@ import "deps/@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 
 contract SimpleTimelock is TokenTimelockUpgradeable {
     using SafeMathUpgradeable for uint256;
+
     function initialize(
         IERC20Upgradeable token,
         address beneficiary,

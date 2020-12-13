@@ -20,4 +20,4 @@ class StrategyBadgerLpMetaFarmResolver(StrategyCoreResolver):
 
     def get_strategy_destinations(self):
         strategy = self.manager.strategy
-        return {}
+        return {"stakingRewards": strategy.geyser()}

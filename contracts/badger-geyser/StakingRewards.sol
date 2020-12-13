@@ -119,12 +119,12 @@ contract StakingRewards is Initializable, AccessControlUpgradeable, PausableUpgr
 
     /* ========== RESTRICTED FUNCTIONS ========== */
 
-    function notifyRewardAmount(uint256 reward) external updateReward(address(0)) {
+    function notifyRewardAmount(uint256 startTimestamp, uint256 reward) external updateReward(address(0)) {
         _onlyAdmin();
-        if (block.timestamp >= periodFinish) {
+        if (startTimestamp >= periodFinish) {
             rewardRate = reward.div(rewardsDuration);
         } else {
-            uint256 remaining = periodFinish.sub(block.timestamp);
+            uint256 remaining = periodFinish.sub(startTimestamp);
             uint256 leftover = remaining.mul(rewardRate);
             rewardRate = reward.add(leftover).div(rewardsDuration);
         }
@@ -134,11 +134,11 @@ contract StakingRewards is Initializable, AccessControlUpgradeable, PausableUpgr
         // very high values of rewardRate in the earned and rewardsPerToken functions;
         // Reward + leftover must be less than 2^256 / 10^18 to avoid overflow.
         uint256 balance = rewardsToken.balanceOf(address(this));
-        emit Test(rewardRate, balance, reward, rewardsDuration);
+        emit Test(rewardRate, startTimestamp, balance, reward, rewardsDuration);
         require(rewardRate <= balance.div(rewardsDuration), "Provided reward too high");
 
-        lastUpdateTime = block.timestamp;
-        periodFinish = block.timestamp.add(rewardsDuration);
+        lastUpdateTime = startTimestamp;
+        periodFinish = startTimestamp.add(rewardsDuration);
         emit RewardAdded(reward);
     }
 
@@ -189,7 +189,7 @@ contract StakingRewards is Initializable, AccessControlUpgradeable, PausableUpgr
     }
 
     /* ========== EVENTS ========== */
-    event Test(uint256 rate, uint256 balance, uint256 reward, uint256 duration);
+    event Test(uint256 rate, uint256 start, uint256 balance, uint256 reward, uint256 duration);
 
     event RewardAdded(uint256 reward);
     event Staked(address indexed user, uint256 amount);

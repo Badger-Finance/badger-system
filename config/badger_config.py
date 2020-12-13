@@ -137,7 +137,7 @@ globalStartTime = 1607014800
 
 badger_config = DotMap(
     prod_json="deploy-final.json",
-    test_mode=True,
+    test_mode=False,
     startMultiplier=1,
     endMultiplier=3,
     multisig=multisig_config,

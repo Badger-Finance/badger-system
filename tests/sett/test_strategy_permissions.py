@@ -362,7 +362,7 @@ def test_sett_permissions(settId):
         chain.revert()
 
 
-@pytest.mark.skip()
+# @pytest.mark.skip()
 @pytest.mark.parametrize(
     "settId",
     [
@@ -395,5 +395,6 @@ def test_controller_permissions(settId):
     # revokeStrategy onlyGovernance
     # setRewards onlyGovernance
     # setSplit onlyGovernance
-    # etOneSplit onlyGovernance
+    # setOneSplit onlyGovernance
+
     assert True

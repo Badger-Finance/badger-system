@@ -1,6 +1,10 @@
 from enum import Enum
 
 from brownie import *
+from rich.console import Console
+from tabulate import tabulate
+
+console = Console()
 
 """
 Gnosis safe helpers
@@ -15,6 +19,57 @@ On test networks leveraging Ganache --unlock, take control of a Gnosis safe with
 class OPERATION(Enum):
     CREATE = 0
     CALL = 2
+
+
+class GnosisSafe:
+    def __init__(self, contract, testMode=True):
+        self.contract = contract
+        self.firstOwner = get_first_owner(contract)
+        self.transactions = {}
+        self.testMode = testMode
+
+        if testMode:
+            self.convert_to_test_mode()
+
+    # Must be on Ganache instance and Gnosis safe must be --unlocked
+
+    def convert_to_test_mode(self):
+        self.contract.changeThreshold(1, {"from": self.contract.address})
+        assert self.contract.getThreshold() == 1
+
+    def execute(self, params, signer=None):
+        return exec_direct(self.contract, params, signer)
+
+    def addTx(self, key, params):
+        self.transactions[key] = params
+
+    def executeTx(self, key):
+
+        self.printTx(key)
+
+        if self.testMode:
+            return exec_direct(self.contract, self.transactions[key])
+
+    def printTx(self, key):
+        params = self.transactions[key]
+
+        console.print("\n[red]== 🦡 Execute: {} 🦡 ==[/red]".format(key))
+        table = []
+
+        table.append([key, params["to"], params["data"]])
+
+        print(tabulate(table, headers=["key", "to", "data",], tablefmt="rst",))
+
+
+def multisig_success(tx):
+    if len(tx.events["ExecutionSuccess"]) > 0:
+        return True
+
+    if len(tx.events["ExecutionFailure"]) > 0:
+        return False
+
+    else:
+        return False
 
 
 # Must be on Ganache instance and Gnosis safe must be --unlocked
@@ -68,7 +123,11 @@ def exec_transaction(contract, params, signer):
     return tx
 
 
-def exec_direct(contract, params, signer):
+def get_first_owner(contract):
+    return contract.getOwners()[0]
+
+
+def exec_direct(contract, params, signer=None):
     signer = accounts.at(contract.getOwners()[0], force=True)
     params["signatures"] = generate_approve_hash_signature(signer)
     return exec_transaction(contract, params, signer)

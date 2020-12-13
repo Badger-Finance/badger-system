@@ -1,3 +1,4 @@
+from helpers.time_utils import days, hours
 from tabulate import tabulate
 from assistant.rewards.BadgerGeyserMock import BadgerGeyserMock
 from scripts.systems.badger_system import BadgerSystem
@@ -62,6 +63,31 @@ def sum_claims(claims):
     return total
 
 
+def diff_rewards(
+    badger: BadgerSystem, before_file, after_file,
+):
+    a = before_file["claims"]
+    b = after_file["claims"]
+
+    table = []
+    # Each users' cumulative claims must only increase
+    for user, claim in b.items():
+        afterClaim = int(b[user]["cumulativeAmounts"][0])
+        beforeClaim = 0
+        if user in a:
+            beforeClaim = int(a[user]["cumulativeAmounts"][0])
+        diff = afterClaim - beforeClaim
+
+        proportionGained = afterClaim / beforeClaim
+        assert proportionGained > 0.98
+        assert proportionGained < 1.25
+
+        table.append(
+            [user, val(beforeClaim), val(afterClaim), val(diff), proportionGained,]
+        )
+    print(tabulate(table, headers=["user", "a", "b", "diff", "% gained"],))
+
+
 def compare_rewards(
     badger: BadgerSystem,
     startBlock,
@@ -70,13 +96,10 @@ def compare_rewards(
     after_file,
     beforeContentHash,
 ):
-    # Get these from files based on past root
-    with open("rewards-1-" + "og" + ".json") as f:
-        ec_file = json.load(f)
-
     before = before_file["claims"]
     after = after_file["claims"]
-    ec = before_file["claims"]
+
+    print(startBlock, endBlock, beforeContentHash)
 
     metadata = after_file["metadata"]
 
@@ -107,15 +130,13 @@ def compare_rewards(
     print("duration: ", duration)
     print("expectedInRange: ", expectedInRange)
 
-    ec_total = 314999999999999981912064
-
     # Expected gains must match up with the distributions from various rewards programs
     expectedGains = getExpectedDistributionInRange(badger, startBlock, endBlock)
 
     # Total claims must only increase
     sum_before = sum_claims(before)
     sum_after = sum_claims(after)
-    sanitySum = Wei("600000 ether")
+    sanitySum = Wei("1100000 ether")
 
     table = []
     table.append(["block range", startBlock, endBlock])
@@ -139,9 +160,7 @@ def compare_rewards(
     table.append(
         ["expectedInRange", expectedInRange, val(expectedInRange),]
     )
-    table.append(
-        ["Geyser Dist", sum_after - ec_total, val(sum_after - ec_total),]
-    )
+    table.append(["Geyser Dist", sum_after, val(sum_after)])
     table.append(
         ["From last period", sum_after - sum_before, val(sum_after - sum_before),]
     )
@@ -158,63 +177,45 @@ def compare_rewards(
     for user, claim in after.items():
         afterClaim = int(after[user]["cumulativeAmounts"][0])
         beforeClaim = 0
-        ecClaim = 0
+
         if user in before:
             beforeClaim = int(before[user]["cumulativeAmounts"][0])
-        if user in ec:
-            ecClaim = int(ec[user]["cumulativeAmounts"][0])
         diff = afterClaim - beforeClaim
-
-        # print([user, val(beforeClaim), val(afterClaim), val(diff)])
-        epoch1 = beforeClaim - ecClaim
-        epoch2 = afterClaim - beforeClaim
 
         assert afterClaim >= beforeClaim
         assert diff >= 0
 
-        if epoch1 > 0:
-            proportionGained = epoch2 / epoch1
+        if beforeClaim == 0:
+            proportionGained = 1
+        elif diff > 0:
+            proportionGained = afterClaim / beforeClaim
         else:
             proportionGained = "+"
 
         if user in metadata:
             shareSeconds = metadata[user]["shareSeconds"]
-            shareSecondsInRange = metadata[user]["shareSecondsInRange"]
-            shareSecondsBefore = shareSeconds - shareSecondsInRange
-            proportionInRange = shareSecondsInRange / shareSeconds
+            # shareSecondsInRange = metadata[user]["shareSecondsInRange"]
+            # shareSecondsBefore = shareSeconds - shareSecondsInRange
+            # proportionInRange = shareSecondsInRange / shareSeconds
         else:
             shareSeconds = 0
-            shareSecondsInRange = 0
-            shareSecondsBefore = 0
-            proportionInRange = 0
+            # shareSecondsInRange = 0
+            # shareSecondsBefore = 0
+            # proportionInRange = 0
 
         table.append(
-            [
-                user,
-                val(ecClaim),
-                val(beforeClaim),
-                val(afterClaim),
-                val(diff),
-                proportionGained,
-                proportionInRange,
-                # sec(shareSecondsInRange),
-                # sec(shareSecondsBefore),
-            ]
+            [user, val(beforeClaim), val(afterClaim), val(diff), proportionGained,]
         )
-        assert beforeClaim >= ecClaim
         assert afterClaim >= beforeClaim
     # print(
     #     tabulate(
     #         table,
     #         headers=[
     #             "user",
-    #             "ec",
-    #             "epoch 1 gains",
-    #             "epoch 2 gains",
+    #             "before gains",
+    #             "after gains",
     #             "diff",
-    #             "% gained" "% in range",
-    #             # "shareSecondsInRange",
-    #             # "shareSecondsBefore",
+    #             "% gained"
     #         ],
     #     )
     # )
@@ -224,21 +225,19 @@ def push_rewards(badger: BadgerSystem, afterContentHash):
     with open("rewards-1-" + afterContentHash + ".json") as f:
         after_file = json.load(f)
 
-    keeper = badger.keeper
-
-    claims = after_file["claims"]
     upload("rewards-1-" + afterContentHash + ".json")
     badger.badgerTree.proposeRoot(
         after_file["merkleRoot"],
         afterContentHash,
         after_file["cycle"],
-        {"from": keeper},
+        {"from": badger.keeper},
     ),
+
     badger.badgerTree.approveRoot(
         after_file["merkleRoot"],
         afterContentHash,
         after_file["cycle"],
-        {"from": keeper},
+        {"from": badger.guardian},
     ),
 
 

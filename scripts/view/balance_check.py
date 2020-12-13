@@ -7,7 +7,7 @@ from helpers.utils import val
 
 
 def main():
-    fileName = badger_config.prod_file
+    fileName = badger_config.prod_json
     badger = connect_badger(fileName)
 
     token = badger.token
@@ -15,8 +15,18 @@ def main():
     table = []
     contracts = {}
     tokens = {}
+
+    for key, contract in badger.sett_system.controllers.items():
+        contracts["Controller " + key] = contract
+
     for key, contract in badger.sett_system.vaults.items():
         contracts["Sett " + key] = contract
+
+    for key, contract in badger.sett_system.strategies.items():
+        contracts["Strategy " + key] = contract
+
+    for key, contract in badger.sett_system.geysers.items():
+        contracts["Geyser " + key] = contract
 
     for key, contract in badger.sett_system.rewards.items():
         contracts["Rewards " + key] = contract
@@ -30,6 +40,7 @@ def main():
 
     tokens["badger"] = interface.IERC20(badger.token.address)
     tokens["farm"] = interface.IERC20(registry.harvest.farmToken)
+    tokens["keep"] = interface.IERC20("0x85eee30c52b0b379b046fb0f85f4f3dc3009afec")
 
     total = 0
 
@@ -48,7 +59,7 @@ def main():
 
     table.append(["total", val(total), "-"])
 
-    print(tabulate(table, headers=["contract", "badger", "farm"]))
+    print(tabulate(table, headers=["contract", "badger", "farm", "keep"]))
 
     # if vaults:
     #     print("poking these vaults:", vaults)

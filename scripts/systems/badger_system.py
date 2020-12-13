@@ -1,4 +1,5 @@
 import json
+import os
 from tests.helpers import create_uniswap_pair, distribute_from_whales
 from scripts.systems.uniswap_system import UniswapSystem, connect_uniswap
 from scripts.systems.gnosis_safe_system import connect_gnosis_safe
@@ -123,6 +124,7 @@ def strategy_name_to_artifact(name):
         "StrategyCurveGaugeTbtcCrv": StrategyCurveGaugeTbtcCrv,
         "StrategyCurveGaugeSbtcCrv": StrategyCurveGaugeSbtcCrv,
         "StrategyCurveGaugeRenBtcCrv": StrategyCurveGaugeRenBtcCrv,
+        "HoneypotMeme": HoneypotMeme,
     }
     return name_to_artifact[name]
 
@@ -133,7 +135,6 @@ def connect_badger(badger_deploy_file):
     with open(badger_deploy_file) as f:
         badger_deploy = json.load(f)
 
-    accounts.at(badger_deploy["deployer"], force=True)
     """
     Connect to existing badger deployment
     """
@@ -156,12 +157,6 @@ def connect_badger(badger_deploy_file):
 
     print("Connect Logic Contracts")
     badger.connect_logic(badger_deploy["logic"])
-
-    # Connect Accounts
-    print("Connect Logic Contracts")
-    badger.connect_guardian(badger_deploy["guardian"])
-    badger.connect_deployer(badger_deploy["deployer"])
-    badger.connect_keeper(badger_deploy["keeper"])
 
     # badger.connect_dev_multisig(badger_deploy["devMultisig"])
 
@@ -190,10 +185,23 @@ class BadgerSystem:
         self.contracts_static = []
         self.contracts_upgradeable = {}
 
-        if badger_config.test_mode:
+        if rpc.is_active():
+            print("RPC Active")
             self.deployer = accounts.at(deployer, force=True)
             self.keeper = accounts.at(keeper, force=True)
             self.guardian = accounts.at(guardian, force=True)
+        else:
+            print("RPC Inactive")
+            deployer_key = os.environ.get("DEPLOYER_PRIVATE_KEY")
+            keeper_key = os.environ.get("KEEPER_PRIVATE_KEY")
+            guardian_key = os.environ.get("GUARDIAN_PRIVATE_KEY")
+
+            print(deployer_key, keeper_key, guardian_key)
+
+            self.deployer = accounts.add(deployer_key)
+            self.keeper = accounts.add(keeper_key)
+            self.guardian = accounts.add(guardian_key)
+
         if deploy:
             self.devProxyAdmin = deploy_proxy_admin(deployer)
             self.daoProxyAdmin = deploy_proxy_admin(deployer)
@@ -453,11 +461,19 @@ class BadgerSystem:
         namePrefixOverride=False,
         namePrefix="",
         symbolPrefix="",
+        governance=None,
+        strategist=None,
+        keeper=None,
     ):
         deployer = self.deployer
         proxyAdmin = self.devProxyAdmin
-        governance = deployer
-        keeper = deployer
+
+        if not governance:
+            governance = deployer
+        if not strategist:
+            strategist = deployer
+        if not keeper:
+            keeper = deployer
 
         sett = deploy_proxy(
             "Sett",
@@ -477,14 +493,33 @@ class BadgerSystem:
         )
         self.sett_system.vaults[id] = sett
         self.track_contract_upgradeable(id + ".sett", sett)
-        print("tracked", sett)
         return sett
 
-    def deploy_strategy(self, id, strategyName, controller, params):
+    def deploy_strategy(
+        self,
+        id,
+        strategyName,
+        controller,
+        params,
+        governance=None,
+        strategist=None,
+        keeper=None,
+        guardian=None,
+    ):
         # TODO: Replace with prod permissions config
         deployer = self.deployer
 
-        strategy = deploy_strategy(self, strategyName, controller, params, deployer)
+        strategy = deploy_strategy(
+            self,
+            strategyName,
+            controller,
+            params,
+            deployer,
+            governance,
+            strategist,
+            keeper,
+            guardian,
+        )
 
         Artifact = strategy_name_to_artifact(strategyName)
 
@@ -494,7 +529,6 @@ class BadgerSystem:
         return strategy
 
     def deploy_geyser(self, stakingToken, id):
-        print(stakingToken)
         deployer = self.deployer
         geyser = deploy_geyser(self, stakingToken)
         self.geysers[id] = geyser
@@ -527,8 +561,6 @@ class BadgerSystem:
         want = strategy.want()
         vault_want = vault.token()
 
-        print(want, vault_want)
-
         assert vault_want == want
 
         controller.setVault(want, vault, {"from": deployer})
@@ -560,7 +592,6 @@ class BadgerSystem:
         deployer = self.deployer
         startTime = badger_config.geyserParams.badgerDistributionStart
         geyser = self.getGeyser(id)
-        print(self.rewardsEscrow.owner())
         self.rewardsEscrow.approveRecipient(geyser, {"from": deployer})
 
         self.rewardsEscrow.signalTokenLock(
@@ -688,7 +719,6 @@ class BadgerSystem:
             self.connect_sett(key, address)
 
         # Connect Strategies
-        print(sett_system["strategies"])
         for key, address in sett_system["strategies"].items():
             artifactName = sett_system["strategy_artifacts"][key]
             self.connect_strategy(key, address, artifactName)
@@ -737,7 +767,6 @@ class BadgerSystem:
 
     def connect_logic(self, logic):
         for name, address in logic.items():
-            print(name, address)
             Artifact = strategy_name_to_artifact(name)
             self.logic[name] = Artifact.at(address)
 
@@ -758,14 +787,14 @@ class BadgerSystem:
         self.sett_system.rewards[id] = pool
         self.track_contract_upgradeable(id + ".pool", pool)
 
-    def connect_guardian(self, address):
-        self.guardian = accounts.at(address)
+    # def connect_guardian(self, address):
+    #     self.guardian = accounts.at(address)
 
-    def connect_keeper(self, address):
-        self.keeper = accounts.at(address)
+    # def connect_keeper(self, address):
+    #     self.keeper = accounts.at(address)
 
-    def connect_deployer(self, address):
-        self.deployer = accounts.at(address)
+    # def connect_deployer(self, address):
+    #     self.deployer = accounts.at(address)
 
     def connect_uni_badger_wbtc_lp(self, address):
         self.pair = Contract.from_abi(
@@ -779,6 +808,27 @@ class BadgerSystem:
             "artifactName": artifactName,
         }
 
+    # ===== Connect =====
+    def get_keeper_account(self):
+        if rpc.is_active():
+            return accounts.at(self.keeper, force=True)
+        else:
+            priv = os.environ.get("KEEPER_PRIVATE_KEY")
+            return (
+                accounts.add(priv) if priv else accounts.load(input("keeper account: "))
+            )
+
+    def get_guardian_account(self):
+        if rpc.is_active():
+            return accounts.at(self.guardian, force=True)
+        else:
+            priv = os.environ.get("GUARDIAN_PRIVATE_KEY")
+            return (
+                accounts.add(priv)
+                if priv
+                else accounts.load(input("guardian account: "))
+            )
+
     # ===== Getters =====
 
     def getGeyser(self, id):
@@ -789,7 +839,6 @@ class BadgerSystem:
 
     def getControllerFor(self, id):
         controllerId = id.split(".", 1)[0]
-        print(controllerId)
         return self.sett_system.controllers[id]
 
     def getSett(self, id):

@@ -1,3 +1,5 @@
+from helpers.utils import val
+from tabulate import tabulate
 from helpers.sett.resolvers.StrategyCurveGaugeResolver import StrategyCurveGaugeResolver
 from helpers.sett.resolvers.StrategyBadgerLpMetaFarmResolver import (
     StrategyBadgerLpMetaFarmResolver,
@@ -77,7 +79,6 @@ class Snap:
 
 class SnapshotManager:
     def __init__(self, badger: BadgerSystem, key):
-        print("Create snapshot manager ", key)
         self.badger = badger
         self.key = key
         self.sett = badger.getSett(key)
@@ -101,12 +102,13 @@ class SnapshotManager:
         for key, dest in destinations.items():
             self.addEntity(key, dest)
 
-    def snap(self, trackedUsers):
+    def snap(self, trackedUsers=None):
         snapBlock = chain.height
         entities = self.entities
 
-        for key, user in trackedUsers.items():
-            entities[key] = user
+        if trackedUsers:
+            for key, user in trackedUsers.items():
+                entities[key] = user
 
         calls = []
         calls = self.resolver.add_balances_snap(calls, entities)
@@ -127,7 +129,6 @@ class SnapshotManager:
         self.entities[key] = entity
 
     def init_resolver(self, name):
-        console.log("init_resolver", name)
         if name == "StrategyHarvestMetaFarm":
             return StrategyHarvestMetaFarmResolver(self)
         if name == "StrategyBadgerRewards":
@@ -152,10 +153,10 @@ class SnapshotManager:
         user = overrides["from"].address
         trackedUsers = {"user": user}
         before = self.snap(trackedUsers)
-        self.sett.harvest(overrides)
+        self.strategy.harvest(overrides)
         after = self.snap(trackedUsers)
         if confirm:
-            self.resolver.confirm_harvest(before, after, {"user": user})
+            self.resolver.confirm_harvest(before, after)
 
     def settDeposit(self, amount, overrides, confirm=True):
         user = overrides["from"].address
@@ -212,3 +213,80 @@ class SnapshotManager:
             self.resolver.confirm_withdraw(
                 before, after, {"user": user, "amount": userBalance}
             )
+
+    def format(self, key, value):
+        if type(value) is int:
+            if (
+                "balance" in key
+                or key == "sett.available"
+                or key == "sett.ppfs"
+                or key == "sett.totalSupply"
+            ):
+                return val(value)
+        return value
+
+    def diff(self, a, b):
+        if type(a) is int and type(b) is int:
+            return b - a
+        else:
+            return "-"
+
+    def printCompare(self, before: Snap, after: Snap):
+        self.printPermissions()
+        table = []
+        console.print("[green]=== Status Report: {} Sett ===[/green]".format(self.key))
+
+        for key, item in before.data.items():
+
+            a = item
+            b = after.get(key)
+
+            table.append(
+                [
+                    key,
+                    self.format(key, a),
+                    self.format(key, b),
+                    self.format(key, self.diff(a, b)),
+                ]
+            )
+
+        print(tabulate(table, headers=["metric", "before", "after"], tablefmt="grid"))
+
+    def printPermissions(self):
+        # Accounts
+        table = []
+        console.print("[blue]=== Permissions: {} Sett ===[/blue]".format(self.key))
+
+        table.append(["sett.keeper", self.sett.keeper()])
+        table.append(["sett.governance", self.sett.governance()])
+        table.append(["sett.strategist", self.sett.strategist()])
+
+        table.append(["---------------", "--------------------"])
+
+        table.append(["strategy.keeper", self.strategy.keeper()])
+        table.append(["strategy.governance", self.strategy.governance()])
+        table.append(["strategy.strategist", self.strategy.strategist()])
+        table.append(["strategy.guardian", self.strategy.guardian()])
+
+        table.append(["---------------", "--------------------"])
+        print(tabulate(table, headers=["account", "value"]))
+
+    def printBasics(self, snap: Snap):
+        table = []
+        console.print("[green]=== Status Report: {} Sett ===[green]".format(self.key))
+
+        table.append(["sett.ppfs", snap.get("sett.ppfs")])
+        table.append(["strategy.want", snap.balances("want", "strategy")])
+
+        print(tabulate(table, headers=["metric", "value"]))
+
+    def printTable(self, snap: Snap):
+        # Numerical Data
+        table = []
+        console.print("[green]=== Status Report: {} Sett ===[green]".format(self.key))
+
+        for key, item in snap.data.items():
+            table.append([key, item])
+
+        table.append(["---------------", "--------------------"])
+        print(tabulate(table, headers=["metric", "value"]))

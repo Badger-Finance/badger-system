@@ -1,13 +1,20 @@
 import json
 
+from assistant.rewards.aws_utils import upload
 from assistant.rewards.calc_stakes import calc_geyser_stakes
 from assistant.rewards.merkle_tree import rewards_to_merkle_tree
 from assistant.rewards.rewards_checker import compare_rewards
 from assistant.rewards.RewardsList import RewardsList
 from brownie import *
+from brownie.network.gas.strategies import GasNowStrategy
+from config.rewards_config import rewards_config
+from eth_abi import decode_single, encode_single
+from eth_abi.packed import encode_abi_packed
 from helpers.time_utils import hours
 from rich.console import Console
-from assistant.rewards.aws_utils import upload
+from scripts.systems.badger_system import BadgerSystem
+
+gas_strategy = GasNowStrategy("fast")
 
 console = Console()
 
@@ -96,7 +103,7 @@ def combine_rewards(list, cycle, badgerTree):
     return totals
 
 
-def guardian(badger, startBlock, endBlock, test=True):
+def guardian(badger: BadgerSystem, startBlock, endBlock, test=False):
     """
     Guardian Role
     - Check if there is a new proposed root
@@ -176,7 +183,10 @@ def guardian(badger, startBlock, endBlock, test=True):
     if not test:
         upload(contentFileName),
         badgerTree.approveRoot(
-            merkleTree["merkleRoot"], rootHash, merkleTree["cycle"], {"from": guardian}
+            merkleTree["merkleRoot"],
+            rootHash,
+            merkleTree["cycle"],
+            {"from": guardian, "gas_price": gas_strategy},
         )
 
 
@@ -232,7 +242,7 @@ def fetch_current_rewards_tree(badger):
     return currentTree
 
 
-def rootUpdater(badger, startBlock, endBlock, test=True):
+def rootUpdater(badger, startBlock, endBlock, test=False):
     """
     Root Updater Role
     - Check how much time has passed since the last published update
@@ -254,17 +264,17 @@ def rootUpdater(badger, startBlock, endBlock, test=True):
     currentTime = chain.time()
 
     timeSinceLastupdate = currentTime - currentMerkleData["lastUpdateTime"]
-    if timeSinceLastupdate < hours(0):
+    if timeSinceLastupdate < rewards_config.rootUpdateInterval and not test:
         console.print(
             "[bold yellow]===== Result: Last Update too Recent =====[/bold yellow]"
         )
         return False
 
-    if badgerTree.hasPendingRoot():
-        console.print(
-            "[bold yellow]===== Result: Pending Root Since Last Update =====[/bold yellow]"
-        )
-        return False
+    # if badgerTree.hasPendingRoot():
+    #     console.print(
+    #         "[bold yellow]===== Result: Pending Root Since Last Update =====[/bold yellow]"
+    #     )
+    #     return False
     print("Geyser Rewards", startBlock, endBlock, nextCycle)
 
     geyserRewards = calc_geyser_rewards(badger, startBlock, endBlock, nextCycle)
@@ -313,7 +323,12 @@ def rootUpdater(badger, startBlock, endBlock, test=True):
     console.print("===== Root Updater Complete =====")
     if not test:
         upload(contentFileName)
-        badgerTree.proposeRoot(merkleTree["merkleRoot"], rootHash, merkleTree["cycle"])
+        badgerTree.proposeRoot(
+            merkleTree["merkleRoot"],
+            rootHash,
+            merkleTree["cycle"],
+            {"from": keeper, "gas_price": gas_strategy},
+        )
 
     return True
 
@@ -327,11 +342,11 @@ def watchdog(badger, endBlock):
     return False
 
 
-def run_action(badger, args):
+def run_action(badger, args, test):
     if args["action"] == "rootUpdater":
-        return rootUpdater(badger, args["startBlock"], args["endBlock"])
+        return rootUpdater(badger, args["startBlock"], args["endBlock"], test)
     if args["action"] == "guardian":
-        return guardian(badger, args["startBlock"], args["endBlock"])
+        return guardian(badger, args["startBlock"], args["endBlock"], test)
     if args["action"] == "watchdog":
         return watchdog(badger)
     return False

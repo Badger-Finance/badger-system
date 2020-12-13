@@ -3,44 +3,10 @@ from helpers.constants import *
 from multicall import Call, Multicall
 from helpers.sett.resolvers.StrategyCoreResolver import StrategyCoreResolver
 
-"""
-if name == "StrategyHarvestMetaFarm":
-        farm = interface.IERC20(strategy.farm())
-        harvestVault = interface.IHarvestVault(strategy.harvestVault())
-        vaultFarm = interface.IRewardPool(strategy.harvestVault())
-        metaFarm = interface.IRewardPool(strategy.harvestVault())
-        badgerTree = interface.IERC20(strategy.badgerTree())
-
-        result.contracts.harvestVault = harvestVault
-        result.contracts.farm = farm
-        result.contracts.vaultFarm = vaultFarm
-        result.contracts.metaFarm = metaFarm
-        result.contracts.badgerTree = badgerTree
-
-        result.strategy.farmBalance = farm.balanceOf(strategy)
-
-        result.strategy.harvestVault.stakedShares = harvestVault.balanceOf(strategy)
-        result.strategy.harvestVault.stakedSharesInFarm = vaultFarm.balanceOf(strategy)
-        result.strategy.harvestVault.pricePerFullShare = (
-            harvestVault.getPricePerFullShare()
-        )
-        result.strategy.metaFarm.stakedFarm = metaFarm.balanceOf(strategy)
-        result.badgerTree.farm = farm.balanceOf(badgerTree)
-    return result
-"""
-
 
 class StrategyHarvestMetaFarmResolver(StrategyCoreResolver):
     def confirm_harvest(self, before, after):
-        """
-        Harvest Should;
-        - Increase the balanceOf() underlying asset in the Strategy
-        - Reduce the amount of idle FARM to zero
-        - Reduce FARM in vaultFarm to zero
-        - Reduce FARM in metaFarm to zero
-        - Increase the ppfs on sett1
-        """
-
+        super().confirm_harvest(before, after)
         # Increase or constant in strategy want balance
         assert after.balances("want", "strategy") >= before.balances("want", "strategy")
         # No idle farm in strategy
@@ -57,10 +23,24 @@ class StrategyHarvestMetaFarmResolver(StrategyCoreResolver):
             "farm", "badgerTree"
         )
 
-        # Increase or constant in PPFS
+    def confirm_tend(self, before, after):
+        # Amount of underlying in vault should not decrease
+        assert after.balances("harvestVault", "strategy") >= after.balances(
+            "harvestVault", "strategy"
+        )
 
-    def confirm_tend(self):
-        assert True
+        # Amount of underlying staked in farm should not decrease
+        assert after.balances("vaultFarm", "strategy") >= after.balances(
+            "vaultFarm", "strategy"
+        )
+
+        # All FARM from underlying vault should be harvested
+        assert after.balances("vaultFarm.strategy.earned") == 0
+
+        # Amount of FARM in meta farm should increase
+        assert after.balances("metaFarm", "strategy") >= after.balances(
+            "metaFarm", "strategy"
+        )
 
     def get_strategy_destinations(self):
         strategy = self.manager.strategy

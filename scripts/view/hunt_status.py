@@ -5,7 +5,7 @@ from config.badger_config import badger_config
 
 
 def main():
-    badger = connect_badger(badger_config.prod_file)
+    badger = connect_badger(badger_config.prod_json)
 
     table = []
 

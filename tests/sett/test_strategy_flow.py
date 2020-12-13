@@ -8,19 +8,20 @@ from tests.conftest import badger_single_sett
 from tests.helpers import getTokenMetadata
 from tests.test_recorder import EventRecord, TestRecorder
 
+settsToRun = [
+    "native.badger",
+    "native.renCrv",
+    "native.sbtcCrv",
+    "native.tbtcCrv",
+    # "pickle.renCrv",
+    "harvest.renCrv",
+    "native.uniBadgerWbtc",
+]
 
-# @pytest.mark.skip()
+
+@pytest.mark.skip()
 @pytest.mark.parametrize(
-    "settId",
-    [
-        "native.badger",
-        "native.renCrv",
-        "native.sbtcCrv",
-        "native.tbtcCrv",
-        # "pickle.renCrv",
-        "harvest.renCrv",
-        "native.uniBadgerWbtc",
-    ],
+    "settId", settsToRun,
 )
 def test_deposit_withdraw_single_user_flow(settId):
     badger = badger_single_sett(settId)
@@ -28,6 +29,9 @@ def test_deposit_withdraw_single_user_flow(settId):
     sett = badger.getSett(settId)
     strategy = badger.getStrategy(settId)
     want = badger.getStrategyWant(settId)
+    keeper = accounts.at(sett.keeper(), force=True)
+
+    print("keeper", keeper)
 
     snap = SnapshotManager(badger, settId)
 
@@ -50,9 +54,7 @@ def test_deposit_withdraw_single_user_flow(settId):
     max = sett.max()
     remain = max - min
 
-    assert sett.keeper() == deployer
-
-    snap.settEarn({"from": deployer})
+    snap.settEarn({"from": keeper})
 
     chain.sleep(15)
     chain.mine(1)
@@ -64,19 +66,12 @@ def test_deposit_withdraw_single_user_flow(settId):
 
     snap.settWithdrawAll({"from": deployer})
 
+    assert False
 
-@pytest.mark.skip()
+
+# @pytest.mark.skip()
 @pytest.mark.parametrize(
-    "settId",
-    [
-        "native.renCrv",
-        "native.badger",
-        "native.sbtcCrv",
-        "native.tbtcCrv",
-        # "pickle.renCrv",
-        "harvest.renCrv",
-        "native.uniBadgerWbtc",
-    ],
+    "settId", settsToRun,
 )
 def test_single_user_harvest_flow(settId):
     suiteName = "test_single_user_harvest_flow" + ": " + settId
@@ -88,6 +83,8 @@ def test_single_user_harvest_flow(settId):
     strategy = badger.getStrategy(settId)
     want = badger.getStrategyWant(settId)
 
+    keeper = accounts.at(strategy.keeper(), force=True)
+
     snap = SnapshotManager(badger, settId)
 
     deployer = badger.deployer
@@ -97,7 +94,7 @@ def test_single_user_harvest_flow(settId):
 
     startingBalance = want.balanceOf(deployer)
 
-    depositAmount = Wei("1 ether")
+    depositAmount = startingBalance // 2
     assert startingBalance >= depositAmount
 
     # Deposit
@@ -105,19 +102,19 @@ def test_single_user_harvest_flow(settId):
     snap.settDeposit(depositAmount, {"from": deployer})
 
     # Earn
-    snap.settEarn(depositAmount, {"from": deployer})
+    snap.settEarn({"from": keeper})
 
     if tendable:
         with brownie.reverts("onlyAuthorizedActors"):
             strategy.tend({"from": randomUser})
 
-        snap.settTend({"from": deployer})
+        snap.settTend({"from": keeper})
 
     chain.sleep(days(0.5))
     chain.mine()
 
     if tendable:
-        snap.settTend({"from": deployer})
+        snap.settTend({"from": keeper})
 
     chain.sleep(days(1))
     chain.mine()
@@ -125,38 +122,24 @@ def test_single_user_harvest_flow(settId):
     with brownie.reverts("onlyAuthorizedActors"):
         strategy.harvest({"from": randomUser})
 
-    snap.settHarvest({"from": deployer})
+    snap.settHarvest({"from": keeper})
 
     chain.sleep(days(1))
     chain.mine()
 
     if tendable:
-        snap.settTend({"from": deployer})
+        snap.settTend({"from": keeper})
 
     chain.sleep(days(3))
     chain.mine()
 
-    snap.settHarvest({"from": deployer})
+    snap.settHarvest({"from": keeper})
 
     snap.settWithdrawAll({"from": deployer})
 
-    endingBalance = want.balanceOf(deployer)
-    assert endingBalance > startingBalance
 
-
-@pytest.mark.skip()
-@pytest.mark.parametrize(
-    "settId",
-    [
-        "native.renCrv",
-        "native.badger",
-        "native.sbtcCrv",
-        "native.tbtcCrv",
-        # "pickle.renCrv",
-        "harvest.renCrv",
-        "native.uniBadgerWbtc",
-    ],
-)
+# @pytest.mark.skip()
+@pytest.mark.parametrize("settId", settsToRun)
 def test_migrate_single_user(settId):
     badger = badger_single_sett(settId)
     controller = badger.getController(settId)
@@ -164,23 +147,25 @@ def test_migrate_single_user(settId):
     strategy = badger.getStrategy(settId)
     want = badger.getStrategyWant(settId)
 
+    strategist = accounts.at(strategy.strategist(), force=True)
+
     deployer = badger.deployer
     randomUser = accounts[6]
 
-    startingBalance = want.balanceOf(deployer)
+    snap = SnapshotManager(badger, settId)
 
-    depositAmount = Wei("1 ether")
+    startingBalance = want.balanceOf(deployer)
+    depositAmount = startingBalance // 2
     assert startingBalance >= depositAmount
 
     # Deposit
     want.approve(sett, MaxUint256, {"from": deployer})
-    sett.deposit(depositAmount, {"from": deployer})
-    after = sett_snapshot(sett, strategy, deployer)
+    snap.settDeposit(depositAmount, {"from": deployer})
 
     chain.sleep(15)
     chain.mine()
 
-    sett.earn({"from": deployer})
+    sett.earn({"from": strategist})
 
     chain.snapshot()
 
@@ -254,18 +239,7 @@ def test_migrate_single_user(settId):
 
 
 @pytest.mark.skip()
-@pytest.mark.parametrize(
-    "settId",
-    [
-        "native.renCrv",
-        "native.badger",
-        "native.sbtcCrv",
-        "native.tbtcCrv",
-        # "pickle.renCrv",
-        "harvest.renCrv",
-        "native.uniBadgerWbtc",
-    ],
-)
+@pytest.mark.parametrize("settId", settsToRun)
 def test_withdraw_other(settId):
     """
     - Controller should be able to withdraw other tokens
@@ -333,18 +307,7 @@ def test_withdraw_other(settId):
 
 
 @pytest.mark.skip()
-@pytest.mark.parametrize(
-    "settId",
-    [
-        "native.renCrv",
-        "native.badger",
-        "native.sbtcCrv",
-        "native.tbtcCrv",
-        # "pickle.renCrv",
-        "harvest.renCrv",
-        "native.uniBadgerWbtc",
-    ],
-)
+@pytest.mark.parametrize("settId", settsToRun)
 def test_single_user_harvest_flow_remove_fees(settId):
     suiteName = "test_single_user_harvest_flow_remove_fees" + ": " + settId
     testRecorder = TestRecorder(suiteName)
