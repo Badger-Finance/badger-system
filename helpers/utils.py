@@ -15,4 +15,3 @@ def val(amount):
 
 def sec(amount):
     return "{:,.1f}".format(amount / 1e12)
-

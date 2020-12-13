@@ -92,6 +92,7 @@ def badger_single_sett(settId):
         ).deploy()
 
 
+
 @pytest.fixture(scope="function")
 def badger_hunt_unit():
     deployer = accounts[0]

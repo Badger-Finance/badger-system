@@ -529,6 +529,7 @@ class BadgerSystem:
         return strategy
 
     def deploy_geyser(self, stakingToken, id):
+        print(stakingToken)
         deployer = self.deployer
         geyser = deploy_geyser(self, stakingToken)
         self.geysers[id] = geyser
@@ -560,6 +561,8 @@ class BadgerSystem:
 
         want = strategy.want()
         vault_want = vault.token()
+
+        print(want, vault_want)
 
         assert vault_want == want
 
@@ -719,6 +722,7 @@ class BadgerSystem:
             self.connect_sett(key, address)
 
         # Connect Strategies
+        print(sett_system["strategies"])
         for key, address in sett_system["strategies"].items():
             artifactName = sett_system["strategy_artifacts"][key]
             self.connect_strategy(key, address, artifactName)
