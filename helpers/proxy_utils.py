@@ -47,5 +47,6 @@ def deploy_proxy(contractName, logicAbi, logic, proxyAdmin, initializer, deploye
 
     tx = deployer.transfer(data=deploy_txn["data"])
 
+    print("Deployng contract:", contractName, "address:", tx.contract_address)
     return Contract.from_abi(contractName, tx.contract_address, logicAbi)
 

@@ -219,7 +219,7 @@ class SnapshotManager:
             if (
                 "balance" in key
                 or key == "sett.available"
-                or key == "sett.ppfs"
+                or key == "sett.pricePerFullShare"
                 or key == "sett.totalSupply"
             ):
                 return val(value)
@@ -275,7 +275,7 @@ class SnapshotManager:
         table = []
         console.print("[green]=== Status Report: {} Sett ===[green]".format(self.key))
 
-        table.append(["sett.ppfs", snap.get("sett.ppfs")])
+        table.append(["sett.pricePerFullShare", snap.get("sett.pricePerFullShare")])
         table.append(["strategy.want", snap.balances("want", "strategy")])
 
         print(tabulate(table, headers=["metric", "value"]))
