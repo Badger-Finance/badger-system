@@ -3,6 +3,9 @@ from dotmap import DotMap
 from tabulate import tabulate
 
 from helpers.registry import whale_registry
+from rich.console import Console
+
+console = Console()
 
 
 def get_token_balances(accounts, tokens):
@@ -12,12 +15,17 @@ def get_token_balances(accounts, tokens):
             balances.token.account = token.balanceOf(account)
     return balances
 
+
 def distribute_from_whales(badger, recipient):
 
-    print(len(whale_registry.items()))
+    console.print(
+        "[gray]Transferring assets from whales for {} assets...[/gray]".format(
+            len(whale_registry.items())
+        )
+    )
     for key, whale in whale_registry.items():
         if key != "_pytestfixturefunction":
-            print("transferring from whale", key, whale.toDict())
+            console.print(" transferring from {} whale {}".format(key, whale.toDict()))
             forceEther = ForceEther.deploy({"from": recipient})
             recipient.transfer(forceEther, Wei("1 ether"))
             forceEther.forceSend(whale.whale, {"from": recipient})
@@ -28,11 +36,20 @@ def distribute_from_whales(badger, recipient):
                 )
 
 
+def distribute_test_ether(recipient, amount):
+    """
+    On test environments, transfer ETH from default ganache account to specified account
+    """
+    assert accounts[0].balance() >= amount
+    accounts[0].transfer(recipient, amount)
+
+
 def getTokenMetadata(address):
     token = interface.IERC20(address)
     name = token.name()
     symbol = token.symbol()
     return (name, symbol, address)
+
 
 def distribute_meme_nfts(badger, user):
     honeypot_params = DotMap(
@@ -44,10 +61,10 @@ def distribute_meme_nfts(badger, user):
     )
 
     memeLtd = interface.IMemeLtd(honeypot_params.meme)
-
     badgerCollection = accounts.at(honeypot_params.badgerCollection, force=True)
 
     for index in honeypot_params.nftIndicies:
+        console.print("Minting MEME NFT {} for {}...".format(index, user))
         memeLtd.mint(user, index, 1, "0x", {"from": badgerCollection})
 
     for index in honeypot_params.nftIndicies:

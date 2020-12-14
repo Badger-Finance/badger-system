@@ -1,26 +1,23 @@
 import json
-import os
-from tests.helpers import create_uniswap_pair, distribute_from_whales
-from scripts.systems.uniswap_system import UniswapSystem, connect_uniswap
+import decouple
+
+from scripts.systems.uniswap_system import UniswapSystem
 from scripts.systems.gnosis_safe_system import connect_gnosis_safe
-from helpers.time_utils import days
 from helpers.proxy_utils import deploy_proxy, deploy_proxy_admin
 from brownie import *
-from helpers.constants import AddressZero, EmptyBytes32
 from helpers.registry import registry
 from dotmap import DotMap
 from config.badger_config import (
     badger_config,
     sett_config,
-    badger_total_supply,
-    dao_config,
 )
 from scripts.systems.sett_system import (
     deploy_controller,
-    deploy_sett,
-    deploy_sett_system,
     deploy_strategy,
 )
+
+from rich.console import Console
+console = Console()
 
 
 def deploy_geyser(badger, stakingToken):
@@ -131,13 +128,14 @@ def strategy_name_to_artifact(name):
 
 def connect_badger(badger_deploy_file):
     badger_deploy = {}
-    print("Connecting to deploy at " + badger_deploy_file)
+    console.print("[grey]Connecting to Existing Badger 🦡 System at {}...[/grey]".format(badger_deploy_file))
     with open(badger_deploy_file) as f:
         badger_deploy = json.load(f)
 
     """
     Connect to existing badger deployment
     """
+    
     badger = BadgerSystem(
         badger_config,
         None,
@@ -155,16 +153,12 @@ def connect_badger(badger_deploy_file):
         badger_deploy["devProxyAdmin"], badger_deploy["daoProxyAdmin"]
     )
 
-    print("Connect Logic Contracts")
     badger.connect_logic(badger_deploy["logic"])
 
     # badger.connect_dev_multisig(badger_deploy["devMultisig"])
-
-    print("Connect Uniswap LP Tokens")
     badger.connect_uni_badger_wbtc_lp(badger_deploy["uniBadgerWbtcLp"])
 
     # Connect Vesting / Rewards Infrastructure
-    print("Connect Rewards Infrastructure")
     badger.connect_team_vesting(badger_deploy["teamVesting"])
     badger.connect_badger_hunt(badger_deploy["badgerHunt"])
     badger.connect_badger_tree(badger_deploy["badgerTree"])
@@ -174,7 +168,6 @@ def connect_badger(badger_deploy_file):
     badger.connect_dao_badger_timelock(badger_deploy["daoBadgerTimelock"])
 
     # Connect Sett
-    print("Connect Sett")
     badger.connect_sett_system(badger_deploy["sett_system"], badger_deploy["geysers"])
 
     return badger
@@ -194,9 +187,9 @@ class BadgerSystem:
             self.guardian = accounts.at(guardian, force=True)
         else:
             print("RPC Inactive")
-            deployer_key = os.environ.get("DEPLOYER_PRIVATE_KEY")
-            keeper_key = os.environ.get("KEEPER_PRIVATE_KEY")
-            guardian_key = os.environ.get("GUARDIAN_PRIVATE_KEY")
+            deployer_key = decouple.config("DEPLOYER_PRIVATE_KEY")
+            keeper_key = decouple.config("KEEPER_PRIVATE_KEY")
+            guardian_key = decouple.config("GUARDIAN_PRIVATE_KEY")
 
             print(deployer_key, keeper_key, guardian_key)
 
@@ -235,7 +228,6 @@ class BadgerSystem:
 
         self.globalStartTime = badger_config.globalStartTime
         self.globalStartBlock = badger_config.globalStartBlock
-        print("globalStartTime", self.globalStartTime)
 
     def track_contract_static(self, contract):
         self.contracts_static.append(contract)
@@ -724,7 +716,6 @@ class BadgerSystem:
             self.connect_sett(key, address)
 
         # Connect Strategies
-        print(sett_system["strategies"])
         for key, address in sett_system["strategies"].items():
             artifactName = sett_system["strategy_artifacts"][key]
             self.connect_strategy(key, address, artifactName)
@@ -772,7 +763,7 @@ class BadgerSystem:
         self.track_contract_upgradeable("badgerHunt", self.badgerHunt)
 
     def connect_honeypot_meme(self, address):
-        self.honeypotMeme = HoneypotMemes.at(address)
+        self.honeypotMeme = HoneypotMeme.at(address)
         self.track_contract_upgradeable("rewardsEscrow", self.rewardsEscrow)
 
     def connect_community_pool(self, address):
@@ -827,7 +818,7 @@ class BadgerSystem:
         if rpc.is_active():
             return accounts.at(self.keeper, force=True)
         else:
-            priv = os.environ.get("KEEPER_PRIVATE_KEY")
+            priv = decouple.config("KEEPER_PRIVATE_KEY")
             return (
                 accounts.add(priv) if priv else accounts.load(input("keeper account: "))
             )
@@ -836,7 +827,7 @@ class BadgerSystem:
         if rpc.is_active():
             return accounts.at(self.guardian, force=True)
         else:
-            priv = os.environ.get("GUARDIAN_PRIVATE_KEY")
+            priv = decouple.config("GUARDIAN_PRIVATE_KEY")
             return (
                 accounts.add(priv)
                 if priv
