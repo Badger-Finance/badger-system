@@ -18,6 +18,7 @@ run-testnet.sh
 keeper.sh
 rewards.sh
 
+rewards_output.log
 rewards_output_test.log
 rewards-*.json
 

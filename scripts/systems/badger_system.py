@@ -169,6 +169,8 @@ def connect_badger(badger_deploy_file):
     badger.connect_badger_hunt(badger_deploy["badgerHunt"])
     badger.connect_badger_tree(badger_deploy["badgerTree"])
     badger.connect_rewards_escrow(badger_deploy["rewardsEscrow"])
+    badger.connect_honeypot_meme(badger_deploy["honeypotMeme"])
+    badger.connect_community_pool(badger_deploy["communityPool"])
     badger.connect_dao_badger_timelock(badger_deploy["daoBadgerTimelock"])
 
     # Connect Sett
@@ -768,6 +770,14 @@ class BadgerSystem:
     def connect_badger_hunt(self, address):
         self.badgerHunt = BadgerHunt.at(address)
         self.track_contract_upgradeable("badgerHunt", self.badgerHunt)
+
+    def connect_honeypot_meme(self, address):
+        self.honeypotMeme = HoneypotMemes.at(address)
+        self.track_contract_upgradeable("rewardsEscrow", self.rewardsEscrow)
+
+    def connect_community_pool(self, address):
+        self.communityPool = RewardsEscrow.at(address)
+        self.track_contract_upgradeable("rewardsEscrow", self.rewardsEscrow)
 
     def connect_logic(self, logic):
         for name, address in logic.items():

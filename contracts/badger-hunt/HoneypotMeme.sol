@@ -24,7 +24,7 @@ contract HoneypotMeme is Initializable {
         IERC20Upgradeable token_,
         uint256 honeypot_,
         uint256[] memory nftIndicies_
-    ) public virtual {
+    ) public initializer {
         memeLtd = IMemeLtd(memeLtdAddress);
         token = token_;
         honeypot = honeypot_;
