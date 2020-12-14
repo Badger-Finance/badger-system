@@ -29,6 +29,7 @@ def main():
     distribute_test_ether(user, Wei("10 ether"))
     distribute_from_whales(badger, user)
 
+    console.print("[green]=== ✅ Test ENV Setup Complete ✅ ===[/green]")
     # Keep ganache open until closed
     time.sleep(days(365))
         

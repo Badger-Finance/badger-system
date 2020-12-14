@@ -42,6 +42,13 @@ brownie test
 brownie test --coverage --gas
 ```
 
+### Local Instance
+Run a local ganache instance connected to badger contracts, with all Sett-related assets distributed to a test account specified in the TEST_ACCOUNT env variable. Assumes the default network is mainnet-fork in the brownie config. Ganache will continue to run until the process is closed.
+
+```bash
+brownie run scripts/local_instance.py
+```
+
 ### Documentation
 
 You can read more about Badger at our [GitBook](https://app.gitbook.com/@badger-finance/s/badger-finance/).
