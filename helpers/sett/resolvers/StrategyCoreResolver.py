@@ -2,6 +2,7 @@ from helpers.utils import approx, val
 from brownie import *
 from helpers.constants import *
 from helpers.multicall import Call, as_wei, func
+from decimal import Decimal
 
 
 class StrategyCoreResolver:
@@ -144,7 +145,17 @@ class StrategyCoreResolver:
 
         # Want in the strategy should be decreased, if idle in sett is insufficient to cover withdrawal
         if params["amount"] > before.balances("want", "sett"):
-            expectedWithdraw = params["amount"] - before.balances("want", "sett")
+            # Adjust amount based on total balance x total supply
+            # Division in python is not accurate, use Decimal package to ensure division is consistent w/ division inside of EVM
+            expectedWithdraw = Decimal(params["amount"] * before.get("sett.balance")) / Decimal(before.get("sett.totalSupply"))
+            # Withdraw from idle in sett first
+            expectedWithdraw -= before.balances("want", "sett")
+            # First we attempt to withdraw from idle want in strategy
+            if expectedWithdraw > before.balances("want", "strategy"):
+                # If insufficient, we then attempt to withdraw from activities (balance of pool)
+                # Just ensure that we have enough in the pool balance to satisfy the request
+                assert expectedWithdraw - before.balances("want", "strategy") <= before.get("strategy.balanceOfPool")
+
             assert approx(
                 after.get("strategy.balanceOf"),
                 before.get("strategy.balanceOf") - expectedWithdraw,
