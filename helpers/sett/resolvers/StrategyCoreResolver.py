@@ -41,7 +41,7 @@ class StrategyCoreResolver:
         )
         calls.append(
             Call(
-                sett.address, [func.sett.getPricePerFullShare], [["sett.ppfs", as_wei]]
+                sett.address, [func.sett.getPricePerFullShare], [["sett.pricePerFullShare", as_wei]]
             )
         )
         calls.append(
@@ -118,7 +118,7 @@ class StrategyCoreResolver:
         assert after.get("strategy.balanceOf") > before.get("strategy.balanceOf")
         assert after.balances("want", "user") == before.balances("want", "user")
 
-    def confirm_withdraw(self, before, after, params, tx):
+    def confirm_withdraw(self, before, after, params):
         """
         Withdraw Should;
         - Decrease the totalSupply() of Sett tokens
@@ -127,7 +127,7 @@ class StrategyCoreResolver:
         - Decrease the balance() tracked for want in the Strategy
         - Decrease the available() if it is not zero
         """
-        ppfs = before.get("sett.ppfs")
+        ppfs = before.get("sett.pricePerFullShare")
 
         # Decrease the totalSupply of Sett tokens
         assert after.get("sett.totalSupply") < before.get("sett.totalSupply")
@@ -163,8 +163,6 @@ class StrategyCoreResolver:
                 "want", "governanceRewards"
             )
 
-        tx
-
     def confirm_deposit(self, before, after, params):
         """
         Deposit Should;
@@ -174,7 +172,7 @@ class StrategyCoreResolver:
         - Decrease the balanceOf() want of the user by depositAmountt
         """
 
-        ppfs = before.get("sett.ppfs")
+        ppfs = before.get("sett.pricePerFullShare")
 
         # Increase the totalSupply() of Sett tokens
         assert (
@@ -211,7 +209,7 @@ class StrategyCoreResolver:
     # ===== Strategies must implement =====
 
     def confirm_harvest(self, before, after):
-        valueGained = after.get("sett.ppfs") > before.get("sett.ppfs")
+        valueGained = after.get("sett.pricePerFullShare") > before.get("sett.pricePerFullShare")
 
         # Strategist should earn if fee is enabled and value was generated
         if before.get("strategy.performanceFeeStrategist") > 0 and valueGained:

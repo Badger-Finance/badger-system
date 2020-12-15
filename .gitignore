@@ -23,3 +23,6 @@ rewards_output_test.log
 rewards-*.json
 
 deploy-1337final.json
+
+# vim swap files
+*.swp
