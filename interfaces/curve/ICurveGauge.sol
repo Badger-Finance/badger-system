@@ -22,10 +22,4 @@ interface ICurveGauge {
 
     function integrate_fraction(address arg0) external view returns (uint256);
 
-    // Add functions for reward tokens
-
-    function rewarded_token() external view returns (address);
-
-    function rewards_for(address arg0) external view returns (uint256);
-
 }

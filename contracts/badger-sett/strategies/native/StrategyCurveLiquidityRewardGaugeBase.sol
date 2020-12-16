@@ -10,6 +10,7 @@ import "deps/@openzeppelin/contracts-upgradeable/token/ERC20/SafeERC20Upgradeabl
 
 import "interfaces/curve/ICurveFi.sol";
 import "interfaces/curve/ICurveGauge.sol";
+import "interfaces/curve/ICurveLiquidityRewardGauge.sol";
 import "interfaces/uniswap/IUniswapRouterV2.sol";
 
 import "interfaces/badger/IController.sol";
@@ -74,17 +75,12 @@ contract StrategyCurveGaugeBase is BaseStrategy {
         mintr = _wantConfig[2];
         curveSwap = _wantConfig[3];
         lpComponent = _wantConfig[4];
-        // Add a check to see if the constructor includes an LP incentive
-        if (_wantConfig.length > 5) {
-            lpIncentive = _wantConfig[5];
-        } else {
-            lpIncentive = address(0);
-        }
 
         performanceFeeGovernance = _feeConfig[0];
         performanceFeeStrategist = _feeConfig[1];
         withdrawalFee = _feeConfig[2];
         keepCRV = _feeConfig[3]; // 1000
+        lpIncentive = ICurveLiquidityRewardGauge(gauge).rewarded_token(); //  If there is a reward token, assign it or address(0)
 
         IERC20Upgradeable(want).safeApprove(gauge, type(uint256).max);
     }
@@ -92,7 +88,7 @@ contract StrategyCurveGaugeBase is BaseStrategy {
     /// ===== View Functions =====
 
     function getName() external override pure returns (string memory) {
-        return "StrategyCurveGauge";
+        return "StrategyCurveGaugev2";
     }
 
     function balanceOfPool() public override view returns (uint256) {
@@ -173,7 +169,7 @@ contract StrategyCurveGaugeBase is BaseStrategy {
         }
 
         // If there is an LP reward token, and there are rewards to claim go get em.
-        if (lpReward != address(0) && ICurveGauge(gauge).rewards_for(address(this)) > 0) {
+        if (lpReward != address(0) && ICurveLiquidityRewardGauge(gauge).rewards_for(address(this)) > 0) {
             ICurveGauge(gauge).claim_rewards();
             harvestData.lpRewardHarvested = IERC20Upgradeable(lpReward).balanceOf(address(this));
             _swap(lpReward, harvestData.lpRewardHarvested, path);
