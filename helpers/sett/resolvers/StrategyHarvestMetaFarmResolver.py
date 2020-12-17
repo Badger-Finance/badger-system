@@ -1,6 +1,7 @@
 from brownie import *
+
 from helpers.constants import *
-from multicall import Call, Multicall
+from helpers.multicall import Call, func, as_wei
 from helpers.sett.resolvers.StrategyCoreResolver import StrategyCoreResolver
 
 
@@ -62,10 +63,47 @@ class StrategyHarvestMetaFarmResolver(StrategyCoreResolver):
         assert False
 
     def add_balances_snap(self, calls, entities):
-        calls = super().(calls, entities)
+        super().(calls, entities)
 
         # Add FARM token balances.
         farm = self.manager.strategy.farm()
 
         calls = self.add_entity_balances(calls, "farm", farm, entities)
+        return calls
+
+    def add_strategy_snap(self, calls):
+        super().(calls)
+
+        strategy = self.manager.strategy
+
+        calls.append(
+            Call(
+                strategy.vaultFarm(),
+                [func.rewardPool.earned, strategy.address],
+                [["vaultFarm.earned.strategy", as_wei]],
+            )
+        )
+        calls.append(
+            Call(
+                strategy.vaultFarm(),
+                [func.rewardPool.balanceOf, strategy.address],
+                [["vaultFarm.staked.strategy", as_wei]],
+            )
+        )
+
+        calls.append(
+            Call(
+                strategy.metaFarm(),
+                [func.rewardPool.earned, strategy.address],
+                [["metaFarm.earned.strategy", as_wei]],
+            )
+        )
+        calls.append(
+            Call(
+                strategy.metaFarm(),
+                [func.rewardPool.balanceOf, strategy.address],
+                [["metaFarm.staked.strategy", as_wei]],
+            )
+        )
+
         return calls
