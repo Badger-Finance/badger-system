@@ -261,8 +261,8 @@ contract StrategyHarvestMetaFarm is BaseStrategy {
         uint256 _preWant = IERC20Upgradeable(want).balanceOf(address(this));
         uint256 _preWrapped = IHarvestVault(harvestVault).balanceOf(address(this));
 
-        uint256 _wrappedToWithdraw = _toHarvestVaultTokens(_amount).sub(_preWrapped));
-
+        uint256 _wrappedToWithdraw = _toHarvestVaultTokens(_amount).sub(_preWrapped);
+        
         uint256 _wrappedInFarm = IRewardPool(vaultFarm).balanceOf(address(this));
 
         uint256 _wrappedWithdrawnFromFarm = 0;
