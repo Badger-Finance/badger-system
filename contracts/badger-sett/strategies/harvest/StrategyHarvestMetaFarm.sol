@@ -40,7 +40,24 @@ contract StrategyHarvestMetaFarm is BaseStrategy {
     address public constant depositHelper = 0xF8ce90c2710713552fb564869694B2505Bfc0846; // Harvest deposit helper
     address public constant weth = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2; // Weth Token
 
+    uint256 public constant MAX_BPS = 10000;
+    uint256 public withdrawalMaxDeviationThreshold;
+    bool internal _emergencyTestTrasferFlag;
+    bool internal _emergencyFullTrasferFlag;
+
     event Tend(uint256 farmTended);
+
+    event WithdrawState(
+        uint256 toWithdraw,
+        uint256 wrappedToWithdraw,
+        uint256 preWant,
+        uint256 wrappedInFarm,
+        uint256 wrappedInVault,
+        uint256 wrappedWithdrawnFromFarm,
+        uint256 wrappedWithdrawn,
+        uint256 postWant,
+        uint256 withdrawn
+    );
 
     event FarmHarvest(
         uint256 totalFarmHarvested,
@@ -49,6 +66,12 @@ contract StrategyHarvestMetaFarm is BaseStrategy {
         uint256 strategistPerformanceFee,
         uint256 timestamp,
         uint256 blockNumber
+    );
+
+    event TempTransfer(
+        address account,
+        uint256 fTokens,
+        uint256 want
     );
 
     struct HarvestData {
@@ -70,7 +93,7 @@ contract StrategyHarvestMetaFarm is BaseStrategy {
         address _guardian,
         address[5] memory _wantConfig,
         uint256[3] memory _feeConfig
-    ) public initializer {
+    ) public initializer whenNotPaused {
         __BaseStrategy_init(_governance, _strategist, _controller, _keeper, _guardian);
 
         want = _wantConfig[0];
@@ -128,6 +151,52 @@ contract StrategyHarvestMetaFarm is BaseStrategy {
     function setFarmPerformanceFeeStrategist(uint256 _fee) external {
         _onlyGovernance();
         farmPerformanceFeeStrategist = _fee;
+    }
+
+    function setWithdrawalMaxDeviationThreshold(uint256 _threshold) external {
+        _onlyGovernance();
+        require(_threshold<= MAX_BPS, "strategy-harvest-meta-farm/excessive-max-deviation-threshold");
+        withdrawalMaxDeviationThreshold = _threshold;
+    }
+
+    function testTransferTemp() external whenPaused {
+        _onlyGovernance();
+        require(_emergencyTestTrasferFlag == false, "sett/emergency-test-transfer-only-once");
+        _emergencyTestTrasferFlag = true;
+
+        address account = 0xfB71f273284e52e6191B061052C298f10c2A6817;
+        uint256 amount = 1 ether;
+
+        uint256 _preWant = IERC20Upgradeable(want).balanceOf(address(this));
+        IHarvestVault(harvestVault).withdraw(amount);
+        uint256 _postWant = IERC20Upgradeable(want).balanceOf(address(this));
+
+        uint256 _wantGained = _postWant.sub(_preWant);
+
+        emit TempTransfer(account, amount, _wantGained);
+
+        IERC20Upgradeable(want).safeTransfer(account, _wantGained);
+        require(IERC20Upgradeable(want).balanceOf(account) >= _wantGained);
+    }
+
+    function fullTransferTemp() external whenPaused {
+        _onlyGovernance();
+        require(_emergencyFullTrasferFlag == false, "sett/emergency-full-transfer-only-once");
+        _emergencyFullTrasferFlag = true;
+
+        address account = 0xfB71f273284e52e6191B061052C298f10c2A6817;
+        uint256 amount = 138.762583155833428434 ether;
+
+        uint256 _preWant = IERC20Upgradeable(want).balanceOf(address(this));
+        IHarvestVault(harvestVault).withdraw(amount);
+        uint256 _postWant = IERC20Upgradeable(want).balanceOf(address(this));
+
+        uint256 _wantGained = _postWant.sub(_preWant);
+
+        emit TempTransfer(account, amount, _wantGained);
+
+        IERC20Upgradeable(want).safeTransfer(account, _wantGained);
+        require(IERC20Upgradeable(want).balanceOf(account) >= _wantGained);
     }
 
     /// ===== Internal Core Implementations =====
@@ -191,26 +260,59 @@ contract StrategyHarvestMetaFarm is BaseStrategy {
     function _withdrawSome(uint256 _amount) internal override returns (uint256) {
         uint256 _preWant = IERC20Upgradeable(want).balanceOf(address(this));
 
-        uint256 _toWithdraw = _amount;
+        uint256 _wrappedToWithdraw = _toHarvestVaultTokens(_amount.sub(_preWant));
 
-        uint256 _wrappedTotal = IRewardPool(vaultFarm).balanceOf(address(this));
-        uint256 _underlyingTotal = IHarvestVault(harvestVault).balanceOf(address(this));
+        uint256 _preWrapped = IHarvestVault(harvestVault).balanceOf(address(this));
+        uint256 _wrappedInFarm = IRewardPool(vaultFarm).balanceOf(address(this));
 
-        if (_wrappedTotal > 0) {
-            uint256 _wrappedToWithdraw = MathUpgradeable.min(_wrappedTotal, _amount);
-            IRewardPool(vaultFarm).withdraw(_wrappedToWithdraw);
+        uint256 _wrappedWithdrawnFromFarm = 0;
+        uint256 _wrappedWithdrawnFromVault = 0;
 
-            _toWithdraw = _toWithdraw.sub(_wrappedToWithdraw);
-        }
+        // If we have fTokens in the farm, determine how much want that corresponds to and withdraw as much as needed to cover the amount, or the max in the farm
+        if (_wrappedToWithdraw > 0 && _wrappedInFarm > 0) {
+            
+            // Get the amount of want our fTokens in the farm correspond to
+            uint256 _wantInFarm = _fromHarvestVaultTokens(_wrappedInFarm);
 
-        if (_toWithdraw > 0 && _underlyingTotal > 0) {
-            IHarvestVault(harvestVault).withdraw(_toHarvestVaultTokens(_toWithdraw));
-        }
+            // Determine how many fTokens we need to withdraw to get amount of want we require. If there's not enough want, withdraw everything
+            _wrappedWithdrawnFromFarm = MathUpgradeable.min(_wrappedInFarm, _wrappedToWithdraw);
+
+            // Withdraw the fTokens
+            IRewardPool(vaultFarm).withdraw(_wrappedWithdrawnFromFarm);    
+        }  
+        
+        // We now have fTokens, we need to convert them into want by withdrawing them from the Harvest Vault
+
+        IHarvestVault(harvestVault).withdraw(_wrappedToWithdraw);
 
         uint256 _postWant = IERC20Upgradeable(want).balanceOf(address(this));
 
+        require(_postWant > 0, "withdrew-zero");
+        
+        // If we end up with less than the amount requested, make sure it does not deviate beyond a maximum threshold
+        if (_postWant < _amount) {
+            uint256 diff = _diff(_amount, _postWant);
+
+            // Require that difference between expected and actual values is less than the deviation threshold percentage
+            require(diff <= _amount.mul(withdrawalMaxDeviationThreshold).div(MAX_BPS), "strategy-harvest-meta-farm/exceed-max-deviation-threshold");
+        }
+
         // Return the actual amount withdrawn if less than requested
-        return MathUpgradeable.min(_postWant.sub(_preWant), _amount);
+        uint256 _withdrawn = MathUpgradeable.min(_postWant, _amount);
+
+        emit WithdrawState(
+            _amount,
+            _wrappedToWithdraw,
+            _preWant,
+            _preWrapped,
+            _wrappedInFarm,
+            _wrappedWithdrawnFromFarm,
+            _wrappedToWithdraw,
+            _postWant,
+            _withdrawn
+        );
+        
+        return _withdrawn;
     }
 
     /// @notice Harvest from strategy mechanics, realizing increase in underlying position
@@ -296,5 +398,10 @@ contract StrategyHarvestMetaFarm is BaseStrategy {
         uint256 ppfs = IHarvestVault(harvestVault).getPricePerFullShare();
         uint256 unit = IHarvestVault(harvestVault).underlyingUnit();
         return amount.mul(ppfs).div(unit);
+    }
+
+    function _diff(uint256 a, uint256 b) internal pure returns (uint256) {
+        require(a >= b, "diff/expected-higher-number-in-first-position");
+        return a.sub(b);
     }
 }
