@@ -60,3 +60,12 @@ class StrategyHarvestMetaFarmResolver(StrategyCoreResolver):
         - Leave no fShares in VaultFarm
         """
         assert False
+
+    def add_balances_snap(self, calls, entities):
+        calls = super().(calls, entities)
+
+        # Add FARM token balances.
+        farm = self.manager.strategy.farm()
+
+        calls = self.add_entity_balances(calls, "farm", farm, entities)
+        return calls

@@ -116,6 +116,7 @@ multicall_registry = DotMap(
 )
 
 harvest_registry = DotMap(
+    badgerTree="0x06466a741094f51b45FB150c6D1e857B3E879967",
     farmToken="0xa0246c9032bC3A600820415aE600c6388619A14D",
     depositHelper="0xf8ce90c2710713552fb564869694b2505bfc0846",
     vaults=DotMap(renCrv="0x9aa8f427a17d6b0d91b6262989edc7d45d6aedf8"),

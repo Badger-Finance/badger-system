@@ -97,6 +97,7 @@ class SnapshotManager:
         self.addEntity("governance", self.strategy.governance())
         self.addEntity("governanceRewards", self.controller.rewards())
         self.addEntity("strategist", self.strategy.strategist())
+        self.addEntity("badgerTree", self.strategy.badgerTree())
 
         destinations = self.resolver.get_strategy_destinations()
         for key, dest in destinations.items():
@@ -144,10 +145,10 @@ class SnapshotManager:
         user = overrides["from"].address
         trackedUsers = {"user": user}
         before = self.snap(trackedUsers)
-        self.sett.tend(overrides)
+        self.strategy.tend(overrides)
         after = self.snap(trackedUsers)
         if confirm:
-            self.resolver.confirm_tend(before, after, {"user": user})
+            self.resolver.confirm_tend(before, after)
 
     def settHarvest(self, overrides, confirm=True):
         user = overrides["from"].address
