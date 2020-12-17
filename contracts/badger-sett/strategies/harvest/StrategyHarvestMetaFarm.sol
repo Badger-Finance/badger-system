@@ -259,10 +259,10 @@ contract StrategyHarvestMetaFarm is BaseStrategy {
     /// @dev Withdraw vaultTokens from vaultFarm first, followed by harvestVault
     function _withdrawSome(uint256 _amount) internal override returns (uint256) {
         uint256 _preWant = IERC20Upgradeable(want).balanceOf(address(this));
-
-        uint256 _wrappedToWithdraw = _toHarvestVaultTokens(_amount.sub(_preWant));
-
         uint256 _preWrapped = IHarvestVault(harvestVault).balanceOf(address(this));
+
+        uint256 _wrappedToWithdraw = _toHarvestVaultTokens(_amount).sub(_preWrapped));
+
         uint256 _wrappedInFarm = IRewardPool(vaultFarm).balanceOf(address(this));
 
         uint256 _wrappedWithdrawnFromFarm = 0;
