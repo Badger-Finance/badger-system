@@ -18,7 +18,7 @@ import "interfaces/badger/IMintr.sol";
 import "interfaces/badger/IStrategy.sol";
 import "../BaseStrategy.sol";
 
-contract StrategyCurveGaugeBase is BaseStrategy {
+contract StrategyCurveLiquidityRewardGaugeBase is BaseStrategy {
     using SafeERC20Upgradeable for IERC20Upgradeable;
     using AddressUpgradeable for address;
     using SafeMathUpgradeable for uint256;
