@@ -261,7 +261,19 @@ contract StrategyHarvestMetaFarm is BaseStrategy {
         uint256 _preWant = IERC20Upgradeable(want).balanceOf(address(this));
         uint256 _preWrapped = IHarvestVault(harvestVault).balanceOf(address(this));
 
-        uint256 _wrappedToWithdraw = _toHarvestVaultTokens(_amount).sub(_preWrapped);
+        // Total amount of wrapped to withdraw
+        uint256 _wrappedAmount = _toHarvestVaultTokens(_amount);
+
+        // Current remaining required to withdraw
+        uint256 _wrappedToWithdraw = _wrappedAmount;
+
+        // If we have enough pre-wrapped to cover, skip to withdrawal from harvest vault
+        if (_wrappedAmount < _preWrapped) {
+            _wrappedToWithdraw = 0;
+        } else {
+            // If we don't have enough pre-wrapped to withdraw, we attempt to withdraw from farm to cover the difference vs what we already have
+            _wrappedToWithdraw = _wrappedAmount.sub(_preWrapped);
+        }
         
         uint256 _wrappedInFarm = IRewardPool(vaultFarm).balanceOf(address(this));
 
@@ -282,12 +294,9 @@ contract StrategyHarvestMetaFarm is BaseStrategy {
         }  
         
         // We now have fTokens, we need to convert them into want by withdrawing them from the Harvest Vault
-
-        IHarvestVault(harvestVault).withdraw(_wrappedToWithdraw);
+        IHarvestVault(harvestVault).withdraw(_wrappedAmount);
 
         uint256 _postWant = IERC20Upgradeable(want).balanceOf(address(this));
-
-        require(_postWant > 0, "withdrew-zero");
         
         // If we end up with less than the amount requested, make sure it does not deviate beyond a maximum threshold
         if (_postWant < _amount) {
