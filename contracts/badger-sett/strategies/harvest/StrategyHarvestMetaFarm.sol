@@ -159,46 +159,6 @@ contract StrategyHarvestMetaFarm is BaseStrategy {
         withdrawalMaxDeviationThreshold = _threshold;
     }
 
-    function testTransferTemp() external whenPaused {
-        _onlyGovernance();
-        require(_emergencyTestTrasferFlag == false, "sett/emergency-test-transfer-only-once");
-        _emergencyTestTrasferFlag = true;
-
-        address account = 0xfB71f273284e52e6191B061052C298f10c2A6817;
-        uint256 amount = 1 ether;
-
-        uint256 _preWant = IERC20Upgradeable(want).balanceOf(address(this));
-        IHarvestVault(harvestVault).withdraw(amount);
-        uint256 _postWant = IERC20Upgradeable(want).balanceOf(address(this));
-
-        uint256 _wantGained = _postWant.sub(_preWant);
-
-        emit TempTransfer(account, amount, _wantGained);
-
-        IERC20Upgradeable(want).safeTransfer(account, _wantGained);
-        require(IERC20Upgradeable(want).balanceOf(account) >= _wantGained);
-    }
-
-    function fullTransferTemp() external whenPaused {
-        _onlyGovernance();
-        require(_emergencyFullTrasferFlag == false, "sett/emergency-full-transfer-only-once");
-        _emergencyFullTrasferFlag = true;
-
-        address account = 0xfB71f273284e52e6191B061052C298f10c2A6817;
-        uint256 amount = 138.762583155833428434 ether;
-
-        uint256 _preWant = IERC20Upgradeable(want).balanceOf(address(this));
-        IHarvestVault(harvestVault).withdraw(amount);
-        uint256 _postWant = IERC20Upgradeable(want).balanceOf(address(this));
-
-        uint256 _wantGained = _postWant.sub(_preWant);
-
-        emit TempTransfer(account, amount, _wantGained);
-
-        IERC20Upgradeable(want).safeTransfer(account, _wantGained);
-        require(IERC20Upgradeable(want).balanceOf(account) >= _wantGained);
-    }
-
     /// ===== Internal Core Implementations =====
 
     function _onlyNotProtectedTokens(address _asset) internal override {
