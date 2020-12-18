@@ -135,6 +135,13 @@ pickle_registry = DotMap(
     farms=DotMap(wethStaking="0xa17a8883dA1aBd57c690DF9Ebf58fC194eDAb66F"),
 )
 
+sushi_registry = DotMap(
+    sushiToken="0x6b3595068778dd592e39a122f4f5a5cf09c90fe2",
+    xsushiToken="0x8798249c2E607446EfB7Ad49eC89dD1865Ff4272",
+    sushiChef="0xc2EdaD668740f1aA35E4D8f227fB8E17dcA888Cd",
+    pids=DotMap(sushiBadgerWBtc=0, sushiEthWBtc=21),
+)
+
 curve_registry = DotMap(
     minter="0xd061D61a4d941c39E5453435B6345Dc261C2fcE0",
     crvToken="0xD533a949740bb3306d119CC777fa900bA034cd52",

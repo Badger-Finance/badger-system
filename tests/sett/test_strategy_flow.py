@@ -16,6 +16,7 @@ settsToRun = [
     # "pickle.renCrv",
     "harvest.renCrv",
     "native.uniBadgerWbtc",
+    "sushi.sushiBadgerWBtc"
 ]
 
 
