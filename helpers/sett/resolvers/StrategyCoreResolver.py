@@ -158,8 +158,8 @@ class StrategyCoreResolver:
                 assert expectedWithdraw - before.balances("want", "strategy") <= before.get("strategy.balanceOfPool")
 
             assert approx(
-                after.get("strategy.balanceOf"),
-                before.get("strategy.balanceOf") - expectedWithdraw,
+                before.get("strategy.balanceOf"),
+                after.get("strategy.balanceOf") + expectedWithdraw,
                 1,
             )
 
