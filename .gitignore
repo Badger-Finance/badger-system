@@ -13,6 +13,8 @@ local.json
 docs
 docs/
 contracts-temporary
+flatten
+flatten/
 
 run-testnet.sh
 keeper.sh
