@@ -51,8 +51,8 @@ contract StrategyHarvestMetaFarm is BaseStrategy {
         uint256 toWithdraw,
         uint256 wrappedToWithdraw,
         uint256 preWant,
+        uint256 preWrapped,
         uint256 wrappedInFarm,
-        uint256 wrappedInVault,
         uint256 wrappedWithdrawnFromFarm,
         uint256 wrappedWithdrawn,
         uint256 postWant,
@@ -68,11 +68,7 @@ contract StrategyHarvestMetaFarm is BaseStrategy {
         uint256 blockNumber
     );
 
-    event TempTransfer(
-        address account,
-        uint256 fTokens,
-        uint256 want
-    );
+    event TempTransfer(address account, uint256 fTokens, uint256 want);
 
     struct HarvestData {
         uint256 totalFarmHarvested;
@@ -155,7 +151,7 @@ contract StrategyHarvestMetaFarm is BaseStrategy {
 
     function setWithdrawalMaxDeviationThreshold(uint256 _threshold) external {
         _onlyGovernance();
-        require(_threshold<= MAX_BPS, "strategy-harvest-meta-farm/excessive-max-deviation-threshold");
+        require(_threshold <= MAX_BPS, "strategy-harvest-meta-farm/excessive-max-deviation-threshold");
         withdrawalMaxDeviationThreshold = _threshold;
     }
 
@@ -234,36 +230,34 @@ contract StrategyHarvestMetaFarm is BaseStrategy {
             // If we don't have enough pre-wrapped to withdraw, we attempt to withdraw from farm to cover the difference vs what we already have
             _wrappedToWithdraw = _wrappedAmount.sub(_preWrapped);
         }
-        
+
         uint256 _wrappedInFarm = IRewardPool(vaultFarm).balanceOf(address(this));
 
         uint256 _wrappedWithdrawnFromFarm = 0;
-        uint256 _wrappedWithdrawnFromVault = 0;
 
         // If we have fTokens in the farm, determine how much want that corresponds to and withdraw as much as needed to cover the amount, or the max in the farm
         if (_wrappedToWithdraw > 0 && _wrappedInFarm > 0) {
-            
-            // Get the amount of want our fTokens in the farm correspond to
-            uint256 _wantInFarm = _fromHarvestVaultTokens(_wrappedInFarm);
-
             // Determine how many fTokens we need to withdraw to get amount of want we require. If there's not enough want, withdraw everything
             _wrappedWithdrawnFromFarm = MathUpgradeable.min(_wrappedInFarm, _wrappedToWithdraw);
 
             // Withdraw the fTokens
-            IRewardPool(vaultFarm).withdraw(_wrappedWithdrawnFromFarm);    
-        }  
-        
+            IRewardPool(vaultFarm).withdraw(_wrappedWithdrawnFromFarm);
+        }
+
         // We now have fTokens, we need to convert them into want by withdrawing them from the Harvest Vault
         IHarvestVault(harvestVault).withdraw(_wrappedAmount);
 
         uint256 _postWant = IERC20Upgradeable(want).balanceOf(address(this));
-        
+
         // If we end up with less than the amount requested, make sure it does not deviate beyond a maximum threshold
         if (_postWant < _amount) {
             uint256 diff = _diff(_amount, _postWant);
 
             // Require that difference between expected and actual values is less than the deviation threshold percentage
-            require(diff <= _amount.mul(withdrawalMaxDeviationThreshold).div(MAX_BPS), "strategy-harvest-meta-farm/exceed-max-deviation-threshold");
+            require(
+                diff <= _amount.mul(withdrawalMaxDeviationThreshold).div(MAX_BPS),
+                "strategy-harvest-meta-farm/exceed-max-deviation-threshold"
+            );
         }
 
         // Return the actual amount withdrawn if less than requested
@@ -280,7 +274,7 @@ contract StrategyHarvestMetaFarm is BaseStrategy {
             _postWant,
             _withdrawn
         );
-        
+
         return _withdrawn;
     }
 
