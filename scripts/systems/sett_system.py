@@ -522,7 +522,7 @@ def deploy_sett_system(badger, deployer):
 
     # Deploy each pair of vault and strategy
     """
-    For each group of Setts (native, harvest, pickle) iterate through each vault 
+    For each group of Setts (native, harvest, pickle) iterate through each vault
     entry and deploy the Sett and starting strategy
     """
 

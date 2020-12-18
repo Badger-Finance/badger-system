@@ -30,5 +30,11 @@ strategy = DotMap(
     performanceFeeStrategist="performanceFeeStrategist()(uint256)",
 )
 harvestFarm = DotMap(earned="earned()(uint256)")
+rewardPool = DotMap(
+        # claimable rewards
+        earned="earned(address)(uint256)",
+        # amount staked
+        balanceOf="balanceOf(address)(uint256)",
+)
 
-func = DotMap(erc20=erc20, sett=sett, strategy=strategy,)
+func = DotMap(erc20=erc20, sett=sett, strategy=strategy, rewardPool=rewardPool,)
