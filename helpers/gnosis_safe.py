@@ -3,7 +3,7 @@ from enum import Enum
 from brownie import *
 from rich.console import Console
 from tabulate import tabulate
-
+from helpers.multicall import func
 console = Console()
 
 """
@@ -15,17 +15,34 @@ On test networks leveraging Ganache --unlock, take control of a Gnosis safe with
     - Leveraging approved hash voting
 """
 
-
 class OPERATION(Enum):
     CREATE = 0
     CALL = 2
 
+class MultisigTxMetadata:
+    def __init__(self, description, operation, callInfo=None):
+        self.description = description
+        self.operation = operation
+        self.callInfo = callInfo
+
+    def __str__(self):
+        return "description: " + self.description + "\n" + 'operation: ' + self.operation + "\n" + 'callInfo: ' + str(self.callInfo) + "\n"
+
+
+class MultisigTx:
+    def __init__(self, params, metadata: MultisigTxMetadata):
+        self.params = params
+        self.metadata = metadata
+    
+    # def printMetadata(self):
+
+    # def printParams(self):
 
 class GnosisSafe:
     def __init__(self, contract, testMode=True):
         self.contract = contract
         self.firstOwner = get_first_owner(contract)
-        self.transactions = {}
+        self.transactions = []
         self.testMode = testMode
 
         if testMode:
@@ -40,25 +57,48 @@ class GnosisSafe:
     def execute(self, params, signer=None):
         return exec_direct(self.contract, params, signer)
 
-    def addTx(self, key, params):
-        self.transactions[key] = params
+    def addTx(self, metadata: MultisigTxMetadata, params):
+        """
+        Store a transaction in the safes' memory, return it's index
+        """
+        self.transactions.append(MultisigTx(params, metadata))
+        return len(self.transactions) - 1
 
-    def executeTx(self, key):
+    def executeTx(self, id=None):
+        tx = None
+        if not id:
+            tx = self.transactions[-1]
+        else:
+            tx = self.transactions[id]
 
-        self.printTx(key)
+        self.printTx(id)
 
         if self.testMode:
-            return exec_direct(self.contract, self.transactions[key])
+            tx = exec_direct(self.contract, tx.params)
+            # try: 
+            #     failEvents = tx.events['ExecutionFailure']
+            #     if len(failEvents) > 0:
+            #         print(tx.events)
+            #         assert False
+            # except EventLookupError:
+            return tx
+
+    def get_first_owner(self):
+        return self.contract.getOwners()[0]
 
     def printTx(self, key):
-        params = self.transactions[key]
+        tx = self.transactions[key]
+        params = tx.params
+        metadata = tx.metadata
 
+        # Print something different if we're on a test network or main network
         console.print("\n[red]== 🦡 Execute: {} 🦡 ==[/red]".format(key))
+
         table = []
 
-        table.append([key, params["to"], params["data"]])
+        table.append([key, metadata, params["to"], params["data"]])
 
-        print(tabulate(table, headers=["key", "to", "data",], tablefmt="rst",))
+        print(tabulate(table, tablefmt="pretty",))
 
 
 def multisig_success(tx):
@@ -98,8 +138,8 @@ def exec_transaction(contract, params, signer):
     if not "operation" in params.keys():
         params["operation"] = 0
 
-    params["safeTxGas"] = 2000000
-    params["baseGas"] = 2000000
+    params["safeTxGas"] = 3000000
+    params["baseGas"] = 3000000
     params["gasPrice"] = Wei("0.1 ether")
     params["gasToken"] = "0x0000000000000000000000000000000000000000"
     params["refundReceiver"] = signer.address
