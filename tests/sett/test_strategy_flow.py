@@ -1,48 +1,38 @@
+from helpers.token_utils import distribute_test_ether
 from helpers.time_utils import days
 import brownie
 import pytest
 from brownie import *
 from helpers.constants import *
 from helpers.sett.SnapshotManager import SnapshotManager
-from tests.conftest import badger_single_sett
-from tests.helpers import getTokenMetadata
+from tests.conftest import badger_single_sett, settsToRun
+from tests.helpers import distribute_from_whales, getTokenMetadata
 from tests.test_recorder import EventRecord, TestRecorder
+from rich.console import Console
 
-settsToRun = [
-    "native.badger",
-    "native.renCrv",
-    "native.sbtcCrv",
-    "native.tbtcCrv",
-    # "pickle.renCrv",
-    "harvest.renCrv",
-    "native.uniBadgerWbtc",
-    "sushi.sushiBadgerWBtc"
-]
+console = Console()
 
-
-@pytest.mark.skip()
+# @pytest.mark.skip()
 @pytest.mark.parametrize(
     "settId", settsToRun,
 )
 def test_deposit_withdraw_single_user_flow(settId):
     badger = badger_single_sett(settId)
-    controller = badger.getController(settId)
     sett = badger.getSett(settId)
     strategy = badger.getStrategy(settId)
     want = badger.getStrategyWant(settId)
-    keeper = accounts.at(sett.keeper(), force=True)
-
-    print("keeper", keeper)
+    deployer = badger.deployer
+    keeper = badger.keeper
 
     snap = SnapshotManager(badger, settId)
 
-    deployer = badger.deployer
     randomUser = accounts[6]
 
-    print(want, want.address, want.totalSupply(), deployer)
-
     # Deposit
+    assert want.balanceOf(deployer) > 0
+
     depositAmount = int(want.balanceOf(deployer) * 0.8)
+    assert depositAmount > 0
 
     want.approve(sett, MaxUint256, {"from": deployer})
     snap.settDeposit(depositAmount, {"from": deployer})
@@ -65,9 +55,7 @@ def test_deposit_withdraw_single_user_flow(settId):
     chain.sleep(10000)
     chain.mine(1)
 
-    snap.settWithdrawAll({"from": deployer})
-
-    assert False
+    snap.settWithdraw(depositAmount // 2 - 1, {"from": deployer})
 
 
 # @pytest.mark.skip()
@@ -97,10 +85,14 @@ def test_single_user_harvest_flow(settId):
 
     depositAmount = startingBalance // 2
     assert startingBalance >= depositAmount
+    assert startingBalance >= 0
 
     # Deposit
     want.approve(sett, MaxUint256, {"from": deployer})
     snap.settDeposit(depositAmount, {"from": deployer})
+    
+    assert want.balanceOf(sett) > 0
+    print('want.balanceOf(sett)', want.balanceOf(sett))
 
     # Earn
     snap.settEarn({"from": keeper})
@@ -139,7 +131,7 @@ def test_single_user_harvest_flow(settId):
     snap.settWithdrawAll({"from": deployer})
 
 
-# @pytest.mark.skip()
+@pytest.mark.skip()
 @pytest.mark.parametrize("settId", settsToRun)
 def test_migrate_single_user(settId):
     badger = badger_single_sett(settId)
@@ -291,7 +283,6 @@ def test_withdraw_other(settId):
 
     # Should not be able to withdraw protected tokens
     protectedTokens = strategy.getProtectedTokens()
-    print(protectedTokens)
     for token in protectedTokens:
         with brownie.reverts():
             controller.inCaseStrategyTokenGetStuck(strategy, token, {"from": deployer})
@@ -370,8 +361,6 @@ def test_single_user_harvest_flow_remove_fees(settId):
     confirm_harvest(before, after, deployer)
 
     after_harvest = sett_snapshot(sett, strategy, deployer)
-
-    print("tx.events", tx.events)
 
     # Harvesting on the HarvestMetaFarm does not increase the underlying position, it sends rewards to the rewardsTree
     # For HarvestMetaFarm, we expect FARM rewards to be distributed to rewardsTree

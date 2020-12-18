@@ -106,6 +106,7 @@ sett_config = DotMap(
                 harvestVault=registry.harvest.vaults.renCrv,
                 vaultFarm=registry.harvest.farms.fRenCrv,
                 metaFarm=registry.harvest.farms.farm,
+                badgerTree=registry.harvest.badgerTree,
                 performanceFeeStrategist=1000,
                 performanceFeeGovernance=1000,
                 withdrawalFee=75,

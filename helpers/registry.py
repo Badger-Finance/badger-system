@@ -116,6 +116,7 @@ multicall_registry = DotMap(
 )
 
 harvest_registry = DotMap(
+    badgerTree="0x06466a741094f51b45FB150c6D1e857B3E879967",
     farmToken="0xa0246c9032bC3A600820415aE600c6388619A14D",
     depositHelper="0xf8ce90c2710713552fb564869694b2505bfc0846",
     vaults=DotMap(renCrv="0x9aa8f427a17d6b0d91b6262989edc7d45d6aedf8"),
@@ -171,6 +172,10 @@ whale_registry = DotMap(
     badger=DotMap(
         whale="0x19d099670a21bC0a8211a89B84cEdF59AbB4377F",
         token="0x3472A5A71965499acd81997a54BBA8D852C6E53d",
+    ),
+    harvestSuperSett=DotMap(
+        whale="0xeD0B7f5d9F6286d00763b0FFCbA886D8f9d56d5e",
+        token="0xAf5A1DECfa95BAF63E0084a35c62592B774A2A87",
     ),
     uniBadgerWbtc=DotMap(
         whale="0x235c9e24D3FB2FAFd58a2E49D454Fdcd2DBf7FF1",

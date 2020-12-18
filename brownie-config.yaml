@@ -16,12 +16,6 @@ autofetch_sources: True
 dependencies:
   - OpenZeppelin/openzeppelin-contracts@3.2.0
 
-compiler:
-  solc:
-    version: 0.6.12
-    remappings:
-      - "@openzeppelinV3=OpenZeppelin/openzeppelin-contracts@3.2.0"
-
 reports:
   exclude_paths:
     - contracts/test/Token.sol

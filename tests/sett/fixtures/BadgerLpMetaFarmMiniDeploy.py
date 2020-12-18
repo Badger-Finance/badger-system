@@ -7,6 +7,7 @@ class BadgerLpMetaFarmMiniDeploy(SettMiniDeployBase):
     def fetch_params(self):
         params = sett_config.harvest.renCrv.params
         want = sett_config.harvest.renCrv.params.want
+        params.geyser = self.rewards
 
         return (params, want)
 
@@ -28,5 +29,5 @@ class BadgerLpMetaFarmMiniDeploy(SettMiniDeployBase):
         Deploy StakingRewards for Strategy
         """
         self.rewards = self.badger.deploy_sett_staking_rewards(
-            self.key, self.badger.token, self.badger.token
+            self.key, sett_config.harvest.renCrv.params.want, self.badger.token
         )

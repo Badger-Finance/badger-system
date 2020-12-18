@@ -1,8 +1,9 @@
-from helpers.utils import approx, val
 from brownie import *
+from decimal import Decimal
+
+from helpers.utils import approx, val
 from helpers.constants import *
 from helpers.multicall import Call, as_wei, func
-
 
 class StrategyCoreResolver:
     def __init__(self, manager):
@@ -129,6 +130,8 @@ class StrategyCoreResolver:
         """
         ppfs = before.get("sett.pricePerFullShare")
 
+        self.manager.printCompare(before, after)
+
         # Decrease the totalSupply of Sett tokens
         assert after.get("sett.totalSupply") < before.get("sett.totalSupply")
 
@@ -144,10 +147,19 @@ class StrategyCoreResolver:
 
         # Want in the strategy should be decreased, if idle in sett is insufficient to cover withdrawal
         if params["amount"] > before.balances("want", "sett"):
-            expectedWithdraw = params["amount"] - before.balances("want", "sett")
+            # Adjust amount based on total balance x total supply
+            # Division in python is not accurate, use Decimal package to ensure division is consistent w/ division inside of EVM
+            expectedWithdraw = Decimal(params["amount"] * before.get("sett.balance")) / Decimal(before.get("sett.totalSupply"))
+            # Withdraw from idle in sett first
+            expectedWithdraw -= before.balances("want", "sett")
+            # First we attempt to withdraw from idle want in strategy
+            if expectedWithdraw > before.balances("want", "strategy"):
+                # If insufficient, we then attempt to withdraw from activities (balance of pool)
+                # Just ensure that we have enough in the pool balance to satisfy the request
+                assert expectedWithdraw - before.balances("want", "strategy") <= before.get("strategy.balanceOfPool")
             assert approx(
-                after.get("strategy.balanceOf"),
-                before.get("strategy.balanceOf") - expectedWithdraw,
+                before.get("strategy.balanceOf"),
+                after.get("strategy.balanceOf") + expectedWithdraw,
                 1,
             )
 
@@ -174,37 +186,21 @@ class StrategyCoreResolver:
 
         ppfs = before.get("sett.pricePerFullShare")
 
-        # Increase the totalSupply() of Sett tokens
-        assert (
-            after.get("sett.totalSupply")
-            == before.get("sett.totalSupply") + params["amount"]
-        )
+        self.manager.printCompare(before, after)
 
-        print(after)
+        expected_shares = params["amount"] * Wei("1 ether") // ppfs
+        
+        # Increase the totalSupply() of Sett tokens
+        assert approx(after.get("sett.totalSupply"), before.get("sett.totalSupply") + expected_shares, 1)
 
         # Increase the balanceOf() want in the Sett by depositAmount
-        assert (
-            after.balances("want", "sett")
-            == before.balances("want", "sett") + params["amount"]
-        )
+        assert approx(after.balances("want", "sett"), before.balances("want", "sett") + params["amount"], 1)
 
         # Decrease the balanceOf() want of the user by depositAmount
-        assert (
-            after.balances("want", "user")
-            == before.balances("want", "user") - params["amount"]
-        )
-
-        print(
-            {
-                "ppfs": val(ppfs),
-                "after": val(after.balances("sett", "user")),
-                "expected": params["amount"] / ppfs,
-                "expected2": val(params["amount"] / ppfs),
-            }
-        )
+        assert approx(after.balances("want", "user"), before.balances("want", "user") - params["amount"], 1)
 
         # Increase the balanceOf() Sett tokens for the user based on depositAmount / pricePerFullShare
-        assert approx(after.balances("sett", "user"), params["amount"] * 1e18 / ppfs, 1)
+        assert approx(after.balances("sett", "user"), before.balances("sett", "user") + expected_shares, 1)
 
     # ===== Strategies must implement =====
 
