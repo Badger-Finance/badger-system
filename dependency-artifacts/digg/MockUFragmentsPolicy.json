@@ -1,0 +1,534 @@
+{
+  "contractName": "MockUFragmentsPolicy",
+  "abi": [
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "name": "instanceName",
+          "type": "string"
+        },
+        {
+          "indexed": false,
+          "name": "functionName",
+          "type": "string"
+        },
+        {
+          "indexed": false,
+          "name": "caller",
+          "type": "address"
+        }
+      ],
+      "name": "FunctionCalled",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "name": "uintVals",
+          "type": "uint256[]"
+        },
+        {
+          "indexed": false,
+          "name": "intVals",
+          "type": "int256[]"
+        }
+      ],
+      "name": "FunctionArguments",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "name": "val",
+          "type": "int256"
+        }
+      ],
+      "name": "ReturnValueInt256",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "name": "val",
+          "type": "uint256"
+        }
+      ],
+      "name": "ReturnValueUInt256",
+      "type": "event"
+    },
+    {
+      "constant": false,
+      "inputs": [],
+      "name": "rebase",
+      "outputs": [],
+      "payable": false,
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ],
+  "bytecode": "0x6080604052348015600f57600080fd5b506101608061001f6000396000f300608060405260043610610041576000357c0100000000000000000000000000000000000000000000000000000000900463ffffffff168063af14052c14610046575b600080fd5b34801561005257600080fd5b5061005b61005d565b005b7f2b3954800366dad952bc52d224185a924290610f61c43c305929b61f35dfd178336040518080602001806020018473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff168152602001838103835260108152602001807f55467261676d656e7473506f6c69637900000000000000000000000000000000815250602001838103825260068152602001807f7265626173650000000000000000000000000000000000000000000000000000815250602001935050505060405180910390a15600a165627a7a723058201a40b6babea93280f5a7dd0f6a325a60c4929fcc9259faa6dcca8570ef896e560029",
+  "deployedBytecode": "0x608060405260043610610041576000357c0100000000000000000000000000000000000000000000000000000000900463ffffffff168063af14052c14610046575b600080fd5b34801561005257600080fd5b5061005b61005d565b005b7f2b3954800366dad952bc52d224185a924290610f61c43c305929b61f35dfd178336040518080602001806020018473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff168152602001838103835260108152602001807f55467261676d656e7473506f6c69637900000000000000000000000000000000815250602001838103825260068152602001807f7265626173650000000000000000000000000000000000000000000000000000815250602001935050505060405180910390a15600a165627a7a723058201a40b6babea93280f5a7dd0f6a325a60c4929fcc9259faa6dcca8570ef896e560029",
+  "sourceMap": "48:156:10:-;;;;8:9:-1;5:2;;;30:1;27;20:12;5:2;48:156:10;;;;;;;",
+  "deployedSourceMap": "48:156:10:-;;;;;;;;;;;;;;;;;;;;;;;;97:105;;8:9:-1;5:2;;;30:1;27;20:12;5:2;97:105:10;;;;;;;139:56;184:10;139:56;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;97:105::o",
+  "source": "pragma solidity 0.4.24;\n\nimport \"./Mock.sol\";\n\n\ncontract MockUFragmentsPolicy is Mock {\n    \n    function rebase() external {\n        emit FunctionCalled(\"UFragmentsPolicy\", \"rebase\", msg.sender);\n    }\n}\n",
+  "sourcePath": "/Users/present/code/digg-core/contracts/mocks/MockUFragmentsPolicy.sol",
+  "ast": {
+    "absolutePath": "/Users/present/code/digg-core/contracts/mocks/MockUFragmentsPolicy.sol",
+    "exportedSymbols": {
+      "MockUFragmentsPolicy": [
+        1961
+      ]
+    },
+    "id": 1962,
+    "nodeType": "SourceUnit",
+    "nodes": [
+      {
+        "id": 1946,
+        "literals": [
+          "solidity",
+          "0.4",
+          ".24"
+        ],
+        "nodeType": "PragmaDirective",
+        "src": "0:23:10"
+      },
+      {
+        "absolutePath": "/Users/present/code/digg-core/contracts/mocks/Mock.sol",
+        "file": "./Mock.sol",
+        "id": 1947,
+        "nodeType": "ImportDirective",
+        "scope": 1962,
+        "sourceUnit": 1585,
+        "src": "25:20:10",
+        "symbolAliases": [],
+        "unitAlias": ""
+      },
+      {
+        "baseContracts": [
+          {
+            "arguments": null,
+            "baseName": {
+              "contractScope": null,
+              "id": 1948,
+              "name": "Mock",
+              "nodeType": "UserDefinedTypeName",
+              "referencedDeclaration": 1584,
+              "src": "81:4:10",
+              "typeDescriptions": {
+                "typeIdentifier": "t_contract$_Mock_$1584",
+                "typeString": "contract Mock"
+              }
+            },
+            "id": 1949,
+            "nodeType": "InheritanceSpecifier",
+            "src": "81:4:10"
+          }
+        ],
+        "contractDependencies": [
+          1584
+        ],
+        "contractKind": "contract",
+        "documentation": null,
+        "fullyImplemented": true,
+        "id": 1961,
+        "linearizedBaseContracts": [
+          1961,
+          1584
+        ],
+        "name": "MockUFragmentsPolicy",
+        "nodeType": "ContractDefinition",
+        "nodes": [
+          {
+            "body": {
+              "id": 1959,
+              "nodeType": "Block",
+              "src": "124:78:10",
+              "statements": [
+                {
+                  "eventCall": {
+                    "argumentTypes": null,
+                    "arguments": [
+                      {
+                        "argumentTypes": null,
+                        "hexValue": "55467261676d656e7473506f6c696379",
+                        "id": 1953,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": true,
+                        "kind": "string",
+                        "lValueRequested": false,
+                        "nodeType": "Literal",
+                        "src": "154:18:10",
+                        "subdenomination": null,
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_stringliteral_10625e70655f85b5b00b90145a851249b9dc2b06136f981b3c78f4ba4da3f2e7",
+                          "typeString": "literal_string \"UFragmentsPolicy\""
+                        },
+                        "value": "UFragmentsPolicy"
+                      },
+                      {
+                        "argumentTypes": null,
+                        "hexValue": "726562617365",
+                        "id": 1954,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": true,
+                        "kind": "string",
+                        "lValueRequested": false,
+                        "nodeType": "Literal",
+                        "src": "174:8:10",
+                        "subdenomination": null,
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_stringliteral_41a1aed767a96ff20353ec646e4cfa9b88d21055bb5e0542bdd35d567d30d222",
+                          "typeString": "literal_string \"rebase\""
+                        },
+                        "value": "rebase"
+                      },
+                      {
+                        "argumentTypes": null,
+                        "expression": {
+                          "argumentTypes": null,
+                          "id": 1955,
+                          "name": "msg",
+                          "nodeType": "Identifier",
+                          "overloadedDeclarations": [],
+                          "referencedDeclaration": 2581,
+                          "src": "184:3:10",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_magic_message",
+                            "typeString": "msg"
+                          }
+                        },
+                        "id": 1956,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": false,
+                        "lValueRequested": false,
+                        "memberName": "sender",
+                        "nodeType": "MemberAccess",
+                        "referencedDeclaration": null,
+                        "src": "184:10:10",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_address",
+                          "typeString": "address"
+                        }
+                      }
+                    ],
+                    "expression": {
+                      "argumentTypes": [
+                        {
+                          "typeIdentifier": "t_stringliteral_10625e70655f85b5b00b90145a851249b9dc2b06136f981b3c78f4ba4da3f2e7",
+                          "typeString": "literal_string \"UFragmentsPolicy\""
+                        },
+                        {
+                          "typeIdentifier": "t_stringliteral_41a1aed767a96ff20353ec646e4cfa9b88d21055bb5e0542bdd35d567d30d222",
+                          "typeString": "literal_string \"rebase\""
+                        },
+                        {
+                          "typeIdentifier": "t_address",
+                          "typeString": "address"
+                        }
+                      ],
+                      "id": 1952,
+                      "name": "FunctionCalled",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 1567,
+                      "src": "139:14:10",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_function_event_nonpayable$_t_string_memory_ptr_$_t_string_memory_ptr_$_t_address_$returns$__$",
+                        "typeString": "function (string memory,string memory,address)"
+                      }
+                    },
+                    "id": 1957,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "kind": "functionCall",
+                    "lValueRequested": false,
+                    "names": [],
+                    "nodeType": "FunctionCall",
+                    "src": "139:56:10",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_tuple$__$",
+                      "typeString": "tuple()"
+                    }
+                  },
+                  "id": 1958,
+                  "nodeType": "EmitStatement",
+                  "src": "134:61:10"
+                }
+              ]
+            },
+            "documentation": null,
+            "id": 1960,
+            "implemented": true,
+            "isConstructor": false,
+            "isDeclaredConst": false,
+            "modifiers": [],
+            "name": "rebase",
+            "nodeType": "FunctionDefinition",
+            "parameters": {
+              "id": 1950,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "112:2:10"
+            },
+            "payable": false,
+            "returnParameters": {
+              "id": 1951,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "124:0:10"
+            },
+            "scope": 1961,
+            "src": "97:105:10",
+            "stateMutability": "nonpayable",
+            "superFunction": null,
+            "visibility": "external"
+          }
+        ],
+        "scope": 1962,
+        "src": "48:156:10"
+      }
+    ],
+    "src": "0:205:10"
+  },
+  "legacyAST": {
+    "absolutePath": "/Users/present/code/digg-core/contracts/mocks/MockUFragmentsPolicy.sol",
+    "exportedSymbols": {
+      "MockUFragmentsPolicy": [
+        1961
+      ]
+    },
+    "id": 1962,
+    "nodeType": "SourceUnit",
+    "nodes": [
+      {
+        "id": 1946,
+        "literals": [
+          "solidity",
+          "0.4",
+          ".24"
+        ],
+        "nodeType": "PragmaDirective",
+        "src": "0:23:10"
+      },
+      {
+        "absolutePath": "/Users/present/code/digg-core/contracts/mocks/Mock.sol",
+        "file": "./Mock.sol",
+        "id": 1947,
+        "nodeType": "ImportDirective",
+        "scope": 1962,
+        "sourceUnit": 1585,
+        "src": "25:20:10",
+        "symbolAliases": [],
+        "unitAlias": ""
+      },
+      {
+        "baseContracts": [
+          {
+            "arguments": null,
+            "baseName": {
+              "contractScope": null,
+              "id": 1948,
+              "name": "Mock",
+              "nodeType": "UserDefinedTypeName",
+              "referencedDeclaration": 1584,
+              "src": "81:4:10",
+              "typeDescriptions": {
+                "typeIdentifier": "t_contract$_Mock_$1584",
+                "typeString": "contract Mock"
+              }
+            },
+            "id": 1949,
+            "nodeType": "InheritanceSpecifier",
+            "src": "81:4:10"
+          }
+        ],
+        "contractDependencies": [
+          1584
+        ],
+        "contractKind": "contract",
+        "documentation": null,
+        "fullyImplemented": true,
+        "id": 1961,
+        "linearizedBaseContracts": [
+          1961,
+          1584
+        ],
+        "name": "MockUFragmentsPolicy",
+        "nodeType": "ContractDefinition",
+        "nodes": [
+          {
+            "body": {
+              "id": 1959,
+              "nodeType": "Block",
+              "src": "124:78:10",
+              "statements": [
+                {
+                  "eventCall": {
+                    "argumentTypes": null,
+                    "arguments": [
+                      {
+                        "argumentTypes": null,
+                        "hexValue": "55467261676d656e7473506f6c696379",
+                        "id": 1953,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": true,
+                        "kind": "string",
+                        "lValueRequested": false,
+                        "nodeType": "Literal",
+                        "src": "154:18:10",
+                        "subdenomination": null,
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_stringliteral_10625e70655f85b5b00b90145a851249b9dc2b06136f981b3c78f4ba4da3f2e7",
+                          "typeString": "literal_string \"UFragmentsPolicy\""
+                        },
+                        "value": "UFragmentsPolicy"
+                      },
+                      {
+                        "argumentTypes": null,
+                        "hexValue": "726562617365",
+                        "id": 1954,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": true,
+                        "kind": "string",
+                        "lValueRequested": false,
+                        "nodeType": "Literal",
+                        "src": "174:8:10",
+                        "subdenomination": null,
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_stringliteral_41a1aed767a96ff20353ec646e4cfa9b88d21055bb5e0542bdd35d567d30d222",
+                          "typeString": "literal_string \"rebase\""
+                        },
+                        "value": "rebase"
+                      },
+                      {
+                        "argumentTypes": null,
+                        "expression": {
+                          "argumentTypes": null,
+                          "id": 1955,
+                          "name": "msg",
+                          "nodeType": "Identifier",
+                          "overloadedDeclarations": [],
+                          "referencedDeclaration": 2581,
+                          "src": "184:3:10",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_magic_message",
+                            "typeString": "msg"
+                          }
+                        },
+                        "id": 1956,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": false,
+                        "lValueRequested": false,
+                        "memberName": "sender",
+                        "nodeType": "MemberAccess",
+                        "referencedDeclaration": null,
+                        "src": "184:10:10",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_address",
+                          "typeString": "address"
+                        }
+                      }
+                    ],
+                    "expression": {
+                      "argumentTypes": [
+                        {
+                          "typeIdentifier": "t_stringliteral_10625e70655f85b5b00b90145a851249b9dc2b06136f981b3c78f4ba4da3f2e7",
+                          "typeString": "literal_string \"UFragmentsPolicy\""
+                        },
+                        {
+                          "typeIdentifier": "t_stringliteral_41a1aed767a96ff20353ec646e4cfa9b88d21055bb5e0542bdd35d567d30d222",
+                          "typeString": "literal_string \"rebase\""
+                        },
+                        {
+                          "typeIdentifier": "t_address",
+                          "typeString": "address"
+                        }
+                      ],
+                      "id": 1952,
+                      "name": "FunctionCalled",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 1567,
+                      "src": "139:14:10",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_function_event_nonpayable$_t_string_memory_ptr_$_t_string_memory_ptr_$_t_address_$returns$__$",
+                        "typeString": "function (string memory,string memory,address)"
+                      }
+                    },
+                    "id": 1957,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "kind": "functionCall",
+                    "lValueRequested": false,
+                    "names": [],
+                    "nodeType": "FunctionCall",
+                    "src": "139:56:10",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_tuple$__$",
+                      "typeString": "tuple()"
+                    }
+                  },
+                  "id": 1958,
+                  "nodeType": "EmitStatement",
+                  "src": "134:61:10"
+                }
+              ]
+            },
+            "documentation": null,
+            "id": 1960,
+            "implemented": true,
+            "isConstructor": false,
+            "isDeclaredConst": false,
+            "modifiers": [],
+            "name": "rebase",
+            "nodeType": "FunctionDefinition",
+            "parameters": {
+              "id": 1950,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "112:2:10"
+            },
+            "payable": false,
+            "returnParameters": {
+              "id": 1951,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "124:0:10"
+            },
+            "scope": 1961,
+            "src": "97:105:10",
+            "stateMutability": "nonpayable",
+            "superFunction": null,
+            "visibility": "external"
+          }
+        ],
+        "scope": 1962,
+        "src": "48:156:10"
+      }
+    ],
+    "src": "0:205:10"
+  },
+  "compiler": {
+    "name": "solc",
+    "version": "0.4.24+commit.e67f0147.Emscripten.clang"
+  },
+  "networks": {},
+  "schemaVersion": "2.0.1",
+  "updatedAt": "2020-09-02T08:23:18.889Z"
+}

@@ -21,9 +21,9 @@ class StrategyHarvestMetaFarmResolver(StrategyCoreResolver):
         assert after.get("metaFarm.staked.strategy") == 0
 
         # BadgerTree should gain FARM
-		# TODO(bodu): Make test more granular later since we're actually
-		# taking out strategist fees on FARM before distributing remaining
-		# to the rewards tree.
+        # TODO(bodu): Make test more granular later since we're actually
+        # taking out strategist fees on FARM before distributing remaining
+        # to the rewards tree.
         assert (after.balances("farm", "badgerTree") >
             before.balances("farm", "badgerTree"))
 
