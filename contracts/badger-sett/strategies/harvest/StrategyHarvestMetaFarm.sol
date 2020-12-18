@@ -68,8 +68,6 @@ contract StrategyHarvestMetaFarm is BaseStrategy {
         uint256 blockNumber
     );
 
-    event TempTransfer(address account, uint256 fTokens, uint256 want);
-
     struct HarvestData {
         uint256 totalFarmHarvested;
         uint256 farmToRewards;
