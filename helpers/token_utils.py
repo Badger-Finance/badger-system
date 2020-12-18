@@ -19,13 +19,13 @@ def get_token_balances(accounts, tokens):
 def distribute_from_whales(badger, recipient):
 
     console.print(
-        "[gray]Transferring assets from whales for {} assets...[/gray]".format(
+        "[green] 🐋 Transferring assets from whales for {} assets... 🐋 [/green]".format(
             len(whale_registry.items())
         )
     )
     for key, whale in whale_registry.items():
         if key != "_pytestfixturefunction":
-            console.print(" transferring from {} whale {}".format(key, whale.toDict()))
+            console.print(" -> {}".format(key))
             forceEther = ForceEther.deploy({"from": recipient})
             recipient.transfer(forceEther, Wei("1 ether"))
             forceEther.forceSend(whale.whale, {"from": recipient})

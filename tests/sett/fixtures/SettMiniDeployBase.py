@@ -1,6 +1,6 @@
-from tests.helpers import distribute_from_whales
+from helpers.token_utils import distribute_from_whales, distribute_test_ether
 from scripts.systems.badger_minimal import deploy_badger_minimal
-
+from brownie import *
 
 class SettMiniDeployBase:
     def __init__(
@@ -32,13 +32,14 @@ class SettMiniDeployBase:
         self.deployer = deployer
 
     def deploy(self):
-        self.badger = deploy_badger_minimal(self.deployer)
+        self.badger = deploy_badger_minimal(self.deployer, self.keeper, self.guardian)
         self.deploy_required_logic()
 
         self.pre_deploy_setup()
 
         (params, want) = self.fetch_params()
 
+        distribute_test_ether(self.deployer, Wei("20 ether"))
         distribute_from_whales(self.badger, self.deployer)
 
         self.controller = self.badger.add_controller(self.key)

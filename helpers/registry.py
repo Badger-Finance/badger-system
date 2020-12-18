@@ -166,6 +166,10 @@ whale_registry = DotMap(
         whale="0x19d099670a21bC0a8211a89B84cEdF59AbB4377F",
         token="0x3472A5A71965499acd81997a54BBA8D852C6E53d",
     ),
+    harvestSuperSett=DotMap(
+        whale="0xeD0B7f5d9F6286d00763b0FFCbA886D8f9d56d5e",
+        token="0xAf5A1DECfa95BAF63E0084a35c62592B774A2A87",
+    ),
     uniBadgerWbtc=DotMap(
         whale="0x235c9e24D3FB2FAFd58a2E49D454Fdcd2DBf7FF1",
         token="0xcD7989894bc033581532D2cd88Da5db0A4b12859",

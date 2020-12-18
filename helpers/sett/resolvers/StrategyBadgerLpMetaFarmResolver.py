@@ -16,7 +16,13 @@ def confirm_harvest_badger_lp(before, after):
 
 class StrategyBadgerLpMetaFarmResolver(StrategyCoreResolver):
     def confirm_harvest(self, before, after):
-        assert False
+        super().confirm_harvest(before, after)
+        # Strategy want should increase
+        before_balance = before.get("strategy.balanceOf")
+        assert after.get("strategy.balanceOf") >= before_balance if before_balance else 0
+
+        # PPFS should not decrease
+        assert after.get("sett.pricePerFullShare") >= before.get("sett.pricePerFullShare")
 
     def get_strategy_destinations(self):
         strategy = self.manager.strategy

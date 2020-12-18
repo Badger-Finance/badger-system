@@ -14,6 +14,14 @@ from tests.sett.fixtures.CurveGaugeSBtcMiniDeploy import CurveGaugeSBtcMiniDeplo
 from tests.sett.fixtures.CurveGaugeTBtcMiniDeploy import CurveGaugeTBtcMiniDeploy
 from tests.sett.fixtures.HarvestMetaFarmMiniDeploy import HarvestMetaFarmMiniDeploy
 
+settsToRun = [
+    "native.badger",
+    "native.renCrv",
+    "native.sbtcCrv",
+    "native.tbtcCrv",
+    "harvest.renCrv",
+    "native.uniBadgerWbtc",
+]
 
 @pytest.fixture(scope="function", autouse=True)
 def isolate(fn_isolation):
