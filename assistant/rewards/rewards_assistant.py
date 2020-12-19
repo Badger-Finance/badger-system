@@ -125,8 +125,6 @@ def guardian(badger: BadgerSystem, startBlock, endBlock, test=False):
         console.print("[bold yellow]===== Result: No Pending Root =====[/bold yellow]")
         return False
 
-    pendingMerkleData = badgerTree.getPendingMerkleData()
-
     currentMerkleData = fetchCurrentMerkleData(badger)
     currentRewards = fetch_current_rewards_tree(badger)
     currentContentHash = currentMerkleData["contentHash"]
@@ -149,6 +147,8 @@ def guardian(badger: BadgerSystem, startBlock, endBlock, test=False):
     # ===== Re-Publish data for redundancy ======
     rootHash = hash(merkleTree["merkleRoot"])
     contentFileName = content_hash_to_filename(rootHash)
+
+    pendingMerkleData = badgerTree.getPendingMerkleData()
 
     assert pendingMerkleData["root"] == merkleTree["merkleRoot"]
     assert pendingMerkleData["contentHash"] == rootHash
