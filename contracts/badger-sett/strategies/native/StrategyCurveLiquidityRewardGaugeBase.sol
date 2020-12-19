@@ -80,7 +80,7 @@ contract StrategyCurveLiquidityRewardGaugeBase is BaseStrategy {
         performanceFeeStrategist = _feeConfig[1];
         withdrawalFee = _feeConfig[2];
         keepCRV = _feeConfig[3]; // 1000
-        lpIncentive = ICurveLiquidityRewardGauge(gauge).rewarded_token(); //  If there is a reward token, assign it or address(0)
+        lpReward = ICurveLiquidityRewardGauge(gauge).rewarded_token(); //  If there is a reward token, assign it or address(0)
 
         IERC20Upgradeable(want).safeApprove(gauge, type(uint256).max);
     }
@@ -100,8 +100,8 @@ contract StrategyCurveLiquidityRewardGaugeBase is BaseStrategy {
         protectedTokens[0] = want;
         protectedTokens[1] = lpComponent;
         protectedTokens[2] = crv;
-        if (lpIncentive != address(0)) {
-            protectedTokens[3] = lpIncentive;
+        if (lpReward != address(0)) {
+            protectedTokens[3] = lpReward;
         } 
 
         return protectedTokens;
@@ -119,8 +119,8 @@ contract StrategyCurveLiquidityRewardGaugeBase is BaseStrategy {
         require(address(want) != _asset, "want");
         require(lpComponent != _asset, "lpComponent");
         require(crv != _asset, "crv");
-        if (lpIncentive != address(0)) {
-            require(lpIncentive != _asset, "lpIncentive");
+        if (lpReward != address(0)) {
+            require(lpReward != _asset, "lpReward");
         }
     }
 
