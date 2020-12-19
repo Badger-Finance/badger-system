@@ -13,6 +13,7 @@ with open("merkle/airdrop.json") as f:
 curve = registry.curve
 pickle = registry.pickle
 harvest = registry.harvest
+sushi = registry.sushi
 
 pools = curve.pools
 
@@ -109,6 +110,18 @@ sett_config = DotMap(
                 performanceFeeStrategist=1000,
                 performanceFeeGovernance=1000,
                 withdrawalFee=75,
+            ),
+        ),
+    ),
+    sushi=DotMap(
+        sushiBadgerWBtc=DotMap(
+            # Unfinished
+            strategyName="StrategySushiBadgerWbtc",
+            params=DotMap(
+                # want=pools.renCrv.token,
+                performanceFeeStrategist=1000,
+                performanceFeeGovernance=1000,
+                withdrawalFee=50,
             ),
         ),
     ),

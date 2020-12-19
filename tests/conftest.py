@@ -13,6 +13,7 @@ from tests.sett.fixtures.CurveGaugeRenBtcMiniDeploy import CurveGaugeRenBtcMiniD
 from tests.sett.fixtures.CurveGaugeSBtcMiniDeploy import CurveGaugeSBtcMiniDeploy
 from tests.sett.fixtures.CurveGaugeTBtcMiniDeploy import CurveGaugeTBtcMiniDeploy
 from tests.sett.fixtures.HarvestMetaFarmMiniDeploy import HarvestMetaFarmMiniDeploy
+from tests.sett.fixtures.SushiBadgerWBtcMiniDeploy import SushiBadgerWBtcMiniDeploy
 
 settsToRun = [
     "native.badger",
@@ -98,6 +99,17 @@ def badger_single_sett(settId):
             keeper=keeper,
             governance=governance,
         ).deploy()
+    if settId == "sushi.sushiBadgerWBtc":
+        return SushiBadgerWBtcMiniDeploy(
+            "sushi.sushiBadgerWBtc",
+            "StrategySushiBadgerWbtc",
+            deployer,
+            strategist=strategist,
+            guardian=guardian,
+            keeper=keeper,
+            governance=governance,
+        ).deploy()
+
 
 
 
