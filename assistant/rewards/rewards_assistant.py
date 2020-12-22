@@ -1,6 +1,6 @@
 import json
 
-from assistant.rewards.aws_utils import upload
+from assistant.rewards.aws_utils import download, upload
 from assistant.rewards.calc_stakes import calc_geyser_stakes
 from assistant.rewards.merkle_tree import rewards_to_merkle_tree
 from assistant.rewards.rewards_checker import compare_rewards
@@ -224,8 +224,7 @@ def fetch_current_rewards_tree(badger):
         "[bold yellow]===== Loading Past Rewards " + pastFile + " =====[/bold yellow]"
     )
 
-    with open(pastFile) as f:
-        currentTree = json.load(f)
+    currentTree = json.loads(download(pastFile))
 
     # Invariant: File shoulld have same root as latest
     assert currentTree["merkleRoot"] == merkle["root"]
