@@ -3,12 +3,12 @@ import brownie
 import pytest
 from brownie import *
 from helpers.constants import *
-from tests.conftest import badger_single_sett
+from tests.conftest import badger_single_sett, settsToRun
 from tests.test_recorder import TestRecorder
 
-
 def state_setup(badger, settId):
-    controller = badger.getController(settId)
+    # TODO: Make this fetch based on the sett prefix name if it has dot
+    controller = badger.getControllerFor(settId)
     sett = badger.getSett(settId)
     strategy = badger.getStrategy(settId)
     want = badger.getStrategyWant(settId)
@@ -40,6 +40,7 @@ def state_setup(badger, settId):
     chain.sleep(days(1))
     chain.mine()
 
+    accounts.at(badger.deployer, force=True)
     accounts.at(strategy.governance(), force=True)
     accounts.at(strategy.strategist(), force=True)
     accounts.at(strategy.keeper(), force=True)
@@ -48,24 +49,16 @@ def state_setup(badger, settId):
 
     chain.snapshot()
 
-
+# @pytest.mark.skip()
 @pytest.mark.parametrize(
     "settId",
-    [
-        "native.renCrv",
-        "native.badger",
-        "native.sbtcCrv",
-        "native.tbtcCrv",
-        # "pickle.renCrv",
-        "harvest.renCrv",
-        "native.uniBadgerWbtc",
-    ],
+    settsToRun,
 )
 def test_strategy_permissions(settId):
     badger = badger_single_sett(settId)
     state_setup(badger, settId)
 
-    controller = badger.getController(settId)
+    controller = badger.getControllerFor(settId)
     sett = badger.getSett(settId)
     strategy = badger.getStrategy(settId)
     want = badger.getStrategyWant(settId)
@@ -271,15 +264,7 @@ def test_strategy_permissions(settId):
 # @pytest.mark.skip()
 @pytest.mark.parametrize(
     "settId",
-    [
-        "native.renCrv",
-        "native.badger",
-        "native.sbtcCrv",
-        "native.tbtcCrv",
-        # "pickle.renCrv",
-        "harvest.renCrv",
-        "native.uniBadgerWbtc",
-    ],
+    settsToRun,
 )
 def test_sett_permissions(settId):
     badger = badger_single_sett(settId)
@@ -362,18 +347,10 @@ def test_sett_permissions(settId):
         chain.revert()
 
 
-# @pytest.mark.skip()
+@pytest.mark.skip()
 @pytest.mark.parametrize(
     "settId",
-    [
-        "native.renCrv",
-        "native.badger",
-        "native.sbtcCrv",
-        "native.tbtcCrv",
-        # "pickle.renCrv",
-        "harvest.renCrv",
-        "native.uniBadgerWbtc",
-    ],
+    settsToRun,
 )
 def test_controller_permissions(settId):
     # ===== Controller =====

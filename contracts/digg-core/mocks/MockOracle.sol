@@ -1,9 +1,9 @@
 pragma solidity 0.4.24;
 
-import "./Mock.sol";
+import "interfaces/digg/IMock.sol";
 
 
-contract MockOracle is Mock {
+contract MockOracle is IMock {
     bool private _validity = true;
     uint256 private _data;
     string public name;

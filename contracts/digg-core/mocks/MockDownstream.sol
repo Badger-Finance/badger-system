@@ -1,9 +1,9 @@
 pragma solidity 0.4.24;
 
-import "./Mock.sol";
+import "interfaces/digg/IMock.sol";
 
 
-contract MockDownstream is Mock {
+contract MockDownstream is IMock {
 
     function updateNoArg() external returns (bool) {
         emit FunctionCalled("MockDownstream", "updateNoArg", msg.sender);

@@ -78,7 +78,7 @@
   "deployedBytecode": "0x608060405260043610610041576000357c0100000000000000000000000000000000000000000000000000000000900463ffffffff168063af14052c14610046575b600080fd5b34801561005257600080fd5b5061005b61005d565b005b7f2b3954800366dad952bc52d224185a924290610f61c43c305929b61f35dfd178336040518080602001806020018473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff168152602001838103835260108152602001807f55467261676d656e7473506f6c69637900000000000000000000000000000000815250602001838103825260068152602001807f7265626173650000000000000000000000000000000000000000000000000000815250602001935050505060405180910390a15600a165627a7a723058201a40b6babea93280f5a7dd0f6a325a60c4929fcc9259faa6dcca8570ef896e560029",
   "sourceMap": "48:156:10:-;;;;8:9:-1;5:2;;;30:1;27;20:12;5:2;48:156:10;;;;;;;",
   "deployedSourceMap": "48:156:10:-;;;;;;;;;;;;;;;;;;;;;;;;97:105;;8:9:-1;5:2;;;30:1;27;20:12;5:2;97:105:10;;;;;;;139:56;184:10;139:56;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;97:105::o",
-  "source": "pragma solidity 0.4.24;\n\nimport \"./Mock.sol\";\n\n\ncontract MockUFragmentsPolicy is Mock {\n    \n    function rebase() external {\n        emit FunctionCalled(\"UFragmentsPolicy\", \"rebase\", msg.sender);\n    }\n}\n",
+  "source": "pragma solidity 0.4.24;\n\nimport \"./Mock.sol\";\n\n\ncontract MockUFragmentsPolicy is IMock {\n    \n    function rebase() external {\n        emit FunctionCalled(\"UFragmentsPolicy\", \"rebase\", msg.sender);\n    }\n}\n",
   "sourcePath": "/Users/present/code/digg-core/contracts/mocks/MockUFragmentsPolicy.sol",
   "ast": {
     "absolutePath": "/Users/present/code/digg-core/contracts/mocks/MockUFragmentsPolicy.sol",

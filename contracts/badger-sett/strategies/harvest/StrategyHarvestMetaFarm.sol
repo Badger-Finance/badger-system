@@ -40,8 +40,6 @@ contract StrategyHarvestMetaFarm is BaseStrategy {
     address public constant depositHelper = 0xF8ce90c2710713552fb564869694B2505Bfc0846; // Harvest deposit helper
     address public constant weth = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2; // Weth Token
 
-    uint256 public constant MAX_BPS = 10000;
-    uint256 public withdrawalMaxDeviationThreshold;
     bool internal _emergencyTestTrasferFlag;
     bool internal _emergencyFullTrasferFlag;
 
@@ -110,6 +108,9 @@ contract StrategyHarvestMetaFarm is BaseStrategy {
     }
 
     /// ===== View Functions =====
+    function version() external pure returns (string memory) {
+        return "1.1";
+    }
 
     function getName() external override pure returns (string memory) {
         return "StrategyHarvestMetaFarm";
@@ -145,12 +146,6 @@ contract StrategyHarvestMetaFarm is BaseStrategy {
     function setFarmPerformanceFeeStrategist(uint256 _fee) external {
         _onlyGovernance();
         farmPerformanceFeeStrategist = _fee;
-    }
-
-    function setWithdrawalMaxDeviationThreshold(uint256 _threshold) external {
-        _onlyGovernance();
-        require(_threshold <= MAX_BPS, "strategy-harvest-meta-farm/excessive-max-deviation-threshold");
-        withdrawalMaxDeviationThreshold = _threshold;
     }
 
     /// ===== Internal Core Implementations =====
@@ -246,17 +241,6 @@ contract StrategyHarvestMetaFarm is BaseStrategy {
         IHarvestVault(harvestVault).withdraw(_wrappedAmount);
 
         uint256 _postWant = IERC20Upgradeable(want).balanceOf(address(this));
-
-        // If we end up with less than the amount requested, make sure it does not deviate beyond a maximum threshold
-        if (_postWant < _amount) {
-            uint256 diff = _diff(_amount, _postWant);
-
-            // Require that difference between expected and actual values is less than the deviation threshold percentage
-            require(
-                diff <= _amount.mul(withdrawalMaxDeviationThreshold).div(MAX_BPS),
-                "strategy-harvest-meta-farm/exceed-max-deviation-threshold"
-            );
-        }
 
         // Return the actual amount withdrawn if less than requested
         uint256 _withdrawn = MathUpgradeable.min(_postWant, _amount);
@@ -359,10 +343,5 @@ contract StrategyHarvestMetaFarm is BaseStrategy {
         uint256 ppfs = IHarvestVault(harvestVault).getPricePerFullShare();
         uint256 unit = IHarvestVault(harvestVault).underlyingUnit();
         return amount.mul(ppfs).div(unit);
-    }
-
-    function _diff(uint256 a, uint256 b) internal pure returns (uint256) {
-        require(a >= b, "diff/expected-higher-number-in-first-position");
-        return a.sub(b);
     }
 }

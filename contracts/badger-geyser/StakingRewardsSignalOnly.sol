@@ -13,10 +13,11 @@ import "deps/@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 import "deps/@openzeppelin/contracts-upgradeable/math/MathUpgradeable.sol";
 
 /**
- * @title Badger Staking Rewards
- * @dev Gated rewards mechanics for Badger Setts, based on Synthetix * StakingRewards
+ * @title Badger Staking Rewards - Signal Only
+ * @dev A special staking rewards variant that does not take in tokens, designed for distribution to a single Sett
+ * @dev Only allows for a single staker, hardcoded at launch
  */
-contract StakingRewardsTokenless is Initializable, AccessControlUpgradeable, PausableUpgradeable, ReentrancyGuardUpgradeable {
+contract StakingRewardsSignalOnly is Initializable, AccessControlUpgradeable, PausableUpgradeable, ReentrancyGuardUpgradeable {
     using SafeMathUpgradeable for uint256;
     using SafeERC20Upgradeable for IERC20Upgradeable;
 
@@ -35,14 +36,15 @@ contract StakingRewardsTokenless is Initializable, AccessControlUpgradeable, Pau
     uint256 private _totalSupply;
     mapping(address => uint256) private _balances;
 
-    bytes32 public constant APPROVED_STAKER_ROLE = keccak256("APPROVED_STAKER_ROLE");
+    address public approvedStaker;
 
-    function initialize(address _admin, address _rewardsToken) public initializer {
+    function initialize(address _admin, address _rewardsToken, address _approvedStaker) public initializer whenNotPaused {
         __AccessControl_init();
         __Pausable_init_unchained();
         __ReentrancyGuard_init_unchained();
 
         _setupRole(DEFAULT_ADMIN_ROLE, _admin);
+        approvedStaker = _approvedStaker;
 
         rewardsToken = IERC20Upgradeable(_rewardsToken);
 
@@ -88,14 +90,15 @@ contract StakingRewardsTokenless is Initializable, AccessControlUpgradeable, Pau
         emit Staked(msg.sender, amount);
     }
 
-    function withdraw(uint256 amount) public nonReentrant updateReward(msg.sender) {
+    function withdraw(uint256 amount) public nonReentrant whenNotPaused updateReward(msg.sender) {
+        _onlyApprovedStaker();
         require(amount > 0, "Cannot withdraw 0");
         _totalSupply = _totalSupply.sub(amount);
         _balances[msg.sender] = _balances[msg.sender].sub(amount);
         emit Withdrawn(msg.sender, amount);
     }
 
-    function getReward() public nonReentrant updateReward(msg.sender) {
+    function getReward() public nonReentrant whenNotPaused updateReward(msg.sender) {
         uint256 reward = rewards[msg.sender];
         if (reward > 0) {
             rewards[msg.sender] = 0;
@@ -104,14 +107,15 @@ contract StakingRewardsTokenless is Initializable, AccessControlUpgradeable, Pau
         }
     }
 
-    function exit() external {
+    function exit() external whenNotPaused {
+        _onlyApprovedStaker();
         withdraw(_balances[msg.sender]);
         getReward();
     }
 
     /* ========== RESTRICTED FUNCTIONS ========== */
 
-    function notifyRewardAmount(uint256 startTimestamp, uint256 reward) external updateReward(address(0)) {
+    function notifyRewardAmount(uint256 startTimestamp, uint256 reward) external whenNotPaused updateReward(address(0)) {
         _onlyAdmin();
         if (startTimestamp >= periodFinish) {
             rewardRate = reward.div(rewardsDuration);
@@ -135,7 +139,7 @@ contract StakingRewardsTokenless is Initializable, AccessControlUpgradeable, Pau
     }
 
     // Added to support recovering LP Rewards from other systems such as BAL to be distributed to holders
-    function recoverERC20(address tokenAddress, uint256 tokenAmount) external {
+    function recoverERC20(address tokenAddress, uint256 tokenAmount) external whenNotPaused {
         _onlyAdmin();
         // Cannot recover the rewards token
         require(tokenAddress != address(rewardsToken), "Cannot withdraw the rewards tokens");
@@ -143,7 +147,7 @@ contract StakingRewardsTokenless is Initializable, AccessControlUpgradeable, Pau
         emit Recovered(tokenAddress, tokenAmount);
     }
 
-    function setRewardsDuration(uint256 _rewardsDuration) external {
+    function setRewardsDuration(uint256 _rewardsDuration) external whenNotPaused {
         _onlyAdmin();
         require(block.timestamp > periodFinish, "Previous rewards period must be complete before changing the duration for the new period");
         rewardsDuration = _rewardsDuration;
@@ -177,7 +181,7 @@ contract StakingRewardsTokenless is Initializable, AccessControlUpgradeable, Pau
     }
 
     function _onlyApprovedStaker() internal {
-        require(hasRole(APPROVED_STAKER_ROLE, msg.sender), "onlyApprovedStaker");
+        require(msg.sender == approvedStaker, "onlyApprovedStaker");
     }
 
     /* ========== EVENTS ========== */

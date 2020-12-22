@@ -1,9 +1,9 @@
 pragma solidity 0.4.24;
 
-import "./Mock.sol";
+import "interfaces/digg/IMock.sol";
 
 
-contract MockUFragmentsPolicy is Mock {
+contract MockUFragmentsPolicy is IMock {
     
     function rebase() external {
         emit FunctionCalled("UFragmentsPolicy", "rebase", msg.sender);

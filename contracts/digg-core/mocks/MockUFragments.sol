@@ -1,9 +1,9 @@
 pragma solidity 0.4.24;
 
-import "./Mock.sol";
+import "interfaces/digg/IMock.sol";
 
 
-contract MockUFragments is Mock {
+contract MockUFragments is IMock {
     uint256 private _supply;
 
     // Methods to mock data on the chain

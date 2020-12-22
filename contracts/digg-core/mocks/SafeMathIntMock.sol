@@ -1,10 +1,10 @@
 pragma solidity 0.4.24;
 
-import "./Mock.sol";
+import "interfaces/digg/IMock.sol";
 import "../lib/SafeMathInt.sol";
 
 
-contract SafeMathIntMock is Mock {
+contract SafeMathIntMock is IMock {
     function mul(int256 a, int256 b)
         external
         returns (int256)

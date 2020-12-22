@@ -1,6 +1,6 @@
 pragma solidity 0.4.24;
 
-import "deps/openzeppelin-eth@2.0.2/contracts/ownership/Ownable.sol";
+import "deps/openzeppelin-eth/2.0.2/contracts/ownership/Ownable.sol";
 
 import "./UFragmentsPolicy.sol";
 

@@ -1,3 +1,5 @@
+from helpers.sett.resolvers.StrategySushiBadgerLpOptimizerResolver import StrategySushiBadgerLpOptimizerResolver
+from helpers.sett.resolvers.StrategySushiBadgerWbtcResolver import StrategySushiBadgerWbtcResolver
 from brownie import *
 from helpers.constants import *
 from helpers.multicall import Call, Multicall, as_wei, func
@@ -129,6 +131,7 @@ class SnapshotManager:
         self.entities[key] = entity
 
     def init_resolver(self, name):
+        print("init_resolver", name)
         if name == "StrategyHarvestMetaFarm":
             return StrategyHarvestMetaFarmResolver(self)
         if name == "StrategyBadgerRewards":
@@ -139,6 +142,11 @@ class SnapshotManager:
             return StrategyCurveGaugeResolver(self)
         if name == "StrategyCurveGauge":
             return StrategyCurveGaugeResolver(self)
+        if name == "StrategySushiBadgerWbtc":
+            return StrategySushiBadgerWbtcResolver(self)
+        if name == "StrategySushiLpOptimizer":
+            print("StrategySushiBadgerLpOptimizerResolver")
+            return StrategySushiBadgerLpOptimizerResolver(self)
 
     def settTend(self, overrides, confirm=True):
         user = overrides["from"].address
@@ -185,7 +193,7 @@ class SnapshotManager:
         user = overrides["from"].address
         trackedUsers = {"user": user}
         before = self.snap(trackedUsers)
-        self.sett.earn(overrides)
+        tx = self.sett.earn(overrides)
         after = self.snap(trackedUsers)
         if confirm:
             self.resolver.confirm_earn(before, after, {"user": user})

@@ -5,7 +5,8 @@ from helpers.registry import registry
 from config.badger_config import sett_config
 from dotmap import DotMap, pprint
 from enum import Enum, auto
-
+from rich.console import Console
+console = Console()
 """
 Sett is a subsystem of badger.
 Requires the BadgerDAO infrastructure & multisig to be deployed
@@ -60,9 +61,9 @@ def deploy_strategy(
 
     proxyAdmin = badger.devProxyAdmin
 
-    # print(
-    #     "Deploy Strategy", governance, strategist, controller, keeper, guardian, params
-    # )
+    console.print(
+        "Deploy Strategy "+ strategyName, params
+    )
 
     if strategyName == "StrategyCurveGaugeRenBtcCrv":
         return deploy_proxy(
@@ -144,6 +145,56 @@ def deploy_strategy(
                     params.performanceFeeStrategist,
                     params.withdrawalFee,
                     params.keepCRV,
+                ],
+            ),
+            deployer,
+        )
+    if strategyName == "StrategySushiLpOptimizer":
+        return deploy_proxy(
+            "StrategySushiLpOptimizer",
+            StrategySushiLpOptimizer.abi,
+            badger.logic.StrategySushiLpOptimizer.address,
+            proxyAdmin.address,
+            badger.logic.StrategySushiLpOptimizer.initialize.encode_input(
+                governance,
+                strategist,
+                controller,
+                keeper,
+                guardian,
+                [
+                    params.want,
+                    params.badgerTree,
+                ],
+                params.pid,
+                [
+                    params.performanceFeeGovernance,
+                    params.performanceFeeStrategist,
+                    params.withdrawalFee
+                ],
+            ),
+            deployer,
+        )
+    if strategyName == "StrategySushiBadgerWbtc":
+        return deploy_proxy(
+            "StrategySushiBadgerWbtc",
+            StrategySushiBadgerWbtc.abi,
+            badger.logic.StrategySushiBadgerWbtc.address,
+            proxyAdmin.address,
+            badger.logic.StrategySushiBadgerWbtc.initialize.encode_input(
+                governance,
+                strategist,
+                controller,
+                keeper,
+                guardian,
+                [
+                    params.want,
+                    params.geyser,
+                    params.badger,
+                ],
+                [
+                    params.performanceFeeGovernance,
+                    params.performanceFeeStrategist,
+                    params.withdrawalFee
                 ],
             ),
             deployer,

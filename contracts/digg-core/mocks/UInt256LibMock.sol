@@ -1,10 +1,10 @@
 pragma solidity 0.4.24;
 
-import "./Mock.sol";
+import "interfaces/digg/IMock.sol";
 import "../lib/UInt256Lib.sol";
 
 
-contract UInt256LibMock is Mock {
+contract UInt256LibMock is IMock {
     function toInt256Safe(uint256 a)
         external
         returns (int256)

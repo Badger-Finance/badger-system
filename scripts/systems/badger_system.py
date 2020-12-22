@@ -1,3 +1,4 @@
+from helpers.sett.strategy_registry import strategy_name_to_artifact
 import json
 import decouple
 
@@ -15,8 +16,10 @@ from scripts.systems.sett_system import (
     deploy_controller,
     deploy_strategy,
 )
+from helpers.sett.strategy_registry import name_to_artifact
 
 from rich.console import Console
+
 console = Console()
 
 
@@ -102,40 +105,20 @@ def print_to_file(badger, path):
         json.dump(system, outfile)
 
 
-def strategy_name_to_artifact(name):
-    name_to_artifact = {
-        "SmartVesting": SmartVesting,
-        "SmartTimelock": SmartTimelock,
-        "RewardsEscrow": RewardsEscrow,
-        "BadgerGeyser": BadgerGeyser,
-        "BadgerTree": BadgerTree,
-        "BadgerHunt": BadgerHunt,
-        "SimpleTimelock": SimpleTimelock,
-        "Controller": Controller,
-        "Sett": Sett,
-        "StakingRewards": StakingRewards,
-        "StrategyBadgerRewards": StrategyBadgerRewards,
-        "StrategyBadgerLpMetaFarm": StrategyBadgerLpMetaFarm,
-        "StrategyHarvestMetaFarm": StrategyHarvestMetaFarm,
-        "StrategyPickleMetaFarm": StrategyPickleMetaFarm,
-        "StrategyCurveGaugeTbtcCrv": StrategyCurveGaugeTbtcCrv,
-        "StrategyCurveGaugeSbtcCrv": StrategyCurveGaugeSbtcCrv,
-        "StrategyCurveGaugeRenBtcCrv": StrategyCurveGaugeRenBtcCrv,
-        "HoneypotMeme": HoneypotMeme,
-    }
-    return name_to_artifact[name]
-
-
 def connect_badger(badger_deploy_file):
     badger_deploy = {}
-    console.print("[grey]Connecting to Existing Badger 🦡 System at {}...[/grey]".format(badger_deploy_file))
+    console.print(
+        "[grey]Connecting to Existing Badger 🦡 System at {}...[/grey]".format(
+            badger_deploy_file
+        )
+    )
     with open(badger_deploy_file) as f:
         badger_deploy = json.load(f)
 
     """
     Connect to existing badger deployment
     """
-    
+
     badger = BadgerSystem(
         badger_config,
         None,
@@ -308,34 +291,24 @@ class BadgerSystem:
 
     def deploy_sett_core_logic(self):
         deployer = self.deployer
-        self.logic.Controller = Controller.deploy({"from": deployer})
-        self.logic.Sett = Sett.deploy({"from": deployer})
-        self.logic.StakingRewards = StakingRewards.deploy({"from": deployer})
+        self.logic["Controller"] = Controller.deploy({"from": deployer})
+        self.logic["Sett"] = Sett.deploy({"from": deployer})
+        self.logic["StakingRewards"] = StakingRewards.deploy({"from": deployer})
+        self.logic["StakingRewardsSignalOnly"] = StakingRewardsSignalOnly.deploy(
+            {"from": deployer}
+        )
 
     def deploy_sett_strategy_logic(self):
         deployer = self.deployer
-        self.logic.StrategyBadgerRewards = StrategyBadgerRewards.deploy(
-            {"from": deployer}
-        )
-        self.logic.StrategyBadgerLpMetaFarm = StrategyBadgerLpMetaFarm.deploy(
-            {"from": deployer}
-        )
-        self.logic.StrategyHarvestMetaFarm = StrategyHarvestMetaFarm.deploy(
-            {"from": deployer}
-        )
-        self.logic.StrategyPickleMetaFarm = StrategyPickleMetaFarm.deploy(
-            {"from": deployer}
-        )
+        for name, artifact in name_to_artifact:
+            self.logic[name] = artifact.deploy({"from": deployer})
 
-        self.logic.StrategyCurveGaugeTbtcCrv = StrategyCurveGaugeTbtcCrv.deploy(
-            {"from": deployer}
-        )
-        self.logic.StrategyCurveGaugeSbtcCrv = StrategyCurveGaugeSbtcCrv.deploy(
-            {"from": deployer}
-        )
-        self.logic.StrategyCurveGaugeRenBtcCrv = StrategyCurveGaugeRenBtcCrv.deploy(
-            {"from": deployer}
-        )
+    def deploy_sett_strategy_logic_for(self, name):
+        deployer = self.deployer
+        artifact = strategy_name_to_artifact(name)
+        self.logic[name] = artifact.deploy({"from": deployer})
+
+        # TODO: Initialize to remove that function
 
     def deploy_rewards_escrow(self):
         deployer = self.deployer
@@ -458,6 +431,7 @@ class BadgerSystem:
         governance=None,
         strategist=None,
         keeper=None,
+        guardian=None,
     ):
         deployer = self.deployer
         proxyAdmin = self.devProxyAdmin
@@ -468,6 +442,8 @@ class BadgerSystem:
             strategist = deployer
         if not keeper:
             keeper = deployer
+        if not guardian:
+            guardian = deployer
 
         sett = deploy_proxy(
             "Sett",
@@ -479,6 +455,7 @@ class BadgerSystem:
                 controller,
                 governance,
                 keeper,
+                guardian,
                 namePrefixOverride,
                 namePrefix,
                 symbolPrefix,
@@ -530,6 +507,24 @@ class BadgerSystem:
         self.track_contract_upgradeable(id + ".geyser", geyser)
         return geyser
 
+    def deploy_set_staking_rewards_signal_only(self, id, distToken, approvedStaker):
+        deployer = self.deployer
+
+        rewards = deploy_proxy(
+            "StakingRewardsSignalOnly",
+            StakingRewardsSignalOnly.abi,
+            self.logic.StakingRewardsSignalOnly.address,
+            self.devProxyAdmin.address,
+            self.logic.StakingRewards.initialize.encode_input(
+                deployer, distToken, approvedStaker
+            ),
+            deployer,
+        )
+
+        self.sett_system.rewards[id] = rewards
+        self.track_contract_upgradeable(id + ".rewards", rewards)
+        return rewards
+
     def deploy_sett_staking_rewards(self, id, stakingToken, distToken):
         deployer = self.deployer
 
@@ -555,8 +550,6 @@ class BadgerSystem:
 
         want = strategy.want()
         vault_want = vault.token()
-
-        print(want, vault_want)
 
         assert vault_want == want
 
@@ -667,17 +660,6 @@ class BadgerSystem:
 
         strategy = self.deploy_strategy(
             "native.uniBadgerWbtc", "StrategyBadgerLpMetaFarm", controller, params
-        )
-
-        self.wire_up_sett(sett, strategy, controller)
-
-    def deploy_strategy_pickle_rencrv(self):
-        sett = self.getSett("pickle.renCrv")
-        controller = self.getController("pickle")
-        params = sett_config.pickle.renCrv.params
-
-        strategy = self.deploy_strategy(
-            "pickle.renCrv", "StrategyPickleMetaFarm", controller, params
         )
 
         self.wire_up_sett(sett, strategy, controller)

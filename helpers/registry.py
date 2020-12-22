@@ -1,6 +1,7 @@
 import json
 
 from dotmap import DotMap
+from enum import Enum
 
 with open("dependency-artifacts/aragon/Agent.json") as f:
     Agent = json.load(f)
@@ -140,6 +141,8 @@ sushi_registry = DotMap(
     sushiToken="0x6b3595068778dd592e39a122f4f5a5cf09c90fe2",
     xsushiToken="0x8798249c2E607446EfB7Ad49eC89dD1865Ff4272",
     sushiChef="0xc2EdaD668740f1aA35E4D8f227fB8E17dcA888Cd",
+    router="0xd9e1cE17f2641f24aE83637ab66a2cca9C378B9F",
+    factory="0xC0AEe478e3658e2610c5F7A4A2E1777cE9e4f2Ac",
     pids=DotMap(sushiBadgerWBtc=0, sushiEthWBtc=21),
 )
 
@@ -167,35 +170,63 @@ curve_registry = DotMap(
     artifacts=DotMap(),
 )
 
+badger_registry = DotMap(
+    token="0x3472a5a71965499acd81997a54bba8d852c6e53d"
+)
+
+class WhaleRegistryAction(Enum):
+    DISTRIBUTE_FROM_EOA = 0
+    DISTRIBUTE_FROM_CONTRACT = 1
+    POPULATE_NEW_SUSHI_LP = 2
+
 
 whale_registry = DotMap(
     badger=DotMap(
         whale="0x19d099670a21bC0a8211a89B84cEdF59AbB4377F",
         token="0x3472A5A71965499acd81997a54BBA8D852C6E53d",
+        action = WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT
     ),
     harvestSuperSett=DotMap(
         whale="0xeD0B7f5d9F6286d00763b0FFCbA886D8f9d56d5e",
         token="0xAf5A1DECfa95BAF63E0084a35c62592B774A2A87",
+        action = WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT
     ),
     uniBadgerWbtc=DotMap(
         whale="0x235c9e24D3FB2FAFd58a2E49D454Fdcd2DBf7FF1",
         token="0xcD7989894bc033581532D2cd88Da5db0A4b12859",
+        action = WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT
     ),
     sbtcCrv=DotMap(
         whale="0xc25099792e9349c7dd09759744ea681c7de2cb66",
         token=curve_registry.pools.sbtcCrv.token,
+        action = WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT
     ),
     renCrv=DotMap(
         whale="0xb1f2cdec61db658f091671f5f199635aef202cac",
         token=curve_registry.pools.renCrv.token,
+        action = WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT
     ),
     tbtcCrv=DotMap(
         whale="0xaf379f0228ad0d46bb7b4f38f9dc9bcc1ad0360c",
         token=curve_registry.pools.tbtcCrv.token,
-        whaleType="CurveRewards",
+        action = WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT
     ),
     wbtc=DotMap(
-        whale="0x2bf792ffe8803585f74e06907900c2dc2c29adcb", token=token_registry.wbtc,
+        whale="0x2bf792ffe8803585f74e06907900c2dc2c29adcb",
+        token=token_registry.wbtc,
+        action = WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT
+    ),
+    sushiBadgerWbtc=DotMap(
+        whale="0x235c9e24D3FB2FAFd58a2E49D454Fdcd2DBf7FF1",
+        token="0xcD7989894bc033581532D2cd88Da5db0A4b12859",
+        special=True,
+        action=WhaleRegistryAction.POPULATE_NEW_SUSHI_LP,
+        actionParams={"token0": badger_registry.token, "token1": token_registry.wbtc},
+    ),
+    sushiWbtcWeth=DotMap(
+        whale="0xc2EdaD668740f1aA35E4D8f227fB8E17dcA888Cd",
+        token="0xCEfF51756c56CeFFCA006cD410B03FFC46dd3a58",
+        action = WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT
     ),
 )
 
@@ -205,6 +236,7 @@ registry = DotMap(
     uniswap=uniswap_registry,
     open_zeppelin=open_zeppelin_registry,
     aragon=aragon_registry,
+    sushiswap=sushi_registry,
     gnosis_safe=gnosis_safe_registry,
     onesplit=gnosis_safe_registry,
     pickle=pickle_registry,

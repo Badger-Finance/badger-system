@@ -217,47 +217,30 @@ badger_config = DotMap(
     ),
 )
 
-# trial_badger_config = badger_config
-# trial_badger_config.globalStartTime = 1606957257
-# trial_badger_config.tokenLockParams.lockDuration = hours(1.5)  # Unlock to DAO
-# trial_badger_config.teamVestingParams.cliffDuration = hours(
-#     1.5
-# )  # Unlock to founders, cliff
-# trial_badger_config.teamVestingParams.totalDuration = hours(6)
-# trial_badger_config.geyserParams.badgerDistributionStart = 1606951800
-
-
-"""
-    tokenLockParams=DotMap(
-        badgerLockAmount=badger_total_supply * 35 // 100,
-        lockDuration=days(30),
-    ),
-    teamVestingParams=DotMap(
-        startTime=globalStartTime,
-        cliffDuration=days(30),
-        totalDuration=days(365),
-    ),
-"""
-
-digg_config = DotMap(
-    initialSupply=6250 * (10 ** 9),
-    deviationThreshold=50000000000000000,
-    rebaseLag=10,
-    minRebaseTimeIntervalSec=86400,
-    rebaseWindowOffsetSec=7200,
-    rebaseWindowLengthSec=1200,
-    baseCpi=10 ** 18,
-    rebaseDelayAfterStakingStart=30,
-    marketOracleParams=DotMap(
-        reportExpirationTimeSec=88200, reportDelaySec=3600, minimumProviders=1,
-    ),
-    cpiOracleParams=DotMap(
-        reportExpirationTimeSec=5356800, reportDelaySec=86400, minimumProviders=1,
-    ),
-    centralizedOracleParams=DotMap(
-        owners=[AddressZero, AddressZero, AddressZero], threshold=1,
-    ),
-    tokenLockParams=DotMap(diggLockAmount=3125 * (10 ** 9), lockDuration=days(30),),
-)
+digg_config = {
+    "initialSupply": 6250 * (10 ** 9),
+    "deviationThreshold": 50000000000000000,
+    "rebaseLag": 10,
+    "minRebaseTimeIntervalSec": 86400,
+    "rebaseWindowOffsetSec": 7200,
+    "rebaseWindowLengthSec": 1200,
+    "baseCpi": 10 ** 18,
+    "rebaseDelayAfterStakingStart": 30,
+    "marketOracleParams": {
+        "reportExpirationTimeSec": 88200,
+        "reportDelaySec": 3600,
+        "minimumProviders": 1,
+    },
+    "cpiOracleParams": {
+        "reportExpirationTimeSec": 5356800,
+        "reportDelaySec": 86400,
+        "minimumProviders": 1,
+    },
+    "centralizedOracleParams": {
+        "owners": [AddressZero, AddressZero, AddressZero],
+        "threshold": 1,
+    },
+    "tokenLockParams": {"diggLockAmount": 3125 * (10 ** 9), "lockDuration": days(30)},
+}
 
 config = DotMap(badger=badger_config, sett=sett_config, digg=digg_config)
