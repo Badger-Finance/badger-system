@@ -3,21 +3,14 @@ from brownie import *
 from helpers.constants import AddressZero, MaxUint256
 from helpers.registry import registry
 
-uniswap = registry.uniswap
-
-
-def connect_uniswap():
-    return UniswapSystem()
-
-
 class UniswapSystem:
     def __init__(self):
-        self.uniswap = uniswap
+        self.contract_registry = registry.uniswap
         self.factory = interface.IUniswapV2Factory(
-            web3.toChecksumAddress(uniswap.factoryV2)
+            web3.toChecksumAddress(self.contract_registry.factoryV2)
         )
         self.router = interface.IUniswapRouterV2(
-            web3.toChecksumAddress(uniswap.routerV2)
+            web3.toChecksumAddress(self.contract_registry.routerV2)
         )
 
     def createPair(self, tokenA, tokenB, signer):
@@ -26,9 +19,9 @@ class UniswapSystem:
         return interface.IUniswapV2Pair(pairAddress)
 
     def addMaxLiquidity(self, tokenA, tokenB, signer):
-        # TODO: Determine if passed in contracts or addresses and process accordingly. Should be able to accept both in any combinantion. Currently expects contracts
-        tokenA.approve(self.router, MaxUint256, {"from": signer})
-        tokenB.approve(self.router, MaxUint256, {"from": signer})
+        print("self", tokenA, tokenB)
+        tokenA = interface.IERC20(tokenA)
+        tokenB = interface.IERC20(tokenB)
 
         balanceA = tokenA.balanceOf(signer) // 2
         balanceB = tokenB.balanceOf(signer) // 2
@@ -37,6 +30,10 @@ class UniswapSystem:
 
         assert balanceA > 0
         assert balanceB > 0
+        
+        # TODO: Determine if passed in contracts or addresses and process accordingly. Should be able to accept both in any combinantion. Currently expects contracts
+        tokenA.approve(self.router, MaxUint256, {"from": signer})
+        tokenB.approve(self.router, MaxUint256, {"from": signer})
 
         return self.router.addLiquidity(
             tokenA.address,
@@ -57,7 +54,7 @@ class UniswapSystem:
 
         pairAddress = self.factory.getPair(tokenA, tokenB)
         return Contract.from_abi(
-            "UniswapV2Pair", pairAddress, self.uniswap.artifacts["UniswapV2Pair"]["abi"]
+            "UniswapV2Pair", pairAddress, self.contract_registry.artifacts["UniswapV2Pair"]["abi"]
         )
 
     def hasPair(self, tokenA, tokenB):

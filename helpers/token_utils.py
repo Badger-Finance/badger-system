@@ -2,8 +2,10 @@ from brownie import *
 from dotmap import DotMap
 from tabulate import tabulate
 
-from helpers.registry import whale_registry
+from helpers.registry import WhaleRegistryAction, whale_registry
 from rich.console import Console
+from scripts.systems.sushiswap_system import SushiswapSystem
+from scripts.systems.uniswap_system import UniswapSystem
 
 console = Console()
 
@@ -19,21 +21,42 @@ def get_token_balances(accounts, tokens):
 def distribute_from_whales(badger, recipient):
 
     console.print(
-        "[gray]Transferring assets from whales for {} assets...[/gray]".format(
+        "[green] 🐋 Transferring assets from whales for {} assets... 🐋 [/green]".format(
             len(whale_registry.items())
         )
     )
-    for key, whale in whale_registry.items():
+
+    # Normal Transfers
+    for key, whale_config in whale_registry.items():
+        # Handle special cases after all standard distributions
+        if whale_config.special:
+            continue
         if key != "_pytestfixturefunction":
-            console.print(" transferring from {} whale {}".format(key, whale.toDict()))
-            forceEther = ForceEther.deploy({"from": recipient})
-            recipient.transfer(forceEther, Wei("1 ether"))
-            forceEther.forceSend(whale.whale, {"from": recipient})
-            if whale.token:
-                token = interface.IERC20(whale.token)
-                token.transfer(
-                    recipient, token.balanceOf(whale.whale) // 5, {"from": whale.whale}
-                )
+            console.print(" -> {}".format(key))
+
+            if whale_config.action == WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT:
+                forceEther = ForceEther.deploy({"from": recipient})
+                recipient.transfer(forceEther, Wei("1 ether"))
+                forceEther.forceSend(whale_config.whale, {"from": recipient})
+
+            token = interface.IERC20(whale_config.token)
+            token.transfer(
+                recipient,
+                token.balanceOf(whale_config.whale) // 5,
+                {"from": whale_config.whale},
+            )
+
+    # Special Transfers
+    for key, whale_config in whale_registry.items():
+        if not whale_config.special:
+            continue
+        if whale_config.action == WhaleRegistryAction.POPULATE_NEW_SUSHI_LP:
+            # Populate LP pair and distribute
+            # NOTE: Account should have been distributed both underlying components previously
+            sushiswap = SushiswapSystem()
+            sushiswap.addMaxLiquidity(
+                whale_config.actionParams["token0"], whale_config.actionParams["token1"], recipient
+            )
 
 
 def distribute_test_ether(recipient, amount):

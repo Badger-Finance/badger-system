@@ -1,12 +1,20 @@
+from scripts.systems.uniswap_system import UniswapSystem
 from config.badger_config import badger_config, sett_config
 from helpers.constants import APPROVED_STAKER_ROLE
 from tests.sett.fixtures.SettMiniDeployBase import SettMiniDeployBase
+from helpers.registry import registry
 
 
 class BadgerLpMetaFarmMiniDeploy(SettMiniDeployBase):
     def fetch_params(self):
-        params = sett_config.harvest.renCrv.params
-        want = sett_config.harvest.renCrv.params.want
+        params = sett_config.native.uniBadgerWbtc.params
+
+        uniswap = UniswapSystem()
+        want = uniswap.getPair(self.badger.token, registry.tokens.wbtc)
+        
+        params.want = want
+
+        params.geyser = self.rewards
 
         return (params, want)
 
@@ -27,6 +35,10 @@ class BadgerLpMetaFarmMiniDeploy(SettMiniDeployBase):
         """
         Deploy StakingRewards for Strategy
         """
+        uniswap = UniswapSystem()
+        want = uniswap.getPair(self.badger.token, registry.tokens.wbtc)
+
         self.rewards = self.badger.deploy_sett_staking_rewards(
-            self.key, self.badger.token, self.badger.token
+            self.key, want, self.badger.token
         )
+        

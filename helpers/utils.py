@@ -1,3 +1,5 @@
+from brownie import *
+
 # Assert approximate integer
 def approx(actual, expected, percentage_threshold):
     print(actual, expected, percentage_threshold)
@@ -13,7 +15,13 @@ def Eth(value):
 
 
 def val(amount):
-    return "{:,.2f}".format(amount / 1e18)
+    if amount < Wei("0.0001 ether"):
+        return "{:,.10f}".format(amount / 1e18)
+    if amount < Wei("0.001 ether"):
+        return "{:,.5f}".format(amount / 1e18)
+    if amount < Wei("0.01 ether"):
+        return "{:,.4f}".format(amount / 1e18)
+    return "{:,.3f}".format(amount / 1e18)
 
 
 def sec(amount):

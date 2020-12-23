@@ -10,4 +10,5 @@ class HarvestMetaFarmMiniDeploy(SettMiniDeployBase):
         return (params, want)
 
     def post_deploy_setup(self):
-        assert False
+        # TODO(bodu): Check if there's any post deploy setup we need to do.
+        self.strategy.setWithdrawalMaxDeviationThreshold(50, {'from': self.governance})

@@ -4,6 +4,7 @@ pragma solidity ^0.6.11;
 
 import "deps/@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import "deps/@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
+import "deps/@openzeppelin/contracts-upgradeable/math/MathUpgradeable.sol";
 import "deps/@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "deps/@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 import "deps/@openzeppelin/contracts-upgradeable/token/ERC20/SafeERC20Upgradeable.sol";
@@ -29,6 +30,7 @@ abstract contract BaseStrategy is PausableUpgradeable, SettAccessControl {
     event SetPerformanceFeeStrategist(uint256 performanceFeeStrategist);
     event SetPerformanceFeeGovernance(uint256 performanceFeeGovernance);
     event Harvest(uint256 harvested, uint256 indexed blockNumber);
+    event Tend(uint256 tended);
 
     address public want; // Want: Curve.fi renBTC/wBTC (crvRenWBTC) LP token
 
@@ -42,19 +44,23 @@ abstract contract BaseStrategy is PausableUpgradeable, SettAccessControl {
     address public controller;
     address public guardian;
 
+    uint256 public withdrawalMaxDeviationThreshold;
+
     function __BaseStrategy_init(
         address _governance,
         address _strategist,
         address _controller,
         address _keeper,
         address _guardian
-    ) public initializer {
+    ) public initializer whenNotPaused {
         __Pausable_init();
         governance = _governance;
         strategist = _strategist;
         keeper = _keeper;
         controller = _controller;
         guardian = _guardian;
+        withdrawalMaxDeviationThreshold = 50;
+
     }
 
     // ===== Modifiers =====
@@ -64,17 +70,17 @@ abstract contract BaseStrategy is PausableUpgradeable, SettAccessControl {
     }
 
     function _onlyAuthorizedActorsOrController() internal view {
-        require(
-            msg.sender == keeper || msg.sender == strategist || msg.sender == governance || msg.sender == controller,
-            "onlyAuthorizedActorsOrController"
-        );
+        require(msg.sender == keeper || msg.sender == governance || msg.sender == controller, "onlyAuthorizedActorsOrController");
     }
 
     function _onlyAuthorizedPausers() internal view {
-        require(msg.sender == guardian || msg.sender == strategist || msg.sender == governance, "onlyPausers");
+        require(msg.sender == guardian || msg.sender == governance, "onlyPausers");
     }
 
     /// ===== View Functions =====
+    function baseStrategyVersion() public view returns (string memory) {
+        return "1.1";
+    }
 
     /// @notice Get the balance of want held idle in the Strategy
     function balanceOfWant() public view returns (uint256) {
@@ -82,11 +88,11 @@ abstract contract BaseStrategy is PausableUpgradeable, SettAccessControl {
     }
 
     /// @notice Get the total balance of want realized in the strategy, whether idle or active in Strategy positions.
-    function balanceOf() public virtual view returns (uint256) {
+    function balanceOf() public view virtual returns (uint256) {
         return balanceOfWant().add(balanceOfPool());
     }
 
-    function isTendable() public virtual view returns (bool) {
+    function isTendable() public view virtual returns (bool) {
         return false;
     }
 
@@ -99,22 +105,31 @@ abstract contract BaseStrategy is PausableUpgradeable, SettAccessControl {
 
     function setWithdrawalFee(uint256 _withdrawalFee) external {
         _onlyGovernance();
+        require(_withdrawalFee <= MAX_FEE, "base-strategy/excessive-withdrawal-fee");
         withdrawalFee = _withdrawalFee;
     }
 
     function setPerformanceFeeStrategist(uint256 _performanceFeeStrategist) external {
         _onlyGovernance();
+        require(_performanceFeeStrategist <= MAX_FEE, "base-strategy/excessive-strategist-performance-fee");
         performanceFeeStrategist = _performanceFeeStrategist;
     }
 
     function setPerformanceFeeGovernance(uint256 _performanceFeeGovernance) external {
         _onlyGovernance();
+        require(_performanceFeeGovernance <= MAX_FEE, "base-strategy/excessive-governance-performance-fee");
         performanceFeeGovernance = _performanceFeeGovernance;
     }
 
     function setController(address _controller) external {
         _onlyGovernance();
         controller = _controller;
+    }
+
+    function setWithdrawalMaxDeviationThreshold(uint256 _threshold) external {
+        _onlyGovernance();
+        require(_threshold <= MAX_FEE, "base-strategy/excessive-max-deviation-threshold");
+        withdrawalMaxDeviationThreshold = _threshold;
     }
 
     function deposit() public virtual whenNotPaused {
@@ -128,7 +143,7 @@ abstract contract BaseStrategy is PausableUpgradeable, SettAccessControl {
 
     // ===== Permissioned Actions: Controller =====
 
-    /// @notice Withdraw all funds, normally used when migrating strategies
+    /// @notice Controller-only function to Withdraw partial funds, normally used with a vault withdrawal
     function withdrawAll() external virtual whenNotPaused returns (uint256 balance) {
         _onlyController();
 
@@ -137,23 +152,43 @@ abstract contract BaseStrategy is PausableUpgradeable, SettAccessControl {
         _transferToVault(IERC20Upgradeable(want).balanceOf(address(this)));
     }
 
-    /// @notice Controller-only function to Withdraw partial funds, normally used with a vault withdrawal
+    /// @notice Withdraw partial funds from the strategy, unrolling from strategy positions as necessary
+    /// @notice Processes withdrawal fee if present
+    /// @dev If it fails to recover sufficient funds (defined by withdrawalMaxDeviationThreshold), the withdrawal should fail so that this unexpected behavior can be investigated
     function withdraw(uint256 _amount) external virtual whenNotPaused {
         _onlyController();
 
         uint256 _balance = IERC20Upgradeable(want).balanceOf(address(this));
 
+        uint256 _withdrawn = 0;
+        uint256 _postWithdraw = _balance;
+
         // Withdraw some from activities if idle want is not sufficient to cover withdrawal
         if (_balance < _amount) {
-            _amount = _withdrawSome(_amount.sub(_balance));
-            _amount = _amount.add(_balance);
+            _withdrawn = _withdrawSome(_amount.sub(_balance));
+            _postWithdraw = _withdrawn.add(_balance);
+
+            // Sanity check: Ensure we were able to retrieve sufficent want from strategy positions
+            // If we end up with less than the amount requested, make sure it does not deviate beyond a maximum threshold
+            if (_postWithdraw < _amount) {
+                uint256 diff = _diff(_amount, _postWithdraw);
+
+                // Require that difference between expected and actual values is less than the deviation threshold percentage
+                require(
+                    diff <= _amount.mul(withdrawalMaxDeviationThreshold).div(MAX_FEE),
+                    "base-strategy/withdraw-exceed-max-deviation-threshold"
+                );
+            }
         }
 
+        // Return the amount actually withdrawn if less than amount requested
+        uint256 _toWithdraw = MathUpgradeable.min(_postWithdraw, _amount);
+
         // Process withdrawal fee
-        uint256 _fee = _processWithdrawalFee(_amount);
+        uint256 _fee = _processWithdrawalFee(_toWithdraw);
 
         // Transfer remaining to Vault to handle withdrawal
-        _transferToVault(_amount.sub(_fee));
+        _transferToVault(_toWithdraw.sub(_fee));
     }
 
     // NOTE: must exclude any tokens used in the yield
@@ -174,7 +209,7 @@ abstract contract BaseStrategy is PausableUpgradeable, SettAccessControl {
     }
 
     function unpause() external {
-        _onlyAuthorizedPausers();
+        _onlyGovernance();
         _unpause();
     }
 
@@ -249,7 +284,7 @@ abstract contract BaseStrategy is PausableUpgradeable, SettAccessControl {
     }
 
     /// @notice Add liquidity to uniswap for specified token pair, utilizing the maximum balance possible
-    function _add_max_liquidity_uniswap(address token0, address token1) internal {
+    function _add_max_liquidity_uniswap(address token0, address token1) internal virtual {
         uint256 _token0Balance = IERC20Upgradeable(token0).balanceOf(address(this));
         uint256 _token1Balance = IERC20Upgradeable(token1).balanceOf(address(this));
 
@@ -257,6 +292,12 @@ abstract contract BaseStrategy is PausableUpgradeable, SettAccessControl {
         _safeApproveHelper(token1, uniswap, _token1Balance);
 
         IUniswapRouterV2(uniswap).addLiquidity(token0, token1, _token0Balance, _token1Balance, 0, 0, address(this), block.timestamp);
+    }
+
+    /// @notice Utility function to diff two numbers, expects higher value in first position
+    function _diff(uint256 a, uint256 b) internal pure returns (uint256) {
+        require(a >= b, "diff/expected-higher-number-in-first-position");
+        return a.sub(b);
     }
 
     // ===== Abstract Functions: To be implemented by specific Strategies =====
@@ -271,7 +312,7 @@ abstract contract BaseStrategy is PausableUpgradeable, SettAccessControl {
     /// @notice Specify tokens used in yield process, should not be available to withdraw via withdrawOther()
     function _onlyNotProtectedTokens(address _asset) internal virtual;
 
-    function getProtectedTokens() external virtual view returns (address[] memory);
+    function getProtectedTokens() external view virtual returns (address[] memory);
 
     /// @dev Internal logic for strategy migration. Should exit positions as efficiently as possible
     function _withdrawAll() internal virtual;
@@ -287,10 +328,10 @@ abstract contract BaseStrategy is PausableUpgradeable, SettAccessControl {
     // function harvest() external virtual;
 
     /// @dev User-friendly name for this strategy for purposes of convenient reading
-    function getName() external virtual pure returns (string memory);
+    function getName() external pure virtual returns (string memory);
 
     /// @dev Balance of want currently held in strategy positions
-    function balanceOfPool() public virtual view returns (uint256);
+    function balanceOfPool() public view virtual returns (uint256);
 
     uint256[50] private __gap;
 }

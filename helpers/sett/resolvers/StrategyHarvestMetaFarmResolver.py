@@ -1,6 +1,7 @@
 from brownie import *
+
 from helpers.constants import *
-from multicall import Call, Multicall
+from helpers.multicall import Call, func, as_wei
 from helpers.sett.resolvers.StrategyCoreResolver import StrategyCoreResolver
 
 
@@ -8,39 +9,34 @@ class StrategyHarvestMetaFarmResolver(StrategyCoreResolver):
     def confirm_harvest(self, before, after):
         super().confirm_harvest(before, after)
         # Increase or constant in strategy want balance
-        assert after.balances("want", "strategy") >= before.balances("want", "strategy")
+        assert (after.balances("want", "strategy") >=
+            before.balances("want", "strategy"))
         # No idle farm in strategy
         assert after.balances("farm", "strategy") == 0
 
-        # Reduce FARM in vaultFarm
+        # Reduce FARM in vaultFarm (harvest rewards)
         assert after.get("vaultFarm.earned.strategy") == 0
 
-        # Reduce FARM in metaFarm
+        # Reduce FARM in metaFarm (unstake all FARM)
         assert after.get("metaFarm.staked.strategy") == 0
 
         # BadgerTree should gain FARM
-        assert after.balances("farm", "badgerTree") > before.balances(
-            "farm", "badgerTree"
-        )
+        # TODO(bodu): Make test more granular later since we're actually
+        # taking out strategist fees on FARM before distributing remaining
+        # to the rewards tree.
+        assert (after.balances("farm", "badgerTree") >
+            before.balances("farm", "badgerTree"))
 
     def confirm_tend(self, before, after):
-        # Amount of underlying in vault should not decrease
-        assert after.balances("harvestVault", "strategy") >= after.balances(
-            "harvestVault", "strategy"
-        )
+        # All FARM from underlying vaults should be harvested
+        assert (before.get("vaultFarm.earned.strategy") >=
+            after.get("vaultFarm.earned.strategy"))
+        assert (before.get("metaFarm.earned.strategy") >=
+            after.get("metaFarm.earned.strategy"))
 
-        # Amount of underlying staked in farm should not decrease
-        assert after.balances("vaultFarm", "strategy") >= after.balances(
-            "vaultFarm", "strategy"
-        )
-
-        # All FARM from underlying vault should be harvested
-        assert after.balances("vaultFarm.strategy.earned") == 0
-
-        # Amount of FARM in meta farm should increase
-        assert after.balances("metaFarm", "strategy") >= after.balances(
-            "metaFarm", "strategy"
-        )
+        # Collected rewards from all vaults are staked in metaVault
+        assert (after.get("metaFarm.staked.strategy") >=
+            before.get("metaFarm.staked.strategy"))
 
     def get_strategy_destinations(self):
         strategy = self.manager.strategy
@@ -60,3 +56,49 @@ class StrategyHarvestMetaFarmResolver(StrategyCoreResolver):
         - Leave no fShares in VaultFarm
         """
         assert False
+
+    def add_balances_snap(self, calls, entities):
+        super().add_balances_snap(calls, entities)
+
+        # Add FARM token balances.
+        farm = interface.IERC20(self.manager.strategy.farm())
+
+        calls = self.add_entity_balances_for_tokens(calls, "farm", farm, entities)
+        return calls
+
+    def add_strategy_snap(self, calls):
+        super().add_strategy_snap(calls)
+
+        strategy = self.manager.strategy
+
+        calls.append(
+            Call(
+                strategy.vaultFarm(),
+                [func.rewardPool.earned, strategy.address],
+                [["vaultFarm.earned.strategy", as_wei]],
+            )
+        )
+        calls.append(
+            Call(
+                strategy.vaultFarm(),
+                [func.rewardPool.balanceOf, strategy.address],
+                [["vaultFarm.staked.strategy", as_wei]],
+            )
+        )
+
+        calls.append(
+            Call(
+                strategy.metaFarm(),
+                [func.rewardPool.earned, strategy.address],
+                [["metaFarm.earned.strategy", as_wei]],
+            )
+        )
+        calls.append(
+            Call(
+                strategy.metaFarm(),
+                [func.rewardPool.balanceOf, strategy.address],
+                [["metaFarm.staked.strategy", as_wei]],
+            )
+        )
+
+        return calls

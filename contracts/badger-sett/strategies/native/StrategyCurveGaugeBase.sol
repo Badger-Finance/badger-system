@@ -132,7 +132,7 @@ contract StrategyCurveGaugeBase is BaseStrategy {
         HarvestData memory harvestData;
 
         uint256 _before = IERC20Upgradeable(want).balanceOf(address(this));
-        uint256 _beforeCrv = IERC20Upgradeable(want).balanceOf(address(this));
+        uint256 _beforeCrv = IERC20Upgradeable(crv).balanceOf(address(this));
 
         // Harvest from Gauge
         IMintr(mintr).mint(address(gauge));

@@ -21,7 +21,7 @@ contract SettAccessControl is Initializable {
     }
 
     function _onlyAuthorizedActors() internal view {
-        require(msg.sender == keeper || msg.sender == strategist || msg.sender == governance, "onlyAuthorizedActors");
+        require(msg.sender == keeper || msg.sender == governance, "onlyAuthorizedActors");
     }
 
     // ===== PERMISSIONED ACTIONS =====

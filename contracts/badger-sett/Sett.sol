@@ -8,6 +8,7 @@ import "../../deps/@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.
 import "../../deps/@openzeppelin/contracts-upgradeable/token/ERC20/SafeERC20Upgradeable.sol";
 import "../../deps/@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import "../../deps/@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "../../deps/@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 
 import "../../interfaces/badger/IController.sol";
 import "../../interfaces/erc20/IERC20Detailed.sol";
@@ -15,8 +16,16 @@ import "./SettAccessControlDefended.sol";
 
 /* 
     Source: https://github.com/iearn-finance/yearn-protocol/blob/develop/contracts/vaults/yVault.sol
+
+    Version 1.1
+    * Strategist no longer has special function calling permissions
+    * Version function added to contract
+    * All write functions are pausable
+    * Keeper or governance can pause
+    * Only governance can unpause
+    * Governance, by maintaining upgradability rights, can remove the keepers' ability to pause
 */
-contract Sett is ERC20Upgradeable, SettAccessControlDefended {
+contract Sett is ERC20Upgradeable, PausableUpgradeable, SettAccessControlDefended {
     using SafeERC20Upgradeable for IERC20Upgradeable;
     using AddressUpgradeable for address;
     using SafeMathUpgradeable for uint256;
@@ -27,6 +36,7 @@ contract Sett is ERC20Upgradeable, SettAccessControlDefended {
     uint256 public constant max = 10000;
 
     address public controller;
+    address public guardian;
 
     mapping(address => uint256) public blockLock;
 
@@ -40,10 +50,11 @@ contract Sett is ERC20Upgradeable, SettAccessControlDefended {
         address _controller,
         address _governance,
         address _keeper,
+        address _guardian,
         bool _overrideTokenName,
         string memory _namePrefix,
         string memory _symbolPrefix
-    ) public initializer {
+    ) public initializer whenNotPaused {
         IERC20Detailed namedToken = IERC20Detailed(_token);
         string memory tokenName = namedToken.name();
         string memory tokenSymbol = namedToken.symbol();
@@ -66,10 +77,14 @@ contract Sett is ERC20Upgradeable, SettAccessControlDefended {
         strategist = address(0);
         keeper = _keeper;
         controller = _controller;
+        guardian = _guardian;
 
         min = 9500;
 
         emit FullPricePerShareUpdated(getPricePerFullShare(), now, block.number);
+
+        // Paused on launch
+        _pause();
     }
 
     /// ===== Modifiers =====
@@ -78,11 +93,19 @@ contract Sett is ERC20Upgradeable, SettAccessControlDefended {
         require(msg.sender == controller, "onlyController");
     }
 
+    function _onlyAuthorizedPausers() internal view {
+        require(msg.sender == guardian || msg.sender == governance, "onlyPausers");
+    }
+
     function _blockLocked() internal view {
         require(blockLock[msg.sender] < block.number, "blockLocked");
     }
 
     /// ===== View Functions =====
+
+    function version() public view returns (string memory) {
+        return "1.1";
+    }
 
     function getPricePerFullShare() public view returns (uint256) {
         if (totalSupply() == 0) {
@@ -108,7 +131,7 @@ contract Sett is ERC20Upgradeable, SettAccessControlDefended {
 
     /// @notice Deposit assets into the Sett, and return corresponding shares to the user
     /// @notice Only callable by EOA accounts that pass the _defend() check
-    function deposit(uint256 _amount) public {
+    function deposit(uint256 _amount) public whenNotPaused {
         _defend();
         _blockLocked();
 
@@ -118,7 +141,7 @@ contract Sett is ERC20Upgradeable, SettAccessControlDefended {
 
     /// @notice Convenience function: Deposit entire balance of asset into the Sett, and return corresponding shares to the user
     /// @notice Only callable by EOA accounts that pass the _defend() check
-    function depositAll() external {
+    function depositAll() external whenNotPaused {
         _defend();
         _blockLocked();
 
@@ -127,7 +150,7 @@ contract Sett is ERC20Upgradeable, SettAccessControlDefended {
     }
 
     /// @notice No rebalance implementation for lower fees and faster swaps
-    function withdraw(uint256 _shares) public {
+    function withdraw(uint256 _shares) public whenNotPaused {
         _defend();
         _blockLocked();
 
@@ -136,7 +159,7 @@ contract Sett is ERC20Upgradeable, SettAccessControlDefended {
     }
 
     /// @notice Convenience function: Withdraw all shares of the sender
-    function withdrawAll() external {
+    function withdrawAll() external whenNotPaused {
         _defend();
         _blockLocked();
 
@@ -160,11 +183,19 @@ contract Sett is ERC20Upgradeable, SettAccessControlDefended {
         controller = _controller;
     }
 
+    /// @notice Change guardian address
+    /// @notice Can only be changed by governance
+    function setGuardian(address _guardian) external {
+        _onlyGovernance();
+        guardian = _guardian;
+    }
+
+
     /// ===== Permissioned Actions: Controller =====
 
     /// @notice Used to swap any borrowed reserve over the debt limit to liquidate to 'token'
     /// @notice Only controller can trigger harvests
-    function harvest(address reserve, uint256 amount) external {
+    function harvest(address reserve, uint256 amount) external whenNotPaused {
         _onlyController();
         require(reserve != address(token), "token");
         IERC20Upgradeable(reserve).safeTransfer(controller, amount);
@@ -175,7 +206,7 @@ contract Sett is ERC20Upgradeable, SettAccessControlDefended {
     /// @notice Transfer the underlying available to be claimed to the controller
     /// @notice The controller will deposit into the Strategy for yield-generating activities
     /// @notice Permissionless operation
-    function earn() public {
+    function earn() public whenNotPaused {
         _onlyAuthorizedActors();
 
         uint256 _bal = available();
@@ -185,9 +216,19 @@ contract Sett is ERC20Upgradeable, SettAccessControlDefended {
 
     /// @dev Emit event tracking current full price per share
     /// @dev Provides a pure on-chain way of approximating APY
-    function trackFullPricePerShare() external {
+    function trackFullPricePerShare() external whenNotPaused {
         _onlyAuthorizedActors();
         emit FullPricePerShareUpdated(getPricePerFullShare(), now, block.number);
+    }
+
+    function pause() external {
+        _onlyAuthorizedPausers();
+        _pause();
+    }
+
+    function unpause() external {
+        _onlyGovernance();
+        _unpause();
     }
 
     /// ===== Internal Implementations =====

@@ -1,5 +1,6 @@
-from tests.helpers import distribute_from_whales
+from helpers.token_utils import distribute_from_whales, distribute_test_ether
 from scripts.systems.badger_minimal import deploy_badger_minimal
+from brownie import *
 
 
 class SettMiniDeployBase:
@@ -18,7 +19,7 @@ class SettMiniDeployBase:
 
         if not strategist:
             strategist = deployer
-        if not governance:
+        if not governance:  
             governance = deployer
         if not keeper:
             keeper = deployer
@@ -32,30 +33,37 @@ class SettMiniDeployBase:
         self.deployer = deployer
 
     def deploy(self):
-        self.badger = deploy_badger_minimal(self.deployer)
+        self.badger = deploy_badger_minimal(self.deployer, self.keeper, self.guardian)
         self.deploy_required_logic()
 
         self.pre_deploy_setup()
 
         (params, want) = self.fetch_params()
 
+        self.params = params
+        self.want = want
+
+        distribute_test_ether(self.deployer, Wei("20 ether"))
         distribute_from_whales(self.badger, self.deployer)
 
         self.controller = self.badger.add_controller(self.key)
         self.vault = self.badger.deploy_sett(
             self.key,
-            want,
+            self.want,
             self.controller,
             governance=self.governance,
             strategist=self.strategist,
             keeper=self.keeper,
+            guardian=self.guardian,
         )
+
+        self.post_vault_deploy_setup()
 
         self.strategy = self.badger.deploy_strategy(
             self.key,
             self.strategyName,
             self.controller,
-            params,
+            self.params,
             governance=self.governance,
             strategist=self.strategist,
             keeper=self.keeper,
@@ -66,12 +74,16 @@ class SettMiniDeployBase:
 
         self.post_deploy_setup()
 
+        assert self.vault.paused()
+
+        self.vault.unpause({"from": self.governance})
+
         return self.badger
 
     def deploy_required_logic(self):
         self.badger.deploy_core_logic()
         self.badger.deploy_sett_core_logic()
-        self.badger.deploy_sett_strategy_logic()
+        self.badger.deploy_sett_strategy_logic_for(self.strategyName)
 
     # ===== Specific instance must implement =====
     def fetch_params(self):
@@ -81,4 +93,7 @@ class SettMiniDeployBase:
         return False
 
     def post_deploy_setup(self):
+        return False
+
+    def post_vault_deploy_setup(self):
         return False
