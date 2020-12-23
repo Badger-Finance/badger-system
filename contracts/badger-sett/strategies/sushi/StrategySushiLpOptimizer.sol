@@ -66,13 +66,14 @@ contract StrategySushiLpOptimizer is BaseStrategy {
 
         want = _wantConfig[0];
         badgerTree = _wantConfig[1];
+
         pid = _pid; // LP token pool ID
 
         performanceFeeGovernance = _feeConfig[0];
         performanceFeeStrategist = _feeConfig[1];
         withdrawalFee = _feeConfig[2];
 
-        // Approve xsushi (aka SushiBar) to use our sushi
+        // Approve Chef and xSushi (aka SushiBar) to use our sushi
         IERC20Upgradeable(want).approve(chef, uint256(-1));
         IERC20Upgradeable(sushi).approve(xsushi, uint256(-1));
     }
@@ -99,6 +100,10 @@ contract StrategySushiLpOptimizer is BaseStrategy {
         return protectedTokens;
     }
 
+    function isTendable() public override view returns (bool) {
+        return true;
+    }
+
     /// ===== Internal Core Implementations =====
 
     function _onlyNotProtectedTokens(address _asset) internal override {
@@ -114,25 +119,29 @@ contract StrategySushiLpOptimizer is BaseStrategy {
         ISushiChef(chef).deposit(pid, _want);
     }
 
-    /// @dev Exit all positions and send any gained tokens to controller rewards
+    /// @dev Unroll from all strategy positions, and transfer non-core tokens to controller rewards
     function _withdrawAll() internal override {
         (uint256 staked, ) = ISushiChef(chef).userInfo(pid, address(this));
 
-        // Withdraw all from Chef
+        // Withdraw all want from Chef
         ISushiChef(chef).withdraw(pid, staked);
+
+        // === Transfer extra token: Sushi ===
 
         // Withdraw all sushi from SushiBar
         uint256 _xsushi = IERC20Upgradeable(xsushi).balanceOf(address(this));
         IxSushi(xsushi).leave(_xsushi);
-
         uint256 _sushi = IERC20Upgradeable(sushi).balanceOf(address(this));
 
         // Send all Sushi to controller rewards
         IERC20Upgradeable(sushi).safeTransfer(IController(controller).rewards(), _sushi);
+
+        // Note: All want is automatically withdrawn outside this "inner hook" in base strategy function
     }
 
     /// @dev Withdraw want from staking rewards, using earnings first
     function _withdrawSome(uint256 _amount) internal override returns (uint256) {
+
         // Get idle want in the strategy
         uint256 _preWant = IERC20Upgradeable(want).balanceOf(address(this));
 
@@ -141,9 +150,7 @@ contract StrategySushiLpOptimizer is BaseStrategy {
             uint256 _toWithdraw = _amount.sub(_preWant);
             ISushiChef(chef).withdraw(pid, _toWithdraw);
 
-            // If we harvested any sushi in withdrawal process, stake it
-            uint256 _sushi = IERC20Upgradeable(sushi).balanceOf(address(this));
-            IxSushi(xsushi).enter(_sushi);
+            // Note: Withdrawl process will earn sushi, this will be deposited into SushiBar on next tend()
         }
 
         // Confirm how much want we actually end up with

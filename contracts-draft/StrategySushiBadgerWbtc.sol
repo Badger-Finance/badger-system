@@ -41,7 +41,9 @@ contract StrategySushiBadgerWbtc is BaseStrategyMultiSwapper {
     address public badgerTree;
 
     event HarvestLpMetaFarm(
+        uint256 totalBadger,
         uint256 badgerHarvested,
+        uint256 totalSushi,
         uint256 sushiHarvested,
         uint256 sushiToStrategist,
         uint256 sushiToGovernance,
@@ -297,7 +299,9 @@ contract StrategySushiBadgerWbtc is BaseStrategyMultiSwapper {
         }
 
         emit HarvestLpMetaFarm(
+            _afterBadger,
             harvestData.badgerHarvested,
+            _sushi,
             harvestData.sushiHarvested,
             harvestData.sushiToStrategist,
             harvestData.sushiToGovernance,

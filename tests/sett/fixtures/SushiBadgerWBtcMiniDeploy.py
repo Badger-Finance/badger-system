@@ -13,6 +13,7 @@ class SushiBadgerWBtcMiniDeploy(SettMiniDeployBase):
         want = sushiswap.getPair(self.badger.token, registry.tokens.wbtc)
 
         params.want = want
+        params.badgerTree = self.badger.badgerTree
         params.badger = self.badger.token
 
         return (params, want)
@@ -27,11 +28,10 @@ class SushiBadgerWBtcMiniDeploy(SettMiniDeployBase):
         )
 
         # Generate initial LP tokens and grant to deployer
-        sushiswap = SushiswapSystem()
-        pid = sushiswap.add_chef_rewards(self.want)
-        print(pid)
-
-        assert pid == self.strategy.pid()
+        # sushiswap = SushiswapSystem()
+        # pid = sushiswap.add_chef_rewards(self.want)
+        # print(pid)
+        # assert pid == self.strategy.pid()
 
     def post_vault_deploy_setup(self):
         """

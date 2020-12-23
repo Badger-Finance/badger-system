@@ -4,6 +4,8 @@ from decimal import Decimal
 from helpers.utils import approx, val
 from helpers.constants import *
 from helpers.multicall import Call, as_wei, func
+from rich.console import Console
+console = Console()
 
 class StrategyCoreResolver:
     def __init__(self, manager):
@@ -111,6 +113,9 @@ class StrategyCoreResolver:
         - Users balanceOf() want should not change
         """
 
+        console.print("=== Compare Earn ===")
+        self.manager.printCompare(before, after)
+
         assert after.balances("want", "sett") <= before.balances("want", "sett")
         assert after.get("strategy.balanceOfWant") == 0
         assert after.get("strategy.balanceOfPool") > before.get(
@@ -130,6 +135,7 @@ class StrategyCoreResolver:
         """
         ppfs = before.get("sett.pricePerFullShare")
 
+        console.print("=== Compare Withdraw ===")
         self.manager.printCompare(before, after)
 
         # Decrease the totalSupply of Sett tokens
@@ -185,7 +191,7 @@ class StrategyCoreResolver:
         """
 
         ppfs = before.get("sett.pricePerFullShare")
-
+        console.print("=== Compare Deposit ===")
         self.manager.printCompare(before, after)
 
         expected_shares = params["amount"] * Wei("1 ether") // ppfs
@@ -205,6 +211,8 @@ class StrategyCoreResolver:
     # ===== Strategies must implement =====
 
     def confirm_harvest(self, before, after):
+        console.print("=== Compare Harvest ===")
+        self.manager.printCompare(before, after)
         valueGained = after.get("sett.pricePerFullShare") > before.get("sett.pricePerFullShare")
 
         # Strategist should earn if fee is enabled and value was generated

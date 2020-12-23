@@ -240,7 +240,7 @@ class SnapshotManager:
             return "-"
 
     def printCompare(self, before: Snap, after: Snap):
-        self.printPermissions()
+        # self.printPermissions()
         table = []
         console.print(
             "[green]=== Compare: {} Sett {} -> {} ===[/green]".format(

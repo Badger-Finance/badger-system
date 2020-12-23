@@ -19,12 +19,9 @@ class UniswapSystem:
         return interface.IUniswapV2Pair(pairAddress)
 
     def addMaxLiquidity(self, tokenA, tokenB, signer):
+        print("self", tokenA, tokenB)
         tokenA = interface.IERC20(tokenA)
         tokenB = interface.IERC20(tokenB)
-        
-        # TODO: Determine if passed in contracts or addresses and process accordingly. Should be able to accept both in any combinantion. Currently expects contracts
-        tokenA.approve(self.router, MaxUint256, {"from": signer})
-        tokenB.approve(self.router, MaxUint256, {"from": signer})
 
         balanceA = tokenA.balanceOf(signer) // 2
         balanceB = tokenB.balanceOf(signer) // 2
@@ -33,6 +30,10 @@ class UniswapSystem:
 
         assert balanceA > 0
         assert balanceB > 0
+        
+        # TODO: Determine if passed in contracts or addresses and process accordingly. Should be able to accept both in any combinantion. Currently expects contracts
+        tokenA.approve(self.router, MaxUint256, {"from": signer})
+        tokenB.approve(self.router, MaxUint256, {"from": signer})
 
         return self.router.addLiquidity(
             tokenA.address,

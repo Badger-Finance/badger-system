@@ -143,7 +143,7 @@ abstract contract BaseStrategy is PausableUpgradeable, SettAccessControl {
 
     // ===== Permissioned Actions: Controller =====
 
-    /// @notice Withdraw all funds, normally used when migrating strategies
+    /// @notice Controller-only function to Withdraw partial funds, normally used with a vault withdrawal
     function withdrawAll() external virtual whenNotPaused returns (uint256 balance) {
         _onlyController();
 
@@ -152,7 +152,9 @@ abstract contract BaseStrategy is PausableUpgradeable, SettAccessControl {
         _transferToVault(IERC20Upgradeable(want).balanceOf(address(this)));
     }
 
-    /// @notice Controller-only function to Withdraw partial funds, normally used with a vault withdrawal
+    /// @notice Withdraw partial funds from the strategy, unrolling from strategy positions as necessary
+    /// @notice Processes withdrawal fee if present
+    /// @dev If it fails to recover sufficient funds (defined by withdrawalMaxDeviationThreshold), the withdrawal should fail so that this unexpected behavior can be investigated
     function withdraw(uint256 _amount) external virtual whenNotPaused {
         _onlyController();
 

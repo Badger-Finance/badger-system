@@ -14,7 +14,7 @@ import "interfaces/badger/IStrategy.sol";
 
 import "../SettAccessControl.sol";
 
-abstract contract BaseStrategy is PausableUpgradeable, SettAccessControl {
+abstract contract BaseStrategyV2 is PausableUpgradeable, SettAccessControl {
     using SafeERC20Upgradeable for IERC20Upgradeable;
     using AddressUpgradeable for address;
     using SafeMathUpgradeable for uint256;
@@ -37,17 +37,11 @@ abstract contract BaseStrategy is PausableUpgradeable, SettAccessControl {
     uint256 public withdrawalFee;
 
     uint256 public constant MAX_FEE = 10000;
-    address public constant uniswap = 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D; // Uniswap Dex
+    address public constant uniswap = 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D; // Uniswap router
+    address public constant sushiswap = 0xd9e1cE17f2641f24aE83637ab66a2cca9C378B9F; // Sushiswap router
 
     address public controller;
     address public guardian;
-
-    event Withdraw(
-            uint256 wantRequested,
-            uint256 wantDelivered,
-            uint256 idleWant,
-            uint256 wantFromPositions
-        );
 
     function __BaseStrategy_init(
         address _governance,
@@ -148,36 +142,13 @@ abstract contract BaseStrategy is PausableUpgradeable, SettAccessControl {
     function withdraw(uint256 _amount) external virtual whenNotPaused {
         _onlyController();
 
-        uint256 _idleWant = IERC20Upgradeable(want).balanceOf(address(this));
-        uint256 _withdrawn = 0;
-        uint256 _postWithdraw = 0;
+        uint256 _balance = IERC20Upgradeable(want).balanceOf(address(this));
 
         // Withdraw some from activities if idle want is not sufficient to cover withdrawal
         if (_balance < _amount) {
-            _withdrawn = _withdrawSome(_amount.sub(_idleWant));
-            _postWithdraw = _withdrawn.add(_idleWant);
-
-            // If we end up with less than the amount requested, make sure it does not deviate beyond a maximum threshold
-            if (_postWithdraw < _amount) {
-                uint256 diff = _absDiff(_amount, _postWithdraw);
-
-                // Require that difference between expected and actual values is less than the deviation threshold percentage
-                require(
-                    diff <= _amount.mul(withdrawalMaxDeviationThreshold).div(MAX_BPS),
-                    "strategy-harvest-meta-farm/exceed-max-deviation-threshold"
-                );
-
-                // Cap amount at actual want if we don't have sufficient want to cover requested withdrawal amount
-                _amount = _postWithdraw;
-            }
+            _amount = _withdrawSome(_amount.sub(_balance));
+            _amount = _amount.add(_balance);
         }
-
-        emit Withdraw(
-            _amount,
-            _postWithdraw,
-            _idleWant,
-            _withdrawn
-        );
 
         // Process withdrawal fee
         uint256 _fee = _processWithdrawalFee(_amount);
@@ -256,7 +227,7 @@ abstract contract BaseStrategy is PausableUpgradeable, SettAccessControl {
     }
 
     /// @notice Swap specified balance of given token on Uniswap with given path
-    function _swap(
+    function _swap_uniswap(
         address startToken,
         uint256 balance,
         address[] memory path
@@ -265,17 +236,40 @@ abstract contract BaseStrategy is PausableUpgradeable, SettAccessControl {
         IUniswapRouterV2(uniswap).swapExactTokensForTokens(balance, 0, path, address(this), now);
     }
 
-    function _swapEthIn(uint256 balance, address[] memory path) internal {
+    /// @notice Swap specified balance of given token on Uniswap with given path
+    function _swap_sushiswap(
+        address startToken,
+        uint256 balance,
+        address[] memory path
+    ) internal {
+        _safeApproveHelper(startToken, sushiswap, balance);
+        IUniswapRouterV2(sushiswap).swapExactTokensForTokens(balance, 0, path, address(this), now);
+    }
+
+    function _swapEthIn_uniswap(uint256 balance, address[] memory path) internal {
         IUniswapRouterV2(uniswap).swapExactETHForTokens{value: balance}(0, path, address(this), now);
     }
 
-    function _swapEthOut(
+    function _swapEthIn_sushiswap(uint256 balance, address[] memory path) internal {
+        IUniswapRouterV2(sushiswap).swapExactETHForTokens{value: balance}(0, path, address(this), now);
+    }
+
+    function _swapEthOut_uniswap(
         address startToken,
         uint256 balance,
         address[] memory path
     ) internal {
         _safeApproveHelper(startToken, uniswap, balance);
         IUniswapRouterV2(uniswap).swapExactTokensForETH(balance, 0, path, address(this), now);
+    }
+
+    function _swapEthOut_sushiswap(
+        address startToken,
+        uint256 balance,
+        address[] memory path
+    ) internal {
+        _safeApproveHelper(startToken, sushiswap, balance);
+        IUniswapRouterV2(sushiswap).swapExactTokensForETH(balance, 0, path, address(this), now);
     }
 
     /// @notice Add liquidity to uniswap for specified token pair, utilizing the maximum balance possible
@@ -289,16 +283,15 @@ abstract contract BaseStrategy is PausableUpgradeable, SettAccessControl {
         IUniswapRouterV2(uniswap).addLiquidity(token0, token1, _token0Balance, _token1Balance, 0, 0, address(this), block.timestamp);
     }
 
-    /// @notice Absolute value difference between two values
-    function _absDiff(uint256 a, uint256 b) internal pure returns (uint256) {
-        if (a > b) {
-            return a.sub(b);
-        }
-        else if (a < b) {
-            return b.sub(a);
-        } else {
-            return 0;
-        }
+    /// @notice Add liquidity to uniswap for specified token pair, utilizing the maximum balance possible
+    function _add_max_liquidity_sushiswap(address token0, address token1) internal {
+        uint256 _token0Balance = IERC20Upgradeable(token0).balanceOf(address(this));
+        uint256 _token1Balance = IERC20Upgradeable(token1).balanceOf(address(this));
+
+        _safeApproveHelper(token0, sushiswap, _token0Balance);
+        _safeApproveHelper(token1, sushiswap, _token1Balance);
+
+        IUniswapRouterV2(sushiswap).addLiquidity(token0, token1, _token0Balance, _token1Balance, 0, 0, address(this), block.timestamp);
     }
 
     // ===== Abstract Functions: To be implemented by specific Strategies =====

@@ -19,11 +19,28 @@ class StrategySushiBadgerWbtcResolver(StrategyCoreResolver):
         super().confirm_harvest(before, after)
         # Strategy want should increase
         before_balance = before.get("strategy.balanceOf")
-        assert after.get("strategy.balanceOf") >= before_balance if before_balance else 0
+        assert (
+            after.get("strategy.balanceOf") >= before_balance if before_balance else 0
+        )
 
         # PPFS should not decrease
-        assert after.get("sett.pricePerFullShare") >= before.get("sett.pricePerFullShare")
+        assert after.get("sett.pricePerFullShare") >= before.get(
+            "sett.pricePerFullShare"
+        )
+
+        # Sushi in badger tree should increase
+        # Strategy should have no sushi
+        # Strategy should have no sushi in Chef
+    
+    def confirm_tend(self, before, after):
+
+        # Increase xSushi position in strategy
+        assert after.balances("xsushi", "strategy") > before.balances("xsushi", "strategy")
 
     def get_strategy_destinations(self):
         strategy = self.manager.strategy
-        return {"stakingRewards": strategy.geyser()}
+        return {
+            "chef": strategy.chef(),
+            "bar": strategy.xsushi(),
+            "stakingRewards": strategy.geyser(),
+        }

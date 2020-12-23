@@ -190,6 +190,7 @@ def deploy_strategy(
                     params.want,
                     params.geyser,
                     params.badger,
+                    params.badgerTree
                 ],
                 [
                     params.performanceFeeGovernance,
