@@ -18,10 +18,8 @@ def val(amount):
     if amount < Wei("0.0001 ether"):
         return "{:,.10f}".format(amount / 1e18)
     if amount < Wei("0.001 ether"):
-        return "{:,.5f}".format(amount / 1e18)
-    if amount < Wei("0.01 ether"):
-        return "{:,.4f}".format(amount / 1e18)
-    return "{:,.3f}".format(amount / 1e18)
+        return "{:,.6f}".format(amount / 1e18)
+    return "{:,.4f}".format(amount / 1e18)
 
 
 def sec(amount):
