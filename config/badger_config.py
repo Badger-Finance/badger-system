@@ -5,7 +5,7 @@ from brownie import Wei, web3
 from dotmap import DotMap
 from helpers.constants import AddressZero
 from helpers.registry import registry
-from helpers.time_utils import days, days, hours
+from helpers.time_utils import days
 
 with open("merkle/airdrop.json") as f:
     Airdrop = json.load(f)
@@ -217,30 +217,47 @@ badger_config = DotMap(
     ),
 )
 
-digg_config = {
-    "initialSupply": 6250 * (10 ** 9),
-    "deviationThreshold": 50000000000000000,
-    "rebaseLag": 10,
-    "minRebaseTimeIntervalSec": 86400,
-    "rebaseWindowOffsetSec": 7200,
-    "rebaseWindowLengthSec": 1200,
-    "baseCpi": 10 ** 18,
-    "rebaseDelayAfterStakingStart": 30,
-    "marketOracleParams": {
-        "reportExpirationTimeSec": 88200,
-        "reportDelaySec": 3600,
-        "minimumProviders": 1,
-    },
-    "cpiOracleParams": {
-        "reportExpirationTimeSec": 5356800,
-        "reportDelaySec": 86400,
-        "minimumProviders": 1,
-    },
-    "centralizedOracleParams": {
-        "owners": [AddressZero, AddressZero, AddressZero],
-        "threshold": 1,
-    },
-    "tokenLockParams": {"diggLockAmount": 3125 * (10 ** 9), "lockDuration": days(30)},
-}
+
+# TODO: Currently a copy of badger config params, needs to be set.
+diggStartTime = globalStartTime
+
+digg_config = DotMap(
+    initialSupply=6250 * (10 ** 9),
+    deviationThreshold=50000000000000000,
+    rebaseLag=10,
+    minRebaseTimeIntervalSec=86400,
+    # TODO: Need to set this value to exact time we want to start rebases.
+    rebaseStartTimeUnixSeconds=1608681600,  # 12/23/2020 @ 12:00 AM (UTC)
+    rebaseWindowOffsetSec=7200,
+    rebaseWindowLengthSec=1200,
+    baseCpi=10 ** 18,
+    rebaseDelayAfterStakingStart=30,
+    marketOracleParams=DotMap(
+        reportExpirationTimeSec=88200,
+        reportDelaySec=3600,
+        # TODO: This should be greater than 1, needs to be set.
+        minimumProviders=1,
+    ),
+    # cpi oracle always reports 1
+    cpiOracleParams=DotMap(
+        reportExpirationTimeSec=5356800,
+        reportDelaySec=86400,
+        minimumProviders=1,
+    ),
+    centralizedOracleParams=DotMap(
+        owners=[AddressZero, AddressZero, AddressZero],
+        threshold=1,
+    ),
+    tokenLockParams=DotMap(
+        diggLockAmount=3125 * (10 ** 9),
+        lockDuration=days(30),
+    ),
+    # TODO: Currently a copy of badger config params, needs to be set.
+    teamVestingParams=DotMap(
+        startTime=diggStartTime,
+        cliffDuration=days(30),
+        totalDuration=days(365),
+    ),
+)
 
 config = DotMap(badger=badger_config, sett=sett_config, digg=digg_config)

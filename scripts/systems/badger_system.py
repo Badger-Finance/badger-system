@@ -121,7 +121,6 @@ def connect_badger(badger_deploy_file):
 
     badger = BadgerSystem(
         badger_config,
-        None,
         badger_deploy["deployer"],
         badger_deploy["keeper"],
         badger_deploy["guardian"],
@@ -157,9 +156,8 @@ def connect_badger(badger_deploy_file):
 
 
 class BadgerSystem:
-    def __init__(self, config, systems, deployer, keeper, guardian, deploy=True):
+    def __init__(self, config, deployer, keeper, guardian, deploy=True):
         self.config = config
-        self.systems = systems
         self.contracts_static = []
         self.contracts_upgradeable = {}
 
