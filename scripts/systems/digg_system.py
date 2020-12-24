@@ -79,6 +79,11 @@ class DiggSystem:
         self.config = config
         self.contracts_static = []
         self.contracts_upgradeable = {}
+        # These contracts adhere to the Ownable iface and belong to the
+        # owner of the digg system (in prod it's the DAO). Note that this
+        # is ONLY tracked on deploy as we will not modify ownership when
+        # connecting to an existing system.
+        self.contracts_ownable = []
         # Token is set when digg token (UFragments) is deployed.
         self.token = None
 
@@ -102,6 +107,9 @@ class DiggSystem:
 
     def track_contract_upgradeable(self, key, contract):
         self.contracts_upgradeable[key] = contract
+
+    def track_contract_ownable(self, contract):
+        self.contracts_ownable.append(contract)
 
     # ===== Contract Connectors =====
     def connect_proxy_admins(self, devProxyAdmin, daoProxyAdmin):
@@ -160,6 +168,7 @@ class DiggSystem:
         deployer = self.owner
         self.orchestrator = Orchestrator.deploy(self.uFragmentsPolicy, {'from': deployer})
         self.track_contract_static(self.orchestrator)
+        self.track_contract_ownable(self.orchestrator)
 
     def deploy_digg_policy(self):
         deployer = self.owner
@@ -176,6 +185,7 @@ class DiggSystem:
             deployer,
         )
         self.track_contract_upgradeable("uFragmentsPolicy", self.uFragmentsPolicy)
+        self.track_contract_ownable(self.uFragmentsPolicy)
 
     def deploy_digg_token(self):
         deployer = self.deployer
@@ -191,8 +201,10 @@ class DiggSystem:
             deployer,
         )
         self.track_contract_upgradeable("uFragments", self.uFragments)
+        self.track_contract_ownable(self.uFragments)
 
         # Set the digg system token after deploying.
+        # TODO: Move this to a better place.
         self.token = self.uFragments
 
     def deploy_constant_oracle(self):
@@ -213,6 +225,7 @@ class DiggSystem:
             {'from': deployer},
         )
         self.track_contract_static(self.cpiMedianOracle)
+        self.track_contract_ownable(self.cpiMedianOracle)
 
     def deploy_market_median_oracle(self):
         deployer = self.owner
@@ -223,6 +236,7 @@ class DiggSystem:
             {'from': deployer},
         )
         self.track_contract_static(self.marketMedianOracle)
+        self.track_contract_ownable(self.marketMedianOracle)
 
     def deploy_dao_digg_timelock(self):
         deployer = self.owner
@@ -260,6 +274,15 @@ class DiggSystem:
             deployer,
         )
         self.track_contract_upgradeable("teamVesting", self.diggTeamVesting)
+
+    # ===== Administrative functions =====
+
+    # Used on DEPLOY ONLY, transfers ownership of ownable contracts to a new owner.
+    def transfer_ownership(self, owner):
+        prevOwner = self.owner
+        self.owner = owner
+        for contract in self.contracts_ownable:
+            contract.transferOwnership(owner, {"from": prevOwner})
 
     # ===== Deploy for TESTING ONLY =====
 
