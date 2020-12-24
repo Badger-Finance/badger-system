@@ -57,16 +57,16 @@ def connect_digg(digg_deploy_file):
         digg_deploy["devProxyAdmin"],
         digg_deploy["daoProxyAdmin"],
     )
-
+    # arguments: (attr name, brownie artifact, address, upgradeable (default=True))
     connectable = [
-        ("daoDiggTimelock", SimpleTimelock, address,),
-        ("diggTeamVesting", SmartVesting, address,),
-        ("uFragments", UFragments, address,),
-        ("uFragmentsPolicy", UFragmentsPolicy, address,),
-        ("constantOracle", ConstantOracle, address, False),
-        ("cpiMedianOracle", MedianOracle, address, False),
-        # TODO: connect market median oracle.
-        ("orchestrator", Orchestrator, address, False),  # static, upgradeable=False
+        ("daoDiggTimelock", SimpleTimelock, digg_deploy["daoDiggTimelock"],),
+        ("diggTeamVesting", SmartVesting, digg_deploy["diggTeamVesting"],),
+        ("uFragments", UFragments, digg_deploy["uFragments"],),
+        ("uFragmentsPolicy", UFragmentsPolicy, digg_deploy["uFragmentsPolicy"],),
+        ("constantOracle", ConstantOracle, digg_deploy["constantOracle"], False),
+        ("cpiMedianOracle", MedianOracle, digg_deploy["cpiMedianOracle"], False),
+        ("marketMedianOracle", MedianOracle, digg_deploy["marketMedianOracle"], False),
+        ("orchestrator", Orchestrator, address, False),
     ]
     for args in connectable:
         digg.connect(*args)
@@ -214,7 +214,15 @@ class DiggSystem:
         )
         self.track_contract_static(self.cpiMedianOracle)
 
-    # TODO: deploy market median oracle
+    def deploy_market_median_oracle(self):
+        deployer = self.owner
+        self.marketMedianOracle = MedianOracle.deploy(
+            self.config.marketOracleParams.reportExpirationTimeSec,
+            self.config.marketOracleParams.reportDelaySec,
+            self.config.marketOracleParams.minimumProviders,
+            {'from': deployer},
+        )
+        self.track_contract_static(self.marketMedianOracle)
 
     def deploy_dao_digg_timelock(self):
         deployer = self.owner
@@ -252,6 +260,17 @@ class DiggSystem:
             deployer,
         )
         self.track_contract_upgradeable("teamVesting", self.diggTeamVesting)
+
+    # ===== Deploy for TESTING ONLY =====
+
+    # requires the market median oracle to be deployed as this feeds it data
+    def deploy_dynamic_oracle(self):
+        deployer = self.owner
+        self.dynamicOracle = DynamicOracle.deploy(
+            self.marketMedianOracle,
+            {'from': deployer},
+        )
+        self.track_contract_static(self.dynamicOracle)
 
     # ===== Connectors =====
 
