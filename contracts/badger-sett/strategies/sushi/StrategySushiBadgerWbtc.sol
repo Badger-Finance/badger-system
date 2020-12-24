@@ -151,10 +151,9 @@ contract StrategySushiBadgerWbtc is BaseStrategyMultiSwapper {
 
     /// @dev Unroll from all strategy positions, and transfer non-core tokens to controller rewards
     function _withdrawAll() internal override {
-        IStakingRewardsSignalOnly(geyser).exit();
-        (uint256 staked, ) = ISushiChef(chef).userInfo(pid, address(this));
 
         // Withdraw all want from Chef
+        (uint256 staked, ) = ISushiChef(chef).userInfo(pid, address(this));
         ISushiChef(chef).withdraw(pid, staked);
 
         // === Transfer extra token: Sushi ===
