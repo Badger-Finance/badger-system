@@ -1,15 +1,12 @@
 import boto3
-import botocore
 from brownie import *
 from rich.console import Console
-
-from config.env_config import env_config
 
 console = Console()
 
 
 def download(fileName):
-    s3 = boto3.client('s3')
+    s3 = boto3.client("s3")
 
     upload_bucket = "badger-json"
     upload_file_key = "rewards/" + fileName
@@ -18,12 +15,14 @@ def download(fileName):
 
     s3_clientobj = s3.get_object(Bucket=upload_bucket, Key=upload_file_key)
     console.print(s3_clientobj)
-    s3_clientdata = s3_clientobj['Body'].read().decode('utf-8')
+    s3_clientdata = s3_clientobj["Body"].read().decode("utf-8")
 
     return s3_clientdata
 
 
 def upload(fileName):
+    from config.env_config import env_config
+
     upload_bucket = "badger-json"
     upload_file_key = "rewards/" + fileName
 
