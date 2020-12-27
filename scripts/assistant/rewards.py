@@ -29,7 +29,7 @@ def main():
 
     print("Claim Section", startBlock, claimAt)
 
-    test = False
+    test = True
 
     print("TestMode", test)
 
