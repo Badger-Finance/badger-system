@@ -98,7 +98,6 @@ class DiggSystem:
         # TODO: Supply existing proxy admin
         self.connect_proxy_admins(devProxyAdmin, daoProxyAdmin)
         self.logic = DotMap()
-        self.geysers = DotMap()
 
         self.connect_multisig()
 
@@ -188,7 +187,7 @@ class DiggSystem:
         self.track_contract_ownable(self.uFragmentsPolicy)
 
     def deploy_digg_token(self):
-        deployer = self.deployer
+        deployer = self.owner
         self.uFragments = deploy_proxy(
             "UFragments",
             UFragments.abi,
@@ -210,8 +209,8 @@ class DiggSystem:
     def deploy_constant_oracle(self):
         deployer = self.owner
         self.constantOracle = ConstantOracle.deploy(
-            self.cpiMedianOracle,
             CONSTANT_ORACLE_VALUE,
+            self.cpiMedianOracle,
             {'from': deployer},
         )
         self.track_contract_static(self.constantOracle)
@@ -277,7 +276,7 @@ class DiggSystem:
 
     # ===== Administrative functions =====
 
-    # Used on DEPLOY ONLY, transfers ownership of ownable contracts to a new owner.
+    # Used on DEPLOY ONLY,  ownership of ownable contracts to a new owner.
     def transfer_ownership(self, owner):
         prevOwner = self.owner
         self.owner = owner

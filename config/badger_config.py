@@ -222,6 +222,7 @@ badger_config = DotMap(
 diggStartTime = globalStartTime
 
 digg_config = DotMap(
+    prod_json="deploy-final-digg.json",
     initialSupply=6250 * (10 ** 9),
     deviationThreshold=50000000000000000,
     rebaseLag=10,
