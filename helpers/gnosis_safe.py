@@ -92,7 +92,7 @@ class GnosisSafe:
         metadata = tx.metadata
 
         # Print something different if we're on a test network or main network
-        console.print("\n[red]== 🦡 Execute: {} 🦡 ==[/red]".format(key))
+        console.print("\n[cyan] Multisig Command: {} 🦡[/cyan]".format(key))
 
         table = []
 
