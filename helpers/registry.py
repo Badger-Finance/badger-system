@@ -95,6 +95,7 @@ token_registry = DotMap(
     wbtc="0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599",
     crv="0xD533a949740bb3306d119CC777fa900bA034cd52",
     tbtc="0x8daebade922df735c38c80c7ebd708af50815faa",
+    badger="0x3472A5A71965499acd81997a54BBA8D852C6E53d"
 )
 
 onesplit_registry = DotMap(contract="0x50FDA034C0Ce7a8f7EFDAebDA7Aa7cA21CC1267e")
