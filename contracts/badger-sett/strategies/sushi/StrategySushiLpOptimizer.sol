@@ -39,8 +39,8 @@ contract StrategySushiLpOptimizer is BaseStrategy {
     event HarvestState(uint256 sushiHarvested, uint256 totalSushi, uint256 toStrategist, uint256 toGovernance, uint256 toBadgerTree, uint256 timestamp, uint256 blockNumber);
 
     struct HarvestData {
-        uint256 sushiHarvested;
-        uint256 totalSushi;
+        uint256 xSushiHarvested;
+        uint256 totalxSushi;
         uint256 toStrategist;
         uint256 toGovernance;
         uint256 toBadgerTree;
@@ -193,33 +193,40 @@ contract StrategySushiLpOptimizer is BaseStrategy {
 
         HarvestData memory harvestData;
 
-        uint256 _beforeSushi = IERC20Upgradeable(sushi).balanceOf(address(this));
+        uint256 _beforexSushi = IERC20Upgradeable(xSushi).balanceOf(address(this));
         uint256 _beforeLp = IERC20Upgradeable(want).balanceOf(address(this));
 
         // == Harvest sushi rewards from Chef ==
         // Note: Deposit of zero harvests rewards balance, but go ahead and deposit idle want if we have it
         ISushiChef(chef).deposit(pid, _beforeLp);
 
-        // == Unstake all sushi in SushiBar, realizing increase in Sushi ==
-        uint256 _xsushi = IERC20Upgradeable(xsushi).balanceOf(address(this));
-        IxSushi(xsushi).leave(_xsushi);
-
-        // Track gains
+        // Put all sushi into xsushi
         uint256 _sushi = IERC20Upgradeable(sushi).balanceOf(address(this));
-        harvestData.totalSushi = _sushi;
-        harvestData.sushiHarvested = _sushi.sub(_beforeSushi);
+
+        if (_sushi > 0) {
+            IxSushi(xsushi).enter(_sushi);
+        }
+
+        uint256 _xsushi = IERC20Upgradeable(xsushi).balanceOf(address(this));
+
+        //all xsushi is profit
+        harvestData.totalxSushi = _xsushi;
+        //harvested is the xsushi gain since last tend
+        harvestData.xSushiHarvested = _xsushi.sub(_beforexSushi);
 
         // Process performance fees
-        harvestData.toStrategist = _processFee(sushi, harvestData.sushiHarvested, performanceFeeStrategist, strategist);
-        harvestData.toGovernance = _processFee(sushi, harvestData.sushiHarvested, performanceFeeGovernance, IController(controller).rewards());
+        //performance fees in xsushi
+        harvestData.toStrategist = _processFee(xsushi, harvestData.totalSushi, performanceFeeStrategist, strategist);
+        harvestData.toGovernance = _processFee(xsushi, harvestData.totalSushi, performanceFeeGovernance, IController(controller).rewards());
 
         // Transfer remainder to Tree
-        harvestData.toBadgerTree = IERC20Upgradeable(sushi).balanceOf(address(this));
-        IERC20Upgradeable(sushi).safeTransfer(badgerTree, harvestData.toBadgerTree);
+        //tree gets xsushi instead of sushi so it keeps compounding
+        harvestData.toBadgerTree = IERC20Upgradeable(xsushi).balanceOf(address(this));
+        IERC20Upgradeable(xsushi).safeTransfer(badgerTree, harvestData.toBadgerTree);
 
         emit HarvestState(
-            harvestData.sushiHarvested, 
-            harvestData.totalSushi, 
+            harvestData.xSushiHarvested, 
+            harvestData.totalxSushi, 
             harvestData.toStrategist,
             harvestData.toGovernance,
             harvestData.toBadgerTree,
