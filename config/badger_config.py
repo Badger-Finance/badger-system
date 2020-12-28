@@ -222,6 +222,7 @@ badger_config = DotMap(
 diggStartTime = globalStartTime
 
 digg_config = DotMap(
+    startTime=diggStartTime,
     prod_json="deploy-final-digg.json",
     initialSupply=6250 * (10 ** 9),
     deviationThreshold=50000000000000000,
@@ -259,6 +260,8 @@ digg_config = DotMap(
         cliffDuration=days(30),
         totalDuration=days(365),
     ),
+    # TODO: Currently a copy of badger config params, needs to be set.
+    founderRewardsAmount=badger_total_supply * 10 // 100,
 )
 
 config = DotMap(badger=badger_config, sett=sett_config, digg=digg_config)

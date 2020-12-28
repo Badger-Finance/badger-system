@@ -95,8 +95,8 @@ class DiggSystem:
             owner_key = decouple.config("DIGG_OWNER_PRIVATE_KEY")
             self.owner = accounts.add(owner_key)
 
-        # TODO: Supply existing proxy admin
         self.connect_proxy_admins(devProxyAdmin, daoProxyAdmin)
+        self.connect_dao()
         self.logic = DotMap()
 
         self.connect_multisig()
@@ -121,6 +121,17 @@ class DiggSystem:
             "ProxyAdmin", web3.toChecksumAddress(daoProxyAdmin), abi,
         )
 
+    def connect_dao(self):
+        deployer = self.owner
+        self.dao = DotMap(
+            agent=Contract.from_abi(
+                "Agent",
+                badger_config.dao.agent,
+                registry.aragon.artifacts.Agent["abi"],
+                deployer,
+            ),
+        )
+
     def connect_multisig(self):
         deployer = self.owner
 
@@ -130,30 +141,6 @@ class DiggSystem:
         print("Deploy Dev Multisig")
         self.devMultisig = connect_gnosis_safe(badger_config.multisig.address)
 
-
-    def connect_dao(self):
-        deployer = self.owner
-        self.dao = DotMap(
-            token=Contract.from_abi(
-                "MiniMeToken",
-                badger_config.dao.token,
-                registry.aragon.artifacts.MiniMeToken["abi"],
-                deployer,
-            ),
-            kernel=Contract.from_abi(
-                "Agent",
-                badger_config.dao.kernel,
-                registry.aragon.artifacts.Agent["abi"],
-                deployer,
-            ),
-            agent=Contract.from_abi(
-                "Agent",
-                badger_config.dao.agent,
-                registry.aragon.artifacts.Agent["abi"],
-                deployer,
-            ),
-        )
-
     # ===== Deployers =====
 
     def deploy_core_logic(self):
@@ -161,6 +148,8 @@ class DiggSystem:
         self.logic = DotMap(
             UFragments=UFragments.deploy({"from": deployer}),
             UFragmentsPolicy=UFragmentsPolicy.deploy({"from": deployer}),
+            SimpleTimelock=SimpleTimelock.deploy({"from": deployer}),
+            SmartVesting=SmartVesting.deploy({"from": deployer}),
         )
 
     def deploy_orchestrator(self):
@@ -247,7 +236,7 @@ class DiggSystem:
             self.logic.SimpleTimelock.initialize.encode_input(
                 self.token,
                 self.dao.agent,
-                self.config.globalStartTime
+                self.config.startTime
                 + self.config.tokenLockParams.lockDuration,
             ),
             deployer,
@@ -257,7 +246,7 @@ class DiggSystem:
     def deploy_digg_team_vesting(self):
         deployer = self.owner
 
-        self.teamVesting = deploy_proxy(
+        self.diggTeamVesting = deploy_proxy(
             "SmartVesting",
             SmartVesting.abi,
             self.logic.SmartVesting.address,
@@ -266,7 +255,7 @@ class DiggSystem:
                 self.token,
                 self.devMultisig,
                 self.dao.agent,
-                self.config.globalStartTime,
+                self.config.startTime,
                 self.config.teamVestingParams.cliffDuration,
                 self.config.teamVestingParams.totalDuration,
             ),

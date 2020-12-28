@@ -15,8 +15,4 @@ def deploy_digg_minimal(deployer, devProxyAdmin, daoProxyAdmin, owner=None):
     digg.deploy_constant_oracle()
     digg.deploy_dynamic_oracle()
 
-    if owner is None:
-        owner = deployer
-    digg.transfer_ownership(owner)
-
     return digg
