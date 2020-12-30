@@ -121,6 +121,16 @@ sett_config = DotMap(
                 # want=pools.renCrv.token,
                 performanceFeeStrategist=1000,
                 performanceFeeGovernance=1000,
+                withdrawalFee=0,
+            ),
+        ),
+        sushiWethWBtc=DotMap(
+            # Unfinished
+            strategyName="StrategySushiBadgerWbtc",
+            params=DotMap(
+                # want=pools.renCrv.token,
+                performanceFeeStrategist=1000,
+                performanceFeeGovernance=1000,
                 withdrawalFee=50,
             ),
         ),

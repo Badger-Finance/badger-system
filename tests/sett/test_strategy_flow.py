@@ -123,12 +123,16 @@ def test_single_user_harvest_flow(settConfig):
     if tendable:
         snap.settTend({"from": strategyKeeper})
 
+    snap.settWithdraw(depositAmount // 2, {"from": deployer})
+
+
     chain.sleep(days(3))
     chain.mine()
 
     snap.settHarvest({"from": strategyKeeper})
+    snap.settWithdraw(depositAmount // 2 - 1, {"from": deployer})
 
-    snap.settWithdraw(depositAmount - 1, {"from": deployer})
+    assert False
 
 
 @pytest.mark.skip()

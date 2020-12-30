@@ -107,9 +107,9 @@ class BadgerGeyserMock:
 
         self.unlockSchedules[str(token)].append(parsedSchedule)
 
-        console.log(
-            "add_unlock_schedule for", str(token), parsedSchedule.toDict(),
-        )
+        # console.log(
+        #     "add_unlock_schedule for", str(token), parsedSchedule.toDict(),
+        # )
 
     def get_distributed_for_token_at(self, token, endTime, read=False):
         """
@@ -257,8 +257,6 @@ class BadgerGeyserMock:
             print("duration ", (self.endTime - self.startTime) / 3600)
             print("totalAmount ", totalAmount / 1e18)
             print("self.totalDistributions ", self.totalDistributions[token] / 1e18)
-            print("totalAmount ", totalAmount)
-            print("self.totalDistributions ", self.totalDistributions[token])
             print("leftover", abs(self.totalDistributions[token] - totalAmount))
             assert abs(self.totalDistributions[token] - totalAmount) < 1e10
 

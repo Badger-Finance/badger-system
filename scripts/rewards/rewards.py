@@ -19,6 +19,7 @@ def main():
 
     print("Run at", int(time.time()))
 
+    # Fetch the appropriate file
     currentRewards = fetch_current_rewards_tree(badger)
 
     lastClaimEnd = int(currentRewards["endBlock"])

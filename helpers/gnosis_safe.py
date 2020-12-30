@@ -20,13 +20,13 @@ class OPERATION(Enum):
     CALL = 2
 
 class MultisigTxMetadata:
-    def __init__(self, description, operation, callInfo=None):
+    def __init__(self, description, operation=None, callInfo=None):
         self.description = description
         self.operation = operation
         self.callInfo = callInfo
 
     def __str__(self):
-        return "description: " + self.description + "\n" + 'operation: ' + self.operation + "\n" + 'callInfo: ' + str(self.callInfo) + "\n"
+        return "description: " + self.description + "\n" + 'operation: ' + str(self.operation) + "\n" + 'callInfo: ' + str(self.callInfo) + "\n"
 
 
 class MultisigTx:
@@ -92,7 +92,7 @@ class GnosisSafe:
         metadata = tx.metadata
 
         # Print something different if we're on a test network or main network
-        console.print("\n[red]== 🦡 Execute: {} 🦡 ==[/red]".format(key))
+        console.print("\n[cyan] Multisig Command: {} 🦡[/cyan]".format(key))
 
         table = []
 

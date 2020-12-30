@@ -32,8 +32,12 @@ class SettMiniDeployBase:
         self.guardian = guardian
         self.deployer = deployer
 
-    def deploy(self):
-        self.badger = deploy_badger_minimal(self.deployer, self.keeper, self.guardian)
+    def deploy(self, new_badger=True):
+        if (new_badger):
+            self.badger = deploy_badger_minimal(self.deployer, self.keeper, self.guardian)
+            self.controller = self.badger.add_controller(self.key)
+        else:
+            self.badger=""
         self.deploy_required_logic()
 
         self.pre_deploy_setup()
