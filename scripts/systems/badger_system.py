@@ -122,7 +122,6 @@ def connect_badger(badger_deploy_file, load_accounts=False):
 
     badger = BadgerSystem(
         badger_config,
-        None,
         badger_deploy["deployer"],
         badger_deploy["keeper"],
         badger_deploy["guardian"],
@@ -162,7 +161,6 @@ default_gas_strategy = GasNowScalingStrategy()
 class BadgerSystem:
     def __init__(self, config, systems, deployer, keeper, guardian, deploy=True, load_accounts=True):
         self.config = config
-        self.systems = systems
         self.contracts_static = []
         self.contracts_upgradeable = {}
         self.gas_strategy = default_gas_strategy
