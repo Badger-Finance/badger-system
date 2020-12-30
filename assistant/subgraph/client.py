@@ -58,6 +58,9 @@ def fetch_all_geyser_events(geyserId):
 
 
 def fetch_sett_balances(settId, startBlock):
+    console.print(
+        "[bold green] Fetching sett balances {}[/bold green]".format(settId)
+    )
     query = gql(
         """
         query balances_and_events($vaultID: Vault_filter, $blockHeight: Block_height) {
@@ -122,6 +125,9 @@ def fetch_geyser_events(geyserId, startBlock):
 
 def fetch_sett_transfers(settID, startBlock, endBlock):
     endBlock = endBlock - 1
+    console.print(
+        "[bold green] Fetching Sett Deposits/Withdrawals {}[/bold green]".format(settID)
+    )
     query = gql(
         """
         query sett_transfers($vaultID: Vault_filter, $blockHeight: Block_height) {

@@ -67,12 +67,12 @@ def calc_geyser_rewards(badger, periodStartBlock, endBlock, cycle):
     return sum_rewards(rewardsByGeyser, cycle, badger.badgerTree)
 
 
-def calc_harvest_meta_farm_rewards(badger, startBlock, endBlock):
+def calc_harvest_meta_farm_rewards(badger,name, startBlock, endBlock):
     startBlockTime = web3.eth.getBlock(startBlock)["timestamp"]
     endBlockTime = web3.eth.getBlock(endBlock)["timestamp"]
     
-    harvestSettId = "0xaf5a1decfa95baf63e0084a35c62592b774a2a87"
-    geyserId = "0xed0b7f5d9f6286d00763b0ffcba886d8f9d56d5e"
+    harvestSettId = badger.getSett(name).address.lower()
+    geyserId = badger.getGeyser(name).address.lower()
     settBalances = fetch_sett_balances(harvestSettId, startBlock)
     console.log("Geyser amount in sett Balance: {}".format(settBalances[geyserId]/10**18))
     settBalances[geyserId] = 0
@@ -330,7 +330,7 @@ def rootUpdater(badger, startBlock, endBlock, test=False):
     #     return False
     print("Geyser Rewards", startBlock, endBlock, nextCycle)
 
-    metaFarmRewards = calc_harvest_meta_farm_rewards(badger, startBlock, endBlock)
+    metaFarmRewards = calc_harvest_meta_farm_rewards(badger,"harvest.renCrv",startBlock, endBlock)
     geyserRewards = calc_geyser_rewards(badger, startBlock, endBlock, nextCycle)
     newRewards = geyserRewards
 
