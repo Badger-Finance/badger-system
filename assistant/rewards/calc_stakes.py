@@ -1,5 +1,6 @@
 from collections import OrderedDict
 
+from config.rewards_config import rewards_config
 from assistant.rewards.BadgerGeyserMock import BadgerGeyserMock
 from assistant.subgraph.client import fetch_all_geyser_events
 from brownie import *
@@ -12,17 +13,7 @@ console = Console()
 
 globalStartBlock = 11381000
 
-
 def calc_geyser_stakes(key, geyser, periodStartBlock, periodEndBlock):
-    console.print(
-        " Geyser initial snapshot for " + geyser.address,
-        {"from": globalStartBlock, "to": periodEndBlock},
-    )
-    console.print(
-        " Rewards for " + geyser.address,
-        {"from": periodStartBlock, "to": periodEndBlock},
-    )
-
     globalStartTime = web3.eth.getBlock(globalStartBlock)["timestamp"]
     periodStartTime = web3.eth.getBlock(periodStartBlock)["timestamp"]
     periodEndTime = web3.eth.getBlock(periodEndBlock)["timestamp"]
@@ -57,7 +48,8 @@ def calculate_token_distributions(
         geyserMock.add_distribution_token(token)
         unlockSchedules = geyser.getUnlockSchedulesFor(token)
         for schedule in unlockSchedules:
-            console.log(schedule)
+            if rewards_config.debug:
+                console.log(schedule)
             geyserMock.add_unlock_schedule(token, schedule)
 
     tokenDistributions = geyserMock.calc_token_distributions_in_range(
@@ -66,7 +58,6 @@ def calculate_token_distributions(
     userDistributions = geyserMock.calc_user_distributions(tokenDistributions)
     geyserMock.tokenDistributions = tokenDistributions
     geyserMock.userDistributions = userDistributions
-    # geyserMock.printState()
     return userDistributions
 
 

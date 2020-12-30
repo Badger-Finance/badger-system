@@ -1,7 +1,7 @@
 from tests.conftest import badger
 from time import time
 from helpers.utils import sec, val
-from helpers.time_utils import days
+from helpers.time_utils import days, to_days, to_hours, to_utc_date
 from dotmap import DotMap
 from rich.console import Console
 from tabulate import tabulate
@@ -26,7 +26,6 @@ class LinearLogic:
     def __init__(self, start, end):
         self.start = Point(start["x"], start["y"])
         self.end = Point(end["x"], end["y"])
-        print(start, end)
         self.slope = (end["y"] - start["y"]) / (end["x"] - start["x"])
         self.intercept = start["y"]
         self.duration = end["x"] - start["x"]
@@ -124,6 +123,10 @@ class BadgerGeyserMock:
             if endTime < schedule.startTime:
                 toDistribute = 0
                 rangeDuration = endTime - schedule.startTime
+                if read:
+                    console.print(
+                        "\n[cyan]Schedule {} for {}: Complete[/cyan]".format(index, self.key)
+                    )
             else:
                 rangeDuration = endTime - schedule.startTime
                 toDistribute = min(
@@ -134,25 +137,27 @@ class BadgerGeyserMock:
                         // schedule.duration
                     ),
                 )
-            if read:
-                console.print(
-                    "\n[blue] == Schedule {} for {} == [/blue]".format(index, self.key)
-                )
 
-                console.log(
-                    "Distributed by: {} tokens for Schedule that starts at {}, out of {} total.".format(
-                        val(toDistribute),
-                        schedule.startTime,
-                        val(schedule.initialTokensLocked),
+                # Output if in rewards range, or read flag is on
+                if read and (schedule.startTime <= endTime and schedule.endTime >= endTime):
+                    console.print(
+                        "\n[blue] == Schedule {} for {} == [/blue]".format(index, self.key)
                     )
-                )
-                console.log(
-                    "Duration covered is {}, or {}% of schedule duration.".format(
-                        rangeDuration, rangeDuration / schedule.duration
-                    )
-                )
 
-                console.log("\n")
+                    console.log(
+                        "Total tokens distributed by schedule starting at {} by the end of rewards cycle are {} out of {} total.".format(
+                            to_utc_date(schedule.startTime),
+                            val(toDistribute),
+                            val(schedule.initialTokensLocked),
+                        )
+                    )
+                    console.log(
+                        "Total duration of schedule elapsed is {} hours out of {} hours, or {}% of total duration.".format(
+                            to_hours(rangeDuration), to_hours(schedule.duration), rangeDuration / schedule.duration * 100
+                        )
+                    )
+
+                    console.log("\n")
 
             totalToDistribute += toDistribute
             index += 1
@@ -168,9 +173,9 @@ class BadgerGeyserMock:
                 )
             )
             console.log(
-                "We're distributing the amount released in the range for {}, {} of {} total".format(
-                    self.key,
+                "Distributing {} tokens for {} in this rewards cycle, out of {} historically locked".format(
                     val(tokenDistributions[token]),
+                    self.key,
                     val(self.get_distributed_for_token_at(token, startTime)),
                 )
             )
