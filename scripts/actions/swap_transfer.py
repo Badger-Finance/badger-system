@@ -33,7 +33,7 @@ def printUniTrade(method, params):
     table.append(["input token", input_token])
     table.append(["output token", output_token])
     table.append(["expected output", params[0]])
-    table.append(["max input", val(params[1])])
+    table.append(["max input", params[1]])
     table.append(["path", params[2]])
     table.append(["recipient", params[3]])
     table.append(["expiration time", to_utc_date(params[4])])
@@ -123,10 +123,11 @@ def swap_transfer(recipient, params):
 
     # === Trade Badger for USDC through WBTC ===
     before = end_token.balanceOf(badger.rewardsEscrow)
+    beforeBadger = badger.token.balanceOf(badger.rewardsEscrow)
 
     console.print({"EAO": params["exact_amount_out"]})
 
-    expiration = 1609079132 + 8000
+    expiration = chain.time() + 8000
 
     id = multi.addTx(
         MultisigTxMetadata(
@@ -149,6 +150,8 @@ def swap_transfer(recipient, params):
     )
 
     tx = multi.executeTx(id)
+    print(tx.call_trace())
+    print(tx.events)
     
 
     printUniTrade(
@@ -164,10 +167,12 @@ def swap_transfer(recipient, params):
 
     console.log("=== Post Trade ===")
     console.print({
+        'before_input_coin': beforeBadger,
         'after_input_coin': badger.token.balanceOf(badger.rewardsEscrow),
         'before_output_coin': before,
         'post_output_coin': end_token.balanceOf(badger.rewardsEscrow),
-        'end_token': end_token
+        'end_token': end_token,
+        'chain_time_before': chain.time()
     })
 
     assert end_token.balanceOf(badger.rewardsEscrow) >= params["exact_amount_out"]
@@ -311,11 +316,11 @@ def main():
     multi = GnosisSafe(badger.devMultisig)
 
     # Parameters
-    recipient = ""
-    dollars = 0
+    recipient = "0x08CeCe3D7e70f13afa91953Ba12b2315598ad7EA"
+    dollars = 10100
 
     # Trade 'at max' Badger for exact amount of end coin
-    max_in = from_dollars(badger, badger.token.address, dollars * 2)
+    max_in = from_dollars(badger, badger.token.address, dollars * 1.2)
     exact_amount_out = from_dollars(badger, registry.tokens.wbtc, dollars)
 
     params = {

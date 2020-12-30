@@ -36,7 +36,15 @@ contract StrategySushiLpOptimizer is BaseStrategy {
 
     address public badgerTree;
 
-    event HarvestState(uint256 sushiHarvested, uint256 totalSushi, uint256 toStrategist, uint256 toGovernance, uint256 toBadgerTree, uint256 timestamp, uint256 blockNumber);
+    event HarvestState(
+        uint256 xSushiHarvested,
+        uint256 totalxSushi,
+        uint256 toStrategist,
+        uint256 toGovernance,
+        uint256 toBadgerTree,
+        uint256 timestamp,
+        uint256 blockNumber
+    );
 
     struct HarvestData {
         uint256 xSushiHarvested;
@@ -83,16 +91,16 @@ contract StrategySushiLpOptimizer is BaseStrategy {
         return "1.1";
     }
 
-    function getName() external pure override returns (string memory) {
+    function getName() external override pure returns (string memory) {
         return "StrategySushiLpOptimizer";
     }
 
-    function balanceOfPool() public view override returns (uint256) {
+    function balanceOfPool() public override view returns (uint256) {
         (uint256 staked, ) = ISushiChef(chef).userInfo(pid, address(this));
         return staked;
     }
 
-    function getProtectedTokens() external view override returns (address[] memory) {
+    function getProtectedTokens() external override view returns (address[] memory) {
         address[] memory protectedTokens = new address[](5);
         protectedTokens[0] = want;
         protectedTokens[1] = sushi;
@@ -141,7 +149,6 @@ contract StrategySushiLpOptimizer is BaseStrategy {
 
     /// @dev Withdraw want from staking rewards, using earnings first
     function _withdrawSome(uint256 _amount) internal override returns (uint256) {
-
         // Get idle want in the strategy
         uint256 _preWant = IERC20Upgradeable(want).balanceOf(address(this));
 
@@ -193,10 +200,11 @@ contract StrategySushiLpOptimizer is BaseStrategy {
 
         HarvestData memory harvestData;
 
-        uint256 _beforexSushi = IERC20Upgradeable(xSushi).balanceOf(address(this));
+        uint256 _beforexSushi = IERC20Upgradeable(xsushi).balanceOf(address(this));
         uint256 _beforeLp = IERC20Upgradeable(want).balanceOf(address(this));
 
         // == Harvest sushi rewards from Chef ==
+
         // Note: Deposit of zero harvests rewards balance, but go ahead and deposit idle want if we have it
         ISushiChef(chef).deposit(pid, _beforeLp);
 
@@ -216,8 +224,8 @@ contract StrategySushiLpOptimizer is BaseStrategy {
 
         // Process performance fees
         //performance fees in xsushi
-        harvestData.toStrategist = _processFee(xsushi, harvestData.totalSushi, performanceFeeStrategist, strategist);
-        harvestData.toGovernance = _processFee(xsushi, harvestData.totalSushi, performanceFeeGovernance, IController(controller).rewards());
+        harvestData.toStrategist = _processFee(xsushi, harvestData.totalxSushi, performanceFeeStrategist, strategist);
+        harvestData.toGovernance = _processFee(xsushi, harvestData.totalxSushi, performanceFeeGovernance, IController(controller).rewards());
 
         // Transfer remainder to Tree
         //tree gets xsushi instead of sushi so it keeps compounding
@@ -225,13 +233,14 @@ contract StrategySushiLpOptimizer is BaseStrategy {
         IERC20Upgradeable(xsushi).safeTransfer(badgerTree, harvestData.toBadgerTree);
 
         emit HarvestState(
-            harvestData.xSushiHarvested, 
-            harvestData.totalxSushi, 
+            harvestData.xSushiHarvested,
+            harvestData.totalxSushi,
             harvestData.toStrategist,
             harvestData.toGovernance,
             harvestData.toBadgerTree,
             block.timestamp,
-            block.number);
+            block.number
+        );
 
         // We never increase underlying position
         emit Harvest(0, block.number);

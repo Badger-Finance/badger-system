@@ -19,7 +19,7 @@ from helpers.gnosis_safe import (
     get_first_owner,
 )
 from helpers.registry import registry
-from helpers.time_utils import days, to_days, to_timestamp, to_utc_date
+from helpers.time_utils import days, hours, to_days, to_timestamp, to_utc_date
 from helpers.utils import val
 from rich import pretty
 from rich.console import Console
@@ -42,7 +42,11 @@ class RewardsDist:
             self.toStakingRewards = 0
 
     def has_compounding(self, key):
-        if key == "native.badger" or key == "native.uniBadgerWbtc":
+        if (
+            key == "native.badger"
+            or key == "native.uniBadgerWbtc"
+            or key == "native.sushiBadgerWbtc"
+        ):
             return True
         else:
             return False
@@ -91,14 +95,11 @@ class RewardsSchedule:
         # TODO: Make the amount based on what we'll require for the next week
         id = multi.addTx(
             MultisigTxMetadata(
-                description="Top up badger tree",
-                operation="Top Up Badger Tree",
+                description="Top up badger tree", operation="Top Up Badger Tree",
             ),
             {
                 "to": rewardsEscrow.address,
-                "data": rewardsEscrow.transfer.encode_input(
-                    badger.token, tree, top_up
-                ),
+                "data": rewardsEscrow.transfer.encode_input(badger.token, tree, top_up),
             },
         )
 
@@ -107,7 +108,6 @@ class RewardsSchedule:
         after = badger.token.balanceOf(tree)
         assert after == before + top_up
 
-
         for key, distribution in self.distributions.items():
             console.print(
                 "===== Distributions for {} =====".format(key), style="bold yellow"
@@ -115,6 +115,21 @@ class RewardsSchedule:
 
             # == Distribute to Geyser ==
             geyser = self.badger.getGeyser(key)
+
+            # Approve Geyser as recipient if required
+            if not rewardsEscrow.isApproved(geyser):
+                id = multi.addTx(
+                    MultisigTxMetadata(
+                        description="Approve StakingRewards " + key,
+                        operation="transfer",
+                    ),
+                    {
+                        "to": rewardsEscrow.address,
+                        "data": rewardsEscrow.approveRecipient.encode_input(geyser),
+                    },
+                )
+
+                multi.executeTx(id)
 
             numSchedules = geyser.unlockScheduleCount(self.badger.token)
             console.print(
@@ -145,6 +160,11 @@ class RewardsSchedule:
 
             # Verify Results
             numSchedulesAfter = geyser.unlockScheduleCount(self.badger.token)
+
+            console.print(
+                "Schedule Addition",
+                {"numSchedules": numSchedules, "numSchedulesAfter": numSchedulesAfter},
+            )
 
             assert numSchedulesAfter == numSchedules + 1
 
@@ -188,7 +208,7 @@ class RewardsSchedule:
                 # Add tokens if insufficent tokens
                 preBal = self.badger.token.balanceOf(stakingRewards)
                 if preBal < distribution.toStakingRewards:
-                    required = distribution.toStakingRewards - preBal 
+                    required = distribution.toStakingRewards - preBal
                     console.print(
                         "⊁ We need to add {} to the {} Badger supply of {} to reach the goal of {} Badger".format(
                             val(required),
@@ -218,6 +238,24 @@ class RewardsSchedule:
                     self.badger.token.balanceOf(stakingRewards)
                     >= distribution.toStakingRewards
                 )
+
+                # Modify the rewards duration, if necessary
+                if stakingRewards.rewardsDuration() != self.duration:
+                    id = multi.addTx(
+                        MultisigTxMetadata(
+                            description="Modify Staking Rewards duration for " + key,
+                            operation="call.notifyRewardAmount",
+                        ),
+                        {
+                            "to": stakingRewards.address,
+                            "data": stakingRewards.setRewardsDuration.encode_input(
+                                self.duration
+                            ),
+                        },
+                    )
+                    tx = multi.executeTx(id)
+
+                # assert stakingRewards.rewardsDuration() == self.duration
 
                 # Notify Rewards Amount
                 id = multi.addTx(
@@ -377,32 +415,42 @@ def main():
     Badger <>wBTC Uniswap LP — 110,000 $BADGER
     (NEW) Badger <>wBTC Sushiswap LP— 50,000 $BADGER
 
+    wbtc/eth = 34,285 $BADGER (which should be distributed evenly over 3 days ie today 1pm to tomorrow, tomorrow to wednesday, wed- thursday then new emissions)
+    Badger <>wBTC Sushiswap LP— 30,000 $BADGER (10k/day)
+
     Super Sett
     Harvest renbtc CRV —83,437.5 $BADGER
     """
 
     rest = RewardsSchedule(badger)
 
-    rest.setStart(to_timestamp(datetime.datetime(2020, 12, 24, 11, 00)))
-    rest.setDuration(days(7))
+    rest.setStart(to_timestamp(datetime.datetime(2020, 12, 28, 16, 30)))
+    rest.setDuration(hours(67.5))
 
     rest.setAmounts(
         {
-            "native.badger": Wei("60000 ether"),
-            "native.renCrv": Wei("83437.5 ether"),
-            "native.sbtcCrv": Wei("83437.5 ether"),
-            "native.tbtcCrv": Wei("83437.5 ether"),
-            "native.uniBadgerWbtc": Wei("110000 ether"),
-            "harvest.renCrv": Wei("83437.5 ether"),
+            "native.sushiWbtcEth": Wei("34285 ether"),
+            "native.sushiBadgerWbtc": Wei("30000 ether"),
         }
     )
 
+    # rest.setAmounts(
+    #     {
+    #         "native.sushiWbtcEth": Wei("60000 ether"),
+    #         "native.sushiBadgerWbtc": Wei("83437.5 ether"),
+    #         "native.sbtcCrv": Wei("83437.5 ether"),
+    #         "native.tbtcCrv": Wei("83437.5 ether"),
+    #         "native.uniBadgerWbtc": Wei("110000 ether"),
+    #         "harvest.renCrv": Wei("83437.5 ether"),
+    #     }
+    # )
+
     rest.testTransactions()
 
-    rest.printState("Week 3")
+    rest.printState("Week 4 - Sushi Emerges")
 
     total = rest.total
-    expected = Wei("603750 ether")
+    expected = Wei("64285 ether")
 
     print("overall total ", total)
     print("expected total ", expected)

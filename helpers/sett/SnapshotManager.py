@@ -161,10 +161,10 @@ class SnapshotManager:
         user = overrides["from"].address
         trackedUsers = {"user": user}
         before = self.snap(trackedUsers)
-        self.strategy.harvest(overrides)
+        tx = self.strategy.harvest(overrides)
         after = self.snap(trackedUsers)
         if confirm:
-            self.resolver.confirm_harvest(before, after)
+            self.resolver.confirm_harvest(before, after, tx)
 
     def settDeposit(self, amount, overrides, confirm=True):
         user = overrides["from"].address

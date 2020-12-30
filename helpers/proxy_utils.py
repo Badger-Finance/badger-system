@@ -44,7 +44,7 @@ def deploy_proxy(contractName, logicAbi, logic, proxyAdmin, initializer, deploye
     deploy_txn = AdminUpgradeabilityProxy.constructor(
         logic, proxyAdmin, web3.toBytes(hexstr=initializer)
     ).buildTransaction()
-
+    
     tx = deployer.transfer(data=deploy_txn["data"])
 
     print("Deployng contract:", contractName, "address:", tx.contract_address)

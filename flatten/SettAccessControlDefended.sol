@@ -4,21 +4,19 @@
 
 // pragma solidity >=0.4.24 <0.7.0;
 
-
 /**
  * @dev This is a base contract to aid in writing upgradeable contracts, or any kind of contract that will be deployed
  * behind a proxy. Since a proxied contract can't have a constructor, it's common to move constructor logic to an
  * external initializer function, usually called `initialize`. It then becomes necessary to protect this initializer
  * function so it can only be called once. The {initializer} modifier provided by this contract will have this effect.
- * 
+ *
  * TIP: To avoid leaving the proxy in an uninitialized state, the initializer function should be called as early as
  * possible by providing the encoded function call as the `_data` argument to {UpgradeableProxy-constructor}.
- * 
+ *
  * CAUTION: When used with inheritance, manual care must be taken to not invoke a parent initializer twice, or to ensure
  * that all initializers are idempotent. This is not verified automatically as constructors are by Solidity.
  */
 abstract contract Initializable {
-
     /**
      * @dev Indicates that the contract has been initialized.
      */
@@ -58,11 +56,12 @@ abstract contract Initializable {
         address self = address(this);
         uint256 cs;
         // solhint-disable-next-line no-inline-assembly
-        assembly { cs := extcodesize(self) }
+        assembly {
+            cs := extcodesize(self)
+        }
         return cs == 0;
     }
 }
-
 
 // Dependency file: contracts/badger-sett/SettAccessControl.sol
 
@@ -88,7 +87,7 @@ contract SettAccessControl is Initializable {
     }
 
     function _onlyAuthorizedActors() internal view {
-        require(msg.sender == keeper || msg.sender == strategist || msg.sender == governance, "onlyAuthorizedActors");
+        require(msg.sender == keeper || msg.sender == governance, "onlyAuthorizedActors");
     }
 
     // ===== PERMISSIONED ACTIONS =====
@@ -117,7 +116,6 @@ contract SettAccessControl is Initializable {
     uint256[50] private __gap;
 }
 
-
 // Root file: contracts/badger-sett/SettAccessControlDefended.sol
 
 pragma solidity ^0.6.11;
@@ -128,7 +126,7 @@ pragma solidity ^0.6.11;
     Add ability to prevent unwanted contract access to Sett permissions
 */
 contract SettAccessControlDefended is SettAccessControl {
-    mapping (address => bool) public approved;
+    mapping(address => bool) public approved;
 
     function approveContractAccess(address account) external {
         _onlyGovernance();
@@ -143,5 +141,6 @@ contract SettAccessControlDefended is SettAccessControl {
     function _defend() internal view returns (bool) {
         require(approved[msg.sender] || msg.sender == tx.origin, "Access denied for caller");
     }
+
     uint256[50] private __gap;
 }

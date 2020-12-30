@@ -144,7 +144,11 @@ sushi_registry = DotMap(
     sushiChef="0xc2EdaD668740f1aA35E4D8f227fB8E17dcA888Cd",
     router="0xd9e1cE17f2641f24aE83637ab66a2cca9C378B9F",
     factory="0xC0AEe478e3658e2610c5F7A4A2E1777cE9e4f2Ac",
-    pids=DotMap(sushiBadgerWBtc=0, sushiEthWBtc=21),
+    lpTokens=DotMap(
+        sushiBadgerWBtc="0x110492b31c59716AC47337E616804E3E3AdC0b4a",
+        sushiWbtcWeth="0xCEfF51756c56CeFFCA006cD410B03FFC46dd3a58"
+    ),
+    pids=DotMap(sushiBadgerWBtc=73, sushiEthWBtc=21),
 )
 
 curve_registry = DotMap(
@@ -218,11 +222,9 @@ whale_registry = DotMap(
         action = WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT
     ),
     sushiBadgerWbtc=DotMap(
-        whale="0x235c9e24D3FB2FAFd58a2E49D454Fdcd2DBf7FF1",
-        token="0xcD7989894bc033581532D2cd88Da5db0A4b12859",
-        special=True,
-        action=WhaleRegistryAction.POPULATE_NEW_SUSHI_LP,
-        actionParams={"token0": badger_registry.token, "token1": token_registry.wbtc},
+        whale="0xc2EdaD668740f1aA35E4D8f227fB8E17dcA888Cd",
+        token="0x110492b31c59716AC47337E616804E3E3AdC0b4a",
+        action = WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT
     ),
     sushiWbtcWeth=DotMap(
         whale="0xc2EdaD668740f1aA35E4D8f227fB8E17dcA888Cd",
@@ -238,6 +240,7 @@ registry = DotMap(
     open_zeppelin=open_zeppelin_registry,
     aragon=aragon_registry,
     sushiswap=sushi_registry,
+    sushi=sushi_registry,
     gnosis_safe=gnosis_safe_registry,
     onesplit=gnosis_safe_registry,
     pickle=pickle_registry,

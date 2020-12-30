@@ -27,6 +27,8 @@ class SushiBadgerWBtcMiniDeploy(SettMiniDeployBase):
             self.key, badger_config.geyserParams.unlockSchedules.badger[0].amount
         )
 
+        self.rewards.initializeApprovedStaker(self.strategy, {"from": self.deployer})
+
         # Generate initial LP tokens and grant to deployer
         # sushiswap = SushiswapSystem()
         # pid = sushiswap.add_chef_rewards(self.want)
@@ -39,7 +41,7 @@ class SushiBadgerWBtcMiniDeploy(SettMiniDeployBase):
         """
 
         self.rewards = self.badger.deploy_set_staking_rewards_signal_only(
-            self.key, self.badger.token, self.vault
+            self.key, self.deployer, self.badger.token
         )
 
         self.params.geyser = self.rewards

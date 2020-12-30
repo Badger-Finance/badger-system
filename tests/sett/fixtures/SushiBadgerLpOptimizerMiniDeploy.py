@@ -7,7 +7,7 @@ from helpers.registry import registry
 
 class SushiBadgerLpOptimizerMiniDeploy(SettMiniDeployBase):
     def fetch_params(self):
-        params = sett_config.sushi.sushiBadgerWBtc.params
+        params = sett_config.sushi.sushiWethWBtc.params
 
         sushiswap = SushiswapSystem()
         want = sushiswap.getPair(registry.tokens.weth, registry.tokens.wbtc)
