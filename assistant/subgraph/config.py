@@ -1,3 +1,3 @@
 subgraph_config = {
-    "url": "http://localhost:8000/subgraphs/name/badger"
+    "url": "https://api.thegraph.com/subgraphs/name/m4azey/badger-finance"
 }

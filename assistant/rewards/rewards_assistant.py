@@ -2,6 +2,13 @@ import json
 
 from assistant.rewards.aws_utils import download, upload
 from assistant.rewards.calc_stakes import calc_geyser_stakes
+from assistant.rewards.calc_harvest import calc_balances_from_geyser_events,get_initial_user_state
+from assistant.subgraph.client import (
+    fetch_sett_balances,
+    fetch_geyser_events,
+    fetch_sett_transfers,
+)
+from assistant.rewards.User import User
 from assistant.rewards.merkle_tree import rewards_to_merkle_tree
 from assistant.rewards.rewards_checker import compare_rewards
 from assistant.rewards.RewardsList import RewardsList
@@ -13,7 +20,6 @@ from eth_abi.packed import encode_abi_packed
 from helpers.time_utils import hours
 from rich.console import Console
 from scripts.systems.badger_system import BadgerSystem
-
 gas_strategy = GasNowStrategy("fast")
 
 console = Console()
@@ -62,14 +68,49 @@ def calc_geyser_rewards(badger, periodStartBlock, endBlock, cycle):
 
 
 def calc_harvest_meta_farm_rewards(badger, startBlock, endBlock):
+    startBlockTime = web3.eth.getBlock(startBlock)["timestamp"]
+    endBlockTime = web3.eth.getBlock(endBlock)["timestamp"]
+    
     harvestSettId = "0xaf5a1decfa95baf63e0084a35c62592b774a2a87"
     geyserId = "0xed0b7f5d9f6286d00763b0ffcba886d8f9d56d5e"
-    settBalances = fetch_sett_balances(harvestSettId,geyserId,startBlock)
-    geyserEvents = fetch_geyser_events(geyserId)
+    settBalances = fetch_sett_balances(harvestSettId, startBlock)
+    console.log("Geyser amount in sett Balance: {}".format(settBalances[geyserId]/10**18))
+    settBalances[geyserId] = 0
+    geyserEvents = fetch_geyser_events(geyserId, startBlock)
     geyserBalances = calc_balances_from_geyser_events(geyserEvents)
-    
+    settTransfers = fetch_sett_transfers(harvestSettId, startBlock, endBlock)
+    user_state = get_initial_user_state(
+        settBalances, geyserBalances, startBlockTime
+    )
+    for transfer in settTransfers:
+        transfer_address = transfer["account"]["id"]
+        transfer_amount = int(transfer["amount"])
+        transfer_timestamp = int(transfer["transaction"]["timestamp"])
+        user = None
+        for u in user_state:
+            if u.address == transfer_address:
+                user = u
+        if user:
+            secondsSinceLastAction = transfer_timestamp - user.lastUpdated
+            assert secondsSinceLastAction > 0
+            user.lastUpdated = transfer_timestamp
+            shareSeconds = secondsSinceLastAction * user.currentDeposited
+            assert shareSeconds > 0
+            user.shareSeconds += shareSeconds
+            user.currentDeposited += transfer_amount
+        else:
+            # If the user hasn't deposited before, create a new one
+            newUser = User(transfer_address,transfer_amount,transfer_timestamp)
+            assert transfer_amount > 0
+            user_state.append(newUser)
 
+    for user in user_state:
+        secondsSinceLastAction = endBlockTime - user.lastUpdated
+        assert secondsSinceLastAction > 0
+        user.lastUpdated = endBlockTime
+        user.shareSeconds += secondsSinceLastAction * user.currentDeposited
 
+    console.log(user_state)
     # TODO: Add harvest reward
     return []
 
@@ -168,7 +209,6 @@ def guardian(badger: BadgerSystem, startBlock, endBlock, test=False):
             "rootHash": str(rootHash),
             "contentFile": contentFileName,
             "startBlock": startBlock,
-            "endBlock": endBlock,
             "currentContentHash": currentContentHash,
         }
     )
@@ -227,28 +267,28 @@ def fetch_current_rewards_tree(badger):
     # TODO How will we upload addresses securely?
     # We will check signature before posting
     merkle = fetchCurrentMerkleData(badger)
-    #pastFile = "rewards-1-" + str(merkle["contentHash"]) + ".json"
-   
+    # pastFile = "rewards-1-" + str(merkle["contentHash"]) + ".json"
+
     pastFile = "rewards-1-0xf5a8ede3b252cee8a1680f10a8f721ad21e336929b8be998bff5736371d3cb06.json"
 
     console.print(
         "[bold yellow]===== Loading Past Rewards " + pastFile + " =====[/bold yellow]"
     )
 
-    #currentTree = json.loads(download(pastFile))
+    # currentTree = json.loads(download(pastFile))
     with open(pastFile) as f:
         treeData = f.read()
     currentTree = json.loads(treeData)
 
     # Invariant: File shoulld have same root as latest
-    #assert currentTree["merkleRoot"] == merkle["root"]
+    # assert currentTree["merkleRoot"] == merkle["root"]
 
     lastUpdateOnChain = merkle["blockNumber"]
     lastUpdate = int(currentTree["endBlock"])
 
     print("lastUpdateOnChain ", lastUpdateOnChain, " lastUpdate ", lastUpdate)
     # Ensure file tracks block within 1 day of upload
-    #assert abs(lastUpdate - lastUpdateOnChain) < 6500
+    # assert abs(lastUpdate - lastUpdateOnChain) < 6500
 
     # Ensure upload was after file tracked
     assert lastUpdateOnChain >= lastUpdate

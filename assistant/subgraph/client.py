@@ -1,4 +1,3 @@
-from sgqlc.endpoint.http import HTTPEndpoint
 from assistant.subgraph.config import subgraph_config
 from rich.console import Console
 
@@ -58,8 +57,9 @@ def fetch_all_geyser_events(geyserId):
     }
 
 
-def fetch_sett_balances(settId,startBlock):
-    query = gql("""
+def fetch_sett_balances(settId, startBlock):
+    query = gql(
+        """
         query balances_and_events($vaultID: Vault_filter, $blockHeight: Block_height) {
             vaults(block: $blockHeight, where: $vaultID) {
                 balances(orderBy: netDeposits, orderDirection: desc) {
@@ -71,34 +71,36 @@ def fetch_sett_balances(settId,startBlock):
                   } 
                 }
             }
-        """)
-    variables = {
-        "blockHeight": {
-            "number": startBlock
-        },
-        "vaultID": {
-            "id": settId
-        }
-    }
-    results = client.execute(query,variable_values=variables)
-    return {
-        "balances":results["vaults"][0]["balances"]
-    }
+        """
+    )
+    variables = {"blockHeight": {"number": startBlock}, "vaultID": {"id": settId}}
+    results = client.execute(query, variable_values=variables)
+    balances = {}
+    for result in results["vaults"][0]["balances"]:
+        account = result["id"].split("-")[0]
+        balances[account] = int(result["shareBalanceRaw"])
+    return balances
 
-def fetch_geyser_events(geyserId,startBlock):
-    query = gql("""query($geyserID: Geyser_filter,$blockHeight: Block_height)
+
+def fetch_geyser_events(geyserId, startBlock):
+    console.print(
+        "[bold green] Fetching Geyser Events {}[/bold green]".format(geyserId)
+    )
+
+    query = gql(
+        """query($geyserID: Geyser_filter,$blockHeight: Block_height)
     {
       geysers(where: $geyserID,block: $blockHeight) {
           id
           totalStaked
-          stakeEvents {
+          stakeEvents(first:1000) {
             id
               user,
               amount
               timestamp,
               total
           }
-          unstakeEvents {
+          unstakeEvents(first:1000) {
               id
               user,
               amount
@@ -107,17 +109,71 @@ def fetch_geyser_events(geyserId,startBlock):
           }
       }
     }
-    """)
-    variables = {
-      "geyserID": {
-        "id":geyserId
-      },
-      "blockHeight":{
-        "number":startBlock
-      }
-    }
+    """
+    )
+    variables = {"geyserID": {"id": geyserId}, "blockHeight": {"number": startBlock}}
     result = client.execute(query, variable_values=variables)
     return {
-        "stakes":result["geyser"][0]]["stakeEvents"]
-        "unstakes":result["geyser"][0]["unstakeEvents"]
+        "stakes": result["geysers"][0]["stakeEvents"],
+        "unstakes": result["geysers"][0]["unstakeEvents"],
+        "totalStaked": result["geysers"][0]["totalStaked"],
     }
+
+
+def fetch_sett_transfers(settID, startBlock, endBlock):
+    endBlock = endBlock - 1
+    query = gql(
+        """
+        query sett_transfers($vaultID: Vault_filter, $blockHeight: Block_height) {
+            vaults(block: $blockHeight, where: $vaultID) {
+                deposits {
+                    account {
+                     id
+                    }
+                    amount
+                    transaction {
+                        timestamp
+                        blockNumber
+                    }
+                }
+                withdrawals {
+                    account {
+                     id
+                    }
+                    amount
+                    transaction {
+                        timestamp
+                        blockNumber
+                    }
+                }
+            }
+        }
+    """
+    )
+    variables = {"vaultID": {"id": settID}, "blockHeight": {"number": endBlock}}
+
+    def filter_by_startBlock(transfer):
+        return int(transfer["transaction"]["blockNumber"]) > startBlock
+
+    def convert_amount_type(transfer):
+        transfer["amount"] = int(transfer["amount"])
+        return transfer
+
+    def negate_withdrawals(withdrawal):
+        withdrawal["amount"] = -withdrawal["amount"]
+        return withdrawal
+
+    results = client.execute(query, variable_values=variables)
+
+    deposits = map(convert_amount_type, results["vaults"][0]["deposits"])
+    withdrawals = map(
+        negate_withdrawals,
+        map(convert_amount_type, results["vaults"][0]["withdrawals"]),
+    )
+
+    deposits = filter(filter_by_startBlock, list(deposits))
+    withdrawals = filter(filter_by_startBlock, list(withdrawals))
+    return sorted(
+        [*list(deposits), *list(withdrawals)],
+        key=lambda t: t["transaction"]["timestamp"],
+    )
