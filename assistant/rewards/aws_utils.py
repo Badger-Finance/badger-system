@@ -14,7 +14,7 @@ def download(fileName):
     console.print("Downloading file from s3: " + upload_file_key)
 
     s3_clientobj = s3.get_object(Bucket=upload_bucket, Key=upload_file_key)
-    console.print(s3_clientobj)
+    # console.print(s3_clientobj)
     s3_clientdata = s3_clientobj["Body"].read().decode("utf-8")
 
     return s3_clientdata

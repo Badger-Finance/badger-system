@@ -24,3 +24,6 @@ def to_timestamp(date):
 
 def to_days(duration):
     return duration / ONE_DAY
+
+def to_hours(duration):
+    return duration / ONE_HOUR

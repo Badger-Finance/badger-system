@@ -106,7 +106,9 @@ def print_to_file(badger, path):
         json.dump(system, outfile)
 
 
-def connect_badger(badger_deploy_file, load_accounts=False):
+def connect_badger(
+    badger_deploy_file, load_deployer=False, load_keeper=False, load_guardian=False
+):
     badger_deploy = {}
     console.print(
         "[grey]Connecting to Existing Badger 🦡 System at {}...[/grey]".format(
@@ -126,12 +128,12 @@ def connect_badger(badger_deploy_file, load_accounts=False):
         badger_deploy["keeper"],
         badger_deploy["guardian"],
         deploy=False,
-        load_accounts=load_accounts
+        load_deployer=False,
+        load_keeper=False,
+        load_guardian=False,
     )
 
     badger.globalStartBlock = badger_deploy["globalStartBlock"]
-
-    deployer = badger.deployer
 
     badger.connect_proxy_admins(
         badger_deploy["devProxyAdmin"], badger_deploy["daoProxyAdmin"]
@@ -156,10 +158,22 @@ def connect_badger(badger_deploy_file, load_accounts=False):
 
     return badger
 
+
 default_gas_strategy = GasNowScalingStrategy()
 
+
 class BadgerSystem:
-    def __init__(self, config, systems, deployer, keeper, guardian, deploy=True, load_accounts=True):
+    def __init__(
+        self,
+        config,
+        deployer,
+        keeper,
+        guardian,
+        deploy=True,
+        load_deployer=False,
+        load_keeper=False,
+        load_guardian=False,
+    ):
         self.config = config
         self.contracts_static = []
         self.contracts_upgradeable = {}
@@ -173,17 +187,15 @@ class BadgerSystem:
             self.guardian = accounts.at(guardian, force=True)
         else:
             print("RPC Inactive")
-
-            deployer_key = decouple.config("DEPLOYER_PRIVATE_KEY")
-            keeper_key = decouple.config("KEEPER_PRIVATE_KEY")
-            guardian_key = decouple.config("GUARDIAN_PRIVATE_KEY")
-
-            print(deployer_key, keeper_key, guardian_key)
-
-            self.deployer = accounts.add(deployer_key)
-            self.keeper = accounts.add(keeper_key)
-            self.guardian = accounts.add(guardian_key)
-
+            if load_deployer:
+                deployer_key = decouple.config("DEPLOYER_PRIVATE_KEY")
+                self.deployer = accounts.add(deployer_key)
+            if load_keeper:
+                keeper_key = decouple.config("KEEPER_PRIVATE_KEY")
+                self.keeper = accounts.add(keeper_key)
+            if load_guardian:
+                guardian_key = decouple.config("GUARDIAN_PRIVATE_KEY")
+                self.guardian = accounts.add(guardian_key)
         if deploy:
             self.devProxyAdmin = deploy_proxy_admin(deployer)
             self.daoProxyAdmin = deploy_proxy_admin(deployer)
@@ -227,49 +239,42 @@ class BadgerSystem:
         abi = registry.open_zeppelin.artifacts["ProxyAdmin"]["abi"]
 
         self.devProxyAdmin = Contract.from_abi(
-            "ProxyAdmin", web3.toChecksumAddress(devProxyAdmin), abi,
+            "ProxyAdmin", web3.toChecksumAddress(devProxyAdmin), abi
         )
         self.daoProxyAdmin = Contract.from_abi(
-            "ProxyAdmin", web3.toChecksumAddress(daoProxyAdmin), abi,
+            "ProxyAdmin", web3.toChecksumAddress(daoProxyAdmin), abi
         )
 
         self.proxyAdmin = self.devProxyAdmin
 
     def connect_dao(self):
-        deployer = self.deployer
         self.dao = DotMap(
             token=Contract.from_abi(
                 "MiniMeToken",
                 badger_config.dao.token,
-                registry.aragon.artifacts.MiniMeToken["abi"],
-                deployer,
+                registry.aragon.artifacts.MiniMeToken["abi"]
             ),
             kernel=Contract.from_abi(
                 "Agent",
                 badger_config.dao.kernel,
-                registry.aragon.artifacts.Agent["abi"],
-                deployer,
+                registry.aragon.artifacts.Agent["abi"]
             ),
             agent=Contract.from_abi(
                 "Agent",
                 badger_config.dao.agent,
-                registry.aragon.artifacts.Agent["abi"],
-                deployer,
+                registry.aragon.artifacts.Agent["abi"]
             ),
         )
 
         self.token = self.dao.token
 
     def connect_multisig(self):
-        deployer = self.deployer
-
-        multisigParams = badger_config["devMultisigParams"]
-        multisigParams.owners = [deployer.address]
-
         self.devMultisig = connect_gnosis_safe(badger_config.multisig.address)
-    
+
     def connect_treasury_multisig(self):
-        self.treasuryMultisig = connect_gnosis_safe(badger_config.treasury_multisig.address)
+        self.treasuryMultisig = connect_gnosis_safe(
+            badger_config.treasury_multisig.address
+        )
 
     def connect_uniswap(self):
         self.uniswap = UniswapSystem()
@@ -312,7 +317,9 @@ class BadgerSystem:
     def deploy_sett_strategy_logic_for(self, name):
         deployer = self.deployer
         artifact = strategy_name_to_artifact(name)
-        self.logic[name] = artifact.deploy({"from": deployer, "gas_price": self.gas_strategy})
+        self.logic[name] = artifact.deploy(
+            {"from": deployer, "gas_price": self.gas_strategy}
+        )
 
         # TODO: Initialize to remove that function
 
@@ -469,7 +476,7 @@ class BadgerSystem:
                 namePrefix,
                 symbolPrefix,
             ),
-            deployer
+            deployer,
         )
         self.sett_system.vaults[id] = sett
         self.track_contract_upgradeable(id + ".sett", sett)

@@ -126,31 +126,38 @@ def hash(value):
     return web3.toHex(web3.keccak(text=value))
 
 
-def fetch_current_rewards_tree(badger):
+def fetch_current_rewards_tree(badger, print_output=False):
     # TODO Files should be hashed and signed by keeper to prevent tampering
     # TODO How will we upload addresses securely?
     # We will check signature before posting
     merkle = fetchCurrentMerkleData(badger)
     pastFile = "rewards-1-" + str(merkle["contentHash"]) + ".json"
-
-    console.print(
-        "[bold yellow]===== Loading Past Rewards " + pastFile + " =====[/bold yellow]"
-    )
+    
+    if print_output:
+        console.print(
+            "[bold yellow]===== Loading Past Rewards "
+            + pastFile
+            + " =====[/bold yellow]"
+        )
 
     currentTree = json.loads(download(pastFile))
 
     # Invariant: File shoulld have same root as latest
     assert currentTree["merkleRoot"] == merkle["root"]
 
-    lastUpdateOnChain = merkle["blockNumber"]
+    lastUpdatePublish = merkle["blockNumber"]
     lastUpdate = int(currentTree["endBlock"])
 
-    print("lastUpdateOnChain ", lastUpdateOnChain, " lastUpdate ", lastUpdate)
-    # Ensure file tracks block within 1 day of upload
-    assert abs(lastUpdate - lastUpdateOnChain) < 6500
-
+    if print_output:
+        print(
+            "lastUpdateBlock", lastUpdate, "lastUpdatePublishBlock", lastUpdatePublish
+        )
     # Ensure upload was after file tracked
-    assert lastUpdateOnChain >= lastUpdate
+    assert lastUpdatePublish >= lastUpdate
+
+    # Ensure file tracks block within 1 day of upload
+    assert abs(lastUpdate - lastUpdatePublish) < 6500
+    
     return currentTree
 
 
@@ -162,12 +169,10 @@ def generate_rewards_in_range(badger, startBlock, endBlock):
         )
     )
 
-    badgerTree = badger.badgerTree
-    keeper = badger.keeper
     nextCycle = getNextCycle(badger)
 
     currentMerkleData = fetchCurrentMerkleData(badger)
-    currentRewards = fetch_current_rewards_tree(badger)
+    currentRewards = fetch_current_rewards_tree(badger, print_output=True)
     geyserRewards = calc_geyser_rewards(badger, startBlock, endBlock, nextCycle)
     # metaFarmRewards = calc_harvest_meta_farm_rewards(badger, startBlock, endBlock)
 
@@ -232,7 +237,6 @@ def rootUpdater(badger, startBlock, endBlock, test=False):
     console.print("\n[bold cyan]===== Root Updater =====[/bold cyan]\n")
 
     badgerTree = badger.badgerTree
-    keeper = badger.keeper
     nextCycle = getNextCycle(badger)
 
     currentMerkleData = fetchCurrentMerkleData(badger)
@@ -240,7 +244,7 @@ def rootUpdater(badger, startBlock, endBlock, test=False):
 
     # Only run if we have sufficent time since previous root
     timeSinceLastupdate = currentTime - currentMerkleData["lastUpdateTime"]
-    if timeSinceLastupdate < rewards_config.rootUpdateInterval and not test:
+    if timeSinceLastupdate < rewards_config.rootUpdateMinInterval and not test:
         console.print(
             "[bold yellow]===== Result: Last Update too Recent =====[/bold yellow]"
         )
@@ -255,7 +259,7 @@ def rootUpdater(badger, startBlock, endBlock, test=False):
             rewards_data["merkleTree"]["merkleRoot"],
             rewards_data["rootHash"],
             rewards_data["merkleTree"]["cycle"],
-            {"from": keeper, "gas_price": gas_strategy},
+            {"from": badger.keeper, "gas_price": gas_strategy},
         )
 
     return True
@@ -274,7 +278,6 @@ def guardian(badger: BadgerSystem, startBlock, endBlock, test=False):
     console.print("\n[bold cyan]===== Guardian =====[/bold cyan]\n")
 
     badgerTree = badger.badgerTree
-    guardian = badger.guardian
 
     # Only run if we have a pending root
     if not badgerTree.hasPendingRoot():
@@ -291,7 +294,7 @@ def guardian(badger: BadgerSystem, startBlock, endBlock, test=False):
             rewards_data["merkleTree"]["merkleRoot"],
             rewards_data["rootHash"],
             rewards_data["merkleTree"]["cycle"],
-            {"from": guardian, "gas_price": gas_strategy},
+            {"from": badger.guardian, "gas_price": gas_strategy},
         )
 
 
