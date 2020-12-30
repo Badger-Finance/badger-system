@@ -1,3 +1,4 @@
+from brownie.network.gas.strategies import GasNowScalingStrategy
 from helpers.sett.strategy_registry import strategy_name_to_artifact
 import json
 import decouple
@@ -105,7 +106,7 @@ def print_to_file(badger, path):
         json.dump(system, outfile)
 
 
-def connect_badger(badger_deploy_file):
+def connect_badger(badger_deploy_file, load_accounts=False):
     badger_deploy = {}
     console.print(
         "[grey]Connecting to Existing Badger 🦡 System at {}...[/grey]".format(
@@ -125,6 +126,7 @@ def connect_badger(badger_deploy_file):
         badger_deploy["keeper"],
         badger_deploy["guardian"],
         deploy=False,
+        load_accounts=load_accounts
     )
 
     badger.globalStartBlock = badger_deploy["globalStartBlock"]
@@ -154,13 +156,16 @@ def connect_badger(badger_deploy_file):
 
     return badger
 
+default_gas_strategy = GasNowScalingStrategy()
 
 class BadgerSystem:
-    def __init__(self, config, deployer, keeper, guardian, deploy=True):
+    def __init__(self, config, systems, deployer, keeper, guardian, deploy=True, load_accounts=True):
         self.config = config
         self.contracts_static = []
         self.contracts_upgradeable = {}
+        self.gas_strategy = default_gas_strategy
 
+        # Unlock accounts in test mode
         if rpc.is_active():
             print("RPC Active")
             self.deployer = accounts.at(deployer, force=True)
@@ -168,6 +173,7 @@ class BadgerSystem:
             self.guardian = accounts.at(guardian, force=True)
         else:
             print("RPC Inactive")
+
             deployer_key = decouple.config("DEPLOYER_PRIVATE_KEY")
             keeper_key = decouple.config("KEEPER_PRIVATE_KEY")
             guardian_key = decouple.config("GUARDIAN_PRIVATE_KEY")
@@ -260,8 +266,10 @@ class BadgerSystem:
         multisigParams = badger_config["devMultisigParams"]
         multisigParams.owners = [deployer.address]
 
-        print("Deploy Dev Multisig")
         self.devMultisig = connect_gnosis_safe(badger_config.multisig.address)
+    
+    def connect_treasury_multisig(self):
+        self.treasuryMultisig = connect_gnosis_safe(badger_config.treasury_multisig.address)
 
     def connect_uniswap(self):
         self.uniswap = UniswapSystem()
@@ -304,9 +312,12 @@ class BadgerSystem:
     def deploy_sett_strategy_logic_for(self, name):
         deployer = self.deployer
         artifact = strategy_name_to_artifact(name)
-        self.logic[name] = artifact.deploy({"from": deployer})
+        self.logic[name] = artifact.deploy({"from": deployer, "gas_price": self.gas_strategy})
 
         # TODO: Initialize to remove that function
+
+    def set_gas_strategy(self, gas_strategy):
+        self.gas_strategy = gas_strategy
 
     def deploy_rewards_escrow(self):
         deployer = self.deployer
@@ -458,7 +469,7 @@ class BadgerSystem:
                 namePrefix,
                 symbolPrefix,
             ),
-            deployer,
+            deployer
         )
         self.sett_system.vaults[id] = sett
         self.track_contract_upgradeable(id + ".sett", sett)
@@ -505,7 +516,7 @@ class BadgerSystem:
         self.track_contract_upgradeable(id + ".geyser", geyser)
         return geyser
 
-    def deploy_set_staking_rewards_signal_only(self, id, distToken, approvedStaker):
+    def deploy_set_staking_rewards_signal_only(self, id, admin, distToken):
         deployer = self.deployer
 
         rewards = deploy_proxy(
@@ -513,8 +524,8 @@ class BadgerSystem:
             StakingRewardsSignalOnly.abi,
             self.logic.StakingRewardsSignalOnly.address,
             self.devProxyAdmin.address,
-            self.logic.StakingRewards.initialize.encode_input(
-                deployer, distToken, approvedStaker
+            self.logic.StakingRewardsSignalOnly.initialize.encode_input(
+                admin, distToken
             ),
             deployer,
         )

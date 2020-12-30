@@ -1,11 +1,11 @@
 from brownie import *
+from config.badger_config import badger_config
 from scripts.systems.badger_system import connect_badger
 from tabulate import tabulate
-from config.badger_config import badger_config
 
 
 def main():
-    badger = connect_badger(badger_config.prod_file)
+    badger = connect_badger(badger_config.prod_json)
 
     table = []
 

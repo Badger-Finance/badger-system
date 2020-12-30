@@ -38,13 +38,12 @@ contract StakingRewardsSignalOnly is Initializable, AccessControlUpgradeable, Pa
 
     address public approvedStaker;
 
-    function initialize(address _admin, address _rewardsToken, address _approvedStaker) public initializer whenNotPaused {
+    function initialize(address _admin, address _rewardsToken) public initializer whenNotPaused {
         __AccessControl_init();
         __Pausable_init_unchained();
         __ReentrancyGuard_init_unchained();
 
         _setupRole(DEFAULT_ADMIN_ROLE, _admin);
-        approvedStaker = _approvedStaker;
 
         rewardsToken = IERC20Upgradeable(_rewardsToken);
 
@@ -152,6 +151,12 @@ contract StakingRewardsSignalOnly is Initializable, AccessControlUpgradeable, Pa
         require(block.timestamp > periodFinish, "Previous rewards period must be complete before changing the duration for the new period");
         rewardsDuration = _rewardsDuration;
         emit RewardsDurationUpdated(rewardsDuration);
+    }
+
+    function initializeApprovedStaker(address _approvedStaker) external {
+        _onlyAdmin();
+        require(approvedStaker == address(0), "Staker already set");
+        approvedStaker = _approvedStaker;
     }
 
     function pause() external {

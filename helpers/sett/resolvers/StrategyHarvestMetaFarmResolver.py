@@ -6,8 +6,8 @@ from helpers.sett.resolvers.StrategyCoreResolver import StrategyCoreResolver
 
 
 class StrategyHarvestMetaFarmResolver(StrategyCoreResolver):
-    def confirm_harvest(self, before, after):
-        super().confirm_harvest(before, after)
+    def confirm_harvest(self, before, after, tx):
+        super().confirm_harvest(before, after, tx)
         # Increase or constant in strategy want balance
         assert (after.balances("want", "strategy") >=
             before.balances("want", "strategy"))
