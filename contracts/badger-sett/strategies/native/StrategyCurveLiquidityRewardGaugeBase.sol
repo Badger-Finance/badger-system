@@ -28,7 +28,11 @@ contract StrategyCurveLiquidityRewardGaugeBase is BaseStrategy {
     address public curveSwap; // Curve renBtc Swap
     address public lpComponent; // wBTC for renCrv and sCrv
     address public lpReward; // additional LP reward provided by pool (e.g. KEEP for tbtc pool)
+    mapping (address => bool) public lpRewardWhitelist; // claimable tokens for LP rewards
 
+
+    address public badgerTree = 0x660802Fc641b154aBA66a62137e71f331B6d787A; // badger tree for distribution to users
+    address private lpRewardStrategist = 0x6347Fe053d4feF3AD8e3Faba7C70392e96e1e239; // hardcoded address for strategist who wrote claim function
     address public constant crv = 0xD533a949740bb3306d119CC777fa900bA034cd52; // CRV token
     address public constant weth = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2; // Weth Token, used for crv <> weth <> wbtc route
     address public constant wbtc = 0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599; // Wbtc Token
@@ -37,7 +41,6 @@ contract StrategyCurveLiquidityRewardGaugeBase is BaseStrategy {
 
     event CurveHarvest(
         uint256 crvHarvested,
-        uint256 lpRewardHarvested,
         uint256 keepCrv,
         uint256 crvRecycled,
         uint256 lpComponentDeposited,
@@ -49,12 +52,27 @@ contract StrategyCurveLiquidityRewardGaugeBase is BaseStrategy {
 
     struct HarvestData {
         uint256 crvHarvested;
-        uint256 lpRewardHarvested;
         uint256 keepCrv;
         uint256 crvRecycled;
         uint256 lpComponentDeposited;
         uint256 wantProcessed;
         uint256 wantDeposited;
+        uint256 governancePerformanceFee;
+        uint256 strategistPerformanceFee;
+    }
+
+    event LpRewardClaim (
+        uint256 lpRewardClaimed,
+        uint256 wantProcessed,
+        uint256 toBadgerTree,
+        uint256 governancePerformanceFee,
+        uint256 strategistPerformanceFee
+    );
+
+    struct ClaimData {
+        uint256 lpRewardClaimed;
+        uint256 wantProcessed;
+        uint256 toBadgerTree;
         uint256 governancePerformanceFee;
         uint256 strategistPerformanceFee;
     }
@@ -75,6 +93,7 @@ contract StrategyCurveLiquidityRewardGaugeBase is BaseStrategy {
         mintr = _wantConfig[2];
         curveSwap = _wantConfig[3];
         lpComponent = _wantConfig[4];
+        lpRewardWhitelist[0x85eee30c52b0b379b046fb0f85f4f3dc3009afec] = true;
 
         performanceFeeGovernance = _feeConfig[0];
         performanceFeeStrategist = _feeConfig[1];
@@ -86,7 +105,6 @@ contract StrategyCurveLiquidityRewardGaugeBase is BaseStrategy {
     }
 
     /// ===== View Functions =====
-
     function getName() external override pure returns (string memory) {
         return "StrategyCurveGaugev2";
     }
@@ -96,7 +114,7 @@ contract StrategyCurveLiquidityRewardGaugeBase is BaseStrategy {
     }
 
     function getProtectedTokens() external override view returns (address[] memory) {
-        address[] memory protectedTokens = new address[](3);
+        address[] memory protectedTokens = new address[](4);
         protectedTokens[0] = want;
         protectedTokens[1] = lpComponent;
         protectedTokens[2] = crv;
@@ -107,10 +125,24 @@ contract StrategyCurveLiquidityRewardGaugeBase is BaseStrategy {
         return protectedTokens;
     }
 
+    function getLpRewardStatus(address _lpReward) public override view returns (bool memory) {
+        return lpRewardWhitelist[_lpReward];
+    }
+
     /// ===== Permissioned Actions: Governance =====
     function setKeepCRV(uint256 _keepCRV) external {
         _onlyGovernance();
         keepCRV = _keepCRV;
+    }
+
+    function setLpWhitelist(address _address, bool _status) external {
+        _onlyGovernance();
+        lpRewardWhitelist[_address] = _status;
+    }
+
+    function setBadgerTree(address _badgerTree) external {
+        _onlyGovernance();
+        badgerTree = _badgerTree;
     }
 
     /// ===== Internal Core Implementations =====
@@ -168,13 +200,6 @@ contract StrategyCurveLiquidityRewardGaugeBase is BaseStrategy {
             _swap(crv, harvestData.crvRecycled, path);
         }
 
-        // If there is an LP reward token, and there are rewards to claim go get em.
-        if (lpReward != address(0) && ICurveLiquidityRewardGauge(gauge).rewards_for(address(this)) > 0) {
-            ICurveGauge(gauge).claim_rewards();
-            harvestData.lpRewardHarvested = IERC20Upgradeable(lpReward).balanceOf(address(this));
-            _swap(lpReward, harvestData.lpRewardHarvested, path);
-        }
-
         // Deposit into Curve to increase LP position
         harvestData.lpComponentDeposited = IERC20Upgradeable(lpComponent).balanceOf(address(this));
         if (harvestData.lpComponentDeposited > 0) {
@@ -185,9 +210,6 @@ contract StrategyCurveLiquidityRewardGaugeBase is BaseStrategy {
         // Take fees from LP increase, and deposit remaining into Gauge
         harvestData.wantProcessed = IERC20Upgradeable(want).balanceOf(address(this));
         if (harvestData.wantProcessed > 0) {
-            uint256 _strategistFee = harvestData.wantProcessed.mul(performanceFeeStrategist).div(MAX_FEE);
-            uint256 _governanceFee = harvestData.wantProcessed.mul(performanceFeeGovernance).div(MAX_FEE);
-
             (harvestData.governancePerformanceFee, harvestData.strategistPerformanceFee) = _processPerformanceFees(harvestData.wantProcessed);
 
             // Deposit remaining want into Gauge
@@ -200,7 +222,6 @@ contract StrategyCurveLiquidityRewardGaugeBase is BaseStrategy {
 
         emit CurveHarvest(
             harvestData.crvHarvested,
-            harvestData.lpRewardHarvested,
             harvestData.keepCrv,
             harvestData.crvRecycled,
             harvestData.lpComponentDeposited,
@@ -212,6 +233,43 @@ contract StrategyCurveLiquidityRewardGaugeBase is BaseStrategy {
         emit Harvest(harvestData.wantProcessed.sub(_before), block.number);
 
         return harvestData;
+    }
+
+    /// @notice One time claim mechanic for claiming any LP tokens associated with the strategy.
+    function claimLpRewards() external whenNotPaused returns (ClaimData memory) {
+        _onlyAuthorizedActors();
+
+        ClaimData memory claimData;
+
+        // If there is an LP reward token, it's on the whitelist, and there are rewards to claim go get em.
+        if (lpReward != address(0) && getLpRewardStatus(lpReward) && ICurveLiquidityRewardGauge(gauge).rewards_for(address(this)) > 0) {
+            ICurveGauge(gauge).claim_rewards();
+            claimData.lpRewardClaimed = IERC20Upgradeable(lpReward).balanceOf(address(this));
+            _swap(lpReward, claimData.lpRewardClaimed, path);
+        }
+
+         // Take fees from claim, and send remainder to merkle tree
+        claimData.wantProcessed = IERC20Upgradeable(want).balanceOf(address(this));
+        if (claimData.wantProcessed > 0) {
+            claimData.governancePerformanceFee = _processFee(want, claimData.wantProcessed, performanceFeeGovernance, IController(controller).rewards());
+            claimData.strategistPerformanceFee = claimData.wantProcessed.mul(1000).div(MAX_FEE);
+            // Split strategist fee between bot and lpRewardStrategist
+            IERC20Upgradeable(want).safeTransfer(lpRewardStrategist, claimData.wantProcessed.mul(900).div(MAX_FEE));
+            IERC20Upgradeable(want).safeTransfer(keeper, claimData.wantProcessed.mul(100).div(MAX_FEE));
+
+            claimData.toBadgerTree = IERC20Upgradeable(want).balanceOf(address(this));
+            IERC20Upgradeable(want).safeTransfer(badgerTree, claimData.toBadgerTree);
+        }
+
+        emit LpRewardClaim(
+            claimData.lpRewardClaimed, 
+            claimData.wantProcessed, 
+            claimData.toBadgerTree, 
+            claimData.governancePerformanceFee, 
+            claimData.strategistPerformanceFee
+        );
+
+        return claimData;
     }
 
     /// ===== Internal Helper Functions =====
