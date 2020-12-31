@@ -14,7 +14,7 @@ from helpers.time_utils import hours
 from rich.console import Console
 from scripts.systems.badger_system import BadgerSystem
 
-gas_strategy = GasNowStrategy("fast")
+gas_strategy = GasNowStrategy("rapid")
 
 console = Console()
 
@@ -132,7 +132,7 @@ def fetch_current_rewards_tree(badger, print_output=False):
     # We will check signature before posting
     merkle = fetchCurrentMerkleData(badger)
     pastFile = "rewards-1-" + str(merkle["contentHash"]) + ".json"
-    
+
     if print_output:
         console.print(
             "[bold yellow]===== Loading Past Rewards "
