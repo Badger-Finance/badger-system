@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 from brownie import accounts
 from rich.console import Console
+import decouple
 
 from config.badger_config import digg_config, dao_config
 from scripts.systems.digg_system import DiggSystem, print_to_file, connect_digg
@@ -13,7 +14,8 @@ console = Console()
 
 def test_deploy(test=False, deploy=True):
     # These should already be deployed
-    deployer = accounts.at(dao_config.initialOwner, force=True)
+    deployer = accounts.at(decouple.config("TEST_ACCOUNT"), force=True)
+    # deployer = accounts.at(dao_config.initialOwner, force=True)
     devProxyAdmin = "0x20dce41acca85e8222d6861aa6d23b6c941777bf"
     daoProxyAdmin = "0x11a9d034b1bbfbbdcac9cb3b86ca7d5df05140f2"
     console.log(
@@ -60,7 +62,7 @@ def post_deploy_config(digg: DiggSystem):
     )
 
 
-def deploy_flow(test=False, outputToFile=True):
+def digg_deploy_flow(test=False, outputToFile=True):
     digg = test_deploy(test=test)
     console.log("Test: Digg System Deployed")
     if outputToFile:
@@ -74,4 +76,4 @@ def deploy_flow(test=False, outputToFile=True):
 
 
 def main():
-    return deploy_flow(test=True, outputToFile=False)
+    return digg_deploy_flow(test=True, outputToFile=True)

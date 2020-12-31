@@ -8,7 +8,7 @@ from helpers.constants import *
 from helpers.time_utils import days
 from helpers.token_utils import distribute_from_whales, distribute_meme_nfts, distribute_test_ether
 from rich.console import Console
-
+from scripts.deploy.deploy_digg import digg_deploy_flow
 from scripts.systems.badger_system import connect_badger
 
 console = Console()
@@ -28,6 +28,9 @@ def main():
 
     distribute_test_ether(user, Wei("10 ether"))
     distribute_from_whales(user)
+
+    digg = digg_deploy_flow(test=True, outputToFile=True)
+
 
     console.print("[green]=== ✅ Test ENV Setup Complete ✅ ===[/green]")
     # Keep ganache open until closed

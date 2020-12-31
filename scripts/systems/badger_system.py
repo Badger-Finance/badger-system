@@ -128,9 +128,9 @@ def connect_badger(
         badger_deploy["keeper"],
         badger_deploy["guardian"],
         deploy=False,
-        load_deployer=False,
-        load_keeper=False,
-        load_guardian=False,
+        load_deployer=load_deployer,
+        load_keeper=load_keeper,
+        load_guardian=load_guardian,
     )
 
     badger.globalStartBlock = badger_deploy["globalStartBlock"]
