@@ -66,7 +66,7 @@ contract UFragments is ERC20Detailed, Ownable {
 
     uint256 private constant DECIMALS = 9;
     uint256 private constant MAX_UINT256 = ~uint256(0);
-    uint256 private constant INITIAL_FRAGMENTS_SUPPLY = 6250 * 10**DECIMALS;
+    uint256 private constant INITIAL_FRAGMENTS_SUPPLY = 4000 * 10**DECIMALS;
 
     // TOTAL_GONS is a multiple of INITIAL_FRAGMENTS_SUPPLY so that _gonsPerFragment is an integer.
     // Use the highest value that fits in a uint256 for max granularity.
@@ -167,6 +167,17 @@ contract UFragments is ERC20Detailed, Ownable {
     }
 
     /**
+     * @return The total number of underlying shares.
+     */
+    function totalShares()
+        public
+        view
+        returns (uint256)
+    {
+        return _totalSupply.div(_gonsPerFragment);
+    }
+
+    /**
      * @param who The address to query.
      * @return The balance of the specified address.
      */
@@ -176,6 +187,30 @@ contract UFragments is ERC20Detailed, Ownable {
         returns (uint256)
     {
         return _gonBalances[who].div(_gonsPerFragment);
+    }
+
+    /**
+     * @param who The address to query.
+     * @return The underlying shares of the specified address.
+     */
+    function sharesOf(address who) public view returns (uint256) {
+        return _gonBalances[who];
+    }
+
+    /**
+     * @param fragments Fragment value to convert.
+     * @return The underlying share value of the specified fragment amount.
+     */
+    function fragmentsToShares(uint256 fragments) public view returns (uint256) {
+        fragments.mul(_gonsPerFragment);
+    }
+
+    /**
+     * @param shares Share value to convert.
+     * @return The current fragment value of the specified underlying share amount.
+     */
+    function sharesToFragments(uint256 shares) public view returns (uint256) {
+        shares.div(_gonsPerFragment);
     }
 
     /**
