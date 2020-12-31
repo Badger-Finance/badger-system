@@ -19,7 +19,7 @@ console = Console()
 def setup():
     badger = connect_badger(badger_config.prod_json)
     deployer = accounts.load("badger_deployer")
-    # distribute_from_whales(badger, deployer)
+    # distribute_from_whales(deployer)
 
     # Deploy Honeypot
     honeypotLogic = HoneypotMeme.deploy({"from": deployer})

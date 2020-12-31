@@ -19,7 +19,7 @@ class SettMiniDeployBase:
 
         if not strategist:
             strategist = deployer
-        if not governance:  
+        if not governance:
             governance = deployer
         if not keeper:
             keeper = deployer
@@ -48,7 +48,7 @@ class SettMiniDeployBase:
         self.want = want
 
         distribute_test_ether(self.deployer, Wei("20 ether"))
-        distribute_from_whales(self.badger, self.deployer)
+        distribute_from_whales(self.deployer)
 
         self.controller = self.badger.add_controller(self.key)
         self.vault = self.badger.deploy_sett(

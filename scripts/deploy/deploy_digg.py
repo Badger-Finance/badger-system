@@ -5,6 +5,8 @@ from rich.console import Console
 from config.badger_config import digg_config, dao_config
 from scripts.systems.digg_system import DiggSystem, print_to_file, connect_digg
 from scripts.systems.digg_minimal import deploy_digg_minimal
+from helpers.token_utils import distribute_from_whale
+from helpers.registry import whale_registry
 
 console = Console()
 
@@ -23,6 +25,12 @@ def test_deploy(test=False, deploy=True):
         digg = deploy_digg_minimal(deployer, devProxyAdmin, daoProxyAdmin)
         digg.deploy_dao_digg_timelock()
         digg.deploy_digg_team_vesting()
+
+        if test:
+            # need some sweet liquidity for testing
+            distribute_from_whale(whale_registry.wbtc, digg.owner)
+        # deploy trading pairs (these deploys are always idempotent)
+        digg.deploy_uniswap_pairs(test=test)  # adds liqudity in test mode
     else:
         digg = connect_digg(digg_config.prod_json)
 

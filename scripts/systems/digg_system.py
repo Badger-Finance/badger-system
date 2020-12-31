@@ -1,11 +1,12 @@
 import json
 import decouple
+from brownie import *
+from dotmap import DotMap
 
 from scripts.systems.gnosis_safe_system import connect_gnosis_safe
+from scripts.systems.uniswap_system import UniswapSystem
 from helpers.proxy_utils import deploy_proxy
-from brownie import *
 from helpers.registry import registry
-from dotmap import DotMap
 from config.badger_config import (
     badger_config,
     digg_config,
@@ -71,6 +72,13 @@ def connect_digg(digg_deploy_file):
     for args in connectable:
         digg.connect(*args)
 
+    # TODO: read these from config, hard configured for now. (Not set on init because token is lazily populated)
+    uniswap_pairs = [
+        ("digg_wbtc", digg.token.address, registry.tokens.wbtc)
+    ]
+    for args in uniswap_pairs:
+        digg.connect_uniswap_pair(*args)
+
     return digg
 
 
@@ -87,6 +95,11 @@ class DiggSystem:
         # Token is set when digg token (UFragments) is deployed.
         self.token = None
 
+        self.logic = DotMap()
+        # Store uniswap trading pairs addresses.
+        # Expected key syntax is `tokenA_tokenB`.
+        self.uniswap_trading_pair_addrs = DotMap()
+
         if rpc.is_active():
             print("RPC Active")
             self.owner = accounts.at(owner, force=True)
@@ -97,8 +110,7 @@ class DiggSystem:
 
         self.connect_proxy_admins(devProxyAdmin, daoProxyAdmin)
         self.connect_dao()
-        self.logic = DotMap()
-
+        self.connect_uniswap_system()
         self.connect_multisig()
 
     def track_contract_static(self, contract):
@@ -140,6 +152,21 @@ class DiggSystem:
 
         print("Deploy Dev Multisig")
         self.devMultisig = connect_gnosis_safe(badger_config.multisig.address)
+
+    def connect_uniswap_system(self):
+        self.uniswap_system = UniswapSystem()
+
+    def connect_uniswap_pair(self, pair_name, tokenA_addr, tokenB_addr):
+        self.uniswap_trading_pair_addrs[pair_name] = self.uniswap_system.getPair(tokenA_addr, tokenB_addr)
+
+    def connect(self, attr, BrownieArtifact, address, upgradeable=True):
+        contract = BrownieArtifact.at(address)
+        setattr(self, attr, contract)
+
+        if upgradeable:
+            self.track_contract_upgradeable(attr, contract)
+        else:
+            self.track_contract_static(contract)
 
     # ===== Deployers =====
 
@@ -263,6 +290,26 @@ class DiggSystem:
         )
         self.track_contract_upgradeable("teamVesting", self.diggTeamVesting)
 
+    def deploy_uniswap_pairs(self, test=False):
+        # TODO: read these from config, hard configured for now. (Not set on init because token is lazily populated)
+        pairs = [
+            ("digg_wbtc", self.token.address, registry.tokens.wbtc)
+        ]
+        for (pair_name, tokenA_addr, tokenB_addr) in pairs:
+            self._deploy_uniswap_pair_idempotent(pair_name, tokenA_addr, tokenB_addr, test=test)
+
+    def _deploy_uniswap_pair_idempotent(self, pair_name, tokenA_addr, tokenB_addr, test=False):
+        deployer = self.owner
+
+        # Deploy digg/wBTC pair if not already deployed.
+        if not self.uniswap_system.hasPair(tokenA_addr, tokenB_addr):
+            self.uniswap_system.createPair(tokenA_addr, tokenB_addr, deployer)
+        self.uniswap_trading_pair_addrs[pair_name] = self.uniswap_system.getPair(tokenA_addr, tokenB_addr)
+
+        # In test mode, add liquidity to uniswap.
+        if test:
+            self.uniswap_system.addMaxLiquidity(tokenA_addr, tokenB_addr, deployer)
+
     # ===== Administrative functions =====
 
     # Used on DEPLOY ONLY,  ownership of ownable contracts to a new owner.
@@ -282,14 +329,3 @@ class DiggSystem:
             {'from': deployer},
         )
         self.track_contract_static(self.dynamicOracle)
-
-    # ===== Connectors =====
-
-    def connect(self, attr, BrownieArtifact, address, upgradeable=True):
-        contract = BrownieArtifact.at(address)
-        setattr(self, attr, contract)
-
-        if upgradeable:
-            self.track_contract_upgradeable(attr, contract)
-        else:
-            self.track_contract_static(contract)

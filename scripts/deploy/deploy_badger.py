@@ -156,7 +156,7 @@ def test_deploy(test=False, uniswap=True):
             badger_total_supply,
         )
         assert badger.token.balanceOf(deployer) == badger_total_supply
-        distribute_from_whales(badger, deployer)
+        distribute_from_whales(deployer)
 
         console.log("after whale funding", badger.token.balanceOf(deployer) / 1e18)
 
