@@ -36,4 +36,4 @@ def main():
     assert badger.devMultisig == expectedMultisig
 
     # Multisig wrapper
-    multi = GnosisSafe(badger.devMultisig, test=True)
+    multi = GnosisSafe(badger.devMultisig, testMode=True)
