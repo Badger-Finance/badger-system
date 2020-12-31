@@ -366,8 +366,8 @@ class RewardsSchedule:
                     to_utc_date(self.end),
                     to_days(self.duration),
                     val(self.tokensPerDay(amount)),
-                    self.badger.rewardsEscrow,
-                    encoded,
+                    # self.badger.rewardsEscrow,
+                    # encoded,
                 ]
             )
 
@@ -383,8 +383,8 @@ class RewardsSchedule:
                     "end time",
                     "duration",
                     "rate per day",
-                    "destination",
-                    "encoded call",
+                    # "destination",
+                    # "encoded call",
                 ],
                 tablefmt="rst",
             )
@@ -424,33 +424,28 @@ def main():
 
     rest = RewardsSchedule(badger)
 
-    rest.setStart(to_timestamp(datetime.datetime(2020, 12, 28, 16, 30)))
-    rest.setDuration(hours(67.5))
+    rest.setStart(to_timestamp(datetime.datetime(2020, 12, 31, 12, 00)))
+    rest.setDuration(days(7))
 
     rest.setAmounts(
         {
-            "native.sushiWbtcEth": Wei("34285 ether"),
-            "native.sushiBadgerWbtc": Wei("30000 ether"),
+            "native.renCrv": Wei("83437.5 ether"),
+            "native.sbtcCrv": Wei("83437.5 ether"),
+            "native.tbtcCrv": Wei("83437.5 ether"),
+            "native.badger": Wei("60000 ether"),
+            "native.sushiWbtcEth": Wei("80000 ether"),
+            "native.uniBadgerWbtc": Wei("80000 ether"),
+            "native.sushiBadgerWbtc": Wei("80000 ether"),
+            "harvest.renCrv": Wei("83437.5 ether"),
         }
     )
 
-    # rest.setAmounts(
-    #     {
-    #         "native.sushiWbtcEth": Wei("60000 ether"),
-    #         "native.sushiBadgerWbtc": Wei("83437.5 ether"),
-    #         "native.sbtcCrv": Wei("83437.5 ether"),
-    #         "native.tbtcCrv": Wei("83437.5 ether"),
-    #         "native.uniBadgerWbtc": Wei("110000 ether"),
-    #         "harvest.renCrv": Wei("83437.5 ether"),
-    #     }
-    # )
-
     rest.testTransactions()
 
-    rest.printState("Week 4 - Sushi Emerges")
+    rest.printState("Week 5 - Sushi Continues")
 
     total = rest.total
-    expected = Wei("64285 ether")
+    expected = Wei("633750 ether")
 
     print("overall total ", total)
     print("expected total ", expected)
