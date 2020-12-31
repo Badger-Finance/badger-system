@@ -61,7 +61,11 @@ interface IERC20Upgradeable {
      *
      * Emits a {Transfer} event.
      */
-    function transferFrom(address sender, address recipient, uint256 amount) external returns (bool);
+    function transferFrom(
+        address sender,
+        address recipient,
+        uint256 amount
+    ) external returns (bool);
 
     /**
      * @dev Emitted when `value` tokens are moved from one account (`from`) to
@@ -78,9 +82,7 @@ interface IERC20Upgradeable {
     event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
-
 // Dependency file: deps/@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol
-
 
 // pragma solidity ^0.6.0;
 
@@ -139,7 +141,11 @@ library SafeMathUpgradeable {
      *
      * - Subtraction cannot overflow.
      */
-    function sub(uint256 a, uint256 b, string memory errorMessage) internal pure returns (uint256) {
+    function sub(
+        uint256 a,
+        uint256 b,
+        string memory errorMessage
+    ) internal pure returns (uint256) {
         require(b <= a, errorMessage);
         uint256 c = a - b;
 
@@ -198,7 +204,11 @@ library SafeMathUpgradeable {
      *
      * - The divisor cannot be zero.
      */
-    function div(uint256 a, uint256 b, string memory errorMessage) internal pure returns (uint256) {
+    function div(
+        uint256 a,
+        uint256 b,
+        string memory errorMessage
+    ) internal pure returns (uint256) {
         require(b > 0, errorMessage);
         uint256 c = a / b;
         // assert(a == b * c + a % b); // There is no case in which this doesn't hold
@@ -234,15 +244,17 @@ library SafeMathUpgradeable {
      *
      * - The divisor cannot be zero.
      */
-    function mod(uint256 a, uint256 b, string memory errorMessage) internal pure returns (uint256) {
+    function mod(
+        uint256 a,
+        uint256 b,
+        string memory errorMessage
+    ) internal pure returns (uint256) {
         require(b != 0, errorMessage);
         return a % b;
     }
 }
 
-
 // Dependency file: deps/@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol
-
 
 // pragma solidity ^0.6.2;
 
@@ -274,7 +286,9 @@ library AddressUpgradeable {
 
         uint256 size;
         // solhint-disable-next-line no-inline-assembly
-        assembly { size := extcodesize(account) }
+        assembly {
+            size := extcodesize(account)
+        }
         return size > 0;
     }
 
@@ -298,7 +312,7 @@ library AddressUpgradeable {
         require(address(this).balance >= amount, "Address: insufficient balance");
 
         // solhint-disable-next-line avoid-low-level-calls, avoid-call-value
-        (bool success, ) = recipient.call{ value: amount }("");
+        (bool success, ) = recipient.call{value: amount}("");
         require(success, "Address: unable to send value, recipient may have reverted");
     }
 
@@ -321,7 +335,7 @@ library AddressUpgradeable {
      * _Available since v3.1._
      */
     function functionCall(address target, bytes memory data) internal returns (bytes memory) {
-      return functionCall(target, data, "Address: low-level call failed");
+        return functionCall(target, data, "Address: low-level call failed");
     }
 
     /**
@@ -330,7 +344,11 @@ library AddressUpgradeable {
      *
      * _Available since v3.1._
      */
-    function functionCall(address target, bytes memory data, string memory errorMessage) internal returns (bytes memory) {
+    function functionCall(
+        address target,
+        bytes memory data,
+        string memory errorMessage
+    ) internal returns (bytes memory) {
         return _functionCallWithValue(target, data, 0, errorMessage);
     }
 
@@ -345,7 +363,11 @@ library AddressUpgradeable {
      *
      * _Available since v3.1._
      */
-    function functionCallWithValue(address target, bytes memory data, uint256 value) internal returns (bytes memory) {
+    function functionCallWithValue(
+        address target,
+        bytes memory data,
+        uint256 value
+    ) internal returns (bytes memory) {
         return functionCallWithValue(target, data, value, "Address: low-level call with value failed");
     }
 
@@ -355,16 +377,26 @@ library AddressUpgradeable {
      *
      * _Available since v3.1._
      */
-    function functionCallWithValue(address target, bytes memory data, uint256 value, string memory errorMessage) internal returns (bytes memory) {
+    function functionCallWithValue(
+        address target,
+        bytes memory data,
+        uint256 value,
+        string memory errorMessage
+    ) internal returns (bytes memory) {
         require(address(this).balance >= value, "Address: insufficient balance for call");
         return _functionCallWithValue(target, data, value, errorMessage);
     }
 
-    function _functionCallWithValue(address target, bytes memory data, uint256 weiValue, string memory errorMessage) private returns (bytes memory) {
+    function _functionCallWithValue(
+        address target,
+        bytes memory data,
+        uint256 weiValue,
+        string memory errorMessage
+    ) private returns (bytes memory) {
         require(isContract(target), "Address: call to non-contract");
 
         // solhint-disable-next-line avoid-low-level-calls
-        (bool success, bytes memory returndata) = target.call{ value: weiValue }(data);
+        (bool success, bytes memory returndata) = target.call{value: weiValue}(data);
         if (success) {
             return returndata;
         } else {
@@ -384,9 +416,7 @@ library AddressUpgradeable {
     }
 }
 
-
 // Dependency file: deps/@openzeppelin/contracts-upgradeable/token/ERC20/SafeERC20Upgradeable.sol
-
 
 // pragma solidity ^0.6.0;
 
@@ -407,11 +437,20 @@ library SafeERC20Upgradeable {
     using SafeMathUpgradeable for uint256;
     using AddressUpgradeable for address;
 
-    function safeTransfer(IERC20Upgradeable token, address to, uint256 value) internal {
+    function safeTransfer(
+        IERC20Upgradeable token,
+        address to,
+        uint256 value
+    ) internal {
         _callOptionalReturn(token, abi.encodeWithSelector(token.transfer.selector, to, value));
     }
 
-    function safeTransferFrom(IERC20Upgradeable token, address from, address to, uint256 value) internal {
+    function safeTransferFrom(
+        IERC20Upgradeable token,
+        address from,
+        address to,
+        uint256 value
+    ) internal {
         _callOptionalReturn(token, abi.encodeWithSelector(token.transferFrom.selector, from, to, value));
     }
 
@@ -422,23 +461,33 @@ library SafeERC20Upgradeable {
      * Whenever possible, use {safeIncreaseAllowance} and
      * {safeDecreaseAllowance} instead.
      */
-    function safeApprove(IERC20Upgradeable token, address spender, uint256 value) internal {
+    function safeApprove(
+        IERC20Upgradeable token,
+        address spender,
+        uint256 value
+    ) internal {
         // safeApprove should only be called when setting an initial allowance,
         // or when resetting it to zero. To increase and decrease it, use
         // 'safeIncreaseAllowance' and 'safeDecreaseAllowance'
         // solhint-disable-next-line max-line-length
-        require((value == 0) || (token.allowance(address(this), spender) == 0),
-            "SafeERC20: approve from non-zero to non-zero allowance"
-        );
+        require((value == 0) || (token.allowance(address(this), spender) == 0), "SafeERC20: approve from non-zero to non-zero allowance");
         _callOptionalReturn(token, abi.encodeWithSelector(token.approve.selector, spender, value));
     }
 
-    function safeIncreaseAllowance(IERC20Upgradeable token, address spender, uint256 value) internal {
+    function safeIncreaseAllowance(
+        IERC20Upgradeable token,
+        address spender,
+        uint256 value
+    ) internal {
         uint256 newAllowance = token.allowance(address(this), spender).add(value);
         _callOptionalReturn(token, abi.encodeWithSelector(token.approve.selector, spender, newAllowance));
     }
 
-    function safeDecreaseAllowance(IERC20Upgradeable token, address spender, uint256 value) internal {
+    function safeDecreaseAllowance(
+        IERC20Upgradeable token,
+        address spender,
+        uint256 value
+    ) internal {
         uint256 newAllowance = token.allowance(address(this), spender).sub(value, "SafeERC20: decreased allowance below zero");
         _callOptionalReturn(token, abi.encodeWithSelector(token.approve.selector, spender, newAllowance));
     }
@@ -455,34 +504,31 @@ library SafeERC20Upgradeable {
         // the target address contains contract code and also asserts for success in the low-level call.
 
         bytes memory returndata = address(token).functionCall(data, "SafeERC20: low-level call failed");
-        if (returndata.length > 0) { // Return data is optional
+        if (returndata.length > 0) {
+            // Return data is optional
             // solhint-disable-next-line max-line-length
             require(abi.decode(returndata, (bool)), "SafeERC20: ERC20 operation did not succeed");
         }
     }
 }
 
-
 // Dependency file: deps/@openzeppelin/contracts-upgradeable/proxy/Initializable.sol
 
-
 // pragma solidity >=0.4.24 <0.7.0;
-
 
 /**
  * @dev This is a base contract to aid in writing upgradeable contracts, or any kind of contract that will be deployed
  * behind a proxy. Since a proxied contract can't have a constructor, it's common to move constructor logic to an
  * external initializer function, usually called `initialize`. It then becomes necessary to protect this initializer
  * function so it can only be called once. The {initializer} modifier provided by this contract will have this effect.
- * 
+ *
  * TIP: To avoid leaving the proxy in an uninitialized state, the initializer function should be called as early as
  * possible by providing the encoded function call as the `_data` argument to {UpgradeableProxy-constructor}.
- * 
+ *
  * CAUTION: When used with inheritance, manual care must be taken to not invoke a parent initializer twice, or to ensure
  * that all initializers are idempotent. This is not verified automatically as constructors are by Solidity.
  */
 abstract contract Initializable {
-
     /**
      * @dev Indicates that the contract has been initialized.
      */
@@ -522,14 +568,14 @@ abstract contract Initializable {
         address self = address(this);
         uint256 cs;
         // solhint-disable-next-line no-inline-assembly
-        assembly { cs := extcodesize(self) }
+        assembly {
+            cs := extcodesize(self)
+        }
         return cs == 0;
     }
 }
 
-
 // Dependency file: deps/@openzeppelin/contracts-upgradeable/GSN/ContextUpgradeable.sol
-
 
 // pragma solidity ^0.6.0;
 // import "deps/@openzeppelin/contracts-upgradeable/proxy/Initializable.sol";
@@ -549,22 +595,21 @@ abstract contract ContextUpgradeable is Initializable {
         __Context_init_unchained();
     }
 
-    function __Context_init_unchained() internal initializer {
-    }
-    function _msgSender() internal view virtual returns (address payable) {
+    function __Context_init_unchained() internal initializer {}
+
+    function _msgSender() internal virtual view returns (address payable) {
         return msg.sender;
     }
 
-    function _msgData() internal view virtual returns (bytes memory) {
+    function _msgData() internal virtual view returns (bytes memory) {
         this; // silence state mutability warning without generating bytecode - see https://github.com/ethereum/solidity/issues/2691
         return msg.data;
     }
+
     uint256[50] private __gap;
 }
 
-
 // Dependency file: deps/@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol
-
 
 // pragma solidity ^0.6.0;
 
@@ -602,9 +647,9 @@ contract ERC20Upgradeable is Initializable, ContextUpgradeable, IERC20Upgradeabl
     using SafeMathUpgradeable for uint256;
     using AddressUpgradeable for address;
 
-    mapping (address => uint256) private _balances;
+    mapping(address => uint256) private _balances;
 
-    mapping (address => mapping (address => uint256)) private _allowances;
+    mapping(address => mapping(address => uint256)) private _allowances;
 
     uint256 private _totalSupply;
 
@@ -667,14 +712,14 @@ contract ERC20Upgradeable is Initializable, ContextUpgradeable, IERC20Upgradeabl
     /**
      * @dev See {IERC20-totalSupply}.
      */
-    function totalSupply() public view override returns (uint256) {
+    function totalSupply() public override view returns (uint256) {
         return _totalSupply;
     }
 
     /**
      * @dev See {IERC20-balanceOf}.
      */
-    function balanceOf(address account) public view override returns (uint256) {
+    function balanceOf(address account) public override view returns (uint256) {
         return _balances[account];
     }
 
@@ -694,7 +739,7 @@ contract ERC20Upgradeable is Initializable, ContextUpgradeable, IERC20Upgradeabl
     /**
      * @dev See {IERC20-allowance}.
      */
-    function allowance(address owner, address spender) public view virtual override returns (uint256) {
+    function allowance(address owner, address spender) public virtual override view returns (uint256) {
         return _allowances[owner][spender];
     }
 
@@ -722,7 +767,11 @@ contract ERC20Upgradeable is Initializable, ContextUpgradeable, IERC20Upgradeabl
      * - the caller must have allowance for ``sender``'s tokens of at least
      * `amount`.
      */
-    function transferFrom(address sender, address recipient, uint256 amount) public virtual override returns (bool) {
+    function transferFrom(
+        address sender,
+        address recipient,
+        uint256 amount
+    ) public virtual override returns (bool) {
         _transfer(sender, recipient, amount);
         _approve(sender, _msgSender(), _allowances[sender][_msgSender()].sub(amount, "ERC20: transfer amount exceeds allowance"));
         return true;
@@ -778,7 +827,11 @@ contract ERC20Upgradeable is Initializable, ContextUpgradeable, IERC20Upgradeabl
      * - `recipient` cannot be the zero address.
      * - `sender` must have a balance of at least `amount`.
      */
-    function _transfer(address sender, address recipient, uint256 amount) internal virtual {
+    function _transfer(
+        address sender,
+        address recipient,
+        uint256 amount
+    ) internal virtual {
         require(sender != address(0), "ERC20: transfer from the zero address");
         require(recipient != address(0), "ERC20: transfer to the zero address");
 
@@ -842,7 +895,11 @@ contract ERC20Upgradeable is Initializable, ContextUpgradeable, IERC20Upgradeabl
      * - `owner` cannot be the zero address.
      * - `spender` cannot be the zero address.
      */
-    function _approve(address owner, address spender, uint256 amount) internal virtual {
+    function _approve(
+        address owner,
+        address spender,
+        uint256 amount
+    ) internal virtual {
         require(owner != address(0), "ERC20: approve from the zero address");
         require(spender != address(0), "ERC20: approve to the zero address");
 
@@ -875,13 +932,16 @@ contract ERC20Upgradeable is Initializable, ContextUpgradeable, IERC20Upgradeabl
      *
      * To learn more about hooks, head to xref:ROOT:extending-contracts.adoc#using-hooks[Using Hooks].
      */
-    function _beforeTokenTransfer(address from, address to, uint256 amount) internal virtual { }
+    function _beforeTokenTransfer(
+        address from,
+        address to,
+        uint256 amount
+    ) internal virtual {}
+
     uint256[44] private __gap;
 }
 
-
 // Dependency file: deps/@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol
-
 
 // pragma solidity ^0.6.0;
 
@@ -954,9 +1014,108 @@ contract OwnableUpgradeable is Initializable, ContextUpgradeable {
         emit OwnershipTransferred(_owner, newOwner);
         _owner = newOwner;
     }
+
     uint256[49] private __gap;
 }
 
+// Dependency file: deps/@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol
+
+// pragma solidity ^0.6.0;
+
+// import "deps/@openzeppelin/contracts-upgradeable/GSN/ContextUpgradeable.sol";
+// import "deps/@openzeppelin/contracts-upgradeable/proxy/Initializable.sol";
+
+/**
+ * @dev Contract module which allows children to implement an emergency stop
+ * mechanism that can be triggered by an authorized account.
+ *
+ * This module is used through inheritance. It will make available the
+ * modifiers `whenNotPaused` and `whenPaused`, which can be applied to
+ * the functions of your contract. Note that they will not be pausable by
+ * simply including this module, only once the modifiers are put in place.
+ */
+contract PausableUpgradeable is Initializable, ContextUpgradeable {
+    /**
+     * @dev Emitted when the pause is triggered by `account`.
+     */
+    event Paused(address account);
+
+    /**
+     * @dev Emitted when the pause is lifted by `account`.
+     */
+    event Unpaused(address account);
+
+    bool private _paused;
+
+    /**
+     * @dev Initializes the contract in unpaused state.
+     */
+    function __Pausable_init() internal initializer {
+        __Context_init_unchained();
+        __Pausable_init_unchained();
+    }
+
+    function __Pausable_init_unchained() internal initializer {
+        _paused = false;
+    }
+
+    /**
+     * @dev Returns true if the contract is paused, and false otherwise.
+     */
+    function paused() public view returns (bool) {
+        return _paused;
+    }
+
+    /**
+     * @dev Modifier to make a function callable only when the contract is not paused.
+     *
+     * Requirements:
+     *
+     * - The contract must not be paused.
+     */
+    modifier whenNotPaused() {
+        require(!_paused, "Pausable: paused");
+        _;
+    }
+
+    /**
+     * @dev Modifier to make a function callable only when the contract is paused.
+     *
+     * Requirements:
+     *
+     * - The contract must be paused.
+     */
+    modifier whenPaused() {
+        require(_paused, "Pausable: not paused");
+        _;
+    }
+
+    /**
+     * @dev Triggers stopped state.
+     *
+     * Requirements:
+     *
+     * - The contract must not be paused.
+     */
+    function _pause() internal virtual whenNotPaused {
+        _paused = true;
+        emit Paused(_msgSender());
+    }
+
+    /**
+     * @dev Returns to normal state.
+     *
+     * Requirements:
+     *
+     * - The contract must be paused.
+     */
+    function _unpause() internal virtual whenPaused {
+        _paused = false;
+        emit Unpaused(_msgSender());
+    }
+
+    uint256[49] private __gap;
+}
 
 // Dependency file: interfaces/badger/IController.sol
 
@@ -976,9 +1135,7 @@ interface IController {
     function vaults(address) external view returns (address);
 }
 
-
 // Dependency file: interfaces/erc20/IERC20Detailed.sol
-
 
 // pragma solidity ^0.6.0;
 
@@ -992,6 +1149,7 @@ interface IERC20Detailed {
     function totalSupply() external view returns (uint256);
 
     function name() external view returns (string memory);
+
     function symbol() external view returns (string memory);
 
     /**
@@ -1042,7 +1200,11 @@ interface IERC20Detailed {
      *
      * Emits a {Transfer} event.
      */
-    function transferFrom(address sender, address recipient, uint256 amount) external returns (bool);
+    function transferFrom(
+        address sender,
+        address recipient,
+        uint256 amount
+    ) external returns (bool);
 
     /**
      * @dev Emitted when `value` tokens are moved from one account (`from`) to
@@ -1058,7 +1220,6 @@ interface IERC20Detailed {
      */
     event Approval(address indexed owner, address indexed spender, uint256 value);
 }
-
 
 // Dependency file: contracts/badger-sett/SettAccessControl.sol
 
@@ -1084,7 +1245,7 @@ contract SettAccessControl is Initializable {
     }
 
     function _onlyAuthorizedActors() internal view {
-        require(msg.sender == keeper || msg.sender == strategist || msg.sender == governance, "onlyAuthorizedActors");
+        require(msg.sender == keeper || msg.sender == governance, "onlyAuthorizedActors");
     }
 
     // ===== PERMISSIONED ACTIONS =====
@@ -1113,7 +1274,6 @@ contract SettAccessControl is Initializable {
     uint256[50] private __gap;
 }
 
-
 // Dependency file: contracts/badger-sett/SettAccessControlDefended.sol
 
 // pragma solidity ^0.6.11;
@@ -1124,7 +1284,7 @@ contract SettAccessControl is Initializable {
     Add ability to prevent unwanted contract access to Sett permissions
 */
 contract SettAccessControlDefended is SettAccessControl {
-    mapping (address => bool) public approved;
+    mapping(address => bool) public approved;
 
     function approveContractAccess(address account) external {
         _onlyGovernance();
@@ -1139,12 +1299,11 @@ contract SettAccessControlDefended is SettAccessControl {
     function _defend() internal view returns (bool) {
         require(approved[msg.sender] || msg.sender == tx.origin, "Access denied for caller");
     }
+
     uint256[50] private __gap;
 }
 
-
 // Root file: contracts/badger-sett/Sett.sol
-
 
 pragma solidity ^0.6.11;
 
@@ -1154,6 +1313,7 @@ pragma solidity ^0.6.11;
 // import "deps/@openzeppelin/contracts-upgradeable/token/ERC20/SafeERC20Upgradeable.sol";
 // import "deps/@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 // import "deps/@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+// import "deps/@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 
 // import "interfaces/badger/IController.sol";
 // import "interfaces/erc20/IERC20Detailed.sol";
@@ -1161,8 +1321,16 @@ pragma solidity ^0.6.11;
 
 /* 
     Source: https://github.com/iearn-finance/yearn-protocol/blob/develop/contracts/vaults/yVault.sol
+
+    Version 1.1
+    * Strategist no longer has special function calling permissions
+    * Version function added to contract
+    * All write functions are pausable
+    * Keeper or governance can pause
+    * Only governance can unpause
+    * Governance, by maintaining upgradability rights, can remove the keepers' ability to pause
 */
-contract Sett is ERC20Upgradeable, SettAccessControlDefended {
+contract Sett is ERC20Upgradeable, PausableUpgradeable, SettAccessControlDefended {
     using SafeERC20Upgradeable for IERC20Upgradeable;
     using AddressUpgradeable for address;
     using SafeMathUpgradeable for uint256;
@@ -1173,6 +1341,7 @@ contract Sett is ERC20Upgradeable, SettAccessControlDefended {
     uint256 public constant max = 10000;
 
     address public controller;
+    address public guardian;
 
     mapping(address => uint256) public blockLock;
 
@@ -1186,10 +1355,11 @@ contract Sett is ERC20Upgradeable, SettAccessControlDefended {
         address _controller,
         address _governance,
         address _keeper,
+        address _guardian,
         bool _overrideTokenName,
         string memory _namePrefix,
         string memory _symbolPrefix
-    ) public initializer {
+    ) public initializer whenNotPaused {
         IERC20Detailed namedToken = IERC20Detailed(_token);
         string memory tokenName = namedToken.name();
         string memory tokenSymbol = namedToken.symbol();
@@ -1212,10 +1382,14 @@ contract Sett is ERC20Upgradeable, SettAccessControlDefended {
         strategist = address(0);
         keeper = _keeper;
         controller = _controller;
+        guardian = _guardian;
 
         min = 9500;
 
         emit FullPricePerShareUpdated(getPricePerFullShare(), now, block.number);
+
+        // Paused on launch
+        _pause();
     }
 
     /// ===== Modifiers =====
@@ -1224,11 +1398,19 @@ contract Sett is ERC20Upgradeable, SettAccessControlDefended {
         require(msg.sender == controller, "onlyController");
     }
 
+    function _onlyAuthorizedPausers() internal view {
+        require(msg.sender == guardian || msg.sender == governance, "onlyPausers");
+    }
+
     function _blockLocked() internal view {
         require(blockLock[msg.sender] < block.number, "blockLocked");
     }
 
     /// ===== View Functions =====
+
+    function version() public view returns (string memory) {
+        return "1.1";
+    }
 
     function getPricePerFullShare() public view returns (uint256) {
         if (totalSupply() == 0) {
@@ -1254,7 +1436,7 @@ contract Sett is ERC20Upgradeable, SettAccessControlDefended {
 
     /// @notice Deposit assets into the Sett, and return corresponding shares to the user
     /// @notice Only callable by EOA accounts that pass the _defend() check
-    function deposit(uint256 _amount) public {
+    function deposit(uint256 _amount) public whenNotPaused {
         _defend();
         _blockLocked();
 
@@ -1264,7 +1446,7 @@ contract Sett is ERC20Upgradeable, SettAccessControlDefended {
 
     /// @notice Convenience function: Deposit entire balance of asset into the Sett, and return corresponding shares to the user
     /// @notice Only callable by EOA accounts that pass the _defend() check
-    function depositAll() external {
+    function depositAll() external whenNotPaused {
         _defend();
         _blockLocked();
 
@@ -1273,7 +1455,7 @@ contract Sett is ERC20Upgradeable, SettAccessControlDefended {
     }
 
     /// @notice No rebalance implementation for lower fees and faster swaps
-    function withdraw(uint256 _shares) public {
+    function withdraw(uint256 _shares) public whenNotPaused {
         _defend();
         _blockLocked();
 
@@ -1282,7 +1464,7 @@ contract Sett is ERC20Upgradeable, SettAccessControlDefended {
     }
 
     /// @notice Convenience function: Withdraw all shares of the sender
-    function withdrawAll() external {
+    function withdrawAll() external whenNotPaused {
         _defend();
         _blockLocked();
 
@@ -1306,11 +1488,18 @@ contract Sett is ERC20Upgradeable, SettAccessControlDefended {
         controller = _controller;
     }
 
+    /// @notice Change guardian address
+    /// @notice Can only be changed by governance
+    function setGuardian(address _guardian) external {
+        _onlyGovernance();
+        guardian = _guardian;
+    }
+
     /// ===== Permissioned Actions: Controller =====
 
     /// @notice Used to swap any borrowed reserve over the debt limit to liquidate to 'token'
     /// @notice Only controller can trigger harvests
-    function harvest(address reserve, uint256 amount) external {
+    function harvest(address reserve, uint256 amount) external whenNotPaused {
         _onlyController();
         require(reserve != address(token), "token");
         IERC20Upgradeable(reserve).safeTransfer(controller, amount);
@@ -1321,7 +1510,7 @@ contract Sett is ERC20Upgradeable, SettAccessControlDefended {
     /// @notice Transfer the underlying available to be claimed to the controller
     /// @notice The controller will deposit into the Strategy for yield-generating activities
     /// @notice Permissionless operation
-    function earn() public {
+    function earn() public whenNotPaused {
         _onlyAuthorizedActors();
 
         uint256 _bal = available();
@@ -1331,9 +1520,19 @@ contract Sett is ERC20Upgradeable, SettAccessControlDefended {
 
     /// @dev Emit event tracking current full price per share
     /// @dev Provides a pure on-chain way of approximating APY
-    function trackFullPricePerShare() external {
+    function trackFullPricePerShare() external whenNotPaused {
         _onlyAuthorizedActors();
         emit FullPricePerShareUpdated(getPricePerFullShare(), now, block.number);
+    }
+
+    function pause() external {
+        _onlyAuthorizedPausers();
+        _pause();
+    }
+
+    function unpause() external {
+        _onlyGovernance();
+        _unpause();
     }
 
     /// ===== Internal Implementations =====

@@ -5,7 +5,7 @@ from brownie import Wei, web3
 from dotmap import DotMap
 from helpers.constants import AddressZero
 from helpers.registry import registry
-from helpers.time_utils import days, days, hours
+from helpers.time_utils import days
 
 with open("merkle/airdrop.json") as f:
     Airdrop = json.load(f)
@@ -13,6 +13,7 @@ with open("merkle/airdrop.json") as f:
 curve = registry.curve
 pickle = registry.pickle
 harvest = registry.harvest
+sushi = registry.sushi
 
 pools = curve.pools
 
@@ -105,9 +106,32 @@ sett_config = DotMap(
                 harvestVault=registry.harvest.vaults.renCrv,
                 vaultFarm=registry.harvest.farms.fRenCrv,
                 metaFarm=registry.harvest.farms.farm,
+                badgerTree=registry.harvest.badgerTree,
                 performanceFeeStrategist=1000,
                 performanceFeeGovernance=1000,
                 withdrawalFee=75,
+            ),
+        ),
+    ),
+    sushi=DotMap(
+        sushiBadgerWBtc=DotMap(
+            # Unfinished
+            strategyName="StrategySushiBadgerWbtc",
+            params=DotMap(
+                # want=pools.renCrv.token,
+                performanceFeeStrategist=1000,
+                performanceFeeGovernance=1000,
+                withdrawalFee=0,
+            ),
+        ),
+        sushiWethWBtc=DotMap(
+            # Unfinished
+            strategyName="StrategySushiBadgerWbtc",
+            params=DotMap(
+                # want=pools.renCrv.token,
+                performanceFeeStrategist=1000,
+                performanceFeeGovernance=1000,
+                withdrawalFee=50,
             ),
         ),
     ),
@@ -203,47 +227,100 @@ badger_config = DotMap(
     ),
 )
 
-# trial_badger_config = badger_config
-# trial_badger_config.globalStartTime = 1606957257
-# trial_badger_config.tokenLockParams.lockDuration = hours(1.5)  # Unlock to DAO
-# trial_badger_config.teamVestingParams.cliffDuration = hours(
-#     1.5
-# )  # Unlock to founders, cliff
-# trial_badger_config.teamVestingParams.totalDuration = hours(6)
-# trial_badger_config.geyserParams.badgerDistributionStart = 1606951800
 
+# TODO: Currently a copy of badger config params, needs to be set.
+diggStartTime = globalStartTime
 
 """
-    tokenLockParams=DotMap(
-        badgerLockAmount=badger_total_supply * 35 // 100,
-        lockDuration=days(30),
-    ),
-    teamVestingParams=DotMap(
-        startTime=globalStartTime,
-        cliffDuration=days(30),
-        totalDuration=days(365),
-    ),
+Test Config
+- Rebases can be called at anytime
+- Anyone can call the oracle to set the price
+- Assets are distributed among
 """
-
-digg_config = DotMap(
-    initialSupply=6250 * (10 ** 9),
+digg_config_test = DotMap(
+    startTime=diggStartTime,
+    prod_json="deploy-test-digg.json",
+    initialSupply=4000 * (10 ** 9),
     deviationThreshold=50000000000000000,
     rebaseLag=10,
-    minRebaseTimeIntervalSec=86400,
+    minRebaseTimeIntervalSec=0,
+    # TODO: Need to set this value to exact time we want to start rebases.
+    rebaseStartTimeUnixSeconds=1608681600,  # 12/23/2020 @ 12:00 AM (UTC)
     rebaseWindowOffsetSec=7200,
     rebaseWindowLengthSec=1200,
     baseCpi=10 ** 18,
     rebaseDelayAfterStakingStart=30,
     marketOracleParams=DotMap(
-        reportExpirationTimeSec=88200, reportDelaySec=3600, minimumProviders=1,
+        reportExpirationTimeSec=88200,
+        reportDelaySec=3600,
+        # TODO: This should be greater than 1, needs to be set.
+        minimumProviders=1,
     ),
+    # cpi oracle always reports 1
     cpiOracleParams=DotMap(
-        reportExpirationTimeSec=5356800, reportDelaySec=86400, minimumProviders=1,
+        reportExpirationTimeSec=5356800,
+        reportDelaySec=86400,
+        minimumProviders=1,
     ),
     centralizedOracleParams=DotMap(
-        owners=[AddressZero, AddressZero, AddressZero], threshold=1,
+        owners=[AddressZero, AddressZero, AddressZero],
+        threshold=1,
     ),
-    tokenLockParams=DotMap(diggLockAmount=3125 * (10 ** 9), lockDuration=days(30),),
+    tokenLockParams=DotMap(
+        diggLockAmount=3125 * (10 ** 9),
+        lockDuration=days(30),
+    ),
+    # TODO: Currently a copy of badger config params, needs to be set.
+    teamVestingParams=DotMap(
+        startTime=diggStartTime,
+        cliffDuration=days(30),
+        totalDuration=days(365),
+    ),
+    # TODO: Currently a copy of badger config params, needs to be set.
+    founderRewardsAmount=badger_total_supply * 10 // 100,
+)
+
+digg_config = DotMap(
+    startTime=diggStartTime,
+    prod_json="deploy-final-digg.json",
+    initialSupply=4000 * (10 ** 9),
+    deviationThreshold=50000000000000000,
+    rebaseLag=10,
+    minRebaseTimeIntervalSec=86400,
+    # TODO: Need to set this value to exact time we want to start rebases.
+    rebaseStartTimeUnixSeconds=1608681600,  # 12/23/2020 @ 12:00 AM (UTC)
+    rebaseWindowOffsetSec=7200,
+    rebaseWindowLengthSec=1200,
+    baseCpi=10 ** 18,
+    rebaseDelayAfterStakingStart=30,
+    marketOracleParams=DotMap(
+        reportExpirationTimeSec=88200,
+        reportDelaySec=3600,
+        # TODO: This should be greater than 1, needs to be set.
+        minimumProviders=1,
+    ),
+    # cpi oracle always reports 1
+    cpiOracleParams=DotMap(
+        reportExpirationTimeSec=5356800,
+        reportDelaySec=86400,
+        minimumProviders=1,
+    ),
+    centralizedOracleParams=DotMap(
+        owners=[AddressZero, AddressZero, AddressZero],
+        threshold=1,
+    ),
+    tokenLockParams=DotMap(
+        diggLockAmount=3125 * (10 ** 9),
+        lockDuration=days(30),
+    ),
+    # TODO: Currently a copy of badger config params, needs to be set.
+    teamVestingParams=DotMap(
+        startTime=diggStartTime,
+        cliffDuration=days(30),
+        totalDuration=days(365),
+    ),
+    # TODO: Currently a copy of badger config params, needs to be set.
+    founderRewardsAmount=badger_total_supply * 10 // 100,
 )
 
 config = DotMap(badger=badger_config, sett=sett_config, digg=digg_config)

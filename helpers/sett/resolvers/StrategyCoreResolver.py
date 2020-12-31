@@ -1,9 +1,11 @@
-from helpers.utils import approx, val
 from brownie import *
-from helpers.constants import *
-from helpers.multicall import Call, as_wei, func
 from decimal import Decimal
 
+from helpers.utils import approx, val
+from helpers.constants import *
+from helpers.multicall import Call, as_wei, func
+from rich.console import Console
+console = Console()
 
 class StrategyCoreResolver:
     def __init__(self, manager):
@@ -111,6 +113,9 @@ class StrategyCoreResolver:
         - Users balanceOf() want should not change
         """
 
+        console.print("=== Compare Earn ===")
+        self.manager.printCompare(before, after)
+
         assert after.balances("want", "sett") <= before.balances("want", "sett")
         assert after.get("strategy.balanceOfWant") == 0
         assert after.get("strategy.balanceOfPool") > before.get(
@@ -129,6 +134,9 @@ class StrategyCoreResolver:
         - Decrease the available() if it is not zero
         """
         ppfs = before.get("sett.pricePerFullShare")
+
+        console.print("=== Compare Withdraw ===")
+        self.manager.printCompare(before, after)
 
         # Decrease the totalSupply of Sett tokens
         assert after.get("sett.totalSupply") < before.get("sett.totalSupply")
@@ -155,10 +163,9 @@ class StrategyCoreResolver:
                 # If insufficient, we then attempt to withdraw from activities (balance of pool)
                 # Just ensure that we have enough in the pool balance to satisfy the request
                 assert expectedWithdraw - before.balances("want", "strategy") <= before.get("strategy.balanceOfPool")
-
             assert approx(
-                after.get("strategy.balanceOf"),
-                before.get("strategy.balanceOf") - expectedWithdraw,
+                before.get("strategy.balanceOf"),
+                after.get("strategy.balanceOf") + expectedWithdraw,
                 1,
             )
 
@@ -184,55 +191,41 @@ class StrategyCoreResolver:
         """
 
         ppfs = before.get("sett.pricePerFullShare")
+        console.print("=== Compare Deposit ===")
+        self.manager.printCompare(before, after)
 
+        expected_shares = params["amount"] * Wei("1 ether") // ppfs
+        
         # Increase the totalSupply() of Sett tokens
-        assert (
-            after.get("sett.totalSupply")
-            == before.get("sett.totalSupply") + params["amount"]
-        )
-
-        print(after)
+        assert approx(after.get("sett.totalSupply"), before.get("sett.totalSupply") + expected_shares, 1)
 
         # Increase the balanceOf() want in the Sett by depositAmount
-        assert (
-            after.balances("want", "sett")
-            == before.balances("want", "sett") + params["amount"]
-        )
+        assert approx(after.balances("want", "sett"), before.balances("want", "sett") + params["amount"], 1)
 
         # Decrease the balanceOf() want of the user by depositAmount
-        assert (
-            after.balances("want", "user")
-            == before.balances("want", "user") - params["amount"]
-        )
-
-        print(
-            {
-                "ppfs": val(ppfs),
-                "after": val(after.balances("sett", "user")),
-                "expected": params["amount"] / ppfs,
-                "expected2": val(params["amount"] / ppfs),
-            }
-        )
+        assert approx(after.balances("want", "user"), before.balances("want", "user") - params["amount"], 1)
 
         # Increase the balanceOf() Sett tokens for the user based on depositAmount / pricePerFullShare
-        assert approx(after.balances("sett", "user"), params["amount"] * 1e18 / ppfs, 1)
+        assert approx(after.balances("sett", "user"), before.balances("sett", "user") + expected_shares, 1)
 
     # ===== Strategies must implement =====
 
-    def confirm_harvest(self, before, after):
+    def confirm_harvest(self, before, after, tx):
+        console.print("=== Compare Harvest ===")
+        self.manager.printCompare(before, after)
         valueGained = after.get("sett.pricePerFullShare") > before.get("sett.pricePerFullShare")
 
-        # Strategist should earn if fee is enabled and value was generated
-        if before.get("strategy.performanceFeeStrategist") > 0 and valueGained:
-            assert after.balances("want", "strategist") > before.balances(
-                "want", "strategist"
-            )
+        # # Strategist should earn if fee is enabled and value was generated
+        # if before.get("strategy.performanceFeeStrategist") > 0 and valueGained:
+        #     assert after.balances("want", "strategist") > before.balances(
+        #         "want", "strategist"
+        #     )
 
-        # Strategist should earn if fee is enabled and value was generated
-        if before.get("strategy.performanceFeeGovernance") > 0 and valueGained:
-            assert after.balances("want", "governanceRewards") > before.balances(
-                "want", "governanceRewards"
-            )
+        # # Strategist should earn if fee is enabled and value was generated
+        # if before.get("strategy.performanceFeeGovernance") > 0 and valueGained:
+        #     assert after.balances("want", "governanceRewards") > before.balances(
+        #         "want", "governanceRewards"
+        #     )
 
     def confirm_tend(self, before, after):
         """

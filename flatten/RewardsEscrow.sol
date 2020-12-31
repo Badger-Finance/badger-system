@@ -4,21 +4,19 @@
 
 // pragma solidity >=0.4.24 <0.7.0;
 
-
 /**
  * @dev This is a base contract to aid in writing upgradeable contracts, or any kind of contract that will be deployed
  * behind a proxy. Since a proxied contract can't have a constructor, it's common to move constructor logic to an
  * external initializer function, usually called `initialize`. It then becomes necessary to protect this initializer
  * function so it can only be called once. The {initializer} modifier provided by this contract will have this effect.
- * 
+ *
  * TIP: To avoid leaving the proxy in an uninitialized state, the initializer function should be called as early as
  * possible by providing the encoded function call as the `_data` argument to {UpgradeableProxy-constructor}.
- * 
+ *
  * CAUTION: When used with inheritance, manual care must be taken to not invoke a parent initializer twice, or to ensure
  * that all initializers are idempotent. This is not verified automatically as constructors are by Solidity.
  */
 abstract contract Initializable {
-
     /**
      * @dev Indicates that the contract has been initialized.
      */
@@ -58,14 +56,14 @@ abstract contract Initializable {
         address self = address(this);
         uint256 cs;
         // solhint-disable-next-line no-inline-assembly
-        assembly { cs := extcodesize(self) }
+        assembly {
+            cs := extcodesize(self)
+        }
         return cs == 0;
     }
 }
 
-
 // Dependency file: /Users/present/code/super-sett/deps/@openzeppelin/contracts-upgradeable/GSN/ContextUpgradeable.sol
-
 
 // pragma solidity ^0.6.0;
 // import "/Users/present/code/super-sett/deps/@openzeppelin/contracts-upgradeable/proxy/Initializable.sol";
@@ -85,22 +83,21 @@ abstract contract ContextUpgradeable is Initializable {
         __Context_init_unchained();
     }
 
-    function __Context_init_unchained() internal initializer {
-    }
-    function _msgSender() internal view virtual returns (address payable) {
+    function __Context_init_unchained() internal initializer {}
+
+    function _msgSender() internal virtual view returns (address payable) {
         return msg.sender;
     }
 
-    function _msgData() internal view virtual returns (bytes memory) {
+    function _msgData() internal virtual view returns (bytes memory) {
         this; // silence state mutability warning without generating bytecode - see https://github.com/ethereum/solidity/issues/2691
         return msg.data;
     }
+
     uint256[50] private __gap;
 }
 
-
 // Dependency file: /Users/present/code/super-sett/deps/@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol
-
 
 // pragma solidity ^0.6.0;
 
@@ -173,12 +170,11 @@ contract OwnableUpgradeable is Initializable, ContextUpgradeable {
         emit OwnershipTransferred(_owner, newOwner);
         _owner = newOwner;
     }
+
     uint256[49] private __gap;
 }
 
-
 // Dependency file: /Users/present/code/super-sett/deps/@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol
-
 
 // pragma solidity ^0.6.0;
 
@@ -239,7 +235,11 @@ interface IERC20Upgradeable {
      *
      * Emits a {Transfer} event.
      */
-    function transferFrom(address sender, address recipient, uint256 amount) external returns (bool);
+    function transferFrom(
+        address sender,
+        address recipient,
+        uint256 amount
+    ) external returns (bool);
 
     /**
      * @dev Emitted when `value` tokens are moved from one account (`from`) to
@@ -256,9 +256,7 @@ interface IERC20Upgradeable {
     event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
-
 // Dependency file: /Users/present/code/super-sett/deps/@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol
-
 
 // pragma solidity ^0.6.0;
 // import "/Users/present/code/super-sett/deps/@openzeppelin/contracts-upgradeable/proxy/Initializable.sol";
@@ -327,9 +325,7 @@ contract ReentrancyGuardUpgradeable is Initializable {
     uint256[49] private __gap;
 }
 
-
 // Dependency file: /Users/present/code/super-sett/interfaces/badger/IBadgerGeyser.sol
-
 
 // pragma solidity >=0.5.0 <0.8.0;
 
@@ -344,55 +340,7 @@ interface IBadgerGeyser {
     ) external;
 }
 
-
-// Dependency file: /Users/present/code/super-sett/contracts/badger-timelock/Executor.sol
-
-// pragma solidity >=0.5.0 <0.7.0;
-
-/*
-    Gnosis Safe Executor - library wrapping low level calls
-    https://github.com/gnosis/safe-contracts/blob/development/contracts/base/Executor.sol
-
-    Ability to execute delegateCall has been removed for security
-*/
-
-/// @title Executor - A contract that can execute transactions
-/// @author Richard Meissner - <richard@gnosis.pm>
-
-contract Executor {
-    function execute(
-        address to,
-        uint256 value,
-        bytes memory data,
-        uint256 txGas
-    ) internal returns (bool success) {
-        success = executeCall(to, value, data, txGas);
-    }
-
-    function executeCall(
-        address to,
-        uint256 value,
-        bytes memory data,
-        uint256 txGas
-    ) internal returns (bool success) {
-        // solium-disable-next-line security/no-inline-assembly
-        assembly {
-            success := call(
-                txGas,
-                to,
-                value,
-                add(data, 0x20),
-                mload(data),
-                0,
-                0
-            )
-        }
-    }
-}
-
-
 // Root file: contracts/badger-geyser/RewardsEscrow.sol
-
 
 pragma solidity ^0.6.0;
 
@@ -400,7 +348,7 @@ pragma solidity ^0.6.0;
 // import "/Users/present/code/super-sett/deps/@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 // import "/Users/present/code/super-sett/deps/@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 // import "/Users/present/code/super-sett/interfaces/badger/IBadgerGeyser.sol";
-// import "/Users/present/code/super-sett/contracts/badger-timelock/Executor.sol";
+// import"../contracts/badger-timelock/Executor.sol";
 
 /**
  * @title A holder of tokens to be distributed via a Geyser.

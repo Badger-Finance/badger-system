@@ -61,7 +61,11 @@ interface IERC20Upgradeable {
      *
      * Emits a {Transfer} event.
      */
-    function transferFrom(address sender, address recipient, uint256 amount) external returns (bool);
+    function transferFrom(
+        address sender,
+        address recipient,
+        uint256 amount
+    ) external returns (bool);
 
     /**
      * @dev Emitted when `value` tokens are moved from one account (`from`) to
@@ -78,9 +82,7 @@ interface IERC20Upgradeable {
     event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
-
 // Dependency file: /Users/present/code/super-sett/deps/@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol
-
 
 // pragma solidity ^0.6.0;
 
@@ -139,7 +141,11 @@ library SafeMathUpgradeable {
      *
      * - Subtraction cannot overflow.
      */
-    function sub(uint256 a, uint256 b, string memory errorMessage) internal pure returns (uint256) {
+    function sub(
+        uint256 a,
+        uint256 b,
+        string memory errorMessage
+    ) internal pure returns (uint256) {
         require(b <= a, errorMessage);
         uint256 c = a - b;
 
@@ -198,7 +204,11 @@ library SafeMathUpgradeable {
      *
      * - The divisor cannot be zero.
      */
-    function div(uint256 a, uint256 b, string memory errorMessage) internal pure returns (uint256) {
+    function div(
+        uint256 a,
+        uint256 b,
+        string memory errorMessage
+    ) internal pure returns (uint256) {
         require(b > 0, errorMessage);
         uint256 c = a / b;
         // assert(a == b * c + a % b); // There is no case in which this doesn't hold
@@ -234,15 +244,17 @@ library SafeMathUpgradeable {
      *
      * - The divisor cannot be zero.
      */
-    function mod(uint256 a, uint256 b, string memory errorMessage) internal pure returns (uint256) {
+    function mod(
+        uint256 a,
+        uint256 b,
+        string memory errorMessage
+    ) internal pure returns (uint256) {
         require(b != 0, errorMessage);
         return a % b;
     }
 }
 
-
 // Dependency file: /Users/present/code/super-sett/deps/@openzeppelin/contracts-upgradeable/math/MathUpgradeable.sol
-
 
 // pragma solidity ^0.6.0;
 
@@ -270,13 +282,11 @@ library MathUpgradeable {
      */
     function average(uint256 a, uint256 b) internal pure returns (uint256) {
         // (a + b) / 2 can overflow, so we distribute
-        return (a / 2) + (b / 2) + ((a % 2 + b % 2) / 2);
+        return (a / 2) + (b / 2) + (((a % 2) + (b % 2)) / 2);
     }
 }
 
-
 // Dependency file: /Users/present/code/super-sett/deps/@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol
-
 
 // pragma solidity ^0.6.2;
 
@@ -308,7 +318,9 @@ library AddressUpgradeable {
 
         uint256 size;
         // solhint-disable-next-line no-inline-assembly
-        assembly { size := extcodesize(account) }
+        assembly {
+            size := extcodesize(account)
+        }
         return size > 0;
     }
 
@@ -332,7 +344,7 @@ library AddressUpgradeable {
         require(address(this).balance >= amount, "Address: insufficient balance");
 
         // solhint-disable-next-line avoid-low-level-calls, avoid-call-value
-        (bool success, ) = recipient.call{ value: amount }("");
+        (bool success, ) = recipient.call{value: amount}("");
         require(success, "Address: unable to send value, recipient may have reverted");
     }
 
@@ -355,7 +367,7 @@ library AddressUpgradeable {
      * _Available since v3.1._
      */
     function functionCall(address target, bytes memory data) internal returns (bytes memory) {
-      return functionCall(target, data, "Address: low-level call failed");
+        return functionCall(target, data, "Address: low-level call failed");
     }
 
     /**
@@ -364,7 +376,11 @@ library AddressUpgradeable {
      *
      * _Available since v3.1._
      */
-    function functionCall(address target, bytes memory data, string memory errorMessage) internal returns (bytes memory) {
+    function functionCall(
+        address target,
+        bytes memory data,
+        string memory errorMessage
+    ) internal returns (bytes memory) {
         return _functionCallWithValue(target, data, 0, errorMessage);
     }
 
@@ -379,7 +395,11 @@ library AddressUpgradeable {
      *
      * _Available since v3.1._
      */
-    function functionCallWithValue(address target, bytes memory data, uint256 value) internal returns (bytes memory) {
+    function functionCallWithValue(
+        address target,
+        bytes memory data,
+        uint256 value
+    ) internal returns (bytes memory) {
         return functionCallWithValue(target, data, value, "Address: low-level call with value failed");
     }
 
@@ -389,16 +409,26 @@ library AddressUpgradeable {
      *
      * _Available since v3.1._
      */
-    function functionCallWithValue(address target, bytes memory data, uint256 value, string memory errorMessage) internal returns (bytes memory) {
+    function functionCallWithValue(
+        address target,
+        bytes memory data,
+        uint256 value,
+        string memory errorMessage
+    ) internal returns (bytes memory) {
         require(address(this).balance >= value, "Address: insufficient balance for call");
         return _functionCallWithValue(target, data, value, errorMessage);
     }
 
-    function _functionCallWithValue(address target, bytes memory data, uint256 weiValue, string memory errorMessage) private returns (bytes memory) {
+    function _functionCallWithValue(
+        address target,
+        bytes memory data,
+        uint256 weiValue,
+        string memory errorMessage
+    ) private returns (bytes memory) {
         require(isContract(target), "Address: call to non-contract");
 
         // solhint-disable-next-line avoid-low-level-calls
-        (bool success, bytes memory returndata) = target.call{ value: weiValue }(data);
+        (bool success, bytes memory returndata) = target.call{value: weiValue}(data);
         if (success) {
             return returndata;
         } else {
@@ -418,9 +448,7 @@ library AddressUpgradeable {
     }
 }
 
-
 // Dependency file: /Users/present/code/super-sett/deps/@openzeppelin/contracts-upgradeable/token/ERC20/SafeERC20Upgradeable.sol
-
 
 // pragma solidity ^0.6.0;
 
@@ -441,11 +469,20 @@ library SafeERC20Upgradeable {
     using SafeMathUpgradeable for uint256;
     using AddressUpgradeable for address;
 
-    function safeTransfer(IERC20Upgradeable token, address to, uint256 value) internal {
+    function safeTransfer(
+        IERC20Upgradeable token,
+        address to,
+        uint256 value
+    ) internal {
         _callOptionalReturn(token, abi.encodeWithSelector(token.transfer.selector, to, value));
     }
 
-    function safeTransferFrom(IERC20Upgradeable token, address from, address to, uint256 value) internal {
+    function safeTransferFrom(
+        IERC20Upgradeable token,
+        address from,
+        address to,
+        uint256 value
+    ) internal {
         _callOptionalReturn(token, abi.encodeWithSelector(token.transferFrom.selector, from, to, value));
     }
 
@@ -456,23 +493,33 @@ library SafeERC20Upgradeable {
      * Whenever possible, use {safeIncreaseAllowance} and
      * {safeDecreaseAllowance} instead.
      */
-    function safeApprove(IERC20Upgradeable token, address spender, uint256 value) internal {
+    function safeApprove(
+        IERC20Upgradeable token,
+        address spender,
+        uint256 value
+    ) internal {
         // safeApprove should only be called when setting an initial allowance,
         // or when resetting it to zero. To increase and decrease it, use
         // 'safeIncreaseAllowance' and 'safeDecreaseAllowance'
         // solhint-disable-next-line max-line-length
-        require((value == 0) || (token.allowance(address(this), spender) == 0),
-            "SafeERC20: approve from non-zero to non-zero allowance"
-        );
+        require((value == 0) || (token.allowance(address(this), spender) == 0), "SafeERC20: approve from non-zero to non-zero allowance");
         _callOptionalReturn(token, abi.encodeWithSelector(token.approve.selector, spender, value));
     }
 
-    function safeIncreaseAllowance(IERC20Upgradeable token, address spender, uint256 value) internal {
+    function safeIncreaseAllowance(
+        IERC20Upgradeable token,
+        address spender,
+        uint256 value
+    ) internal {
         uint256 newAllowance = token.allowance(address(this), spender).add(value);
         _callOptionalReturn(token, abi.encodeWithSelector(token.approve.selector, spender, newAllowance));
     }
 
-    function safeDecreaseAllowance(IERC20Upgradeable token, address spender, uint256 value) internal {
+    function safeDecreaseAllowance(
+        IERC20Upgradeable token,
+        address spender,
+        uint256 value
+    ) internal {
         uint256 newAllowance = token.allowance(address(this), spender).sub(value, "SafeERC20: decreased allowance below zero");
         _callOptionalReturn(token, abi.encodeWithSelector(token.approve.selector, spender, newAllowance));
     }
@@ -489,21 +536,19 @@ library SafeERC20Upgradeable {
         // the target address contains contract code and also asserts for success in the low-level call.
 
         bytes memory returndata = address(token).functionCall(data, "SafeERC20: low-level call failed");
-        if (returndata.length > 0) { // Return data is optional
+        if (returndata.length > 0) {
+            // Return data is optional
             // solhint-disable-next-line max-line-length
             require(abi.decode(returndata, (bool)), "SafeERC20: ERC20 operation did not succeed");
         }
     }
 }
 
-
 // Dependency file: /Users/present/code/super-sett/interfaces/harvest/IDepositHelper.sol
-
 
 // pragma solidity ^0.6.0;
 
 interface IDepositHelper {
-    
     event DepositComplete(address holder, uint256 numberOfTransfers);
 
     /*
@@ -512,83 +557,103 @@ interface IDepositHelper {
     function depositAll(uint256[] memory amounts, address[] memory vaultAddresses) external;
 }
 
-
 // Dependency file: /Users/present/code/super-sett/interfaces/harvest/IHarvestVault.sol
-
 
 // pragma solidity ^0.6.0;
 
 interface IHarvestVault {
-
     function underlyingBalanceInVault() external view returns (uint256);
+
     function underlyingBalanceWithInvestment() external view returns (uint256);
 
     function governance() external view returns (address);
+
     function controller() external view returns (address);
+
     function underlying() external view returns (address);
+
     function strategy() external view returns (address);
 
     function setStrategy(address _strategy) external;
+
     function setVaultFractionToInvest(uint256 numerator, uint256 denominator) external;
 
     function deposit(uint256 amountWei) external;
+
     function depositFor(uint256 amountWei, address holder) external;
 
     function withdrawAll() external;
+
     function withdraw(uint256 numberOfShares) external;
+
     function getPricePerFullShare() external view returns (uint256);
+
     function underlyingUnit() external view returns (uint256);
 
-    function underlyingBalanceWithInvestmentForHolder(address holder) view external returns (uint256);
+    function underlyingBalanceWithInvestmentForHolder(address holder) external view returns (uint256);
 
     // hard work should be callable only by the controller (by the hard worker) or by governance
     function doHardWork() external;
+
     function rebalance() external;
 
     // ERC20 functions
     function totalSupply() external view returns (uint256);
+
     function balanceOf(address account) external view returns (uint256);
+
     function transfer(address recipient, uint256 amount) external returns (bool);
+
     function allowance(address owner, address spender) external view returns (uint256);
+
     function approve(address spender, uint256 amount) external returns (bool);
-    function transferFrom(address sender, address recipient, uint256 amount) external returns (bool);
+
+    function transferFrom(
+        address sender,
+        address recipient,
+        uint256 amount
+    ) external returns (bool);
 }
 
 // Dependency file: /Users/present/code/super-sett/interfaces/harvest/IRewardPool.sol
 
-
 // pragma solidity ^0.6.0;
 
-// Unifying the interface with the Synthetix Reward Pool 
+// Unifying the interface with the Synthetix Reward Pool
 interface IRewardPool {
+    function rewardToken() external view returns (address);
 
-  function rewardToken() external view returns (address);
-  function lpToken() external view returns (address);
-  function duration() external view returns (uint256);
+    function lpToken() external view returns (address);
 
-  function periodFinish() external view returns (uint256);
-  function rewardRate() external view returns (uint256);
-  function rewardPerTokenStored() external view returns (uint256);
+    function duration() external view returns (uint256);
 
-  function stake(uint256 amountWei) external;
+    function periodFinish() external view returns (uint256);
 
-  // `balanceOf` would give the amount staked. 
-  // As this is 1 to 1, this is also the holder's share
-  function balanceOf(address holder) external view returns (uint256);
-  // total shares & total lpTokens staked
-  function totalSupply() external view returns(uint256);
+    function rewardRate() external view returns (uint256);
 
-  function withdraw(uint256 amountWei) external;
-  function exit() external;
+    function rewardPerTokenStored() external view returns (uint256);
 
-  // get claimed rewards
-  function earned(address holder) external view returns (uint256);
+    function stake(uint256 amountWei) external;
 
-  // claim rewards
-  function getReward() external;
+    // `balanceOf` would give the amount staked.
+    // As this is 1 to 1, this is also the holder's share
+    function balanceOf(address holder) external view returns (uint256);
 
-  // notify
-  function notifyRewardAmount(uint256 _amount) external;
+    // total shares & total lpTokens staked
+    function totalSupply() external view returns (uint256);
+
+    function withdraw(uint256 amountWei) external;
+
+    function exit() external;
+
+    // get claimed rewards
+    function earned(address holder) external view returns (uint256);
+
+    // claim rewards
+    function getReward() external;
+
+    // notify
+    function notifyRewardAmount(uint256 _amount) external;
 }
 
 // Dependency file: /Users/present/code/super-sett/interfaces/uniswap/IUniswapRouterV2.sol
@@ -596,14 +661,6 @@ interface IRewardPool {
 // pragma solidity >=0.5.0 <0.8.0;
 
 interface IUniswapRouterV2 {
-    function swapExactTokensForTokens(
-        uint256 amountIn,
-        uint256 amountOutMin,
-        address[] calldata path,
-        address to,
-        uint256 deadline
-    ) external returns (uint256[] memory amounts);
-
     function addLiquidity(
         address tokenA,
         address tokenB,
@@ -672,8 +729,23 @@ interface IUniswapRouterV2 {
         address to,
         uint256 deadline
     ) external returns (uint256[] memory amounts);
-}
 
+    function swapExactTokensForTokens(
+        uint256 amountIn,
+        uint256 amountOutMin,
+        address[] calldata path,
+        address to,
+        uint256 deadline
+    ) external returns (uint256[] memory amounts);
+
+    function swapTokensForExactTokens(
+        uint256 amountOut,
+        uint256 amountInMax,
+        address[] calldata path,
+        address to,
+        uint256 deadline
+    ) external returns (uint256[] memory amounts);
+}
 
 // Dependency file: /Users/present/code/super-sett/interfaces/badger/IController.sol
 
@@ -693,9 +765,7 @@ interface IController {
     function vaults(address) external view returns (address);
 }
 
-
 // Dependency file: /Users/present/code/super-sett/interfaces/badger/IMintr.sol
-
 
 // pragma solidity >=0.5.0 <0.8.0;
 
@@ -703,9 +773,7 @@ interface IMintr {
     function mint(address) external;
 }
 
-
 // Dependency file: /Users/present/code/super-sett/interfaces/badger/IStrategy.sol
-
 
 // pragma solidity >=0.5.0 <0.8.0;
 
@@ -741,27 +809,23 @@ interface IStrategy {
     function setController(address _controller) external;
 }
 
-
 // Dependency file: /Users/present/code/super-sett/deps/@openzeppelin/contracts-upgradeable/proxy/Initializable.sol
 
-
 // pragma solidity >=0.4.24 <0.7.0;
-
 
 /**
  * @dev This is a base contract to aid in writing upgradeable contracts, or any kind of contract that will be deployed
  * behind a proxy. Since a proxied contract can't have a constructor, it's common to move constructor logic to an
  * external initializer function, usually called `initialize`. It then becomes necessary to protect this initializer
  * function so it can only be called once. The {initializer} modifier provided by this contract will have this effect.
- * 
+ *
  * TIP: To avoid leaving the proxy in an uninitialized state, the initializer function should be called as early as
  * possible by providing the encoded function call as the `_data` argument to {UpgradeableProxy-constructor}.
- * 
+ *
  * CAUTION: When used with inheritance, manual care must be taken to not invoke a parent initializer twice, or to ensure
  * that all initializers are idempotent. This is not verified automatically as constructors are by Solidity.
  */
 abstract contract Initializable {
-
     /**
      * @dev Indicates that the contract has been initialized.
      */
@@ -801,14 +865,14 @@ abstract contract Initializable {
         address self = address(this);
         uint256 cs;
         // solhint-disable-next-line no-inline-assembly
-        assembly { cs := extcodesize(self) }
+        assembly {
+            cs := extcodesize(self)
+        }
         return cs == 0;
     }
 }
 
-
 // Dependency file: /Users/present/code/super-sett/deps/@openzeppelin/contracts-upgradeable/GSN/ContextUpgradeable.sol
-
 
 // pragma solidity ^0.6.0;
 // import "/Users/present/code/super-sett/deps/@openzeppelin/contracts-upgradeable/proxy/Initializable.sol";
@@ -828,22 +892,21 @@ abstract contract ContextUpgradeable is Initializable {
         __Context_init_unchained();
     }
 
-    function __Context_init_unchained() internal initializer {
-    }
-    function _msgSender() internal view virtual returns (address payable) {
+    function __Context_init_unchained() internal initializer {}
+
+    function _msgSender() internal virtual view returns (address payable) {
         return msg.sender;
     }
 
-    function _msgData() internal view virtual returns (bytes memory) {
+    function _msgData() internal virtual view returns (bytes memory) {
         this; // silence state mutability warning without generating bytecode - see https://github.com/ethereum/solidity/issues/2691
         return msg.data;
     }
+
     uint256[50] private __gap;
 }
 
-
 // Dependency file: /Users/present/code/super-sett/deps/@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol
-
 
 // pragma solidity ^0.6.0;
 
@@ -938,30 +1001,27 @@ contract PausableUpgradeable is Initializable, ContextUpgradeable {
         _paused = false;
         emit Unpaused(_msgSender());
     }
+
     uint256[49] private __gap;
 }
 
-
 // Dependency file: deps/@openzeppelin/contracts-upgradeable/proxy/Initializable.sol
 
-
 // pragma solidity >=0.4.24 <0.7.0;
-
 
 /**
  * @dev This is a base contract to aid in writing upgradeable contracts, or any kind of contract that will be deployed
  * behind a proxy. Since a proxied contract can't have a constructor, it's common to move constructor logic to an
  * external initializer function, usually called `initialize`. It then becomes necessary to protect this initializer
  * function so it can only be called once. The {initializer} modifier provided by this contract will have this effect.
- * 
+ *
  * TIP: To avoid leaving the proxy in an uninitialized state, the initializer function should be called as early as
  * possible by providing the encoded function call as the `_data` argument to {UpgradeableProxy-constructor}.
- * 
+ *
  * CAUTION: When used with inheritance, manual care must be taken to not invoke a parent initializer twice, or to ensure
  * that all initializers are idempotent. This is not verified automatically as constructors are by Solidity.
  */
 abstract contract Initializable {
-
     /**
      * @dev Indicates that the contract has been initialized.
      */
@@ -1001,11 +1061,12 @@ abstract contract Initializable {
         address self = address(this);
         uint256 cs;
         // solhint-disable-next-line no-inline-assembly
-        assembly { cs := extcodesize(self) }
+        assembly {
+            cs := extcodesize(self)
+        }
         return cs == 0;
     }
 }
-
 
 // Dependency file: contracts/badger-sett/SettAccessControl.sol
 
@@ -1031,7 +1092,7 @@ contract SettAccessControl is Initializable {
     }
 
     function _onlyAuthorizedActors() internal view {
-        require(msg.sender == keeper || msg.sender == strategist || msg.sender == governance, "onlyAuthorizedActors");
+        require(msg.sender == keeper || msg.sender == governance, "onlyAuthorizedActors");
     }
 
     // ===== PERMISSIONED ACTIONS =====
@@ -1060,14 +1121,13 @@ contract SettAccessControl is Initializable {
     uint256[50] private __gap;
 }
 
-
 // Dependency file: contracts/badger-sett/strategies/BaseStrategy.sol
-
 
 // pragma solidity ^0.6.11;
 
 // import "/Users/present/code/super-sett/deps/@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 // import "/Users/present/code/super-sett/deps/@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
+// import "/Users/present/code/super-sett/deps/@openzeppelin/contracts-upgradeable/math/MathUpgradeable.sol";
 // import "/Users/present/code/super-sett/deps/@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 // import "/Users/present/code/super-sett/deps/@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 // import "/Users/present/code/super-sett/deps/@openzeppelin/contracts-upgradeable/token/ERC20/SafeERC20Upgradeable.sol";
@@ -1093,6 +1153,7 @@ abstract contract BaseStrategy is PausableUpgradeable, SettAccessControl {
     event SetPerformanceFeeStrategist(uint256 performanceFeeStrategist);
     event SetPerformanceFeeGovernance(uint256 performanceFeeGovernance);
     event Harvest(uint256 harvested, uint256 indexed blockNumber);
+    event Tend(uint256 tended);
 
     address public want; // Want: Curve.fi renBTC/wBTC (crvRenWBTC) LP token
 
@@ -1106,19 +1167,22 @@ abstract contract BaseStrategy is PausableUpgradeable, SettAccessControl {
     address public controller;
     address public guardian;
 
+    uint256 public withdrawalMaxDeviationThreshold;
+
     function __BaseStrategy_init(
         address _governance,
         address _strategist,
         address _controller,
         address _keeper,
         address _guardian
-    ) public initializer {
+    ) public initializer whenNotPaused {
         __Pausable_init();
         governance = _governance;
         strategist = _strategist;
         keeper = _keeper;
         controller = _controller;
         guardian = _guardian;
+        withdrawalMaxDeviationThreshold = 50;
     }
 
     // ===== Modifiers =====
@@ -1128,17 +1192,17 @@ abstract contract BaseStrategy is PausableUpgradeable, SettAccessControl {
     }
 
     function _onlyAuthorizedActorsOrController() internal view {
-        require(
-            msg.sender == keeper || msg.sender == strategist || msg.sender == governance || msg.sender == controller,
-            "onlyAuthorizedActorsOrController"
-        );
+        require(msg.sender == keeper || msg.sender == governance || msg.sender == controller, "onlyAuthorizedActorsOrController");
     }
 
     function _onlyAuthorizedPausers() internal view {
-        require(msg.sender == guardian || msg.sender == strategist || msg.sender == governance, "onlyPausers");
+        require(msg.sender == guardian || msg.sender == governance, "onlyPausers");
     }
 
     /// ===== View Functions =====
+    function baseStrategyVersion() public view returns (string memory) {
+        return "1.1";
+    }
 
     /// @notice Get the balance of want held idle in the Strategy
     function balanceOfWant() public view returns (uint256) {
@@ -1163,22 +1227,31 @@ abstract contract BaseStrategy is PausableUpgradeable, SettAccessControl {
 
     function setWithdrawalFee(uint256 _withdrawalFee) external {
         _onlyGovernance();
+        require(_withdrawalFee <= MAX_FEE, "base-strategy/excessive-withdrawal-fee");
         withdrawalFee = _withdrawalFee;
     }
 
     function setPerformanceFeeStrategist(uint256 _performanceFeeStrategist) external {
         _onlyGovernance();
+        require(_performanceFeeStrategist <= MAX_FEE, "base-strategy/excessive-strategist-performance-fee");
         performanceFeeStrategist = _performanceFeeStrategist;
     }
 
     function setPerformanceFeeGovernance(uint256 _performanceFeeGovernance) external {
         _onlyGovernance();
+        require(_performanceFeeGovernance <= MAX_FEE, "base-strategy/excessive-governance-performance-fee");
         performanceFeeGovernance = _performanceFeeGovernance;
     }
 
     function setController(address _controller) external {
         _onlyGovernance();
         controller = _controller;
+    }
+
+    function setWithdrawalMaxDeviationThreshold(uint256 _threshold) external {
+        _onlyGovernance();
+        require(_threshold <= MAX_FEE, "base-strategy/excessive-max-deviation-threshold");
+        withdrawalMaxDeviationThreshold = _threshold;
     }
 
     function deposit() public virtual whenNotPaused {
@@ -1192,7 +1265,7 @@ abstract contract BaseStrategy is PausableUpgradeable, SettAccessControl {
 
     // ===== Permissioned Actions: Controller =====
 
-    /// @notice Withdraw all funds, normally used when migrating strategies
+    /// @notice Controller-only function to Withdraw partial funds, normally used with a vault withdrawal
     function withdrawAll() external virtual whenNotPaused returns (uint256 balance) {
         _onlyController();
 
@@ -1201,23 +1274,43 @@ abstract contract BaseStrategy is PausableUpgradeable, SettAccessControl {
         _transferToVault(IERC20Upgradeable(want).balanceOf(address(this)));
     }
 
-    /// @notice Controller-only function to Withdraw partial funds, normally used with a vault withdrawal
+    /// @notice Withdraw partial funds from the strategy, unrolling from strategy positions as necessary
+    /// @notice Processes withdrawal fee if present
+    /// @dev If it fails to recover sufficient funds (defined by withdrawalMaxDeviationThreshold), the withdrawal should fail so that this unexpected behavior can be investigated
     function withdraw(uint256 _amount) external virtual whenNotPaused {
         _onlyController();
 
         uint256 _balance = IERC20Upgradeable(want).balanceOf(address(this));
 
+        uint256 _withdrawn = 0;
+        uint256 _postWithdraw = _balance;
+
         // Withdraw some from activities if idle want is not sufficient to cover withdrawal
         if (_balance < _amount) {
-            _amount = _withdrawSome(_amount.sub(_balance));
-            _amount = _amount.add(_balance);
+            _withdrawn = _withdrawSome(_amount.sub(_balance));
+            _postWithdraw = _withdrawn.add(_balance);
+
+            // Sanity check: Ensure we were able to retrieve sufficent want from strategy positions
+            // If we end up with less than the amount requested, make sure it does not deviate beyond a maximum threshold
+            if (_postWithdraw < _amount) {
+                uint256 diff = _diff(_amount, _postWithdraw);
+
+                // Require that difference between expected and actual values is less than the deviation threshold percentage
+                require(
+                    diff <= _amount.mul(withdrawalMaxDeviationThreshold).div(MAX_FEE),
+                    "base-strategy/withdraw-exceed-max-deviation-threshold"
+                );
+            }
         }
 
+        // Return the amount actually withdrawn if less than amount requested
+        uint256 _toWithdraw = MathUpgradeable.min(_postWithdraw, _amount);
+
         // Process withdrawal fee
-        uint256 _fee = _processWithdrawalFee(_amount);
+        uint256 _fee = _processWithdrawalFee(_toWithdraw);
 
         // Transfer remaining to Vault to handle withdrawal
-        _transferToVault(_amount.sub(_fee));
+        _transferToVault(_toWithdraw.sub(_fee));
     }
 
     // NOTE: must exclude any tokens used in the yield
@@ -1238,7 +1331,7 @@ abstract contract BaseStrategy is PausableUpgradeable, SettAccessControl {
     }
 
     function unpause() external {
-        _onlyAuthorizedPausers();
+        _onlyGovernance();
         _unpause();
     }
 
@@ -1313,7 +1406,7 @@ abstract contract BaseStrategy is PausableUpgradeable, SettAccessControl {
     }
 
     /// @notice Add liquidity to uniswap for specified token pair, utilizing the maximum balance possible
-    function _add_max_liquidity_uniswap(address token0, address token1) internal {
+    function _add_max_liquidity_uniswap(address token0, address token1) internal virtual {
         uint256 _token0Balance = IERC20Upgradeable(token0).balanceOf(address(this));
         uint256 _token1Balance = IERC20Upgradeable(token1).balanceOf(address(this));
 
@@ -1321,6 +1414,12 @@ abstract contract BaseStrategy is PausableUpgradeable, SettAccessControl {
         _safeApproveHelper(token1, uniswap, _token1Balance);
 
         IUniswapRouterV2(uniswap).addLiquidity(token0, token1, _token0Balance, _token1Balance, 0, 0, address(this), block.timestamp);
+    }
+
+    /// @notice Utility function to diff two numbers, expects higher value in first position
+    function _diff(uint256 a, uint256 b) internal pure returns (uint256) {
+        require(a >= b, "diff/expected-higher-number-in-first-position");
+        return a.sub(b);
     }
 
     // ===== Abstract Functions: To be implemented by specific Strategies =====
@@ -1359,9 +1458,7 @@ abstract contract BaseStrategy is PausableUpgradeable, SettAccessControl {
     uint256[50] private __gap;
 }
 
-
 // Root file: contracts/badger-sett/strategies/harvest/StrategyHarvestMetaFarm.sol
-
 
 pragma solidity ^0.6.11;
 pragma experimental ABIEncoderV2;
@@ -1403,7 +1500,22 @@ contract StrategyHarvestMetaFarm is BaseStrategy {
     address public constant depositHelper = 0xF8ce90c2710713552fb564869694B2505Bfc0846; // Harvest deposit helper
     address public constant weth = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2; // Weth Token
 
+    bool internal _emergencyTestTrasferFlag;
+    bool internal _emergencyFullTrasferFlag;
+
     event Tend(uint256 farmTended);
+
+    event WithdrawState(
+        uint256 toWithdraw,
+        uint256 wrappedToWithdraw,
+        uint256 preWant,
+        uint256 preWrapped,
+        uint256 wrappedInFarm,
+        uint256 wrappedWithdrawnFromFarm,
+        uint256 wrappedWithdrawn,
+        uint256 postWant,
+        uint256 withdrawn
+    );
 
     event FarmHarvest(
         uint256 totalFarmHarvested,
@@ -1433,7 +1545,7 @@ contract StrategyHarvestMetaFarm is BaseStrategy {
         address _guardian,
         address[5] memory _wantConfig,
         uint256[3] memory _feeConfig
-    ) public initializer {
+    ) public initializer whenNotPaused {
         __BaseStrategy_init(_governance, _strategist, _controller, _keeper, _guardian);
 
         want = _wantConfig[0];
@@ -1456,6 +1568,9 @@ contract StrategyHarvestMetaFarm is BaseStrategy {
     }
 
     /// ===== View Functions =====
+    function version() external pure returns (string memory) {
+        return "1.1";
+    }
 
     function getName() external override pure returns (string memory) {
         return "StrategyHarvestMetaFarm";
@@ -1553,27 +1668,56 @@ contract StrategyHarvestMetaFarm is BaseStrategy {
     /// @dev Withdraw vaultTokens from vaultFarm first, followed by harvestVault
     function _withdrawSome(uint256 _amount) internal override returns (uint256) {
         uint256 _preWant = IERC20Upgradeable(want).balanceOf(address(this));
+        uint256 _preWrapped = IHarvestVault(harvestVault).balanceOf(address(this));
 
-        uint256 _toWithdraw = _amount;
+        // Total amount of wrapped to withdraw
+        uint256 _wrappedAmount = _toHarvestVaultTokens(_amount);
 
-        uint256 _wrappedTotal = IRewardPool(vaultFarm).balanceOf(address(this));
-        uint256 _underlyingTotal = IHarvestVault(harvestVault).balanceOf(address(this));
+        // Current remaining required to withdraw
+        uint256 _wrappedToWithdraw = _wrappedAmount;
 
-        if (_wrappedTotal > 0) {
-            uint256 _wrappedToWithdraw = MathUpgradeable.min(_wrappedTotal, _amount);
-            IRewardPool(vaultFarm).withdraw(_wrappedToWithdraw);
-
-            _toWithdraw = _toWithdraw.sub(_wrappedToWithdraw);
+        // If we have enough pre-wrapped to cover, skip to withdrawal from harvest vault
+        if (_wrappedAmount < _preWrapped) {
+            _wrappedToWithdraw = 0;
+        } else {
+            // If we don't have enough pre-wrapped to withdraw, we attempt to withdraw from farm to cover the difference vs what we already have
+            _wrappedToWithdraw = _wrappedAmount.sub(_preWrapped);
         }
 
-        if (_toWithdraw > 0 && _underlyingTotal > 0) {
-            IHarvestVault(harvestVault).withdraw(_toHarvestVaultTokens(_toWithdraw));
+        uint256 _wrappedInFarm = IRewardPool(vaultFarm).balanceOf(address(this));
+
+        uint256 _wrappedWithdrawnFromFarm = 0;
+
+        // If we have fTokens in the farm, determine how much want that corresponds to and withdraw as much as needed to cover the amount, or the max in the farm
+        if (_wrappedToWithdraw > 0 && _wrappedInFarm > 0) {
+            // Determine how many fTokens we need to withdraw to get amount of want we require. If there's not enough want, withdraw everything
+            _wrappedWithdrawnFromFarm = MathUpgradeable.min(_wrappedInFarm, _wrappedToWithdraw);
+
+            // Withdraw the fTokens
+            IRewardPool(vaultFarm).withdraw(_wrappedWithdrawnFromFarm);
         }
+
+        // We now have fTokens, we need to convert them into want by withdrawing them from the Harvest Vault
+        IHarvestVault(harvestVault).withdraw(_wrappedAmount);
 
         uint256 _postWant = IERC20Upgradeable(want).balanceOf(address(this));
 
         // Return the actual amount withdrawn if less than requested
-        return MathUpgradeable.min(_postWant.sub(_preWant), _amount);
+        uint256 _withdrawn = MathUpgradeable.min(_postWant, _amount);
+
+        emit WithdrawState(
+            _amount,
+            _wrappedToWithdraw,
+            _preWant,
+            _preWrapped,
+            _wrappedInFarm,
+            _wrappedWithdrawnFromFarm,
+            _wrappedToWithdraw,
+            _postWant,
+            _withdrawn
+        );
+
+        return _withdrawn;
     }
 
     /// @notice Harvest from strategy mechanics, realizing increase in underlying position

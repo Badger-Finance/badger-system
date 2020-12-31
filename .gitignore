@@ -11,13 +11,19 @@ cache
 local.json
 .pytest_cache
 docs
-docs/
-contracts-temporary
+
+flatten
 
 run-testnet.sh
 keeper.sh
+earn.sh
+harvest.sh
+tend.sh
 rewards.sh
 
+earn_output.log
+tend_output.log
+harvest_output.log
 rewards_output.log
 rewards_output_test.log
 rewards-*.json

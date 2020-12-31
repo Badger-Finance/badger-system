@@ -1,21 +1,21 @@
-from helpers.utils import val
-from tabulate import tabulate
-from helpers.sett.resolvers.StrategyCurveGaugeResolver import StrategyCurveGaugeResolver
-from helpers.sett.resolvers.StrategyBadgerLpMetaFarmResolver import (
-    StrategyBadgerLpMetaFarmResolver,
-)
+from helpers.sett.resolvers.StrategySushiBadgerLpOptimizerResolver import StrategySushiBadgerLpOptimizerResolver
+from helpers.sett.resolvers.StrategySushiBadgerWbtcResolver import StrategySushiBadgerWbtcResolver
 from brownie import *
 from helpers.constants import *
 from helpers.multicall import Call, Multicall, as_wei, func
 from helpers.registry import registry
-from helpers.sett.resolvers.StrategyHarvestMetaFarmResolver import (
-    StrategyHarvestMetaFarmResolver,
-)
-from helpers.sett.resolvers.StrategyBadgerRewardsResolver import (
-    StrategyBadgerRewardsResolver,
-)
+from helpers.sett.resolvers.StrategyBadgerLpMetaFarmResolver import \
+    StrategyBadgerLpMetaFarmResolver
+from helpers.sett.resolvers.StrategyBadgerRewardsResolver import \
+    StrategyBadgerRewardsResolver
+from helpers.sett.resolvers.StrategyCurveGaugeResolver import \
+    StrategyCurveGaugeResolver
+from helpers.sett.resolvers.StrategyHarvestMetaFarmResolver import \
+    StrategyHarvestMetaFarmResolver
+from helpers.utils import val
 from rich.console import Console
 from scripts.systems.badger_system import BadgerSystem
+from tabulate import tabulate
 
 console = Console()
 
@@ -51,8 +51,9 @@ def is_curve_gauge_variant(name):
 
 
 class Snap:
-    def __init__(self, data):
+    def __init__(self, data, block):
         self.data = data
+        self.block = block
 
     # ===== Getters =====
 
@@ -91,6 +92,7 @@ class SnapshotManager:
 
         assert self.want == self.strategy.want()
 
+        # Common entities for all strategies
         self.addEntity("sett", self.sett.address)
         self.addEntity("strategy", self.strategy.address)
         self.addEntity("controller", self.controller.address)
@@ -121,7 +123,7 @@ class SnapshotManager:
         #     print(call.target, call.function, call.args)
 
         data = multi()
-        self.snaps[snapBlock] = Snap(data)
+        self.snaps[snapBlock] = Snap(data, snapBlock)
 
         return self.snaps[snapBlock]
 
@@ -129,6 +131,7 @@ class SnapshotManager:
         self.entities[key] = entity
 
     def init_resolver(self, name):
+        print("init_resolver", name)
         if name == "StrategyHarvestMetaFarm":
             return StrategyHarvestMetaFarmResolver(self)
         if name == "StrategyBadgerRewards":
@@ -139,24 +142,29 @@ class SnapshotManager:
             return StrategyCurveGaugeResolver(self)
         if name == "StrategyCurveGauge":
             return StrategyCurveGaugeResolver(self)
+        if name == "StrategySushiBadgerWbtc":
+            return StrategySushiBadgerWbtcResolver(self)
+        if name == "StrategySushiLpOptimizer":
+            print("StrategySushiBadgerLpOptimizerResolver")
+            return StrategySushiBadgerLpOptimizerResolver(self)
 
     def settTend(self, overrides, confirm=True):
         user = overrides["from"].address
         trackedUsers = {"user": user}
         before = self.snap(trackedUsers)
-        self.sett.tend(overrides)
+        self.strategy.tend(overrides)
         after = self.snap(trackedUsers)
         if confirm:
-            self.resolver.confirm_tend(before, after, {"user": user})
+            self.resolver.confirm_tend(before, after)
 
     def settHarvest(self, overrides, confirm=True):
         user = overrides["from"].address
         trackedUsers = {"user": user}
         before = self.snap(trackedUsers)
-        self.strategy.harvest(overrides)
+        tx = self.strategy.harvest(overrides)
         after = self.snap(trackedUsers)
         if confirm:
-            self.resolver.confirm_harvest(before, after)
+            self.resolver.confirm_harvest(before, after, tx)
 
     def settDeposit(self, amount, overrides, confirm=True):
         user = overrides["from"].address
@@ -185,7 +193,7 @@ class SnapshotManager:
         user = overrides["from"].address
         trackedUsers = {"user": user}
         before = self.snap(trackedUsers)
-        self.sett.earn(overrides)
+        tx = self.sett.earn(overrides)
         after = self.snap(trackedUsers)
         if confirm:
             self.resolver.confirm_earn(before, after, {"user": user})
@@ -232,25 +240,31 @@ class SnapshotManager:
             return "-"
 
     def printCompare(self, before: Snap, after: Snap):
-        self.printPermissions()
+        # self.printPermissions()
         table = []
-        console.print("[green]=== Status Report: {} Sett ===[/green]".format(self.key))
+        console.print(
+            "[green]=== Compare: {} Sett {} -> {} ===[/green]".format(
+                self.key, before.block, after.block
+            )
+        )
 
         for key, item in before.data.items():
 
             a = item
             b = after.get(key)
 
-            table.append(
-                [
-                    key,
-                    self.format(key, a),
-                    self.format(key, b),
-                    self.format(key, self.diff(a, b)),
-                ]
-            )
+            # Don't add items that don't change
+            if a != b:
+                table.append(
+                    [
+                        key,
+                        self.format(key, a),
+                        self.format(key, b),
+                        self.format(key, self.diff(a, b)),
+                    ]
+                )
 
-        print(tabulate(table, headers=["metric", "before", "after"], tablefmt="grid"))
+        print(tabulate(table, headers=["metric", "before", "after", "diff"], tablefmt="grid"))
 
     def printPermissions(self):
         # Accounts
@@ -286,6 +300,9 @@ class SnapshotManager:
         console.print("[green]=== Status Report: {} Sett ===[green]".format(self.key))
 
         for key, item in snap.data.items():
+            # Don't display 0 balances:
+            if "balances" in key and item == 0:
+                continue
             table.append([key, item])
 
         table.append(["---------------", "--------------------"])

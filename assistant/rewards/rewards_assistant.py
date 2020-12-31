@@ -1,6 +1,6 @@
 import json
 
-from assistant.rewards.aws_utils import upload
+from assistant.rewards.aws_utils import download, upload
 from assistant.rewards.calc_stakes import calc_geyser_stakes
 from assistant.rewards.merkle_tree import rewards_to_merkle_tree
 from assistant.rewards.rewards_checker import compare_rewards
@@ -103,93 +103,6 @@ def combine_rewards(list, cycle, badgerTree):
     return totals
 
 
-def guardian(badger: BadgerSystem, startBlock, endBlock, test=False):
-    """
-    Guardian Role
-    - Check if there is a new proposed root
-    - If there is, run the rewards script at the same block height to verify the results
-    - If there is a discrepency, notify admin
-
-    (In case of a one-off failure, Script will be attempted again at the guardianInterval)
-    """
-
-    print("Guardian", startBlock, endBlock)
-
-    badgerTree = badger.badgerTree
-    guardian = badger.guardian
-    nextCycle = getNextCycle(badger)
-
-    console.print("\n[bold cyan]===== Guardian =====[/bold cyan]\n")
-
-    if not badgerTree.hasPendingRoot():
-        console.print("[bold yellow]===== Result: No Pending Root =====[/bold yellow]")
-        return False
-
-    pendingMerkleData = badgerTree.getPendingMerkleData()
-
-    currentMerkleData = fetchCurrentMerkleData(badger)
-    currentRewards = fetch_current_rewards_tree(badger)
-    currentContentHash = currentMerkleData["contentHash"]
-    # blockNumber = currentMerkleData["blockNumber"]
-
-    console.print("\n[bold cyan]===== Verifying Rewards =====[/bold cyan]\n")
-    print("Geyser Rewards", startBlock, endBlock, nextCycle)
-    geyserRewards = calc_geyser_rewards(badger, startBlock, endBlock, nextCycle)
-
-    newRewards = geyserRewards
-
-    cumulativeRewards = process_cumulative_rewards(currentRewards, newRewards)
-
-    # Take metadata from geyserRewards
-    console.print("Processing to merkle tree")
-    merkleTree = rewards_to_merkle_tree(
-        cumulativeRewards, startBlock, endBlock, geyserRewards
-    )
-
-    # ===== Re-Publish data for redundancy ======
-    rootHash = hash(merkleTree["merkleRoot"])
-    contentFileName = content_hash_to_filename(rootHash)
-
-    assert pendingMerkleData["root"] == merkleTree["merkleRoot"]
-    assert pendingMerkleData["contentHash"] == rootHash
-
-    console.log(
-        {
-            "merkleRoot": merkleTree["merkleRoot"],
-            "rootHash": str(rootHash),
-            "contentFile": contentFileName,
-            "startBlock": startBlock,
-            "endBlock": endBlock,
-            "currentContentHash": currentContentHash,
-        }
-    )
-
-    print("Uploading to file " + contentFileName)
-
-    # TODO: Upload file to AWS & serve from server
-    with open(contentFileName, "w") as outfile:
-        json.dump(merkleTree, outfile)
-    # upload(contentFileName)
-
-    with open(contentFileName) as f:
-        after_file = json.load(f)
-
-    compare_rewards(
-        badger, startBlock, endBlock, currentRewards, after_file, currentContentHash
-    )
-
-    console.print("===== Guardian Complete =====")
-
-    if not test:
-        upload(contentFileName),
-        badgerTree.approveRoot(
-            merkleTree["merkleRoot"],
-            rootHash,
-            merkleTree["cycle"],
-            {"from": guardian, "gas_price": gas_strategy},
-        )
-
-
 def fetchCurrentMerkleData(badger):
     currentMerkleData = badger.badgerTree.getCurrentMerkleData()
     root = str(currentMerkleData[0])
@@ -213,74 +126,57 @@ def hash(value):
     return web3.toHex(web3.keccak(text=value))
 
 
-def fetch_current_rewards_tree(badger):
+def fetch_current_rewards_tree(badger, print_output=False):
     # TODO Files should be hashed and signed by keeper to prevent tampering
     # TODO How will we upload addresses securely?
     # We will check signature before posting
     merkle = fetchCurrentMerkleData(badger)
     pastFile = "rewards-1-" + str(merkle["contentHash"]) + ".json"
+    
+    if print_output:
+        console.print(
+            "[bold yellow]===== Loading Past Rewards "
+            + pastFile
+            + " =====[/bold yellow]"
+        )
 
-    console.print(
-        "[bold yellow]===== Loading Past Rewards " + pastFile + " =====[/bold yellow]"
-    )
-
-    with open(pastFile) as f:
-        currentTree = json.load(f)
+    currentTree = json.loads(download(pastFile))
 
     # Invariant: File shoulld have same root as latest
     assert currentTree["merkleRoot"] == merkle["root"]
 
-    lastUpdateOnChain = merkle["blockNumber"]
+    lastUpdatePublish = merkle["blockNumber"]
     lastUpdate = int(currentTree["endBlock"])
 
-    print("lastUpdateOnChain ", lastUpdateOnChain, " lastUpdate ", lastUpdate)
-    # Ensure file tracks block within 1 day of upload
-    assert abs(lastUpdate - lastUpdateOnChain) < 6500
-
+    if print_output:
+        print(
+            "lastUpdateBlock", lastUpdate, "lastUpdatePublishBlock", lastUpdatePublish
+        )
     # Ensure upload was after file tracked
-    assert lastUpdateOnChain >= lastUpdate
+    assert lastUpdatePublish >= lastUpdate
+
+    # Ensure file tracks block within 1 day of upload
+    assert abs(lastUpdate - lastUpdatePublish) < 6500
+    
     return currentTree
 
 
-def rootUpdater(badger, startBlock, endBlock, test=False):
-    """
-    Root Updater Role
-    - Check how much time has passed since the last published update
-    - If sufficient time has passed, run the rewards script and p
-    - If there is a discrepency, notify admin
+def generate_rewards_in_range(badger, startBlock, endBlock):
+    blockDuration = endBlock - startBlock
+    console.print(
+        "\n[green]Calculate rewards for {} blocks: {} -> {} [/green]\n".format(
+            blockDuration, startBlock, endBlock
+        )
+    )
 
-    (In case of a one-off failure, Script will be attempted again at the rootUpdaterInterval)
-    """
-    badgerTree = badger.badgerTree
-    keeper = badger.keeper
     nextCycle = getNextCycle(badger)
 
-    assert keeper == badger.keeper
-
-    console.print("\n[bold cyan]===== Root Updater =====[/bold cyan]\n")
     currentMerkleData = fetchCurrentMerkleData(badger)
-    currentRewards = fetch_current_rewards_tree(badger)
-
-    currentTime = chain.time()
-
-    timeSinceLastupdate = currentTime - currentMerkleData["lastUpdateTime"]
-    if timeSinceLastupdate < rewards_config.rootUpdateInterval and not test:
-        console.print(
-            "[bold yellow]===== Result: Last Update too Recent =====[/bold yellow]"
-        )
-        return False
-
-    # if badgerTree.hasPendingRoot():
-    #     console.print(
-    #         "[bold yellow]===== Result: Pending Root Since Last Update =====[/bold yellow]"
-    #     )
-    #     return False
-    print("Geyser Rewards", startBlock, endBlock, nextCycle)
-
+    currentRewards = fetch_current_rewards_tree(badger, print_output=True)
     geyserRewards = calc_geyser_rewards(badger, startBlock, endBlock, nextCycle)
     # metaFarmRewards = calc_harvest_meta_farm_rewards(badger, startBlock, endBlock)
-    newRewards = geyserRewards
 
+    newRewards = geyserRewards
     cumulativeRewards = process_cumulative_rewards(currentRewards, newRewards)
 
     # Take metadata from geyserRewards
@@ -312,6 +208,7 @@ def rootUpdater(badger, startBlock, endBlock, test=False):
     with open(contentFileName) as f:
         after_file = json.load(f)
 
+    # Sanity check new rewards file
     compare_rewards(
         badger,
         startBlock,
@@ -320,26 +217,85 @@ def rootUpdater(badger, startBlock, endBlock, test=False):
         after_file,
         currentMerkleData["contentHash"],
     )
+
+    return {
+        "contentFileName": contentFileName,
+        "merkleTree": merkleTree,
+        "rootHash": rootHash,
+    }
+
+
+def rootUpdater(badger, startBlock, endBlock, test=False):
+    """
+    Root Updater Role
+    - Check how much time has passed since the last published update
+    - If sufficient time has passed, run the rewards script and p
+    - If there is a discrepency, notify admin
+
+    (In case of a one-off failure, Script will be attempted again at the rootUpdaterInterval)
+    """
+    console.print("\n[bold cyan]===== Root Updater =====[/bold cyan]\n")
+
+    badgerTree = badger.badgerTree
+    nextCycle = getNextCycle(badger)
+
+    currentMerkleData = fetchCurrentMerkleData(badger)
+    currentTime = chain.time()
+
+    # Only run if we have sufficent time since previous root
+    timeSinceLastupdate = currentTime - currentMerkleData["lastUpdateTime"]
+    if timeSinceLastupdate < rewards_config.rootUpdateMinInterval and not test:
+        console.print(
+            "[bold yellow]===== Result: Last Update too Recent =====[/bold yellow]"
+        )
+        return False
+
+    rewards_data = generate_rewards_in_range(badger, startBlock, endBlock)
+
     console.print("===== Root Updater Complete =====")
     if not test:
-        upload(contentFileName)
+        upload(rewards_data["contentFileName"])
         badgerTree.proposeRoot(
-            merkleTree["merkleRoot"],
-            rootHash,
-            merkleTree["cycle"],
-            {"from": keeper, "gas_price": gas_strategy},
+            rewards_data["merkleTree"]["merkleRoot"],
+            rewards_data["rootHash"],
+            rewards_data["merkleTree"]["cycle"],
+            {"from": badger.keeper, "gas_price": gas_strategy},
         )
 
     return True
 
 
-def watchdog(badger, endBlock):
+def guardian(badger: BadgerSystem, startBlock, endBlock, test=False):
     """
-    Watchdog
-    Ensure that the root has been updated within the maximum interval
-    If not, the system is not functioning properly, notify admin
+    Guardian Role
+    - Check if there is a new proposed root
+    - If there is, run the rewards script at the same block height to verify the results
+    - If there is a discrepency, notify admin
+
+    (In case of a one-off failure, Script will be attempted again at the guardianInterval)
     """
-    return False
+
+    console.print("\n[bold cyan]===== Guardian =====[/bold cyan]\n")
+
+    badgerTree = badger.badgerTree
+
+    # Only run if we have a pending root
+    if not badgerTree.hasPendingRoot():
+        console.print("[bold yellow]===== Result: No Pending Root =====[/bold yellow]")
+        return False
+
+    rewards_data = generate_rewards_in_range(badger, startBlock, endBlock)
+
+    console.print("===== Guardian Complete =====")
+
+    if not test:
+        upload(rewards_data["contentFileName"]),
+        badgerTree.approveRoot(
+            rewards_data["merkleTree"]["merkleRoot"],
+            rewards_data["rootHash"],
+            rewards_data["merkleTree"]["cycle"],
+            {"from": badger.guardian, "gas_price": gas_strategy},
+        )
 
 
 def run_action(badger, args, test):
@@ -347,8 +303,6 @@ def run_action(badger, args, test):
         return rootUpdater(badger, args["startBlock"], args["endBlock"], test)
     if args["action"] == "guardian":
         return guardian(badger, args["startBlock"], args["endBlock"], test)
-    if args["action"] == "watchdog":
-        return watchdog(badger)
     return False
 
 

@@ -136,7 +136,7 @@ def compare_rewards(
     # Total claims must only increase
     sum_before = sum_claims(before)
     sum_after = sum_claims(after)
-    sanitySum = Wei("1100000 ether")
+    sanitySum = Wei("2800000 ether")
 
     table = []
     table.append(["block range", startBlock, endBlock])

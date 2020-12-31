@@ -3,18 +3,20 @@ import brownie
 import pytest
 from brownie import *
 from helpers.constants import *
-from tests.conftest import badger_single_sett
-from tests.test_recorder import TestRecorder
+from tests.conftest import badger_single_sett, settTestConfig
 
 
-def state_setup(badger, settId):
-    controller = badger.getController(settId)
+def state_setup(badger, settConfig):
+    settId = settConfig['id']
+    # TODO: Make this fetch based on the sett prefix name if it has dot
+    controller = badger.getControllerFor(settId)
     sett = badger.getSett(settId)
     strategy = badger.getStrategy(settId)
     want = badger.getStrategyWant(settId)
 
     deployer = badger.deployer
-    randomUser = accounts[6]
+    settKeeper = accounts.at(sett.keeper(), force=True)
+    strategyKeeper = accounts.at(strategy.keeper(), force=True)
 
     tendable = strategy.isTendable()
 
@@ -27,45 +29,38 @@ def state_setup(badger, settId):
     chain.sleep(days(1))
     chain.mine()
 
-    sett.earn({"from": deployer})
+    sett.earn({"from": settKeeper})
 
     chain.sleep(days(1))
     chain.mine()
 
     if tendable:
-        strategy.tend({"from": deployer})
+        strategy.tend({"from": strategyKeeper})
 
-    strategy.harvest({"from": deployer})
+    strategy.harvest({"from": strategyKeeper})
 
     chain.sleep(days(1))
     chain.mine()
 
+    accounts.at(badger.deployer, force=True)
     accounts.at(strategy.governance(), force=True)
     accounts.at(strategy.strategist(), force=True)
     accounts.at(strategy.keeper(), force=True)
     accounts.at(strategy.guardian(), force=True)
     accounts.at(controller, force=True)
 
-    chain.snapshot()
-
-
+# @pytest.mark.skip()
 @pytest.mark.parametrize(
-    "settId",
-    [
-        "native.renCrv",
-        "native.badger",
-        "native.sbtcCrv",
-        "native.tbtcCrv",
-        # "pickle.renCrv",
-        "harvest.renCrv",
-        "native.uniBadgerWbtc",
-    ],
+    "settConfig", settTestConfig,
 )
-def test_strategy_permissions(settId):
-    badger = badger_single_sett(settId)
-    state_setup(badger, settId)
+def test_strategy_action_permissions(settConfig):
+    # Setup
+    badger = badger_single_sett(settConfig)
+    state_setup(badger, settConfig)
 
-    controller = badger.getController(settId)
+    settId = settConfig['id']
+
+    controller = badger.getControllerFor(settId)
     sett = badger.getSett(settId)
     strategy = badger.getStrategy(settId)
     want = badger.getStrategyWant(settId)
@@ -73,15 +68,12 @@ def test_strategy_permissions(settId):
     tendable = strategy.isTendable()
 
     deployer = badger.deployer
-    randomUser = accounts[6]
+    randomUser = accounts[8]
+    # End Setup
 
     # ===== Strategy =====
-    # initialized = true
-
-    # deposit: onlyAuthorizedActorsOrController
     authorizedActors = [
         strategy.governance(),
-        strategy.strategist(),
         strategy.keeper(),
     ]
 
@@ -90,7 +82,6 @@ def test_strategy_permissions(settId):
 
     for actor in authorizedActors:
         strategy.deposit({"from": actor})
-        chain.revert()
 
     # harvest: onlyAuthorizedActors
     with brownie.reverts("onlyAuthorizedActors"):
@@ -98,7 +89,6 @@ def test_strategy_permissions(settId):
 
     for actor in authorizedActors:
         strategy.harvest({"from": actor})
-        chain.revert()
 
     # (if tendable) tend: onlyAuthorizedActors
     if tendable:
@@ -106,7 +96,6 @@ def test_strategy_permissions(settId):
             strategy.tend({"from": randomUser})
 
         for actor in authorizedActors:
-            chain.revert()
             strategy.tend({"from": actor})
 
     actorsToCheck = [
@@ -131,76 +120,28 @@ def test_strategy_permissions(settId):
         with brownie.reverts("onlyController"):
             strategy.withdrawOther(controller, {"from": actor})
 
-    authorizedPausers = [
-        strategy.governance(),
-        strategy.strategist(),
-        strategy.guardian(),
-    ]
-    # pause onlyPausers
-    for pauser in authorizedPausers:
-        strategy.pause({"from": pauser})
-        chain.revert()
+# @pytest.mark.skip()
+@pytest.mark.parametrize(
+    "settConfig", settTestConfig,
+)
+def test_strategy_config_permissions(settConfig):
+    # Setup
+    badger = badger_single_sett(settConfig)
+    state_setup(badger, settConfig)
 
-    with brownie.reverts("onlyPausers"):
-        strategy.pause({"from": randomUser})
+    settId = settConfig['id']
 
-    # unpause onlyPausers
-    for pauser in authorizedPausers:
-        strategy.pause({"from": pauser})
-        strategy.unpause({"from": pauser})
-        chain.revert()
+    controller = badger.getControllerFor(settId)
+    sett = badger.getSett(settId)
+    strategy = badger.getStrategy(settId)
+    want = badger.getStrategyWant(settId)
 
-    strategy.pause({"from": strategy.guardian()})
-    with brownie.reverts("onlyPausers"):
-        strategy.unpause({"from": randomUser})
+    tendable = strategy.isTendable()
 
-    chain.revert()
+    deployer = badger.deployer
+    randomUser = accounts[8]
+    # End Setup
 
-    # Pause Gated Functions
-    # deposit
-    # withdraw
-    # withdrawAll
-    # withdrawOther
-    # harvest
-    # tend
-    strategy.pause({"from": strategy.guardian()})
-    with brownie.reverts("Pausable: paused"):
-        sett.earn({"from": deployer})
-    with brownie.reverts("Pausable: paused"):
-        sett.withdrawAll({"from": deployer})
-    with brownie.reverts("Pausable: paused"):
-        strategy.harvest({"from": deployer})
-    if strategy.isTendable():
-        with brownie.reverts("Pausable: paused"):
-            strategy.tend({"from": deployer})
-
-    chain.revert()
-    # Unpause should unlock
-    # deposit
-    # withdraw
-    # withdrawAll
-    # withdrawOther
-    # harvest
-    # tend
-    strategy.pause({"from": strategy.guardian()})
-    strategy.unpause({"from": strategy.guardian()})
-
-    sett.deposit(1, {"from": deployer})
-    sett.earn({"from": deployer})
-    sett.withdraw(1, {"from": deployer})
-    sett.withdrawAll({"from": deployer})
-    strategy.harvest({"from": deployer})
-    if strategy.isTendable():
-        strategy.tend({"from": deployer})
-
-    chain.revert()
-
-    # Governance params: onlyGovernance
-    # setGuardian
-    # setWithdrawalFee
-    # setPerformanceFeeStrategist
-    # setPerformanceFeeGovernance
-    # setController
     governance = strategy.governance()
 
     # Valid User should update
@@ -265,78 +206,172 @@ def test_strategy_permissions(settId):
         with brownie.reverts("onlyGovernance"):
             strategy.setFarmPerformanceFeeStrategist(0, {"from": randomUser})
 
-    chain.revert()
-
-
 # @pytest.mark.skip()
 @pytest.mark.parametrize(
-    "settId",
-    [
-        "native.renCrv",
-        "native.badger",
-        "native.sbtcCrv",
-        "native.tbtcCrv",
-        # "pickle.renCrv",
-        "harvest.renCrv",
-        "native.uniBadgerWbtc",
-    ],
+    "settConfig", settTestConfig,
 )
-def test_sett_permissions(settId):
-    badger = badger_single_sett(settId)
-    state_setup(badger, settId)
+def test_strategy_pausing_permissions(settConfig):
+    # Setup
+    badger = badger_single_sett(settConfig)
+    state_setup(badger, settConfig)
 
-    controller = badger.getController(settId)
+    settId = settConfig['id']
+
+    controller = badger.getControllerFor(settId)
     sett = badger.getSett(settId)
     strategy = badger.getStrategy(settId)
     want = badger.getStrategyWant(settId)
 
+    tendable = strategy.isTendable()
+
     deployer = badger.deployer
-    randomUser = accounts[6]
+    randomUser = accounts[8]
+    # End Setup
 
+    authorizedPausers = [
+        strategy.governance(),
+        strategy.guardian(),
+    ]
+
+    authorizedUnpausers = [
+        strategy.governance(),
+    ]
+
+    # pause onlyPausers
+    for pauser in authorizedPausers:
+        strategy.pause({"from": pauser})
+        strategy.unpause({"from": authorizedUnpausers[0]})
+
+    with brownie.reverts("onlyPausers"):
+        strategy.pause({"from": randomUser})
+
+    # unpause onlyPausers
+    for unpauser in authorizedUnpausers:
+        strategy.pause({"from": unpauser})
+        strategy.unpause({"from": unpauser})
+    
+    with brownie.reverts("onlyGovernance"):
+        strategy.unpause({"from": randomUser})
+
+    strategy.pause({"from": strategy.guardian()})
+
+    strategyKeeper = accounts.at(strategy.keeper(), force=True)
+
+    with brownie.reverts("Pausable: paused"):
+        sett.withdrawAll({"from": deployer})
+    with brownie.reverts("Pausable: paused"):
+        strategy.harvest({"from": strategyKeeper})
+    if strategy.isTendable():
+        with brownie.reverts("Pausable: paused"):
+            strategy.tend({"from": strategyKeeper})
+
+    strategy.unpause({"from": authorizedUnpausers[0]})
+
+    sett.deposit(1, {"from": deployer})
+    sett.withdraw(1, {"from": deployer})
+    sett.withdrawAll({"from": deployer})
+
+    strategy.harvest({"from": strategyKeeper})
+    if strategy.isTendable():
+        strategy.tend({"from": strategyKeeper})
+
+
+@pytest.mark.parametrize(
+    "settConfig", settTestConfig,
+)
+def test_sett_pausing_permissions(settConfig): 
+    # Setup
+    badger = badger_single_sett(settConfig)
+    state_setup(badger, settConfig)
+    settId = settConfig['id']
+    sett = badger.getSett(settId)
+    deployer = badger.deployer
+    randomUser = accounts[8]
     assert sett.strategist() == AddressZero
+    # End Setup
 
-    # ===== Sett =====
-    # initialize - no-one
-    # initialized = true
+    authorizedPausers = [
+        sett.governance(),
+        sett.guardian(),
+    ]
 
-    # == All Valid Users ==
-    # EOAs or approved contracts, can only take one action per block
+    authorizedUnpausers = [
+        sett.governance(),
+    ]
 
-    # deposit
-    # depositAll
-    # withdraw
-    # withdrawAll
+    # pause onlyPausers
+    for pauser in authorizedPausers:
+        sett.pause({"from": pauser})
+        sett.unpause({"from": authorizedUnpausers[0]})
+
+    with brownie.reverts("onlyPausers"):
+        sett.pause({"from": randomUser})
+
+    # unpause onlyPausers
+    for unpauser in authorizedUnpausers:
+        sett.pause({"from": unpauser})
+        sett.unpause({"from": unpauser})
+
+    sett.pause({"from": sett.guardian()})
+    with brownie.reverts("onlyGovernance"):
+        sett.unpause({"from": randomUser})
+
+    settKeeper = accounts.at(sett.keeper(), force=True)
+
+    with brownie.reverts("Pausable: paused"):
+        sett.earn({"from": settKeeper})
+    with brownie.reverts("Pausable: paused"):
+        sett.withdrawAll({"from": deployer})
+    with brownie.reverts("Pausable: paused"):
+        sett.withdraw(1, {"from": deployer})
+    with brownie.reverts("Pausable: paused"):
+        sett.deposit(1, {"from": randomUser})
+    with brownie.reverts("Pausable: paused"):
+        sett.depositAll({"from": randomUser})
+
+    sett.unpause({"from": authorizedUnpausers[0]})
+
+    sett.deposit(1, {"from": deployer})
+    sett.earn({"from": settKeeper})
+    sett.withdraw(1, {"from": deployer})
+    sett.withdrawAll({"from": deployer})
+
+@pytest.mark.parametrize(
+    "settConfig", settTestConfig,
+)
+def test_sett_config_permissions(settConfig):
+    # Setup
+    badger = badger_single_sett(settConfig)
+    state_setup(badger, settConfig)
+    settId = settConfig['id']
+    sett = badger.getSett(settId)
+    randomUser = accounts[8]
+    assert sett.strategist() == AddressZero
+    # End Setup
 
     # == Governance ==
-    # setMin
-    # setController
-    # setStrategist
-
     validActor = sett.governance()
 
+    # setMin
     with brownie.reverts("onlyGovernance"):
         sett.setMin(0, {"from": randomUser})
 
     sett.setMin(0, {"from": validActor})
     assert sett.min() == 0
 
-    chain.revert()
-
+    # setController
     with brownie.reverts("onlyGovernance"):
         sett.setController(AddressZero, {"from": randomUser})
 
     sett.setController(AddressZero, {"from": validActor})
     assert sett.controller() == AddressZero
 
-    chain.revert()
-
+    # setStrategist
     with brownie.reverts("onlyGovernance"):
         sett.setStrategist(validActor, {"from": randomUser})
 
     sett.setStrategist(validActor, {"from": validActor})
     assert sett.strategist() == validActor
-
-    chain.revert()
 
     with brownie.reverts("onlyGovernance"):
         sett.setKeeper(validActor, {"from": randomUser})
@@ -344,7 +379,18 @@ def test_sett_permissions(settId):
     sett.setKeeper(validActor, {"from": validActor})
     assert sett.keeper() == validActor
 
-    chain.revert()
+@pytest.mark.parametrize(
+    "settConfig", settTestConfig,
+)    
+def test_sett_earn_permissions(settConfig):
+    # Setup
+    badger = badger_single_sett(settConfig)
+    state_setup(badger, settConfig)
+    settId = settConfig['id']
+    sett = badger.getSett(settId)
+    randomUser = accounts[8]
+    assert sett.strategist() == AddressZero
+    # End Setup
 
     # == Authorized Actors ==
     # earn
@@ -358,24 +404,16 @@ def test_sett_permissions(settId):
         sett.earn({"from": randomUser})
 
     for actor in authorizedActors:
+        chain.snapshot()
         sett.earn({"from": actor})
         chain.revert()
 
 
-# @pytest.mark.skip()
+@pytest.mark.skip()
 @pytest.mark.parametrize(
-    "settId",
-    [
-        "native.renCrv",
-        "native.badger",
-        "native.sbtcCrv",
-        "native.tbtcCrv",
-        # "pickle.renCrv",
-        "harvest.renCrv",
-        "native.uniBadgerWbtc",
-    ],
+    "settConfig", settTestConfig,
 )
-def test_controller_permissions(settId):
+def test_controller_permissions(settConfig):
     # ===== Controller =====
     # initialize - no-one
     # initialized = true

@@ -8,7 +8,7 @@ def as_wei(value):
 
 
 erc20 = DotMap(
-    balanceOf="balanceOf(address)(uint256)", totalSupply="totalSupply()(uint256)"
+    balanceOf="balanceOf(address)(uint256)", totalSupply="totalSupply()(uint256)", transfer="transfer(address,uint256)()", safeTransfer="safeTransfer(address,uint256)()"
 )
 sett = DotMap(
     getPricePerFullShare="getPricePerFullShare()(uint256)",
@@ -28,7 +28,15 @@ strategy = DotMap(
     withdrawalFee="withdrawalFee()(uint256)",
     performanceFeeGovernance="performanceFeeGovernance()(uint256)",
     performanceFeeStrategist="performanceFeeStrategist()(uint256)",
+    farmPerformanceFeeGovernance="farmPerformanceFeeGovernance()(uint256)",
+    farmPerformanceFeeStrategist="farmPerformanceFeeStrategist()(uint256)",
 )
 harvestFarm = DotMap(earned="earned()(uint256)")
+rewardPool = DotMap(
+        # claimable rewards
+        earned="earned(address)(uint256)",
+        # amount staked
+        balanceOf="balanceOf(address)(uint256)",
+)
 
-func = DotMap(erc20=erc20, sett=sett, strategy=strategy,)
+func = DotMap(erc20=erc20, sett=sett, strategy=strategy, rewardPool=rewardPool,)
