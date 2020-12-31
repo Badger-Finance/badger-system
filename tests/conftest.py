@@ -161,7 +161,7 @@ def badger_single_sett(settConfig):
         badger = connect_badger(badger_config.prod_json)
 
         distribute_test_ether(badger.deployer, Wei("20 ether"))
-        distribute_from_whales(badger, badger.deployer)
+        distribute_from_whales(badger.deployer)
 
         return badger
 
@@ -170,7 +170,7 @@ def badger_single_sett(settConfig):
 def badger_hunt_unit():
     deployer = accounts[0]
     badger = deploy_badger_minimal(deployer)
-    distribute_from_whales(badger, deployer)
+    distribute_from_whales(deployer)
 
     badger.deploy_logic("BadgerHunt", BadgerHunt)
     badger.deploy_badger_hunt()
@@ -186,7 +186,7 @@ def badger_hunt_unit():
 def badger_tree_unit():
     deployer = accounts[0]
     badger = deploy_badger_minimal(deployer)
-    distribute_from_whales(badger, deployer)
+    distribute_from_whales(deployer)
 
     badger.deploy_logic("BadgerHunt", BadgerHunt)
     badger.deploy_badger_hunt()
