@@ -1,6 +1,5 @@
 import json
 
-from assistant.rewards.aws_utils import download, upload
 from assistant.rewards.calc_stakes import calc_geyser_stakes
 from assistant.rewards.calc_harvest import calc_balances_from_geyser_events,get_initial_user_state
 from assistant.subgraph.client import (
@@ -70,7 +69,6 @@ def calc_geyser_rewards(badger, periodStartBlock, endBlock, cycle):
 def calc_harvest_meta_farm_rewards(badger,name, startBlock, endBlock):
     startBlockTime = web3.eth.getBlock(startBlock)["timestamp"]
     endBlockTime = web3.eth.getBlock(endBlock)["timestamp"]
-    
     harvestSettId = badger.getSett(name).address.lower()
     geyserId = badger.getGeyser(name).address.lower()
     settBalances = fetch_sett_balances(harvestSettId, startBlock)
@@ -91,13 +89,7 @@ def calc_harvest_meta_farm_rewards(badger,name, startBlock, endBlock):
             if u.address == transfer_address:
                 user = u
         if user:
-            secondsSinceLastAction = transfer_timestamp - user.lastUpdated
-            assert secondsSinceLastAction > 0
-            user.lastUpdated = transfer_timestamp
-            shareSeconds = secondsSinceLastAction * user.currentDeposited
-            assert shareSeconds > 0
-            user.shareSeconds += shareSeconds
-            user.currentDeposited += transfer_amount
+               user.process_transfer(transfer)
         else:
             # If the user hasn't deposited before, create a new one
             newUser = User(transfer_address,transfer_amount,transfer_timestamp)
@@ -105,14 +97,15 @@ def calc_harvest_meta_farm_rewards(badger,name, startBlock, endBlock):
             user_state.append(newUser)
 
     for user in user_state:
-        secondsSinceLastAction = endBlockTime - user.lastUpdated
-        assert secondsSinceLastAction > 0
-        user.lastUpdated = endBlockTime
-        user.shareSeconds += secondsSinceLastAction * user.currentDeposited
+        user.process_transfer({
+            "transaction": {
+                "timestamp": endBlockTime
+            },
+            "amount":0
+        })
 
     console.log(user_state)
-    # TODO: Add harvest reward
-    return []
+    return user_state
 
 
 

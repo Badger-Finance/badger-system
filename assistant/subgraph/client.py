@@ -71,7 +71,7 @@ def fetch_sett_balances(settId, startBlock):
                         id
                     }
                     shareBalanceRaw
-                  } 
+                  }
                 }
             }
         """
@@ -132,7 +132,8 @@ def fetch_sett_transfers(settID, startBlock, endBlock):
         """
         query sett_transfers($vaultID: Vault_filter, $blockHeight: Block_height) {
             vaults(block: $blockHeight, where: $vaultID) {
-                deposits {
+                pricePerFullShare
+                deposits(first:1000) {
                     account {
                      id
                     }
@@ -142,7 +143,7 @@ def fetch_sett_transfers(settID, startBlock, endBlock):
                         blockNumber
                     }
                 }
-                withdrawals {
+                withdrawals(first:1000) {
                     account {
                      id
                     }
@@ -158,23 +159,26 @@ def fetch_sett_transfers(settID, startBlock, endBlock):
     )
     variables = {"vaultID": {"id": settID}, "blockHeight": {"number": endBlock}}
 
-    def filter_by_startBlock(transfer):
-        return int(transfer["transaction"]["blockNumber"]) > startBlock
+    results = client.execute(query, variable_values=variables)
+    pricePerFullShare = results["vaults"][0]["pricePerFullShare"]
 
-    def convert_amount_type(transfer):
-        transfer["amount"] = int(transfer["amount"])
+    def filter_by_startBlock(transfer):
+            return int(transfer["transaction"]["blockNumber"]) > startBlock
+
+    def convert_amount(transfer):
+        transfer["amount"] = int(transfer["amount"]) / float(pricePerFullShare)
         return transfer
 
     def negate_withdrawals(withdrawal):
         withdrawal["amount"] = -withdrawal["amount"]
         return withdrawal
 
-    results = client.execute(query, variable_values=variables)
 
-    deposits = map(convert_amount_type, results["vaults"][0]["deposits"])
+
+    deposits = map(convert_amount, results["vaults"][0]["deposits"])
     withdrawals = map(
         negate_withdrawals,
-        map(convert_amount_type, results["vaults"][0]["withdrawals"]),
+        map(convert_amount, results["vaults"][0]["withdrawals"]),
     )
 
     deposits = filter(filter_by_startBlock, list(deposits))
