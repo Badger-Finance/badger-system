@@ -21,24 +21,29 @@ If you're not familiar with brownie, see the [quickstart guide](https://eth-brow
 git clone https://github.com/Badger-Finance/badger-system
 cd badger-system
 yarn install --lock-file
+python3 -m venv venv
+source venv/bin/activate
 pip install -r requirements.txt
 ```
 
 ### Compile
 
 ```bash
+source venv/bin/activate
 brownie compile
 ```
 
 ### Test
 
 ```bash
+source venv/bin/activate
 brownie test
 ```
 
 ### Add coverage and gas profiling
 
 ```bash
+source venv/bin/activate
 brownie test --coverage --gas
 ```
 
@@ -46,6 +51,7 @@ brownie test --coverage --gas
 Run a local ganache instance connected to badger contracts, with all Sett-related assets distributed to a test account specified in the TEST_ACCOUNT env variable. Assumes the default network is mainnet-fork in the brownie config. Ganache will continue to run until the process is closed.
 
 ```bash
+source venv/bin/activate
 brownie run scripts/local_instance.py
 ```
 
