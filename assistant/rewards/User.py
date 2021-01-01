@@ -1,3 +1,6 @@
+from rich.console import Console
+
+console = Console()
 class User:
     def __init__(self, address, currentDeposited, lastUpdated):
         self.address = address
@@ -17,7 +20,7 @@ class User:
         transfer_timestamp = int(transfer["transaction"]["timestamp"])
         transfer_amount = transfer["amount"]
 
-        secondsSinceLastAction = transfer_timestamp - user.lastUpdated
+        secondsSinceLastAction = transfer_timestamp - self.lastUpdated
         assert secondsSinceLastAction > 0
         self.lastUpdated = transfer_timestamp
         shareSeconds = secondsSinceLastAction * self.currentDeposited

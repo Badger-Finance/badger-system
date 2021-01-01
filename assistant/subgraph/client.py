@@ -163,7 +163,7 @@ def fetch_sett_transfers(settID, startBlock, endBlock):
     pricePerFullShare = results["vaults"][0]["pricePerFullShare"]
 
     def filter_by_startBlock(transfer):
-            return int(transfer["transaction"]["blockNumber"]) > startBlock
+        return int(transfer["transaction"]["blockNumber"]) > startBlock
 
     def convert_amount(transfer):
         transfer["amount"] = int(transfer["amount"]) / float(pricePerFullShare)
@@ -187,3 +187,19 @@ def fetch_sett_transfers(settID, startBlock, endBlock):
         [*list(deposits), *list(withdrawals)],
         key=lambda t: t["transaction"]["timestamp"],
     )
+
+def fetch_harvest_farm_events():
+    query = gql("""
+        query fetch_harvest_events {
+            farmHarvestEvents(first:1000,orderBy: blockNumber,orderDirection:asc) {
+                id
+                farmToRewards
+                blockNumber
+                totalFarmHarvested
+                timestamp
+            }
+        }
+
+    """)
+    results = client.execute(query)
+    return results["farmHarvestEvents"]
