@@ -1,3 +1,4 @@
+from helpers.utils import sec
 import json
 
 from assistant.rewards.aws_utils import download, upload
@@ -10,7 +11,7 @@ from brownie.network.gas.strategies import GasNowStrategy
 from config.rewards_config import rewards_config
 from eth_abi import decode_single, encode_single
 from eth_abi.packed import encode_abi_packed
-from helpers.time_utils import hours
+from helpers.time_utils import hours, to_hours
 from rich.console import Console
 from scripts.systems.badger_system import BadgerSystem
 
@@ -157,7 +158,7 @@ def fetch_current_rewards_tree(badger, print_output=False):
 
     # Ensure file tracks block within 1 day of upload
     assert abs(lastUpdate - lastUpdatePublish) < 6500
-    
+
     return currentTree
 
 
@@ -246,7 +247,9 @@ def rootUpdater(badger, startBlock, endBlock, test=False):
     timeSinceLastupdate = currentTime - currentMerkleData["lastUpdateTime"]
     if timeSinceLastupdate < rewards_config.rootUpdateMinInterval and not test:
         console.print(
-            "[bold yellow]===== Result: Last Update too Recent =====[/bold yellow]"
+            "[bold yellow]===== Result: Last Update too Recent ({}) =====[/bold yellow]".format(
+                to_hours(timeSinceLastupdate)
+            )
         )
         return False
 

@@ -1,4 +1,4 @@
-from scripts.rewards.rewards_utils import fetch_rewards_preconditions
+from scripts.rewards.rewards_utils import calc_next_cycle_range
 import time
 
 from brownie import *
@@ -13,7 +13,7 @@ console = Console()
 
 def main():
     badger = connect_badger(badger_config.prod_json, load_keeper=True)
-    (startBlock, endBlock) = fetch_rewards_preconditions(badger)
+    (startBlock, endBlock) = calc_next_cycle_range(badger)
 
     # If sufficient time has passed since last root proposal, propose a new root
     rootProposed = run_action(
