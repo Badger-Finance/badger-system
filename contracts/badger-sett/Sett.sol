@@ -16,16 +16,22 @@ import "./SettAccessControlDefended.sol";
 
 /* 
     Source: https://github.com/iearn-finance/yearn-protocol/blob/develop/contracts/vaults/yVault.sol
+    
+    Changelog:
 
-    Version 1.1
+    V1.1
     * Strategist no longer has special function calling permissions
     * Version function added to contract
-    * All write functions are pausable
+    * All write functions, with the exception of transfer, are pausable
     * Keeper or governance can pause
     * Only governance can unpause
-    * Governance, by maintaining upgradability rights, can remove the keepers' ability to pause
+
+    V1.2
+    * Transfer functions are now pausable along with all other non-permissioned write functions
+    * All permissioned write functions, with the exception of pause() & unpause(), are pausable as well
 */
-contract Sett is ERC20Upgradeable, PausableUpgradeable, SettAccessControlDefended {
+
+contract Sett is ERC20Upgradeable, SettAccessControlDefended, PausableUpgradeable {
     using SafeERC20Upgradeable for IERC20Upgradeable;
     using AddressUpgradeable for address;
     using SafeMathUpgradeable for uint256;
@@ -36,12 +42,13 @@ contract Sett is ERC20Upgradeable, PausableUpgradeable, SettAccessControlDefende
     uint256 public constant max = 10000;
 
     address public controller;
-    address public guardian;
 
     mapping(address => uint256) public blockLock;
 
     string internal constant _defaultNamePrefix = "Badger Sett ";
     string internal constant _symbolSymbolPrefix = "b";
+
+    address public guardian;
 
     event FullPricePerShareUpdated(uint256 value, uint256 indexed timestamp, uint256 indexed blockNumber);
 
@@ -104,7 +111,7 @@ contract Sett is ERC20Upgradeable, PausableUpgradeable, SettAccessControlDefende
     /// ===== View Functions =====
 
     function version() public view returns (string memory) {
-        return "1.1";
+        return "1.2";
     }
 
     function getPricePerFullShare() public view returns (uint256) {
@@ -123,7 +130,7 @@ contract Sett is ERC20Upgradeable, PausableUpgradeable, SettAccessControlDefende
     /// @notice Defines how much of the Setts' underlying can be borrowed by the Strategy for use
     /// @notice Custom logic in here for how much the vault allows to be borrowed
     /// @notice Sets minimum required on-hand to keep small withdrawals cheap
-    function available() public view returns (uint256) {
+    function available() public view virtual returns (uint256) {
         return token.balanceOf(address(this)).mul(min).div(max);
     }
 
@@ -171,25 +178,24 @@ contract Sett is ERC20Upgradeable, PausableUpgradeable, SettAccessControlDefende
 
     /// @notice Set minimum threshold of underlying that must be deposited in strategy
     /// @notice Can only be changed by governance
-    function setMin(uint256 _min) external {
+    function setMin(uint256 _min) external whenNotPaused {
         _onlyGovernance();
         min = _min;
     }
 
     /// @notice Change controller address
     /// @notice Can only be changed by governance
-    function setController(address _controller) public {
+    function setController(address _controller) public whenNotPaused {
         _onlyGovernance();
         controller = _controller;
     }
 
     /// @notice Change guardian address
     /// @notice Can only be changed by governance
-    function setGuardian(address _guardian) external {
+    function setGuardian(address _guardian) external whenNotPaused {
         _onlyGovernance();
         guardian = _guardian;
     }
-
 
     /// ===== Permissioned Actions: Controller =====
 
@@ -235,7 +241,7 @@ contract Sett is ERC20Upgradeable, PausableUpgradeable, SettAccessControlDefende
 
     /// @dev Calculate the number of shares to issue for a given deposit
     /// @dev This is based on the realized value of underlying assets between Sett & associated Strategy
-    function _deposit(uint256 _amount) internal {
+    function _deposit(uint256 _amount) internal virtual {
         uint256 _pool = balance();
         uint256 _before = token.balanceOf(address(this));
         token.safeTransferFrom(msg.sender, address(this), _amount);
@@ -251,7 +257,7 @@ contract Sett is ERC20Upgradeable, PausableUpgradeable, SettAccessControlDefende
     }
 
     // No rebalance implementation for lower fees and faster swaps
-    function _withdraw(uint256 _shares) internal {
+    function _withdraw(uint256 _shares) internal virtual {
         uint256 r = (balance().mul(_shares)).div(totalSupply());
         _burn(msg.sender, _shares);
 
@@ -277,7 +283,7 @@ contract Sett is ERC20Upgradeable, PausableUpgradeable, SettAccessControlDefende
     /// ===== ERC20 Overrides =====
 
     /// @dev Add blockLock to transfers, users cannot transfer tokens in the same block as a deposit or withdrawal.
-    function transfer(address recipient, uint256 amount) public virtual override returns (bool) {
+    function transfer(address recipient, uint256 amount) public virtual override whenNotPaused returns (bool) {
         _blockLocked();
         return super.transfer(recipient, amount);
     }
@@ -286,7 +292,7 @@ contract Sett is ERC20Upgradeable, PausableUpgradeable, SettAccessControlDefende
         address sender,
         address recipient,
         uint256 amount
-    ) public virtual override returns (bool) {
+    ) public virtual override whenNotPaused returns (bool) {
         _blockLocked();
         return super.transferFrom(sender, recipient, amount);
     }

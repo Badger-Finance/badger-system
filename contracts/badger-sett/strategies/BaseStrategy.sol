@@ -15,6 +15,18 @@ import "interfaces/badger/IStrategy.sol";
 
 import "../SettAccessControl.sol";
 
+/*
+    ===== Badger Base Strategy =====
+    Common base class for all Sett strategies
+
+    Changelog
+    V1.1
+    - Verify amount unrolled from strategy positions on withdraw() is within a threshold relative to the requested amount as a sanity check
+    - Add version number which is displayed with baseStrategyVersion(). If a strategy does not implement this function, it can be assumed to be 1.0
+
+    V1.2
+    - Remove idle want handling from base withdraw() function. This should be handled as the strategy sees fit in _withdrawSome()
+*/
 abstract contract BaseStrategy is PausableUpgradeable, SettAccessControl {
     using SafeERC20Upgradeable for IERC20Upgradeable;
     using AddressUpgradeable for address;
@@ -60,7 +72,6 @@ abstract contract BaseStrategy is PausableUpgradeable, SettAccessControl {
         controller = _controller;
         guardian = _guardian;
         withdrawalMaxDeviationThreshold = 50;
-
     }
 
     // ===== Modifiers =====
@@ -79,7 +90,7 @@ abstract contract BaseStrategy is PausableUpgradeable, SettAccessControl {
 
     /// ===== View Functions =====
     function baseStrategyVersion() public view returns (string memory) {
-        return "1.1";
+        return "1.2";
     }
 
     /// @notice Get the balance of want held idle in the Strategy
@@ -88,11 +99,11 @@ abstract contract BaseStrategy is PausableUpgradeable, SettAccessControl {
     }
 
     /// @notice Get the total balance of want realized in the strategy, whether idle or active in Strategy positions.
-    function balanceOf() public view virtual returns (uint256) {
+    function balanceOf() public virtual view returns (uint256) {
         return balanceOfWant().add(balanceOfPool());
     }
 
-    function isTendable() public view virtual returns (bool) {
+    function isTendable() public virtual view returns (bool) {
         return false;
     }
 
@@ -158,27 +169,20 @@ abstract contract BaseStrategy is PausableUpgradeable, SettAccessControl {
     function withdraw(uint256 _amount) external virtual whenNotPaused {
         _onlyController();
 
-        uint256 _balance = IERC20Upgradeable(want).balanceOf(address(this));
+        uint256 _preWithdraw = IERC20Upgradeable(want).balanceOf(address(this));
 
-        uint256 _withdrawn = 0;
-        uint256 _postWithdraw = _balance;
+        // Withdraw from strategy positions, typically taking from any idle want first.
+        uint256 _withdrawn = _withdrawSome(_amount);
 
-        // Withdraw some from activities if idle want is not sufficient to cover withdrawal
-        if (_balance < _amount) {
-            _withdrawn = _withdrawSome(_amount.sub(_balance));
-            _postWithdraw = _withdrawn.add(_balance);
+        // Sanity check: Ensure we were able to retrieve sufficent want from strategy positions
+        // If we end up with less than the amount requested, make sure it does not deviate beyond a maximum threshold
+        uint256 _postWithdraw = _withdrawn.add(_preWithdraw);
 
-            // Sanity check: Ensure we were able to retrieve sufficent want from strategy positions
-            // If we end up with less than the amount requested, make sure it does not deviate beyond a maximum threshold
-            if (_postWithdraw < _amount) {
-                uint256 diff = _diff(_amount, _postWithdraw);
+        if (_postWithdraw < _amount) {
+            uint256 diff = _diff(_amount, _postWithdraw);
 
-                // Require that difference between expected and actual values is less than the deviation threshold percentage
-                require(
-                    diff <= _amount.mul(withdrawalMaxDeviationThreshold).div(MAX_FEE),
-                    "base-strategy/withdraw-exceed-max-deviation-threshold"
-                );
-            }
+            // Require that difference between expected and actual values is less than the deviation threshold percentage
+            require(diff <= _amount.mul(withdrawalMaxDeviationThreshold).div(MAX_FEE), "base-strategy/withdraw-exceed-max-deviation-threshold");
         }
 
         // Return the amount actually withdrawn if less than amount requested
@@ -312,7 +316,7 @@ abstract contract BaseStrategy is PausableUpgradeable, SettAccessControl {
     /// @notice Specify tokens used in yield process, should not be available to withdraw via withdrawOther()
     function _onlyNotProtectedTokens(address _asset) internal virtual;
 
-    function getProtectedTokens() external view virtual returns (address[] memory);
+    function getProtectedTokens() external virtual view returns (address[] memory);
 
     /// @dev Internal logic for strategy migration. Should exit positions as efficiently as possible
     function _withdrawAll() internal virtual;
@@ -328,10 +332,10 @@ abstract contract BaseStrategy is PausableUpgradeable, SettAccessControl {
     // function harvest() external virtual;
 
     /// @dev User-friendly name for this strategy for purposes of convenient reading
-    function getName() external pure virtual returns (string memory);
+    function getName() external virtual pure returns (string memory);
 
     /// @dev Balance of want currently held in strategy positions
-    function balanceOfPool() public view virtual returns (uint256);
+    function balanceOfPool() public virtual view returns (uint256);
 
     uint256[50] private __gap;
 }
