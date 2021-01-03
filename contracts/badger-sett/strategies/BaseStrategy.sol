@@ -12,6 +12,7 @@ import "deps/@openzeppelin/contracts-upgradeable/proxy/Initializable.sol";
 import "interfaces/uniswap/IUniswapRouterV2.sol";
 import "interfaces/badger/IController.sol";
 import "interfaces/badger/IStrategy.sol";
+import "contracts/libraries/UniswapLibraries/UniswapV2Library.sol";
 
 import "../SettAccessControl.sol";
 
@@ -268,6 +269,29 @@ abstract contract BaseStrategy is PausableUpgradeable, SettAccessControl {
     ) internal {
         _safeApproveHelper(startToken, uniswap, balance);
         IUniswapRouterV2(uniswap).swapExactTokensForTokens(balance, 0, path, address(this), now);
+    }
+
+    // babylonian method (https://en.wikipedia.org/wiki/Methods_of_computing_square_roots#Babylonian_method)
+    //from uniswap https://github.com/Uniswap/uniswap-v2-core/blob/master/contracts/libraries/Math.sol
+    function sqrt(uint y) internal pure returns (uint z) {
+        if (y > 3) {
+            z = y;
+            uint x = y / 2 + 1;
+            while (x < z) {
+                z = x;
+                x = (y / x + x) / 2;
+            }
+        } else if (y != 0) {
+            z = 1;
+        }
+    }
+
+    function _getOptimalSwapAmount(uint256 amount, address tokenIn, address tokenOut) internal view returns (uint256){
+
+        //this orders by what we put in. as tokenIn is first it is now A
+        (uint reserveA,)  = UniswapV2Library.getReserves(IUniswapRouterV2(uniswap).factory(), tokenIn, tokenOut);
+
+        return sqrt(reserveA.mul(amount.mul(3988000) + reserveA.mul(3988009))).sub(reserveA.mul(1997)) / 1994;
     }
 
     function _swapEthIn(uint256 balance, address[] memory path) internal {
