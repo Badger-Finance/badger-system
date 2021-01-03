@@ -58,6 +58,7 @@ def fetch_all_geyser_events(geyserId):
 
 
 def fetch_sett_balances(settId, startBlock):
+    console.log(startBlock)
     console.print(
         "[bold green] Fetching sett balances {}[/bold green]".format(settId)
     )
@@ -78,6 +79,9 @@ def fetch_sett_balances(settId, startBlock):
     )
     variables = {"blockHeight": {"number": startBlock}, "vaultID": {"id": settId}}
     results = client.execute(query, variable_values=variables)
+    if len(results["vaults"]) == 0:
+        return {}
+
     balances = {}
     for result in results["vaults"][0]["balances"]:
         account = result["id"].split("-")[0]
@@ -132,8 +136,8 @@ def fetch_sett_transfers(settID, startBlock, endBlock):
         """
         query sett_transfers($vaultID: Vault_filter, $blockHeight: Block_height) {
             vaults(block: $blockHeight, where: $vaultID) {
-                pricePerFullShare
                 deposits(first:1000) {
+                    pricePerFullShare
                     account {
                      id
                     }
@@ -144,6 +148,7 @@ def fetch_sett_transfers(settID, startBlock, endBlock):
                     }
                 }
                 withdrawals(first:1000) {
+                    pricePerFullShare
                     account {
                      id
                     }
@@ -160,19 +165,18 @@ def fetch_sett_transfers(settID, startBlock, endBlock):
     variables = {"vaultID": {"id": settID}, "blockHeight": {"number": endBlock}}
 
     results = client.execute(query, variable_values=variables)
-    pricePerFullShare = results["vaults"][0]["pricePerFullShare"]
 
     def filter_by_startBlock(transfer):
         return int(transfer["transaction"]["blockNumber"]) > startBlock
 
     def convert_amount(transfer):
-        transfer["amount"] = int(transfer["amount"]) / float(pricePerFullShare)
+        ppfs = float(transfer["pricePerFullShare"])/10**18
+        transfer["amount"] = int(transfer["amount"]) / ppfs
         return transfer
 
     def negate_withdrawals(withdrawal):
         withdrawal["amount"] = -withdrawal["amount"]
         return withdrawal
-
 
 
     deposits = map(convert_amount, results["vaults"][0]["deposits"])

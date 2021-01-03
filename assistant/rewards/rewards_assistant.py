@@ -72,11 +72,15 @@ def calc_harvest_meta_farm_rewards(badger,name, startBlock, endBlock):
     harvestSettId = badger.getSett(name).address.lower()
     geyserId = badger.getGeyser(name).address.lower()
     settBalances = fetch_sett_balances(harvestSettId, startBlock)
+    if len(settBalances) == 0:
+        return []
+
     console.log("Geyser amount in sett Balance: {}".format(settBalances[geyserId]/10**18))
-    settBalances[geyserId] = 0
     geyserEvents = fetch_geyser_events(geyserId, startBlock)
     geyserBalances = calc_balances_from_geyser_events(geyserEvents)
     settTransfers = fetch_sett_transfers(harvestSettId, startBlock, endBlock)
+    
+    settBalances[geyserId] = 0
     user_state = get_initial_user_state(
         settBalances, geyserBalances, startBlockTime
     )
@@ -95,7 +99,6 @@ def calc_harvest_meta_farm_rewards(badger,name, startBlock, endBlock):
             newUser = User(transfer_address,transfer_amount,transfer_timestamp)
             assert transfer_amount > 0
             user_state.append(newUser)
-
     for user in user_state:
         user.process_transfer({
             "transaction": {
@@ -103,8 +106,12 @@ def calc_harvest_meta_farm_rewards(badger,name, startBlock, endBlock):
             },
             "amount":0
         })
+    
+    totalShareSeconds = sum([u.shareSeconds for u in user_state])
+    for user in sorted(user_state,key=lambda u: u.shareSeconds,reverse=True):
+        percentage = (user.shareSeconds/totalShareSeconds) * 100
+        console.log(user,"{}%".format(percentage))
 
-    console.log(user_state)
     return user_state
 
 
