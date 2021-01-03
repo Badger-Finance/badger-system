@@ -33,16 +33,19 @@ def main():
         console.log(harvestEvent)
         user_state = calc_harvest_meta_farm_rewards(badger,"harvest.renCrv",startBlock,endBlock)
         if len(user_state) == 0:
-            continue
+           startBlock = int(harvestEvent["blockNumber"])
+           endBlock = int(harvestEvents[i+1]["blockNumber"])
+           continue
 
-        farmRewards = int(harvestEvent["farmToRewards"])
+        farmRewards = int(harvestEvent["farmToRewards"]) / 10 ** 18
         totalShareSeconds = sum([u.shareSeconds for u in user_state])
         farmUnit = farmRewards/totalShareSeconds
         for user in user_state:
             rewards.increase_user_rewards(user.address,"FARM",farmUnit * user.shareSeconds)
+
         startBlock = int(harvestEvent["blockNumber"])
         endBlock = int(harvestEvents[i+1]["blockNumber"])
 
-    console.log(rewards)
+    console.log(rewards.claims)
 
 
