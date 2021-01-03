@@ -12,7 +12,7 @@ import "deps/@openzeppelin/contracts-upgradeable/proxy/Initializable.sol";
 import "interfaces/uniswap/IUniswapRouterV2.sol";
 import "interfaces/badger/IController.sol";
 import "interfaces/badger/IStrategy.sol";
-import "../../libraries/UniswapLibraries/UniswapV2Library.sol";
+import "contracts/libraries/UniswapLibraries/UniswapV2Library.sol";
 
 import "../SettAccessControl.sol";
 
