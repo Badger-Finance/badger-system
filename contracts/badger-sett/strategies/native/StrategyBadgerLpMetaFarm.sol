@@ -145,19 +145,20 @@ contract StrategyBadgerLpMetaFarm is BaseStrategy {
         harvestData.totalBadger = IERC20Upgradeable(badger).balanceOf(address(this));
         harvestData.badgerHarvested = harvestData.totalBadger.sub(_beforeBadger);
 
-        // Swap half of harvested badger for wBTC in liquidity pool
-        if (harvestData.totalBadger > 0) {
-            harvestData.badgerConvertedToWbtc = harvestData.badgerHarvested.div(2);
-            if (harvestData.badgerConvertedToWbtc > 0) {
-                address[] memory path = new address[](2);
-                path[0] = badger; // Badger
-                path[1] = wbtc;
+        // Calculate optimal badger to swap for single sided liquidity supply
+        if (harvestData.badgerHarvested > 4) {
 
-                _swap(badger, harvestData.badgerConvertedToWbtc, path);
+            uint256 optimal = _getOptimalSwapAmount(harvestData.badgerHarvested, badger, wbtc);
 
-                // Add Badger and wBTC as liquidity if any to add
-                _add_max_liquidity_uniswap(badger, wbtc);
-            }
+            address[] memory path = new address[](2);
+            path[0] = badger; // Badger
+            path[1] = wbtc;
+
+            _swap(badger, optimal, path);
+
+            // Add Badger and wBTC as liquidity if any to add
+            _add_max_liquidity_uniswap(badger, wbtc);
+            
         }
 
         // Deposit gained LP position into staking rewards
