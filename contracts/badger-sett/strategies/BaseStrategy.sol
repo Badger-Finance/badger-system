@@ -169,15 +169,12 @@ abstract contract BaseStrategy is PausableUpgradeable, SettAccessControl {
     function withdraw(uint256 _amount) external virtual whenNotPaused {
         _onlyController();
 
-        uint256 _preWithdraw = IERC20Upgradeable(want).balanceOf(address(this));
-
         // Withdraw from strategy positions, typically taking from any idle want first.
-        uint256 _withdrawn = _withdrawSome(_amount);
+        _withdrawSome(_amount);
+        uint256 _postWithdraw = IERC20Upgradeable(want).balanceOf(address(this));
 
         // Sanity check: Ensure we were able to retrieve sufficent want from strategy positions
         // If we end up with less than the amount requested, make sure it does not deviate beyond a maximum threshold
-        uint256 _postWithdraw = _withdrawn.add(_preWithdraw);
-
         if (_postWithdraw < _amount) {
             uint256 diff = _diff(_amount, _postWithdraw);
 
@@ -337,5 +334,5 @@ abstract contract BaseStrategy is PausableUpgradeable, SettAccessControl {
     /// @dev Balance of want currently held in strategy positions
     function balanceOfPool() public virtual view returns (uint256);
 
-    uint256[50] private __gap;
+    uint256[49] private __gap;
 }
