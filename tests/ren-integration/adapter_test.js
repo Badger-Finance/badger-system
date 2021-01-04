@@ -39,6 +39,7 @@ describe('BadgerRenAdapter', function() {
 
   it('should mint renBTC', async () => {
     const testAccount = web3.eth.accounts.create();
+    web3.eth.defaultAccount = testAccount.address;
 
 	const mint = await renJS.lockAndMint({
       // Send BTC from the Bitcoin blockchain to the Ethereum blockchain.
