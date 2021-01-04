@@ -28,6 +28,9 @@ before(async () => {
   // Need an infura account for testing.
   // Ren test env (gateways) are deployed on the kovan testnet.
   web3 = new Web3(`https://kovan.infura.io/v3/${INFURA_PROJECT_ID}`);
+  // Create and set default test account for all tests (we want to mint/burn from same eth addr).
+  const testAccount = web3.eth.accounts.create();
+  web3.eth.defaultAccount = testAccount.address;
   const networkID = await web3.eth.net.getId();
   if (networkID !== KOVAN_NETWORK_ID) {
     throw `Invalid network id ${networkID}, must use kovan network`;
@@ -38,8 +41,6 @@ describe('BadgerRenAdapter', function() {
   this.timeout(60 * MINUTES); // 60 minute t/o for integration tests
 
   it('should mint renBTC', async () => {
-    const testAccount = web3.eth.accounts.create();
-    web3.eth.defaultAccount = testAccount.address;
 
 	const mint = await renJS.lockAndMint({
       // Send BTC from the Bitcoin blockchain to the Ethereum blockchain.
