@@ -1,7 +1,7 @@
 from scripts.systems.digg_minimal import deploy_digg_minimal
 from helpers.constants import APPROVED_STAKER_ROLE
 from tests.sett.fixtures.SettMiniDeployBase import SettMiniDeployBase
-from config.badger_config import badger_config, sett_config
+from config.badger_config import badger_config, sett_config, digg_config_test
 from helpers.registry import registry
 from brownie import *
 
@@ -26,7 +26,7 @@ class DiggRewardsMiniDeploy(SettMiniDeployBase):
         Distribute badger to Geyser and allow strategy to take
         """
         self.badger.distribute_staking_rewards(
-            self.key, badger_config.geyserParams.unlockSchedules.badger[0].amount
+            self.key, digg_config_test.geyserParams.unlockSchedules.digg[0].amount
         )
 
         # Make strategy the recipient of the DIGG faucet
@@ -46,4 +46,4 @@ class DiggRewardsMiniDeploy(SettMiniDeployBase):
             self.deployer, devProxyAdminAddress, daoProxyAdminAddress, owner=self.deployer
         )
 
-       
+

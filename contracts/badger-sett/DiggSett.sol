@@ -47,8 +47,8 @@ contract DiggSett is Sett {
     /// @notice Defines how much of the Setts' underlying can be borrowed by the Strategy for use
     /// @notice Custom logic in here for how much the vault allows to be borrowed
     /// @notice Sets minimum required on-hand to keep small withdrawals cheap
-    function available() public view override returns (uint256) {
-        return IDigg(address(token)).sharesOf(address(this)).mul(min).div(max);
+    function available() public override view returns (uint256) {
+        return IDigg(address(token)).sharesOf(address(this)).div(max).mul(min);
     }
 
     /// ===== Internal Implementations =====
@@ -57,7 +57,7 @@ contract DiggSett is Sett {
     /// @dev This is based on the realized value of underlying assets between Sett & associated Strategy
     function _deposit(uint256 _amount) internal override {
         IDigg digg = IDigg(address(token));
-        
+
         uint256 _pool = shares(); // Shares realized in system before transfer
         uint256 _before = digg.sharesOf(address(this));
 
@@ -92,7 +92,7 @@ contract DiggSett is Sett {
 
             uint256 diggSharesInSettAfterWithdraw = digg.sharesOf(address(this));
             uint256 _diff = diggSharesInSettAfterWithdraw.sub(diggSharesInSett);
-            
+
             // If we are not able to get the full amount requested from the strategy due to losses, redeem what we can
             if (_diff < _toWithdraw) {
                 diggSharesToRedeem = diggSharesInSett.add(_diff);

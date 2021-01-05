@@ -1,7 +1,7 @@
 from tests.sett.fixtures.DiggRewardsMiniDeploy import DiggRewardsMiniDeploy
-from scripts.actions.upgrade_tbtccrv import upgrade_tbtccrv
-from scripts.actions.upgade_sbtccrv import upgrade_sbtccrv
-from scripts.actions.upgade_renbtc import upgrade_rencrv
+#from scripts.actions.upgrade_tbtccrv import upgrade_tbtccrv
+#from scripts.actions.upgade_sbtccrv import upgrade_sbtccrv
+#from scripts.actions.upgade_renbtc import upgrade_rencrv
 from tests.sett.fixtures.SushiBadgerLpOptimizerMiniDeploy import SushiBadgerLpOptimizerMiniDeploy
 from helpers.token_utils import distribute_test_ether
 from scripts.systems.badger_system import connect_badger
@@ -10,6 +10,7 @@ from brownie import *
 from config.badger_config import badger_config, sett_config
 from scripts.deploy.deploy_badger import deploy_flow
 from scripts.systems.badger_minimal import deploy_badger_minimal
+from scripts.systems.constants import SettType
 
 from helpers.constants import *
 from helpers.registry import registry
@@ -169,7 +170,7 @@ def badger_single_sett(settConfig):
                 guardian=guardian,
                 keeper=keeper,
                 governance=governance,
-            ).deploy()
+            ).deploy(sett_type=SettType.DIGG)
         if settId == "native.uniDiggWbtc":
             return DiggRewardsMiniDeploy(
                 "sushi.sushiWbtcWeth",
@@ -179,7 +180,7 @@ def badger_single_sett(settConfig):
                 guardian=guardian,
                 keeper=keeper,
                 governance=governance,
-            ).deploy()
+            ).deploy(sett_type=SettType.DIGG)
         if settId == "native.sushiDiggWBtc":
             return DiggRewardsMiniDeploy(
                 "native.sushiDiggWBtc",
@@ -189,7 +190,7 @@ def badger_single_sett(settConfig):
                 guardian=guardian,
                 keeper=keeper,
                 governance=governance,
-            ).deploy()
+            ).deploy(sett_type=SettType.DIGG)
     if settConfig['mode'] == 'prod':
         """
         Run vs prod contracts, transferring assets to the test user

@@ -20,6 +20,7 @@ from scripts.systems.sett_system import (
     deploy_strategy,
 )
 from helpers.sett.strategy_registry import name_to_artifact
+from scripts.systems.constants import SettType
 
 from rich.console import Console
 
@@ -306,6 +307,7 @@ class BadgerSystem:
         deployer = self.deployer
         self.logic["Controller"] = Controller.deploy({"from": deployer})
         self.logic["Sett"] = Sett.deploy({"from": deployer})
+        self.logic["DiggSett"] = DiggSett.deploy({"from": deployer})
         self.logic["StakingRewards"] = StakingRewards.deploy({"from": deployer})
         self.logic["StakingRewardsSignalOnly"] = StakingRewardsSignalOnly.deploy(
             {"from": deployer}
@@ -450,6 +452,7 @@ class BadgerSystem:
         strategist=None,
         keeper=None,
         guardian=None,
+        sett_type=SettType.DEFAULT,
     ):
         deployer = self.deployer
         proxyAdmin = self.devProxyAdmin
@@ -462,15 +465,14 @@ class BadgerSystem:
             keeper = deployer
         if not guardian:
             guardian = deployer
-        sett = ""
-        if id == "native.digg":
+        if sett_type == SettType.DIGG:
             print("Deploying DIGG Sett")
             sett = deploy_proxy(
                 "DiggSett",
                 DiggSett.abi,
-                self.logic.Sett.address,
+                self.logic.DiggSett.address,
                 proxyAdmin.address,
-                self.logic.Sett.initialize.encode_input(
+                self.logic.DiggSett.initialize.encode_input(
                     token,
                     controller,
                     governance,
@@ -635,7 +637,7 @@ class BadgerSystem:
         )
 
         ## uint256 startTimestamp, uint256 _rewardsDuration, uint256 reward
-        assert self.token.balanceOf(rewards) >= amount
+        assert rewardsToken.balanceOf(rewards) >= amount
         if notify:
             rewards.notifyRewardAmount(chain.time(), days(7), amount, {"from": deployer})
 

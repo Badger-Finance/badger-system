@@ -205,10 +205,7 @@ badger_config = DotMap(
         voteDuration=days(3),
     ),
     geyserParams=DotMap(
-        initialSharesPerToken=10 ** 6,
-        founderRewardPercentage=10,
         badgerDistributionStart=globalStartTime,
-        diggDistributionStart=globalStartTime + days(15),
         unlockSchedules=DotMap(
             badger=[DotMap(amount=Wei("45000 ether"), duration=days(7),)],  # 1 week
             uniBadgerWbtc=[
@@ -278,6 +275,14 @@ digg_config_test = DotMap(
     ),
     # TODO: Currently a copy of badger config params, needs to be set.
     founderRewardsAmount=badger_total_supply * 10 // 100,
+    geyserParams=DotMap(
+        # TODO: Needs to be set
+        diggDistributionStart=globalStartTime + days(15),
+        unlockSchedules=DotMap(
+            # Setting distribution amt to 25% for now.
+            digg=[DotMap(amount=1000 * (10 ** 9), duration=days(7),)],  # 1 week
+        ),
+    ),
 )
 
 digg_config = DotMap(

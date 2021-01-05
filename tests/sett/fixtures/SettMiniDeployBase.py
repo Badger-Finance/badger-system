@@ -1,5 +1,6 @@
 from helpers.token_utils import distribute_from_whales, distribute_test_ether
 from scripts.systems.badger_minimal import deploy_badger_minimal
+from scripts.systems.constants import SettType
 from brownie import *
 
 
@@ -32,7 +33,7 @@ class SettMiniDeployBase:
         self.guardian = guardian
         self.deployer = deployer
 
-    def deploy(self, new_badger=True):
+    def deploy(self, new_badger=True, sett_type=SettType.DEFAULT):
         if (new_badger):
             self.badger = deploy_badger_minimal(self.deployer, self.keeper, self.guardian)
             self.controller = self.badger.add_controller(self.key)
@@ -59,6 +60,7 @@ class SettMiniDeployBase:
             strategist=self.strategist,
             keeper=self.keeper,
             guardian=self.guardian,
+            sett_type=sett_type,
         )
 
         self.post_vault_deploy_setup()

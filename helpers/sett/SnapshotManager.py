@@ -2,19 +2,16 @@ from brownie import *
 from helpers.constants import *
 from helpers.multicall import Call, Multicall, as_wei, func
 from helpers.registry import registry
-from helpers.sett.resolvers.SettCoreResolver import SettCoreResolver
-from helpers.sett.resolvers.StrategyBadgerLpMetaFarmResolver import \
-    StrategyBadgerLpMetaFarmResolver
-from helpers.sett.resolvers.StrategyBadgerRewardsResolver import \
-    StrategyBadgerRewardsResolver
-from helpers.sett.resolvers.StrategyCurveGaugeResolver import \
-    StrategyCurveGaugeResolver
-from helpers.sett.resolvers.StrategyHarvestMetaFarmResolver import \
-    StrategyHarvestMetaFarmResolver
-from helpers.sett.resolvers.StrategySushiBadgerLpOptimizerResolver import \
-    StrategySushiBadgerLpOptimizerResolver
-from helpers.sett.resolvers.StrategySushiBadgerWbtcResolver import \
-    StrategySushiBadgerWbtcResolver
+from helpers.sett.resolvers import (
+    SettCoreResolver,
+    StrategyBadgerLpMetaFarmResolver,
+    StrategyHarvestMetaFarmResolver,
+    StrategySushiBadgerWbtcResolver,
+    StrategyBadgerRewardsResolver,
+    StrategySushiBadgerLpOptimizerResolver,
+    StrategyCurveGaugeResolver,
+    StrategyDiggRewardsResolver,
+)
 from helpers.utils import val
 from rich.console import Console
 from scripts.systems.badger_system import BadgerSystem
@@ -157,6 +154,8 @@ class SnapshotManager:
         if name == "StrategySushiLpOptimizer":
             print("StrategySushiBadgerLpOptimizerResolver")
             return StrategySushiBadgerLpOptimizerResolver(self)
+        if name == "StrategyDiggRewards":
+            return StrategyDiggRewardsResolver(self)
 
     def settTend(self, overrides, confirm=True):
         user = overrides["from"].address
@@ -181,6 +180,7 @@ class SnapshotManager:
         trackedUsers = {"user": user}
         before = self.snap(trackedUsers)
         self.sett.deposit(amount, overrides)
+        __import__('pdb').set_trace()
         after = self.snap(trackedUsers)
         if confirm:
             self.resolver.confirm_deposit(
