@@ -1,4 +1,7 @@
 from brownie import *
+from tabulate import tabulate
+from rich.console import Console
+
 from helpers.constants import *
 from helpers.multicall import Call, Multicall, as_wei, func
 from helpers.registry import registry
@@ -13,9 +16,8 @@ from helpers.sett.resolvers import (
     StrategyDiggRewardsResolver,
 )
 from helpers.utils import val
-from rich.console import Console
 from scripts.systems.badger_system import BadgerSystem
-from tabulate import tabulate
+from scripts.systems.constants import SettType
 
 console = Console()
 
@@ -181,6 +183,11 @@ class SnapshotManager:
         before = self.snap(trackedUsers)
         self.sett.deposit(amount, overrides)
         after = self.snap(trackedUsers)
+
+        # Convert amount into shares for DIGG type setts
+        if self.badger.sett_type == SettType.DIGG:
+            amount = self.badger.digg_system.token.fragmentsToShares(amount)
+
         if confirm:
             self.resolver.confirm_deposit(
                 before, after, {"user": user, "amount": amount}

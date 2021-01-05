@@ -84,6 +84,13 @@ class SettMiniDeployBase:
 
         self.vault.unpause({"from": self.governance})
 
+        self.badger.setTestingContext(
+            sett_type=sett_type,
+            # It's fine if digg system is None, it's only used
+            # when testing DIGG sett type.
+            digg_system=self.digg,
+        )
+
         return self.badger
 
     def deploy_required_logic(self):

@@ -933,3 +933,9 @@ class BadgerSystem:
 
     def getStrategyArtifactName(self, id):
         return self.strategy_artifacts[id]["artifactName"]
+
+    # ===== Testing =====
+
+    def setTestingContext(self, sett_type=SettType.DEFAULT, digg_system=None):
+        self.digg_system = digg_system
+        self.sett_type = sett_type

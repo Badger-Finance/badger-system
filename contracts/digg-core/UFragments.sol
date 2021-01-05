@@ -76,7 +76,7 @@ contract UFragments is ERC20Detailed, Ownable {
     uint256 private constant MAX_SUPPLY = ~uint128(0); // (2^128) - 1
 
     uint256 private _totalSupply;
-    uint256 private _sharesPerFragment;
+    uint256 public _sharesPerFragment;
     mapping(address => uint256) private _shareBalances;
 
     // This is denominated in Fragments, because the shares-fragments conversion might change before
@@ -179,7 +179,7 @@ contract UFragments is ERC20Detailed, Ownable {
      * @return The underlying share value of the specified fragment amount.
      */
     function fragmentsToShares(uint256 fragments) public view returns (uint256) {
-        fragments.mul(_sharesPerFragment);
+        return fragments.mul(_sharesPerFragment);
     }
 
     /**
@@ -187,7 +187,7 @@ contract UFragments is ERC20Detailed, Ownable {
      * @return The current fragment value of the specified underlying share amount.
      */
     function sharesToFragments(uint256 shares) public view returns (uint256) {
-        shares.div(_sharesPerFragment);
+        return shares.div(_sharesPerFragment);
     }
 
     /**

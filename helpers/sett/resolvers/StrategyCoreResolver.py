@@ -194,8 +194,8 @@ class StrategyCoreResolver:
         console.print("=== Compare Deposit ===")
         self.manager.printCompare(before, after)
 
-        expected_shares = params["amount"] * Wei("1 ether") // ppfs
-        
+        expected_shares = Decimal(params["amount"] * Wei("1 ether")) / Decimal(ppfs)
+
         # Increase the totalSupply() of Sett tokens
         assert approx(after.get("sett.totalSupply"), before.get("sett.totalSupply") + expected_shares, 1)
 
