@@ -1,6 +1,5 @@
 from assistant.subgraph.config import subgraph_config
 from rich.console import Console
-
 from gql import gql, Client
 from gql.transport.aiohttp import AIOHTTPTransport
 
@@ -58,7 +57,6 @@ def fetch_all_geyser_events(geyserId):
 
 
 def fetch_sett_balances(settId, startBlock):
-    console.log(startBlock)
     console.print(
         "[bold green] Fetching sett balances {}[/bold green]".format(settId)
     )
@@ -101,7 +99,7 @@ def fetch_geyser_events(geyserId, startBlock):
           id
           totalStaked
           stakeEvents(first:1000) {
-            id
+              id
               user,
               amount
               timestamp,
@@ -120,10 +118,18 @@ def fetch_geyser_events(geyserId, startBlock):
     )
     variables = {"geyserID": {"id": geyserId}, "blockHeight": {"number": startBlock}}
     result = client.execute(query, variable_values=variables)
+    if len(result["geysers"]) == 0:
+        stakes = []
+        unstakes = []
+        totalStaked = 0
+    else:
+        stakes = result["geysers"][0]["stakeEvents"]
+        unstakes = result["geysers"][0]["unstakeEvents"]
+        totalStaked = result["geysers"][0]["totalStaked"]
     return {
-        "stakes": result["geysers"][0]["stakeEvents"],
-        "unstakes": result["geysers"][0]["unstakeEvents"],
-        "totalStaked": result["geysers"][0]["totalStaked"],
+        "stakes": stakes,
+        "unstakes": unstakes,
+        "totalStaked": totalStaked
     }
 
 
@@ -170,8 +176,8 @@ def fetch_sett_transfers(settID, startBlock, endBlock):
         return int(transfer["transaction"]["blockNumber"]) > startBlock
 
     def convert_amount(transfer):
-        ppfs = float(transfer["pricePerFullShare"])/10**18
-        transfer["amount"] = int(transfer["amount"]) / ppfs
+        ppfs = int(transfer["pricePerFullShare"])
+        transfer["amount"] = (int(transfer["amount"]) / ppfs) / 1e18 
         return transfer
 
     def negate_withdrawals(withdrawal):

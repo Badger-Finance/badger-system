@@ -11,7 +11,7 @@ class User:
     def __repr__(self):
         return "User({},{},{},{})".format(
             self.address,
-            self.currentDeposited / 10 ** 18,
+            self.currentDeposited,
             self.lastUpdated,
             self.shareSeconds,
         )
@@ -23,9 +23,9 @@ class User:
         secondsSinceLastAction = transfer_timestamp - self.lastUpdated
         assert secondsSinceLastAction > 0
         self.lastUpdated = transfer_timestamp
-        shareSeconds = secondsSinceLastAction * self.currentDeposited
-        self.shareSeconds += shareSeconds
+        self.shareSeconds += secondsSinceLastAction * self.currentDeposited
         self.currentDeposited += transfer_amount
         if self.currentDeposited < 0:
-            console.log(self)
+            self.currentDeposited = 0
+
 

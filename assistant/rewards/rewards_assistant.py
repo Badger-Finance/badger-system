@@ -71,19 +71,23 @@ def calc_harvest_meta_farm_rewards(badger,name, startBlock, endBlock):
     endBlockTime = web3.eth.getBlock(endBlock)["timestamp"]
     harvestSettId = badger.getSett(name).address.lower()
     geyserId = badger.getGeyser(name).address.lower()
-    settBalances = fetch_sett_balances(harvestSettId, startBlock)
-    if len(settBalances) == 0:
-        return []
 
-    console.log("Geyser amount in sett Balance: {}".format(settBalances[geyserId]/10**18))
+    settBalances = fetch_sett_balances(harvestSettId, startBlock)
+    settTransfers = fetch_sett_transfers(harvestSettId, startBlock, endBlock)
+    # If there is nothing in the sett, and there have been no transfers
+    if len(settBalances) == 0:
+        if len(settTransfers) == 0:
+            return []
+    if len(settBalances) != 0:
+        console.log("Geyser amount in sett Balance: {}".format(settBalances[geyserId]/1e18))
+        settBalances[geyserId] = 0
+
     geyserEvents = fetch_geyser_events(geyserId, startBlock)
     geyserBalances = calc_balances_from_geyser_events(geyserEvents)
-    settTransfers = fetch_sett_transfers(harvestSettId, startBlock, endBlock)
-    
-    settBalances[geyserId] = 0
     user_state = get_initial_user_state(
         settBalances, geyserBalances, startBlockTime
     )
+
     for transfer in settTransfers:
         transfer_address = transfer["account"]["id"]
         transfer_amount = int(transfer["amount"])
@@ -91,14 +95,15 @@ def calc_harvest_meta_farm_rewards(badger,name, startBlock, endBlock):
         user = None
         for u in user_state:
             if u.address == transfer_address:
-                user = u
+               user = u
         if user:
                user.process_transfer(transfer)
         else:
             # If the user hasn't deposited before, create a new one
             newUser = User(transfer_address,transfer_amount,transfer_timestamp)
-            assert transfer_amount > 0
+            assert transfer_amount >= 0
             user_state.append(newUser)
+
     for user in user_state:
         user.process_transfer({
             "transaction": {
@@ -108,9 +113,9 @@ def calc_harvest_meta_farm_rewards(badger,name, startBlock, endBlock):
         })
     
     totalShareSeconds = sum([u.shareSeconds for u in user_state])
-    for user in sorted(user_state,key=lambda u: u.shareSeconds,reverse=True):
-        percentage = (user.shareSeconds/totalShareSeconds) * 100
-        console.log(user,"{}%".format(percentage))
+    #for user in sorted(user_state,key=lambda u: u.shareSeconds,reverse=True):
+    #    percentage = (user.shareSeconds/totalShareSeconds) * 100
+    #    console.log(user,"{}%".format(percentage))
 
     return user_state
 
