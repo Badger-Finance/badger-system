@@ -77,12 +77,48 @@ describe('BadgerRenAdapter', function() {
     await account.sendSats(gatewayAddress, amount, 'btc');
 
     // Submit mint
+    // NB: On testnet this actually mints testBTC.
+	await submitMint(mint);
+  });
+
+  it('should burn renBTC', async () => {
+
+	const mint = await renJS.lockAndMint({
+      // Send BTC from the Bitcoin blockchain to the Ethereum blockchain.
+      sendToken: RenJS.Tokens.BTC.Btc2Eth,
+      // The contract we want to interact with
+      sendTo: KOVAN_BADGER_REN_ADAPTER_ADDR,
+      contractFn: 'mint',
+      // Arguments expected for calling `mint`
+      contractParams: [
+        {
+      	  name: '_to',
+      	  type: 'address',
+      	  value: web3.eth.defaultAccount,
+        },
+      ],
+      web3Provider: web3.currentProvider,
+	});
+
+    const gatewayAddress = await mint.gatewayAddress();
+    const account = new CryptoAccount(PRIVATE_KEY, { network: 'testnet' });
+    logger.info(
+      `BTC balance: ${await account.balanceOf(
+          'btc'
+      )} ${'btc'} (${await account.address('btc')})`
+    );
+	const amount = RenJS.utils
+	  .value(0.00101, 'btc')
+	  ._smallest();
+    logger.info(`Sending BTC: ${amount}`);
+    await account.sendSats(gatewayAddress, amount, 'btc');
+
+    // Submit mint
 	await submitMint(mint);
   });
 });
 
 // A debug `sleep`. It prints a count-down to the console.
-// tslint:disable-next-line: no-string-based-set-timeout
 const sleepWithCountdown = async (seconds) => {
   while (seconds) {
     process.stdout.write(`\u001b[0K\r${seconds}\r`);
