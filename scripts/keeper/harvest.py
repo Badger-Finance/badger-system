@@ -10,8 +10,6 @@ gas_strategy = GasNowStrategy("fast")
 
 console = Console()
 def harvest_all(badger: BadgerSystem, skip):
-    keeper = badger.deployer
-
     for key, vault in badger.sett_system.vaults.items():
         if key in skip:
             continue
@@ -38,7 +36,7 @@ def main():
     # TODO: Output message when failure
 
     fileName = "deploy-" + "final" + ".json"
-    badger = connect_badger(fileName)
+    badger = connect_badger(fileName, load_keeper=True)
 
     skip = [
         # "native.uniBadgerWbtc"

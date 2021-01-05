@@ -1,3 +1,5 @@
+from helpers.time_utils import days
+from helpers.gnosis_safe import GnosisSafe, MultisigTxMetadata
 from brownie.network.gas.strategies import GasNowScalingStrategy
 from helpers.sett.strategy_registry import strategy_name_to_artifact
 import json
@@ -460,24 +462,44 @@ class BadgerSystem:
             keeper = deployer
         if not guardian:
             guardian = deployer
-
-        sett = deploy_proxy(
-            "Sett",
-            Sett.abi,
-            self.logic.Sett.address,
-            proxyAdmin.address,
-            self.logic.Sett.initialize.encode_input(
-                token,
-                controller,
-                governance,
-                keeper,
-                guardian,
-                namePrefixOverride,
-                namePrefix,
-                symbolPrefix,
-            ),
-            deployer,
-        )
+        sett = ""
+        if id == "native.digg":
+            print("Deploying DIGG Sett")
+            sett = deploy_proxy(
+                "DiggSett",
+                DiggSett.abi,
+                self.logic.Sett.address,
+                proxyAdmin.address,
+                self.logic.Sett.initialize.encode_input(
+                    token,
+                    controller,
+                    governance,
+                    keeper,
+                    guardian,
+                    namePrefixOverride,
+                    namePrefix,
+                    symbolPrefix,
+                ),
+                deployer,
+            )
+        else:
+            sett = deploy_proxy(
+                "Sett",
+                Sett.abi,
+                self.logic.Sett.address,
+                proxyAdmin.address,
+                self.logic.Sett.initialize.encode_input(
+                    token,
+                    controller,
+                    governance,
+                    keeper,
+                    guardian,
+                    namePrefixOverride,
+                    namePrefix,
+                    symbolPrefix,
+                ),
+                deployer,
+            )
         self.sett_system.vaults[id] = sett
         self.track_contract_upgradeable(id + ".sett", sett)
         return sett
@@ -522,6 +544,27 @@ class BadgerSystem:
         self.geysers[id] = geyser
         self.track_contract_upgradeable(id + ".geyser", geyser)
         return geyser
+
+    def add_existing_digg(self, digg_system):
+        self.digg_system = digg_system
+
+    def deploy_digg_rewards_faucet(self, id, diggToken):
+        deployer = self.deployer
+
+        rewards = deploy_proxy(
+            "StakingRewards",
+            DiggRewardsFaucet.abi,
+            self.logic.DiggRewardsFaucet.address,
+            self.devProxyAdmin.address,
+            self.logic.DiggRewardsFaucet.initialize.encode_input(
+                deployer, diggToken
+            ),
+            deployer,
+        )
+
+        self.sett_system.rewards[id] = rewards
+        self.track_contract_upgradeable(id + ".rewards", rewards)
+        return rewards
 
     def deploy_set_staking_rewards_signal_only(self, id, admin, distToken):
         deployer = self.deployer
@@ -583,16 +626,18 @@ class BadgerSystem:
         deployer = self.deployer
         rewards = self.getSettRewards(id)
 
-        assert self.token.balanceOf(deployer) >= amount
+        rewardsToken = interface.IERC20(rewards.rewardsToken())
 
-        self.token.transfer(
+        assert rewardsToken.balanceOf(deployer) >= amount
+
+        rewardsToken.transfer(
             rewards, amount, {"from": deployer},
         )
 
+        ## uint256 startTimestamp, uint256 _rewardsDuration, uint256 reward
         assert self.token.balanceOf(rewards) >= amount
-        assert rewards.rewardsToken() == self.token
         if notify:
-            rewards.notifyRewardAmount(amount, {"from": deployer})
+            rewards.notifyRewardAmount(chain.time(), days(7), amount, {"from": deployer})
 
     def signal_initial_geyser_rewards(self, id, params):
         deployer = self.deployer
@@ -702,6 +747,23 @@ class BadgerSystem:
             self.globalStartTime,
             {"from": self.deployer},
         )
+
+    def upgrade_sett(self, id, newLogic):
+        sett = self.getSett(id)
+        multi = GnosisSafe(self.devMultisig)
+        id = multi.addTx(
+            MultisigTxMetadata(
+                description="Upgrade timelock"
+            ),
+            {
+                "to": self.proxyAdmin.address,
+                "data": self.proxyAdmin.upgrade.encode_input(
+                    sett,
+                    newLogic
+                ),
+            },
+            )
+        tx = multi.executeTx(id)
 
     # ===== Connectors =====
     def connect_sett_system(self, sett_system, geysers):

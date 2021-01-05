@@ -1,9 +1,8 @@
-from helpers.sett.resolvers.StrategySushiBadgerLpOptimizerResolver import StrategySushiBadgerLpOptimizerResolver
-from helpers.sett.resolvers.StrategySushiBadgerWbtcResolver import StrategySushiBadgerWbtcResolver
 from brownie import *
 from helpers.constants import *
 from helpers.multicall import Call, Multicall, as_wei, func
 from helpers.registry import registry
+from helpers.sett.resolvers.SettCoreResolver import SettCoreResolver
 from helpers.sett.resolvers.StrategyBadgerLpMetaFarmResolver import \
     StrategyBadgerLpMetaFarmResolver
 from helpers.sett.resolvers.StrategyBadgerRewardsResolver import \
@@ -12,6 +11,10 @@ from helpers.sett.resolvers.StrategyCurveGaugeResolver import \
     StrategyCurveGaugeResolver
 from helpers.sett.resolvers.StrategyHarvestMetaFarmResolver import \
     StrategyHarvestMetaFarmResolver
+from helpers.sett.resolvers.StrategySushiBadgerLpOptimizerResolver import \
+    StrategySushiBadgerLpOptimizerResolver
+from helpers.sett.resolvers.StrategySushiBadgerWbtcResolver import \
+    StrategySushiBadgerWbtcResolver
 from helpers.utils import val
 from rich.console import Console
 from scripts.systems.badger_system import BadgerSystem
@@ -88,6 +91,7 @@ class SnapshotManager:
         self.want = interface.IERC20(self.sett.token())
         self.resolver = self.init_resolver(self.strategy.getName())
         self.snaps = {}
+        self.settSnaps = {}
         self.entities = {}
 
         assert self.want == self.strategy.want()
@@ -105,6 +109,7 @@ class SnapshotManager:
             self.addEntity(key, dest)
 
     def snap(self, trackedUsers=None):
+        print("snap")
         snapBlock = chain.height
         entities = self.entities
 
@@ -115,6 +120,7 @@ class SnapshotManager:
         calls = []
         calls = self.resolver.add_balances_snap(calls, entities)
         calls = self.resolver.add_sett_snap(calls)
+        # calls = self.resolver.add_sett_permissions_snap(calls)
         calls = self.resolver.add_strategy_snap(calls)
 
         multi = Multicall(calls)
@@ -129,6 +135,10 @@ class SnapshotManager:
 
     def addEntity(self, key, entity):
         self.entities[key] = entity
+
+    def init_sett_resolver(self, version):
+        print("init_sett_resolver", version)
+        return SettCoreResolver(self)
 
     def init_resolver(self, name):
         print("init_resolver", name)
@@ -264,7 +274,11 @@ class SnapshotManager:
                     ]
                 )
 
-        print(tabulate(table, headers=["metric", "before", "after", "diff"], tablefmt="grid"))
+        print(
+            tabulate(
+                table, headers=["metric", "before", "after", "diff"], tablefmt="grid"
+            )
+        )
 
     def printPermissions(self):
         # Accounts

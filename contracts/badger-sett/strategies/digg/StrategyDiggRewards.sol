@@ -25,14 +25,15 @@ import "interfaces/digg/IDigg.sol";
 
 /*
     Strategy to compound DIGG rewards
-    - Deposit Badger into the vault to receive more from a special rewards pool
+    - Deposit DIGG into the vault to receive more DIGG from a special rewards pool
+    - bDIGG is a non-rebasing asset that can be composed into other systems more easily
 */
 contract StrategyDiggRewards is BaseStrategy {
     using SafeERC20Upgradeable for IERC20Upgradeable;
     using AddressUpgradeable for address;
     using SafeMathUpgradeable for uint256;
 
-    address public geyser;
+    address public diggFaucet;
 
     struct HarvestData {
         uint256 totalDigg;
@@ -60,7 +61,7 @@ contract StrategyDiggRewards is BaseStrategy {
         __BaseStrategy_init(_governance, _strategist, _controller, _keeper, _guardian);
 
         want = _wantConfig[0];
-        geyser = _wantConfig[1];
+        diggFaucet = _wantConfig[1];
 
         performanceFeeGovernance = _feeConfig[0];
         performanceFeeStrategist = _feeConfig[1];
@@ -95,7 +96,7 @@ contract StrategyDiggRewards is BaseStrategy {
     }
 
     function getProtectedTokens() external override view returns (address[] memory) {
-        address[] memory protectedTokens = new address[](2);
+        address[] memory protectedTokens = new address[](1);
         protectedTokens[0] = want;
         return protectedTokens;
     }
@@ -110,8 +111,10 @@ contract StrategyDiggRewards is BaseStrategy {
     function _deposit(uint256 _want) internal override {
     }
 
-    /// @dev No active position
+    /// @dev No active position to exit, just send all want to controller as per wrapper withdrawAll() function
+    /// @dev Do harvest all pending DIGG rewards before, will be sent with want transfer
     function _withdrawAll() internal override {
+        IStakingRewards(diggFaucet).getReward();
     }
 
     function _withdrawSome(uint256 _amount) internal override returns (uint256) {
@@ -128,8 +131,8 @@ contract StrategyDiggRewards is BaseStrategy {
         uint256 _beforeDigg = IDigg(want).balanceOf(address(this));
         uint256 _beforeShares = IDigg(want).sharesOf(address(this));
 
-        IStakingRewards(geyser).getReward();
-
+        // ===== Harvest rewards from Geyser =====
+        IStakingRewards(diggFaucet).getReward();
         
         harvestData.totalDigg = IDigg(want).balanceOf(address(this));
         harvestData.totalShares = IDigg(want).sharesOf(address(this));

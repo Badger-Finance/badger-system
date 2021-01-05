@@ -10,7 +10,7 @@ import "../../deps/@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable
 import "../../deps/@openzeppelin/contracts-upgradeable/cryptography/MerkleProofUpgradeable.sol";
 import "../../interfaces/badger/ICumulativeMultiTokenMerkleDistributor.sol";
 
-contract BadgerTree is Initializable, AccessControlUpgradeable, ICumulativeMultiTokenMerkleDistributor, PausableUpgradeable {
+contract BadgerTreeV2 is Initializable, AccessControlUpgradeable, ICumulativeMultiTokenMerkleDistributor, PausableUpgradeable {
     using SafeMathUpgradeable for uint256;
 
     struct MerkleData {

@@ -1,3 +1,7 @@
+from tests.sett.fixtures.DiggRewardsMiniDeploy import DiggRewardsMiniDeploy
+from scripts.actions.upgrade_tbtccrv import upgrade_tbtccrv
+from scripts.actions.upgade_sbtccrv import upgrade_sbtccrv
+from scripts.actions.upgade_renbtc import upgrade_rencrv
 from tests.sett.fixtures.SushiBadgerLpOptimizerMiniDeploy import SushiBadgerLpOptimizerMiniDeploy
 from helpers.token_utils import distribute_test_ether
 from scripts.systems.badger_system import connect_badger
@@ -46,7 +50,10 @@ settsToRun = [
     # "harvest.renCrv",
     # "native.uniBadgerWbtc",
     # "sushi.sushiBadgerWBtc",
-    "sushi.sushiWbtcWeth"
+    # "sushi.sushiWbtcWeth",
+    "native.digg",
+    # "native.uniDiggWbtc",
+    # "native.sushiDiggWBtc"
 ]
 
 runTestSetts = True
@@ -146,6 +153,36 @@ def badger_single_sett(settConfig):
         if settId == "sushi.sushiWbtcWeth":
             return SushiBadgerLpOptimizerMiniDeploy(
                 "sushi.sushiWbtcWeth",
+                "StrategySushiLpOptimizer",
+                deployer,
+                strategist=strategist,
+                guardian=guardian,
+                keeper=keeper,
+                governance=governance,
+            ).deploy()
+        if settId == "native.digg":
+            return DiggRewardsMiniDeploy(
+                "native.digg",
+                "StrategyDiggRewards",
+                deployer,
+                strategist=strategist,
+                guardian=guardian,
+                keeper=keeper,
+                governance=governance,
+            ).deploy()
+        if settId == "native.uniDiggWbtc":
+            return DiggRewardsMiniDeploy(
+                "sushi.sushiWbtcWeth",
+                "StrategySushiLpOptimizer",
+                deployer,
+                strategist=strategist,
+                guardian=guardian,
+                keeper=keeper,
+                governance=governance,
+            ).deploy()
+        if settId == "native.sushiDiggWBtc":
+            return DiggRewardsMiniDeploy(
+                "native.sushiDiggWBtc",
                 "StrategySushiLpOptimizer",
                 deployer,
                 strategist=strategist,

@@ -6,6 +6,9 @@ from dotmap import DotMap
 def as_wei(value):
     return value
 
+def as_original(value):
+    return value
+
 
 erc20 = DotMap(
     balanceOf="balanceOf(address)(uint256)",

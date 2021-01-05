@@ -149,6 +149,30 @@ def deploy_strategy(
             ),
             deployer,
         )
+    if strategyName == "StrategyDiggRewards":
+        return deploy_proxy(
+            "StrategyDiggRewards",
+            StrategyDiggRewards.abi,
+            badger.logic.StrategyDiggRewards.address,
+            proxyAdmin.address,
+            badger.logic.StrategyDiggRewards.initialize.encode_input(
+                governance,
+                strategist,
+                controller,
+                keeper,
+                guardian,
+                [
+                    params.want,
+                    params.geyser,
+                ],
+                [
+                    params.performanceFeeGovernance,
+                    params.performanceFeeStrategist,
+                    params.withdrawalFee
+                ],
+            ),
+            deployer,
+        )
     if strategyName == "StrategySushiLpOptimizer":
         return deploy_proxy(
             "StrategySushiLpOptimizer",

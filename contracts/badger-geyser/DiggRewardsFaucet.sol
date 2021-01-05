@@ -26,6 +26,7 @@ contract DiggRewardsFaucet is Initializable, AccessControlUpgradeable, PausableU
 
     /* ========== STATE VARIABLES ========== */
 
+    IERC20Upgradeable public rewardsToken;
     IDigg public digg;
     uint256 public periodFinish;
     uint256 public rewardRate;
@@ -40,6 +41,7 @@ contract DiggRewardsFaucet is Initializable, AccessControlUpgradeable, PausableU
 
         _setupRole(DEFAULT_ADMIN_ROLE, _admin);
 
+        rewardsToken = IERC20Upgradeable(_digg);
         digg = IDigg(_digg);
 
         rewardsDuration = 7 days;

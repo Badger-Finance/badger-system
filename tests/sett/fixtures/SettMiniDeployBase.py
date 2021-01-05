@@ -62,7 +62,7 @@ class SettMiniDeployBase:
         )
 
         self.post_vault_deploy_setup()
-
+        print("Deploying Strategy with key: ", self.key)
         self.strategy = self.badger.deploy_strategy(
             self.key,
             self.strategyName,

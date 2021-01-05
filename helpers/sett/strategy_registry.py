@@ -23,6 +23,9 @@ name_to_artifact = {
     "StrategyCurveGaugeRenBtcCrv": StrategyCurveGaugeRenBtcCrv,
     "StrategySushiBadgerWbtc": StrategySushiBadgerWbtc,
     "StrategySushiLpOptimizer": StrategySushiLpOptimizer,
+    "StrategyDiggRewards": StrategyDiggRewards,
+    "StrategyDiggLpMetaFarm": StrategyDiggLpMetaFarm,
+    "StrategySushiDiggWbtcLpOptimizer": StrategySushiDiggWbtcLpOptimizer,
     "HoneypotMeme": HoneypotMeme,
 }
 

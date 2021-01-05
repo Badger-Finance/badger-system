@@ -98,7 +98,7 @@ contract StrategyBadgerLpMetaFarm is BaseStrategy {
     function _onlyNotProtectedTokens(address _asset) internal override {
         require(address(want) != _asset, "want");
         require(address(geyser) != _asset, "geyser");
-        require(address(badger) != _asset, "geyser");
+        require(address(badger) != _asset, "badger");
     }
 
     /// @dev Deposit Badger into the staking contract

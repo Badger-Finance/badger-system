@@ -1,4 +1,3 @@
-from helpers.utils import sec
 import json
 
 from assistant.rewards.aws_utils import download, upload
@@ -9,9 +8,7 @@ from assistant.rewards.RewardsList import RewardsList
 from brownie import *
 from brownie.network.gas.strategies import GasNowStrategy
 from config.rewards_config import rewards_config
-from eth_abi import decode_single, encode_single
-from eth_abi.packed import encode_abi_packed
-from helpers.time_utils import hours, to_hours
+from helpers.time_utils import to_hours
 from rich.console import Console
 from scripts.systems.badger_system import BadgerSystem
 
@@ -104,6 +101,21 @@ def combine_rewards(list, cycle, badgerTree):
     return totals
 
 
+def fetchPendingMerkleData(badger):
+    currentMerkleData = badger.badgerTree.getPendingMerkleData()
+    root = str(currentMerkleData[0])
+    contentHash = str(currentMerkleData[1])
+    lastUpdateTime = currentMerkleData[2]
+    blockNumber = currentMerkleData[3]
+
+    return {
+        "root": root,
+        "contentHash": contentHash,
+        "lastUpdateTime": lastUpdateTime,
+        "blockNumber": int(blockNumber),
+    }
+
+
 def fetchCurrentMerkleData(badger):
     currentMerkleData = badger.badgerTree.getCurrentMerkleData()
     root = str(currentMerkleData[0])
@@ -125,6 +137,39 @@ def getNextCycle(badger):
 
 def hash(value):
     return web3.toHex(web3.keccak(text=value))
+
+
+def fetch_pending_rewards_tree(badger, print_output=False):
+    # TODO Files should be hashed and signed by keeper to prevent tampering
+    # TODO How will we upload addresses securely?
+    # We will check signature before posting
+    merkle = fetchPendingMerkleData(badger)
+    pastFile = "rewards-1-" + str(merkle["contentHash"]) + ".json"
+
+    if print_output:
+        console.print(
+            "[green]===== Loading Pending Rewards " + pastFile + " =====[/green]"
+        )
+
+    currentTree = json.loads(download(pastFile))
+
+    # Invariant: File shoulld have same root as latest
+    assert currentTree["merkleRoot"] == merkle["root"]
+
+    lastUpdatePublish = merkle["blockNumber"]
+    lastUpdate = int(currentTree["endBlock"])
+
+    if print_output:
+        print(
+            "lastUpdateBlock", lastUpdate, "lastUpdatePublishBlock", lastUpdatePublish
+        )
+    # Ensure upload was after file tracked
+    assert lastUpdatePublish >= lastUpdate
+
+    # Ensure file tracks block within 1 day of upload
+    assert abs(lastUpdate - lastUpdatePublish) < 6500
+
+    return currentTree
 
 
 def fetch_current_rewards_tree(badger, print_output=False):
@@ -162,23 +207,17 @@ def fetch_current_rewards_tree(badger, print_output=False):
     return currentTree
 
 
-def generate_rewards_in_range(badger, startBlock, endBlock):
+def generate_rewards_in_range(badger, startBlock, endBlock, pastRewards):
     blockDuration = endBlock - startBlock
-    console.print(
-        "\n[green]Calculate rewards for {} blocks: {} -> {} [/green]\n".format(
-            blockDuration, startBlock, endBlock
-        )
-    )
 
     nextCycle = getNextCycle(badger)
 
     currentMerkleData = fetchCurrentMerkleData(badger)
-    currentRewards = fetch_current_rewards_tree(badger, print_output=True)
     geyserRewards = calc_geyser_rewards(badger, startBlock, endBlock, nextCycle)
     # metaFarmRewards = calc_harvest_meta_farm_rewards(badger, startBlock, endBlock)
 
     newRewards = geyserRewards
-    cumulativeRewards = process_cumulative_rewards(currentRewards, newRewards)
+    cumulativeRewards = process_cumulative_rewards(pastRewards, newRewards)
 
     # Take metadata from geyserRewards
     console.print("Processing to merkle tree")
@@ -214,7 +253,7 @@ def generate_rewards_in_range(badger, startBlock, endBlock):
         badger,
         startBlock,
         endBlock,
-        currentRewards,
+        pastRewards,
         after_file,
         currentMerkleData["contentHash"],
     )
@@ -226,7 +265,7 @@ def generate_rewards_in_range(badger, startBlock, endBlock):
     }
 
 
-def rootUpdater(badger, startBlock, endBlock, test=False):
+def rootUpdater(badger, startBlock, endBlock, pastRewards, test=False):
     """
     Root Updater Role
     - Check how much time has passed since the last published update
@@ -243,6 +282,12 @@ def rootUpdater(badger, startBlock, endBlock, test=False):
     currentMerkleData = fetchCurrentMerkleData(badger)
     currentTime = chain.time()
 
+    console.print(
+        "\n[green]Calculate rewards for {} blocks: {} -> {} [/green]\n".format(
+            endBlock - startBlock, startBlock, endBlock
+        )
+    )
+
     # Only run if we have sufficent time since previous root
     timeSinceLastupdate = currentTime - currentMerkleData["lastUpdateTime"]
     if timeSinceLastupdate < rewards_config.rootUpdateMinInterval and not test:
@@ -253,7 +298,7 @@ def rootUpdater(badger, startBlock, endBlock, test=False):
         )
         return False
 
-    rewards_data = generate_rewards_in_range(badger, startBlock, endBlock)
+    rewards_data = generate_rewards_in_range(badger, startBlock, endBlock, pastRewards)
 
     console.print("===== Root Updater Complete =====")
     if not test:
@@ -268,7 +313,7 @@ def rootUpdater(badger, startBlock, endBlock, test=False):
     return True
 
 
-def guardian(badger: BadgerSystem, startBlock, endBlock, test=False):
+def guardian(badger: BadgerSystem, startBlock, endBlock, pastRewards, test=False):
     """
     Guardian Role
     - Check if there is a new proposed root
@@ -280,6 +325,12 @@ def guardian(badger: BadgerSystem, startBlock, endBlock, test=False):
 
     console.print("\n[bold cyan]===== Guardian =====[/bold cyan]\n")
 
+    console.print(
+        "\n[green]Calculate rewards for {} blocks: {} -> {} [/green]\n".format(
+            endBlock - startBlock, startBlock, endBlock
+        )
+    )
+
     badgerTree = badger.badgerTree
 
     # Only run if we have a pending root
@@ -287,7 +338,7 @@ def guardian(badger: BadgerSystem, startBlock, endBlock, test=False):
         console.print("[bold yellow]===== Result: No Pending Root =====[/bold yellow]")
         return False
 
-    rewards_data = generate_rewards_in_range(badger, startBlock, endBlock)
+    rewards_data = generate_rewards_in_range(badger, startBlock, endBlock, pastRewards)
 
     console.print("===== Guardian Complete =====")
 
