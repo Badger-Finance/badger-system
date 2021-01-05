@@ -7,15 +7,22 @@ import "deps/@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.s
 import "deps/@openzeppelin/contracts-upgradeable/proxy/Initializable.sol";
 import "deps/@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 
-
 interface IGateway {
-    function mint(bytes32 _pHash, uint256 _amount, bytes32 _nHash, bytes calldata _sig) external returns (uint256);
+    function mint(
+        bytes32 _pHash,
+        uint256 _amount,
+        bytes32 _nHash,
+        bytes calldata _sig
+    ) external returns (uint256);
+
     function burn(bytes calldata _to, uint256 _amount) external returns (uint256);
 }
 
 interface IGatewayRegistry {
     function getGatewayBySymbol(string calldata _tokenSymbol) external view returns (IGateway);
-    function getGatewayByToken(address  _tokenAddress) external view returns (IGateway);
+
+    function getGatewayByToken(address _tokenAddress) external view returns (IGateway);
+
     function getTokenBySymbol(string calldata _tokenSymbol) external view returns (IERC20Upgradeable);
 }
 
@@ -53,7 +60,7 @@ contract BadgerRenAdapter is Initializable {
         emit RecoverStuckRenBTC(mintedAmount);
 
         renBTC.safeTransfer(msg.sender, mintedAmount);
-    }  
+    }
 
     function mint(
         // user args
@@ -64,7 +71,7 @@ contract BadgerRenAdapter is Initializable {
         bytes calldata _sig
     ) external {
         // Mint renBTC tokens
-        bytes32 pHash = keccak256(abi.encode(_renBTCDestination, msg.sender));
+        bytes32 pHash = keccak256(abi.encode(_renBTCDestination));
         uint256 mintedAmount = registry.getGatewayBySymbol("BTC").mint(pHash, _amount, _nHash, _sig);
 
         emit MintRenBTC(mintedAmount);
@@ -72,10 +79,7 @@ contract BadgerRenAdapter is Initializable {
         renBTC.safeTransfer(_renBTCDestination, mintedAmount);
     }
 
-    function burn(
-        bytes calldata _btcDestination, 
-        uint256 _amount
-    ) external {
+    function burn(bytes calldata _btcDestination, uint256 _amount) external {
         require(renBTC.balanceOf(address(this)) >= _amount);
         uint256 burnAmount = registry.getGatewayBySymbol("BTC").burn(_btcDestination, _amount);
 

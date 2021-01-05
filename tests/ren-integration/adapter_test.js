@@ -21,7 +21,7 @@ const MNEMONIC = process.env.TEST_MNEMONIC;
 const PRIVATE_KEY = process.env.TESTNET_PRIVATE_KEY;
   // Ren test env (gateways) are deployed on the kovan testnet.
 const KOVAN_NETWORK_ID = 42;
-const KOVAN_BADGER_REN_ADAPTER_ADDR = '0x9C3Ef5ecE74D7D33D0f68dFb550D2474Dc8e9732';
+const KOVAN_BADGER_REN_ADAPTER_ADDR = '0x15798d5c0842C73F54d5375Db60CEc19278cEcfb';
 const MINUTES = 60 * SECONDS;
 
 // initialize before running all tests
@@ -71,7 +71,7 @@ describe('BadgerRenAdapter', function() {
       )} ${'btc'} (${await account.address('btc')})`
     );
 	const amount = RenJS.utils
-	  .value(0.0011, 'btc')
+	  .value(0.00101, 'btc')
 	  ._smallest();
     logger.info(`Sending BTC: ${amount}`);
     await account.sendSats(gatewayAddress, amount, 'btc');
@@ -130,10 +130,8 @@ const submitMint = async (mint) => {
   try {
     await signature
       .submitToEthereum(web3.currentProvider, { gas: 1000000 })
-      .on('eth_transactionHash', (txHashB64) => {
-        const buf = Buffer.from(txHashB64, 'base64');
-        const txHashHex = buf.toString('hex');
-        logger.info(`Received txHash(kovan.eth): 0x${txHashHex}`);
+      .on('eth_transactionHash', (txHash) => {
+        logger.info(`Received txHash: ${txHash}`);
       });
     logger.info('Done waiting for Ethereum TX.');
   } catch (error) {
