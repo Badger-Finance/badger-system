@@ -44,13 +44,6 @@ contract DiggSett is Sett {
         return strategyShares.add(settShares);
     }
 
-    /// @notice Defines how much of the Setts' underlying can be borrowed by the Strategy for use
-    /// @notice Custom logic in here for how much the vault allows to be borrowed
-    /// @notice Sets minimum required on-hand to keep small withdrawals cheap
-    function available() public override view returns (uint256) {
-        return IDigg(address(token)).sharesOf(address(this)).div(max).mul(min);
-    }
-
     /// ===== Internal Implementations =====
 
     /// @dev Calculate the number of shares to issue for a given deposit
