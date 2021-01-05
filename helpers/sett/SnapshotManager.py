@@ -180,7 +180,6 @@ class SnapshotManager:
         trackedUsers = {"user": user}
         before = self.snap(trackedUsers)
         self.sett.deposit(amount, overrides)
-        __import__('pdb').set_trace()
         after = self.snap(trackedUsers)
         if confirm:
             self.resolver.confirm_deposit(
