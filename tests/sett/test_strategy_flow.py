@@ -59,7 +59,7 @@ def test_deposit_withdraw_single_user_flow(settConfig):
     snap.settWithdraw(depositAmount // 2 - 1, {"from": deployer})
 
 
-# @pytest.mark.skip()
+@pytest.mark.skip()
 @pytest.mark.parametrize(
     "settConfig", settTestConfig,
 )
