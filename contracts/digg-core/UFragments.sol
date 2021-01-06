@@ -65,15 +65,15 @@ contract UFragments is ERC20Detailed, Ownable {
     }
 
     uint256 private constant DECIMALS = 9;
-    uint256 private constant MAX_UINT256 = ~uint256(0);
+    uint256 private constant MAX_UINT64 = (1 << 64) - 1;
     uint256 private constant INITIAL_FRAGMENTS_SUPPLY = 4000 * 10**DECIMALS;
 
     // TOTAL_SHARES is a multiple of INITIAL_FRAGMENTS_SUPPLY so that _sharesPerFragment is an integer.
-    // Use the highest value that fits in a uint256 for max granularity.
-    uint256 private constant TOTAL_SHARES = MAX_UINT256 - (MAX_UINT256 % INITIAL_FRAGMENTS_SUPPLY);
+    // Use the highest value that fits in a uint64 for reasonable granularity.
+    uint256 private constant TOTAL_SHARES = MAX_UINT64 - (MAX_UINT64 % INITIAL_FRAGMENTS_SUPPLY);
 
     // MAX_SUPPLY = maximum integer < (sqrt(4*TOTAL_SHARES + 1) - 1) / 2
-    uint256 private constant MAX_SUPPLY = ~uint128(0); // (2^128) - 1
+    uint256 private constant MAX_SUPPLY = (2 << 32) - 1; // max uint32
 
     uint256 private _totalSupply;
     uint256 public _sharesPerFragment;
@@ -120,7 +120,7 @@ contract UFragments is ERC20Detailed, Ownable {
         // This means our applied supplyDelta can deviate from the requested supplyDelta,
         // but this deviation is guaranteed to be < (_totalSupply^2)/(TOTAL_SHARES - _totalSupply).
         //
-        // In the case of _totalSupply <= MAX_UINT128 (our current supply cap), this
+        // In the case of _totalSupply <= MAX_UINT32 (our current supply cap), this
         // deviation is guaranteed to be < 1, so we can omit this step. If the supply cap is
         // ever increased, it must be re-included.
         // _totalSupply = TOTAL_SHARES.div(_sharesPerFragment)

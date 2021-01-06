@@ -1,10 +1,12 @@
 from brownie import *
 from decimal import Decimal
+from rich.console import Console
 
 from helpers.utils import approx, val
 from helpers.constants import *
 from helpers.multicall import Call, as_wei, func
-from rich.console import Console
+from scripts.systems.constants import SettType
+
 console = Console()
 
 class StrategyCoreResolver:
@@ -117,12 +119,19 @@ class StrategyCoreResolver:
         self.manager.printCompare(before, after)
 
         assert after.balances("want", "sett") <= before.balances("want", "sett")
-        assert after.get("strategy.balanceOfWant") == 0
-        assert after.get("strategy.balanceOfPool") > before.get(
-            "strategy.balanceOfPool"
-        )
         assert after.get("strategy.balanceOf") > before.get("strategy.balanceOf")
         assert after.balances("want", "user") == before.balances("want", "user")
+
+        if params.get("sett_type") == SettType.DIGG:
+            deposited = before.balances("want", "sett") - after.balances("want", "sett")
+            assert after.get("strategy.balanceOfWant") == deposited
+            assert (after.get("strategy.balanceOfPool") == 0 or  # Basic digg rewards strategy has no position.
+                after.get("strategy.balanceOfPool") > before.get("strategy.balanceOfPool"))
+        else:
+            assert after.get("strategy.balanceOfWant") == 0
+            assert after.get("strategy.balanceOfPool") > before.get(
+                "strategy.balanceOfPool"
+            )
 
     def confirm_withdraw(self, before, after, params):
         """
@@ -155,7 +164,10 @@ class StrategyCoreResolver:
         if params["amount"] > before.balances("want", "sett"):
             # Adjust amount based on total balance x total supply
             # Division in python is not accurate, use Decimal package to ensure division is consistent w/ division inside of EVM
-            expectedWithdraw = Decimal(params["amount"] * before.get("sett.balance")) / Decimal(before.get("sett.totalSupply"))
+            if params.get("sett_type") == SettType.DIGG:
+                expectedWithdraw = Decimal(params["shares"] * before.get("sett.balance")) / Decimal(before.get("sett.totalSupply"))
+            else:
+                expectedWithdraw = Decimal(params["amount"] * before.get("sett.balance")) / Decimal(before.get("sett.totalSupply"))
             # Withdraw from idle in sett first
             expectedWithdraw -= before.balances("want", "sett")
             # First we attempt to withdraw from idle want in strategy
@@ -163,6 +175,14 @@ class StrategyCoreResolver:
                 # If insufficient, we then attempt to withdraw from activities (balance of pool)
                 # Just ensure that we have enough in the pool balance to satisfy the request
                 assert expectedWithdraw - before.balances("want", "strategy") <= before.get("strategy.balanceOfPool")
+            ''' TODO: Tests failing here. Balance of strategy did not change.
+            (Pdb) before.get("strategy.balanceOf")
+            2280000000000
+            (Pdb) after.get("strategy.balanceOf")
+            2280000000000
+            (Pdb) expectedWithdraw
+            Decimal('1080000000000')
+            '''
             assert approx(
                 before.get("strategy.balanceOf"),
                 after.get("strategy.balanceOf") + expectedWithdraw,
@@ -195,6 +215,10 @@ class StrategyCoreResolver:
         self.manager.printCompare(before, after)
 
         expected_shares = Decimal(params["amount"] * Wei("1 ether")) / Decimal(ppfs)
+        # For sett type DIGG, bDIGG is minted 1:1 w/ digg shares (not fragments).
+        # DIGG balances are represented as fragments.
+        if params.get("sett_type") == SettType.DIGG:
+            expected_shares = Decimal(params.get("shares") * Wei("1 ether")) / Decimal(ppfs)
 
         # Increase the totalSupply() of Sett tokens
         assert approx(after.get("sett.totalSupply"), before.get("sett.totalSupply") + expected_shares, 1)

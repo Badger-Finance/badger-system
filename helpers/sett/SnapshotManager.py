@@ -184,14 +184,19 @@ class SnapshotManager:
         self.sett.deposit(amount, overrides)
         after = self.snap(trackedUsers)
 
-        # Convert amount into shares for DIGG type setts
+        params = {
+            "user": user,
+            "amount": amount,
+            "sett_type": self.badger.sett_type,
+        }
+
         if self.badger.sett_type == SettType.DIGG:
-            amount = self.badger.digg_system.token.fragmentsToShares(amount)
+            # Calculate the # of digg shares (static w.r.t. rebases).
+            params["shares"] = self.badger.digg_system.token.fragmentsToShares(amount)
 
         if confirm:
             self.resolver.confirm_deposit(
-                before, after, {"user": user, "amount": amount}
-            )
+                before, after, params)
 
     def settDepositAll(self, overrides, confirm=True):
         user = overrides["from"].address
@@ -200,10 +205,19 @@ class SnapshotManager:
         before = self.snap(trackedUsers)
         self.sett.depositAll(overrides)
         after = self.snap(trackedUsers)
+
+        params = {
+            "user": user,
+            "amount": userBalance,
+            "sett_type": self.badger.sett_type,
+        }
+        if self.badger.sett_type == SettType.DIGG:
+            # Calculate the # of digg shares (static w.r.t. rebases).
+            params["shares"] = self.badger.digg_system.token.fragmentsToShares(amount)
+
         if confirm:
             self.resolver.confirm_deposit(
-                before, after, {"user": user, "amount": userBalance}
-            )
+                before, after, params)
 
     def settEarn(self, overrides, confirm=True):
         user = overrides["from"].address
@@ -212,7 +226,10 @@ class SnapshotManager:
         tx = self.sett.earn(overrides)
         after = self.snap(trackedUsers)
         if confirm:
-            self.resolver.confirm_earn(before, after, {"user": user})
+            self.resolver.confirm_earn(before, after, {
+                "user": user,
+                "sett_type": self.badger.sett_type,
+            })
 
     def settWithdraw(self, amount, overrides, confirm=True):
         user = overrides["from"].address
@@ -220,10 +237,20 @@ class SnapshotManager:
         before = self.snap(trackedUsers)
         self.sett.withdraw(amount, overrides)
         after = self.snap(trackedUsers)
+
+        params = {
+            "user": user,
+            "amount": amount,
+            "sett_type": self.badger.sett_type,
+        }
+
+        if self.badger.sett_type == SettType.DIGG:
+            # Calculate the # of digg shares (static w.r.t. rebases).
+            params["shares"] = self.badger.digg_system.token.fragmentsToShares(amount)
+
         if confirm:
             self.resolver.confirm_withdraw(
-                before, after, {"user": user, "amount": amount}
-            )
+                before, after, params)
 
     def settWithdrawAll(self, overrides, confirm=True):
         user = overrides["from"].address
@@ -233,10 +260,19 @@ class SnapshotManager:
         self.sett.withdraw(userBalance, overrides)
         after = self.snap(trackedUsers)
 
+        params = {
+            "user": user,
+            "amount": userBalance,
+            "sett_type": self.badger.sett_type,
+        }
+
+        if self.badger.sett_type == SettType.DIGG:
+            # Calculate the # of digg shares (static w.r.t. rebases).
+            params["shares"] = self.badger.digg_system.token.fragmentsToShares(amount)
+
         if confirm:
             self.resolver.confirm_withdraw(
-                before, after, {"user": user, "amount": userBalance}
-            )
+                before, after, params)
 
     def format(self, key, value):
         if type(value) is int:
