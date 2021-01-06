@@ -21,7 +21,7 @@ const MNEMONIC = process.env.TEST_MNEMONIC;
 const PRIVATE_KEY = process.env.TESTNET_PRIVATE_KEY;
   // Ren test env (gateways) are deployed on the kovan testnet.
 const KOVAN_NETWORK_ID = 42;
-const KOVAN_BADGER_REN_ADAPTER_ADDR = '0x15798d5c0842C73F54d5375Db60CEc19278cEcfb';
+const KOVAN_BADGER_REN_ADAPTER_ADDR = '0x48965838713554CC3dA249bb719517A7FA027980';
 const MINUTES = 60 * SECONDS;
 
 // initialize before running all tests
