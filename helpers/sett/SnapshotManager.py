@@ -53,19 +53,20 @@ def is_curve_gauge_variant(name):
 
 
 class Snap:
-    def __init__(self, data, block, fragmentsToShares=None):
+    def __init__(self, data, block):
         self.data = data
         self.block = block
-        # Converts values from fragments to shares (for type DIGG setts).
-        self.fragmentsToShares = fragmentsToShares
 
     # ===== Getters =====
 
-    def balances(self, tokenKey, accountKey, fragments=False):
-        balance = self.data["balances." + tokenKey + "." + accountKey]
-        if fragments and self.fragmentsToShares is not None:
-            return self.fragmentsToShares(balance)
-        return balance
+    def balances(self, tokenKey, accountKey):
+        return self.data["balances." + tokenKey + "." + accountKey]
+
+    def sumBalances(self, tokenKey, accountKeys):
+        total = 0
+        for accountKey in accountKeys:
+            total += self.data["balances." + tokenKey + "." + accountKey]
+        return total
 
     def get(self, key):
 
@@ -126,11 +127,8 @@ class SnapshotManager:
         # for call in calls:
         #     print(call.target, call.function, call.args)
 
-        fragmentsToShares = None
-        if self.badger.sett_type == SettType.DIGG:
-            fragmentsToShares = self.badger.digg_system.token.fragmentsToShares
         data = multi()
-        self.snaps[snapBlock] = Snap(data, snapBlock, fragmentsToShares=fragmentsToShares)
+        self.snaps[snapBlock] = Snap(data, snapBlock)
 
         return self.snaps[snapBlock]
 
@@ -186,11 +184,14 @@ class SnapshotManager:
         self.sett.deposit(amount, overrides)
         after = self.snap(trackedUsers)
 
+        # Convert amount into shares for DIGG type setts
         if self.badger.sett_type == SettType.DIGG:
             amount = self.badger.digg_system.token.fragmentsToShares(amount)
 
         if confirm:
-            self.resolver.confirm_deposit(before, after, {"user": user, "amount": amount})
+            self.resolver.confirm_deposit(
+                before, after, {"user": user, "amount": amount}
+            )
 
     def settDepositAll(self, overrides, confirm=True):
         user = overrides["from"].address

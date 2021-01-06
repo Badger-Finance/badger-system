@@ -200,12 +200,10 @@ class StrategyCoreResolver:
         assert approx(after.get("sett.totalSupply"), before.get("sett.totalSupply") + expected_shares, 1)
 
         # Increase the balanceOf() want in the Sett by depositAmount
-        assert approx(after.balances("want", "sett", fragments=True),
-                before.balances("want", "sett", fragments=True) + params["amount"], 1)
+        assert approx(after.balances("want", "sett"), before.balances("want", "sett") + params["amount"], 1)
 
         # Decrease the balanceOf() want of the user by depositAmount
-        assert approx(after.balances("want", "user", fragments=True),
-            before.balances("want", "user", fragments=True) - params["amount"], 1)
+        assert approx(after.balances("want", "user"), before.balances("want", "user") - params["amount"], 1)
 
         # Increase the balanceOf() Sett tokens for the user based on depositAmount / pricePerFullShare
         assert approx(after.balances("sett", "user"), before.balances("sett", "user") + expected_shares, 1)
