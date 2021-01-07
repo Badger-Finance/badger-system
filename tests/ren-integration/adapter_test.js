@@ -12,6 +12,13 @@ const logger = require('pino')({
     prettyPrint: { colorize: true }
 });
 
+const {
+  // Curve exchange renBTC/wBTC trading pair addr.
+  KOVAN_CURVE_TRADING_PAIR_ADDR,
+  KOVAN_ADAPTER_ADDR,
+} = require('./deploy.json');
+const curveABI = require('./curveABI.json');
+
 require('dotenv').config();
 
 const INFURA_PROJECT_ID = process.env.WEB3_INFURA_PROJECT_ID;
@@ -21,7 +28,6 @@ const MNEMONIC = process.env.TEST_MNEMONIC;
 const PRIVATE_KEY = process.env.TESTNET_PRIVATE_KEY;
   // Ren test env (gateways) are deployed on the kovan testnet.
 const KOVAN_NETWORK_ID = 42;
-const KOVAN_BADGER_REN_ADAPTER_ADDR = '0x48965838713554CC3dA249bb719517A7FA027980';
 const MINUTES = 60 * SECONDS;
 
 // initialize before running all tests
@@ -46,12 +52,13 @@ describe('BadgerRenAdapter', function() {
 
   it('should mint renBTC', async () => {
 
-	const mint = await renJS.lockAndMint({
+    const amount = 0.00101;
+    const mint = await renJS.lockAndMint({
       // Send BTC from the Bitcoin blockchain to the Ethereum blockchain.
       sendToken: RenJS.Tokens.BTC.Btc2Eth,
       // The contract we want to interact with
-      sendTo: KOVAN_BADGER_REN_ADAPTER_ADDR,
-      contractFn: 'mint',
+      sendTo: KOVAN_ADAPTER_ADDR,
+      contractFn: 'mintRenBTC',
       // Arguments expected for calling `mint`
       contractParams: [
         {
@@ -61,29 +68,60 @@ describe('BadgerRenAdapter', function() {
         },
       ],
       web3Provider: web3.currentProvider,
-	});
+    });
 
-    const gatewayAddress = await mint.gatewayAddress();
-    const account = new CryptoAccount(PRIVATE_KEY, { network: 'testnet' });
-    logger.info(
-      `BTC balance: ${await account.balanceOf(
-          'btc'
-      )} ${'btc'} (${await account.address('btc')})`
-    );
-	const amount = RenJS.utils
-	  .value(0.00101, 'btc')
-	  ._smallest();
-    logger.info(`Sending BTC: ${amount}`);
-    await account.sendSats(gatewayAddress, amount, 'btc');
-
-    // Submit mint
-    // NB: On testnet this actually mints testBTC.
-	await submitMint(mint);
+    logger.info('processing renBTC mint...');
+    await processMint(mint, amount);
   });
 
   it('should burn renBTC', async () => {
-
   });
+
+  it('should mint wBTC', async () => {
+
+    const amount = 0.00101;
+    const minExchangeRate = await getMinExchangeRate(amount);
+    // Use high max slippage, we just want the tx to go thru for test purposes.
+    const maxSlippage = 0.05;
+	const mint = await renJS.lockAndMint({
+      // Send BTC from the Bitcoin blockchain to the Ethereum blockchain.
+      sendToken: RenJS.Tokens.BTC.Btc2Eth,
+      // The contract we want to interact with
+      sendTo: KOVAN_ADAPTER_ADDR,
+      contractFn: 'mintWBTC',
+      // Arguments expected for calling `mint`
+      contractParams: [
+        {
+          name: "_minExchangeRate",
+          type: "uint256",
+          value: RenJS.utils
+            .value(Number(minExchangeRate), "btc")
+            .sats()
+            .toNumber()
+            .toFixed(0),
+        },
+        {
+          name: "_slippage",
+          type: "uint256",
+          value: Number(maxSlippage * 10000).toFixed(0),
+        },
+        {
+          name: "_wbtcDestination",
+          type: "address",
+          value: web3.eth.defaultAccount,
+        },
+      ],
+      web3Provider: web3.currentProvider,
+	});
+
+    logger.info('processing wBTC mint...');
+    await processMint(mint, amount);
+  });
+
+  it('should burn wBTC', async () => {
+  });
+
+
 });
 
 // A debug `sleep`. It prints a count-down to the console.
@@ -94,6 +132,25 @@ const sleepWithCountdown = async (seconds) => {
     seconds -= 1;
   }
   process.stdout.write('\u001b[0K\r');
+};
+
+const processMint = async(mint, _amount) => {
+    const gatewayAddress = await mint.gatewayAddress();
+    const account = new CryptoAccount(PRIVATE_KEY, { network: 'testnet' });
+    logger.info(
+      `BTC balance: ${await account.balanceOf(
+          'btc'
+      )} ${'btc'} (${await account.address('btc')})`
+    );
+	const amount = RenJS.utils
+	  .value(_amount, 'btc')
+	  ._smallest();
+    logger.info(`Sending BTC: ${amount}`);
+    await account.sendSats(gatewayAddress, amount, 'btc');
+
+    // Submit mint
+    // NB: On testnet this actually mints testBTC.
+	await submitMint(mint);
 };
 
 const submitMint = async (mint) => {
@@ -143,3 +200,18 @@ const submitMint = async (mint) => {
     throw error;
   }
 };
+
+const getMinExchangeRate = async (amount) => {
+  const curve = new web3.eth.Contract(curveABI, KOVAN_CURVE_TRADING_PAIR_ADDR);
+  // NB: In production, we actually want to calculate this based on the expected badger/renVM fees.
+  // For testing purposes we'll just make the minimum mint amount 95% of the mint amount.
+  const amountAfterMint = amount * 0.95;
+  const amountAfterMintInSats = Math.round(
+    RenJS.utils.value(amountAfterMint, "btc").sats().toNumber()
+  );
+
+  const swapResult =
+    (await curve.methods.get_dy(0, 1, amountAfterMintInSats).call()) /
+    10 ** 8; // satoshi denominated, convert back to BTC
+  return Number(swapResult / amountAfterMint);
+}

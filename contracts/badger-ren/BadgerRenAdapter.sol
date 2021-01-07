@@ -137,7 +137,7 @@ contract BadgerRenAdapter is Initializable {
         bytes calldata _sig
     ) external {
         // Mint renBTC tokens
-        bytes32 pHash = keccak256(abi.encode(_minExchangeRate, _slippage, _wbtcDestination, msg.sender));
+        bytes32 pHash = keccak256(abi.encode(_minExchangeRate, _slippage, _wbtcDestination));
         uint256 mintedAmount = registry.getGatewayBySymbol("BTC").mint(pHash, _amount, _nHash, _sig);
 
         // Get price
