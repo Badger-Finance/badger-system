@@ -32,7 +32,7 @@ const MINUTES = 60 * SECONDS;
 
 // initialize before running all tests
 const renJS = new RenJS('testnet', {
-  //  logLevel: LogLevel.Debug
+  logLevel: LogLevel.Debug
 });
 let web3 = null;
 before(async () => {
@@ -80,10 +80,9 @@ describe('BadgerRenAdapter', function() {
   it('should mint wBTC', async () => {
 
     const amount = 0.00101;
-    const minExchangeRate = await getMinExchangeRate(amount);
     // Use high max slippage, we just want the tx to go thru for test purposes.
     const maxSlippage = 0.05;
-	const mint = await renJS.lockAndMint({
+    const mint = await renJS.lockAndMint({
       // Send BTC from the Bitcoin blockchain to the Ethereum blockchain.
       sendToken: RenJS.Tokens.BTC.Btc2Eth,
       // The contract we want to interact with
@@ -91,15 +90,6 @@ describe('BadgerRenAdapter', function() {
       contractFn: 'mintWBTC',
       // Arguments expected for calling `mint`
       contractParams: [
-        {
-          name: "_minExchangeRate",
-          type: "uint256",
-          value: RenJS.utils
-            .value(Number(minExchangeRate), "btc")
-            .sats()
-            .toNumber()
-            .toFixed(0),
-        },
         {
           name: "_slippage",
           type: "uint256",
@@ -112,7 +102,7 @@ describe('BadgerRenAdapter', function() {
         },
       ],
       web3Provider: web3.currentProvider,
-	});
+    });
 
     logger.info('processing wBTC mint...');
     await processMint(mint, amount);
