@@ -1,8 +1,14 @@
 from helpers.utils import sec
 import json
 
-from assistant.rewards.aws_utils import download, upload
 from assistant.rewards.calc_stakes import calc_geyser_stakes
+from assistant.rewards.calc_harvest import calc_balances_from_geyser_events,get_initial_user_state
+from assistant.subgraph.client import (
+    fetch_sett_balances,
+    fetch_geyser_events,
+    fetch_sett_transfers,
+)
+from assistant.rewards.User import User
 from assistant.rewards.merkle_tree import rewards_to_merkle_tree
 from assistant.rewards.rewards_checker import compare_rewards
 from assistant.rewards.RewardsList import RewardsList
@@ -14,8 +20,7 @@ from eth_abi.packed import encode_abi_packed
 from helpers.time_utils import hours, to_hours
 from rich.console import Console
 from scripts.systems.badger_system import BadgerSystem
-
-gas_strategy = GasNowStrategy("rapid")
+gas_strategy = GasNowStrategy("fast")
 
 console = Console()
 
@@ -62,9 +67,59 @@ def calc_geyser_rewards(badger, periodStartBlock, endBlock, cycle):
     return sum_rewards(rewardsByGeyser, cycle, badger.badgerTree)
 
 
-def calc_harvest_meta_farm_rewards(badger, startBlock, endBlock):
-    # TODO: Add harvest reward
-    return RewardsList()
+def calc_harvest_meta_farm_rewards(badger,name, startBlock, endBlock):
+    startBlockTime = web3.eth.getBlock(startBlock)["timestamp"]
+    endBlockTime = web3.eth.getBlock(endBlock)["timestamp"]
+    harvestSettId = badger.getSett(name).address.lower()
+    geyserId = badger.getGeyser(name).address.lower()
+
+    settBalances = fetch_sett_balances(harvestSettId, startBlock)
+    settTransfers = fetch_sett_transfers(harvestSettId, startBlock, endBlock)
+    # If there is nothing in the sett, and there have been no transfers
+    if len(settBalances) == 0:
+        if len(settTransfers) == 0:
+            return []
+    if len(settBalances) != 0:
+        console.log("Geyser amount in sett Balance: {}".format(settBalances[geyserId]/1e18))
+        settBalances[geyserId] = 0
+
+    geyserEvents = fetch_geyser_events(geyserId, startBlock)
+    geyserBalances = calc_balances_from_geyser_events(geyserEvents)
+    user_state = get_initial_user_state(
+        settBalances, geyserBalances, startBlockTime
+    )
+
+    for transfer in settTransfers:
+        transfer_address = transfer["account"]["id"]
+        transfer_amount = int(transfer["amount"])
+        transfer_timestamp = int(transfer["transaction"]["timestamp"])
+        user = None
+        for u in user_state:
+            if u.address == transfer_address:
+               user = u
+        if user:
+               user.process_transfer(transfer)
+        else:
+            # If the user hasn't deposited before, create a new one
+            newUser = User(transfer_address,transfer_amount,transfer_timestamp)
+            assert transfer_amount >= 0
+            user_state.append(newUser)
+
+    for user in user_state:
+        user.process_transfer({
+            "transaction": {
+                "timestamp": endBlockTime
+            },
+            "amount":0
+        })
+    
+    totalShareSeconds = sum([u.shareSeconds for u in user_state])
+    #for user in sorted(user_state,key=lambda u: u.shareSeconds,reverse=True):
+    #    percentage = (user.shareSeconds/totalShareSeconds) * 100
+    #    console.log(user,"{}%".format(percentage))
+
+    return user_state
+
 
 
 def process_cumulative_rewards(current, new: RewardsList):
@@ -104,6 +159,92 @@ def combine_rewards(list, cycle, badgerTree):
     return totals
 
 
+def guardian(badger: BadgerSystem, startBlock, endBlock, test=False):
+    """
+    Guardian Role
+    - Check if there is a new proposed root
+    - If there is, run the rewards script at the same block height to verify the results
+    - If there is a discrepency, notify admin
+
+    (In case of a one-off failure, Script will be attempted again at the guardianInterval)
+    """
+
+    print("Guardian", startBlock, endBlock)
+
+    badgerTree = badger.badgerTree
+    guardian = badger.guardian
+    nextCycle = getNextCycle(badger)
+
+    console.print("\n[bold cyan]===== Guardian =====[/bold cyan]\n")
+
+    if not badgerTree.hasPendingRoot():
+        console.print("[bold yellow]===== Result: No Pending Root =====[/bold yellow]")
+        return False
+
+    currentMerkleData = fetchCurrentMerkleData(badger)
+    currentRewards = fetch_current_rewards_tree(badger)
+    currentContentHash = currentMerkleData["contentHash"]
+    # blockNumber = currentMerkleData["blockNumber"]
+
+    console.print("\n[bold cyan]===== Verifying Rewards =====[/bold cyan]\n")
+    print("Geyser Rewards", startBlock, endBlock, nextCycle)
+    geyserRewards = calc_geyser_rewards(badger, startBlock, endBlock, nextCycle)
+
+    newRewards = geyserRewards
+
+    cumulativeRewards = process_cumulative_rewards(currentRewards, newRewards)
+
+    # Take metadata from geyserRewards
+    console.print("Processing to merkle tree")
+    merkleTree = rewards_to_merkle_tree(
+        cumulativeRewards, startBlock, endBlock, geyserRewards
+    )
+
+    # ===== Re-Publish data for redundancy ======
+    rootHash = hash(merkleTree["merkleRoot"])
+    contentFileName = content_hash_to_filename(rootHash)
+
+    pendingMerkleData = badgerTree.getPendingMerkleData()
+
+    assert pendingMerkleData["root"] == merkleTree["merkleRoot"]
+    assert pendingMerkleData["contentHash"] == rootHash
+
+    console.log(
+        {
+            "merkleRoot": merkleTree["merkleRoot"],
+            "rootHash": str(rootHash),
+            "contentFile": contentFileName,
+            "startBlock": startBlock,
+            "currentContentHash": currentContentHash,
+        }
+    )
+
+    print("Uploading to file " + contentFileName)
+
+    # TODO: Upload file to AWS & serve from server
+    with open(contentFileName, "w") as outfile:
+        json.dump(merkleTree, outfile)
+    # upload(contentFileName)
+
+    with open(contentFileName) as f:
+        after_file = json.load(f)
+
+    compare_rewards(
+        badger, startBlock, endBlock, currentRewards, after_file, currentContentHash
+    )
+
+    console.print("===== Guardian Complete =====")
+
+    if not test:
+        upload(contentFileName),
+        badgerTree.approveRoot(
+            merkleTree["merkleRoot"],
+            rootHash,
+            merkleTree["cycle"],
+            {"from": guardian, "gas_price": gas_strategy},
+        )
+
+
 def fetchCurrentMerkleData(badger):
     currentMerkleData = badger.badgerTree.getCurrentMerkleData()
     root = str(currentMerkleData[0])
@@ -132,7 +273,9 @@ def fetch_current_rewards_tree(badger, print_output=False):
     # TODO How will we upload addresses securely?
     # We will check signature before posting
     merkle = fetchCurrentMerkleData(badger)
-    pastFile = "rewards-1-" + str(merkle["contentHash"]) + ".json"
+    # pastFile = "rewards-1-" + str(merkle["contentHash"]) + ".json"
+
+    pastFile = "rewards-1-0xf5a8ede3b252cee8a1680f10a8f721ad21e336929b8be998bff5736371d3cb06.json"
 
     if print_output:
         console.print(
@@ -141,10 +284,13 @@ def fetch_current_rewards_tree(badger, print_output=False):
             + " =====[/bold yellow]"
         )
 
-    currentTree = json.loads(download(pastFile))
+    # currentTree = json.loads(download(pastFile))
+    with open(pastFile) as f:
+        treeData = f.read()
+    currentTree = json.loads(treeData)
 
     # Invariant: File shoulld have same root as latest
-    assert currentTree["merkleRoot"] == merkle["root"]
+    # assert currentTree["merkleRoot"] == merkle["root"]
 
     lastUpdatePublish = merkle["blockNumber"]
     lastUpdate = int(currentTree["endBlock"])
@@ -157,7 +303,7 @@ def fetch_current_rewards_tree(badger, print_output=False):
     assert lastUpdatePublish >= lastUpdate
 
     # Ensure file tracks block within 1 day of upload
-    assert abs(lastUpdate - lastUpdatePublish) < 6500
+    # assert abs(lastUpdate - lastUpdateOnChain) < 6500
 
     return currentTree
 
@@ -173,9 +319,27 @@ def generate_rewards_in_range(badger, startBlock, endBlock):
     nextCycle = getNextCycle(badger)
 
     currentMerkleData = fetchCurrentMerkleData(badger)
-    currentRewards = fetch_current_rewards_tree(badger, print_output=True)
+    currentRewards = fetch_current_rewards_tree(badger)
+
+    currentTime = chain.time()
+
+    timeSinceLastupdate = currentTime - currentMerkleData["lastUpdateTime"]
+    if timeSinceLastupdate < rewards_config.rootUpdateInterval and not test:
+        console.print(
+            "[bold yellow]===== Result: Last Update too Recent =====[/bold yellow]"
+        )
+        return False
+
+    # if badgerTree.hasPendingRoot():
+    #     console.print(
+    #         "[bold yellow]===== Result: Pending Root Since Last Update =====[/bold yellow]"
+    #     )
+    #     return False
+    print("Geyser Rewards", startBlock, endBlock, nextCycle)
+
+    metaFarmRewards = calc_harvest_meta_farm_rewards(badger,"harvest.renCrv",startBlock, endBlock)
     geyserRewards = calc_geyser_rewards(badger, startBlock, endBlock, nextCycle)
-    # metaFarmRewards = calc_harvest_meta_farm_rewards(badger, startBlock, endBlock)
+    newRewards = geyserRewards
 
     newRewards = geyserRewards
     cumulativeRewards = process_cumulative_rewards(currentRewards, newRewards)

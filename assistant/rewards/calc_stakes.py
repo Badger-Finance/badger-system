@@ -120,15 +120,19 @@ def collect_actions_from_events(geyser, startBlock, endBlock):
     """
     contract = web3.eth.contract(geyser.address, abi=BadgerGeyser.abi)
     actions = DotMap()
-
+    console.log("collecting actions")
     # Add stake actions
     for start in trange(startBlock, endBlock, 1000):
+        console.log(startBlock)
         end = min(start + 999, endBlock)
+        console.log("gettingLogs")
         logs = contract.events.Staked().getLogs(fromBlock=start, toBlock=end)
+        console.log("gotLogs")
+        console.log(logs)
         for log in logs:
             timestamp = log["args"]["timestamp"]
             user = log["args"]["user"]
-            # console.log("Staked", log["args"])
+            console.log("Staked", log["args"])
             if user != AddressZero:
                 if not actions[user]:
                     actions[user] = OrderedDict()
@@ -152,7 +156,7 @@ def collect_actions_from_events(geyser, startBlock, endBlock):
         for log in logs:
             timestamp = log["args"]["timestamp"]
             user = log["args"]["user"]
-            # console.log("Unstaked", log["args"])
+            console.log("Unstaked", log["args"])
             if user != AddressZero:
                 if not actions[user]:
                     actions[user] = OrderedDict()
