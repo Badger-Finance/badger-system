@@ -31,7 +31,7 @@ contract StrategySushiDiggWbtcLpOptimizer is BaseStrategyMultiSwapper {
     using SafeMathUpgradeable for uint256;
 
     address public geyser;
-    address public digg; // BADGER Token
+    address public digg; // DIGG Token
     address public constant wbtc = 0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599; // WBTC Token
     address public constant sushi = 0x6B3595068778DD592e39A122f4f5a5cF09C90fE2; // SUSHI token
     address public constant xsushi = 0x8798249c2E607446EfB7Ad49eC89dD1865Ff4272; // xSUSHI token
@@ -52,8 +52,8 @@ contract StrategySushiDiggWbtcLpOptimizer is BaseStrategyMultiSwapper {
     );
 
     event HarvestDiggState(
-        uint256 badgerHarvested,
-        uint256 badgerConvertedToWbtc,
+        uint256 diggHarvested,
+        uint256 diggConvertedToWbtc,
         uint256 wtbcFromConversion,
         uint256 lpGained,
         uint256 timestamp,
@@ -61,13 +61,13 @@ contract StrategySushiDiggWbtcLpOptimizer is BaseStrategyMultiSwapper {
     );
 
     struct HarvestData {
-        uint256 badgerHarvested;
+        uint256 diggHarvested;
         uint256 xSushiHarvested;
         uint256 totalxSushi;
         uint256 toStrategist;
         uint256 toGovernance;
         uint256 toBadgerTree;
-        uint256 badgerConvertedToWbtc;
+        uint256 diggConvertedToWbtc;
         uint256 wtbcFromConversion;
         uint256 lpGained;
     }
@@ -109,7 +109,7 @@ contract StrategySushiDiggWbtcLpOptimizer is BaseStrategyMultiSwapper {
     }
 
     function getName() external override pure returns (string memory) {
-        return "StrategySushiBadgerWbtc";
+        return "StrategySushiDiggWbtc";
     }
 
     function balanceOfPool() public override view returns (uint256) {
@@ -142,7 +142,7 @@ contract StrategySushiDiggWbtcLpOptimizer is BaseStrategyMultiSwapper {
         require(address(digg) != _asset, "digg");
     }
 
-    /// @dev Deposit Badger into the staking contract
+    /// @dev Deposit DIGG into the staking contract
     /// @dev Track balance in the StakingRewards
     function _deposit(uint256 _want) internal override {
         // Deposit all want in sushi chef
@@ -169,14 +169,14 @@ contract StrategySushiDiggWbtcLpOptimizer is BaseStrategyMultiSwapper {
         // Send all Sushi to controller rewards
         IERC20Upgradeable(sushi).safeTransfer(IController(controller).rewards(), _sushi);
 
-        // === Transfer extra token: Badger ===
+        // === Transfer extra token: DIGG ===
 
         // "Unstake" from digg rewards source and hrvest all digg rewards
         IStakingRewardsSignalOnly(geyser).exit();
 
         // Send all digg rewards to controller rewards
-        uint256 _badger = IERC20Upgradeable(digg).balanceOf(address(this));
-        IERC20Upgradeable(digg).safeTransfer(IController(controller).rewards(), _badger);
+        uint256 _digg = IERC20Upgradeable(digg).balanceOf(address(this));
+        IERC20Upgradeable(digg).safeTransfer(IController(controller).rewards(), _digg);
 
         // Note: All want is automatically withdrawn outside this "inner hook" in base strategy function
     }
@@ -241,7 +241,7 @@ contract StrategySushiDiggWbtcLpOptimizer is BaseStrategyMultiSwapper {
         uint256 _beforexSushi = IERC20Upgradeable(xsushi).balanceOf(address(this));
         uint256 _beforeLp = IERC20Upgradeable(want).balanceOf(address(this));
 
-        uint256 _beforeBadger = IERC20Upgradeable(digg).balanceOf(address(this));
+        uint256 _beforeDigg = IERC20Upgradeable(digg).balanceOf(address(this));
 
         // ===== Harvest sushi rewards from Chef =====
 
@@ -272,24 +272,24 @@ contract StrategySushiDiggWbtcLpOptimizer is BaseStrategyMultiSwapper {
         harvestData.toBadgerTree = IERC20Upgradeable(xsushi).balanceOf(address(this));
         IERC20Upgradeable(xsushi).safeTransfer(badgerTree, harvestData.toBadgerTree);
 
-        // ===== Harvest all Badger rewards: Sell to underlying (no performance fees) =====
+        // ===== Harvest all DIGG rewards: Sell to underlying (no performance fees) =====
 
         IStakingRewardsSignalOnly(geyser).getReward();
 
-        uint256 _afterBadger = IERC20Upgradeable(digg).balanceOf(address(this));
-        harvestData.badgerHarvested = _afterBadger.sub(_beforeBadger);
+        uint256 _afterDigg = IERC20Upgradeable(digg).balanceOf(address(this));
+        harvestData.diggHarvested = _afterDigg.sub(_beforeDigg);
 
         // ===== Swap half of digg for wBTC in liquidity pool =====
-        if (harvestData.badgerHarvested > 0) {
-            harvestData.badgerConvertedToWbtc = harvestData.badgerHarvested.div(2);
-            if (harvestData.badgerConvertedToWbtc > 0) {
+        if (harvestData.diggHarvested > 0) {
+            harvestData.diggConvertedToWbtc = harvestData.diggHarvested.div(2);
+            if (harvestData.diggConvertedToWbtc > 0) {
                 address[] memory path = new address[](2);
-                path[0] = digg; // Badger
+                path[0] = digg; // Digg
                 path[1] = wbtc;
 
-                _swap_sushiswap(digg, harvestData.badgerConvertedToWbtc, path);
+                _swap_sushiswap(digg, harvestData.diggConvertedToWbtc, path);
 
-                // Add Badger and wBTC as liquidity if any to add
+                // Add DIGG and wBTC as liquidity if any to add
                 _add_max_liquidity_sushiswap(digg, wbtc);
             }
         }
@@ -313,8 +313,8 @@ contract StrategySushiDiggWbtcLpOptimizer is BaseStrategyMultiSwapper {
         );
 
         emit HarvestDiggState(
-            harvestData.badgerHarvested,
-            harvestData.badgerConvertedToWbtc,
+            harvestData.diggHarvested,
+            harvestData.diggConvertedToWbtc,
             harvestData.wtbcFromConversion,
             harvestData.lpGained,
             block.timestamp,

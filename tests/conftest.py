@@ -1,25 +1,29 @@
-from tests.sett.fixtures.DiggRewardsMiniDeploy import DiggRewardsMiniDeploy
-from tests.sett.fixtures.SushiBadgerLpOptimizerMiniDeploy import SushiBadgerLpOptimizerMiniDeploy
-from helpers.token_utils import distribute_test_ether
-from scripts.systems.badger_system import connect_badger
 import pytest
-from brownie import *
-from config.badger_config import badger_config, sett_config
+from brownie import (
+    Wei,
+    BadgerHunt,
+    accounts,
+)
+
+from config.badger_config import badger_config
 from scripts.deploy.deploy_badger import deploy_flow
 from scripts.systems.badger_minimal import deploy_badger_minimal
 from scripts.systems.constants import SettType
-
-from helpers.constants import *
-from helpers.registry import registry
-from tests.helpers import create_uniswap_pair, distribute_from_whales
-from tests.sett.fixtures.BadgerLpMetaFarmMiniDeploy import BadgerLpMetaFarmMiniDeploy
-from tests.sett.fixtures.BadgerRewardsMiniDeploy import BadgerRewardsMiniDeploy
-from tests.sett.fixtures.CurveGaugeRenBtcMiniDeploy import CurveGaugeRenBtcMiniDeploy
-from tests.sett.fixtures.CurveGaugeSBtcMiniDeploy import CurveGaugeSBtcMiniDeploy
-from tests.sett.fixtures.CurveGaugeTBtcMiniDeploy import CurveGaugeTBtcMiniDeploy
-from tests.sett.fixtures.HarvestMetaFarmMiniDeploy import HarvestMetaFarmMiniDeploy
-from tests.sett.fixtures.SushiBadgerWBtcMiniDeploy import SushiBadgerWBtcMiniDeploy
-
+from helpers.token_utils import distribute_test_ether
+from scripts.systems.badger_system import connect_badger
+from tests.helpers import distribute_from_whales
+from tests.sett.fixtures import (
+    SushiBadgerLpOptimizerMiniDeploy,
+    DiggRewardsMiniDeploy,
+    BadgerLpMetaFarmMiniDeploy,
+    BadgerRewardsMiniDeploy,
+    CurveGaugeRenBtcMiniDeploy,
+    CurveGaugeSBtcMiniDeploy,
+    CurveGaugeTBtcMiniDeploy,
+    HarvestMetaFarmMiniDeploy,
+    SushiBadgerWBtcMiniDeploy,
+    SushiDiggWbtcLpOptimizerMiniDeploy,
+)
 
 
 def generate_sett_test_config(settsToRun, runTestSetts, runProdSetts=False):
@@ -51,12 +55,17 @@ settsToRun = [
     # "sushi.sushiWbtcWeth",
     "native.digg",
     # "native.uniDiggWbtc",
-    # "native.sushiDiggWBtc"
+]
+
+diggSettsToRun = [
+    "native.sushiDiggWbtc",
 ]
 
 runTestSetts = True
 
 settTestConfig = generate_sett_test_config(settsToRun, runTestSetts)
+diggSettTestConfig = generate_sett_test_config(diggSettsToRun, runTestSetts)
+
 
 @pytest.fixture(scope="function", autouse=True)
 def isolate(fn_isolation):
@@ -178,10 +187,10 @@ def badger_single_sett(settConfig):
                 keeper=keeper,
                 governance=governance,
             ).deploy(sett_type=SettType.DIGG)
-        if settId == "native.sushiDiggWBtc":
-            return DiggRewardsMiniDeploy(
-                "native.sushiDiggWBtc",
-                "StrategySushiLpOptimizer",
+        if settId == "native.sushiDiggWbtc":
+            return SushiDiggWbtcLpOptimizerMiniDeploy(
+                "native.sushiDiggWbtc",
+                "StrategySushiDiggWbtcLpOptimizer",
                 deployer,
                 strategist=strategist,
                 guardian=guardian,

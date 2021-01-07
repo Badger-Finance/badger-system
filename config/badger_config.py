@@ -134,6 +134,15 @@ sett_config = DotMap(
                 withdrawalFee=50,
             ),
         ),
+        sushiDiggWBtc=DotMap(
+            # Unfinished
+            strategyName="StrategySushiBadgerWbtc",
+            params=DotMap(
+                performanceFeeStrategist=1000,
+                performanceFeeGovernance=1000,
+                withdrawalFee=50,
+            ),
+        ),
     ),
 )
 

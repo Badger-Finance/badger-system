@@ -14,6 +14,7 @@ from helpers.sett.resolvers import (
     StrategySushiBadgerLpOptimizerResolver,
     StrategyCurveGaugeResolver,
     StrategyDiggRewardsResolver,
+    StrategySushiDiggWbtcLpOptimizer,
 )
 from helpers.utils import val
 from scripts.systems.badger_system import BadgerSystem
@@ -158,6 +159,8 @@ class SnapshotManager:
             return StrategySushiBadgerLpOptimizerResolver(self)
         if name == "StrategyDiggRewards":
             return StrategyDiggRewardsResolver(self)
+        if name == "StrategySushiDiggWbtcLpOptimizer":
+            return StrategySushiDiggWbtcLpOptimizerResolver(self)
 
     def settTend(self, overrides, confirm=True):
         user = overrides["from"].address

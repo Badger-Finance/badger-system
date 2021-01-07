@@ -38,7 +38,7 @@ class SettMiniDeployBase:
             self.badger = deploy_badger_minimal(self.deployer, self.keeper, self.guardian)
             self.controller = self.badger.add_controller(self.key)
         else:
-            self.badger=""
+            self.badger = ""
         self.deploy_required_logic()
 
         self.pre_deploy_setup()
@@ -83,13 +83,6 @@ class SettMiniDeployBase:
         assert self.vault.paused()
 
         self.vault.unpause({"from": self.governance})
-
-        self.badger.setTestingContext(
-            sett_type=sett_type,
-            # It's fine if digg system is None, it's only used
-            # when testing DIGG sett type.
-            digg_system=self.digg,
-        )
 
         return self.badger
 

@@ -1,37 +1,32 @@
-from brownie import web3, DiggRewardsFaucet
+from brownie import web3
 
 from scripts.systems.digg_minimal import deploy_digg_minimal
 from tests.sett.fixtures.SettMiniDeployBase import SettMiniDeployBase
-from config.badger_config import sett_config, digg_config_test
+from config.badger_config import sett_config
+from scripts.systems.sushiswap_system import SushiswapSystem
+from helpers.registry import registry
 
 
-class DiggRewardsMiniDeploy(SettMiniDeployBase):
+class SushiDiggWbtcLpOptimizerMiniDeploy(SettMiniDeployBase):
     def fetch_params(self):
-        params = sett_config.native.badger.params
-        params.want = self.digg.token
+        params = sett_config.sushi.sushiDiggWBtc.params
+
+        sushiswap = SushiswapSystem()
+        # TODO: Pull digg token addr from registry once its deployed.
+        if sushiswap.hasPair(self.digg.token, registry.tokens.wbtc):
+            params.want = sushiswap.getPair(self.digg.token, registry.tokens.wbtc)
+        else:
+            params.want = sushiswap.createPair(
+                self.digg.token,
+                registry.tokens.wbtc,
+                self.deployer,
+            )
         want = params.want
-
-        self.badger.deploy_logic("DiggRewardsFaucet", DiggRewardsFaucet)
-
-        self.rewards = self.badger.deploy_digg_rewards_faucet(
-            self.key, self.digg.token
-        )
-
-        params.geyser = self.rewards
+        params.token = self.digg.token
 
         return (params, want)
 
     def post_deploy_setup(self):
-        """
-        Distribute badger to Geyser and allow strategy to take
-        """
-        self.badger.distribute_staking_rewards(
-            self.key, digg_config_test.geyserParams.unlockSchedules.digg[0].amount
-        )
-
-        # Make strategy the recipient of the DIGG faucet
-        self.rewards.initializeRecipient(self.strategy, {"from": self.deployer})
-
         # Track our digg system within badger system for convenience
         self.badger.add_existing_digg(self.digg)
 
