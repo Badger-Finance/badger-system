@@ -2,8 +2,8 @@
 
 pragma solidity ^0.6.8;
 
-import "deps/@openzeppelin/contracts-upgradeable/token/ERC20/SafeERC20Upgradeable.sol";
-import "deps/@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
+import "deps/@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "deps/@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import "deps/@openzeppelin/contracts-upgradeable/proxy/Initializable.sol";
 import "deps/@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 
@@ -23,7 +23,7 @@ interface IGatewayRegistry {
 
     function getGatewayByToken(address _tokenAddress) external view returns (IGateway);
 
-    function getTokenBySymbol(string calldata _tokenSymbol) external view returns (IERC20Upgradeable);
+    function getTokenBySymbol(string calldata _tokenSymbol) external view returns (IERC20);
 }
 
 interface ICurveExchange {
@@ -55,12 +55,13 @@ interface ICurveExchange {
     ) external;
 }
 
-contract BadgerRenAdapter is Initializable {
+//contract BadgerRenAdapter is Initializable {
+contract BadgerRenAdapter {
     using SafeMathUpgradeable for uint256;
-    using SafeERC20Upgradeable for IERC20Upgradeable;
+    using SafeERC20 for IERC20;
 
-    IERC20Upgradeable renBTC;
-    IERC20Upgradeable wBTC;
+    IERC20 renBTC;
+    IERC20 wBTC;
 
     // RenVM gateway registry.
     IGatewayRegistry public registry;
@@ -73,7 +74,17 @@ contract BadgerRenAdapter is Initializable {
     event MintWBTC(uint256 renbtc_minted, uint256 wbtc_bought);
     event BurnWBTC(uint256 wbtc_transferred, uint256 renbtc_burned);
 
-    function initialize(
+    //function initialize(
+    //    address _registry,
+    //    address _exchange,
+    //    address _wbtc
+    //) public {
+    //    registry = IGatewayRegistry(_registry);
+    //    exchange = ICurveExchange(_exchange);
+    //    renBTC = registry.getTokenBySymbol("BTC");
+    //    wBTC = IERC20(_wbtc);
+    //}
+    constructor(
         address _registry,
         address _exchange,
         address _wbtc
@@ -81,7 +92,11 @@ contract BadgerRenAdapter is Initializable {
         registry = IGatewayRegistry(_registry);
         exchange = ICurveExchange(_exchange);
         renBTC = registry.getTokenBySymbol("BTC");
-        wBTC = IERC20Upgradeable(_wbtc);
+        wBTC = IERC20(_wbtc);
+
+        // Approve exchange.
+        require(renBTC.approve(_exchange, uint256(-1)));
+        require(wBTC.approve(_exchange, uint256(-1)));
     }
 
     function recoverStuck(
@@ -127,9 +142,10 @@ contract BadgerRenAdapter is Initializable {
         emit BurnRenBTC(burnAmount);
     }
 
+    event ExchangeWBTCBytesError(bytes error);
+    event ExchangeWBTCStringError(string error);
+
     function mintWBTC(
-        uint256 _minExchangeRate,
-        uint256 _newMinExchangeRate,
         uint256 _slippage,
         address payable _wbtcDestination,
         uint256 _amount,
@@ -137,30 +153,34 @@ contract BadgerRenAdapter is Initializable {
         bytes calldata _sig
     ) external {
         // Mint renBTC tokens
-        bytes32 pHash = keccak256(abi.encode(_minExchangeRate, _slippage, _wbtcDestination));
+        bytes32 pHash = keccak256(abi.encode(_slippage, _wbtcDestination));
         uint256 mintedAmount = registry.getGatewayBySymbol("BTC").mint(pHash, _amount, _nHash, _sig);
 
         // Get price
         uint256 dy = exchange.get_dy(0, 1, mintedAmount);
-        uint256 rate = dy.mul(1e8).div(mintedAmount);
         _slippage = uint256(1e4).sub(_slippage);
         uint256 min_dy = dy.mul(_slippage).div(1e4);
 
-        // Price is OK
-        if (rate >= _newMinExchangeRate) {
-            uint256 startWbtcBalance = wBTC.balanceOf(address(this));
-            exchange.exchange(0, 1, mintedAmount, min_dy);
-
+        uint256 startWbtcBalance = wBTC.balanceOf(address(this));
+        try exchange.exchange(0, 1, mintedAmount, min_dy)  {
             uint256 endWbtcBalance = wBTC.balanceOf(address(this));
             uint256 wbtcBought = endWbtcBalance.sub(startWbtcBalance);
 
-            //Send proceeds to the User
+            // Send converted wBTC to user.
             require(wBTC.transfer(_wbtcDestination, wbtcBought));
             emit MintWBTC(mintedAmount, wbtcBought);
-        } else {
-            //Send renBTC to the User instead
-            require(renBTC.transfer(_wbtcDestination, mintedAmount));
+        } catch Error(string memory _error) {
+            emit ExchangeWBTCStringError(_error);
+
+            // Fallback to sending renBTC to user.
             emit MintRenBTC(mintedAmount);
+            require(renBTC.transfer(_wbtcDestination, mintedAmount));
+        } catch (bytes memory _error) {
+            emit ExchangeWBTCBytesError(_error);
+
+            // Fallback to sending renBTC to user.
+            emit MintRenBTC(mintedAmount);
+            require(renBTC.transfer(_wbtcDestination, mintedAmount));
         }
     }
 
