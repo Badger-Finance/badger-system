@@ -1,8 +1,13 @@
+from brownie import (
+    accounts,
+    interface,
+    web3,
+    chain,
+)
+
 from scripts.systems.uniswap_system import UniswapSystem
-from helpers.utils import Eth
-from brownie import *
-from helpers.constants import AddressZero, MaxUint256
 from helpers.registry import registry
+
 
 class SushiswapSystem(UniswapSystem):
     def __init__(self):
@@ -19,17 +24,12 @@ class SushiswapSystem(UniswapSystem):
     def add_chef_rewards(self, pool):
         chef = self.chef
 
-        totalAllocPoint = chef.totalAllocPoint()
-        numPools = chef.totalAllocPoint()
-        avgAllocPoint = totalAllocPoint / numPools
-
         owner = accounts.at(self.chef.owner(), force=True)
 
-        chef.add(avgAllocPoint, pool, True, {f"from": owner})
+        avgAllocPoint = chef.totalAllocPoint() / chef.poolLength()
+        chef.add(avgAllocPoint, pool, True, {"from": owner})
 
-        numPools = chef.totalAllocPoint()
-        pid = numPools - 1
-        print(pid, numPools)
+        pid = chef.poolLength() - 1
         chain.mine()
 
         chef.updatePool(pid, {"from": owner})
