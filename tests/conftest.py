@@ -178,15 +178,16 @@ def badger_single_sett(settConfig):
                 governance=governance,
             ).deploy(sett_type=SettType.DIGG)
         if settId == "native.uniDiggWbtc":
+            # TODO: Implement and add uniswap digg/wbtc deploy.
             return DiggRewardsMiniDeploy(
-                "sushi.sushiWbtcWeth",
-                "StrategySushiLpOptimizer",
+                "native.uniDiggWbtc",
+                "StrategyDiggLpMetaFarm",
                 deployer,
                 strategist=strategist,
                 guardian=guardian,
                 keeper=keeper,
                 governance=governance,
-            ).deploy(sett_type=SettType.DIGG)
+            ).deploy()
         if settId == "native.sushiDiggWbtc":
             return SushiDiggWbtcLpOptimizerMiniDeploy(
                 "native.sushiDiggWbtc",
@@ -196,7 +197,7 @@ def badger_single_sett(settConfig):
                 guardian=guardian,
                 keeper=keeper,
                 governance=governance,
-            ).deploy(sett_type=SettType.DIGG)
+            ).deploy()
     if settConfig['mode'] == 'prod':
         """
         Run vs prod contracts, transferring assets to the test user

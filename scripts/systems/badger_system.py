@@ -568,7 +568,7 @@ class BadgerSystem:
         self.track_contract_upgradeable(id + ".rewards", rewards)
         return rewards
 
-    def deploy_set_staking_rewards_signal_only(self, id, admin, distToken):
+    def deploy_sett_staking_rewards_signal_only(self, id, admin, distToken):
         deployer = self.deployer
 
         rewards = deploy_proxy(

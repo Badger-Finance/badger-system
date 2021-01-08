@@ -40,7 +40,7 @@ class SushiBadgerWBtcMiniDeploy(SettMiniDeployBase):
         Deploy StakingRewardsSignalOnly for Strategy
         """
 
-        self.rewards = self.badger.deploy_set_staking_rewards_signal_only(
+        self.rewards = self.badger.deploy_sett_staking_rewards_signal_only(
             self.key, self.deployer, self.badger.token
         )
 

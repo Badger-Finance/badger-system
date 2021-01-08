@@ -24,15 +24,15 @@ class SushiswapSystem(UniswapSystem):
         avgAllocPoint = totalAllocPoint / numPools
 
         owner = accounts.at(self.chef.owner(), force=True)
-    
-        chef.add(avgAllocPoint, pool, True, {'from': owner})
+
+        chef.add(avgAllocPoint, pool, True, {f"from": owner})
 
         numPools = chef.totalAllocPoint()
         pid = numPools - 1
         print(pid, numPools)
         chain.mine()
 
-        chef.updatePool(pid)
+        chef.updatePool(pid, {"from": owner})
         chain.mine()
 
         return pid

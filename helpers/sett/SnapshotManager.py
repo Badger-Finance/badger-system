@@ -1,9 +1,12 @@
-from brownie import *
+from brownie import (
+    Controller,
+    interface,
+    chain,
+)
 from tabulate import tabulate
 from rich.console import Console
 
-from helpers.constants import *
-from helpers.multicall import Call, Multicall, as_wei, func
+from helpers.multicall import Multicall
 from helpers.registry import registry
 from helpers.sett.resolvers import (
     SettCoreResolver,
@@ -14,7 +17,7 @@ from helpers.sett.resolvers import (
     StrategySushiBadgerLpOptimizerResolver,
     StrategyCurveGaugeResolver,
     StrategyDiggRewardsResolver,
-    StrategySushiDiggWbtcLpOptimizer,
+    StrategySushiDiggWbtcLpOptimizerResolver,
 )
 from helpers.utils import val
 from scripts.systems.badger_system import BadgerSystem
@@ -71,7 +74,7 @@ class Snap:
 
     def get(self, key):
 
-        if not key in self.data.keys():
+        if key not in self.data.keys():
             assert False
         return self.data[key]
 
@@ -187,10 +190,6 @@ class SnapshotManager:
         self.sett.deposit(amount, overrides)
         after = self.snap(trackedUsers)
 
-        # Convert amount into shares for DIGG type setts
-        if self.badger.sett_type == SettType.DIGG:
-            amount = self.badger.digg_system.token.fragmentsToShares(amount)
-
         if confirm:
             self.resolver.confirm_deposit(
                 before, after, {"user": user, "amount": amount}
@@ -212,7 +211,7 @@ class SnapshotManager:
         user = overrides["from"].address
         trackedUsers = {"user": user}
         before = self.snap(trackedUsers)
-        tx = self.sett.earn(overrides)
+        self.sett.earn(overrides)
         after = self.snap(trackedUsers)
         if confirm:
             self.resolver.confirm_earn(before, after, {"user": user})

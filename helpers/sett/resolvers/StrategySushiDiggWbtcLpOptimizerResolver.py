@@ -10,7 +10,7 @@ from helpers.sett.resolvers.StrategyCoreResolver import StrategyCoreResolver
 console = Console()
 
 
-class StrategySushiDiggWbtcLpOptimizer(StrategyCoreResolver):
+class StrategySushiDiggWbtcLpOptimizerResolver(StrategyCoreResolver):
     def confirm_harvest(self, before, after, tx):
         console.print("=== Compare Harvest ===")
         self.manager.printCompare(before, after)
