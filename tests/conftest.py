@@ -55,6 +55,7 @@ settsToRun = [
     # "sushi.sushiWbtcWeth",
     "native.digg",
     # "native.uniDiggWbtc",
+    # "native.sushiDiggWbtc",
 ]
 
 diggSettsToRun = [
