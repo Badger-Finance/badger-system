@@ -52,6 +52,9 @@ interface IDigg {
      */
     function sharesToFragments(uint256 shares) external view returns (uint256);
 
+    function initialFragmentsToShares(uint256 fragments) external view returns (uint256);
+    function sharesToInitialFragments(uint256 shares) external view returns (uint256);
+
     /**
      * @dev Transfer tokens to a specified address.
      * @param to The address to transfer to.

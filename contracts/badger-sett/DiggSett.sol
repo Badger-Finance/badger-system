@@ -14,6 +14,9 @@ import "interfaces/digg/IDiggStrategy.sol";
 import "./Sett.sol";
 
 /* 
+    bDIGG is denominated in initialFragments.
+    At the start 1 bDIGG = 1 DIGG (at peg)
+
     Source: https://github.com/iearn-finance/yearn-protocol/blob/develop/contracts/vaults/yVault.sol
     
     Changelog:
@@ -44,14 +47,15 @@ contract DiggSett is Sett {
         return strategyShares.add(settShares);
     }
 
+
     /// ===== Internal Implementations =====
 
-    /// @dev Calculate the number of shares to issue for a given deposit
+    /// @dev Calculate the number of bDIGG shares to issue for a given deposit
     /// @dev This is based on the realized value of underlying assets between Sett & associated Strategy
     function _deposit(uint256 _amount) internal override {
         IDigg digg = IDigg(address(token));
 
-        uint256 _pool = shares(); // Shares realized in system before transfer
+        uint256 _poolBefore = shares(); // Shares realized in system before transfer
         uint256 _before = digg.sharesOf(address(this));
 
         digg.transferFrom(msg.sender, address(this), _amount);
@@ -59,40 +63,47 @@ contract DiggSett is Sett {
         uint256 _after = digg.sharesOf(address(this));
         uint256 _sharesTransferred = _after.sub(_before); // Additional check for deflationary tokens
 
-        uint256 sharesToMint = 0;
+        uint256 bDiggToMint = 0;
         if (totalSupply() == 0) {
-            sharesToMint = _sharesTransferred;
+            bDiggToMint = digg.sharesToInitialFragments(_sharesTransferred);
         } else {
-            sharesToMint = (_sharesTransferred.mul(totalSupply())).div(_pool);
+            bDiggToMint = _sharesTransferred.mul(totalSupply()).div(_poolBefore);
         }
 
-        _mint(msg.sender, sharesToMint);
+        _mint(msg.sender, bDiggToMint);
     }
 
     // No rebalance implementation for lower fees and faster swaps
-    function _withdraw(uint256 _shares) internal override {
+    function _withdraw(uint256 _bDiggToBurn) internal override {
         IDigg digg = IDigg(address(token));
-
-        uint256 diggSharesToRedeem = (shares().mul(_shares)).div(totalSupply());
-        _burn(msg.sender, _shares);
+    
+        // uint256 _sharesToRedeem = (shares().mul(_bDiggToBurn)).div(totalSupply());
+        uint256 _sharesToRedeem = (shares().div(totalSupply())).mul(_bDiggToBurn);
+        
+        _burn(msg.sender, _bDiggToBurn);
 
         // Check balance
-        uint256 diggSharesInSett = digg.sharesOf(address(this));
+        uint256 _sharesInSett = digg.sharesOf(address(this));
 
-        if (diggSharesInSett < diggSharesToRedeem) {
-            uint256 _toWithdraw = diggSharesToRedeem.sub(diggSharesInSett);
-            IController(controller).withdraw(address(token), _toWithdraw);
+        // If we don't have sufficient idle want in Sett, withdraw from Strategy
+        if (_sharesInSett < _sharesToRedeem) {
 
-            uint256 diggSharesInSettAfterWithdraw = digg.sharesOf(address(this));
-            uint256 _diff = diggSharesInSettAfterWithdraw.sub(diggSharesInSett);
+            
+            uint256 _toWithdraw = _sharesToRedeem.sub(_sharesInSett);
+
+            // Note: This amount is scaled as a bDIGG value in the withdraw function
+            IController(controller).withdraw(address(token), digg.sharesToInitialFragments(_toWithdraw));
+
+            uint256 _sharesAfterWithdraw = digg.sharesOf(address(this));
+            uint256 _diff = _sharesAfterWithdraw.sub(_sharesInSett);
 
             // If we are not able to get the full amount requested from the strategy due to losses, redeem what we can
             if (_diff < _toWithdraw) {
-                diggSharesToRedeem = diggSharesInSett.add(_diff);
+                _sharesToRedeem = _sharesInSett.add(_diff);
             }
         }
 
-        // Transfer the corresponding number of tokens to recipient
-        digg.transfer(msg.sender, digg.sharesToFragments(diggSharesToRedeem));
+        // Transfer the corresponding number of shares, scaled to DIGG fragments, to recipient
+        digg.transfer(msg.sender, digg.sharesToFragments(_sharesToRedeem));
     }
 }
