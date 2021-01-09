@@ -3,21 +3,19 @@ from brownie import chain
 from datetime import datetime
 from rich.console import Console
 
+from config.badger_config import digg_config_test
 from .SnapshotManager import SnapshotManager
 
 console = Console()
 
-MINUTE = 60
-HOUR = 60 * MINUTE
-DAY = 24 * HOUR
-
 # Rebase constants pulled directly from `UFragmentsPolicy.sol`.
 # 15 minute rebase window at 8pm UTC everyday.
-REBASE_WINDOW_OFFSET_SEC = 20 * HOUR  # 8pm UTC
-REBASE_WINDOW_LENGTH_SEC = 15 * MINUTE
-MIN_REBASE_TIME_INTERVAL_SEC = DAY
+REBASE_WINDOW_OFFSET_SEC = digg_config_test.rebaseWindowOffsetSec
+REBASE_WINDOW_LENGTH_SEC = digg_config_test.rebaseWindowLengthSec
+MIN_REBASE_TIME_INTERVAL_SEC = digg_config_test.minRebaseTimeIntervalSec
 # Pad shifts into rebase winudow by 1 minute.
-REBASE_SHIFT_PADDING_SECONDS = MINUTE
+REBASE_SHIFT_PADDING_SECONDS = 60
+DAY = 24 * 60 * 60
 
 
 class DiggSnapshotManager(SnapshotManager):
@@ -32,8 +30,8 @@ class DiggSnapshotManager(SnapshotManager):
         # as the rebase logic checks if block ts w/in rebase window.
         # Update market value and rebase.
         self._shift_into_rebase_window()
-        _value = self.badger.digg_system.dynamicOracle.setValueAndPush(value)
-        assert _value == value
+        tx = self.badger.digg_system.dynamicOracle.setValueAndPush(value)
+        assert tx.return_value == value
         self.badger.digg_system.orchestrator.rebase()
 
         after = self.snap(trackedUsers)

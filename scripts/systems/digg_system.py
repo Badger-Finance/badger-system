@@ -199,6 +199,20 @@ class DiggSystem:
             ),
             deployer,
         )
+        config = self.config
+
+        # TODO: F/u on why these values are not being set.
+        self.uFragmentsPolicy.setDeviationThreshold(
+            config.deviationThreshold,
+            {"from": deployer})
+        self.uFragmentsPolicy.setRebaseLag(config.rebaseLag, {"from": deployer})
+        self.uFragmentsPolicy.setRebaseTimingParameters(
+            config.minRebaseTimeIntervalSec,
+            config.rebaseWindowOffsetSec,
+            config.rebaseWindowLengthSec,
+            {"from": deployer},
+        )
+
         self.track_contract_upgradeable("uFragmentsPolicy", self.uFragmentsPolicy)
         self.track_contract_ownable(self.uFragmentsPolicy)
 

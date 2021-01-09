@@ -75,8 +75,23 @@ class SushiDiggWbtcLpOptimizerMiniDeploy(SettMiniDeployBase):
         Deploy DIGG System
         Deploy StakingRewards for Strategy
         """
+        deployer = self.deployer
         devProxyAdminAddress = web3.toChecksumAddress("0x20dce41acca85e8222d6861aa6d23b6c941777bf")
         daoProxyAdminAddress = web3.toChecksumAddress("0x11a9d034b1bbfbbdcac9cb3b86ca7d5df05140f2")
         self.digg = deploy_digg_minimal(
-            self.deployer, devProxyAdminAddress, daoProxyAdminAddress, owner=self.deployer
+            deployer, devProxyAdminAddress, daoProxyAdminAddress, owner=deployer
+        )
+        # Authorize dynamic oracle as a data provider to median oracle.
+        self.digg.marketMedianOracle.addProvider(
+            self.digg.dynamicOracle,
+            {"from": deployer},
+        )
+        # Set oracles on frag policy.
+        self.digg.uFragmentsPolicy.setCpiOracle(
+            self.digg.cpiMedianOracle,
+            {"from": deployer},
+        )
+        self.digg.uFragmentsPolicy.setMarketOracle(
+            self.digg.cpiMedianOracle,
+            {"from": deployer},
         )
