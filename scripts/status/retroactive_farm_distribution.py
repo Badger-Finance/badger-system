@@ -30,6 +30,7 @@ def main():
     console.log( sum ( [ int( h["farmToRewards"] ) for h in harvestEvents ] )/1e18)
     totalHarvested = 0
     for i in tqdm(range(len(harvestEvents))):
+        console.log("Processing between {} and {}".format(startBlock,endBlock))
         harvestEvent = harvestEvents[i]
         user_state = calc_harvest_meta_farm_rewards(badger,"harvest.renCrv",startBlock,endBlock)
         farmRewards = int(harvestEvent["farmToRewards"])
@@ -44,13 +45,15 @@ def main():
         for user in user_state:
             rewards.increase_user_rewards(user.address,"FARM",farmUnit * user.shareSeconds/1e18)
 
-        if i+1 > len(harvestEvents):
+        if i+1 < len(harvestEvents):
             startBlock = int(harvestEvent["blockNumber"])
             endBlock = int(harvestEvents[i+1]["blockNumber"])
 
     console.log(rewards.claims)
     console.log(sorted( [list(v.values())[0] for v in list(rewards.claims.values())  ] ))
-        
+    assert totalHarvested == sum( [list(v.values())[0] for v in list(rewards.claims.values())])
+
+
 
 
 

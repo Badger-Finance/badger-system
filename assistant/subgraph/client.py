@@ -126,6 +126,9 @@ def fetch_geyser_events(geyserId, startBlock):
         stakes = result["geysers"][0]["stakeEvents"]
         unstakes = result["geysers"][0]["unstakeEvents"]
         totalStaked = result["geysers"][0]["totalStaked"]
+
+    console.log("Processing {} stakes".format(len(stakes)))
+    console.log("Processing {} unstakes".format(len(unstakes)))
     return {
         "stakes": stakes,
         "unstakes": unstakes,
@@ -134,7 +137,6 @@ def fetch_geyser_events(geyserId, startBlock):
 
 
 def fetch_sett_transfers(settID, startBlock, endBlock):
-    endBlock = endBlock - 1
     console.print(
         "[bold green] Fetching Sett Deposits/Withdrawals {}[/bold green]".format(settID)
     )
@@ -191,10 +193,13 @@ def fetch_sett_transfers(settID, startBlock, endBlock):
         map(convert_amount, results["vaults"][0]["withdrawals"]),
     )
 
-    deposits = filter(filter_by_startBlock, list(deposits))
-    withdrawals = filter(filter_by_startBlock, list(withdrawals))
+    deposits = list(filter(filter_by_startBlock, list(deposits)))
+    withdrawals = list(filter(filter_by_startBlock, list(withdrawals)))
+    console.log("Processing {} deposits".format(len(deposits)))
+    console.log("Processing {} withdrawals".format(len((withdrawals))))
+
     return sorted(
-        [*list(deposits), *list(withdrawals)],
+        [*deposits, *withdrawals],
         key=lambda t: t["transaction"]["timestamp"],
     )
 
