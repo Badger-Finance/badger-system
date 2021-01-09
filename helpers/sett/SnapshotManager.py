@@ -164,6 +164,7 @@ class SnapshotManager:
             return StrategyDiggRewardsResolver(self)
         if name == "StrategySushiDiggWbtcLpOptimizer":
             return StrategySushiDiggWbtcLpOptimizerResolver(self)
+        # TODO Add uni digg/wbtc lp resolver
 
     def settTend(self, overrides, confirm=True):
         user = overrides["from"].address

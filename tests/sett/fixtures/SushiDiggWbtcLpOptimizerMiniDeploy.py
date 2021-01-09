@@ -53,6 +53,12 @@ class SushiDiggWbtcLpOptimizerMiniDeploy(SettMiniDeployBase):
         # Setup sushi reward allocations.
         sushiswap = SushiswapSystem()
         pid = sushiswap.add_chef_rewards(self.want)
+        # Generate lp tokens.
+        sushiswap.addMaxLiquidity(
+            self.digg.token,
+            registry.tokens.wbtc,
+            self.deployer,
+        )
 
         # Pass in LP token pool id to underlying strategy.
         self.params.pid = pid

@@ -5,12 +5,12 @@ from rich.console import Console
 from helpers.utils import val
 from helpers.constants import *
 from helpers.multicall import Call, func, as_wei
-from helpers.sett.resolvers.StrategyCoreResolver import StrategyCoreResolver
+from helpers.sett.resolvers.StrategyDiggCoreResolver import StrategyDiggCoreResolver
 
 console = Console()
 
 
-class StrategySushiDiggWbtcLpOptimizerResolver(StrategyCoreResolver):
+class StrategySushiDiggWbtcLpOptimizerResolver(StrategyDiggCoreResolver):
     def confirm_harvest(self, before, after, tx):
         console.print("=== Compare Harvest ===")
         self.manager.printCompare(before, after)

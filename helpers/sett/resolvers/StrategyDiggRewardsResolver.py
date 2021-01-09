@@ -1,7 +1,7 @@
-from helpers.sett.resolvers.StrategyCoreResolver import StrategyCoreResolver
+from helpers.sett.resolvers.StrategyDiggCoreResolver import StrategyDiggCoreResolver
 
 
-class StrategyDiggRewardsResolver(StrategyCoreResolver):
+class StrategyDiggRewardsResolver(StrategyDiggCoreResolver):
     # ===== Strategies must implement =====
 
     def confirm_harvest(self, before, after, tx):

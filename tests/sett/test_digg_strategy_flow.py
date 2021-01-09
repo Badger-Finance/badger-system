@@ -5,7 +5,7 @@ from rich.console import Console
 
 from helpers.time_utils import days
 from helpers.constants import MaxUint256
-from helpers.sett.SnapshotManager import SnapshotManager
+from helpers.sett.DiggSnapshotManager import DiggSnapshotManager
 from tests.conftest import badger_single_sett, diggSettTestConfig
 
 console = Console()
@@ -25,7 +25,7 @@ def test_single_user_harvest_flow(settConfig):
     settKeeper = accounts.at(sett.keeper(), force=True)
     strategyKeeper = accounts.at(strategy.keeper(), force=True)
 
-    snap = SnapshotManager(badger, settConfig["id"])
+    snap = DiggSnapshotManager(badger, settConfig["id"])
 
     deployer = badger.deployer
     randomUser = accounts[6]
