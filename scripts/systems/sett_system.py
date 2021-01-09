@@ -326,6 +326,7 @@ def deploy_strategy(
                     params.badgerTree,
 
                 ],
+                params.pid,
                 [
                     params.performanceFeeGovernance,
                     params.performanceFeeStrategist,

@@ -42,9 +42,6 @@ def test_single_user_harvest_flow(settConfig):
     want.approve(sett, MaxUint256, {"from": deployer})
     snap.settDeposit(depositAmount, {"from": deployer})
 
-    assert want.balanceOf(sett) > 0
-    print("want.balanceOf(sett)", want.balanceOf(sett))
-
     # Earn
     snap.settEarn({"from": settKeeper})
 

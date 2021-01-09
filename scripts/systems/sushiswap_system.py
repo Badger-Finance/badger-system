@@ -25,9 +25,15 @@ class SushiswapSystem(UniswapSystem):
         chef = self.chef
 
         owner = accounts.at(self.chef.owner(), force=True)
-
+        # Make an average allocation of lp tokens.
         avgAllocPoint = chef.totalAllocPoint() / chef.poolLength()
-        chef.add(avgAllocPoint, pool, True, {"from": owner})
+
+        # Add pool if not exists and
+        pid, exists = self._get_pool(pool)
+        if exists:
+            chef.set(avgAllocPoint, pool, True, {"from": owner})
+        else:
+            chef.add(avgAllocPoint, pool, True, {"from": owner})
 
         pid = chef.poolLength() - 1
         chain.mine()
@@ -37,3 +43,12 @@ class SushiswapSystem(UniswapSystem):
 
         return pid
 
+    def _get_pool(self, pool):
+        chef = self.chef
+        # Iterate over pools and look for pool first
+        # NB: THIS IS EXPENSIVE AND SHOULD ONLY BE USED FOR TESTING.
+        for pid in range(0, chef.poolLength()):
+            (address, _, _, _) = chef.poolInfo(pid)
+            if address == pool.address:
+                return (pid, True)
+        return (-1, False)

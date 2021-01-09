@@ -37,7 +37,7 @@ contract StrategySushiDiggWbtcLpOptimizer is BaseStrategyMultiSwapper {
     address public constant xsushi = 0x8798249c2E607446EfB7Ad49eC89dD1865Ff4272; // xSUSHI token
 
     address public constant chef = 0xc2EdaD668740f1aA35E4D8f227fB8E17dcA888Cd; // Master staking contract
-    uint256 public constant pid = 73; // LP token pool ID
+    uint256 public pid; // LP token pool id
 
     address public badgerTree;
 
@@ -85,6 +85,7 @@ contract StrategySushiDiggWbtcLpOptimizer is BaseStrategyMultiSwapper {
         address _keeper,
         address _guardian,
         address[4] memory _wantConfig,
+        uint256 _pid,
         uint256[3] memory _feeConfig
     ) public initializer whenNotPaused {
         __BaseStrategy_init(_governance, _strategist, _controller, _keeper, _guardian);
@@ -93,6 +94,8 @@ contract StrategySushiDiggWbtcLpOptimizer is BaseStrategyMultiSwapper {
         geyser = _wantConfig[1];
         digg = _wantConfig[2];
         badgerTree = _wantConfig[3];
+
+        pid = _pid; // LP token pool ID
 
         performanceFeeGovernance = _feeConfig[0];
         performanceFeeStrategist = _feeConfig[1];
