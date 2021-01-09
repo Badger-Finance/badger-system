@@ -42,6 +42,9 @@ def test_single_user_harvest_flow(settConfig):
     want.approve(sett, MaxUint256, {"from": deployer})
     snap.settDeposit(depositAmount, {"from": deployer})
 
+    # Push/rebase on an exchange rate of 1.2 (DIGG trading at 1.2x BTC)
+    snap.rebase(1.2, {"from": deployer})
+
     # Earn
     snap.settEarn({"from": settKeeper})
 
@@ -53,6 +56,9 @@ def test_single_user_harvest_flow(settConfig):
 
     chain.sleep(days(0.5))
     chain.mine()
+
+    # Push/rebase on an exchange rate of 0.6 (DIGG trading at 0.8x BTC)
+    snap.rebase(0.6, {"from": deployer})
 
     if tendable:
         snap.settTend({"from": strategyKeeper})
@@ -68,6 +74,9 @@ def test_single_user_harvest_flow(settConfig):
     chain.sleep(days(1))
     chain.mine()
 
+    # Push/rebase on an exchange rate of 1.6 (DIGG trading at 1.6x BTC)
+    snap.rebase(1.6, {"from": deployer})
+
     if tendable:
         snap.settTend({"from": strategyKeeper})
 
@@ -75,6 +84,9 @@ def test_single_user_harvest_flow(settConfig):
 
     chain.sleep(days(3))
     chain.mine()
+
+    # Push/rebase on an exchange rate of 0.7 (DIGG trading at 0.7x BTC)
+    snap.rebase(.7, {"from": deployer})
 
     snap.settHarvest({"from": strategyKeeper})
     snap.settWithdraw(depositAmount // 2 - 1, {"from": deployer})
