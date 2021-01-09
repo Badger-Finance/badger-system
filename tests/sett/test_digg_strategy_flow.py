@@ -78,5 +78,3 @@ def test_single_user_harvest_flow(settConfig):
 
     snap.settHarvest({"from": strategyKeeper})
     snap.settWithdraw(depositAmount // 2 - 1, {"from": deployer})
-
-    assert False

@@ -2,7 +2,7 @@ from brownie import web3
 
 from scripts.systems.digg_minimal import deploy_digg_minimal
 from tests.sett.fixtures.SettMiniDeployBase import SettMiniDeployBase
-from config.badger_config import sett_config
+from config.badger_config import sett_config, digg_config_test
 from scripts.systems.sushiswap_system import SushiswapSystem
 from helpers.registry import registry
 
@@ -33,6 +33,13 @@ class SushiDiggWbtcLpOptimizerMiniDeploy(SettMiniDeployBase):
         """
         # Track our digg system within badger system for convenience.
         self.badger.add_existing_digg(self.digg)
+
+        self.badger.distribute_staking_rewards(
+            self.key,
+            digg_config_test.geyserParams.unlockSchedules.digg[0].amount,
+        )
+
+        self.rewards.initializeApprovedStaker(self.strategy, {"from": self.deployer})
 
         if self.strategy.paused():
             self.strategy.unpause({"from": self.governance})
