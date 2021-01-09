@@ -67,6 +67,7 @@ contract UFragments is ERC20Detailed, Ownable {
     uint256 private constant DECIMALS = 18;
     uint256 private constant MAX_UINT128 = ~uint128(0);
     uint256 private constant INITIAL_FRAGMENTS_SUPPLY = 4000 * 10**DECIMALS;
+    uint256 private constant MAX_FRAGMENTS_SUPPLY = 21000000 * 10**DECIMALS;
 
     // TOTAL_SHARES is a multiple of INITIAL_FRAGMENTS_SUPPLY so that _sharesPerFragment is an integer.
     // Use the highest value that fits in a uint128 for sufficient granularity.
@@ -77,6 +78,7 @@ contract UFragments is ERC20Detailed, Ownable {
 
     uint256 private _totalSupply;
     uint256 public _sharesPerFragment;
+    uint256 public _initialSharesPerFragment;
     mapping(address => uint256) private _shareBalances;
 
     // This is denominated in Fragments, because the shares-fragments conversion might change before
@@ -142,6 +144,7 @@ contract UFragments is ERC20Detailed, Ownable {
         _totalSupply = INITIAL_FRAGMENTS_SUPPLY;
         _shareBalances[owner_] = TOTAL_SHARES;
         _sharesPerFragment = TOTAL_SHARES.div(_totalSupply);
+        _initialSharesPerFragment = TOTAL_SHARES.div(_totalSupply);
 
         emit Transfer(address(0x0), owner_, _totalSupply);
     }
@@ -157,7 +160,7 @@ contract UFragments is ERC20Detailed, Ownable {
      * @return The total number of underlying shares.
      */
     function totalShares() public view returns (uint256) {
-        return _totalSupply.div(_sharesPerFragment);
+        return TOTAL_SHARES;
     }
 
     /**
@@ -190,6 +193,14 @@ contract UFragments is ERC20Detailed, Ownable {
      */
     function sharesToFragments(uint256 shares) public view returns (uint256) {
         return shares.div(_sharesPerFragment);
+    }
+
+    function initialFragmentsToShares(uint256 fragments) public view returns (uint256) {
+        return fragments.mul(_initialSharesPerFragment);
+    }
+
+    function sharesToInitialFragments(uint256 shares) public view returns (uint256) {
+        return shares.div(_initialSharesPerFragment);
     }
 
     /**
