@@ -1,6 +1,20 @@
 import json
 import decouple
-from brownie import *
+from brownie import (
+    SimpleTimelock,
+    SmartVesting,
+    UFragments,
+    UFragmentsPolicy,
+    ConstantOracle,
+    DynamicOracle,
+    MedianOracle,
+    Orchestrator,
+    Contract,
+    web3,
+    rpc,
+    address,
+    accounts,
+)
 from dotmap import DotMap
 
 from scripts.systems.gnosis_safe_system import connect_gnosis_safe
@@ -16,8 +30,8 @@ from rich.console import Console
 
 console = Console()
 
-# Constant oracle always reports a value of 1.
-CONSTANT_ORACLE_VALUE = 1
+# Constant oracle always reports a value of 1 w/ 18 decimal precision.
+CONSTANT_ORACLE_VALUE = 1 * 10**18
 
 
 def print_to_file(digg, path):
