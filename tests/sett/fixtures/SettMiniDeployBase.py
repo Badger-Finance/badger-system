@@ -1,7 +1,8 @@
+from brownie import Wei
+
 from helpers.token_utils import distribute_from_whales, distribute_test_ether
 from scripts.systems.badger_minimal import deploy_badger_minimal
 from scripts.systems.constants import SettType
-from brownie import *
 
 
 class SettMiniDeployBase:

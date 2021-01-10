@@ -257,15 +257,21 @@ digg_config_test = DotMap(
     baseCpi=10 ** 18,
     rebaseDelayAfterStakingStart=30,
     marketOracleParams=DotMap(
-        reportExpirationTimeSec=88200,
+        # NB: Longer report expiration for testing purposes.
+        # We want this to cover two full rebase windows to account
+        # for shifting the rebase window forward during tests.
+        reportExpirationTimeSec=86400 * 2,
         reportDelaySec=3600,
         # TODO: This should be greater than 1, needs to be set.
         minimumProviders=1,
     ),
     # cpi oracle always reports 1
     cpiOracleParams=DotMap(
-        reportExpirationTimeSec=5356800,
-        reportDelaySec=86400,
+        # TODO: The median oracle caps report expiration time
+        # at 520 weeks.There is no way to guarantee report non-expiry.
+        # Maybe look into a constant oracle that adheres to the IOracle interface.
+        reportExpirationTimeSec=520 * 7 * 24 * 60 * 60,  # 520 weeks
+        reportDelaySec=0,
         minimumProviders=1,
     ),
     centralizedOracleParams=DotMap(

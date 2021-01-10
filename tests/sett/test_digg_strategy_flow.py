@@ -1,6 +1,9 @@
-import brownie
-from brownie import accounts, chain
 import pytest
+from brownie import (
+    accounts,
+    chain,
+    reverts,
+)
 from rich.console import Console
 
 from helpers.time_utils import days
@@ -43,13 +46,13 @@ def test_single_user_harvest_flow(settConfig):
     snap.settDeposit(depositAmount, {"from": deployer})
 
     # Push/rebase on an exchange rate of 1.2 (DIGG trading at 1.2x BTC)
-    snap.rebase(1.2, {"from": deployer})
+    snap.rebase(1.2 * 10**18, {"from": deployer})
 
     # Earn
     snap.settEarn({"from": settKeeper})
 
     if tendable:
-        with brownie.reverts("onlyAuthorizedActors"):
+        with reverts("onlyAuthorizedActors"):
             strategy.tend({"from": randomUser})
 
         snap.settTend({"from": strategyKeeper})
@@ -58,7 +61,7 @@ def test_single_user_harvest_flow(settConfig):
     chain.mine()
 
     # Push/rebase on an exchange rate of 0.6 (DIGG trading at 0.8x BTC)
-    snap.rebase(0.6, {"from": deployer})
+    snap.rebase(0.6 * 10**18, {"from": deployer})
 
     if tendable:
         snap.settTend({"from": strategyKeeper})
@@ -66,7 +69,7 @@ def test_single_user_harvest_flow(settConfig):
     chain.sleep(days(1))
     chain.mine()
 
-    with brownie.reverts("onlyAuthorizedActors"):
+    with reverts("onlyAuthorizedActors"):
         strategy.harvest({"from": randomUser})
 
     snap.settHarvest({"from": strategyKeeper})
@@ -75,7 +78,7 @@ def test_single_user_harvest_flow(settConfig):
     chain.mine()
 
     # Push/rebase on an exchange rate of 1.6 (DIGG trading at 1.6x BTC)
-    snap.rebase(1.6, {"from": deployer})
+    snap.rebase(1.6 * 10**18, {"from": deployer})
 
     if tendable:
         snap.settTend({"from": strategyKeeper})
@@ -86,7 +89,7 @@ def test_single_user_harvest_flow(settConfig):
     chain.mine()
 
     # Push/rebase on an exchange rate of 0.7 (DIGG trading at 0.7x BTC)
-    snap.rebase(.7, {"from": deployer})
+    snap.rebase(.7 * 10**18, {"from": deployer})
 
     snap.settHarvest({"from": strategyKeeper})
     snap.settWithdraw(depositAmount // 2 - 1, {"from": deployer})

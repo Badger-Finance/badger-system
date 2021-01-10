@@ -1,6 +1,4 @@
-import calendar
 from brownie import chain
-from datetime import datetime
 from rich.console import Console
 
 from config.badger_config import digg_config_test
@@ -29,33 +27,29 @@ class DiggSnapshotManager(SnapshotManager):
         # Shift into rebase window (if not already). Need to mine a block as well
         # as the rebase logic checks if block ts w/in rebase window.
         # Update market value and rebase.
-        self._shift_into_rebase_window()
         tx = self.badger.digg_system.dynamicOracle.setValueAndPush(value)
         assert tx.return_value == value
-        self.badger.digg_system.orchestrator.rebase()
+        # NB: Guarantee the configured report delay has passed. Otherwise,
+        # the median oracle will attempt to use the last report.
+        # This can result in unexpected behaviour, especially when this is
+        # the first report as the last report value is 0.
+        chain.sleep(digg_config_test.marketOracleParams.reportDelaySec)
+
+        self._shift_into_next_rebase_window()
+
+        tx = self.badger.digg_system.orchestrator.rebase()
 
         after = self.snap(trackedUsers)
         if confirm:
             self.resolver.confirm_rebase(before, after, value)
 
-    def _shift_into_rebase_window(self):
-        utcnow = datetime.utcnow()
-        utcnow_unix_secs = calendar.timegm(utcnow.utctimetuple())
+    def _shift_into_next_rebase_window(self):
         # seconds offset into the day
-        utcnow_unix_offset_secs = (utcnow_unix_secs % MIN_REBASE_TIME_INTERVAL_SEC)
-        # Shift forward into rebase window within the day.
-        if utcnow_unix_offset_secs < REBASE_WINDOW_OFFSET_SEC:
-            chain.sleep(
-                REBASE_WINDOW_OFFSET_SEC
-                - utcnow_unix_offset_secs
-                + REBASE_SHIFT_PADDING_SECONDS)
-            chain.mine()
-
-        # Missed todays rebase window. Shift forward into rebase window into tomorrow.
-        if utcnow_unix_offset_secs >= REBASE_WINDOW_OFFSET_SEC + REBASE_WINDOW_LENGTH_SEC:
-            secs_remaining_in_day = DAY - utcnow_unix_offset_secs
-            chain.sleep(
-                secs_remaining_in_day
-                + REBASE_WINDOW_OFFSET_SEC
-                + REBASE_SHIFT_PADDING_SECONDS)
-            chain.mine()
+        utcnow_unix_offset_secs = (chain.time() % MIN_REBASE_TIME_INTERVAL_SEC)
+        # Shift forward into rebase window into tomorrow.
+        secs_remaining_in_day = DAY - utcnow_unix_offset_secs
+        chain.sleep(
+            secs_remaining_in_day
+            + REBASE_WINDOW_OFFSET_SEC
+            + REBASE_SHIFT_PADDING_SECONDS)
+        chain.mine()
