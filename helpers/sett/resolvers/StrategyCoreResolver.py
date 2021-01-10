@@ -276,3 +276,10 @@ class StrategyCoreResolver:
         (Strategy Must Implement)
         """
         assert False
+
+    def confirm_rebase(self, before, after, value):
+        """
+        Check for proper rebases.
+        (Strategy Must Implement)
+        """
+        assert False

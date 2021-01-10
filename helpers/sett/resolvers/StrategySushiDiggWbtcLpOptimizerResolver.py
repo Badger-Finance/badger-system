@@ -1,16 +1,20 @@
-from brownie import *
+from brownie import interface
 from tabulate import tabulate
 from rich.console import Console
 
 from helpers.utils import val
-from helpers.constants import *
-from helpers.multicall import Call, func, as_wei
-from helpers.sett.resolvers.StrategyDiggCoreResolver import StrategyDiggCoreResolver
+from helpers.sett.resolvers.StrategyCoreResolver import StrategyCoreResolver
 
 console = Console()
 
 
-class StrategySushiDiggWbtcLpOptimizerResolver(StrategyDiggCoreResolver):
+class StrategySushiDiggWbtcLpOptimizerResolver(StrategyCoreResolver):
+    def confirm_rebase(self, before, after, value):
+        '''
+        Confirm sett want balance has stayed constant across rebases.
+        '''
+        assert before.balances("want", "sett") == after.balances("want", "sett")
+
     def confirm_harvest(self, before, after, tx):
         console.print("=== Compare Harvest ===")
         self.manager.printCompare(before, after)
@@ -83,10 +87,8 @@ class StrategySushiDiggWbtcLpOptimizerResolver(StrategyDiggCoreResolver):
         super().add_balances_snap(calls, entities)
         strategy = self.manager.strategy
 
-
         sushi = interface.IERC20(strategy.sushi())
         xsushi = interface.IERC20(strategy.xsushi())
-
 
         calls = self.add_entity_balances_for_tokens(calls, "sushi", sushi, entities)
         calls = self.add_entity_balances_for_tokens(calls, "xsushi", xsushi, entities)
