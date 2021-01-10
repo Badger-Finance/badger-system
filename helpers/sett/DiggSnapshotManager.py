@@ -31,8 +31,6 @@ class DiggSnapshotManager(SnapshotManager):
         assert tx.return_value == value
         # NB: Guarantee the configured report delay has passed. Otherwise,
         # the median oracle will attempt to use the last report.
-        # This can result in unexpected behaviour, especially when this is
-        # the first report as the last report value is 0.
         chain.sleep(digg_config_test.marketOracleParams.reportDelaySec)
 
         self._shift_into_next_rebase_window()

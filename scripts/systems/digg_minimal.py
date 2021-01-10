@@ -27,8 +27,6 @@ def deploy_digg_minimal(deployer, devProxyAdmin, daoProxyAdmin, owner=None):
     digg.constantOracle.updateAndPush()
     # NB: Guarantee the configured report delay has passed. Otherwise,
     # the median oracle will attempt to use the last report.
-    # This can result in unexpected behaviour, especially when this is
-    # the first report as the last report value is 0.
     chain.sleep(digg_config_test.cpiOracleParams.reportDelaySec)
 
     # Setup frag policy & frag (required for ALL deploys).
