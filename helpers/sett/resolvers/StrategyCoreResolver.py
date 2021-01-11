@@ -190,7 +190,6 @@ class StrategyCoreResolver:
         ) < before.get("strategy.balanceOf") + before.balances("want", "sett")
 
         # Controller rewards should earn
-        self.manager.printCompare(before, after)
         if before.get("strategy.withdrawalFee") > 0:
             assert after.balances("want", "governanceRewards") > before.balances(
                 "want", "governanceRewards"

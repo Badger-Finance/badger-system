@@ -15,11 +15,12 @@ def Eth(value):
 
 
 def val(amount):
-    if amount < Wei("0.0001 ether"):
-        return "{:,.18f}".format(amount / 1e18)
-    if amount < Wei("0.001 ether"):
-        return "{:,.18f}".format(amount / 1e18)
-    return "{:,.18f}".format(amount / 1e18)
+    return amount
+    # if amount < Wei("0.0001 ether"):
+    #     return "{:,.18f}".format(amount / 1e18)
+    # if amount < Wei("0.001 ether"):
+    #     return "{:,.18f}".format(amount / 1e18)
+    # return "{:,.18f}".format(amount / 1e18)
 
 
 def sec(amount):

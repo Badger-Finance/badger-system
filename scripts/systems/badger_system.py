@@ -559,7 +559,7 @@ class BadgerSystem:
             self.logic.DiggRewardsFaucet.address,
             self.devProxyAdmin.address,
             self.logic.DiggRewardsFaucet.initialize.encode_input(
-                deployer, diggToken
+                deployer, diggToken, diggToken
             ),
             deployer,
         )

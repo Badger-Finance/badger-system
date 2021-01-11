@@ -17,7 +17,6 @@ class StrategySushiDiggWbtcLpOptimizerResolver(StrategyCoreResolver):
 
     def confirm_harvest(self, before, after, tx):
         console.print("=== Compare Harvest ===")
-        self.manager.printCompare(before, after)
         self.confirm_harvest_events(before, after, tx)
 
         super().confirm_harvest(before, after, tx)
@@ -73,7 +72,6 @@ class StrategySushiDiggWbtcLpOptimizerResolver(StrategyCoreResolver):
 
     def confirm_tend(self, before, after):
         console.print("=== Compare Tend ===")
-        self.manager.printCompare(before, after)
 
         # Increase xSushi position in strategy
         assert after.balances("xsushi", "strategy") > before.balances("xsushi", "strategy")

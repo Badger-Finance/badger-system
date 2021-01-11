@@ -19,6 +19,8 @@ import "interfaces/digg/IDigg.sol";
     Define or modify the rate of distribution as: X DIGG shares over Y time
     Adequate DIGG shares must be provided for the distribution
 
+    To facilitate strategies with no other positions, the Digg Faucet can also optionally hold tokens for the recipient
+
  */
 contract DiggRewardsFaucet is Initializable, AccessControlUpgradeable, PausableUpgradeable, ReentrancyGuardUpgradeable {
     using SafeMathUpgradeable for uint256;
@@ -26,6 +28,7 @@ contract DiggRewardsFaucet is Initializable, AccessControlUpgradeable, PausableU
 
     /* ========== STATE VARIABLES ========== */
 
+    IERC20Upgradeable public stakingToken;
     IERC20Upgradeable public rewardsToken;
     IDigg public digg;
     uint256 public periodFinish;
@@ -34,13 +37,14 @@ contract DiggRewardsFaucet is Initializable, AccessControlUpgradeable, PausableU
     uint256 public lastUpdateTime;
     address public recipient;
 
-    function initialize(address _admin, address _digg) public initializer whenNotPaused {
+    function initialize(address _admin, address _stakingToken, address _digg) public initializer whenNotPaused {
         __AccessControl_init();
         __Pausable_init_unchained();
         __ReentrancyGuard_init_unchained();
 
         _setupRole(DEFAULT_ADMIN_ROLE, _admin);
 
+        stakingToken = IERC20Upgradeable(_stakingToken);
         rewardsToken = IERC20Upgradeable(_digg);
         digg = IDigg(_digg);
 
@@ -64,12 +68,28 @@ contract DiggRewardsFaucet is Initializable, AccessControlUpgradeable, PausableU
 
     /* ========== MUTATIVE FUNCTIONS ========== */
 
+    function stake(uint256 amount) external nonReentrant whenNotPaused {
+        _onlyRecipient();
+        require(amount > 0, "Cannot stake 0");
+        stakingToken.safeTransferFrom(recipient, address(this), amount);
+        emit Staked(recipient, amount);
+    }
+
+    function withdraw(uint256 amount) public nonReentrant whenNotPaused {
+        _onlyRecipient();
+        require(amount > 0, "Cannot withdraw 0");
+        stakingToken.safeTransfer(recipient, amount);
+        emit Withdrawn(recipient, amount);
+    }
+
     function getReward() public nonReentrant whenNotPaused {
         _onlyRecipient();
         uint256 reward = earned();
         if (reward > 0) {
-            digg.transfer(msg.sender, reward);
-            emit RewardPaid(msg.sender, reward);
+            uint256 rewardInFragments = digg.sharesToFragments(reward);
+            // Convert shares earned to fragments for transfer
+            digg.transfer(msg.sender, rewardInFragments);
+            emit RewardPaid(msg.sender, reward, rewardInFragments);
         }
     }
 
@@ -126,7 +146,7 @@ contract DiggRewardsFaucet is Initializable, AccessControlUpgradeable, PausableU
     event RewardAdded(uint256 reward);
     event Staked(address indexed user, uint256 amount);
     event Withdrawn(address indexed user, uint256 amount);
-    event RewardPaid(address indexed user, uint256 reward);
+    event RewardPaid(address indexed user, uint256 reward, uint256 rewardInFragments);
     event RewardsDurationUpdated(uint256 newDuration);
     event Recovered(address token, uint256 amount);
 }
