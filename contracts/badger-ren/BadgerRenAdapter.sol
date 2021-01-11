@@ -189,7 +189,7 @@ contract BadgerRenAdapter {
         uint256 _amount,
         uint256 _minRenbtcAmount
     ) external {
-        require(wBTC.transferFrom(msg.sender, address(this), _amount));
+        wBTC.safeTransferFrom(msg.sender, address(this), _amount);
         uint256 startRenbtcBalance = renBTC.balanceOf(address(this));
         exchange.exchange(1, 0, _amount, _minRenbtcAmount);
         uint256 endRenbtcBalance = renBTC.balanceOf(address(this));
