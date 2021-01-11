@@ -2,7 +2,8 @@ from assistant.subgraph.config import subgraph_config
 from rich.console import Console
 from gql import gql, Client
 from gql.transport.aiohttp import AIOHTTPTransport
-
+from decimal import *
+getcontext().prec = 20
 console = Console()
 
 url = subgraph_config["url"]
@@ -178,8 +179,8 @@ def fetch_sett_transfers(settID, startBlock, endBlock):
         return int(transfer["transaction"]["blockNumber"]) > startBlock
 
     def convert_amount(transfer):
-        ppfs = int(transfer["pricePerFullShare"])
-        transfer["amount"] = (int(transfer["amount"]) / ppfs) / 1e18 
+        ppfs = Decimal(transfer["pricePerFullShare"]) / Decimal(1e18)
+        transfer["amount"] = round(Decimal(transfer["amount"]) / Decimal(ppfs))
         return transfer
 
     def negate_withdrawals(withdrawal):
