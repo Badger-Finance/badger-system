@@ -638,14 +638,14 @@ class BadgerSystem:
         self.track_contract_upgradeable(id + ".rewards", rewards)
         return rewards
 
-    def deploy_ren_adapter(self, governance=None, integrator=None):
+    def deploy_ren_adapter(self, governance=None, rewards=None):
         deployer = self.deployer
 
         if governance is None:
             governance = deployer
 
-        if integrator is None:
-            integrator = deployer
+        if rewards is None:
+            rewards = deployer
 
         self.renAdapter = deploy_proxy(
             "BadgerRenAdapter",
@@ -654,10 +654,10 @@ class BadgerSystem:
             self.devProxyAdmin.address,
             self.logic.BadgerRenAdapter.initialize.encode_input(
                 governance,
-                integrator,
+                rewards,
                 ren_config.mintFeeBps,
                 ren_config.burnFeeBps,
-                ren_config.percentageFeeIntegratorBps,
+                ren_config.percentageFeerewardsBps,
                 ren_config.percentageFeeGovernanceBps,
             ),
             deployer,
