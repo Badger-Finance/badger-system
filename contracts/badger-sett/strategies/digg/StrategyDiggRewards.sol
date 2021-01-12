@@ -38,15 +38,19 @@ contract StrategyDiggRewards is BaseStrategy {
     struct HarvestData {
         uint256 totalDigg;
         uint256 totalShares;
+        uint256 totalInitialFragments;
         uint256 diggIncrease;
         uint256 sharesIncrease;
+        uint256 initialFragmentsIncrease;
     }
 
-    event HarvestDiggState (
+    event HarvestState (
         uint256 totalDigg,
         uint256 totalShares,
+        uint256 totalInitialFragments,
         uint256 diggIncrease,
-        uint256 sharesIncrease
+        uint256 sharesIncrease,
+        uint256 initialFragmentsIncrease
     );
 
     function initialize(
@@ -130,22 +134,27 @@ contract StrategyDiggRewards is BaseStrategy {
 
         uint256 _beforeDigg = IDigg(want).balanceOf(address(this));
         uint256 _beforeShares = IDigg(want).sharesOf(address(this));
+        uint256 _beforeInitialFragments = IDigg(want).sharesToInitialFragments(_beforeShares);
 
         // ===== Harvest rewards from Geyser =====
         IStakingRewards(diggFaucet).getReward();
         
         harvestData.totalDigg = IDigg(want).balanceOf(address(this));
         harvestData.totalShares = IDigg(want).sharesOf(address(this));
+        harvestData.totalInitialFragments = IDigg(want).sharesToInitialFragments(harvestData.totalShares);
 
         harvestData.diggIncrease = harvestData.totalDigg.sub(_beforeDigg);
         harvestData.sharesIncrease = harvestData.totalShares.sub(_beforeShares);
+        harvestData.initialFragmentsIncrease = harvestData.totalInitialFragments.sub(_beforeInitialFragments);
 
         emit Harvest(harvestData.sharesIncrease, block.number);
-        emit HarvestDiggState(
+        emit HarvestState(
             harvestData.totalDigg,
             harvestData.totalShares,
+            harvestData.totalInitialFragments,
             harvestData.diggIncrease,
-            harvestData.sharesIncrease
+            harvestData.sharesIncrease,
+            harvestData.initialFragmentsIncrease
         );
 
         return harvestData;

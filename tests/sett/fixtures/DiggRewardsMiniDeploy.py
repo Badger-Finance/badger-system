@@ -1,4 +1,6 @@
-from brownie import DiggRewardsFaucet
+from helpers.constants import PAUSER_ROLE, UNPAUSER_ROLE
+from helpers.time_utils import days
+from brownie import DiggRewardsFaucet, chain
 
 from tests.sett.fixtures.DiggSettMiniDeployBase import DiggSettMiniDeployBase
 from config.badger_config import sett_config, digg_config_test
@@ -25,10 +27,15 @@ class DiggRewardsMiniDeploy(DiggSettMiniDeployBase):
         Distribute badger to Geyser and allow strategy to take
         """
         super().post_deploy_setup()
+        amount = digg_config_test.geyserParams.unlockSchedules.digg[0].amount
+        digg = self.digg.token
 
-        self.badger.distribute_staking_rewards(
-            self.key, digg_config_test.geyserParams.unlockSchedules.digg[0].amount
-        )
+        digg.transfer(self.rewards, amount, {'from': self.deployer})
+        self.rewards.notifyRewardAmount(chain.time(), days(7), digg.fragmentsToShares(amount), {'from': self.deployer})
+        print(digg.balanceOf(self.rewards), digg.sharesOf(self.rewards))
+
+        self.rewards.grantRole(PAUSER_ROLE, self.keeper, {'from': self.deployer})
+        self.rewards.grantRole(UNPAUSER_ROLE, self.guardian, {'from': self.deployer})
 
         # Make strategy the recipient of the DIGG faucet
         self.rewards.initializeRecipient(self.strategy, {"from": self.deployer})

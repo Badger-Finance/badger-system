@@ -19,7 +19,7 @@ from helpers.sett.resolvers import (
     StrategyDiggRewardsResolver,
     StrategySushiDiggWbtcLpOptimizerResolver,
 )
-from helpers.utils import val
+from helpers.utils import digg_shares_to_initial_fragments, val
 from scripts.systems.badger_system import BadgerSystem
 from scripts.systems.constants import SettType
 
@@ -111,6 +111,14 @@ class SnapshotManager:
         for key, dest in destinations.items():
             self.addEntity(key, dest)
 
+    def add_snap_calls(self, entities):
+        calls = []
+        calls = self.resolver.add_balances_snap(calls, entities)
+        calls = self.resolver.add_sett_snap(calls)
+        # calls = self.resolver.add_sett_permissions_snap(calls)
+        calls = self.resolver.add_strategy_snap(calls)
+        return calls
+
     def snap(self, trackedUsers=None):
         print("snap")
         snapBlock = chain.height
@@ -120,12 +128,7 @@ class SnapshotManager:
             for key, user in trackedUsers.items():
                 entities[key] = user
 
-        calls = []
-        calls = self.resolver.add_balances_snap(calls, entities)
-        calls = self.resolver.add_sett_snap(calls)
-        # calls = self.resolver.add_sett_permissions_snap(calls)
-        calls = self.resolver.add_strategy_snap(calls)
-
+        calls = self.add_snap_calls(entities)
         multi = Multicall(calls)
 
         # for call in calls:
@@ -243,6 +246,8 @@ class SnapshotManager:
 
     def format(self, key, value):
         if type(value) is int:
+            # Ether-scaled balances
+            # TODO: Handle based on token decimals
             if (
                 "balance" in key
                 or key == "sett.available"
@@ -250,6 +255,18 @@ class SnapshotManager:
                 or key == "sett.totalSupply"
             ):
                 return val(value)
+            # DIGG Shares
+            if "shares" in key or "diggFaucet.earned" in key:
+                # We expect to have a known digg instance in the strategy in this case
+                name = self.strategy.getName()
+                digg = ""
+
+                if name == "StrategyDiggRewards":
+                    digg = interface.IDigg(self.strategy.want())
+                else:
+                    digg = interface.IDigg(self.strategy.digg())
+
+                return digg_shares_to_initial_fragments(digg, value)
         return value
 
     def diff(self, a, b):

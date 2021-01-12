@@ -114,7 +114,7 @@ contract Sett is ERC20Upgradeable, SettAccessControlDefended, PausableUpgradeabl
         return "1.2";
     }
 
-    function getPricePerFullShare() public view returns (uint256) {
+    function getPricePerFullShare() public view virtual returns (uint256) {
         if (totalSupply() == 0) {
             return 1e18;
         }

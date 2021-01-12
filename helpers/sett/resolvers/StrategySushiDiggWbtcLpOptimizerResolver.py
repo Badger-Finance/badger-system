@@ -85,9 +85,11 @@ class StrategySushiDiggWbtcLpOptimizerResolver(StrategyCoreResolver):
         super().add_balances_snap(calls, entities)
         strategy = self.manager.strategy
 
+        digg = interface.IERC20(strategy.digg())
         sushi = interface.IERC20(strategy.sushi())
         xsushi = interface.IERC20(strategy.xsushi())
 
+        calls = self.add_entity_balances_for_tokens(calls, "digg", digg, entities)
         calls = self.add_entity_balances_for_tokens(calls, "sushi", sushi, entities)
         calls = self.add_entity_balances_for_tokens(calls, "xsushi", xsushi, entities)
         return calls

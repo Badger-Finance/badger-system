@@ -15,6 +15,18 @@ class StrategyCoreResolver:
 
     # ===== Read strategy data =====
 
+    def add_entity_shares_for_tokens(self, calls, tokenKey, token, entities):
+        for entityKey, entity in entities.items():
+            calls.append(
+                Call(
+                    token.address,
+                    [func.digg.sharesOf, entity],
+                    [["shares." + tokenKey + "." + entityKey, as_wei]],
+                )
+            )
+
+        return calls
+
     def add_entity_balances_for_tokens(self, calls, tokenKey, token, entities):
         for entityKey, entity in entities.items():
             calls.append(
@@ -106,6 +118,17 @@ class StrategyCoreResolver:
         return calls
 
     # ===== Verify strategy action results =====
+
+    def confirm_harvest_state(self, before, after, tx):
+        """
+        Confirm the events from the harvest match with actual recorded change
+        Must be implemented on a per-strategy basis
+        """
+        self.printHarvestState(tx)
+        return True
+
+    def printHarvestState(self, tx):
+        return True
 
     def confirm_earn(self, before, after, params):
         """
@@ -239,10 +262,11 @@ class StrategyCoreResolver:
         )
 
     # ===== Strategies must implement =====
-
     def confirm_harvest(self, before, after, tx):
         console.print("=== Compare Harvest ===")
         self.manager.printCompare(before, after)
+        self.confirm_harvest_state(before, after, tx)
+
         valueGained = after.get("sett.pricePerFullShare") > before.get(
             "sett.pricePerFullShare"
         )
@@ -281,4 +305,6 @@ class StrategyCoreResolver:
         Check for proper rebases.
         (Strategy Must Implement)
         """
+        console.print("=== Compare Rebase ===")
+        self.manager.printCompare(before, after)
         assert False

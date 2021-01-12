@@ -40,7 +40,6 @@ class StrategySushiBadgerLpOptimizerResolver(StrategyCoreResolver):
         # Strategy should have no sushi in Chef
     
     def printHarvestState(self, tx):
-
         events = tx.events
         event = events['HarvestState'][0]
 
@@ -60,20 +59,6 @@ class StrategySushiBadgerLpOptimizerResolver(StrategyCoreResolver):
         table.append(["toBadgerTree", val(toBadgerTree)])
 
         print(tabulate(table, headers=["account", "value"]))
-        
-    def confirm_harvest_events(self, before, after, tx):
-        events = tx.events
-        event = events['HarvestState'][0]
-
-        self.printHarvestState(tx)
-
-        xSushiHarvested = event['xSushiHarvested']
-        totalxSushi = event['totalxSushi']
-        toStrategist = event['toStrategist']
-        toGovernance = event['toGovernance']
-        toBadgerTree = event['toBadgerTree']
-
-        assert True
 
     def confirm_tend(self, before, after):
         console.print("=== Compare Tend ===")

@@ -15,25 +15,26 @@ import "interfaces/digg/IDigg.sol";
 import "interfaces/curve/ICurveFi.sol";
 import "interfaces/curve/ICurveGauge.sol";
 import "interfaces/uniswap/IUniswapRouterV2.sol";
+import "interfaces/uniswap/IUniswapV2Pair.sol";
 
 import "interfaces/badger/IController.sol";
 import "interfaces/badger/IMintr.sol";
 import "interfaces/badger/IStrategy.sol";
 
-import "../BaseStrategy.sol";
+import "../BaseStrategySwapper.sol";
 import "interfaces/uniswap/IStakingRewards.sol";
 
 /*
     ===== StrategyDiggLpMetaFarm =====
     - Harvest DIGG from special rewards pool and sell to increase LP Position
 */
-contract StrategyDiggLpMetaFarm is BaseStrategy {
+contract StrategyDiggLpMetaFarm is BaseStrategyMultiSwapper {
     using SafeERC20Upgradeable for IERC20Upgradeable;
     using AddressUpgradeable for address;
     using SafeMathUpgradeable for uint256;
 
     address public diggFaucet;
-    address public digg; // Badger Token
+    address public digg; // Digg Token
     address public constant wbtc = 0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599; // wBTC Token, directly paird with digg
 
     event HarvestLpMetaFarm(
@@ -109,7 +110,7 @@ contract StrategyDiggLpMetaFarm is BaseStrategy {
         require(address(digg) != _asset, "digg");
     }
 
-    /// @dev Deposit Badger into the staking contract
+    /// @dev Deposit Digg into the staking contract
     function _deposit(uint256 _want) internal override {}
 
     /// @dev No active position, just send all want to controller as per wrapper withdrawAll() function
@@ -117,9 +118,9 @@ contract StrategyDiggLpMetaFarm is BaseStrategy {
     function _withdrawAll() internal override {
         IStakingRewards(diggFaucet).getReward();
 
+        uint256 _diggBalance = IDigg(digg).balanceOf(address(this));
         // Send DIGG rewards to controller
-        uint256 digg = IDigg(digg).balanceOf(address(this));
-        IDigg(digg).transfer(IController(controller).rewards(), digg);
+        IDigg(digg).transfer(IController(controller).rewards(), _diggBalance);
 
         // Note: All want in contract will be sent in wrapper function
     }
@@ -164,11 +165,15 @@ contract StrategyDiggLpMetaFarm is BaseStrategy {
                 // We use actual DIGG balance in trade rather than shares
                 harvestData.diggConvertedToWbtc = IDigg(digg).sharesToFragments(harvestData.sharesConvertedToWbtc);
 
+                // Note: We must sync before trading due to having a rebasing asset in the pair
+                address pair = _get_uni_pair(digg, wbtc);
+                IUniswapV2Pair(pair).sync();
+
                 _swap(digg, harvestData.diggConvertedToWbtc, path);
 
                 harvestData.wtbcFromConversion = IERC20Upgradeable(wbtc).balanceOf(address(this));
 
-                // Add Badger and wBTC as liquidity if any to add
+                // Add Digg and wBTC as liquidity if any to add
                 _add_max_liquidity_uniswap(digg, wbtc);
             }
         }

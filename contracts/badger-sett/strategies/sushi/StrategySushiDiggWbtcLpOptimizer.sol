@@ -9,6 +9,7 @@ import "deps/@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "deps/@openzeppelin/contracts-upgradeable/token/ERC20/SafeERC20Upgradeable.sol";
 import "interfaces/uniswap/IUniswapRouterV2.sol";
 import "interfaces/badger/IBadgerGeyser.sol";
+import "interfaces/digg/IDigg.sol";
 
 import "interfaces/sushi/ISushiChef.sol";
 import "interfaces/sushi/IxSushi.sol";
@@ -16,21 +17,23 @@ import "interfaces/sushi/IxSushi.sol";
 import "interfaces/badger/IController.sol";
 import "interfaces/badger/IMintr.sol";
 import "interfaces/badger/IStrategy.sol";
+import "interfaces/uniswap/IUniswapV2Pair.sol";
 
 import "../BaseStrategySwapper.sol";
-import "interfaces/badger/IStakingRewardsSignalOnly.sol";
+import "interfaces/uniswap/IStakingRewards.sol";
 
 /*
     Strategy to compound DIGG LP Position
     - Harvest DIGG from special rewards pool and sell to increase LP Position
     - Optimize Sushi gains from onsen rewards, if present
+    - Sushi rewards will be distrtibuted via the BadgerTree in the form of interest-bearing xSushi
 */
 contract StrategySushiDiggWbtcLpOptimizer is BaseStrategyMultiSwapper {
     using SafeERC20Upgradeable for IERC20Upgradeable;
     using AddressUpgradeable for address;
     using SafeMathUpgradeable for uint256;
 
-    address public geyser;
+    address public diggFaucet;
     address public digg; // DIGG Token
     address public constant wbtc = 0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599; // WBTC Token
     address public constant sushi = 0x6B3595068778DD592e39A122f4f5a5cF09C90fE2; // SUSHI token
@@ -91,7 +94,7 @@ contract StrategySushiDiggWbtcLpOptimizer is BaseStrategyMultiSwapper {
         __BaseStrategy_init(_governance, _strategist, _controller, _keeper, _guardian);
 
         want = _wantConfig[0];
-        geyser = _wantConfig[1];
+        diggFaucet = _wantConfig[1];
         digg = _wantConfig[2];
         badgerTree = _wantConfig[3];
 
@@ -116,14 +119,14 @@ contract StrategySushiDiggWbtcLpOptimizer is BaseStrategyMultiSwapper {
     }
 
     function balanceOfPool() public override view returns (uint256) {
-        // Note: Our want balance is actually in the SushiChef, but it is also tracked in the geyser, which is easier to read
-        return IStakingRewardsSignalOnly(geyser).balanceOf(address(this));
+        // Note: Our want balance is actually in the SushiChef, but it is also tracked in the diggFaucet, which is easier to read
+        return IStakingRewards(diggFaucet).balanceOf(address(this));
     }
 
     function getProtectedTokens() external override view returns (address[] memory) {
         address[] memory protectedTokens = new address[](5);
         protectedTokens[0] = want;
-        protectedTokens[1] = geyser;
+        protectedTokens[1] = diggFaucet;
         protectedTokens[2] = digg;
         protectedTokens[3] = sushi;
         protectedTokens[4] = xsushi;
@@ -141,7 +144,7 @@ contract StrategySushiDiggWbtcLpOptimizer is BaseStrategyMultiSwapper {
         require(address(sushi) != _asset, "sushi");
         require(address(xsushi) != _asset, "xsushi");
 
-        require(address(geyser) != _asset, "geyser");
+        require(address(diggFaucet) != _asset, "diggFaucet");
         require(address(digg) != _asset, "digg");
     }
 
@@ -150,9 +153,6 @@ contract StrategySushiDiggWbtcLpOptimizer is BaseStrategyMultiSwapper {
     function _deposit(uint256 _want) internal override {
         // Deposit all want in sushi chef
         ISushiChef(chef).deposit(pid, _want);
-
-        // "Deposit" same want into personal staking rewards via signal (note: this is a SIGNAL ONLY - the staking rewards must be locked to just this account)
-        IStakingRewardsSignalOnly(geyser).stake(_want);
     }
 
     /// @dev Unroll from all strategy positions, and transfer non-core tokens to controller rewards
@@ -174,12 +174,12 @@ contract StrategySushiDiggWbtcLpOptimizer is BaseStrategyMultiSwapper {
 
         // === Transfer extra token: DIGG ===
 
-        // "Unstake" from digg rewards source and hrvest all digg rewards
-        IStakingRewardsSignalOnly(geyser).exit();
+        // Harvest all pending digg rewards
+        IStakingRewards(diggFaucet).getReward();
 
         // Send all digg rewards to controller rewards
-        uint256 _digg = IERC20Upgradeable(digg).balanceOf(address(this));
-        IERC20Upgradeable(digg).safeTransfer(IController(controller).rewards(), _digg);
+        uint256 _diggBalance = IDigg(digg).balanceOf(address(this));
+        IDigg(digg).transfer(IController(controller).rewards(), _diggBalance);
 
         // Note: All want is automatically withdrawn outside this "inner hook" in base strategy function
     }
@@ -194,9 +194,6 @@ contract StrategySushiDiggWbtcLpOptimizer is BaseStrategyMultiSwapper {
             uint256 _toWithdraw = _amount.sub(_preWant);
 
             ISushiChef(chef).withdraw(pid, _toWithdraw);
-            // Note: Also signal withdraw from staking rewards
-            IStakingRewardsSignalOnly(geyser).withdraw(_toWithdraw);
-
             // Note: Withdrawl process will earn sushi, this will be deposited into SushiBar on next tend()
         }
 
@@ -235,7 +232,7 @@ contract StrategySushiDiggWbtcLpOptimizer is BaseStrategyMultiSwapper {
 
     /// @dev Harvest accumulated digg rewards and convert them to LP tokens
     /// @dev Harvest accumulated sushi and send to the controller
-    /// @dev Restake the gained LP tokens in the Geyser
+    /// @dev Restake the gained LP tokens in the diggFaucet
     function harvest() external whenNotPaused returns (HarvestData memory) {
         _onlyAuthorizedActors();
 
@@ -277,7 +274,7 @@ contract StrategySushiDiggWbtcLpOptimizer is BaseStrategyMultiSwapper {
 
         // ===== Harvest all DIGG rewards: Sell to underlying (no performance fees) =====
 
-        IStakingRewardsSignalOnly(geyser).getReward();
+        IStakingRewards(diggFaucet).getReward();
 
         uint256 _afterDigg = IERC20Upgradeable(digg).balanceOf(address(this));
         harvestData.diggHarvested = _afterDigg.sub(_beforeDigg);
@@ -290,7 +287,13 @@ contract StrategySushiDiggWbtcLpOptimizer is BaseStrategyMultiSwapper {
                 path[0] = digg; // Digg
                 path[1] = wbtc;
 
+                // Note: We must sync before trading due to having a rebasing asset in the pair
+                address pair = _get_sushi_pair(digg, wbtc);
+                IUniswapV2Pair(pair).sync();
+
                 _swap_sushiswap(digg, harvestData.diggConvertedToWbtc, path);
+
+                // We must
 
                 // Add DIGG and wBTC as liquidity if any to add
                 _add_max_liquidity_sushiswap(digg, wbtc);
@@ -328,4 +331,6 @@ contract StrategySushiDiggWbtcLpOptimizer is BaseStrategyMultiSwapper {
 
         return harvestData;
     }
+
+
 }

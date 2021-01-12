@@ -17,7 +17,6 @@ DAY = 24 * 60 * 60
 
 
 class DiggSnapshotManager(SnapshotManager):
-    # Rebase digg assets at provided value.
     def rebase(self, value, overrides, confirm=True):
         console.print(f"rebasing at value: {value}")
         user = overrides["from"].address

@@ -1,20 +1,6 @@
 import json
 import decouple
-from brownie import (
-    SimpleTimelock,
-    SmartVesting,
-    UFragments,
-    UFragmentsPolicy,
-    ConstantOracle,
-    DynamicOracle,
-    MedianOracle,
-    Orchestrator,
-    Contract,
-    web3,
-    rpc,
-    address,
-    accounts,
-)
+from brownie import *
 from dotmap import DotMap
 
 from scripts.systems.gnosis_safe_system import connect_gnosis_safe

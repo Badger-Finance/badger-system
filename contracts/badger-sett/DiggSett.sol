@@ -47,6 +47,14 @@ contract DiggSett is Sett {
         return strategyShares.add(settShares);
     }
 
+    function getPricePerFullShare() public view override returns (uint256) {
+        if (totalSupply() == 0) {
+            return 1e18;
+        }
+        IDigg digg = IDigg(address(token));
+        uint256 scaledShares = digg.sharesToInitialFragments(shares());
+        return scaledShares.mul(1e18).div(totalSupply());
+    }
 
     /// ===== Internal Implementations =====
 
