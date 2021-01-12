@@ -218,7 +218,6 @@ def guardian(badger: BadgerSystem, startBlock, endBlock, test=False):
             "currentContentHash": currentContentHash,
         }
     )
-
     print("Uploading to file " + contentFileName)
 
     # TODO: Upload file to AWS & serve from server
@@ -275,7 +274,7 @@ def fetch_current_rewards_tree(badger, print_output=False):
     merkle = fetchCurrentMerkleData(badger)
     # pastFile = "rewards-1-" + str(merkle["contentHash"]) + ".json"
 
-    pastFile = "rewards-1-0xf5a8ede3b252cee8a1680f10a8f721ad21e336929b8be998bff5736371d3cb06.json"
+    pastFile = "rewards-1-0xedb19ff04e848620b228f1657b9232c41c080af0f4d2be1318696b5f9c0c892e.json"
 
     if print_output:
         console.print(
