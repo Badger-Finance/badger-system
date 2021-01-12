@@ -74,7 +74,19 @@ contract BadgerRenAdapter {
     event MintWBTC(uint256 renbtc_minted, uint256 wbtc_bought);
     event BurnWBTC(uint256 wbtc_transferred, uint256 renbtc_burned);
 
+    address public integrator;
+    address public governance;
+
+    uint256 public mintFeeBps;
+    uint256 public burnFeeBps;
+    uint256 private percentageFeeIntegratorBps;
+    uint256 private percentageFeeGovernanceBps;
+
+    uint256 public constant MAX_BPS = 10000;
+
     //function initialize(
+    //    address _governance,
+    //    address _integrator,
     //    address _registry,
     //    address _exchange,
     //    address _wbtc
@@ -85,14 +97,25 @@ contract BadgerRenAdapter {
     //    wBTC = IERC20(_wbtc);
     //}
     constructor(
+        address _governance,
+        address _integrator,
         address _registry,
         address _exchange,
-        address _wbtc
+        address _wbtc,
+        uint256[4] memory _feeConfig,
     ) public {
+        governance = _governance;
+        integrator = _integrator;
+
         registry = IGatewayRegistry(_registry);
         exchange = ICurveExchange(_exchange);
         renBTC = registry.getTokenBySymbol("BTC");
         wBTC = IERC20(_wbtc);
+
+        mintFeeBps = _feeConfig[0];
+        burnFeeBps = _feeConfig[1];
+        percentageFeeIntegratorBps = _feeConfig[2];
+        percentageFeeGovernanceBps = _feeConfig[3];
 
         // Approve exchange.
         require(renBTC.approve(_exchange, uint256(-1)));
@@ -136,8 +159,12 @@ contract BadgerRenAdapter {
     }
 
     function burnRenBTC(bytes calldata _btcDestination, uint256 _amount) external {
-        require(renBTC.balanceOf(address(this)) >= _amount);
-        uint256 burnAmount = registry.getGatewayBySymbol("BTC").burn(_btcDestination, _amount);
+        require(renBTC.balanceOf(address(msg.sender)) >= _amount);
+        uint256 startRenbtcBalance = renBTC.balanceOf(address(this));
+        renBTC.safeTransferFrom(msg.sender, address(this), _amount);
+        uint256 endRenbtcBalance = renBTC.balanceOf(address(this));
+        uint256 _transferred = endRenbtcBalance.sub(startRenbtcBalance);
+        uint256 burnAmount = registry.getGatewayBySymbol("BTC").burn(_btcDestination, _transferred);
 
         emit BurnRenBTC(burnAmount);
     }
@@ -165,10 +192,10 @@ contract BadgerRenAdapter {
         try exchange.exchange(0, 1, mintedAmount, min_dy)  {
             uint256 endWbtcBalance = wBTC.balanceOf(address(this));
             uint256 wbtcBought = endWbtcBalance.sub(startWbtcBalance);
+            emit MintWBTC(mintedAmount, wbtcBought);
 
             // Send converted wBTC to user.
             require(wBTC.transfer(_wbtcDestination, wbtcBought));
-            emit MintWBTC(mintedAmount, wbtcBought);
         } catch Error(string memory _error) {
             emit ExchangeWBTCStringError(_error);
 
@@ -198,5 +225,21 @@ contract BadgerRenAdapter {
         // Burn and send proceeds to the User
         uint256 burnAmount = registry.getGatewayBySymbol("BTC").burn(_btcDestination, renbtcBought);
         emit BurnWBTC(_amount, burnAmount);
+    }
+
+    function _processFee(
+        address token,
+        uint256 amount,
+        uint256 feeBps,
+    ) internal returns (uint256) {
+        if (feeBps == 0) {
+            return 0;
+        }
+        uint256 fee = amount.mul(feeBps).div(MAX_BPS);
+        uint256 governanceFee = fee.mul(percentageFeeGovernanceBps).div(MAX_BPS);
+        uint256 integratorFee = fee.mul(percentageFeeIntegratorBps).div(MAX_BPS);
+        IERC20(token).safeTransfer(governance, governanceFee);
+        IERC20(token).safeTransfer(integrator, integratorFee);
+        return fee;
     }
 }

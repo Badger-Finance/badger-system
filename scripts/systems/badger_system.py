@@ -13,6 +13,7 @@ from brownie import *
 from helpers.registry import registry
 from dotmap import DotMap
 from config.badger_config import (
+    ren_config,
     badger_config,
     sett_config,
 )
@@ -636,6 +637,32 @@ class BadgerSystem:
         self.sett_system.rewards[id] = rewards
         self.track_contract_upgradeable(id + ".rewards", rewards)
         return rewards
+
+    def deploy_ren_adapter(self, governance=None, integrator=None):
+        deployer = self.deployer
+
+        if governance is None:
+            governance = deployer
+
+        if integrator is None:
+            integrator = deployer
+
+        self.renAdapter = deploy_proxy(
+            "BadgerRenAdapter",
+            BadgerRenAdapter.abi,
+            self.logic.BadgerRenAdapter.address,
+            self.devProxyAdmin.address,
+            self.logic.BadgerRenAdapter.initialize.encode_input(
+                governance,
+                integrator,
+                ren_config.mintFeeBps,
+                ren_config.burnFeeBps,
+                ren_config.percentageFeeIntegratorBps,
+                ren_config.percentageFeeGovernanceBps,
+            ),
+            deployer,
+        )
+        self.track_contract_upgradeable("renAdapter", self.rewardsAdapter)
 
     # ===== Function Call Macros =====
 
