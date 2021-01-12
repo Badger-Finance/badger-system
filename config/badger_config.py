@@ -243,10 +243,12 @@ Test Config
 - Anyone can call the oracle to set the price
 - Assets are distributed among
 """
+digg_decimals = 18
+
 digg_config_test = DotMap(
     startTime=diggStartTime,
     prod_json="deploy-test-digg.json",
-    initialSupply=4000 * (10 ** 9),
+    initialSupply=4000 * (10 ** digg_decimals),
     deviationThreshold=50000000000000000,
     rebaseLag=10,
     # TODO: Need to set this value to exact time we want to start rebases.
@@ -295,7 +297,7 @@ digg_config_test = DotMap(
         diggDistributionStart=globalStartTime + days(15),
         unlockSchedules=DotMap(
             # Setting distribution amt to 25% for now.
-            digg=[DotMap(amount=1000 * (10 ** 9), duration=days(7),)],  # 1 week
+            digg=[DotMap(amount=1000 * (10 ** digg_decimals), duration=days(7),)],  # 1 week
         ),
     ),
 )
