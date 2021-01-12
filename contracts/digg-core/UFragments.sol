@@ -65,16 +65,19 @@ contract UFragments is ERC20Detailed, Ownable {
     }
 
     uint256 private constant DECIMALS = 18;
+    uint256 private constant MAX_UINT256 = ~uint256(0);
     uint256 private constant MAX_UINT128 = ~uint128(0);
     uint256 private constant INITIAL_FRAGMENTS_SUPPLY = 4000 * 10**DECIMALS;
     uint256 private constant MAX_FRAGMENTS_SUPPLY = 21000000 * 10**DECIMALS;
 
     // TOTAL_SHARES is a multiple of INITIAL_FRAGMENTS_SUPPLY so that _sharesPerFragment is an integer.
     // Use the highest value that fits in a uint128 for sufficient granularity.
-    uint256 private constant TOTAL_SHARES = MAX_UINT128 - (MAX_UINT128 % INITIAL_FRAGMENTS_SUPPLY);
+    uint256 private constant TOTAL_SHARES = MAX_UINT256 - (MAX_UINT256 % INITIAL_FRAGMENTS_SUPPLY);
+    // uint256 private constant TOTAL_SHARES = MAX_UINT128 - (MAX_UINT128 % INITIAL_FRAGMENTS_SUPPLY);
 
     // MAX_SUPPLY = maximum integer < (sqrt(4*TOTAL_SHARES + 1) - 1) / 2
-    uint256 private constant MAX_SUPPLY = (1 << 64) - 1; // (2^64) - 1
+    uint256 private constant MAX_SUPPLY = MAX_UINT128;
+    // uint256 private constant MAX_SUPPLY = (1 << 64) - 1; // (2^64) - 1
 
     uint256 private _totalSupply;
     uint256 public _sharesPerFragment;
@@ -192,6 +195,9 @@ contract UFragments is ERC20Detailed, Ownable {
      * @return The current fragment value of the specified underlying share amount.
      */
     function sharesToFragments(uint256 shares) public view returns (uint256) {
+        if (shares == 0) {
+            return 0;
+        }
         return shares.div(_sharesPerFragment);
     }
 
@@ -200,6 +206,9 @@ contract UFragments is ERC20Detailed, Ownable {
     }
 
     function sharesToInitialFragments(uint256 shares) public view returns (uint256) {
+        if (shares == 0) {
+            return 0;
+        }
         return shares.div(_initialSharesPerFragment);
     }
 
