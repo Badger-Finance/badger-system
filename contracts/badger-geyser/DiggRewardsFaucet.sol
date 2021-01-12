@@ -21,10 +21,16 @@ import "interfaces/digg/IDigg.sol";
 
     To facilitate strategies with no other positions, the Digg Faucet can also optionally hold tokens for the recipient
 
+    All mutative functions are pausable by holders of the Pauser role. They can only be unpaused by holders of the Unpauser role.
+
  */
 contract DiggRewardsFaucet is Initializable, AccessControlUpgradeable, PausableUpgradeable, ReentrancyGuardUpgradeable {
     using SafeMathUpgradeable for uint256;
     using SafeERC20Upgradeable for IERC20Upgradeable;
+
+    bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
+    bytes32 public constant UNPAUSER_ROLE = keccak256("UNPAUSER_ROLE");
+
 
     /* ========== STATE VARIABLES ========== */
 
@@ -84,33 +90,43 @@ contract DiggRewardsFaucet is Initializable, AccessControlUpgradeable, PausableU
 
     function getReward() public nonReentrant whenNotPaused {
         _onlyRecipient();
+
+        // Get accumulated rewards and set update time
         uint256 reward = earned();
+        lastUpdateTime = lastTimeRewardApplicable();
+
         if (reward > 0) {
             uint256 rewardInFragments = digg.sharesToFragments(reward);
             // Convert shares earned to fragments for transfer
             digg.transfer(msg.sender, rewardInFragments);
             emit RewardPaid(msg.sender, reward, rewardInFragments);
         }
+
     }
 
     /* ========== RESTRICTED FUNCTIONS ========== */
 
-    function notifyRewardAmount(uint256 startTimestamp, uint256 _rewardsDuration, uint256 reward) external whenNotPaused {
+    /// @dev Update the reward distribution schedule
+    /// @dev Only callable by admin
+    /// @param startTimestamp Timestamp to start distribution. If in the past, all "previously" distributed rewards within the range will be immediately claimable.
+    /// @param duration Duration over which to distribute the DIGG Shares.
+    /// @param rewardInShares Number of DIGG Shares to distribute within the specified time.
+    function notifyRewardAmount(uint256 startTimestamp, uint256 duration, uint256 rewardInShares) external whenNotPaused {
         _onlyAdmin();
-        rewardsDuration = _rewardsDuration;
-        rewardRate = reward.div(rewardsDuration);
+        rewardsDuration = duration;
+        rewardRate = rewardInShares.div(rewardsDuration);
 
         // Ensure the provided reward amount is not more than the balance in the contract.
         // This keeps the reward rate in the right range, preventing overflows due to
         // very high values of rewardRate in the earned and rewardsPerToken functions;
         // Reward + leftover must be less than 2^256 / 10^18 to avoid overflow.
-        uint256 balance = digg.balanceOf(address(this));
-        emit NotifyRewardsAmount(rewardRate, startTimestamp, balance, reward, rewardsDuration);
-        require(rewardRate <= balance.div(rewardsDuration), "Provided reward too high");
+        uint256 currentShares = digg.sharesOf(address(this));
+        emit NotifyRewardsAmount(rewardRate, startTimestamp, currentShares, rewardInShares, rewardsDuration);
+        require(rewardRate <= currentShares.div(rewardsDuration), "Provided reward too high");
 
         lastUpdateTime = startTimestamp;
         periodFinish = startTimestamp.add(rewardsDuration);
-        emit RewardAdded(reward);
+        emit RewardAdded(rewardInShares);
         emit RewardsDurationUpdated(rewardsDuration);
 
     }
@@ -122,18 +138,26 @@ contract DiggRewardsFaucet is Initializable, AccessControlUpgradeable, PausableU
     }
 
     function pause() external {
-        _onlyAdmin();
+        _onlyAdminOrPauser();
         _pause();
     }
 
     function unpause() external {
-        _onlyAdmin();
+        _onlyAdminOrUnpauser();
         _unpause();
     }
 
     /* ========== MODIFIERS ========== */
     function _onlyAdmin() internal {
         require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "onlyAdmin");
+    }
+
+    function _onlyAdminOrPauser() internal {
+        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender) || hasRole(PAUSER_ROLE, msg.sender), "onlyAdminOrPauser");
+    }
+
+    function _onlyAdminOrUnpauser() internal {
+        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender) || hasRole(UNPAUSER_ROLE, msg.sender), "onlyAdminOrUnpauser");
     }
 
     function _onlyRecipient() internal {
@@ -147,6 +171,6 @@ contract DiggRewardsFaucet is Initializable, AccessControlUpgradeable, PausableU
     event Staked(address indexed user, uint256 amount);
     event Withdrawn(address indexed user, uint256 amount);
     event RewardPaid(address indexed user, uint256 reward, uint256 rewardInFragments);
-    event RewardsDurationUpdated(uint256 newDuration);
+    event RewardsDurationUpdated(uint256 duration);
     event Recovered(address token, uint256 amount);
 }
