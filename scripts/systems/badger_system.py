@@ -5,18 +5,31 @@ from brownie import *
 from brownie.network.gas.strategies import GasNowScalingStrategy
 from config.badger_config import badger_config, sett_config
 from dotmap import DotMap
-from helpers.gnosis_safe import GnosisSafe, MultisigTxMetadata
-from helpers.proxy_utils import deploy_proxy, deploy_proxy_admin
+from config.badger_config import (
+    ren_config,
+    badger_config,
+    sett_config,
+)
+from scripts.systems.sett_system import (
+    deploy_controller,
+    deploy_strategy,
+)
 from helpers.registry import registry
-from helpers.sett.strategy_registry import name_to_artifact, strategy_name_to_artifact
 from helpers.time_utils import days
-from rich.console import Console
+from helpers.sett.strategy_registry import name_to_artifact, strategy_name_to_artifact
+from helpers.proxy_utils import deploy_proxy, deploy_proxy_admin
+from helpers.gnosis_safe import GnosisSafe, MultisigTxMetadata
+from helpers.sett.strategy_registry import name_to_artifact
+from scripts.systems.constants import SettType
+from scripts.systems.digg_system import connect_digg
 from scripts.systems.constants import SettType
 from scripts.systems.digg_system import DiggSystem, connect_digg
 from scripts.systems.claw_system import ClawSystem
 from scripts.systems.gnosis_safe_system import connect_gnosis_safe
 from scripts.systems.sett_system import deploy_controller, deploy_strategy
 from scripts.systems.uniswap_system import UniswapSystem
+
+from rich.console import Console
 
 console = Console()
 
@@ -658,8 +671,36 @@ class BadgerSystem:
         self.track_contract_upgradeable(id + ".rewards", rewards)
         return rewards
 
+<<<<<<< HEAD
     def add_existing_claw(self, claw_system: ClawSystem):
         self.claw = claw_system
+=======
+    def deploy_ren_adapter(self, governance=None, integrator=None):
+        deployer = self.deployer
+
+        if governance is None:
+            governance = deployer
+
+        if integrator is None:
+            integrator = deployer
+
+        self.renAdapter = deploy_proxy(
+            "BadgerRenAdapter",
+            BadgerRenAdapter.abi,
+            self.logic.BadgerRenAdapter.address,
+            self.devProxyAdmin.address,
+            self.logic.BadgerRenAdapter.initialize.encode_input(
+                governance,
+                integrator,
+                ren_config.mintFeeBps,
+                ren_config.burnFeeBps,
+                ren_config.percentageFeeIntegratorBps,
+                ren_config.percentageFeeGovernanceBps,
+            ),
+            deployer,
+        )
+        self.track_contract_upgradeable("renAdapter", self.rewardsAdapter)
+>>>>>>> Add ren adapter to badger system. Add fee processing. Update tests.
 
     # ===== Function Call Macros =====
 
