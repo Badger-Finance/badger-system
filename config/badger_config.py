@@ -437,12 +437,13 @@ claw_config = DotMap(
 )
 
 ren_config = DotMap(
-    integrator="0x0",
+    # Rewards address.
+    rewardsAddress="0x0",
     # Fees below are in bps.
     mintFeeBps=100,
     burnFeeBps=100,
-    # 50/50 integrator/governance.
-    percentageFeeIntegratorBps=5000,
+    # 50/50 rewards/governance.
+    percentageFeeRewardsBps=5000,
     percentageFeeGovernanceBps=5000,
 )
 

@@ -6,6 +6,7 @@ import "deps/@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "deps/@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import "deps/@openzeppelin/contracts-upgradeable/proxy/Initializable.sol";
 import "deps/@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
+import "deps//@openzeppelin/upgrades/ownership/Ownable.sol";
 
 interface IGateway {
     function mint(
@@ -55,8 +56,8 @@ interface ICurveExchange {
     ) external;
 }
 
-//contract BadgerRenAdapter is Initializable {
-contract BadgerRenAdapter {
+// TODO: Maybe convert to upgradeable.
+contract BadgerRenAdapter is Ownable {
     using SafeMathUpgradeable for uint256;
     using SafeERC20 for IERC20;
 
@@ -74,38 +75,26 @@ contract BadgerRenAdapter {
     event MintWBTC(uint256 renbtc_minted, uint256 wbtc_bought);
     event BurnWBTC(uint256 wbtc_transferred, uint256 renbtc_burned);
 
-    address public integrator;
+    address public rewards;
     address public governance;
 
     uint256 public mintFeeBps;
     uint256 public burnFeeBps;
-    uint256 private percentageFeeIntegratorBps;
+    uint256 private percentageFeeRewardsBps;
     uint256 private percentageFeeGovernanceBps;
 
     uint256 public constant MAX_BPS = 10000;
 
-    //function initialize(
-    //    address _governance,
-    //    address _integrator,
-    //    address _registry,
-    //    address _exchange,
-    //    address _wbtc
-    //) public {
-    //    registry = IGatewayRegistry(_registry);
-    //    exchange = ICurveExchange(_exchange);
-    //    renBTC = registry.getTokenBySymbol("BTC");
-    //    wBTC = IERC20(_wbtc);
-    //}
     constructor(
         address _governance,
-        address _integrator,
+        address _rewards,
         address _registry,
         address _exchange,
         address _wbtc,
         uint256[4] memory _feeConfig,
     ) public {
         governance = _governance;
-        integrator = _integrator;
+        rewards = _rewards;
 
         registry = IGatewayRegistry(_registry);
         exchange = ICurveExchange(_exchange);
@@ -114,7 +103,7 @@ contract BadgerRenAdapter {
 
         mintFeeBps = _feeConfig[0];
         burnFeeBps = _feeConfig[1];
-        percentageFeeIntegratorBps = _feeConfig[2];
+        percentageFeeRewardsBps = _feeConfig[2];
         percentageFeeGovernanceBps = _feeConfig[3];
 
         // Approve exchange.
@@ -237,9 +226,30 @@ contract BadgerRenAdapter {
         }
         uint256 fee = amount.mul(feeBps).div(MAX_BPS);
         uint256 governanceFee = fee.mul(percentageFeeGovernanceBps).div(MAX_BPS);
-        uint256 integratorFee = fee.mul(percentageFeeIntegratorBps).div(MAX_BPS);
+        uint256 rewardsFee = fee.mul(percentageFeeRewardsBps).div(MAX_BPS);
         IERC20(token).safeTransfer(governance, governanceFee);
-        IERC20(token).safeTransfer(integrator, integratorFee);
+        IERC20(token).safeTransfer(rewards, rewardsFee);
         return fee;
+    }
+
+    // Admin methods.
+    function setMintFeeBps(uint256 _mintFeeBps) external onlyOwner {
+        mintFeeBps = _mintFeeBps;
+    }
+
+    function setBurnFeeBps(uint256 _burnFeeBps) external onlyOwner {
+        burnFeeBps = _burnFeeBps;
+    }
+
+    function setPercentageFeeGovernanceBps(uint256 _percentageFeeGovernanceBps) external onlyOwner {
+        percentageFeeGovernanceBps = _percentageFeeGovernanceBps;
+    }
+
+    function setPercentageFeeRewardsBps(uint256 _percentageFeeRewardsBps) external onlyOwner {
+        percentageFeeRewardsBps = _percentageFeeRewardsBps;
+    }
+
+    function setRewards(address _rewards) external onlyOwner {
+        rewards = _rewards;
     }
 }
