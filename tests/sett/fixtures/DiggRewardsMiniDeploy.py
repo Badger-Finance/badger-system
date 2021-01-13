@@ -24,7 +24,7 @@ class DiggRewardsMiniDeploy(DiggSettMiniDeployBase):
 
     def post_deploy_setup(self):
         """
-        Distribute badger to Geyser and allow strategy to take
+        Distribute digg to Geyser and allow strategy to take
         """
         super().post_deploy_setup()
         amount = digg_config_test.geyserParams.unlockSchedules.digg[0].amount

@@ -18,10 +18,10 @@ from helpers.sett.resolvers import (
     StrategyCurveGaugeResolver,
     StrategyDiggRewardsResolver,
     StrategySushiDiggWbtcLpOptimizerResolver,
+    StrategyDiggLpMetaFarmResolver,
 )
 from helpers.utils import digg_shares_to_initial_fragments, val
 from scripts.systems.badger_system import BadgerSystem
-from scripts.systems.constants import SettType
 
 console = Console()
 
@@ -57,20 +57,23 @@ def is_curve_gauge_variant(name):
 
 
 class Snap:
-    def __init__(self, data, block):
+    def __init__(self, data, block, entityKeys):
         self.data = data
         self.block = block
+        self.entityKeys = entityKeys
 
     # ===== Getters =====
 
     def balances(self, tokenKey, accountKey):
         return self.data["balances." + tokenKey + "." + accountKey]
 
-    def sumBalances(self, tokenKey, accountKeys):
-        total = 0
-        for accountKey in accountKeys:
-            total += self.data["balances." + tokenKey + "." + accountKey]
-        return total
+    def balancesMatchForToken(self, tokenKey, otherSnap):
+        for entityKey in self.entityKeys:
+            balance = self.balances(tokenKey, entityKey)
+            otherBalance = otherSnap.balances(tokenKey, entityKey)
+            if balance != otherBalance:
+                return False
+        return True
 
     def get(self, key):
 
@@ -135,7 +138,11 @@ class SnapshotManager:
         #     print(call.target, call.function, call.args)
 
         data = multi()
-        self.snaps[snapBlock] = Snap(data, snapBlock)
+        self.snaps[snapBlock] = Snap(
+            data,
+            snapBlock,
+            [x[0] for x in entities.items()],
+        )
 
         return self.snaps[snapBlock]
 
@@ -167,7 +174,8 @@ class SnapshotManager:
             return StrategyDiggRewardsResolver(self)
         if name == "StrategySushiDiggWbtcLpOptimizer":
             return StrategySushiDiggWbtcLpOptimizerResolver(self)
-        # TODO Add uni digg/wbtc lp resolver
+        if name == "StrategyDiggLpMetaFarm":
+            return StrategyDiggLpMetaFarmResolver(self)
 
     def settTend(self, overrides, confirm=True):
         user = overrides["from"].address
