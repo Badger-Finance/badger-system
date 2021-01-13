@@ -25,18 +25,14 @@ def digg_shares_to_initial_fragments(digg, shares):
         scaled = -scaled
     else:
         scaled = digg.sharesToInitialFragments(shares)
-    return "{:,.18f}".format(scaled / 1e18)
+    return val(scaled)
 
 def digg_shares(value):
     return value / 1e68
 
 def val(amount):
     # return amount
-    if amount < Wei("0.0001 ether"):
-        return "{:,.18f}".format(amount / 1e18)
-    if amount < Wei("0.001 ether"):
-        return "{:,.18f}".format(amount / 1e18)
-    return "{:,.18f}".format(amount / 1e18)
+    return "{:,.0f}".format(amount)
 
 
 def sec(amount):
