@@ -1,4 +1,4 @@
-from brownie import web3
+from brownie import web3, DiggRewardsFaucet
 
 from scripts.systems.digg_minimal import deploy_digg_minimal
 from tests.sett.fixtures.SettMiniDeployBase import SettMiniDeployBase
@@ -21,6 +21,8 @@ class DiggSettMiniDeployBase(SettMiniDeployBase):
             deployer, devProxyAdminAddress, daoProxyAdminAddress, owner=deployer
         )
 
+        self.badger.deploy_logic("DiggRewardsFaucet", DiggRewardsFaucet)
+
         # Deploy dynamic oracle (used for testing ONLY).
         self.digg.deploy_dynamic_oracle()
         # Authorize dynamic oracle as a data provider to median oracle.
@@ -28,3 +30,4 @@ class DiggSettMiniDeployBase(SettMiniDeployBase):
             self.digg.dynamicOracle,
             {"from": deployer},
         )
+        

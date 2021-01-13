@@ -33,7 +33,8 @@ def digg_shares(value):
 
 def val(amount):
     # return amount
-    return "{:,.0f}".format(amount)
+    # return "{:,.0f}".format(amount)
+    return "{:,.18f}".format(amount / 1e18)
 
 
 def sec(amount):

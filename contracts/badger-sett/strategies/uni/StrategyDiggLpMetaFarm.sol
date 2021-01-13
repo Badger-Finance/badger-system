@@ -87,7 +87,7 @@ contract StrategyDiggLpMetaFarm is BaseStrategyMultiSwapper {
 
     /// ===== View Functions =====
     function getName() external override pure returns (string memory) {
-        return "StrategyBadgerLpMetaFarm";
+        return "StrategyDiggLpMetaFarm";
     }
 
     function balanceOfPool() public override view returns (uint256) {

@@ -1,4 +1,5 @@
-from brownie import chain
+from helpers.proxy_utils import deploy_proxy
+from brownie import chain, DiggRewardsFaucet
 
 from tests.sett.fixtures.DiggSettMiniDeployBase import DiggSettMiniDeployBase
 from config.badger_config import sett_config, digg_config_test
@@ -6,7 +7,8 @@ from scripts.systems.uniswap_system import UniswapSystem
 from helpers.registry import registry
 from helpers.constants import PAUSER_ROLE, UNPAUSER_ROLE
 from helpers.time_utils import days
-
+from rich.console import Console
+console = Console()
 
 class UniDiggWbtcLpMiniDeploy(DiggSettMiniDeployBase):
     def fetch_params(self):
@@ -25,9 +27,12 @@ class UniDiggWbtcLpMiniDeploy(DiggSettMiniDeployBase):
         want = params.want
         params.token = self.digg.token
 
+        deployer = self.deployer
+
         self.rewards = self.badger.deploy_digg_rewards_faucet(
-            self.key, self.digg.token
+            self.key, self.digg.token, want
         )
+
         params.geyser = self.rewards
 
         return (params, want)
@@ -40,10 +45,10 @@ class UniDiggWbtcLpMiniDeploy(DiggSettMiniDeployBase):
         self.badger.add_existing_digg(self.digg)
         digg = self.digg.token
 
+        # Transfer initial emissions to DiggFaucet
         amount = digg_config_test.geyserParams.unlockSchedules.digg[0].amount
         digg.transfer(self.rewards, amount, {'from': self.deployer})
         self.rewards.notifyRewardAmount(chain.time(), days(7), digg.fragmentsToShares(amount), {'from': self.deployer})
-        print(digg.balanceOf(self.rewards), digg.sharesOf(self.rewards))
 
         self.rewards.grantRole(PAUSER_ROLE, self.keeper, {'from': self.deployer})
         self.rewards.grantRole(UNPAUSER_ROLE, self.guardian, {'from': self.deployer})
@@ -54,15 +59,3 @@ class UniDiggWbtcLpMiniDeploy(DiggSettMiniDeployBase):
         if self.strategy.paused():
             self.strategy.unpause({"from": self.governance})
 
-    def post_vault_deploy_setup(self):
-        """
-        Deploy StakingRewardsSignalOnly for Digg Strategy
-        Generate LP tokens and grant to deployer
-        """
-
-        # rewards in digg, stake in sushi (ONLY SIGNAL)
-        self.rewards = self.badger.deploy_sett_staking_rewards_signal_only(
-            self.key, self.deployer, self.digg.token
-        )
-
-        self.params.geyser = self.rewards

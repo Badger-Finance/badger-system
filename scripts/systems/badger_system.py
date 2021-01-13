@@ -519,7 +519,6 @@ class BadgerSystem:
     ):
         # TODO: Replace with prod permissions config
         deployer = self.deployer
-
         strategy = deploy_strategy(
             self,
             strategyName,
@@ -550,16 +549,16 @@ class BadgerSystem:
     def add_existing_digg(self, digg_system):
         self.digg_system = digg_system
 
-    def deploy_digg_rewards_faucet(self, id, diggToken):
+    def deploy_digg_rewards_faucet(self, id, diggToken, stakingToken):
         deployer = self.deployer
 
         rewards = deploy_proxy(
-            "StakingRewards",
+            "DiggRewardsFaucet",
             DiggRewardsFaucet.abi,
             self.logic.DiggRewardsFaucet.address,
             self.devProxyAdmin.address,
             self.logic.DiggRewardsFaucet.initialize.encode_input(
-                deployer, diggToken, diggToken
+                deployer, stakingToken, diggToken
             ),
             deployer,
         )

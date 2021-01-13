@@ -1,9 +1,11 @@
 from brownie import Wei
+from dotmap import DotMap
 
 from helpers.token_utils import distribute_from_whales, distribute_test_ether
 from scripts.systems.badger_minimal import deploy_badger_minimal
 from scripts.systems.constants import SettType
-
+from rich.console import Console
+console = Console()
 
 class SettMiniDeployBase:
     def __init__(

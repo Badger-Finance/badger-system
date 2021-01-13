@@ -1,10 +1,11 @@
 from tabulate import tabulate
-from helpers.utils import val
+from helpers.utils import snapBalancesMatchForToken, val
 from helpers.multicall.functions import as_digg_shares
 from helpers.sett.resolvers.StrategyCoreResolver import StrategyCoreResolver
 from brownie import *
 from rich.console import Console
 from helpers.multicall import Call, as_wei, func
+from config.badger_config import digg_decimals
 
 console = Console()
 
@@ -19,6 +20,11 @@ class StrategyDiggRewardsResolver(StrategyCoreResolver):
         """
         console.print("=== Compare Rebase ===")
         self.manager.printCompare(before, after)
+        # TODO: Impl more accurate rebase checks.
+        if value > 10**digg_decimals:
+            assert after.balances("digg", "user") > before.balances("digg", "user")
+        elif value < 10**digg_decimals:
+            assert after.balances("digg", "user") < before.balances("digg", "user")
 
     def printHarvestState(self, tx):
         events = tx.events

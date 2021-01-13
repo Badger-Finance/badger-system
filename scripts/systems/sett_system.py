@@ -328,7 +328,7 @@ def deploy_strategy(
             StrategyDiggLpMetaFarm.abi,
             badger.logic.StrategyDiggLpMetaFarm.address,
             proxyAdmin.address,
-            badger.logic.StrategyDiggLpMetaFarmResolver.initialize.encode_input(
+            badger.logic.StrategyDiggLpMetaFarm.initialize.encode_input(
                 governance,
                 strategist,
                 controller,

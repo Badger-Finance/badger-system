@@ -6,7 +6,8 @@ from scripts.systems.sushiswap_system import SushiswapSystem
 from helpers.registry import registry
 from helpers.constants import PAUSER_ROLE, UNPAUSER_ROLE
 from helpers.time_utils import days
-
+from rich.console import Console
+console = Console()
 
 class SushiDiggWbtcLpOptimizerMiniDeploy(DiggSettMiniDeployBase):
     def fetch_params(self):
@@ -27,7 +28,7 @@ class SushiDiggWbtcLpOptimizerMiniDeploy(DiggSettMiniDeployBase):
         params.badgerTree = self.badger.badgerTree
 
         self.rewards = self.badger.deploy_digg_rewards_faucet(
-            self.key, self.digg.token
+            self.key, self.digg.token, want
         )
         params.geyser = self.rewards
 
@@ -41,10 +42,10 @@ class SushiDiggWbtcLpOptimizerMiniDeploy(DiggSettMiniDeployBase):
         self.badger.add_existing_digg(self.digg)
         digg = self.digg.token
 
+        # Transfer initial emissions to DiggFaucet
         amount = digg_config_test.geyserParams.unlockSchedules.digg[0].amount
         digg.transfer(self.rewards, amount, {'from': self.deployer})
         self.rewards.notifyRewardAmount(chain.time(), days(7), digg.fragmentsToShares(amount), {'from': self.deployer})
-        print(digg.balanceOf(self.rewards), digg.sharesOf(self.rewards))
 
         self.rewards.grantRole(PAUSER_ROLE, self.keeper, {'from': self.deployer})
         self.rewards.grantRole(UNPAUSER_ROLE, self.guardian, {'from': self.deployer})
