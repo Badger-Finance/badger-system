@@ -123,7 +123,7 @@ contract StrategyDiggRewards is BaseStrategy {
 
     function _withdrawSome(uint256 _amount) internal override returns (uint256) {
         // We only have idle DIGG, withdraw from the strategy directly
-        // Note: This value is in DIGG shares
+        // Note: This value is in DIGG fragments
         return _amount;
     }
 

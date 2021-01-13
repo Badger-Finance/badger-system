@@ -95,12 +95,10 @@ contract DiggSett is Sett {
 
         // If we don't have sufficient idle want in Sett, withdraw from Strategy
         if (_sharesInSett < _sharesToRedeem) {
-
-            
             uint256 _toWithdraw = _sharesToRedeem.sub(_sharesInSett);
 
-            // Note: This amount is scaled as a bDIGG value in the withdraw function
-            IController(controller).withdraw(address(token), digg.sharesToInitialFragments(_toWithdraw));
+            // Note: This amount is scaled as a DIGG value in the withdraw function
+            IController(controller).withdraw(address(token), digg.sharesToFragments(_toWithdraw));
 
             uint256 _sharesAfterWithdraw = digg.sharesOf(address(this));
             uint256 _diff = _sharesAfterWithdraw.sub(_sharesInSett);
