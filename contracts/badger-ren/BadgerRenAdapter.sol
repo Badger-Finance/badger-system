@@ -6,7 +6,7 @@ import "deps/@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "deps/@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import "deps/@openzeppelin/contracts-upgradeable/proxy/Initializable.sol";
 import "deps/@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
-import "deps//@openzeppelin/upgrades/ownership/Ownable.sol";
+import "deps//@openzeppelin/contracts/access/Ownable.sol";
 
 interface IGateway {
     function mint(
@@ -91,7 +91,7 @@ contract BadgerRenAdapter is Ownable {
         address _registry,
         address _exchange,
         address _wbtc,
-        uint256[4] memory _feeConfig,
+        uint256[4] memory _feeConfig
     ) public {
         governance = _governance;
         rewards = _rewards;
@@ -219,7 +219,7 @@ contract BadgerRenAdapter is Ownable {
     function _processFee(
         address token,
         uint256 amount,
-        uint256 feeBps,
+        uint256 feeBps
     ) internal returns (uint256) {
         if (feeBps == 0) {
             return 0;
