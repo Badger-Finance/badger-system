@@ -1,7 +1,11 @@
+from brownie import chain
+
 from tests.sett.fixtures.DiggSettMiniDeployBase import DiggSettMiniDeployBase
 from config.badger_config import sett_config, digg_config_test
 from scripts.systems.sushiswap_system import SushiswapSystem
 from helpers.registry import registry
+from helpers.constants import PAUSER_ROLE, UNPAUSER_ROLE
+from helpers.time_utils import days
 
 
 class SushiDiggWbtcLpOptimizerMiniDeploy(DiggSettMiniDeployBase):
@@ -22,6 +26,11 @@ class SushiDiggWbtcLpOptimizerMiniDeploy(DiggSettMiniDeployBase):
         params.token = self.digg.token
         params.badgerTree = self.badger.badgerTree
 
+        self.rewards = self.badger.deploy_digg_rewards_faucet(
+            self.key, self.digg.token
+        )
+        params.geyser = self.rewards
+
         return (params, want)
 
     def post_deploy_setup(self):
@@ -30,13 +39,18 @@ class SushiDiggWbtcLpOptimizerMiniDeploy(DiggSettMiniDeployBase):
         """
         # Track our digg system within badger system for convenience.
         self.badger.add_existing_digg(self.digg)
+        digg = self.digg.token
 
-        self.badger.distribute_staking_rewards(
-            self.key,
-            digg_config_test.geyserParams.unlockSchedules.digg[0].amount,
-        )
+        amount = digg_config_test.geyserParams.unlockSchedules.digg[0].amount
+        digg.transfer(self.rewards, amount, {'from': self.deployer})
+        self.rewards.notifyRewardAmount(chain.time(), days(7), digg.fragmentsToShares(amount), {'from': self.deployer})
+        print(digg.balanceOf(self.rewards), digg.sharesOf(self.rewards))
 
-        self.rewards.initializeApprovedStaker(self.strategy, {"from": self.deployer})
+        self.rewards.grantRole(PAUSER_ROLE, self.keeper, {'from': self.deployer})
+        self.rewards.grantRole(UNPAUSER_ROLE, self.guardian, {'from': self.deployer})
+
+        # Make strategy the recipient of the DIGG faucet
+        self.rewards.initializeRecipient(self.strategy, {"from": self.deployer})
 
         if self.strategy.paused():
             self.strategy.unpause({"from": self.governance})
@@ -46,14 +60,6 @@ class SushiDiggWbtcLpOptimizerMiniDeploy(DiggSettMiniDeployBase):
         Deploy StakingRewardsSignalOnly for Digg Strategy
         Generate LP tokens and grant to deployer
         """
-
-        # rewards in digg, stake in sushi (ONLY SIGNAL)
-        self.rewards = self.badger.deploy_sett_staking_rewards_signal_only(
-            self.key, self.deployer, self.digg.token
-        )
-
-        self.params.geyser = self.rewards
-
         # Setup sushi reward allocations.
         sushiswap = SushiswapSystem()
         pid = sushiswap.add_chef_rewards(self.want)

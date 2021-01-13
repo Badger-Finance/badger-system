@@ -13,7 +13,6 @@ class StrategyDiggRewardsResolver(StrategyCoreResolver):
     # ===== Strategies must implement =====
     def confirm_rebase(self, before, after, value):
         """
-        Confirm sett want balance has stayed constant across rebases.
         All share values should stay the same.
         bDIGG values should stay the same.
         All DIGG balances should change in proportion to the rebase. (10% towards the new target)

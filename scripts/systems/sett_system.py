@@ -1,17 +1,4 @@
-from brownie import (
-    Controller,
-    StrategyCurveGaugeRenBtcCrv,
-    StrategyCurveGaugeSbtcCrv,
-    StrategyCurveGaugeTbtcCrv,
-    StrategyDiggRewards,
-    StrategySushiLpOptimizer,
-    StrategySushiBadgerWbtc,
-    StrategyPickleMetaFarm,
-    StrategyHarvestMetaFarm,
-    StrategyBadgerLpMetaFarm,
-    StrategyBadgerRewards,
-    StrategySushiDiggWbtcLpOptimizer,
-)
+from brownie import *
 from rich.console import Console
 
 from helpers.registry import registry
@@ -327,6 +314,32 @@ def deploy_strategy(
 
                 ],
                 params.pid,
+                [
+                    params.performanceFeeGovernance,
+                    params.performanceFeeStrategist,
+                    params.withdrawalFee,
+                ],
+            ),
+            deployer,
+        )
+    if strategyName == "StrategyDiggLpMetaFarm":
+        return deploy_proxy(
+            "StrategyDiggLpMetaFarm",
+            StrategyDiggLpMetaFarm.abi,
+            badger.logic.StrategyDiggLpMetaFarm.address,
+            proxyAdmin.address,
+            badger.logic.StrategyDiggLpMetaFarmResolver.initialize.encode_input(
+                governance,
+                strategist,
+                controller,
+                keeper,
+                guardian,
+                [
+                    params.want,
+                    params.geyser,
+                    params.token,
+
+                ],
                 [
                     params.performanceFeeGovernance,
                     params.performanceFeeStrategist,

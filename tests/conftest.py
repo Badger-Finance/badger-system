@@ -23,6 +23,7 @@ from tests.sett.fixtures import (
     HarvestMetaFarmMiniDeploy,
     SushiBadgerWBtcMiniDeploy,
     SushiDiggWbtcLpOptimizerMiniDeploy,
+    UniDiggWbtcLpMiniDeploy,
 )
 
 
@@ -60,8 +61,8 @@ settsToRun = [
 
 diggSettsToRun = [
     "native.digg",
-    # "native.uniDiggWbtc",
-    # "native.sushiDiggWbtc",
+    "native.uniDiggWbtc",
+    "native.sushiDiggWbtc",
 ]
 
 runTestSetts = True
@@ -181,8 +182,7 @@ def badger_single_sett(settConfig):
                 governance=governance,
             ).deploy(sett_type=SettType.DIGG)
         if settId == "native.uniDiggWbtc":
-            # TODO: Implement and add uniswap digg/wbtc deploy.
-            return DiggRewardsMiniDeploy(
+            return UniDiggWbtcLpMiniDeploy(
                 "native.uniDiggWbtc",
                 "StrategyDiggLpMetaFarm",
                 deployer,

@@ -8,3 +8,4 @@ from .SushiBadgerWBtcMiniDeploy import SushiBadgerWBtcMiniDeploy
 from .SushiDiggWbtcLpOptimizerMiniDeploy import SushiDiggWbtcLpOptimizerMiniDeploy
 from .DiggRewardsMiniDeploy import DiggRewardsMiniDeploy
 from .SushiBadgerLpOptimizerMiniDeploy import SushiBadgerLpOptimizerMiniDeploy
+from .UniDiggWbtcLpMiniDeploy import UniDiggWbtcLpMiniDeploy

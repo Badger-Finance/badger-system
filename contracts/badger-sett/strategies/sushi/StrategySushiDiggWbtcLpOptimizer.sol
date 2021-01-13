@@ -119,8 +119,9 @@ contract StrategySushiDiggWbtcLpOptimizer is BaseStrategyMultiSwapper {
     }
 
     function balanceOfPool() public override view returns (uint256) {
-        // Note: Our want balance is actually in the SushiChef, but it is also tracked in the diggFaucet, which is easier to read
-        return IStakingRewards(diggFaucet).balanceOf(address(this));
+        // Note: Our want balance is actually in the SushiChef.
+        (uint256 staked, ) = ISushiChef(chef).userInfo(pid, address(this));
+        return staked;
     }
 
     function getProtectedTokens() external override view returns (address[] memory) {
@@ -148,10 +149,8 @@ contract StrategySushiDiggWbtcLpOptimizer is BaseStrategyMultiSwapper {
         require(address(digg) != _asset, "digg");
     }
 
-    /// @dev Deposit DIGG into the staking contract
-    /// @dev Track balance in the StakingRewards
+    /// @dev Deposit DIGG into the sushi chef.
     function _deposit(uint256 _want) internal override {
-        // Deposit all want in sushi chef
         ISushiChef(chef).deposit(pid, _want);
     }
 
@@ -293,8 +292,6 @@ contract StrategySushiDiggWbtcLpOptimizer is BaseStrategyMultiSwapper {
 
                 _swap_sushiswap(digg, harvestData.diggConvertedToWbtc, path);
 
-                // We must
-
                 // Add DIGG and wBTC as liquidity if any to add
                 _add_max_liquidity_sushiswap(digg, wbtc);
             }
@@ -331,6 +328,4 @@ contract StrategySushiDiggWbtcLpOptimizer is BaseStrategyMultiSwapper {
 
         return harvestData;
     }
-
-
 }

@@ -2,8 +2,9 @@ from brownie import interface
 from tabulate import tabulate
 from rich.console import Console
 
-from helpers.utils import val
+from helpers.utils import val, snapBalancesMatchForToken
 from helpers.sett.resolvers.StrategyCoreResolver import StrategyCoreResolver
+from config.badger_config import digg_decimals
 
 console = Console()
 
@@ -11,9 +12,19 @@ console = Console()
 class StrategySushiDiggWbtcLpOptimizerResolver(StrategyCoreResolver):
     def confirm_rebase(self, before, after, value):
         '''
-        Confirm sett want balance has stayed constant across rebases.
+        Lp token balance should stay the same.
+        Sushi balances stay the same.
+        xSushi balances stay the same.
+        All DIGG balances should change in proportion to the rebase. (10% towards the new target)
         '''
-        assert before.balances("want", "sett") == after.balances("want", "sett")
+        assert snapBalancesMatchForToken(before, after, "want")
+        assert snapBalancesMatchForToken(before, after, "sushi")
+        assert snapBalancesMatchForToken(before, after, "xsushi")
+        # TODO: Impl more accurate rebase checks.
+        if value > 10**digg_decimals:
+            assert after.balances("digg", "user") > before.balances("digg", "user")
+        elif value < 10**digg_decimals:
+            assert after.balances("digg", "user") < before.balances("digg", "user")
 
     def confirm_harvest(self, before, after, tx):
         console.print("=== Compare Harvest ===")

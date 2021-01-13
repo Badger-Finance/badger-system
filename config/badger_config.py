@@ -113,6 +113,17 @@ sett_config = DotMap(
             ),
         ),
     ),
+    uni=DotMap(
+        uniDiggWbtc=DotMap(
+            # Unfinished
+            strategyName="StrategyDiggLpMetaFarm",
+            params=DotMap(
+                performanceFeeStrategist=1000,
+                performanceFeeGovernance=1000,
+                withdrawalFee=50,
+            ),
+        ),
+    ),
     sushi=DotMap(
         sushiBadgerWBtc=DotMap(
             # Unfinished
@@ -136,7 +147,7 @@ sett_config = DotMap(
         ),
         sushiDiggWBtc=DotMap(
             # Unfinished
-            strategyName="StrategySushiBadgerWbtc",
+            strategyName="StrategySushiDiggWbtcLpOptimizer",
             params=DotMap(
                 performanceFeeStrategist=1000,
                 performanceFeeGovernance=1000,

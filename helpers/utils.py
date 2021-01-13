@@ -1,5 +1,3 @@
-from brownie import *
-
 # Assert approximate integer
 def approx(actual, expected, percentage_threshold):
     print(actual, expected, percentage_threshold)
@@ -12,6 +10,7 @@ def approx(actual, expected, percentage_threshold):
 
 def Eth(value):
     return value / 1e18
+
 
 def digg_shares_to_initial_fragments(digg, shares):
     """
@@ -27,8 +26,10 @@ def digg_shares_to_initial_fragments(digg, shares):
         scaled = digg.sharesToInitialFragments(shares)
     return val(scaled)
 
+
 def digg_shares(value):
     return value / 1e68
+
 
 def val(amount):
     # return amount
@@ -37,3 +38,12 @@ def val(amount):
 
 def sec(amount):
     return "{:,.1f}".format(amount / 1e12)
+
+
+def snapBalancesMatchForToken(snap, otherSnap, tokenKey):
+    for entityKey in snap.entityKeys:
+        balance = snap.balances(tokenKey, entityKey)
+        otherBalance = otherSnap.balances(tokenKey, entityKey)
+        if balance != otherBalance:
+            return False
+    return True

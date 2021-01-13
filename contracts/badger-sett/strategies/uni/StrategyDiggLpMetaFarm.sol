@@ -35,7 +35,7 @@ contract StrategyDiggLpMetaFarm is BaseStrategyMultiSwapper {
 
     address public diggFaucet;
     address public digg; // Digg Token
-    address public constant wbtc = 0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599; // wBTC Token, directly paird with digg
+    address public constant wbtc = 0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599; // wBTC Token, directly paired with digg
 
     event HarvestLpMetaFarm(
         uint256 totalDigg,
@@ -86,15 +86,15 @@ contract StrategyDiggLpMetaFarm is BaseStrategyMultiSwapper {
     }
 
     /// ===== View Functions =====
-    function getName() external pure override returns (string memory) {
+    function getName() external override pure returns (string memory) {
         return "StrategyBadgerLpMetaFarm";
     }
 
-    function balanceOfPool() public view override returns (uint256) {
-        return IStakingRewards(diggFaucet).balanceOf(address(this));
+    function balanceOfPool() public override view returns (uint256) {
+        return IERC20Upgradeable(want).balanceOf(address(this));
     }
 
-    function getProtectedTokens() external view override returns (address[] memory) {
+    function getProtectedTokens() external override view returns (address[] memory) {
         address[] memory protectedTokens = new address[](3);
         protectedTokens[0] = want;
         protectedTokens[1] = diggFaucet;
@@ -110,7 +110,7 @@ contract StrategyDiggLpMetaFarm is BaseStrategyMultiSwapper {
         require(address(digg) != _asset, "digg");
     }
 
-    /// @dev Deposit Digg into the staking contract
+    /// @dev No need to stake uni lp.
     function _deposit(uint256 _want) internal override {}
 
     /// @dev No active position, just send all want to controller as per wrapper withdrawAll() function
