@@ -87,11 +87,12 @@ contract StrategyDiggLpMetaFarm is BaseStrategyMultiSwapper {
 
     /// ===== View Functions =====
     function getName() external override pure returns (string memory) {
-        return "StrategyBadgerLpMetaFarm";
+        return "StrategyDiggLpMetaFarm";
     }
 
     function balanceOfPool() public override view returns (uint256) {
-        return IERC20Upgradeable(want).balanceOf(address(this));
+        // Since we're not staking uni lp, pool balance is always 0.
+        return 0;
     }
 
     function getProtectedTokens() external override view returns (address[] memory) {
@@ -138,8 +139,8 @@ contract StrategyDiggLpMetaFarm is BaseStrategyMultiSwapper {
 
         HarvestData memory harvestData;
 
-        uint256 _beforeDigg = IDigg(want).balanceOf(address(this));
-        uint256 _beforeShares = IDigg(want).sharesOf(address(this));
+        uint256 _beforeDigg = IDigg(digg).balanceOf(address(this));
+        uint256 _beforeShares = IDigg(digg).sharesOf(address(this));
         uint256 _beforeLp = IERC20Upgradeable(want).balanceOf(address(this));
 
         // ===== Harvest rewards from Geyser =====

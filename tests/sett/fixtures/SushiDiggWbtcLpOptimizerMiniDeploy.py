@@ -1,4 +1,4 @@
-from brownie import chain
+from brownie import chain, DiggRewardsFaucet
 
 from tests.sett.fixtures.DiggSettMiniDeployBase import DiggSettMiniDeployBase
 from config.badger_config import sett_config, digg_config_test
@@ -26,6 +26,7 @@ class SushiDiggWbtcLpOptimizerMiniDeploy(DiggSettMiniDeployBase):
         params.token = self.digg.token
         params.badgerTree = self.badger.badgerTree
 
+        self.badger.deploy_logic("DiggRewardsFaucet", DiggRewardsFaucet)
         self.rewards = self.badger.deploy_digg_rewards_faucet(
             self.key, self.digg.token
         )

@@ -22,8 +22,6 @@ def confirm_harvest_badger_lp(before, after):
 class StrategySushiBadgerLpOptimizerResolver(StrategyCoreResolver):
     def confirm_harvest(self, before, after, tx):
         console.print("=== Compare Harvest ===")
-        self.confirm_harvest_events(before, after, tx)
-
         super().confirm_harvest(before, after, tx)
 
         # Strategy want should increase
@@ -38,7 +36,7 @@ class StrategySushiBadgerLpOptimizerResolver(StrategyCoreResolver):
         # Strategy should have no sushi
 
         # Strategy should have no sushi in Chef
-    
+
     def printHarvestState(self, tx):
         events = tx.events
         event = events['HarvestState'][0]
@@ -70,16 +68,16 @@ class StrategySushiBadgerLpOptimizerResolver(StrategyCoreResolver):
         entities['badgerTree'] = self.manager.strategy.badgerTree()
         super().add_entity_balances_for_tokens(calls, tokenKey, token, entities)
         return calls
-    
+
     def add_balances_snap(self, calls, entities):
         super().add_balances_snap(calls, entities)
         strategy = self.manager.strategy
-        
-        
+
+
         sushi = interface.IERC20(strategy.sushi())
         xsushi = interface.IERC20(strategy.xsushi())
 
-        
+
         calls = self.add_entity_balances_for_tokens(calls, "sushi", sushi, entities)
         calls = self.add_entity_balances_for_tokens(calls, "xsushi", xsushi, entities)
         return calls

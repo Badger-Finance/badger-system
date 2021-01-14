@@ -23,8 +23,6 @@ class StrategyDiggLpMetaFarmResolver(StrategyCoreResolver):
 
     def confirm_harvest(self, before, after, tx):
         console.print("=== Compare Harvest ===")
-        self.confirm_harvest_events(before, after, tx)
-
         super().confirm_harvest(before, after, tx)
 
         # Strategy want should increase
@@ -42,3 +40,7 @@ class StrategyDiggLpMetaFarmResolver(StrategyCoreResolver):
 
         calls = self.add_entity_balances_for_tokens(calls, "digg", digg, entities)
         return calls
+
+    def get_strategy_destinations(self):
+        # No strategy destinations, uni lp stays in contract.
+        return {}

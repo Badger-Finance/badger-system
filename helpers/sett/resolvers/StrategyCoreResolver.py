@@ -293,7 +293,7 @@ class StrategyCoreResolver:
         """
         assert False
 
-    def get_strategy_destinations():
+    def get_strategy_destinations(self):
         """
         Track balances for all strategy implementations
         (Strategy Must Implement)

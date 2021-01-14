@@ -1,4 +1,4 @@
-from brownie import chain
+from brownie import chain, DiggRewardsFaucet
 
 from tests.sett.fixtures.DiggSettMiniDeployBase import DiggSettMiniDeployBase
 from config.badger_config import sett_config, digg_config_test
@@ -25,6 +25,7 @@ class UniDiggWbtcLpMiniDeploy(DiggSettMiniDeployBase):
         want = params.want
         params.token = self.digg.token
 
+        self.badger.deploy_logic("DiggRewardsFaucet", DiggRewardsFaucet)
         self.rewards = self.badger.deploy_digg_rewards_faucet(
             self.key, self.digg.token
         )
@@ -56,13 +57,12 @@ class UniDiggWbtcLpMiniDeploy(DiggSettMiniDeployBase):
 
     def post_vault_deploy_setup(self):
         """
-        Deploy StakingRewardsSignalOnly for Digg Strategy
         Generate LP tokens and grant to deployer
         """
-
-        # rewards in digg, stake in sushi (ONLY SIGNAL)
-        self.rewards = self.badger.deploy_sett_staking_rewards_signal_only(
-            self.key, self.deployer, self.digg.token
+        uniswap = UniswapSystem()
+        # Generate lp tokens.
+        uniswap.addMaxLiquidity(
+            self.digg.token,
+            registry.tokens.wbtc,
+            self.deployer,
         )
-
-        self.params.geyser = self.rewards
