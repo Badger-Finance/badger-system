@@ -48,7 +48,7 @@ def distribute_from_whales(recipient):
             )
 
 
-def distribute_from_whale(whale_config, recipient):
+def distribute_from_whale(whale_config, recipient, percentage=0.2):
     if whale_config.action == WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT:
         forceEther = ForceEther.deploy({"from": recipient})
         recipient.transfer(forceEther, Wei("1 ether"))
@@ -57,7 +57,7 @@ def distribute_from_whale(whale_config, recipient):
     token = interface.IERC20(whale_config.token)
     token.transfer(
         recipient,
-        token.balanceOf(whale_config.whale) // 5,
+        token.balanceOf(whale_config.whale) * percentage,
         {"from": whale_config.whale},
     )
 
