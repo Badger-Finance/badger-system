@@ -69,7 +69,7 @@ def main():
 
     merkleTree = rewards_to_merkle_tree(cumulative_rewards,settStartBlock,endBlock,{})
     # Upload merkle tree
-    rootHash = hash(merkleTree["merkleRoot"])
+    rootHash = web3.toHex(web3.keccak(text=merkleTree["merkleRoot"]))
     console.log(rootHash)
     contentFileName = "rewards-" + str(chain.id) + "-" + str(merkleTree["merkleRoot"]) + ".json"
     console.log("Saving merkle tree as {}".format(contentFileName))
@@ -91,13 +91,20 @@ def main():
     console.log("Difference: {}".format((farmHarvestedMerkleTree/1e18) - (claimsHarvested/1e18)))
     difference = farmHarvestedMerkleTree - claimsHarvested
     console.log("Difference: {}".format(farmHarvestedMerkleTree - claimsHarvested))
-    if abs(difference) < 100000 and not test:
+    if abs(difference) < 1000000 and not test:
         badger.badgerTree.proposeRoot(
         merkleTree["merkleRoot"],
         rootHash,
         nextCycle,
         {"from" :badger.keeper,"gas_price":gas_strategy})
-        
+
+        badger.badgerTree.approveRoot(
+        merkleTree["merkleRoot"],
+        rootHash,
+        nextCycle,
+        {"from" :badger.keeper,"gas_price":gas_strategy})
+
+       
 
     
 
