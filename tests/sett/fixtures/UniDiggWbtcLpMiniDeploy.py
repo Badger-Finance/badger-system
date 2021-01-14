@@ -1,4 +1,3 @@
-from helpers.proxy_utils import deploy_proxy
 from brownie import chain, DiggRewardsFaucet
 
 from tests.sett.fixtures.DiggSettMiniDeployBase import DiggSettMiniDeployBase
@@ -27,8 +26,7 @@ class UniDiggWbtcLpMiniDeploy(DiggSettMiniDeployBase):
         want = params.want
         params.token = self.digg.token
 
-        deployer = self.deployer
-
+        self.badger.deploy_logic("DiggRewardsFaucet", DiggRewardsFaucet)
         self.rewards = self.badger.deploy_digg_rewards_faucet(
             self.key, self.digg.token, want
         )
@@ -59,3 +57,14 @@ class UniDiggWbtcLpMiniDeploy(DiggSettMiniDeployBase):
         if self.strategy.paused():
             self.strategy.unpause({"from": self.governance})
 
+    def post_vault_deploy_setup(self):
+        """
+        Generate LP tokens and grant to deployer
+        """
+        uniswap = UniswapSystem()
+        # Generate lp tokens.
+        uniswap.addMaxLiquidity(
+            self.digg.token,
+            registry.tokens.wbtc,
+            self.deployer,
+        )
