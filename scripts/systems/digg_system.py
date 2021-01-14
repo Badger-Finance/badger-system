@@ -30,8 +30,8 @@ def print_to_file(digg, path):
         "orchestrator": digg.orchestrator.address,
         "cpiMedianOracle": digg.cpiMedianOracle.address,
         "constantOracle": digg.constantOracle.address,
-        "daoDiggTimelock": digg.daoDiggTimelock.address,
-        "diggTeamVesting": digg.diggTeamVesting.address,
+        # "daoDiggTimelock": digg.daoDiggTimelock.address,
+        # "diggTeamVesting": digg.diggTeamVesting.address,
         "logic": {},
     }
 

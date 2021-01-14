@@ -104,6 +104,27 @@ def print_to_file(badger, path):
 
     for key, value in badger.sett_system.rewards.items():
         system["sett_system"]["rewards"][key] = value.address
+    
+    if badger.digg:
+        digg = badger.digg
+        digg_system = {
+            "owner": digg.owner.address,
+            "devProxyAdmin": digg.devProxyAdmin.address,
+            "daoProxyAdmin": digg.daoProxyAdmin.address,
+            "uFragments": digg.uFragments.address,
+            "uFragmentsPolicy": digg.uFragmentsPolicy.address,
+            "orchestrator": digg.orchestrator.address,
+            "cpiMedianOracle": digg.cpiMedianOracle.address,
+            "constantOracle": digg.constantOracle.address,
+            # "daoDiggTimelock": digg.daoDiggTimelock.address,
+            # "diggTeamVesting": digg.diggTeamVesting.address,
+            "logic": {},
+        }
+
+        for key, value in digg.logic.items():
+            digg_system["logic"][key] = value.address
+
+        system["digg_system"] = digg_system
 
     with open(path, "w") as outfile:
         json.dump(system, outfile)
@@ -548,6 +569,7 @@ class BadgerSystem:
 
     def add_existing_digg(self, digg_system):
         self.digg_system = digg_system
+        self.digg = digg_system
 
     def deploy_digg_rewards_faucet(self, id, diggToken, stakingToken):
         deployer = self.deployer
