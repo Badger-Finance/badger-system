@@ -1,5 +1,6 @@
 from helpers.utils import sec
 import json
+from tqdm import tqdm
 
 from assistant.rewards.calc_stakes import calc_geyser_stakes
 from assistant.rewards.calc_harvest import calc_balances_from_geyser_events,get_initial_user_state
@@ -7,6 +8,7 @@ from assistant.subgraph.client import (
     fetch_sett_balances,
     fetch_geyser_events,
     fetch_sett_transfers,
+    fetch_harvest_farm_events
 )
 from assistant.rewards.User import User
 from assistant.rewards.merkle_tree import rewards_to_merkle_tree
@@ -65,6 +67,43 @@ def calc_geyser_rewards(badger, periodStartBlock, endBlock, cycle):
         rewardsByGeyser[key] = geyserRewards
 
     return sum_rewards(rewardsByGeyser, cycle, badger.badgerTree)
+
+
+def fetch_current_harvest_rewards(badger,startBlock,endBlock,nextCycle):
+    farmTokenAddress = "0xa0246c9032bC3A600820415aE600c6388619A14D"
+    harvestEvents = fetch_harvest_farm_events()
+    rewards = RewardsList(nextCycle,badger.badgerTree)
+
+    def filter_events(e):
+        return int(e["blockNumber"]) > startBlock and int(e["blockNumber"]) < endBlock
+
+    unprocessedEvents = list(filter(filter_events,harvestEvents))
+    if len(unprocessedEvents) == 0:
+        return rewards
+    start = startBlock
+    end = int(unprocessedEvents[0]["blockNumber"])
+    totalHarvested = 0
+    for i in tqdm(range(len(unprocessedEvents))):
+        console.log("Processing between {} and {}".format(startBlock,endBlock))
+        harvestEvent = unprocessedEvents[i]
+        user_state = calc_harvest_meta_farm_rewards(badger,"harvest.renCrv",startBlock,endBlock)
+        farmRewards = int(harvestEvent["farmToRewards"])
+        console.print("Processing block {}, distributing {} to users".format(
+            harvestEvent["blockNumber"],
+            farmRewards/1e18,
+         ))
+        totalHarvested += farmRewards/1e18
+        console.print("{} total FARM processed".format(totalHarvested))
+        totalShareSeconds = sum([u.shareSeconds for u in user_state])
+        farmUnit = farmRewards/totalShareSeconds
+        for user in user_state:
+            rewards.increase_user_rewards(user.address,farmTokenAddress,farmUnit * user.shareSeconds)
+
+        if i+1 < len(unprocessedEvents):
+            start = int(unprocessedEvents[i]["blockNumber"])
+            end = int(unprocessedEvents[i+1]["blockNumber"])
+
+    return rewards
 
 
 def calc_harvest_meta_farm_rewards(badger,name, startBlock, endBlock):
@@ -336,9 +375,9 @@ def generate_rewards_in_range(badger, startBlock, endBlock):
     #     return False
     print("Geyser Rewards", startBlock, endBlock, nextCycle)
 
-    metaFarmRewards = calc_harvest_meta_farm_rewards(badger,"harvest.renCrv",startBlock, endBlock)
+    metaFarmRewards = fetch_current_harvest_rewards(badger,startBlock, endBlock,nextCycle)
     geyserRewards = calc_geyser_rewards(badger, startBlock, endBlock, nextCycle)
-    newRewards = geyserRewards
+    newRewards = process_cumulative_rewards(geyserRewards,metaFarmRewards)
 
     newRewards = geyserRewards
     cumulativeRewards = process_cumulative_rewards(currentRewards, newRewards)

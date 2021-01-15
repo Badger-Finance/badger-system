@@ -62,7 +62,6 @@ def main():
     console.log(rewards.claims)
     console.log(sorted( [list(v.values())[0]/1e18 for v in list(rewards.claims.values())  ] ))
     claimsHarvested = sum( [list(v.values())[0] for v in list(rewards.claims.values())])
-    console.log(claimsHarvested/1e18)
     
     currentRewards = fetch_current_rewards_tree(badger)
     cumulative_rewards = process_cumulative_rewards(currentRewards,rewards)
@@ -88,10 +87,13 @@ def main():
             farmHarvestedMerkleTree += int(float(amount))
             
     console.log("Total Farm Harvested {}".format(farmHarvestedMerkleTree/1e18))
+    console.log("Claims Harvested From Events {}".format(claimsHarvested/1e18))
+
     console.log("Difference: {}".format((farmHarvestedMerkleTree/1e18) - (claimsHarvested/1e18)))
     difference = farmHarvestedMerkleTree - claimsHarvested
     console.log("Difference: {}".format(farmHarvestedMerkleTree - claimsHarvested))
-    if abs(difference) < 1000000 and not test:
+    console.log(gas_strategy)
+    if abs(difference) < 10000000 and not test:
         badger.badgerTree.proposeRoot(
         merkleTree["merkleRoot"],
         rootHash,
