@@ -9,7 +9,7 @@ from rich.console import Console
 from helpers.time_utils import days
 from helpers.constants import MaxUint256
 from helpers.sett.DiggSnapshotManager import DiggSnapshotManager
-from helpers.sett.SimulationManager import SimulationManager
+from helpers.sett.simulation.SimulationManager import SimulationManager
 from tests.conftest import badger_single_sett, diggSettTestConfig
 from config.badger_config import digg_decimals
 console = Console()

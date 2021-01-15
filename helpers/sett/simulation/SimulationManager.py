@@ -5,8 +5,9 @@ from enum import Enum
 from rich.console import Console
 
 from scripts.systems.badger_system import BadgerSystem
-from .SnapshotManager import SnapshotManager
+from ..SnapshotManager import SnapshotManager
 from .provisioners import (
+    BaseProvisioner,
     DiggRewardsProvisioner,
     DiggLpMetaFarmProvisioner,
     SushiDiggWbtcLpOptimizerProvisioner,
@@ -22,7 +23,7 @@ class SimulationManagerState(Enum):
     IDLE = 0
     PROVISIONED = 1
     RANDOMIZED = 2
-    RUNNING = 3
+    RUN = 3
 
 
 # SimulationManager is meant to be initialized per test and run once.
@@ -33,8 +34,14 @@ class SimulationManager:
         snap: SnapshotManager,
         settId: str,
     ):
-        self.accounts = accounts[6:]  # use the 7th account onwards
-        self.users = []  # users need to be provisioned before
+        self.accounts = accounts[6:]  # Use the 7th account onwards.
+        # User accounts (need to be provisioned before running sim).
+        self.users = []
+        # Actors are generators that yield valid actions based on
+        # the actor type. For example, user actors need to have deposited
+        # first before they can withdraw (withdraw before deposit is an
+        # invalid action).
+        self.actors = []
 
         self.badger = badger
         self.snap = snap
@@ -49,9 +56,9 @@ class SimulationManager:
         # Track seed so we can hard code this value if we want to repro test failures.
         self.seed = int(time.time())
         random.seed(self.seed)
-        self.provisioner = self.init_provisioner(self.strategy.getName())
+        self.provisioner = self._initProvisioner(self.strategy.getName())
 
-    def provision(self):
+    def provision(self) -> None:
         if self.state != SimulationManagerState.IDLE:
             raise Exception(f"invalid state: {self.state}")
 
@@ -64,22 +71,22 @@ class SimulationManager:
             self.users.append(self.accounts[idx])
             accountsUsed.add(idx)
 
-        self._distributeTokens()
-        self._distributeWant()
+        self._distributeTokens(self.users)
+        self._distributeWant(self.users)
 
         self.state = SimulationManagerState.PROVISIONED
 
-    def randomize(self):
+    def randomize(self) -> None:
         if self.state != SimulationManagerState.PROVISIONED:
             raise Exception(f"invalid state: {self.state}")
         self.state = SimulationManagerState.RANDOMIZED
 
-    def run(self):
+    def run(self) -> None:
         if self.state != SimulationManagerState.RANDOMIZED:
             raise Exception(f"invalid state: {self.state}")
-        self.state = SimulationManagerState.RUNNING
+        self.state = SimulationManagerState.RUN
 
-    def init_provisioner(self, name):
+    def _initProvisioner(self, name) -> BaseProvisioner:
         if name == "StrategyDiggRewards":
             return DiggRewardsProvisioner(self)
         if name == "StrategyDiggLpMetaFarm":
@@ -88,5 +95,5 @@ class SimulationManager:
             return SushiDiggWbtcLpOptimizerProvisioner(self)
         raise Exception(f"invalid strategy name (no provisioner): {name}")
 
-    def _distributeTokens(self):
-        raise Exception("unimplemented")
+    def _provisionAccounts(self) -> None:
+        pass
