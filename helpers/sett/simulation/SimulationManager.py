@@ -40,6 +40,7 @@ class SimulationManager:
         badger: BadgerSystem,
         snap: SnapshotManager,
         settId: str,
+        seed: int = 0,  # Default seed is 0 or unset, will generate.
     ):
         self.accounts = accounts[6:]  # Use the 7th account onwards.
         # User accounts (need to be provisioned before running sim).
@@ -67,8 +68,10 @@ class SimulationManager:
 
         self.state = SimulationManagerState.IDLE
 
-        # Track seed so we can hard code this value if we want to repro test failures.
-        self.seed = int(time.time())
+        # Track seed so we can configure this value if we want to repro test failures.
+        self.seed = seed
+        if self.seed == 0:
+            self.seed = int(time.time())
         console.print(f"initialized simulation manager with seed: {self.seed}")
         random.seed(self.seed)
         self.provisioner = self._initProvisioner(self.strategy.getName())
