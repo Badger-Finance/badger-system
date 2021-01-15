@@ -26,7 +26,7 @@ class BaseProvisioner:
 
             if self.manager.badger.digg is not None:
                 # Explicitly distribute digg to users from deployer.
-                deployer = self.manager.deployer
+                deployer = self.manager.badger.deployer
                 digg = self.manager.badger.digg.token
                 balance = digg.balanceOf(deployer)
                 digg.transfer(
