@@ -12,11 +12,12 @@ class DiggLpMetaFarmProvisioner(BaseProvisioner):
         ]
 
     def _distributeWant(self, users) -> None:
+        digg = self.manager.badger.digg
         # Generate lp tokens for users.
         for user in users:
             uniswap = UniswapSystem()
             uniswap.addMaxLiquidity(
-                self.digg.token,
+                digg.token,
                 registry.tokens.wbtc,
                 user,
             )
