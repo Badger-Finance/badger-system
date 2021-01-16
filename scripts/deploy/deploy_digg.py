@@ -129,7 +129,7 @@ def deploy_digg_native_sett(badger, digg):
     params = sett_config.native.badger.params
     params.want = digg.token
 
-    rewards = badger.deploy_digg_rewards_faucet("native.digg", digg.token, digg.token)
+    rewards = badger.deploy_digg_rewards_faucet("native.digg", digg.token)
     params.geyser = rewards
 
     deploy_sett_by_key(
@@ -146,8 +146,13 @@ def deploy_digg_native_sett(badger, digg):
     )
 
     # Configure Rewards Faucet with initial distribution schedule
+    console.print("[cyan]Configure native DIGG Sett Rewards Faucet...[/cyan]")
     strategy = badger.getStrategy(key)
     amount = digg_config_test.geyserParams.unlockSchedules.digg[0].amount
+
+    print('digg.token.balanceOf(deployer)', digg.token.balanceOf(deployer), amount)
+    assert digg.token.balanceOf(deployer) >= amount
+
     digg.token.transfer(rewards, amount, {"from": deployer})
     rewards.notifyRewardAmount(
         chain.time(), days(7), digg.token.fragmentsToShares(amount), {"from": deployer}
@@ -183,6 +188,11 @@ def deploy_digg_with_existing_badger(badger, test=False, outputToFile=True, test
     # Deploy simple oracle
     digg.deploy_dynamic_oracle()
 
+    digg.deploy_airdrop_distributor(digg_config.airdropRoot, badger.rewardsEscrow, digg_config.reclaimAllowedTimestamp)
+
+    # Distribute required shares to airdrop
+    
+
     # Setup simple oracle as provider
     digg.marketMedianOracle.addProvider(
         digg.dynamicOracle, {"from": deployer},
@@ -208,6 +218,9 @@ def deploy_digg_with_existing_badger(badger, test=False, outputToFile=True, test
         badger.digg.token.transfer(testUser, remainingFree, {'from': deployer})
 
         assert badger.digg.token.balanceOf(testUser) >= remainingFree
+
+    console.print("[cyan]== Digg Supply ==[/cyan]")
+    console.print({"totalShares": badger.digg.token.totalShares(), "totalSupply": badger.digg.token.totalSupply()})
 
     console.log("Test: Digg System Deployed")
     if outputToFile:

@@ -177,6 +177,7 @@ class DiggSystem:
             UFragmentsPolicy=UFragmentsPolicy.deploy({"from": deployer}),
             SimpleTimelock=SimpleTimelock.deploy({"from": deployer}),
             SmartVesting=SmartVesting.deploy({"from": deployer}),
+            DiggDistributor=DiggDistributor.deploy({"from": deployer}),
         )
 
     def deploy_orchestrator(self):
@@ -303,6 +304,25 @@ class DiggSystem:
             deployer,
         )
         self.track_contract_upgradeable("teamVesting", self.diggTeamVesting)
+
+    def deploy_airdrop_distributor(self, root, rewardsEscrow, reclaimAllowedTimestamp):
+        deployer = self.owner
+
+        self.diggDistributor = deploy_proxy(
+            "DiggDistributor",
+            DiggDistributor.abi,
+            self.logic.DiggDistributor.address,
+            self.devProxyAdmin.address,
+            self.logic.DiggDistributor.initialize.encode_input(
+                self.token,
+                root,
+                rewardsEscrow,
+                reclaimAllowedTimestamp
+            ),
+            deployer,
+        )
+
+        self.track_contract_upgradeable("diggDistributor", self.diggDistributor)
 
     def deploy_uniswap_pairs(self, test=False):
         # TODO: read these from config, hard configured for now. (Not set on init because token is lazily populated)

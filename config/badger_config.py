@@ -1,7 +1,7 @@
 import json
 import time
 
-from brownie import Wei, web3
+from brownie import Wei, web3, chain
 from dotmap import DotMap
 from helpers.constants import AddressZero
 from helpers.registry import registry
@@ -254,7 +254,7 @@ Test Config
 - Anyone can call the oracle to set the price
 - Assets are distributed among
 """
-digg_decimals = 18
+digg_decimals = 9
 
 digg_config_test = DotMap(
     startTime=diggStartTime,
@@ -354,6 +354,11 @@ digg_config = DotMap(
     ),
     # TODO: Currently a copy of badger config params, needs to be set.
     founderRewardsAmount=badger_total_supply * 10 // 100,
+    # TODO: Set this to the prod airdrop root
+    airdropRoot="0x9bd11f5585bb45f827575bdfedc2d2110d46f74b95ab9961eaf49c35ed42f240",
+    airdropTotalShares="0x9bd11f5585bb45f827575bdfedc2d2110d46f74b95ab9961eaf49c35ed42f240",
+    # TODO: Need to set this value to exact time we want allow reclaiming of airdrop.
+    reclaimAllowedTimestamp=chain.time()
 )
 
 config = DotMap(badger=badger_config, sett=sett_config, digg=digg_config)
