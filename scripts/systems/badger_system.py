@@ -116,6 +116,7 @@ def print_to_file(badger, path):
             "orchestrator": digg.orchestrator.address,
             "cpiMedianOracle": digg.cpiMedianOracle.address,
             "constantOracle": digg.constantOracle.address,
+            "diggDistributor": digg.diggDistributor.address,
             # "daoDiggTimelock": digg.daoDiggTimelock.address,
             # "diggTeamVesting": digg.diggTeamVesting.address,
             "logic": {},
