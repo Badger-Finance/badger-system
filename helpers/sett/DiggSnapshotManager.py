@@ -26,7 +26,7 @@ class DiggSnapshotManager(SnapshotManager):
         # Shift into rebase window (if not already). Need to mine a block as well
         # as the rebase logic checks if block ts w/in rebase window.
         # Update market value and rebase.
-        tx = self.badger.digg_system.dynamicOracle.setValueAndPush(value)
+        tx = self.badger.digg.dynamicOracle.setValueAndPush(value)
         assert tx.return_value == value
         # NB: Guarantee the configured report delay has passed. Otherwise,
         # the median oracle will attempt to use the last report.
@@ -34,7 +34,7 @@ class DiggSnapshotManager(SnapshotManager):
 
         self._shift_into_next_rebase_window()
 
-        tx = self.badger.digg_system.orchestrator.rebase()
+        tx = self.badger.digg.orchestrator.rebase()
 
         after = self.snap(trackedUsers)
         if confirm:

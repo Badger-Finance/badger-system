@@ -104,7 +104,7 @@ def print_to_file(badger, path):
 
     for key, value in badger.sett_system.rewards.items():
         system["sett_system"]["rewards"][key] = value.address
-    
+
     if badger.digg:
         digg = badger.digg
         digg_system = {
@@ -203,6 +203,8 @@ class BadgerSystem:
         self.contracts_static = []
         self.contracts_upgradeable = {}
         self.gas_strategy = default_gas_strategy
+        # Digg system ref lazily set.
+        self.digg = None
 
         # Unlock accounts in test mode
         if rpc.is_active():
@@ -569,7 +571,6 @@ class BadgerSystem:
         return geyser
 
     def add_existing_digg(self, digg_system):
-        self.digg_system = digg_system
         self.digg = digg_system
 
     def deploy_digg_rewards_faucet(self, id, diggToken):

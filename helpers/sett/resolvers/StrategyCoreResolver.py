@@ -1,7 +1,11 @@
 from brownie import *
 from decimal import Decimal
 
-from helpers.utils import approx, val
+from helpers.utils import (
+    approx,
+    val,
+    snapSharesMatchForToken,
+)
 from helpers.constants import *
 from helpers.multicall import Call, as_wei, func
 from rich.console import Console
@@ -124,10 +128,10 @@ class StrategyCoreResolver:
         Confirm the events from the harvest match with actual recorded change
         Must be implemented on a per-strategy basis
         """
-        self.printHarvestState(tx)
+        self.printHarvestState({}, [])
         return True
 
-    def printHarvestState(self, tx):
+    def printHarvestState(self, event, keys):
         return True
 
     def confirm_earn(self, before, after, params):
@@ -142,6 +146,12 @@ class StrategyCoreResolver:
 
         console.print("=== Compare Earn ===")
         self.manager.printCompare(before, after)
+
+        # Do nothing if there is not enough available want in sett to transfer.
+        # NB: Since we calculate available want by taking a percentage when
+        # balance is 1 it gets rounded down to 1.
+        if before.balances("want", "sett") <= 1:
+            return
 
         assert after.balances("want", "sett") <= before.balances("want", "sett")
 
@@ -158,7 +168,7 @@ class StrategyCoreResolver:
         assert after.get("strategy.balanceOf") > before.get("strategy.balanceOf")
         assert after.balances("want", "user") == before.balances("want", "user")
 
-    def confirm_withdraw(self, before, after, params):
+    def confirm_withdraw(self, before, after, params, tx):
         """
         Withdraw Should;
         - Decrease the totalSupply() of Sett tokens
@@ -198,22 +208,35 @@ class StrategyCoreResolver:
             if expectedWithdraw > before.balances("want", "strategy"):
                 # If insufficient, we then attempt to withdraw from activities (balance of pool)
                 # Just ensure that we have enough in the pool balance to satisfy the request
-                assert expectedWithdraw - before.balances(
-                    "want", "strategy"
-                ) <= before.get("strategy.balanceOfPool")
-            assert approx(
-                before.get("strategy.balanceOf"),
-                after.get("strategy.balanceOf") + expectedWithdraw,
-                1,
-            )
+                expectedWithdraw -= before.balances("want", "strategy")
+                assert expectedWithdraw <= before.get("strategy.balanceOfPool")
+
+                assert approx(
+                    before.get("strategy.balanceOfPool"),
+                    after.get("strategy.balanceOfPool") + expectedWithdraw,
+                    1,
+                )
 
         # The total want between the strategy and sett should be less after than before
-        assert after.get("strategy.balanceOf") + after.balances(
-            "want", "sett"
-        ) < before.get("strategy.balanceOf") + before.balances("want", "sett")
+        # if there was previous want in strategy or sett (sometimes we withdraw entire
+        # balance from the strategy pool) which we check above.
+        if (
+            before.balances("want", "strategy") > 0 or
+            before.balances("want", "sett") > 0
+        ):
+            assert (
+                after.balances("want", "strategy") +
+                after.balances("want", "sett") <
+                before.balances("want", "strategy") +
+                before.balances("want", "sett")
+            )
 
         # Controller rewards should earn
-        if before.get("strategy.withdrawalFee") > 0:
+        if (
+                before.get("strategy.withdrawalFee") > 0 and
+                # Fees are only processed when withdrawing from the strategy.
+                before.balances("want", "strategy") > after.balances("want", "strategy")
+        ):
             assert after.balances("want", "governanceRewards") > before.balances(
                 "want", "governanceRewards"
             )
@@ -223,8 +246,8 @@ class StrategyCoreResolver:
         Deposit Should;
         - Increase the totalSupply() of Sett tokens
         - Increase the balanceOf() Sett tokens for the user based on depositAmount / pricePerFullShare
-        - Increase the balanceOf() want in the Sett by depositAmountt
-        - Decrease the balanceOf() want of the user by depositAmountt
+        - Increase the balanceOf() want in the Sett by depositAmount
+        - Decrease the balanceOf() want of the user by depositAmount
         """
 
         ppfs = before.get("sett.pricePerFullShare")
@@ -232,6 +255,8 @@ class StrategyCoreResolver:
         self.manager.printCompare(before, after)
 
         expected_shares = Decimal(params["amount"] * Wei("1 ether")) / Decimal(ppfs)
+        if params.get("expected_shares") is not None:
+            expected_shares = params["expected_shares"]
 
         # Increase the totalSupply() of Sett tokens
         assert approx(
@@ -261,6 +286,7 @@ class StrategyCoreResolver:
             1,
         )
 
+
     # ===== Strategies must implement =====
     def confirm_harvest(self, before, after, tx):
         console.print("=== Compare Harvest ===")
@@ -283,7 +309,7 @@ class StrategyCoreResolver:
         #         "want", "governanceRewards"
         #     )
 
-    def confirm_tend(self, before, after):
+    def confirm_tend(self, before, after, tx):
         """
         Tend Should;
         - Increase the number of staked tended tokens in the strategy-specific mechanism
@@ -303,8 +329,17 @@ class StrategyCoreResolver:
     def confirm_rebase(self, before, after, value):
         """
         Check for proper rebases.
-        (Strategy Must Implement)
+
+        All share values should stay the same.
+        All DIGG balances should change in proportion to the rebase. (10% towards the new target)
         """
         console.print("=== Compare Rebase ===")
         self.manager.printCompare(before, after)
-        assert False
+        assert snapSharesMatchForToken(before, after, "digg")
+
+        # TODO: Impl more accurate rebase checks.
+        # If rebase value is within configured deviation threshold the supply delta is 0.
+        if value > 10**18:
+            assert after.balances("digg", "user") >= before.balances("digg", "user")
+        elif value < 10**18:
+            assert after.balances("digg", "user") <= before.balances("digg", "user")

@@ -5,7 +5,6 @@ from brownie import (
 )
 from tabulate import tabulate
 from rich.console import Console
-from decimal import *
 from helpers.multicall import Multicall
 from helpers.registry import registry
 from helpers.sett.resolvers import (
@@ -14,7 +13,7 @@ from helpers.sett.resolvers import (
     StrategyHarvestMetaFarmResolver,
     StrategySushiBadgerWbtcResolver,
     StrategyBadgerRewardsResolver,
-    StrategySushiBadgerLpOptimizerResolver,
+    StrategySushiLpOptimizerResolver,
     StrategyCurveGaugeResolver,
     StrategyDiggRewardsResolver,
     StrategySushiDiggWbtcLpOptimizerResolver,
@@ -67,13 +66,8 @@ class Snap:
     def balances(self, tokenKey, accountKey):
         return self.data["balances." + tokenKey + "." + accountKey]
 
-    def balancesMatchForToken(self, tokenKey, otherSnap):
-        for entityKey in self.entityKeys:
-            balance = self.balances(tokenKey, entityKey)
-            otherBalance = otherSnap.balances(tokenKey, entityKey)
-            if balance != otherBalance:
-                return False
-        return True
+    def shares(self, tokenKey, accountKey):
+        return self.data["shares." + tokenKey + "." + accountKey]
 
     def get(self, key):
 
@@ -168,8 +162,8 @@ class SnapshotManager:
         if name == "StrategySushiBadgerWbtc":
             return StrategySushiBadgerWbtcResolver(self)
         if name == "StrategySushiLpOptimizer":
-            print("StrategySushiBadgerLpOptimizerResolver")
-            return StrategySushiBadgerLpOptimizerResolver(self)
+            print("StrategySushiLpOptimizerResolver")
+            return StrategySushiLpOptimizerResolver(self)
         if name == "StrategyDiggRewards":
             return StrategyDiggRewardsResolver(self)
         if name == "StrategySushiDiggWbtcLpOptimizer":
@@ -181,10 +175,10 @@ class SnapshotManager:
         user = overrides["from"].address
         trackedUsers = {"user": user}
         before = self.snap(trackedUsers)
-        self.strategy.tend(overrides)
+        tx = self.strategy.tend(overrides)
         after = self.snap(trackedUsers)
         if confirm:
-            self.resolver.confirm_tend(before, after)
+            self.resolver.confirm_tend(before, after, tx)
 
     def settHarvest(self, overrides, confirm=True):
         user = overrides["from"].address
@@ -244,19 +238,19 @@ class SnapshotManager:
         trackedUsers = {"user": user}
         userBalance = self.sett.balanceOf(user)
         before = self.snap(trackedUsers)
-        self.sett.withdraw(userBalance, overrides)
+        tx = self.sett.withdraw(userBalance, overrides)
         after = self.snap(trackedUsers)
 
         if confirm:
             self.resolver.confirm_withdraw(
-                before, after, {"user": user, "amount": userBalance}
+                before, after, {"user": user, "amount": userBalance}, tx
             )
 
     def format(self, key, value):
         if type(value) is int:
             # Ether-scaled balances
             # TODO: Handle based on token decimals
-            if ".digg" in key and not "shares" in key:
+            if ".digg" in key and "shares" not in key:
                 return val(value, decimals=9)
             if (
                 "balance" in key

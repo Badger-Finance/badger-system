@@ -73,11 +73,9 @@ contract UFragments is ERC20Detailed, Ownable {
     // TOTAL_SHARES is a multiple of MAX_FRAGMENTS_SUPPLY so that _sharesPerFragment is an integer.
     // Use the highest value that fits in a uint128 for sufficient granularity.
     uint256 private constant TOTAL_SHARES = MAX_UINT256 - (MAX_UINT256 % MAX_FRAGMENTS_SUPPLY);
-    // uint256 private constant TOTAL_SHARES = MAX_UINT128 - (MAX_UINT128 % MAX_FRAGMENTS_SUPPLY);
 
     // MAX_SUPPLY = maximum integer < (sqrt(4*TOTAL_SHARES + 1) - 1) / 2
     uint256 private constant MAX_SUPPLY = MAX_UINT128;
-    // uint256 private constant MAX_SUPPLY = (1 << 64) - 1; // (2^64) - 1
 
     uint256 private _totalSupply;
     uint256 public _sharesPerFragment;
@@ -125,11 +123,11 @@ contract UFragments is ERC20Detailed, Ownable {
         // This means our applied supplyDelta can deviate from the requested supplyDelta,
         // but this deviation is guaranteed to be < (_totalSupply^2)/(TOTAL_SHARES - _totalSupply).
         //
-        // In the case of _totalSupply <= MAX_UINT64 (our current supply cap), this
+        // In the case of _totalSupply <= MAX_UINT128 (our current supply cap), this
         // deviation is guaranteed to be < 1, so we can omit this step. If the supply cap is
         // ever increased, it must be re-included.
         // NB: Digg will likely never reach the total supply cap as the total supply of BTC is
-        // currently 21 million and MAX_UINT64 is many orders of magnitude greater.
+        // currently 21 million and MAX_UINT128 is many orders of magnitude greater.
         // _totalSupply = TOTAL_SHARES.div(_sharesPerFragment)
 
         emit LogRebase(epoch, _totalSupply);
@@ -203,14 +201,14 @@ contract UFragments is ERC20Detailed, Ownable {
 
     /// @dev Scaled Shares are a user-friendly representation of shares
     function scaledSharesToShares(uint256 fragments) public view returns (uint256) {
-        return fragments.mul(_initialSharesPerFragment).mul(10 ** SCALED_SHARES_EXTRA_DECIMALS);
+        return fragments.mul(_initialSharesPerFragment).mul(10**SCALED_SHARES_EXTRA_DECIMALS);
     }
 
     function sharesToScaledShares(uint256 shares) public view returns (uint256) {
         if (shares == 0) {
             return 0;
         }
-        return shares.div(_initialSharesPerFragment).mul(10 ** SCALED_SHARES_EXTRA_DECIMALS);
+        return shares.div(_initialSharesPerFragment).mul(10**SCALED_SHARES_EXTRA_DECIMALS);
     }
 
     /**

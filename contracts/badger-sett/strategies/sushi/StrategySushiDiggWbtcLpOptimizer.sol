@@ -57,7 +57,7 @@ contract StrategySushiDiggWbtcLpOptimizer is BaseStrategyMultiSwapper {
     event HarvestDiggState(
         uint256 diggHarvested,
         uint256 diggConvertedToWbtc,
-        uint256 wtbcFromConversion,
+        uint256 wbtcFromConversion,
         uint256 lpGained,
         uint256 timestamp,
         uint256 blockNumber
@@ -71,7 +71,7 @@ contract StrategySushiDiggWbtcLpOptimizer is BaseStrategyMultiSwapper {
         uint256 toGovernance;
         uint256 toBadgerTree;
         uint256 diggConvertedToWbtc;
-        uint256 wtbcFromConversion;
+        uint256 wbtcFromConversion;
         uint256 lpGained;
     }
 
@@ -318,7 +318,7 @@ contract StrategySushiDiggWbtcLpOptimizer is BaseStrategyMultiSwapper {
         emit HarvestDiggState(
             harvestData.diggHarvested,
             harvestData.diggConvertedToWbtc,
-            harvestData.wtbcFromConversion,
+            harvestData.wbtcFromConversion,
             harvestData.lpGained,
             block.timestamp,
             block.number
