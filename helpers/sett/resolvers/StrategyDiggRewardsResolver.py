@@ -42,7 +42,7 @@ class StrategyDiggRewardsResolver(StrategyCoreResolver):
         keys = [
             'totalDigg',
             'totalShares',
-            'totalInitialFragments',
+            'totalScaledShares',
             'diggIncrease',
             'sharesIncrease',
             'scaledSharesIncrease',
@@ -81,14 +81,14 @@ class StrategyDiggRewardsResolver(StrategyCoreResolver):
         digg = self.manager.badger.digg.token
 
         sharesTransferred = after.get("sett.shares") - before.get("sett.shares")
-        sharesTransferredFrags = digg.sharesToInitialFragments(sharesTransferred)
+        sharesTransferredFrags = digg.sharesToScaledShares(sharesTransferred)
 
         totalSupply = before.get("sett.totalSupply")  # bDIGG is already at 18 decimal scale
         if totalSupply == 0:
             expected_shares = sharesTransferredFrags
         else:
             poolBefore = before.get("sett.shares")
-            poolBeforeFrags = digg.sharesToInitialFragments(poolBefore)
+            poolBeforeFrags = digg.sharesToScaledShares(poolBefore)
             expected_shares = (sharesTransferredFrags * totalSupply) / poolBeforeFrags
 
         params["expected_shares"] = expected_shares

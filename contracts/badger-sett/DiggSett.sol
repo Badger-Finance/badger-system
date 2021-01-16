@@ -75,8 +75,8 @@ contract DiggSett is Sett {
         if (totalSupply() == 0) {
             bDiggToMint = digg.sharesToScaledShares(_sharesTransferred);
         } else {
-            uint256 _poolBeforeFrags = digg.sharesToInitialFragments(_poolBefore);
-            uint256 _sharesTransferredFrags = digg.sharesToInitialFragments(_sharesTransferred);
+            uint256 _poolBeforeFrags = digg.sharesToScaledShares(_poolBefore);
+            uint256 _sharesTransferredFrags = digg.sharesToScaledShares(_sharesTransferred);
             bDiggToMint = _sharesTransferredFrags.mul(totalSupply()).div(_poolBeforeFrags);
         }
 
