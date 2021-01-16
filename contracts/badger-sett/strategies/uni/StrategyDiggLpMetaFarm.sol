@@ -121,14 +121,15 @@ contract StrategyDiggLpMetaFarm is BaseStrategyMultiSwapper {
 
         uint256 _diggBalance = IDigg(digg).balanceOf(address(this));
         // Send DIGG rewards to controller
-        IDigg(digg).transfer(IController(controller).rewards(), _diggBalance);
+        require(IDigg(digg).transfer(IController(controller).rewards(), _diggBalance));
 
         // Note: All want in contract will be sent in wrapper function
     }
 
-    /// @dev Stra
+    /// @dev No-op, we only have idle want and no staking position.
     function _withdrawSome(uint256 _amount) internal override returns (uint256) {
-        // We only have idle want, withdraw from the strategy directly
+        // Return requested _amount.
+        // Note: All want in contract will be sent in wrapper function
         return _amount;
     }
 

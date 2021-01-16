@@ -105,8 +105,8 @@ contract StrategySushiDiggWbtcLpOptimizer is BaseStrategyMultiSwapper {
         withdrawalFee = _feeConfig[2];
 
         // Approve Chef and xSushi (aka SushiBar) to use our sushi
-        IERC20Upgradeable(want).approve(chef, uint256(-1));
-        IERC20Upgradeable(sushi).approve(xsushi, uint256(-1));
+        require(IERC20Upgradeable(want).approve(chef, uint256(-1)));
+        require(IERC20Upgradeable(sushi).approve(xsushi, uint256(-1)));
     }
 
     /// ===== View Functions =====
@@ -239,7 +239,6 @@ contract StrategySushiDiggWbtcLpOptimizer is BaseStrategyMultiSwapper {
 
         uint256 _beforexSushi = IERC20Upgradeable(xsushi).balanceOf(address(this));
         uint256 _beforeLp = IERC20Upgradeable(want).balanceOf(address(this));
-
         uint256 _beforeDigg = IERC20Upgradeable(digg).balanceOf(address(this));
 
         // ===== Harvest sushi rewards from Chef =====
