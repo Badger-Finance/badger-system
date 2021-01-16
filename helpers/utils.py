@@ -48,3 +48,12 @@ def snapBalancesMatchForToken(snap, otherSnap, tokenKey):
         if balance != otherBalance:
             return False
     return True
+
+
+def snapSharesMatchForToken(snap, otherSnap, tokenKey):
+    for entityKey in snap.entityKeys:
+        shares = snap.shares(tokenKey, entityKey)
+        otherShares = otherSnap.shares(tokenKey, entityKey)
+        if shares != otherShares:
+            return False
+    return True

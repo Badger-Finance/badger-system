@@ -1,7 +1,11 @@
 from brownie import *
 from decimal import Decimal
 
-from helpers.utils import approx, val
+from helpers.utils import (
+    approx,
+    val,
+    snapSharesMatchForToken,
+)
 from helpers.constants import *
 from helpers.multicall import Call, as_wei, func
 from rich.console import Console
@@ -143,8 +147,10 @@ class StrategyCoreResolver:
         console.print("=== Compare Earn ===")
         self.manager.printCompare(before, after)
 
-        if before.balances("want", "sett") == 0:
-            # Do nothing if there is no want in sett.
+        # Do nothing if there is not enough available want in sett to transfer.
+        # NB: Since we calculate available want by taking a percentage when
+        # balance is 1 it gets rounded down to 1.
+        if before.balances("want", "sett") <= 1:
             return
 
         assert after.balances("want", "sett") <= before.balances("want", "sett")
@@ -323,8 +329,17 @@ class StrategyCoreResolver:
     def confirm_rebase(self, before, after, value):
         """
         Check for proper rebases.
-        (Strategy Must Implement)
+
+        All share values should stay the same.
+        All DIGG balances should change in proportion to the rebase. (10% towards the new target)
         """
         console.print("=== Compare Rebase ===")
         self.manager.printCompare(before, after)
-        assert False
+        assert snapSharesMatchForToken(before, after, "digg")
+
+        # TODO: Impl more accurate rebase checks.
+        # If rebase value is within configured deviation threshold the supply delta is 0.
+        if value > 10**18:
+            assert after.balances("digg", "user") >= before.balances("digg", "user")
+        elif value < 10**18:
+            assert after.balances("digg", "user") <= before.balances("digg", "user")

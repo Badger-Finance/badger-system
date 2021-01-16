@@ -13,17 +13,10 @@ class StrategyDiggRewardsResolver(StrategyCoreResolver):
     # ===== Strategies must implement =====
     def confirm_rebase(self, before, after, value):
         """
-        All share values should stay the same.
         bDIGG values should stay the same.
-        All DIGG balances should change in proportion to the rebase. (10% towards the new target)
         """
-        console.print("=== Compare Rebase ===")
-        self.manager.printCompare(before, after)
-        # TODO: Impl more accurate rebase checks.
-        if value > 10**18:
-            assert after.balances("digg", "user") > before.balances("digg", "user")
-        elif value < 10**18:
-            assert after.balances("digg", "user") < before.balances("digg", "user")
+        super().confirm_rebase(before, after, value)
+        assert after.get("sett.totalSupply") == before.get("sett.totalSupply")
 
     def printHarvestState(self, event, keys):
         table = []

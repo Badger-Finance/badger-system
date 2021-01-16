@@ -13,16 +13,11 @@ class StrategySushiDiggWbtcLpOptimizerResolver(StrategyBaseSushiResolver):
         Lp token balance should stay the same.
         Sushi balances stay the same.
         xSushi balances stay the same.
-        All DIGG balances should change in proportion to the rebase. (10% towards the new target)
         '''
+        super().confirm_rebase(before, after, value)
         assert snapBalancesMatchForToken(before, after, "want")
         assert snapBalancesMatchForToken(before, after, "sushi")
         assert snapBalancesMatchForToken(before, after, "xsushi")
-        # TODO: Impl more accurate rebase checks.
-        if value > 10**18:
-            assert after.balances("digg", "user") > before.balances("digg", "user")
-        elif value < 10**18:
-            assert after.balances("digg", "user") < before.balances("digg", "user")
 
     def add_balances_snap(self, calls, entities):
         calls = super().add_balances_snap(calls, entities)

@@ -5,7 +5,6 @@ from brownie import (
 )
 from tabulate import tabulate
 from rich.console import Console
-from decimal import *
 from helpers.multicall import Multicall
 from helpers.registry import registry
 from helpers.sett.resolvers import (
@@ -67,13 +66,8 @@ class Snap:
     def balances(self, tokenKey, accountKey):
         return self.data["balances." + tokenKey + "." + accountKey]
 
-    def balancesMatchForToken(self, tokenKey, otherSnap):
-        for entityKey in self.entityKeys:
-            balance = self.balances(tokenKey, entityKey)
-            otherBalance = otherSnap.balances(tokenKey, entityKey)
-            if balance != otherBalance:
-                return False
-        return True
+    def shares(self, tokenKey, accountKey):
+        return self.data["shares." + tokenKey + "." + accountKey]
 
     def get(self, key):
 
@@ -256,7 +250,7 @@ class SnapshotManager:
         if type(value) is int:
             # Ether-scaled balances
             # TODO: Handle based on token decimals
-            if ".digg" in key and not "shares" in key:
+            if ".digg" in key and "shares" not in key:
                 return val(value, decimals=9)
             if (
                 "balance" in key
