@@ -124,10 +124,10 @@ class StrategyCoreResolver:
         Confirm the events from the harvest match with actual recorded change
         Must be implemented on a per-strategy basis
         """
-        self.printHarvestState(tx)
+        self.printHarvestState({}, [])
         return True
 
-    def printHarvestState(self, tx):
+    def printHarvestState(self, event, keys):
         return True
 
     def confirm_earn(self, before, after, params):
@@ -142,6 +142,10 @@ class StrategyCoreResolver:
 
         console.print("=== Compare Earn ===")
         self.manager.printCompare(before, after)
+
+        if before.balances("want", "sett") == 0:
+            # Do nothing if there is no want in sett.
+            return
 
         assert after.balances("want", "sett") <= before.balances("want", "sett")
 
@@ -158,7 +162,7 @@ class StrategyCoreResolver:
         assert after.get("strategy.balanceOf") > before.get("strategy.balanceOf")
         assert after.balances("want", "user") == before.balances("want", "user")
 
-    def confirm_withdraw(self, before, after, params):
+    def confirm_withdraw(self, before, after, params, tx):
         """
         Withdraw Should;
         - Decrease the totalSupply() of Sett tokens
@@ -198,22 +202,35 @@ class StrategyCoreResolver:
             if expectedWithdraw > before.balances("want", "strategy"):
                 # If insufficient, we then attempt to withdraw from activities (balance of pool)
                 # Just ensure that we have enough in the pool balance to satisfy the request
-                assert expectedWithdraw - before.balances(
-                    "want", "strategy"
-                ) <= before.get("strategy.balanceOfPool")
-            assert approx(
-                before.get("strategy.balanceOf"),
-                after.get("strategy.balanceOf") + expectedWithdraw,
-                1,
-            )
+                expectedWithdraw -= before.balances("want", "strategy")
+                assert expectedWithdraw <= before.get("strategy.balanceOfPool")
+
+                assert approx(
+                    before.get("strategy.balanceOfPool"),
+                    after.get("strategy.balanceOfPool") + expectedWithdraw,
+                    1,
+                )
 
         # The total want between the strategy and sett should be less after than before
-        assert after.get("strategy.balanceOf") + after.balances(
-            "want", "sett"
-        ) < before.get("strategy.balanceOf") + before.balances("want", "sett")
+        # if there was previous want in strategy or sett (sometimes we withdraw entire
+        # balance from the strategy pool) which we check above.
+        if (
+            before.balances("want", "strategy") > 0 or
+            before.balances("want", "sett") > 0
+        ):
+            assert (
+                after.balances("want", "strategy") +
+                after.balances("want", "sett") <
+                before.balances("want", "strategy") +
+                before.balances("want", "sett")
+            )
 
         # Controller rewards should earn
-        if before.get("strategy.withdrawalFee") > 0:
+        if (
+                before.get("strategy.withdrawalFee") > 0 and
+                # Fees are only processed when withdrawing from the strategy.
+                before.balances("want", "strategy") > after.balances("want", "strategy")
+        ):
             assert after.balances("want", "governanceRewards") > before.balances(
                 "want", "governanceRewards"
             )
@@ -223,8 +240,8 @@ class StrategyCoreResolver:
         Deposit Should;
         - Increase the totalSupply() of Sett tokens
         - Increase the balanceOf() Sett tokens for the user based on depositAmount / pricePerFullShare
-        - Increase the balanceOf() want in the Sett by depositAmountt
-        - Decrease the balanceOf() want of the user by depositAmountt
+        - Increase the balanceOf() want in the Sett by depositAmount
+        - Decrease the balanceOf() want of the user by depositAmount
         """
 
         ppfs = before.get("sett.pricePerFullShare")
@@ -232,6 +249,8 @@ class StrategyCoreResolver:
         self.manager.printCompare(before, after)
 
         expected_shares = Decimal(params["amount"] * Wei("1 ether")) / Decimal(ppfs)
+        if params.get("expected_shares") is not None:
+            expected_shares = params["expected_shares"]
 
         # Increase the totalSupply() of Sett tokens
         assert approx(
@@ -261,6 +280,7 @@ class StrategyCoreResolver:
             1,
         )
 
+
     # ===== Strategies must implement =====
     def confirm_harvest(self, before, after, tx):
         console.print("=== Compare Harvest ===")
@@ -283,7 +303,7 @@ class StrategyCoreResolver:
         #         "want", "governanceRewards"
         #     )
 
-    def confirm_tend(self, before, after):
+    def confirm_tend(self, before, after, tx):
         """
         Tend Should;
         - Increase the number of staked tended tokens in the strategy-specific mechanism

@@ -45,7 +45,7 @@ contract StrategyDiggLpMetaFarm is BaseStrategyMultiSwapper {
         uint256 diggToGovernance,
         uint256 sharesConvertedToWbtc,
         uint256 diggConvertedToWbtc,
-        uint256 wtbcFromConversion,
+        uint256 wbtcFromConversion,
         uint256 lpDeposited,
         uint256 lpGained,
         uint256 timestamp,
@@ -60,7 +60,7 @@ contract StrategyDiggLpMetaFarm is BaseStrategyMultiSwapper {
         uint256 diggToGovernance;
         uint256 sharesConvertedToWbtc;
         uint256 diggConvertedToWbtc;
-        uint256 wtbcFromConversion;
+        uint256 wbtcFromConversion;
         uint256 lpDeposited;
         uint256 lpGained;
     }
@@ -172,7 +172,7 @@ contract StrategyDiggLpMetaFarm is BaseStrategyMultiSwapper {
 
                 _swap(digg, harvestData.diggConvertedToWbtc, path);
 
-                harvestData.wtbcFromConversion = IERC20Upgradeable(wbtc).balanceOf(address(this));
+                harvestData.wbtcFromConversion = IERC20Upgradeable(wbtc).balanceOf(address(this));
 
                 // Add Digg and wBTC as liquidity if any to add
                 _add_max_liquidity_uniswap(digg, wbtc);
@@ -193,7 +193,7 @@ contract StrategyDiggLpMetaFarm is BaseStrategyMultiSwapper {
             harvestData.diggToGovernance,
             harvestData.sharesConvertedToWbtc,
             harvestData.diggConvertedToWbtc,
-            harvestData.wtbcFromConversion,
+            harvestData.wbtcFromConversion,
             harvestData.lpDeposited,
             harvestData.lpGained,
             block.timestamp,

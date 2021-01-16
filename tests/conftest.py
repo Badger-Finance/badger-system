@@ -60,7 +60,7 @@ settsToRun = [
 ]
 
 diggSettsToRun = [
-    "native.digg",
+    # "native.digg",
     "native.uniDiggWbtc",
     "native.sushiDiggWbtc",
 ]

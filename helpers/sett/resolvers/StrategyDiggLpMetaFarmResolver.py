@@ -2,8 +2,8 @@ from brownie import interface
 from rich.console import Console
 
 from helpers.utils import snapBalancesMatchForToken
-from helpers.sett.resolvers.StrategyCoreResolver import StrategyCoreResolver
 from config.badger_config import digg_decimals
+from .StrategyCoreResolver import StrategyCoreResolver
 
 console = Console()
 
@@ -25,9 +25,12 @@ class StrategyDiggLpMetaFarmResolver(StrategyCoreResolver):
         console.print("=== Compare Harvest ===")
         super().confirm_harvest(before, after, tx)
 
-        # Strategy want should increase
-        before_balance = before.get("strategy.balanceOf")
-        assert after.get("strategy.balanceOf") >= before_balance if before_balance else 0
+        # No staking position, strategy want should increase irrespective of
+        # current balance.
+        # TODO: Add more specific check that the correct reward amount was deposited.
+        assert (
+            after.get("strategy.balanceOf") >= before.get("strategy.balanceOf")
+        )
 
         # PPFS should not decrease
         assert after.get("sett.pricePerFullShare") >= before.get("sett.pricePerFullShare")

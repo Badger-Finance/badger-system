@@ -1,27 +1,18 @@
-from helpers.utils import val
-from brownie import *
+from brownie import interface
 from tabulate import tabulate
+from rich.console import Console
 
-from helpers.constants import *
-from helpers.multicall import Call, func, as_wei
-from helpers.sett.resolvers.StrategyCoreResolver import StrategyCoreResolver, console
+from helpers.utils import val
+from .StrategyCoreResolver import StrategyCoreResolver
 
-def confirm_harvest_badger_lp(before, after):
-    """
-    Harvest Should;
-    - Increase the balanceOf() underlying asset in the Strategy
-    - Reduce the amount of idle BADGER to zero
-    - Increase the ppfs on sett
-    """
-
-    assert after.strategy.balanceOf >= before.strategy.balanceOf
-    if before.sett.pricePerFullShare:
-        assert after.sett.pricePerFullShare > before.sett.pricePerFullShare
+console = Console()
 
 
-class StrategySushiBadgerLpOptimizerResolver(StrategyCoreResolver):
+class StrategyBaseSushiResolver(StrategyCoreResolver):
     def confirm_harvest(self, before, after, tx):
-        console.print("=== Compare Harvest ===")
+        console.print("=== Compare Harvest Basse ===")
+        self.confirm_harvest_events(before, after, tx)
+
         super().confirm_harvest(before, after, tx)
 
         # Strategy want should increase
@@ -32,37 +23,45 @@ class StrategySushiBadgerLpOptimizerResolver(StrategyCoreResolver):
         assert after.get("sett.pricePerFullShare") >= before.get("sett.pricePerFullShare")
 
         # Sushi in badger tree should increase
+        assert after.balances("xsushi", "badgerTree") > before.balances("xsushi", "badgerTree")
 
         # Strategy should have no sushi
+        assert after.balances("sushi", "strategy") == 0
 
         # Strategy should have no sushi in Chef
 
-    def printHarvestState(self, tx):
-        events = tx.events
-        event = events['HarvestState'][0]
-
-        xSushiHarvested = event['xSushiHarvested']
-        totalxSushi = event['totalxSushi']
-        toStrategist = event['toStrategist']
-        toGovernance = event['toGovernance']
-        toBadgerTree = event['toBadgerTree']
-
+    def printHarvestState(self, event, keys):
         table = []
         console.print("[blue]== Harvest State ==[/blue]")
-
-        table.append(["xSushiHarvested", val(xSushiHarvested)])
-        table.append(["totalxSushi", val(totalxSushi)])
-        table.append(["toStrategist", val(toStrategist)])
-        table.append(["toGovernance", val(toGovernance)])
-        table.append(["toBadgerTree", val(toBadgerTree)])
+        for key in keys:
+            table.append([key, val(event[key])])
 
         print(tabulate(table, headers=["account", "value"]))
 
-    def confirm_tend(self, before, after):
+    def confirm_harvest_events(self, before, after, tx):
+        key = 'HarvestState'
+        assert key in tx.events
+        assert len(tx.events[key]) == 1
+        event = tx.events[key][0]
+        keys = [
+            'xSushiHarvested',
+            'totalxSushi',
+            'toStrategist',
+            'toGovernance',
+            'toBadgerTree',
+        ]
+        for key in keys:
+            assert key in event
+
+        self.printHarvestState(event, keys)
+
+    def confirm_tend(self, before, after, tx):
         console.print("=== Compare Tend ===")
 
-        # Increase xSushi position in strategy
-        assert after.balances("xsushi", "strategy") > before.balances("xsushi", "strategy")
+        # Expect Increase xSushi position in strategy if we have tended sushi.
+        event = tx.events["Tend"][0]
+        if event["tended"] > 0:
+            assert after.balances("xsushi", "strategy") > before.balances("xsushi", "strategy")
 
     def add_entity_balances_for_tokens(self, calls, tokenKey, token, entities):
         entities['badgerTree'] = self.manager.strategy.badgerTree()
@@ -73,10 +72,8 @@ class StrategySushiBadgerLpOptimizerResolver(StrategyCoreResolver):
         super().add_balances_snap(calls, entities)
         strategy = self.manager.strategy
 
-
         sushi = interface.IERC20(strategy.sushi())
         xsushi = interface.IERC20(strategy.xsushi())
-
 
         calls = self.add_entity_balances_for_tokens(calls, "sushi", sushi, entities)
         calls = self.add_entity_balances_for_tokens(calls, "xsushi", xsushi, entities)

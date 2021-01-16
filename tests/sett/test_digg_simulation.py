@@ -18,5 +18,3 @@ def test_simulation(settConfig):
     # Randomize 100 actions.
     simulation.randomize(100)
     simulation.run()
-
-    assert False

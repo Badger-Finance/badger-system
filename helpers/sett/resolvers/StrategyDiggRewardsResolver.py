@@ -1,11 +1,11 @@
-from tabulate import tabulate
-from helpers.utils import snapBalancesMatchForToken, val
-from helpers.multicall.functions import as_digg_shares
-from helpers.sett.resolvers.StrategyCoreResolver import StrategyCoreResolver
-from brownie import *
+from brownie import interface
 from rich.console import Console
+from tabulate import tabulate
+
+from helpers.utils import val
 from helpers.multicall import Call, as_wei, func
 from config.badger_config import digg_decimals
+from .StrategyCoreResolver import StrategyCoreResolver
 
 console = Console()
 
@@ -26,37 +26,40 @@ class StrategyDiggRewardsResolver(StrategyCoreResolver):
         elif value < 10**digg_decimals:
             assert after.balances("digg", "user") < before.balances("digg", "user")
 
-    def printHarvestState(self, tx):
-        events = tx.events
-        event = events["HarvestState"][0]
-
+    def printHarvestState(self, event, keys):
         table = []
         console.print("[blue]== Harvest State ==[/blue]")
-
-        table.append(["totalDigg", val(event["totalDigg"])])
-        table.append(["totalShares", val(event["totalShares"])])
-        table.append(["totalScaledShares", val(event["totalScaledShares"])])
-        table.append(["diggIncrease", val(event["diggIncrease"])])
-        table.append(["sharesIncrease", val(event["sharesIncrease"])])
-        table.append(
-            ["scaledSharesIncrease", val(event["scaledSharesIncrease"])]
-        )
+        for key in keys:
+            table.append([key, val(event[key])])
 
         print(tabulate(table, headers=["account", "value"]))
 
+    def confirm_harvest_events(self, before, after, tx):
+        key = 'HarvestState'
+        assert key in tx.events
+        assert len(tx.events[key]) == 1
+        event = tx.events[key][0]
+        keys = [
+            'totalDigg',
+            'totalShares',
+            'totalInitialFragments',
+            'diggIncrease',
+            'sharesIncrease',
+            'scaledSharesIncrease',
+        ]
+        for key in keys:
+            assert key in event
+
+        self.printHarvestState(event, keys)
+
     def confirm_harvest(self, before, after, tx):
-        strategy = self.manager.strategy
-        digg = interface.IDigg(strategy.want())
-        # rewards = interface.IDiggRewardsFaucet(strategy.geyser())
         super().confirm_harvest(before, after, tx)
 
-        # table = []
-        # table.append(["sett.keeper", self.sett.keeper()])
-        # print(tabulate(table, headers=["account", "value"]))
-        # Strategy want should increase
-        before_balance = before.get("strategy.balanceOf")
+        # No staking position, strategy want should increase irrespective of
+        # current balance.
+        # TODO: Add more specific check that the correct reward amount was deposited.
         assert (
-            after.get("strategy.balanceOf") >= before_balance if before_balance else 0
+            after.get("strategy.balanceOf") >= before.get("strategy.balanceOf")
         )
 
         # PPFS should not decrease
@@ -64,8 +67,37 @@ class StrategyDiggRewardsResolver(StrategyCoreResolver):
             "sett.pricePerFullShare"
         )
 
+    def confirm_deposit(self, before, after, params):
+        """
+        Since DIGG is a rebasing token, the amount of shares
+        transferred per DIGG changes over time so we need to
+        calculated expected shares using the following equation:
+
+        (sharesTransferred * totalSupply) / poolBefore
+
+        Note that shares scale values are scaled down to 18 decimal
+        values (e.g. sharesTransferred, poolBefore).
+        """
+        digg = self.manager.badger.digg.token
+
+        sharesTransferred = after.get("sett.shares") - before.get("sett.shares")
+        sharesTransferredFrags = digg.sharesToInitialFragments(sharesTransferred)
+
+        totalSupply = before.get("sett.totalSupply")  # bDIGG is already at 18 decimal scale
+        if totalSupply == 0:
+            expected_shares = sharesTransferredFrags
+        else:
+            poolBefore = before.get("sett.shares")
+            poolBeforeFrags = digg.sharesToInitialFragments(poolBefore)
+            expected_shares = (sharesTransferredFrags * totalSupply) / poolBeforeFrags
+
+        params["expected_shares"] = expected_shares
+
+        # We need to pass in expected_shares to the core resolver so we call the
+        # super method down here.
+        super().confirm_deposit(before, after, params)
+
     def add_balances_snap(self, calls, entities):
-        want = self.manager.want
         sett = self.manager.sett
 
         # Add FARM token balances.
@@ -74,7 +106,6 @@ class StrategyDiggRewardsResolver(StrategyCoreResolver):
         calls = self.add_entity_balances_for_tokens(calls, "digg", digg, entities)
         calls = self.add_entity_shares_for_tokens(calls, "digg", digg, entities)
         calls = self.add_entity_balances_for_tokens(calls, "sett", sett, entities)
-
 
         return calls
 
