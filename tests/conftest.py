@@ -61,8 +61,8 @@ settsToRun = [
 
 diggSettsToRun = [
     "native.digg",
-    # "native.uniDiggWbtc",
-    # "native.sushiDiggWbtc",
+    "native.uniDiggWbtc",
+    "native.sushiDiggWbtc",
 ]
 
 runTestSetts = True
