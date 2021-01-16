@@ -4,7 +4,6 @@ from tabulate import tabulate
 
 from helpers.utils import val
 from helpers.multicall import Call, as_wei, func
-from config.badger_config import digg_decimals
 from .StrategyCoreResolver import StrategyCoreResolver
 
 console = Console()
@@ -21,9 +20,9 @@ class StrategyDiggRewardsResolver(StrategyCoreResolver):
         console.print("=== Compare Rebase ===")
         self.manager.printCompare(before, after)
         # TODO: Impl more accurate rebase checks.
-        if value > 10**digg_decimals:
+        if value > 10**18:
             assert after.balances("digg", "user") > before.balances("digg", "user")
-        elif value < 10**digg_decimals:
+        elif value < 10**18:
             assert after.balances("digg", "user") < before.balances("digg", "user")
 
     def printHarvestState(self, event, keys):
@@ -98,14 +97,12 @@ class StrategyDiggRewardsResolver(StrategyCoreResolver):
         super().confirm_deposit(before, after, params)
 
     def add_balances_snap(self, calls, entities):
-        sett = self.manager.sett
-
+        calls = super().add_balances_snap(calls, entities)
         # Add FARM token balances.
         digg = interface.IERC20(self.manager.strategy.want())
 
         calls = self.add_entity_balances_for_tokens(calls, "digg", digg, entities)
         calls = self.add_entity_shares_for_tokens(calls, "digg", digg, entities)
-        calls = self.add_entity_balances_for_tokens(calls, "sett", sett, entities)
 
         return calls
 

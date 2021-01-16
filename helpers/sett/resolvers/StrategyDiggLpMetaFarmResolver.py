@@ -2,7 +2,6 @@ from brownie import interface
 from rich.console import Console
 
 from helpers.utils import snapBalancesMatchForToken
-from config.badger_config import digg_decimals
 from .StrategyCoreResolver import StrategyCoreResolver
 
 console = Console()
@@ -16,9 +15,9 @@ class StrategyDiggLpMetaFarmResolver(StrategyCoreResolver):
         '''
         assert snapBalancesMatchForToken(before, after, "want")
         # TODO: Impl more accurate rebase checks.
-        if value > 10**digg_decimals:
+        if value > 10**18:
             assert after.balances("digg", "user") > before.balances("digg", "user")
-        elif value < 10**digg_decimals:
+        elif value < 10**18:
             assert after.balances("digg", "user") < before.balances("digg", "user")
 
     def confirm_harvest(self, before, after, tx):

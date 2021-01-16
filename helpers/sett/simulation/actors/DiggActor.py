@@ -2,7 +2,6 @@ import random
 from typing import Any
 
 from helpers.sett.SnapshotManager import SnapshotManager
-from config.badger_config import digg_decimals
 from .BaseAction import BaseAction
 
 
@@ -17,7 +16,8 @@ class RebaseAction(BaseAction):
 
     def run(self):
         rebaseValue = random.random() * random.randint(1, 10)
-        self.snap.rebase(rebaseValue * 10**digg_decimals, {"from": self.user})
+        # Rebase values are expected to have 18 decimals of precision.
+        self.snap.rebase(rebaseValue * 10**18, {"from": self.user})
 
 
 class DiggActor:

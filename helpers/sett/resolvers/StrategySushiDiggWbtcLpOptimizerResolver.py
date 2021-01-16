@@ -1,16 +1,13 @@
 from brownie import interface
-from tabulate import tabulate
 from rich.console import Console
 
-from helpers.utils import val, snapBalancesMatchForToken
-from config.badger_config import digg_decimals
-from .StrategyCoreResolver import StrategyCoreResolver
+from helpers.utils import snapBalancesMatchForToken
 from .StrategyBaseSushiResolver import StrategyBaseSushiResolver
 
 console = Console()
 
 
-class StrategySushiDiggWbtcLpOptimizerResolver(StrategyBaseSushiResolver, StrategyCoreResolver):
+class StrategySushiDiggWbtcLpOptimizerResolver(StrategyBaseSushiResolver):
     def confirm_rebase(self, before, after, value):
         '''
         Lp token balance should stay the same.
@@ -22,13 +19,13 @@ class StrategySushiDiggWbtcLpOptimizerResolver(StrategyBaseSushiResolver, Strate
         assert snapBalancesMatchForToken(before, after, "sushi")
         assert snapBalancesMatchForToken(before, after, "xsushi")
         # TODO: Impl more accurate rebase checks.
-        if value > 10**digg_decimals:
+        if value > 10**18:
             assert after.balances("digg", "user") > before.balances("digg", "user")
-        elif value < 10**digg_decimals:
+        elif value < 10**18:
             assert after.balances("digg", "user") < before.balances("digg", "user")
 
     def add_balances_snap(self, calls, entities):
-        super().add_balances_snap(calls, entities)
+        calls = super().add_balances_snap(calls, entities)
         strategy = self.manager.strategy
 
         digg = interface.IERC20(strategy.digg())
