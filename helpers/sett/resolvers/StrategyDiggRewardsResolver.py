@@ -35,11 +35,11 @@ class StrategyDiggRewardsResolver(StrategyCoreResolver):
 
         table.append(["totalDigg", val(event["totalDigg"])])
         table.append(["totalShares", val(event["totalShares"])])
-        table.append(["totalInitialFragments", val(event["totalInitialFragments"])])
+        table.append(["totalScaledShares", val(event["totalScaledShares"])])
         table.append(["diggIncrease", val(event["diggIncrease"])])
         table.append(["sharesIncrease", val(event["sharesIncrease"])])
         table.append(
-            ["initialFragmentsIncrease", val(event["initialFragmentsIncrease"])]
+            ["scaledSharesIncrease", val(event["scaledSharesIncrease"])]
         )
 
         print(tabulate(table, headers=["account", "value"]))
@@ -65,13 +65,16 @@ class StrategyDiggRewardsResolver(StrategyCoreResolver):
         )
 
     def add_balances_snap(self, calls, entities):
-        super().add_balances_snap(calls, entities)
+        want = self.manager.want
+        sett = self.manager.sett
 
         # Add FARM token balances.
         digg = interface.IERC20(self.manager.strategy.want())
 
         calls = self.add_entity_balances_for_tokens(calls, "digg", digg, entities)
         calls = self.add_entity_shares_for_tokens(calls, "digg", digg, entities)
+        calls = self.add_entity_balances_for_tokens(calls, "sett", sett, entities)
+
 
         return calls
 

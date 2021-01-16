@@ -571,7 +571,7 @@ class BadgerSystem:
         self.digg_system = digg_system
         self.digg = digg_system
 
-    def deploy_digg_rewards_faucet(self, id, diggToken, stakingToken):
+    def deploy_digg_rewards_faucet(self, id, diggToken):
         deployer = self.deployer
 
         rewards = deploy_proxy(
@@ -580,7 +580,7 @@ class BadgerSystem:
             self.logic.DiggRewardsFaucet.address,
             self.devProxyAdmin.address,
             self.logic.DiggRewardsFaucet.initialize.encode_input(
-                deployer, stakingToken, diggToken
+                deployer, diggToken
             ),
             deployer,
         )

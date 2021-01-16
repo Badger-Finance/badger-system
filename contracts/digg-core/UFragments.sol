@@ -64,11 +64,11 @@ contract UFragments is ERC20Detailed, Ownable {
         _;
     }
 
-    uint256 private constant DECIMALS = 18;
+    uint256 private constant DECIMALS = 9;
+    uint256 private constant SCALED_SHARES_EXTRA_DECIMALS = 9;
     uint256 private constant MAX_UINT256 = ~uint256(0);
     uint256 private constant MAX_UINT128 = ~uint128(0);
-    uint256 private constant INITIAL_FRAGMENTS_SUPPLY = 4000 * 10**DECIMALS;
-    uint256 private constant MAX_FRAGMENTS_SUPPLY = 21000000 * 10**DECIMALS;
+    uint256 private constant MAX_FRAGMENTS_SUPPLY = 4000 * 10**DECIMALS;
 
     // TOTAL_SHARES is a multiple of MAX_FRAGMENTS_SUPPLY so that _sharesPerFragment is an integer.
     // Use the highest value that fits in a uint128 for sufficient granularity.
@@ -144,7 +144,7 @@ contract UFragments is ERC20Detailed, Ownable {
         rebasePausedDeprecated = false;
         tokenPausedDeprecated = false;
 
-        _totalSupply = INITIAL_FRAGMENTS_SUPPLY;
+        _totalSupply = MAX_FRAGMENTS_SUPPLY;
         _shareBalances[owner_] = TOTAL_SHARES;
         _sharesPerFragment = TOTAL_SHARES.div(_totalSupply);
         _initialSharesPerFragment = TOTAL_SHARES.div(_totalSupply);
@@ -201,15 +201,16 @@ contract UFragments is ERC20Detailed, Ownable {
         return shares.div(_sharesPerFragment);
     }
 
-    function initialFragmentsToShares(uint256 fragments) public view returns (uint256) {
-        return fragments.mul(_initialSharesPerFragment);
+    /// @dev Scaled Shares are a user-friendly representation of shares
+    function scaledSharesToShares(uint256 fragments) public view returns (uint256) {
+        return fragments.mul(_initialSharesPerFragment).mul(10 ** SCALED_SHARES_EXTRA_DECIMALS);
     }
 
-    function sharesToInitialFragments(uint256 shares) public view returns (uint256) {
+    function sharesToScaledShares(uint256 shares) public view returns (uint256) {
         if (shares == 0) {
             return 0;
         }
-        return shares.div(_initialSharesPerFragment);
+        return shares.div(_initialSharesPerFragment).mul(10 ** SCALED_SHARES_EXTRA_DECIMALS);
     }
 
     /**

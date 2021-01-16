@@ -28,7 +28,7 @@ class UniDiggWbtcLpMiniDeploy(DiggSettMiniDeployBase):
 
         self.badger.deploy_logic("DiggRewardsFaucet", DiggRewardsFaucet)
         self.rewards = self.badger.deploy_digg_rewards_faucet(
-            self.key, self.digg.token, want
+            self.key, self.digg.token
         )
 
         params.geyser = self.rewards

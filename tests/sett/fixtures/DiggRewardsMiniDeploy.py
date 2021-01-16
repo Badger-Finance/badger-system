@@ -14,7 +14,7 @@ class DiggRewardsMiniDeploy(DiggSettMiniDeployBase):
 
 
         self.rewards = self.badger.deploy_digg_rewards_faucet(
-            self.key, self.digg.token, self.digg.token
+            self.key, self.digg.token
         )
 
         params.geyser = self.rewards

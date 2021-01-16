@@ -5,7 +5,7 @@ from brownie import (
 )
 from tabulate import tabulate
 from rich.console import Console
-
+from decimal import *
 from helpers.multicall import Multicall
 from helpers.registry import registry
 from helpers.sett.resolvers import (
@@ -256,6 +256,8 @@ class SnapshotManager:
         if type(value) is int:
             # Ether-scaled balances
             # TODO: Handle based on token decimals
+            if ".digg" in key and not "shares" in key:
+                return val(value, decimals=9)
             if (
                 "balance" in key
                 or key == "sett.available"

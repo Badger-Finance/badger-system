@@ -34,7 +34,6 @@ contract DiggRewardsFaucet is Initializable, AccessControlUpgradeable, PausableU
 
     /* ========== STATE VARIABLES ========== */
 
-    IERC20Upgradeable public stakingToken;
     IERC20Upgradeable public rewardsToken;
     IDigg public digg;
     uint256 public periodFinish;
@@ -43,14 +42,13 @@ contract DiggRewardsFaucet is Initializable, AccessControlUpgradeable, PausableU
     uint256 public lastUpdateTime;
     address public recipient;
 
-    function initialize(address _admin, address _stakingToken, address _digg) public initializer whenNotPaused {
+    function initialize(address _admin, address _digg) public initializer whenNotPaused {
         __AccessControl_init();
         __Pausable_init_unchained();
         __ReentrancyGuard_init_unchained();
 
         _setupRole(DEFAULT_ADMIN_ROLE, _admin);
 
-        stakingToken = IERC20Upgradeable(_stakingToken);
         rewardsToken = IERC20Upgradeable(_digg);
         digg = IDigg(_digg);
 
@@ -73,21 +71,6 @@ contract DiggRewardsFaucet is Initializable, AccessControlUpgradeable, PausableU
     }
 
     /* ========== MUTATIVE FUNCTIONS ========== */
-
-    function stake(uint256 amount) external nonReentrant whenNotPaused {
-        _onlyRecipient();
-        require(amount > 0, "Cannot stake 0");
-        stakingToken.safeTransferFrom(recipient, address(this), amount);
-        emit Staked(recipient, amount);
-    }
-
-    function withdraw(uint256 amount) public nonReentrant whenNotPaused {
-        _onlyRecipient();
-        require(amount > 0, "Cannot withdraw 0");
-        stakingToken.safeTransfer(recipient, amount);
-        emit Withdrawn(recipient, amount);
-    }
-
     function getReward() public nonReentrant whenNotPaused {
         _onlyRecipient();
 

@@ -14,7 +14,7 @@ import "interfaces/digg/IDiggStrategy.sol";
 import "./Sett.sol";
 
 /* 
-    bDIGG is denominated in initialFragments.
+    bDIGG is denominated in scaledShares.
     At the start 1 bDIGG = 1 DIGG (at peg)
 
     Source: https://github.com/iearn-finance/yearn-protocol/blob/develop/contracts/vaults/yVault.sol
@@ -52,7 +52,7 @@ contract DiggSett is Sett {
             return 1e18;
         }
         IDigg digg = IDigg(address(token));
-        uint256 scaledShares = digg.sharesToInitialFragments(shares());
+        uint256 scaledShares = digg.sharesToScaledShares(shares());
         return scaledShares.mul(1e18).div(totalSupply());
     }
 
@@ -73,7 +73,7 @@ contract DiggSett is Sett {
 
         uint256 bDiggToMint = 0;
         if (totalSupply() == 0) {
-            bDiggToMint = digg.sharesToInitialFragments(_sharesTransferred);
+            bDiggToMint = digg.sharesToScaledShares(_sharesTransferred);
         } else {
             bDiggToMint = _sharesTransferred.mul(totalSupply()).div(_poolBefore);
         }

@@ -20,10 +20,10 @@ def digg_shares_to_initial_fragments(digg, shares):
     scaled = 0
     if shares < 0:
         shares = abs(shares)
-        scaled = digg.sharesToInitialFragments(shares)
+        scaled = digg.sharesToScaledShares(shares)
         scaled = -scaled
     else:
-        scaled = digg.sharesToInitialFragments(shares)
+        scaled = digg.sharesToScaledShares(shares)
     return val(scaled)
 
 
@@ -31,10 +31,10 @@ def digg_shares(value):
     return value / 1e68
 
 
-def val(amount):
+def val(amount, decimals=18):
     # return amount
-    # return "{:,.0f}".format(amount)
-    return "{:,.18f}".format(amount / 1e18)
+    return "{:,.0f}".format(amount)
+    return "{:,.18f}".format(amount / 10 ** decimals)
 
 
 def sec(amount):

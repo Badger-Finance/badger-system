@@ -38,19 +38,19 @@ contract StrategyDiggRewards is BaseStrategy {
     struct HarvestData {
         uint256 totalDigg;
         uint256 totalShares;
-        uint256 totalInitialFragments;
+        uint256 totalScaledShares;
         uint256 diggIncrease;
         uint256 sharesIncrease;
-        uint256 initialFragmentsIncrease;
+        uint256 scaledSharesIncrease;
     }
 
     event HarvestState (
         uint256 totalDigg,
         uint256 totalShares,
-        uint256 totalInitialFragments,
+        uint256 totalScaledShares,
         uint256 diggIncrease,
         uint256 sharesIncrease,
-        uint256 initialFragmentsIncrease
+        uint256 scaledSharesIncrease
     );
 
     function initialize(
@@ -134,27 +134,27 @@ contract StrategyDiggRewards is BaseStrategy {
 
         uint256 _beforeDigg = IDigg(want).balanceOf(address(this));
         uint256 _beforeShares = IDigg(want).sharesOf(address(this));
-        uint256 _beforeInitialFragments = IDigg(want).sharesToInitialFragments(_beforeShares);
+        uint256 _beforeScaledShares = IDigg(want).sharesToScaledShares(_beforeShares);
 
         // ===== Harvest rewards from Geyser =====
         IStakingRewards(diggFaucet).getReward();
         
         harvestData.totalDigg = IDigg(want).balanceOf(address(this));
         harvestData.totalShares = IDigg(want).sharesOf(address(this));
-        harvestData.totalInitialFragments = IDigg(want).sharesToInitialFragments(harvestData.totalShares);
+        harvestData.totalScaledShares = IDigg(want).sharesToScaledShares(harvestData.totalShares);
 
         harvestData.diggIncrease = harvestData.totalDigg.sub(_beforeDigg);
         harvestData.sharesIncrease = harvestData.totalShares.sub(_beforeShares);
-        harvestData.initialFragmentsIncrease = harvestData.totalInitialFragments.sub(_beforeInitialFragments);
+        harvestData.scaledSharesIncrease = harvestData.totalScaledShares.sub(_beforeScaledShares);
 
         emit Harvest(harvestData.sharesIncrease, block.number);
         emit HarvestState(
             harvestData.totalDigg,
             harvestData.totalShares,
-            harvestData.totalInitialFragments,
+            harvestData.totalScaledShares,
             harvestData.diggIncrease,
             harvestData.sharesIncrease,
-            harvestData.initialFragmentsIncrease
+            harvestData.scaledSharesIncrease
         );
 
         return harvestData;
