@@ -47,7 +47,7 @@ contract DiggSett is Sett {
         return strategyShares.add(settShares);
     }
 
-    function getPricePerFullShare() public view override returns (uint256) {
+    function getPricePerFullShare() public override view returns (uint256) {
         if (totalSupply() == 0) {
             return 1e18;
         }
@@ -66,7 +66,7 @@ contract DiggSett is Sett {
         uint256 _poolBefore = shares(); // Shares realized in system before transfer
         uint256 _before = digg.sharesOf(address(this));
 
-        digg.transferFrom(msg.sender, address(this), _amount);
+        require(digg.transferFrom(msg.sender, address(this), _amount));
 
         uint256 _after = digg.sharesOf(address(this));
         uint256 _sharesTransferred = _after.sub(_before); // Additional check for deflationary tokens
@@ -84,10 +84,10 @@ contract DiggSett is Sett {
     // No rebalance implementation for lower fees and faster swaps
     function _withdraw(uint256 _bDiggToBurn) internal override {
         IDigg digg = IDigg(address(token));
-    
+
         // uint256 _sharesToRedeem = (shares().mul(_bDiggToBurn)).div(totalSupply());
         uint256 _sharesToRedeem = (shares().div(totalSupply())).mul(_bDiggToBurn);
-        
+
         _burn(msg.sender, _bDiggToBurn);
 
         // Check balance
