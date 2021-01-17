@@ -134,11 +134,11 @@ contract UFragments is ERC20Detailed, Ownable {
         return _totalSupply;
     }
 
-    function initialize(address owner_, uint256 rebaseStartTime_) public initializer {
+    function initialize(address owner_) public initializer {
         ERC20Detailed.initialize("Digg", "DIGG", uint8(DECIMALS));
         Ownable.initialize(owner_);
 
-        rebaseStartTime = rebaseStartTime_;
+        rebaseStartTime = 0;
         rebasePausedDeprecated = false;
         tokenPausedDeprecated = false;
 
