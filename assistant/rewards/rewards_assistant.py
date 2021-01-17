@@ -78,15 +78,18 @@ def fetch_current_harvest_rewards(badger,startBlock,endBlock,nextCycle):
         return int(e["blockNumber"]) > startBlock and int(e["blockNumber"]) < endBlock
 
     unprocessedEvents = list(filter(filter_events,harvestEvents))
+    console.log("Processing {} farm events".format(len(unprocessedEvents)))
+
     if len(unprocessedEvents) == 0:
         return rewards
+
     start = startBlock
     end = int(unprocessedEvents[0]["blockNumber"])
     totalHarvested = 0
     for i in tqdm(range(len(unprocessedEvents))):
         console.log("Processing between {} and {}".format(startBlock,endBlock))
         harvestEvent = unprocessedEvents[i]
-        user_state = calc_harvest_meta_farm_rewards(badger,"harvest.renCrv",startBlock,endBlock)
+        user_state = calc_harvest_meta_farm_rewards(badger,"harvest.renCrv",start,end)
         farmRewards = int(harvestEvent["farmToRewards"])
         console.print("Processing block {}, distributing {} to users".format(
             harvestEvent["blockNumber"],
@@ -103,6 +106,7 @@ def fetch_current_harvest_rewards(badger,startBlock,endBlock,nextCycle):
             start = int(unprocessedEvents[i]["blockNumber"])
             end = int(unprocessedEvents[i+1]["blockNumber"])
 
+    console.log(sorted( [list(v.values())[0]/1e18 for v in list(rewards.claims.values())  ] ))
     return rewards
 
 
@@ -449,7 +453,7 @@ def rootUpdater(badger, startBlock, endBlock, test=False):
     timeSinceLastupdate = currentTime - currentMerkleData["lastUpdateTime"]
     if timeSinceLastupdate < rewards_config.rootUpdateMinInterval and not test:
         console.print(
-            "[bold yellow]===== Result: Last Update too Recent ({}) =====[/bold yellow]".format(
+           "[bold yellow]===== Result: Last Update too Recent ({}) =====[/bold yellow]".format(
                 to_hours(timeSinceLastupdate)
             )
         )
