@@ -9,6 +9,7 @@ from brownie import (
 from config.badger_config import badger_config, digg_config
 from scripts.deploy.deploy_badger import deploy_flow
 from scripts.systems.badger_minimal import deploy_badger_minimal
+from scripts.systems.digg_minimal import deploy_digg_minimal
 from scripts.systems.constants import SettType
 from helpers.token_utils import distribute_test_ether
 from scripts.systems.badger_system import connect_badger
@@ -253,6 +254,30 @@ def badger_tree_unit():
     )
 
     return badger
+
+
+@pytest.fixture(scope="function")
+def digg_distributor_unit():
+    badger = connect_badger(badger_config.prod_json)
+    deployer = badger.deployer
+    devProxyAdminAddress = badger.devProxyAdmin.address
+    daoProxyAdminAddress = badger.daoProxyAdmin.address
+    digg = deploy_digg_minimal(deployer, devProxyAdminAddress, daoProxyAdminAddress, owner=deployer)
+
+    # deployer should have eth but just in case
+    distribute_test_ether(badger.deployer, Wei("20 ether"))
+
+    digg.deploy_airdrop_distributor(
+        digg_config.airdropRoot,
+        badger.rewardsEscrow,
+        digg_config.reclaimAllowedTimestamp,
+    )
+
+    totalSupply = digg.token.totalSupply()
+    # 15% airdropped
+    digg.token.transfer(digg.diggDistributor, totalSupply * .15, {"from": deployer})
+
+    return digg
 
 
 @pytest.fixture()
