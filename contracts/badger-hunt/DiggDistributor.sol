@@ -2,6 +2,7 @@
 pragma solidity ^0.6.11;
 
 import "deps/@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "deps/@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 import "deps/@openzeppelin/contracts-upgradeable/cryptography/MerkleProofUpgradeable.sol";
 import "interfaces/digg/IDigg.sol";
 import "./MerkleDistributor.sol";
@@ -12,7 +13,7 @@ import "./MerkleDistributor.sol";
 
     After a preset delay, an owner can recall unclaimed DIGG to the treasury
 */
-contract DiggDistributor is MerkleDistributor, OwnableUpgradeable {
+contract DiggDistributor is MerkleDistributor, OwnableUpgradeable, PausableUpgradeable {
     address public rewardsEscrow;
     uint256 public reclaimAllowedTimestamp;
 
@@ -21,11 +22,16 @@ contract DiggDistributor is MerkleDistributor, OwnableUpgradeable {
         bytes32 merkleRoot_,
         address rewardsEscrow_,
         uint256 reclaimAllowedTimestamp_
-    ) public initializer {
+    ) public initializer whenNotPaused {
         __MerkleDistributor_init(token_, merkleRoot_);
         __Ownable_init();
+        __Pausable_init_unchained();
         rewardsEscrow = rewardsEscrow_;
         reclaimAllowedTimestamp = reclaimAllowedTimestamp_;
+
+        // Paused on launch
+        _pause();
+
     }
 
     function claim(
@@ -33,7 +39,7 @@ contract DiggDistributor is MerkleDistributor, OwnableUpgradeable {
         address account,
         uint256 shares,
         bytes32[] calldata merkleProof
-    ) external virtual override {
+    ) external virtual override whenNotPaused {
         require(!isClaimed(index), "DiggDistributor: Drop already claimed.");
 
         // Verify the merkle proof.
@@ -50,9 +56,18 @@ contract DiggDistributor is MerkleDistributor, OwnableUpgradeable {
     /// ===== Gated Actions: Owner =====
 
     /// @notice Transfer unclaimed funds to rewards escrow
-    function reclaim() external onlyOwner {
+    function reclaim() external onlyOwner whenNotPaused {
         require(now >= reclaimAllowedTimestamp, "DiggDistributor: Before reclaim timestamp");
         uint256 remainingBalance = IDigg(token).balanceOf(address(this));
         IERC20Upgradeable(token).transfer(rewardsEscrow, remainingBalance);
+    }   
+
+    function pause() external onlyOwner {
+        _pause();
     }
+
+    function unpause() external onlyOwner {
+        _unpause();
+    }
+
 }
