@@ -25,6 +25,12 @@ class MultisigTxMetadata:
         self.operation = operation
         self.callInfo = callInfo
 
+        if not operation:
+            self.operation = ""
+        
+        if not callInfo:
+            self.callInfo = ""
+
     def __str__(self):
         return "description: " + self.description + "\n" + 'operation: ' + str(self.operation) + "\n" + 'callInfo: ' + str(self.callInfo) + "\n"
 

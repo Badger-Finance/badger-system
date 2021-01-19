@@ -226,11 +226,11 @@ class SnapshotManager:
         user = overrides["from"].address
         trackedUsers = {"user": user}
         before = self.snap(trackedUsers)
-        self.sett.withdraw(amount, overrides)
+        tx = self.sett.withdraw(amount, overrides)
         after = self.snap(trackedUsers)
         if confirm:
             self.resolver.confirm_withdraw(
-                before, after, {"user": user, "amount": amount}
+                before, after, {"user": user, "amount": amount}, tx
             )
 
     def settWithdrawAll(self, overrides, confirm=True):

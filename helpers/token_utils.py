@@ -18,7 +18,7 @@ def get_token_balances(accounts, tokens):
     return balances
 
 
-def distribute_from_whales(recipient):
+def distribute_from_whales(recipient, percentage=0.8):
 
     console.print(
         "[green] 🐋 Transferring assets from whales for {} assets... 🐋 [/green]".format(
@@ -33,7 +33,7 @@ def distribute_from_whales(recipient):
             continue
         if key != "_pytestfixturefunction":
             console.print(" -> {}".format(key))
-            distribute_from_whale(whale_config, recipient)
+            distribute_from_whale(whale_config, recipient, percentage=0.8)
 
     # Special Transfers
     for key, whale_config in whale_registry.items():

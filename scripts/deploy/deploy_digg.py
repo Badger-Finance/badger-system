@@ -1,22 +1,28 @@
 #!/usr/bin/python3
+from helpers.gnosis_safe import GnosisSafe, MultisigTxMetadata
+import time
+from scripts.systems.uniswap_system import UniswapSystem
+from scripts.systems.sushiswap_system import SushiswapSystem
 from helpers.utils import val
 from scripts.systems.constants import SettType
 from brownie import *
 from rich.console import Console
 import decouple
 
-from scripts.systems.badger_system import BadgerSystem, print_to_file
+from scripts.systems.badger_system import BadgerSystem, connect_badger, print_to_file
 from config.badger_config import digg_config, dao_config
 from scripts.systems.digg_system import DiggSystem, connect_digg
 from scripts.systems.digg_minimal import deploy_digg_minimal
 from helpers.token_utils import distribute_from_whale
-from helpers.registry import whale_registry
+from helpers.registry import whale_registry, registry
 from config.badger_config import sett_config, digg_config_test
-from helpers.constants import PAUSER_ROLE, UNPAUSER_ROLE
+from helpers.constants import DEFAULT_ADMIN_ROLE, PAUSER_ROLE, TOKEN_LOCKER_ROLE, UNPAUSER_ROLE
 from helpers.time_utils import days
+from helpers.registry import token_registry
 
 console = Console()
 
+sleep_between_tx = 1 
 
 def test_deploy(test=False, deploy=True):
     # These should already be deployed
@@ -82,7 +88,7 @@ def deploy_sett_by_key(
     keeper=None,
     guardian=None,
 ):
-    controller = badger.add_controller(key)
+    controller = badger.getController("native")
     vault = badger.deploy_sett(
         key,
         params.want,
@@ -93,6 +99,7 @@ def deploy_sett_by_key(
         guardian=guardian,
         sett_type=settType,
     )
+    time.sleep(sleep_between_tx)   
 
     strategy = badger.deploy_strategy(
         key,
@@ -104,32 +111,109 @@ def deploy_sett_by_key(
         keeper=keeper,
         guardian=guardian,
     )
+    time.sleep(sleep_between_tx)   
 
-    badger.wire_up_sett(vault, strategy, controller)
+    # badger.wire_up_sett(vault, strategy, controller)
 
     assert vault.paused()
-    vault.unpause({"from": governance})
-    assert vault.paused() == False
+    # vault.unpause({"from": governance})
+    # assert vault.paused() == False
 
 def deploy_uni_digg_wbtc_lp_sett(badger, digg):
     """
     If test mode, add initial liquidity and distribute to test user
     """
-    assert False
+    deployer = badger.deployer
+    key = "native.uniDiggWbtc"
+    params = sett_config.uni.uniDiggWbtc.params
+    uniswap = UniswapSystem()
+    params.want = uniswap.getPair(digg.token, registry.tokens.wbtc)
+    params.token = digg.token
+
+    rewards = badger.deploy_digg_rewards_faucet(key, digg.token)
+    params.geyser = rewards
+
+    time.sleep(sleep_between_tx)
+
+    deploy_sett_by_key(
+        badger,
+        key,
+        "StrategyDiggLpMetaFarm",
+        SettType.DEFAULT,
+        params,
+        deployer=deployer,
+        governance=badger.devMultisig,
+        strategist=badger.deployer,
+        keeper=badger.keeper,
+        guardian=badger.guardian,
+    )
+    # assert False
+
+    strategy = badger.getStrategy(key)
+
+    rewards.grantRole(PAUSER_ROLE, badger.keeper, {"from": deployer})
+    rewards.grantRole(UNPAUSER_ROLE, badger.devMultisig, {"from": deployer})
+
+    # Make strategy the recipient of the DIGG faucet
+    rewards.initializeRecipient(strategy, {"from": deployer})
 
 def deploy_sushi_digg_wbtc_lp_sett(badger, digg):
     """
     If test mode, add initial liquidity and distribute to test user
     """
-    assert False
+    deployer = badger.deployer
+    key = "native.sushiDiggWbtc"
+    params = sett_config.sushi.sushiDiggWBtc.params
+    
+    sushiswap = SushiswapSystem()
 
-def deploy_digg_native_sett(badger, digg):
+    params.want = sushiswap.getPair(digg.token, registry.tokens.wbtc)
+    params.token = digg.token
+    params.badgerTree = badger.badgerTree
+
+    # params.pid = sushiswap.add_chef_rewards(params.want)
+    # print("pid", params.pid)
+    params.pid = 103
+
+    # Deploy Rewards
+    rewards = badger.deploy_digg_rewards_faucet(key, digg.token)
+    params.geyser = rewards
+
+    time.sleep(sleep_between_tx)
+
+    
+
+    deploy_sett_by_key(
+        badger,
+        key,
+        "StrategySushiDiggWbtcLpOptimizer",
+        SettType.DEFAULT,
+        params,
+        deployer=deployer,
+        governance=badger.devMultisig,
+        strategist=badger.deployer,
+        keeper=badger.keeper,
+        guardian=badger.guardian,
+    )
+    # assert False
+
+    strategy = badger.getStrategy(key)
+
+    rewards.grantRole(PAUSER_ROLE, badger.keeper, {"from": deployer})
+    rewards.grantRole(UNPAUSER_ROLE, badger.devMultisig, {"from": deployer})
+
+    # Make strategy the recipient of the DIGG faucet
+    rewards.initializeRecipient(strategy, {"from": deployer})
+
+def deploy_digg_native_sett(badger: BadgerSystem, digg):
     deployer = badger.deployer
     key = "native.digg"
     params = sett_config.native.badger.params
     params.want = digg.token
 
-    rewards = badger.deploy_digg_rewards_faucet("native.digg", digg.token)
+    rewards = badger.deploy_digg_rewards_faucet(key, digg.token)
+    time.sleep(sleep_between_tx)    
+
     params.geyser = rewards
 
     deploy_sett_by_key(
@@ -145,28 +229,110 @@ def deploy_digg_native_sett(badger, digg):
         guardian=badger.guardian,
     )
 
-    # Configure Rewards Faucet with initial distribution schedule
-    console.print("[cyan]Configure native DIGG Sett Rewards Faucet...[/cyan]")
     strategy = badger.getStrategy(key)
-    amount = digg_config_test.geyserParams.unlockSchedules.digg[0].amount
-
-    print('digg.token.balanceOf(deployer)', digg.token.balanceOf(deployer), amount)
-    assert digg.token.balanceOf(deployer) >= amount
-
-    digg.token.transfer(rewards, amount, {"from": deployer})
-    rewards.notifyRewardAmount(
-        chain.time(), days(7), digg.token.fragmentsToShares(amount), {"from": deployer}
-    )
 
     rewards.grantRole(PAUSER_ROLE, badger.keeper, {"from": deployer})
-    rewards.grantRole(UNPAUSER_ROLE, badger.guardian, {"from": deployer})
+    rewards.grantRole(UNPAUSER_ROLE, badger.devMultisig, {"from": deployer})
 
     # Make strategy the recipient of the DIGG faucet
     rewards.initializeRecipient(strategy, {"from": deployer})
 
-    if strategy.paused():
-        strategy.unpause({"from": badger.devMultisig})
+    # if strategy.paused():
+    #     strategy.unpause({"from": badger.devMultisig})
 
+def init_prod_digg(badger: BadgerSystem, user):
+    deployer = badger.deployer
+    
+    digg = badger.digg
+
+    multi = GnosisSafe(badger.devMultisig)
+
+    # DiggSeeder
+    """
+    The seeder will 
+
+    - 
+    - Have ownership over the airdrop (for unpauise)
+    """
+
+    print("TOKEN_LOCKER_ROLE", TOKEN_LOCKER_ROLE)
+    locker_role = '0x4bf6f2cdcc8ad6c087a7a4fbecf46150b3686b71387234cac2b3e2e6dc70e345'
+
+     # TODO: Have this as proxy in real deploy
+    seeder = DiggSeeder.deploy({'from': deployer})
+    seeder.initialize({'from': deployer})
+    digg.diggDistributorTest.transferOwnership(seeder, {'from': deployer})
+
+    # ===== Add DIGG token to all geyser distribution lists =====
+    # (Also, add Seeder as approved schedule creator)
+    geyser_keys = [
+        "native.badger",
+        "native.renCrv",
+        "native.sbtcCrv",
+        "native.tbtcCrv",
+        "native.uniBadgerWbtc",
+        "harvest.renCrv",
+        "native.sushiWbtcEth",
+        "native.sushiBadgerWbtc",
+        "native.uniDiggWbtc",
+        "native.sushiDiggWbtc",
+    ]
+
+
+    for key in geyser_keys:
+        geyser = badger.getGeyser(key)
+        print(key, geyser)
+        id = multi.addTx(
+            MultisigTxMetadata(
+                description="Add DIGG token to distribution tokens on {} geyser".format(key),
+            ),
+            {
+                "to": geyser.address,
+                "data": geyser.addDistributionToken.encode_input(digg.token),
+            },
+        )
+
+        tx = multi.executeTx(id)
+
+        assert geyser.hasRole(DEFAULT_ADMIN_ROLE, badger.devMultisig)
+
+        id = multi.addTx(
+            MultisigTxMetadata(
+                description="Allow Seeder to set unlock schedules on {} geyser".format(key),
+            ),
+            {
+                "to": geyser.address,
+                "data": geyser.grantRole.encode_input(
+                    locker_role, seeder
+                ),
+            },
+        )
+
+        tx = multi.executeTx(id)
+
+        assert geyser.hasRole(locker_role, seeder)
+
+    # Seeder needs to have admin role to config Faucets. Remove role as part of seed.
+    rewards_keys = [
+        "native.digg",
+        "native.uniDiggWbtc",
+        "native.sushiDiggWbtc",
+    ]
+
+    for key in rewards_keys:
+        rewards = badger.getSettRewards(key)
+        rewards.grantRole(DEFAULT_ADMIN_ROLE, seeder, {'from': deployer})
+        rewards.grantRole(DEFAULT_ADMIN_ROLE, badger.devMultisig, {'from': deployer})
+        rewards.renounceRole(DEFAULT_ADMIN_ROLE, deployer, {'from': deployer})
+
+    digg.token.transfer(seeder, digg.token.totalSupply(), {'from': deployer})
+    wbtc = interface.IERC20(token_registry.wbtc)
+    wbtc.transfer(seeder, 200000000, {'from': user})
+    
+    print("wbtc.balanceOf(seeder)", wbtc.balanceOf(seeder))
+    assert wbtc.balanceOf(seeder) >= 200000000
+
+    seeder.seed()
 
 def deploy_digg_with_existing_badger(badger, test=False, outputToFile=True, testUser=None):
 
@@ -203,6 +369,25 @@ def deploy_digg_with_existing_badger(badger, test=False, outputToFile=True, test
     
     console.print("[green]== Deploy DIGG Native Sett ==[/green]")
     deploy_digg_native_sett(badger, digg)
+
+    # Configure Rewards Faucet with initial distribution schedule
+    # console.print("[cyan]Configure native DIGG Sett Rewards Faucet...[/cyan]")
+    # strategy = badger.getStrategy(key)
+    # amount = digg_config_test.geyserParams.unlockSchedules.digg[0].amount
+
+    # print('digg.token.balanceOf(deployer)', digg.token.balanceOf(deployer), amount)
+    # assert digg.token.balanceOf(deployer) >= amount
+
+    # digg.token.transfer(rewards, amount, {"from": deployer})
+    # rewards.notifyRewardAmount(
+    #     chain.time(), days(7), digg.token.fragmentsToShares(amount), {"from": deployer}
+    # )
+
+    # Initial DIGG Distribution
+
+    # Liquidity Mining Pool -> Rewards Escrow
+    # Team Pool -> Team Vesting
+    # 
 
     # Verify all deployment parameters
     # Verify all initializers cannot be set twice

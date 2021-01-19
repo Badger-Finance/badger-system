@@ -5,7 +5,7 @@ from brownie import Wei, web3, chain
 from dotmap import DotMap
 from helpers.constants import AddressZero
 from helpers.registry import registry
-from helpers.time_utils import days
+from helpers.time_utils import days, to_timestamp
 
 with open("merkle/airdrop.json") as f:
     Airdrop = json.load(f)
@@ -247,7 +247,7 @@ badger_config = DotMap(
 
 # TODO: Currently a copy of badger config params, needs to be set.
 # diggStartTime = globalStartTime
-diggStartTime = chain.time() + 1000
+diggStartTime = 1611097200 # 6PM EST 1/19
 
 """
 Test Config
@@ -261,7 +261,7 @@ total_digg = 4000 * (10 ** digg_decimals)
 liquidity_mining_pct = 40
 dao_treasury_pct = 40
 team_vesting_pct = 5
-airdrop_pct = 14.5
+airdrop_pct = 15
 
 digg_config_test = DotMap(
     startTime=diggStartTime,
@@ -350,7 +350,7 @@ digg_config = DotMap(
     ),
     tokenLockParams=DotMap(
         diggAmount=int(total_digg * dao_treasury_pct / 100),
-        lockDuration=days(30)
+        lockDuration=days(7)
     ),
     teamVestingParams=DotMap(
         diggAmount=int(total_digg * team_vesting_pct / 100),

@@ -3,7 +3,7 @@ from helpers.gnosis_safe import GnosisSafe, MultisigTxMetadata
 from brownie.network.gas.strategies import GasNowScalingStrategy
 from helpers.sett.strategy_registry import strategy_name_to_artifact
 import json
-import decouple
+import decouple 
 
 from scripts.systems.uniswap_system import UniswapSystem
 from scripts.systems.gnosis_safe_system import connect_gnosis_safe
@@ -117,8 +117,8 @@ def print_to_file(badger, path):
             "cpiMedianOracle": digg.cpiMedianOracle.address,
             "constantOracle": digg.constantOracle.address,
             "diggDistributor": digg.diggDistributor.address,
-            # "daoDiggTimelock": digg.daoDiggTimelock.address,
-            # "diggTeamVesting": digg.diggTeamVesting.address,
+            "daoDiggTimelock": digg.daoDiggTimelock.address,
+            "diggTeamVesting": digg.diggTeamVesting.address,
             "logic": {},
         }
 
@@ -132,7 +132,7 @@ def print_to_file(badger, path):
 
 
 def connect_badger(
-    badger_deploy_file, load_deployer=False, load_keeper=False, load_guardian=False
+    badger_deploy_file, load_deployer=True, load_keeper=True, load_guardian=True
 ):
     badger_deploy = {}
     console.print(
@@ -212,6 +212,7 @@ class BadgerSystem:
             self.deployer = accounts.at(deployer, force=True)
             self.keeper = accounts.at(keeper, force=True)
             self.guardian = accounts.at(guardian, force=True)
+            self.publish_source = False
         else:
             print("RPC Inactive")
             if load_deployer:
@@ -223,6 +224,7 @@ class BadgerSystem:
             if load_guardian:
                 guardian_key = decouple.config("GUARDIAN_PRIVATE_KEY")
                 self.guardian = accounts.add(guardian_key)
+            self.publish_source = False # Publish sources for deployed logic on mainnet
         if deploy:
             self.devProxyAdmin = deploy_proxy_admin(deployer)
             self.daoProxyAdmin = deploy_proxy_admin(deployer)
@@ -346,7 +348,7 @@ class BadgerSystem:
         deployer = self.deployer
         artifact = strategy_name_to_artifact(name)
         self.logic[name] = artifact.deploy(
-            {"from": deployer, "gas_price": self.gas_strategy}
+            {"from": deployer, "gas_price": self.gas_strategy}, publish_source=self.publish_source
         )
 
         # TODO: Initialize to remove that function
@@ -462,7 +464,7 @@ class BadgerSystem:
 
     def deploy_logic(self, name, BrownieArtifact):
         deployer = self.deployer
-        self.logic[name] = BrownieArtifact.deploy({"from": deployer})
+        self.logic[name] = BrownieArtifact.deploy({"from": deployer}, publish_source=self.publish_source)
 
     def deploy_sett(
         self,
@@ -646,6 +648,53 @@ class BadgerSystem:
         controller.setStrategy(
             want, strategy, {"from": deployer},
         )
+
+    def wire_up_sett_multisig(self, vault, strategy, controller):
+        multi = GnosisSafe(self.devMultisig, testMode=True)
+
+        want = strategy.want()
+        vault_want = vault.token()
+
+        assert vault_want == want
+
+        id = multi.addTx(
+            MultisigTxMetadata(
+                description="Set Vault for {} on Controller".format(want)
+            ),
+            {
+                "to": controller.address,
+                "data": controller.setVault.encode_input(
+                    want, vault
+                ),
+            },
+        )
+        multi.executeTx(id)
+
+        id = multi.addTx(
+            MultisigTxMetadata(
+                description="Approve Strategy for {} on Controller".format(want)
+            ),
+            {
+                "to": controller.address,
+                "data": controller.approveStrategy.encode_input(
+                    want, strategy
+                ),
+            },
+        )
+        multi.executeTx(id)
+
+        id = multi.addTx(
+            MultisigTxMetadata(
+                description="Set Strategy for {} on Controller".format(want)
+            ),
+            {
+                "to": controller.address,
+                "data": controller.setStrategy.encode_input(
+                    want, strategy
+                ),
+            },
+        )
+        multi.executeTx(id)
 
     def distribute_staking_rewards(self, id, amount, notify=False):
         deployer = self.deployer

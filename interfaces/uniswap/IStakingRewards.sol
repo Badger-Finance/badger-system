@@ -17,4 +17,8 @@ interface IStakingRewards {
     function balanceOf(address) external view returns (uint256);
 
     function exit() external;
+
+    function notifyRewardAmount(uint256 startTimestamp, uint256 reward) external;
+
+    function setRewardsDuration(uint256 _rewardsDuration) external;
 }

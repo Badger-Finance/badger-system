@@ -26,7 +26,14 @@ name_to_artifact = {
     "StrategyDiggRewards": StrategyDiggRewards,
     "StrategyDiggLpMetaFarm": StrategyDiggLpMetaFarm,
     "StrategySushiDiggWbtcLpOptimizer": StrategySushiDiggWbtcLpOptimizer,
+    "DiggRewardsFaucet": DiggRewardsFaucet,
+    "DiggSett": DiggSett,
     "HoneypotMeme": HoneypotMeme,
+    "UFragments": UFragments,
+    "UFragmentsPolicy": UFragmentsPolicy,
+    "SimpleTimelock": SimpleTimelock,
+    "SmartVesting": SmartVesting,
+    "DiggDistributor": DiggDistributor
 }
 
 

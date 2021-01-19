@@ -6,7 +6,9 @@ from config.badger_config import digg_config_test
 
 def deploy_digg_minimal(deployer, devProxyAdmin, daoProxyAdmin, owner=None):
 
-    digg = DiggSystem(digg_config_test, deployer, devProxyAdmin, daoProxyAdmin)
+    digg = DiggSystem(digg_config_test, deployer, devProxyAdmin, daoProxyAdmin, owner=deployer)
+
+    deployer = digg.deployer
 
     digg.deploy_core_logic()
     digg.deploy_digg_token()
@@ -15,6 +17,11 @@ def deploy_digg_minimal(deployer, devProxyAdmin, daoProxyAdmin, owner=None):
     digg.deploy_market_median_oracle()
     digg.deploy_cpi_median_oracle()
     digg.deploy_constant_oracle()
+
+    digg.deploy_dao_digg_timelock()
+    digg.deploy_digg_team_vesting()
+
+    print("deploy_digg_minimal", deployer)
 
     # Setup constant oracle as provider to cpi median oracle.
     digg.cpiMedianOracle.addProvider(

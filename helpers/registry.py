@@ -217,7 +217,7 @@ whale_registry = DotMap(
         action = WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT
     ),
     wbtc=DotMap(
-        whale="0x2bf792ffe8803585f74e06907900c2dc2c29adcb",
+        whale="0xc11b1268c1a384e55c48c2391d8d480264a3a7f4",
         token=token_registry.wbtc,
         action = WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT
     ),
