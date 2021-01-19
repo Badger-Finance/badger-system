@@ -27,8 +27,9 @@ def main():
     console.print("[blue]=== 🦡 Test ENV for account {} 🦡 ===[/blue]".format(user))
 
     distribute_test_ether(user, Wei("10 ether"))
+    distribute_test_ether(badger.deployer, Wei("20 ether"))
     distribute_from_whales(user)
-    
+
     digg = deploy_digg_with_existing_badger(badger, test=True, outputToFile=True, testUser=user)
 
     console.print("[green]=== ✅ Test ENV Setup Complete ✅ ===[/green]")

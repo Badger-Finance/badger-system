@@ -226,7 +226,6 @@ class DiggSystem:
             self.devProxyAdmin.address,
             self.logic.UFragments.initialize.encode_input(
                 self.owner,
-                self.config.rebaseStartTimeUnixSeconds,
             ),
             deployer,
         )
@@ -240,7 +239,6 @@ class DiggSystem:
     def deploy_constant_oracle(self):
         deployer = self.owner
         self.constantOracle = ConstantOracle.deploy(
-            CONSTANT_ORACLE_VALUE,
             self.cpiMedianOracle,
             {'from': deployer},
         )
