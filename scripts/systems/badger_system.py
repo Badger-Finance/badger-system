@@ -348,7 +348,7 @@ class BadgerSystem:
         deployer = self.deployer
         artifact = strategy_name_to_artifact(name)
         self.logic[name] = artifact.deploy(
-            {"from": deployer, "gas_price": self.gas_strategy}, publish_source=self.publish_source
+            {"from": deployer}
         )
 
         # TODO: Initialize to remove that function

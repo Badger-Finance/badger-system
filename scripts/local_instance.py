@@ -45,6 +45,7 @@ def main():
     console.print("[blue]=== 🦡 Test ENV for account {} 🦡 ===[/blue]".format(user))
 
     distribute_test_ether(user, Wei("10 ether"))
+    distribute_test_ether(badger.deployer, Wei("20 ether"))
     distribute_from_whales(user)
 
     wbtc = interface.IERC20(token_registry.wbtc)
