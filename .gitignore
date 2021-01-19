@@ -26,3 +26,6 @@ deploy-1337final.json
 
 # vim swap files
 *.swp
+
+venv
+.vscode
