@@ -183,6 +183,8 @@ def deploy_digg_with_existing_badger(badger, test=False, outputToFile=True, test
     badger.deploy_logic("DiggRewardsFaucet", DiggRewardsFaucet)
     badger.deploy_logic("DiggSett", DiggSett)
     badger.deploy_sett_strategy_logic_for("StrategyDiggRewards")
+    badger.deploy_sett_strategy_logic_for("StrategySushiDiggWbtcLpOptimizer")
+    badger.deploy_sett_strategy_logic_for("StrategyDiggLpMetaFarm")
 
     console.print("[green]== Deploy & Configure Dynamic Oracle ==[/green]")
     # Deploy simple oracle
@@ -191,7 +193,7 @@ def deploy_digg_with_existing_badger(badger, test=False, outputToFile=True, test
     digg.deploy_airdrop_distributor(digg_config.airdropRoot, badger.rewardsEscrow, digg_config.reclaimAllowedTimestamp)
 
     # Distribute required shares to airdrop
-    
+
 
     # Setup simple oracle as provider
     digg.marketMedianOracle.addProvider(
@@ -200,7 +202,7 @@ def deploy_digg_with_existing_badger(badger, test=False, outputToFile=True, test
 
     # Add DIGG to badger object
     badger.add_existing_digg(digg)
-    
+
     console.print("[green]== Deploy DIGG Native Sett ==[/green]")
     deploy_digg_native_sett(badger, digg)
 
