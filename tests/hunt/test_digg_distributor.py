@@ -25,7 +25,7 @@ def test_all_claims_full_amount(setup):
 
     claims = []
     loop = asyncio.get_event_loop()
-    with concurrent.futures.ProcessPoolExecutor() as pool:
+    with concurrent.futures.ThreadPoolExecutor() as pool:
         for user, claim in airdrop["claims"].items():
             claims.append(_process_claim(loop, pool, digg, user, claim))
 
