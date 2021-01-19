@@ -11,6 +11,7 @@ cache
 local.json
 .pytest_cache
 docs
+/.idea
 
 flatten
 
