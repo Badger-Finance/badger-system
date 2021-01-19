@@ -11,6 +11,7 @@ cache
 local.json
 .pytest_cache
 docs
+venv
 
 flatten
 
@@ -32,3 +33,6 @@ deploy-1337final.json
 
 # vim swap files
 *.swp
+
+# vs code specific
+.vscode
