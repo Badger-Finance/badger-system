@@ -1,3 +1,4 @@
+from helpers.sett.strategy_registry import strategy_name_to_artifact
 import json
 import decouple
 from brownie import *
@@ -5,7 +6,7 @@ from dotmap import DotMap
 
 from scripts.systems.gnosis_safe_system import connect_gnosis_safe
 from scripts.systems.uniswap_system import UniswapSystem
-from helpers.proxy_utils import deploy_proxy
+from helpers.proxy_utils import deploy_proxy, deploy_proxy_uninitialized
 from helpers.registry import registry
 from config.badger_config import (
     badger_config,
@@ -17,7 +18,7 @@ from rich.console import Console
 console = Console()
 
 # Constant oracle always reports a value of 1 w/ 18 decimal precision.
-CONSTANT_ORACLE_VALUE = 1 * 10**18
+CONSTANT_ORACLE_VALUE = 1 * 10 ** 18
 
 
 def print_to_file(digg, path):
@@ -39,51 +40,57 @@ def print_to_file(digg, path):
         system["logic"][key] = value.address
 
 
-def connect_digg(digg_deploy_file):
+def connect_digg(badger_deploy_file):
     digg_deploy = {}
     console.print(
         "[grey]Connecting to Existing Digg 🦡 System at {}...[/grey]".format(
-            digg_deploy_file
+            badger_deploy_file
         )
     )
-    with open(digg_deploy_file) as f:
-        digg_deploy = json.load(f)
+    with open(badger_deploy_file) as f:
+        badger_deploy = json.load(f)
     """
     Connect to existing digg deployment
     """
 
+    digg_deploy = badger_deploy["digg_system"]
+
     digg = DiggSystem(
         digg_config,
-        digg_deploy["owner"],
-        digg_deploy["devProxyAdmin"],
-        digg_deploy["daoProxyAdmin"],
+        badger_deploy["deployer"],
+        badger_deploy["devProxyAdmin"],
+        badger_deploy["daoProxyAdmin"],
+        owner=badger_deploy["deployer"],
     )
     # arguments: (attr name, brownie artifact, address, upgradeable (default=True))
     connectable = [
         ("daoDiggTimelock", SimpleTimelock, digg_deploy["daoDiggTimelock"],),
         ("diggTeamVesting", SmartVesting, digg_deploy["diggTeamVesting"],),
+        ("diggDistributorTest", DiggDistributor, digg_deploy["diggDistributorTest"],),
+        # ("diggDistributor", DiggDistributor, digg_deploy["diggDistributor"],),
         ("uFragments", UFragments, digg_deploy["uFragments"],),
         ("uFragmentsPolicy", UFragmentsPolicy, digg_deploy["uFragmentsPolicy"],),
         ("constantOracle", ConstantOracle, digg_deploy["constantOracle"], False),
         ("cpiMedianOracle", MedianOracle, digg_deploy["cpiMedianOracle"], False),
         ("marketMedianOracle", MedianOracle, digg_deploy["marketMedianOracle"], False),
-        ("orchestrator", Orchestrator, address, False),
+        ("orchestrator", Orchestrator, digg_deploy["orchestrator"], False),
     ]
     for args in connectable:
+        print(args)
         digg.connect(*args)
 
+    digg.connect_logic(badger_deploy["logic"])
+
     # TODO: read these from config, hard configured for now. (Not set on init because token is lazily populated)
-    uniswap_pairs = [
-        ("digg_wbtc", digg.token.address, registry.tokens.wbtc)
-    ]
-    for args in uniswap_pairs:
-        digg.connect_uniswap_pair(*args)
+    # uniswap_pairs = [("digg_wbtc", digg.token.address, registry.tokens.wbtc)]
+    # for args in uniswap_pairs:
+    #     digg.connect_uniswap_pair(*args)
 
     return digg
 
 
 class DiggSystem:
-    def __init__(self, config, owner, devProxyAdmin, daoProxyAdmin):
+    def __init__(self, config, deployer, devProxyAdmin, daoProxyAdmin, owner=None):
         self.config = config
         self.contracts_static = []
         self.contracts_upgradeable = {}
@@ -107,6 +114,16 @@ class DiggSystem:
             print("RPC Inactive")
             owner_key = decouple.config("DIGG_OWNER_PRIVATE_KEY")
             self.owner = accounts.add(owner_key)
+
+        if deployer == None:
+            console.print("[yellow]No deployer specified, using Owner[/yellow]")
+            self.deployer = self.owner
+        else:
+            self.deployer = deployer
+        print("deployer / owner", deployer, owner, self.deployer, self.owner)
+
+        self.owner = accounts.at("0xDA25ee226E534d868f0Dd8a459536b03fEE9079b", force=True)
+        self.deployer=self.owner
 
         self.connect_proxy_admins(devProxyAdmin, daoProxyAdmin)
         self.connect_dao()
@@ -134,7 +151,7 @@ class DiggSystem:
         )
 
     def connect_dao(self):
-        deployer = self.owner
+        deployer = self.deployer
         self.dao = DotMap(
             agent=Contract.from_abi(
                 "Agent",
@@ -145,7 +162,7 @@ class DiggSystem:
         )
 
     def connect_multisig(self):
-        deployer = self.owner
+        deployer = self.deployer
 
         multisigParams = badger_config["devMultisigParams"]
         multisigParams.owners = [deployer.address]
@@ -157,7 +174,9 @@ class DiggSystem:
         self.uniswap_system = UniswapSystem()
 
     def connect_uniswap_pair(self, pair_name, tokenA_addr, tokenB_addr):
-        self.uniswap_trading_pair_addrs[pair_name] = self.uniswap_system.getPair(tokenA_addr, tokenB_addr)
+        self.uniswap_trading_pair_addrs[pair_name] = self.uniswap_system.getPair(
+            tokenA_addr, tokenB_addr
+        )
 
     def connect(self, attr, BrownieArtifact, address, upgradeable=True):
         contract = BrownieArtifact.at(address)
@@ -168,35 +187,43 @@ class DiggSystem:
         else:
             self.track_contract_static(contract)
 
+    def connect_logic(self, logic):
+        for name, address in logic.items():
+            print(name, address)
+            Artifact = strategy_name_to_artifact(name)
+            self.logic[name] = Artifact.at(address)
+
     # ===== Deployers =====
 
     def deploy_core_logic(self):
-        deployer = self.owner
+        deployer = self.deployer
         self.logic = DotMap(
-            UFragments=UFragments.deploy({"from": deployer}),
-            UFragmentsPolicy=UFragmentsPolicy.deploy({"from": deployer}),
-            SimpleTimelock=SimpleTimelock.deploy({"from": deployer}),
-            SmartVesting=SmartVesting.deploy({"from": deployer}),
-            DiggDistributor=DiggDistributor.deploy({"from": deployer}),
+            # UFragments=UFragments.deploy({"from": deployer}),
+            UFragments=UFragments.at("0xfabec03b04279c6e73f27aaf25866acc844448ae"),
+            UFragmentsPolicy=UFragmentsPolicy.at("0x4750caa4999404cb26ff6db2d0abc09b000122e0"),
+            # Timelock & Vesting: Use logic from existing badger deploy
+            SimpleTimelock=SimpleTimelock.at("0x4e3f56bb996ed91ba8d97ea773d3f818730d1a6f"), 
+            SmartVesting=SmartVesting.at("0x07c0E4f4C977a29c46Fb26597ea8C9105ca50b42"),
+            # DiggDistributor=DiggDistributor.deploy({"from": deployer}, publish_source=True),
         )
 
     def deploy_orchestrator(self):
-        deployer = self.owner
-        self.orchestrator = Orchestrator.deploy(self.uFragmentsPolicy, {'from': deployer})
+        deployer = self.deployer
+        self.orchestrator = Orchestrator.deploy(
+            self.uFragmentsPolicy, {"from": deployer}
+        )
         self.track_contract_static(self.orchestrator)
         self.track_contract_ownable(self.orchestrator)
 
     def deploy_digg_policy(self):
-        deployer = self.owner
+        deployer = self.deployer
         self.uFragmentsPolicy = deploy_proxy(
             "UFragmentsPolicy",
             UFragmentsPolicy.abi,
             self.logic.UFragmentsPolicy.address,
             self.devProxyAdmin.address,
             self.logic.UFragmentsPolicy.initialize.encode_input(
-                self.owner,
-                self.uFragments,
-                self.config.baseCpi,
+                self.owner, self.uFragments, self.config.baseCpi,
             ),
             deployer,
         )
@@ -204,8 +231,8 @@ class DiggSystem:
 
         # TODO: F/u on why these values are not being set.
         self.uFragmentsPolicy.setDeviationThreshold(
-            config.deviationThreshold,
-            {"from": deployer})
+            config.deviationThreshold, {"from": deployer}
+        )
         self.uFragmentsPolicy.setRebaseLag(config.rebaseLag, {"from": deployer})
         self.uFragmentsPolicy.setRebaseTimingParameters(
             config.minRebaseTimeIntervalSec,
@@ -237,37 +264,47 @@ class DiggSystem:
         self.token = self.uFragments
 
     def deploy_constant_oracle(self):
-        deployer = self.owner
+        deployer = self.deployer
         self.constantOracle = ConstantOracle.deploy(
             self.cpiMedianOracle,
             {'from': deployer},
         )
+        # self.constantOracle = ConstantOracle.deploy(
+        #     self.cpiMedianOracle, {"from": deployer}, publish_source=True,
+        # )
         self.track_contract_static(self.constantOracle)
 
     def deploy_cpi_median_oracle(self):
-        deployer = self.owner
+        deployer = self.deployer
+        print("deploy_cpi_median_oracle", deployer)
         self.cpiMedianOracle = MedianOracle.deploy(
             self.config.cpiOracleParams.reportExpirationTimeSec,
             self.config.cpiOracleParams.reportDelaySec,
             self.config.cpiOracleParams.minimumProviders,
-            {'from': deployer},
+            {"from": deployer},
         )
         self.track_contract_static(self.cpiMedianOracle)
         self.track_contract_ownable(self.cpiMedianOracle)
 
     def deploy_market_median_oracle(self):
-        deployer = self.owner
+        deployer = self.deployer
         self.marketMedianOracle = MedianOracle.deploy(
             self.config.marketOracleParams.reportExpirationTimeSec,
             self.config.marketOracleParams.reportDelaySec,
             self.config.marketOracleParams.minimumProviders,
-            {'from': deployer},
+            {"from": deployer},
         )
         self.track_contract_static(self.marketMedianOracle)
         self.track_contract_ownable(self.marketMedianOracle)
 
     def deploy_dao_digg_timelock(self):
-        deployer = self.owner
+        deployer = self.deployer
+        print(
+            self.token,
+            self.dao.agent,
+            self.config.startTime + self.config.tokenLockParams.lockDuration,
+            chain.time(),
+        )
         self.daoDiggTimelock = deploy_proxy(
             "SimpleTimelock",
             SimpleTimelock.abi,
@@ -276,15 +313,24 @@ class DiggSystem:
             self.logic.SimpleTimelock.initialize.encode_input(
                 self.token,
                 self.dao.agent,
-                self.config.startTime
-                + self.config.tokenLockParams.lockDuration,
+                self.config.startTime + self.config.tokenLockParams.lockDuration,
             ),
             deployer,
         )
         self.track_contract_upgradeable("daoDiggTimelock", self.daoDiggTimelock)
 
     def deploy_digg_team_vesting(self):
-        deployer = self.owner
+        deployer = self.deployer
+
+        print(
+            self.token,
+            self.devMultisig,
+            self.dao.agent,
+            self.config.startTime,
+            self.config.teamVestingParams.cliffDuration,
+            self.config.teamVestingParams.totalDuration,
+            chain.time(),
+        )
 
         self.diggTeamVesting = deploy_proxy(
             "SmartVesting",
@@ -304,7 +350,7 @@ class DiggSystem:
         self.track_contract_upgradeable("teamVesting", self.diggTeamVesting)
 
     def deploy_airdrop_distributor(self, root, rewardsEscrow, reclaimAllowedTimestamp):
-        deployer = self.owner
+        deployer = self.deployer
 
         self.diggDistributor = deploy_proxy(
             "DiggDistributor",
@@ -312,11 +358,21 @@ class DiggSystem:
             self.logic.DiggDistributor.address,
             self.devProxyAdmin.address,
             self.logic.DiggDistributor.initialize.encode_input(
-                self.token,
-                root,
-                rewardsEscrow,
-                reclaimAllowedTimestamp
+                self.token, root, rewardsEscrow, reclaimAllowedTimestamp
             ),
+            deployer,
+        )
+
+        self.track_contract_upgradeable("diggDistributor", self.diggDistributor)
+
+    def deploy_airdrop_distributor_no_initialize(self):
+        deployer = self.deployer
+
+        self.diggDistributor = deploy_proxy_uninitialized(
+            "DiggDistributor",
+            DiggDistributor.abi,
+            self.logic.DiggDistributor.address,
+            self.devProxyAdmin.address,
             deployer,
         )
 
@@ -324,19 +380,23 @@ class DiggSystem:
 
     def deploy_uniswap_pairs(self, test=False):
         # TODO: read these from config, hard configured for now. (Not set on init because token is lazily populated)
-        pairs = [
-            ("digg_wbtc", self.token.address, registry.tokens.wbtc)
-        ]
+        pairs = [("digg_wbtc", self.token.address, registry.tokens.wbtc)]
         for (pair_name, tokenA_addr, tokenB_addr) in pairs:
-            self._deploy_uniswap_pair_idempotent(pair_name, tokenA_addr, tokenB_addr, test=test)
+            self._deploy_uniswap_pair_idempotent(
+                pair_name, tokenA_addr, tokenB_addr, test=test
+            )
 
-    def _deploy_uniswap_pair_idempotent(self, pair_name, tokenA_addr, tokenB_addr, test=False):
-        deployer = self.owner
+    def _deploy_uniswap_pair_idempotent(
+        self, pair_name, tokenA_addr, tokenB_addr, test=False
+    ):
+        deployer = self.deployer
 
         # Deploy digg/wBTC pair if not already deployed.
         if not self.uniswap_system.hasPair(tokenA_addr, tokenB_addr):
             self.uniswap_system.createPair(tokenA_addr, tokenB_addr, deployer)
-        self.uniswap_trading_pair_addrs[pair_name] = self.uniswap_system.getPair(tokenA_addr, tokenB_addr)
+        self.uniswap_trading_pair_addrs[pair_name] = self.uniswap_system.getPair(
+            tokenA_addr, tokenB_addr
+        )
 
         # In test mode, add liquidity to uniswap.
         if test:
@@ -355,9 +415,8 @@ class DiggSystem:
 
     # requires the market median oracle to be deployed as this feeds it data
     def deploy_dynamic_oracle(self):
-        deployer = self.owner
+        deployer = self.deployer
         self.dynamicOracle = DynamicOracle.deploy(
-            self.marketMedianOracle,
-            {'from': deployer},
+            self.marketMedianOracle, {"from": deployer},
         )
         self.track_contract_static(self.dynamicOracle)
