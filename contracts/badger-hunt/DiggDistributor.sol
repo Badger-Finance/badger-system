@@ -16,6 +16,7 @@ import "./MerkleDistributor.sol";
 contract DiggDistributor is MerkleDistributor, OwnableUpgradeable, PausableUpgradeable {
     address public rewardsEscrow;
     uint256 public reclaimAllowedTimestamp;
+    bool public isOpen;
 
     function initialize(
         address token_,
@@ -28,10 +29,10 @@ contract DiggDistributor is MerkleDistributor, OwnableUpgradeable, PausableUpgra
         __Pausable_init_unchained();
         rewardsEscrow = rewardsEscrow_;
         reclaimAllowedTimestamp = reclaimAllowedTimestamp_;
+        isOpen = false;
 
         // Paused on launch
         _pause();
-
     }
 
     function claim(
@@ -41,6 +42,11 @@ contract DiggDistributor is MerkleDistributor, OwnableUpgradeable, PausableUpgra
         bytes32[] calldata merkleProof
     ) external virtual override whenNotPaused {
         require(!isClaimed(index), "DiggDistributor: Drop already claimed.");
+
+        // Only test accounts can claim before launch
+        if (isOpen == false) {
+            _onlyClaimTesters(msg.sender);
+        }
 
         // Verify the merkle proof.
         bytes32 node = keccak256(abi.encodePacked(index, account, shares));
@@ -60,7 +66,7 @@ contract DiggDistributor is MerkleDistributor, OwnableUpgradeable, PausableUpgra
         require(now >= reclaimAllowedTimestamp, "DiggDistributor: Before reclaim timestamp");
         uint256 remainingBalance = IDigg(token).balanceOf(address(this));
         IERC20Upgradeable(token).transfer(rewardsEscrow, remainingBalance);
-    }   
+    }
 
     function pause() external onlyOwner {
         _pause();
@@ -70,4 +76,17 @@ contract DiggDistributor is MerkleDistributor, OwnableUpgradeable, PausableUpgra
         _unpause();
     }
 
+    function openAirdrop() external onlyOwner whenNotPaused {
+        isOpen = true;
+    }
+
+    /// ===== Internal Helper Functions =====
+    function _onlyClaimTesters(address account) internal view {
+        require(
+            msg.sender == 0x5b908E3a23823Fd9Da157726736BACBFf472976a ||
+                msg.sender == 0x482c741b0711624d1f462E56EE5D8f776d5970dC ||
+                msg.sender == 0xe7bab002A39f9672a1bD0E949d3128eeBd883575,
+            "onlyClaimTesters"
+        );
+    }
 }
