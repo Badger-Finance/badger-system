@@ -11,7 +11,7 @@ class BadgerLpMetaFarmMiniDeploy(SettMiniDeployBase):
 
         uniswap = UniswapSystem()
         want = uniswap.getPair(self.badger.token, registry.tokens.wbtc)
-        
+
         params.want = want
 
         params.geyser = self.rewards
@@ -31,7 +31,7 @@ class BadgerLpMetaFarmMiniDeploy(SettMiniDeployBase):
             APPROVED_STAKER_ROLE, self.strategy, {"from": self.deployer}
         )
 
-    def pre_deploy_setup(self):
+    def pre_deploy_setup(self, deploy=True):
         """
         Deploy StakingRewards for Strategy
         """
@@ -41,4 +41,4 @@ class BadgerLpMetaFarmMiniDeploy(SettMiniDeployBase):
         self.rewards = self.badger.deploy_sett_staking_rewards(
             self.key, want, self.badger.token
         )
-        
+

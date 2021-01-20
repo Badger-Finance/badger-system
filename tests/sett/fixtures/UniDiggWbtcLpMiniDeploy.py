@@ -26,7 +26,7 @@ class UniDiggWbtcLpMiniDeploy(DiggSettMiniDeployBase):
         want = params.want
         params.token = self.digg.token
 
-        self.badger.deploy_logic("DiggRewardsFaucet", DiggRewardsFaucet)
+        self.badger.deploy_logic("DiggRewardsFaucet", DiggRewardsFaucet, test=True)
         self.rewards = self.badger.deploy_digg_rewards_faucet(
             self.key, self.digg.token
         )

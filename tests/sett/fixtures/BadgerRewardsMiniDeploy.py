@@ -26,7 +26,7 @@ class BadgerRewardsMiniDeploy(SettMiniDeployBase):
             APPROVED_STAKER_ROLE, self.strategy, {"from": self.deployer}
         )
 
-    def pre_deploy_setup(self):
+    def pre_deploy_setup(self, deploy=True):
         """
         Deploy StakingRewards for Strategy
         """

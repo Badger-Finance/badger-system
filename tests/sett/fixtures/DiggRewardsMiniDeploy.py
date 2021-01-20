@@ -5,13 +5,11 @@ from brownie import DiggRewardsFaucet, chain
 from tests.sett.fixtures.DiggSettMiniDeployBase import DiggSettMiniDeployBase
 from config.badger_config import sett_config, digg_config_test
 
-
 class DiggRewardsMiniDeploy(DiggSettMiniDeployBase):
     def fetch_params(self):
         params = sett_config.native.badger.params
         params.want = self.digg.token
         want = params.want
-
 
         self.rewards = self.badger.deploy_digg_rewards_faucet(
             self.key, self.digg.token

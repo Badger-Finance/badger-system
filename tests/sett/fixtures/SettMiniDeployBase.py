@@ -1,11 +1,14 @@
 from brownie import Wei
-from dotmap import DotMap
 
 from helpers.token_utils import distribute_from_whales, distribute_test_ether
+from scripts.systems.badger_system import BadgerSystem, connect_badger
 from scripts.systems.badger_minimal import deploy_badger_minimal
 from scripts.systems.constants import SettType
+from config.badger_config import badger_config
 from rich.console import Console
+
 console = Console()
+
 
 class SettMiniDeployBase:
     def __init__(
@@ -36,15 +39,38 @@ class SettMiniDeployBase:
         self.guardian = guardian
         self.deployer = deployer
 
-    def deploy(self, new_badger=True, sett_type=SettType.DEFAULT):
-        if (new_badger):
-            self.badger = deploy_badger_minimal(self.deployer, self.keeper, self.guardian)
-            self.controller = self.badger.add_controller(self.key)
-        else:
-            self.badger = ""
+    def deploy(self, sett_type=SettType.DEFAULT, deploy=True) -> BadgerSystem:
+        if not deploy:
+            self.badger = connect_badger(badger_config.prod_json)
+
+            self.pre_deploy_setup(deploy=deploy)
+
+            (params, want) = self.fetch_params()
+            self.params = params
+            self.want = want
+
+            distribute_test_ether(self.deployer, Wei("20 ether"))
+            distribute_from_whales(self.deployer)
+
+            self.controller = self.badger.sett_system.controllers[self.key]
+            self.vault = self.badger.sett_system.vaults[self.key]
+
+            self.post_vault_deploy_setup()
+
+            self.strategy = self.badger.sett_system.strategies[self.key]
+
+            self.post_deploy_setup()
+
+            if self.vault.paused():
+                self.vault.unpause({"from": self.governance})
+
+            return self.badger
+
+        self.badger = deploy_badger_minimal(self.deployer, self.keeper, self.guardian)
+        self.controller = self.badger.add_controller(self.key)
         self.deploy_required_logic()
 
-        self.pre_deploy_setup()
+        self.pre_deploy_setup(deploy=deploy)
 
         (params, want) = self.fetch_params()
 
@@ -98,7 +124,7 @@ class SettMiniDeployBase:
     def fetch_params(self):
         return False
 
-    def pre_deploy_setup(self):
+    def pre_deploy_setup(self, deploy=True):
         return False
 
     def post_deploy_setup(self):

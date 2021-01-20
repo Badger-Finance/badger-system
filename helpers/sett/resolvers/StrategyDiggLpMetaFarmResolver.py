@@ -36,6 +36,7 @@ class StrategyDiggLpMetaFarmResolver(StrategyCoreResolver):
         digg = interface.IERC20(strategy.digg())
 
         calls = self.add_entity_balances_for_tokens(calls, "digg", digg, entities)
+        calls = self.add_entity_shares_for_tokens(calls, "digg", digg, entities)
         return calls
 
     def get_strategy_destinations(self):
