@@ -180,7 +180,7 @@ dao_config = DotMap(
 globalStartTime = 1607014800
 
 badger_config = DotMap(
-    prod_json="deploy-final.json",
+    prod_json="deploy-test-digg.json",
     test_mode=False,
     startMultiplier=1,
     endMultiplier=3,
@@ -361,7 +361,7 @@ digg_config = DotMap(
     # TODO: Set this to the prod airdrop root
     airdropRoot="0x9bd11f5585bb45f827575bdfedc2d2110d46f74b95ab9961eaf49c35ed42f240",
     airdropTotalShares="0x9bd11f5585bb45f827575bdfedc2d2110d46f74b95ab9961eaf49c35ed42f240",
-    # TODO: Need to set this value to exact time we want allow reclaiming of airdrop. 
+    # TODO: Need to set this value to exact time we want allow reclaiming of airdrop.
     reclaimAllowedTimestamp=chain.time()
 )
 

@@ -257,9 +257,9 @@ def init_prod_digg(badger: BadgerSystem, user):
 
     # DiggSeeder
     """
-    The seeder will 
+    The seeder will
 
-    - 
+    -
     - Have ownership over the airdrop (for unpauise)
     """
 

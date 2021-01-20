@@ -91,7 +91,6 @@ class StrategyDiggRewardsResolver(StrategyCoreResolver):
 
     def add_balances_snap(self, calls, entities):
         calls = super().add_balances_snap(calls, entities)
-        # Add FARM token balances.
         digg = interface.IERC20(self.manager.strategy.want())
 
         calls = self.add_entity_balances_for_tokens(calls, "digg", digg, entities)

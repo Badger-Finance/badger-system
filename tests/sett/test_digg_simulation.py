@@ -10,7 +10,8 @@ from tests.conftest import badger_single_sett, diggSettTestConfig
     "settConfig", diggSettTestConfig,
 )
 def test_simulation(settConfig):
-    badger = badger_single_sett(settConfig)
+    # connect to prod deploy and run simulation
+    badger = badger_single_sett(settConfig, deploy=False)
     snap = DiggSnapshotManager(badger, settConfig["id"])
     simulation = SimulationManager(badger, snap, settConfig["id"])
 

@@ -3,7 +3,7 @@ from helpers.gnosis_safe import GnosisSafe, MultisigTxMetadata
 from brownie.network.gas.strategies import GasNowScalingStrategy
 from helpers.sett.strategy_registry import strategy_name_to_artifact
 import json
-import decouple 
+import decouple
 
 from scripts.systems.uniswap_system import UniswapSystem
 from scripts.systems.gnosis_safe_system import connect_gnosis_safe
@@ -462,8 +462,12 @@ class BadgerSystem:
         )
         self.track_contract_upgradeable("teamVesting", self.teamVesting)
 
-    def deploy_logic(self, name, BrownieArtifact):
+    def deploy_logic(self, name, BrownieArtifact, test=False):
         deployer = self.deployer
+        if test:
+            self.logic[name] = BrownieArtifact.deploy({"from": deployer})
+            return
+
         self.logic[name] = BrownieArtifact.deploy({"from": deployer}, publish_source=self.publish_source)
 
     def deploy_sett(
