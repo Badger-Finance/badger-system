@@ -8,6 +8,7 @@ import "interfaces/uniswap/IStakingRewards.sol";
 import "interfaces/uniswap/IUniswapRouterV2.sol";
 import "interfaces/badger/IPausable.sol";
 import "interfaces/badger/IOwnable.sol";
+import "interfaces/digg/IDiggDistributor.sol";
 import "interfaces/digg/IDigg.sol";
 import "interfaces/digg/IDiggRewardsFaucet.sol";
 
@@ -58,6 +59,17 @@ contract DiggSeeder is OwnableUpgradeable {
         __Ownable_init();
     }
 
+    function preSeed() external onlyOwner {
+        // Distribute DIGG to airdorp, Open airdrop for UI testers only
+        IPausable(airdrop).unpause();
+
+        // airdrop_pct = 15%
+        require(IDigg(digg).transfer(airdrop, AIRDROP_SUPPLY), "transfer airdrop");
+
+        require(IDigg(digg).balanceOf(airdrop) == AIRDROP_SUPPLY, "AIRDROP_SUPPLY");
+        require(IDiggDistributor(airdrop).isOpen() == false, "isOpen");
+    }
+
     function seed() external onlyOwner {
         require(seeded == false, "Already Seeded");
         // ===== Configure Emissions Schedules =====
@@ -83,6 +95,7 @@ contract DiggSeeder is OwnableUpgradeable {
         geyser = IBadgerGeyser(native_badger_geyser);
         geyser.signalTokenLock(digg, IDigg(digg).fragmentsToShares(4170000000), 7 days, now);
         IAccessControl(address(geyser)).renounceRole(TOKEN_LOCKER_ROLE, address(this));
+
 
         // == native.renCrv ==
         geyser = IBadgerGeyser(native_renCrv_geyser);
@@ -157,6 +170,8 @@ contract DiggSeeder is OwnableUpgradeable {
         rewards.notifyRewardAmount(now, 7 days, amountInShares);
         IAccessControl(address(rewards)).renounceRole(DEFAULT_ADMIN_ROLE, address(this));
 
+        
+
         // ===== Lock Initial Liquidity =====
         IDigg(digg).approve(uniRouter, 1000000000);
         IDigg(wbtc).approve(uniRouter, 100000000);
@@ -168,29 +183,27 @@ contract DiggSeeder is OwnableUpgradeable {
 
         IUniswapRouterV2(sushiRouter).addLiquidity(digg, wbtc, 1000000000, 100000000, 1000000000, 100000000, rewardsEscrow, now);
 
+
         // ===== Initial DIGG Distribution =====
 
         // dao_treasury_pct = 40%
-        IDigg(digg).transfer(daoDiggTimelock, DAO_TREASURY_SUPPLY);
+        require(IDigg(digg).transfer(daoDiggTimelock, DAO_TREASURY_SUPPLY), "transfer DAO_TREASURY_SUPPLY");
 
         // team_vesting_pct = 5%
-        IDigg(digg).transfer(teamVesting, TEAM_VESTING_SUPPLY);
-
-        // airdrop_pct = 15%
-        IDigg(digg).transfer(airdrop, AIRDROP_SUPPLY);
+        require(IDigg(digg).transfer(teamVesting, TEAM_VESTING_SUPPLY), "transfer TEAM_VESTING_SUPPLY");
 
         uint256 remainingBalance = IDigg(digg).balanceOf(address(this));
+
         // liquidity_mining_pct = 40% - already distributed
         require(LIQUIDITY_MINING_SUPPLY > remainingBalance, "Excess DIGG remaining");
-        IDigg(digg).transfer(rewardsEscrow, remainingBalance);
+        require(IDigg(digg).transfer(rewardsEscrow, remainingBalance), "transfer LIQUIDITY_MINING_SUPPLY");
 
         require(IDigg(digg).balanceOf(rewardsEscrow) == remainingBalance, "LIQUIDITY_MINING_SUPPLY");
         require(IDigg(digg).balanceOf(daoDiggTimelock) == DAO_TREASURY_SUPPLY, "DAO_TREASURY_SUPPLY");
         require(IDigg(digg).balanceOf(teamVesting) == TEAM_VESTING_SUPPLY, "TEAM_VESTING_SUPPLY");
-        require(IDigg(digg).balanceOf(airdrop) == AIRDROP_SUPPLY, "AIRDROP_SUPPLY");
 
-        // ===== Unpause Airdrop =====
-        // IPausable(airdrop).unpause();
+        // ===== Open Airdrop & Transfer to Multisig =====
+        IDiggDistributor(airdrop).openAirdrop();
         IOwnable(airdrop).transferOwnership(devMultisig);
 
         seeded = true;
