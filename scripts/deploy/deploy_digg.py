@@ -1,4 +1,6 @@
 #!/usr/bin/python3
+from scripts.systems.aragon_system import AragonSystem
+from helpers.proxy_utils import deploy_proxy
 from helpers.gnosis_safe import GnosisSafe, MultisigTxMetadata
 import time
 from scripts.systems.uniswap_system import UniswapSystem
@@ -255,21 +257,144 @@ def init_prod_digg(badger: BadgerSystem, user):
 
     multi = GnosisSafe(badger.devMultisig)
 
-    # DiggSeeder
-    """
-    The seeder will
-
-    -
-    - Have ownership over the airdrop (for unpauise)
-    """
+    digg_liquidity_amount = 1000000000
+    wbtc_liquidity_amount = 100000000
 
     print("TOKEN_LOCKER_ROLE", TOKEN_LOCKER_ROLE)
     locker_role = "0x4bf6f2cdcc8ad6c087a7a4fbecf46150b3686b71387234cac2b3e2e6dc70e345"
 
     # TODO: Have this as proxy in real deploy
-    seeder = DiggSeeder.deploy({"from": deployer})
-    seeder.initialize({"from": deployer})
-    digg.diggDistributorTest.transferOwnership(seeder, {"from": deployer})
+    seederLogic = DiggSeeder.deploy({"from": deployer})
+
+    seeder = deploy_proxy(
+        "DiggSeeder",
+        DiggSeeder.abi,
+        seederLogic.address,
+        badger.devProxyAdmin.address,
+        seederLogic.initialize.encode_input(),
+        deployer,
+    )
+
+    # Take initial liquidity from DAO
+    aragon = AragonSystem()
+
+    voting = aragon.getVotingAt("0xdc344bfb12522bf3fa58ef0d6b9a41256fc79a1b")
+    # voting.vote(0, True, True, {'from': deployer})
+
+    # PROD: Configure DIGG
+    digg.uFragmentsPolicy.setCpiOracle(
+        digg.cpiMedianOracle, {"from": deployer},
+    )
+    digg.uFragmentsPolicy.setMarketOracle(
+        digg.marketMedianOracle, {"from": deployer},
+    )
+    digg.uFragmentsPolicy.setOrchestrator(
+        digg.orchestrator, {"from": deployer},
+    )
+    digg.uFragments.setMonetaryPolicy(
+        digg.uFragmentsPolicy, {"from": deployer},
+    )
+
+    # ===== Upgrade DAOTimelock to allow voting =====
+    timelockWithVotingLogic = SimpleTimelockWithVoting.deploy({"from": deployer})
+    timelock = interface.ISimpleTimelockWithVoting(badger.daoBadgerTimelock.address)
+
+    multi.execute(
+        MultisigTxMetadata(description="Upgrade DAO Badger Timelock to Allow voting",),
+        {
+            "to": badger.devProxyAdmin.address,
+            "data": badger.devProxyAdmin.upgrade.encode_input(
+                badger.daoBadgerTimelock, timelockWithVotingLogic
+            ),
+        },
+    )
+
+    # ===== Vote to move initial liquidity funds to multisig  =====
+    tx = multi.execute(
+        MultisigTxMetadata(description="Vote on DAO Timelock from multisig",),
+        {
+            "to": timelock.address,
+            "data": timelock.call.encode_input(
+                voting, 0, voting.vote.encode_input(0, True, True)
+            ),
+        },
+    )
+
+    # Approve DAO voting as recipient
+    multi.execute(
+        MultisigTxMetadata(description="Approve DAO voting as recipient",),
+        {
+            "to": badger.rewardsEscrow.address,
+            "data": badger.rewardsEscrow.approveRecipient.encode_input(voting),
+        },
+    )
+
+    # Vote on DAO voting as rewardsEscrow
+
+    before = badger.token.balanceOf(badger.rewardsEscrow)
+
+    tx = multi.execute(
+        MultisigTxMetadata(description="Vote on Rewards Escrow from multisig",),
+        {
+            "to": badger.rewardsEscrow.address,
+            "data": badger.rewardsEscrow.call.encode_input(
+                voting, 0, voting.vote.encode_input(0, True, True)
+            ),
+        },
+    )
+
+    after = badger.token.balanceOf(badger.rewardsEscrow)
+
+    print(tx.call_trace())
+
+    assert after == before
+
+    crvRen = interface.IERC20(registry.curve.pools.renCrv.token)
+    wbtc = interface.IERC20(registry.tokens.wbtc)
+    assert crvRen.balanceOf(badger.devMultisig) >= wbtc_liquidity_amount * 10 ** 10 * 2
+
+    crvPool = interface.ICurveZap(registry.curve.pools.renCrv.swap)
+
+    # crvPool.Remove_liquidity_one_coin(
+    #     wbtc_liquidity_amount * 10 ** 10, 1, wbtc_liquidity_amount
+    # )
+
+    # ===== Convert crvRen to wBTC on multisig =====
+    tx = multi.execute(
+        MultisigTxMetadata(description="Withdraw crvRen for 100% WBTC",),
+        {
+            "to": crvPool.address,
+            "data": crvPool.remove_liquidity_one_coin.encode_input(
+                wbtc_liquidity_amount * 10 ** 10 * 2, 1, wbtc_liquidity_amount * 2
+            ),
+        },
+    )
+
+    assert wbtc.balanceOf(badger.devMultisig) >= wbtc_liquidity_amount * 2
+
+    # ===== Move initial liquidity funds to Seeder =====
+    multi.execute(
+        MultisigTxMetadata(
+            description="Transfer initial liquidity WBTC to the Seeder",
+        ),
+        {"to": wbtc.address, "data": wbtc.transfer.encode_input(seeder, 200000000),},
+    )
+
+    # ===== Move DIGG to Seeder =====
+    digg.token.transfer(seeder, digg.token.totalSupply(), {"from": deployer})
+
+    # ===== Move Required Badger to Seeder from RewardsEscrow =====
+    multi.execute(
+        MultisigTxMetadata(
+            description="Move Required Badger to Seeder from RewardsEscrow",
+        ),
+        {
+            "to": badger.rewardsEscrow.address,
+            "data": badger.rewardsEscrow.transfer.encode_input(
+                badger.token, seeder, Wei("30000 ether")
+            ),
+        },
+    )
 
     # ===== Add DIGG token to all geyser distribution lists =====
     # (Also, add Seeder as approved schedule creator)
@@ -305,7 +430,7 @@ def init_prod_digg(badger: BadgerSystem, user):
 
         assert geyser.hasRole(DEFAULT_ADMIN_ROLE, badger.devMultisig)
 
-        id = multi.addTx(
+        multi.execute(
             MultisigTxMetadata(
                 description="Allow Seeder to set unlock schedules on {} geyser".format(
                     key
@@ -316,8 +441,6 @@ def init_prod_digg(badger: BadgerSystem, user):
                 "data": geyser.grantRole.encode_input(locker_role, seeder),
             },
         )
-
-        tx = multi.executeTx(id)
 
         assert geyser.hasRole(locker_role, seeder)
 
@@ -334,12 +457,41 @@ def init_prod_digg(badger: BadgerSystem, user):
         rewards.grantRole(DEFAULT_ADMIN_ROLE, badger.devMultisig, {"from": deployer})
         rewards.renounceRole(DEFAULT_ADMIN_ROLE, deployer, {"from": deployer})
 
-    digg.token.transfer(seeder, digg.token.totalSupply(), {"from": deployer})
-    wbtc = interface.IERC20(token_registry.wbtc)
-    wbtc.transfer(seeder, 200000000, {"from": user})
+    # print(digg.token.balanceOf(deployer))
+    # assert digg.token.balanceOf(deployer) == digg.token.totalSupply()
+    # digg.token.transfer(seeder, digg.token.totalSupply(), {"from": deployer})
+    # wbtc = interface.IERC20(token_registry.wbtc)
+    # wbtc.transfer(seeder, 200000000, {"from": user})
+
+    # ===== Seed Prep =====
 
     print("wbtc.balanceOf(seeder)", wbtc.balanceOf(seeder))
+    assert digg.token.balanceOf(seeder) >= digg.token.totalSupply()
     assert wbtc.balanceOf(seeder) >= 200000000
+
+    print(digg.diggDistributorTest.address)
+    print("digg.diggDistributorTest", digg.diggDistributorTest.isOpen())
+    digg.diggDistributorTest.transferOwnership(seeder, {"from": deployer})
+
+    print("prePreSeed", digg.token.balanceOf(seeder))
+
+    seeder.preSeed({"from": deployer})
+
+    print("postPreSeed", digg.token.balanceOf(seeder))
+
+    seeder.seed({"from": deployer})
+
+    # seeder.transferOwnership(badger.devMultisig, {'from': deployer})
+
+    # tx = multi.execute(
+    #     MultisigTxMetadata(description="Withdraw crvRen for 100% WBTC",),
+    #     {
+    #         "to": seeder.address,
+    #         "data": seeder.preSeed.encode_input(),
+    #     },
+    # )
+
+    # seeder.initialize({"from": deployer})
 
     # Unpause all Setts
     setts_to_unpause = [
@@ -352,22 +504,12 @@ def init_prod_digg(badger: BadgerSystem, user):
         sett = badger.getSett(key)
 
         id = multi.addTx(
-            MultisigTxMetadata(
-                description="Unpause Sett {}".format(
-                    key
-                ),
-            ),
-            {
-                "to": sett.address,
-                "data": sett.unpause.encode_input(),
-            },
+            MultisigTxMetadata(description="Unpause Sett {}".format(key),),
+            {"to": sett.address, "data": sett.unpause.encode_input(),},
         )
 
         tx = multi.executeTx(id)
         assert sett.paused() == False
-
-    seeder.seed()
-
 
 
 def deploy_digg_with_existing_badger(
