@@ -65,7 +65,7 @@ def fetch_sett_balances(settId, startBlock):
         """
         query balances_and_events($vaultID: Vault_filter, $blockHeight: Block_height) {
             vaults(block: $blockHeight, where: $vaultID) {
-                balances(orderBy: netDeposits, orderDirection: desc) {
+                balances(first:1000,orderBy: netDeposits, orderDirection: desc) {
                     id
                     account {
                         id
@@ -146,6 +146,7 @@ def fetch_sett_transfers(settID, startBlock, endBlock):
         query sett_transfers($vaultID: Vault_filter, $blockHeight: Block_height) {
             vaults(block: $blockHeight, where: $vaultID) {
                 deposits(first:1000) {
+                    id
                     pricePerFullShare
                     account {
                      id
@@ -157,6 +158,7 @@ def fetch_sett_transfers(settID, startBlock, endBlock):
                     }
                 }
                 withdrawals(first:1000) {
+                    id
                     pricePerFullShare
                     account {
                      id
@@ -219,3 +221,35 @@ def fetch_harvest_farm_events():
     """)
     results = client.execute(query)
     return results["farmHarvestEvents"]
+
+
+def fetch_sushi_harvest_events():
+    query = gql("""
+        query fetch_harvest_events {
+            sushiHarvestEvents(first:1000,orderBy:blockNumber,orderDirection:asc) {
+                id
+                xSushiHarvested
+                totalxSushi
+                toStrategist
+                toBadgerTree
+                toGovernance
+                timestamp
+                blockNumber
+            }
+        }
+    """)
+    results = client.execute(query)
+    wbtcEthEvents = []
+    wbtcBadgerEvents = []
+    for event in results["sushiHarvestEvents"]:
+        sett = event["id"].split("-")[0]
+        if sett == "0x7a56d65254705b4def63c68488c0182968c452ce":
+            wbtcEthEvents.append(event)
+        elif sett == "0x3a494d79aa78118795daad8aeff5825c6c8df7f1":
+            wbtcBadgerEvents.append(event)
+    
+    return {
+        "wbtcEth":wbtcEthEvents,
+        "wbtcBadger":wbtcBadgerEvents
+    }
+
