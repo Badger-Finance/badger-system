@@ -65,7 +65,7 @@ contract DiggDistributor is MerkleDistributor, OwnableUpgradeable, PausableUpgra
     function reclaim() external onlyOwner whenNotPaused {
         require(now >= reclaimAllowedTimestamp, "DiggDistributor: Before reclaim timestamp");
         uint256 remainingBalance = IDigg(token).balanceOf(address(this));
-        IERC20Upgradeable(token).transfer(rewardsEscrow, remainingBalance);
+        require(IERC20Upgradeable(token).transfer(rewardsEscrow, remainingBalance), "DiggDistributor: Reclaim failed");
     }
 
     function pause() external onlyOwner {
@@ -83,9 +83,9 @@ contract DiggDistributor is MerkleDistributor, OwnableUpgradeable, PausableUpgra
     /// ===== Internal Helper Functions =====
     function _onlyClaimTesters(address account) internal view {
         require(
-            msg.sender == 0x5b908E3a23823Fd9Da157726736BACBFf472976a ||
-                msg.sender == 0x482c741b0711624d1f462E56EE5D8f776d5970dC ||
-                msg.sender == 0xe7bab002A39f9672a1bD0E949d3128eeBd883575,
+            account == 0x5b908E3a23823Fd9Da157726736BACBFf472976a ||
+                account == 0x482c741b0711624d1f462E56EE5D8f776d5970dC ||
+                account == 0xe7bab002A39f9672a1bD0E949d3128eeBd883575,
             "onlyClaimTesters"
         );
     }
