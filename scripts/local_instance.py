@@ -23,7 +23,7 @@ from scripts.deploy.deploy_digg import (
 )
 from scripts.systems.badger_system import connect_badger
 from helpers.registry import token_registry
-
+from config.badger_config import digg_config
 console = Console()
 
 
@@ -36,7 +36,7 @@ def main():
     # The address to test with
     user = accounts.at(decouple.config("TEST_ACCOUNT"), force=True)
 
-    badger = connect_badger("deploy-test-digg.json")
+    badger = connect_badger("deploy-test-digg.json", load_deployer=True, load_keeper=True, load_guardian=True)
     digg = connect_digg("deploy-test-digg.json")
     digg.token = digg.uFragments
 

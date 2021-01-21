@@ -132,7 +132,7 @@ def print_to_file(badger, path):
 
 
 def connect_badger(
-    badger_deploy_file, load_deployer=True, load_keeper=True, load_guardian=True
+    badger_deploy_file, load_deployer=False, load_keeper=False, load_guardian=False
 ):
     badger_deploy = {}
     console.print(

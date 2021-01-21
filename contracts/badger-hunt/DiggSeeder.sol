@@ -25,7 +25,7 @@ contract DiggSeeder is OwnableUpgradeable {
     address constant rewardsEscrow = 0x19d099670a21bC0a8211a89B84cEdF59AbB4377F;
     address constant daoDiggTimelock = 0x5A54Ca44e8F5A1A695f8621f15Bfa159a140bB61;
     address constant teamVesting = 0x124FD4A9bd4914b32c77C9AE51819b1181dbb3D4;
-    address constant airdrop = 0xED743eD6c78429981Ad3aaf9d2306D1E3C336010;
+    address constant airdrop = 0xec27365809Bc43B7a712b747b48E6Db5f5606E2E;
 
     address constant uniRouter = 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D;
     address constant sushiRouter = 0xd9e1cE17f2641f24aE83637ab66a2cca9C378B9F;
@@ -61,13 +61,12 @@ contract DiggSeeder is OwnableUpgradeable {
 
     function preSeed() external onlyOwner {
         // Distribute DIGG to airdorp, Open airdrop for UI testers only
-        IPausable(airdrop).unpause();
+        IDiggDistributor(airdrop).unpause();
 
         // airdrop_pct = 15%
         require(IDigg(digg).transfer(airdrop, AIRDROP_SUPPLY), "transfer airdrop");
-
         require(IDigg(digg).balanceOf(airdrop) == AIRDROP_SUPPLY, "AIRDROP_SUPPLY");
-        require(IDiggDistributor(airdrop).isOpen() == false, "isOpen");
+        require(IDiggDistributor(airdrop).isOpen() == false, "airdrop open");
     }
 
     function seed() external onlyOwner {
@@ -76,8 +75,6 @@ contract DiggSeeder is OwnableUpgradeable {
         /*
             All DIGG Schedules are denominated in Shares
         */
-
-        // address badger = 0x3472a5a71965499acd81997a54bba8d852c6e53d;
 
         // == native.uniBadgerWbtc ==
         IBadgerGeyser geyser = IBadgerGeyser(native_uniBadgerWbtc_geyser);
@@ -205,6 +202,8 @@ contract DiggSeeder is OwnableUpgradeable {
         // ===== Open Airdrop & Transfer to Multisig =====
         IDiggDistributor(airdrop).openAirdrop();
         IOwnable(airdrop).transferOwnership(devMultisig);
+
+        require(IDiggDistributor(airdrop).isOpen() == true, "airdrop open");
 
         seeded = true;
     }

@@ -39,7 +39,7 @@
         "StrategyDiggRewards": "0x5543e25B6Eea80D38863023392a33D976d769e5C",
         "StrategySushiDiggWbtcLpOptimizer": "0x16626Fd20b8e1541Fdb85D9e63DEf368b374fa75",
         "StrategyDiggLpMetaFarm": "0xd0b1e9f652019B993dacdd97011557ec3b2B6019",
-        "DiggDistributor": "0xaABf65CAB84932F4D545F6030F231cD2e7b09227"
+        "DiggDistributor": "0x9a7d4078068ebb39ffe471898212353cf661580c"
     },
     "dao": {
         "token": "0x3472A5A71965499acd81997a54BBA8D852C6E53d",
@@ -132,6 +132,6 @@
         "centralizedOracle": "0x72dc16CFa95beB42aeebD2B10F22E55bD17Ce976",
         "daoDiggTimelock": "0x5A54Ca44e8F5A1A695f8621f15Bfa159a140bB61",
         "diggTeamVesting": "0x124FD4A9bd4914b32c77C9AE51819b1181dbb3D4",
-        "diggDistributorTest": "0xED743eD6c78429981Ad3aaf9d2306D1E3C336010"
+        "diggDistributorTest": "0xec27365809Bc43B7a712b747b48E6Db5f5606E2E"
     }
 }

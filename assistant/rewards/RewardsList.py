@@ -8,6 +8,9 @@ from tabulate import tabulate
 
 console = Console()
 
+digg_token = "0x798D1bE841a82a273720CE31c822C61a67a601C3"
+badger_token = "0x3472A5A71965499acd81997a54BBA8D852C6E53d"
+badger_tree = "0x660802Fc641b154aBA66a62137e71f331B6d787A"
 
 class RewardsList:
     def __init__(self, cycle, badgerTree) -> None:
@@ -101,6 +104,10 @@ class RewardsList:
             return 0
 
     def to_node_entry(self, user, userData, cycle, index):
+        """
+        Use abi.encode() to encode data into the hex format used as raw node information in the tree
+        This is the value that will be hashed to form the rest of the tree  
+        """
         nodeEntry = {
             "user": user,
             "tokens": [],
@@ -114,13 +121,13 @@ class RewardsList:
             nodeEntry["cumulativeAmounts"].append(str(cumulativeAmount))
             intAmounts.append(int(cumulativeAmount))
 
-        # print(
-        #     int(nodeEntry["index"]),
-        #     nodeEntry["user"],
-        #     int(nodeEntry["cycle"]),
-        #     nodeEntry["tokens"],
-        #     intAmounts,
-        # )
+        print(
+            int(nodeEntry["index"]),
+            nodeEntry["user"],
+            int(nodeEntry["cycle"]),
+            nodeEntry["tokens"],
+            intAmounts,
+        )
 
         address = nodeEntry["tokens"][0]
         # print(address, address[2:])
@@ -128,7 +135,7 @@ class RewardsList:
         bytearray.fromhex(address[2:])
 
         encoded = encode_hex(
-            encode_abi_packed(
+            encode_abi(
                 ["uint", "address", "uint", "address", "uint[]"],
                 (
                     int(nodeEntry["index"]),
@@ -140,42 +147,20 @@ class RewardsList:
             )
         )
 
-        surgeryIndex = 64 + 40 + 64 + 2
+        encoder = BadgerTree.at(badger_tree)
+        claim = encoder.encodeClaim(
+            nodeEntry["tokens"],
+            nodeEntry["cumulativeAmounts"],
+            nodeEntry["index"],
+            nodeEntry["cycle"],
+            nodeEntry["user"],
+        )[0]
 
-        after = encoded[surgeryIndex:]
-        before = encoded[0:surgeryIndex]
-        before = before + "000000000000000000000000"
+        console.log("nodeEntry", nodeEntry)
+        console.log("encoded", encoded)
+        print("claim", claim)
 
-        postSurgery = before + after
-        # print("post", postSurgery)
-
-        # encoder = ClaimEncoder.at("0x19be80e976cb397ae584d350153914ced7c1b1d2")
-
-        # claim = encoder.encodeClaim(
-        #     nodeEntry["tokens"],
-        #     nodeEntry["cumulativeAmounts"],
-        #     nodeEntry["index"],
-        #     nodeEntry["cycle"],
-        #     nodeEntry["user"],
-        # )[0]
-
-        # local = encoder.encodeClaim.encode_input(
-        #     nodeEntry["tokens"],
-        #     nodeEntry["cumulativeAmounts"],
-        #     nodeEntry["index"],
-        #     nodeEntry["cycle"],
-        #     nodeEntry["user"],
-        # )
-
-        # print("claim", claim)
-        # print("encoded", encoded)
-
-        # encoded = encode_hex(postSurgery)
-        # print("encoded", encoded)
-
-        # console.log("nodeEntry", nodeEntry)
-        # console.log("encoded", encoded)
-        return (nodeEntry, postSurgery)
+        return (nodeEntry, encoded)
 
     def to_merkle_format(self):
         """
