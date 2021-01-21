@@ -32,6 +32,7 @@ name_to_artifact = {
     "UFragments": UFragments,
     "UFragmentsPolicy": UFragmentsPolicy,
     "SimpleTimelock": SimpleTimelock,
+    "SimpleTimelockWithVoting": SimpleTimelockWithVoting,
     "SmartVesting": SmartVesting,
     "DiggDistributor": DiggDistributor
 }

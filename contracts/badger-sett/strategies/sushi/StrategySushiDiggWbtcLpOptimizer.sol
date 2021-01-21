@@ -290,6 +290,8 @@ contract StrategySushiDiggWbtcLpOptimizer is BaseStrategyMultiSwapper {
                 IUniswapV2Pair(pair).sync();
 
                 _swap_sushiswap(digg, harvestData.diggConvertedToWbtc, path);
+                               
+                harvestData.wbtcFromConversion = IERC20Upgradeable(wbtc).balanceOf(address(this));
 
                 // Add DIGG and wBTC as liquidity if any to add
                 _add_max_liquidity_sushiswap(digg, wbtc);

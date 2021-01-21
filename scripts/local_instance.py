@@ -36,8 +36,8 @@ def main():
     # The address to test with
     user = accounts.at(decouple.config("TEST_ACCOUNT"), force=True)
 
-    badger = connect_badger("deploy-test-digg.json", load_deployer=True, load_keeper=True, load_guardian=True)
-    digg = connect_digg("deploy-test-digg.json")
+    badger = connect_badger("deploy-final.json", load_deployer=True, load_keeper=True, load_guardian=True)
+    digg = connect_digg("deploy-final.json")
     digg.token = digg.uFragments
 
     badger.add_existing_digg(digg)

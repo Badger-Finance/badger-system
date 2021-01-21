@@ -4,9 +4,9 @@ pragma solidity ^0.6.8;
 import "deps/@openzeppelin/contracts-upgradeable/token/ERC20/TokenTimelockUpgradeable.sol";
 import "deps/@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import "deps/@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
-import "./Executor.sol";
+import "interfaces/aragon/IVoting.sol";
 
-contract SimpleTimelockWithVoting is TokenTimelockUpgradeable, Executor {
+contract SimpleTimelockWithVoting is TokenTimelockUpgradeable {
     using SafeMathUpgradeable for uint256;
 
     function initialize(
@@ -32,25 +32,17 @@ contract SimpleTimelockWithVoting is TokenTimelockUpgradeable, Executor {
         require(token().balanceOf(beneficiary()) >= 7350000 ether);
     }
 
-    /**
-     * @notice Allows the timelock to call arbitrary contracts, as long as it does not reduce it's locked token balance
-     * @dev Initialization check is implicitly provided by `voteExists()` as new votes can only be
-     *      created via `newVote(),` which requires initialization
-     * @param to Contract address to call
-     * @param value ETH value to send, if any
-     * @param data Encoded data to send
-     */
-    function call(
-        address to,
-        uint256 value,
-        bytes calldata data
-    ) external payable returns (bool success) {
+    function vote(
+        uint256 _voteId,
+        bool _supports,
+        bool _executesIfDecided
+    ) external payable {
         require(msg.sender == 0xB65cef03b9B89f99517643226d76e286ee999e77);
 
         IERC20Upgradeable badger = IERC20Upgradeable(0x3472A5A71965499acd81997a54BBA8D852C6E53d);
         uint256 preAmount = badger.balanceOf(address(this));
 
-        success = execute(to, value, data, gasleft());
+        IVoting(0xDc344bFB12522bF3fa58EF0d6b9a41256fc79A1b).vote(_voteId, _supports, _executesIfDecided);
 
         uint256 postAmount = badger.balanceOf(address(this));
         require(postAmount >= preAmount, "smart-vesting/locked-balance-check");

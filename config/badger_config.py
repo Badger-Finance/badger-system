@@ -180,7 +180,7 @@ dao_config = DotMap(
 globalStartTime = 1607014800
 
 badger_config = DotMap(
-    prod_json="deploy-test-digg.json",
+    prod_json="deploy-final.json",
     test_mode=False,
     startMultiplier=1,
     endMultiplier=3,
@@ -265,7 +265,7 @@ airdrop_pct = 15
 
 digg_config_test = DotMap(
     startTime=diggStartTime,
-    prod_json="deploy-test-digg.json",
+    prod_json="deploy-final.json",
     initialSupply=total_digg,
     airdropAmount = int(total_digg * airdrop_pct / 100),
     liquidityMiningAmount = int(total_digg * liquidity_mining_pct / 100),
@@ -321,7 +321,7 @@ digg_config_test = DotMap(
 
 digg_config = DotMap(
     startTime=diggStartTime,
-    prod_json="deploy-test-digg.json",
+    prod_json="deploy-final.json",
     initialSupply=total_digg,
     airdropAmount = int(total_digg * airdrop_pct / 100),
     liquidityMiningAmount = int(total_digg * liquidity_mining_pct / 100),
@@ -359,8 +359,8 @@ digg_config = DotMap(
         totalDuration=days(365)
     ),
     # TODO: Set this to the prod airdrop root
-    airdropRoot="0x9bd11f5585bb45f827575bdfedc2d2110d46f74b95ab9961eaf49c35ed42f240",
-    airdropTotalShares="0x9bd11f5585bb45f827575bdfedc2d2110d46f74b95ab9961eaf49c35ed42f240",
+    airdropRoot="0xcdf95f37a8e91841ec653f55a9d9afc600a6e0505bf4cae6db9546642eb0e42d",
+    airdropTotalShares="0x266666666666660000000000000000000007629c343934e590c7b64ae9c00000",
     # TODO: Need to set this value to exact time we want allow reclaiming of airdrop.
     reclaimAllowedTimestamp=chain.time()
 )

@@ -66,7 +66,7 @@ def connect_digg(badger_deploy_file):
     connectable = [
         ("daoDiggTimelock", SimpleTimelock, digg_deploy["daoDiggTimelock"],),
         ("diggTeamVesting", SmartVesting, digg_deploy["diggTeamVesting"],),
-        ("diggDistributorTest", DiggDistributor, digg_deploy["diggDistributorTest"],),
+        ("diggDistributor", DiggDistributor, digg_deploy["diggDistributor"],),
         # ("diggDistributor", DiggDistributor, digg_deploy["diggDistributor"],),
         ("uFragments", UFragments, digg_deploy["uFragments"],),
         ("uFragmentsPolicy", UFragmentsPolicy, digg_deploy["uFragmentsPolicy"],),

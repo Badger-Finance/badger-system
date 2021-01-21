@@ -23,7 +23,7 @@ def harvest_all(badger: BadgerSystem, skip):
         keeper = accounts.at(strategy.keeper())
 
         before = snap.snap()
-        snap.settHarvest({'from': keeper, "gas_price": gas_strategy})
+        snap.settHarvest({'from': keeper, "gas_price": gas_strategy}, confirm=False)
         after = snap.snap()
 
         snap.printCompare(before, after)

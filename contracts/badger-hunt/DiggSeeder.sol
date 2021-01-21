@@ -25,7 +25,7 @@ contract DiggSeeder is OwnableUpgradeable {
     address constant rewardsEscrow = 0x19d099670a21bC0a8211a89B84cEdF59AbB4377F;
     address constant daoDiggTimelock = 0x5A54Ca44e8F5A1A695f8621f15Bfa159a140bB61;
     address constant teamVesting = 0x124FD4A9bd4914b32c77C9AE51819b1181dbb3D4;
-    address constant airdrop = 0xec27365809Bc43B7a712b747b48E6Db5f5606E2E;
+    address public airdrop;
 
     address constant uniRouter = 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D;
     address constant sushiRouter = 0xd9e1cE17f2641f24aE83637ab66a2cca9C378B9F;
@@ -55,8 +55,9 @@ contract DiggSeeder is OwnableUpgradeable {
 
     bool public seeded;
 
-    function initialize() public initializer {
+    function initialize(address airdrop_) public initializer {
         __Ownable_init();
+        airdrop = airdrop_;
     }
 
     function preSeed() external onlyOwner {

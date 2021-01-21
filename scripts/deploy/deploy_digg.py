@@ -271,15 +271,13 @@ def init_prod_digg(badger: BadgerSystem, user):
         DiggSeeder.abi,
         seederLogic.address,
         badger.devProxyAdmin.address,
-        seederLogic.initialize.encode_input(),
+        seederLogic.initialize.encode_input(digg.diggDistributor),
         deployer,
     )
 
-    # Take initial liquidity from DAO
-    aragon = AragonSystem()
-
-    voting = aragon.getVotingAt("0xdc344bfb12522bf3fa58ef0d6b9a41256fc79a1b")
-    # voting.vote(0, True, True, {'from': deployer})
+    # # Take initial liquidity from DAO
+    # aragon = AragonSystem()
+    # voting = aragon.getVotingAt("0xdc344bfb12522bf3fa58ef0d6b9a41256fc79a1b")
 
     # PROD: Configure DIGG
     digg.uFragmentsPolicy.setCpiOracle(
@@ -296,81 +294,80 @@ def init_prod_digg(badger: BadgerSystem, user):
     )
 
     # ===== Upgrade DAOTimelock to allow voting =====
-    timelockWithVotingLogic = SimpleTimelockWithVoting.deploy({"from": deployer})
-    timelock = interface.ISimpleTimelockWithVoting(badger.daoBadgerTimelock.address)
+    # print(badger.logic.SimpleTimelockWithVoting.address)
+    # timelockWithVotingLogic = SimpleTimelockWithVoting.at(badger.logic.SimpleTimelockWithVoting.address)
+    # timelock = interface.ISimpleTimelockWithVoting(badger.daoBadgerTimelock.address)
 
-    multi.execute(
-        MultisigTxMetadata(description="Upgrade DAO Badger Timelock to Allow voting",),
-        {
-            "to": badger.devProxyAdmin.address,
-            "data": badger.devProxyAdmin.upgrade.encode_input(
-                badger.daoBadgerTimelock, timelockWithVotingLogic
-            ),
-        },
-    )
-
-    # ===== Vote to move initial liquidity funds to multisig  =====
-    tx = multi.execute(
-        MultisigTxMetadata(description="Vote on DAO Timelock from multisig",),
-        {
-            "to": timelock.address,
-            "data": timelock.call.encode_input(
-                voting, 0, voting.vote.encode_input(0, True, True)
-            ),
-        },
-    )
-
-    # Approve DAO voting as recipient
-    multi.execute(
-        MultisigTxMetadata(description="Approve DAO voting as recipient",),
-        {
-            "to": badger.rewardsEscrow.address,
-            "data": badger.rewardsEscrow.approveRecipient.encode_input(voting),
-        },
-    )
-
-    # Vote on DAO voting as rewardsEscrow
-
-    before = badger.token.balanceOf(badger.rewardsEscrow)
-
-    tx = multi.execute(
-        MultisigTxMetadata(description="Vote on Rewards Escrow from multisig",),
-        {
-            "to": badger.rewardsEscrow.address,
-            "data": badger.rewardsEscrow.call.encode_input(
-                voting, 0, voting.vote.encode_input(0, True, True)
-            ),
-        },
-    )
-
-    after = badger.token.balanceOf(badger.rewardsEscrow)
-
-    print(tx.call_trace())
-
-    assert after == before
-
-    crvRen = interface.IERC20(registry.curve.pools.renCrv.token)
-    wbtc = interface.IERC20(registry.tokens.wbtc)
-    assert crvRen.balanceOf(badger.devMultisig) >= wbtc_liquidity_amount * 10 ** 10 * 2
-
-    crvPool = interface.ICurveZap(registry.curve.pools.renCrv.swap)
-
-    # crvPool.Remove_liquidity_one_coin(
-    #     wbtc_liquidity_amount * 10 ** 10, 1, wbtc_liquidity_amount
+    # multi.execute(
+    #     MultisigTxMetadata(description="Upgrade DAO Badger Timelock to Allow voting",),
+    #     {
+    #         "to": badger.devProxyAdmin.address,
+    #         "data": badger.devProxyAdmin.upgrade.encode_input(
+    #             badger.daoBadgerTimelock, timelockWithVotingLogic
+    #         ),
+    #     },
     # )
 
-    # ===== Convert crvRen to wBTC on multisig =====
-    tx = multi.execute(
-        MultisigTxMetadata(description="Withdraw crvRen for 100% WBTC",),
-        {
-            "to": crvPool.address,
-            "data": crvPool.remove_liquidity_one_coin.encode_input(
-                wbtc_liquidity_amount * 10 ** 10 * 2, 1, wbtc_liquidity_amount * 2
-            ),
-        },
-    )
+    # # ===== Vote to move initial liquidity funds to multisig  =====
+    # tx = multi.execute(
+    #     MultisigTxMetadata(description="Vote on DAO Timelock from multisig",),
+    #     {
+    #         "to": timelock.address,
+    #         "data": timelock.vote.encode_input(0, True, True)
+    #     },
+    # )
 
-    assert wbtc.balanceOf(badger.devMultisig) >= wbtc_liquidity_amount * 2
+    # # Approve DAO voting as recipient
+    # multi.execute(
+    #     MultisigTxMetadata(description="Approve DAO voting as recipient",),
+    #     {
+    #         "to": badger.rewardsEscrow.address,
+    #         "data": badger.rewardsEscrow.approveRecipient.encode_input(voting),
+    #     },
+    # )
+
+    # # Vote on DAO voting as rewardsEscrow
+
+    # before = badger.token.balanceOf(badger.rewardsEscrow)
+
+    # tx = multi.execute(
+    #     MultisigTxMetadata(description="Vote on Rewards Escrow from multisig",),
+    #     {
+    #         "to": badger.rewardsEscrow.address,
+    #         "data": badger.rewardsEscrow.call.encode_input(
+    #             voting, 0, voting.vote.encode_input(0, True, True)
+    #         ),
+    #     },
+    # )
+
+    # after = badger.token.balanceOf(badger.rewardsEscrow)
+
+    # print(tx.call_trace())
+
+    # assert after == before
+
+    # crvRen = interface.IERC20(registry.curve.pools.renCrv.token)
+    wbtc = interface.IERC20(registry.tokens.wbtc)
+    # assert crvRen.balanceOf(badger.devMultisig) >= wbtc_liquidity_amount * 10 ** 10 * 2
+
+    # crvPool = interface.ICurveZap(registry.curve.pools.renCrv.swap)
+
+    # # crvPool.Remove_liquidity_one_coin(
+    # #     wbtc_liquidity_amount * 10 ** 10, 1, wbtc_liquidity_amount
+    # # )
+
+    # # ===== Convert crvRen to wBTC on multisig =====
+    # tx = multi.execute(
+    #     MultisigTxMetadata(description="Withdraw crvRen for 100% WBTC",),
+    #     {
+    #         "to": crvPool.address,
+    #         "data": crvPool.remove_liquidity_one_coin.encode_input(
+    #             wbtc_liquidity_amount * 10 ** 10 * 2, 1, wbtc_liquidity_amount * 2
+    #         ),
+    #     },
+    # )
+
+    # assert wbtc.balanceOf(badger.devMultisig) >= wbtc_liquidity_amount * 2
 
     # ===== Move initial liquidity funds to Seeder =====
     multi.execute(
@@ -469,9 +466,9 @@ def init_prod_digg(badger: BadgerSystem, user):
     assert digg.token.balanceOf(seeder) >= digg.token.totalSupply()
     assert wbtc.balanceOf(seeder) >= 200000000
 
-    print(digg.diggDistributorTest.address)
-    print("digg.diggDistributorTest", digg.diggDistributorTest.isOpen())
-    digg.diggDistributorTest.transferOwnership(seeder, {"from": deployer})
+    print(digg.diggDistributor.address)
+    print("digg.diggDistributor", digg.diggDistributor.isOpen())
+    digg.diggDistributor.transferOwnership(seeder, {"from": deployer})
 
     print("prePreSeed", digg.token.balanceOf(seeder))
 
@@ -608,7 +605,7 @@ def deploy_digg_with_existing_badger(
 
     console.log("Test: Digg System Deployed")
     if outputToFile:
-        fileName = "deploy-test-digg.json"
+        fileName = "deploy-final.json"
         console.log("Printing digg contract addresses to ", fileName)
         print_to_file(badger, fileName)
     if not test:
