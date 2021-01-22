@@ -21,7 +21,7 @@ class User:
         transfer_amount = transfer["amount"]
 
         secondsSinceLastAction = transfer_timestamp - self.lastUpdated
-        assert secondsSinceLastAction > 0
+        assert secondsSinceLastAction >= 0
         self.lastUpdated = transfer_timestamp
         self.shareSeconds += secondsSinceLastAction * self.currentDeposited
         self.currentDeposited += transfer_amount

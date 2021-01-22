@@ -8,7 +8,15 @@ from assistant.subgraph.client import (
     fetch_sett_balances,
     fetch_geyser_events,
     fetch_sett_transfers,
+<<<<<<< Updated upstream
     fetch_harvest_farm_events
+=======
+<<<<<<< Updated upstream
+=======
+    fetch_harvest_farm_events,
+    fetch_sushi_harvest_events
+>>>>>>> Stashed changes
+>>>>>>> Stashed changes
 )
 from assistant.rewards.User import User
 from assistant.rewards.merkle_tree import rewards_to_merkle_tree
@@ -69,6 +77,7 @@ def calc_geyser_rewards(badger, periodStartBlock, endBlock, cycle):
     return sum_rewards(rewardsByGeyser, cycle, badger.badgerTree)
 
 
+<<<<<<< Updated upstream
 def fetch_current_harvest_rewards(badger,startBlock,endBlock,nextCycle):
     farmTokenAddress = "0xa0246c9032bC3A600820415aE600c6388619A14D"
     harvestEvents = fetch_harvest_farm_events()
@@ -110,19 +119,150 @@ def fetch_current_harvest_rewards(badger,startBlock,endBlock,nextCycle):
     return rewards
 
 
+=======
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
 def calc_harvest_meta_farm_rewards(badger,name, startBlock, endBlock):
+=======
+
+def calc_sushi_rewards(badger,startBlock,endBlock,nextCycle,retroactive):
+    xSushiTokenAddress = "0x8798249c2e607446efb7ad49ec89dd1865ff4272"
+    sushi_harvest_events = fetch_sushi_harvest_events()
+    console.log(sushi_harvest_events)
+    def filter_events(e):
+        return int(e["blockNumber"]) > startBlock and int(e["blockNumber"]) < endBlock
+
+    wbtcEthEvents = list(filter(filter_events,sushi_harvest_events["wbtcEth"]))
+    wbtcBadgerEvents = list(filter(filter_events,sushi_harvest_events["wbtcBadger"]))
+    totalxSushi = sum([int(e["toBadgerTree"]) for e in wbtcEthEvents]) + sum([int(e["toBadgerTree"]) for e in wbtcBadgerEvents])
+
+    console.log("Processing {} wbtcEth sushi events".format(len(wbtcEthEvents)))
+    wbtcEthStartBlock = get_last_event_block(startBlock,wbtcEthEvents) if not retroactive else 11537600
+    wbtcEthRewards = process_sushi_events(
+        badger,wbtcEthStartBlock,endBlock,wbtcEthEvents,"native.sushiWbtcEth",nextCycle)
+
+    console.log("Processing {} wbtcBadger sushi events".format(len(wbtcBadgerEvents)))
+    wbtcBadgerStartBlock = get_last_event_block(startBlock,wbtcBadgerEvents) if not retroactive else 11539529
+    wbtcBadgerRewards = process_sushi_events(
+        badger,wbtcBadgerStartBlock,endBlock,wbtcBadgerEvents,"native.sushiBadgerWbtc",nextCycle)
+
+    finalRewards = combine_rewards([wbtcEthRewards,wbtcBadgerRewards],nextCycle,badger.badgerTree)
+    console.log(finalRewards.claims)
+    xSushiFromRewards = 0
+
+    for user,claimData in finalRewards.claims.items():
+        for token,tokenAmount in claimData.items():
+            if token == xSushiTokenAddress:
+                console.log("Address {}: {} xSushi".format(user,int(float(tokenAmount))/1e18 ))
+                xSushiFromRewards += int(float(tokenAmount))
+
+    console.log("Total xSushi {} from  events".format(
+        totalxSushi/1e18
+    ))
+    console.log("Total xSushi {} from claims".format(
+        xSushiFromRewards/1e18
+    ))
+    console.log("Difference {}".format(abs(totalxSushi/1e18 - xSushiFromRewards/1e18)))
+
+    return finalRewards
+
+            
+
+
+
+def process_sushi_events(badger,startBlock,endBlock,events,name,nextCycle):
+    xSushiTokenAddress = "0x8798249c2e607446efb7ad49ec89dd1865ff4272"
+
+    start = startBlock
+    end = int(events[0]["blockNumber"])
+    totalHarvested = 0
+    rewards = RewardsList(nextCycle,badger.badgerTree)
+    for i in tqdm(range(len(events))):
+        event = events[i]
+        xSushiRewards = int(events[i]["toBadgerTree"])
+        user_state = calc_meta_farm_rewards(badger,name,start,end)
+        console.print("Processing block {}, distributing {} to users".format(
+            event["blockNumber"],
+            xSushiRewards/1e18
+        ))
+        totalHarvested += xSushiRewards/1e18
+        console.print("{} total xSushi processed".format(totalHarvested))
+        totalShareSeconds = sum([u.shareSeconds for u in user_state])
+        xSushiUnit = xSushiRewards/totalShareSeconds
+        for user in user_state:
+            rewards.increase_user_rewards(user.address,xSushiTokenAddress,xSushiUnit * user.shareSeconds)
+
+        if i+1 < len(events):
+           start = int(events[i]["blockNumber"])
+           end = int(events[i+1]["blockNumber"])
+
+    console.log(sum([list(v.values())[0]/1e18 for v in list(rewards.claims.values())  ]))
+    console.log(rewards.claims)
+    return rewards
+
+def get_last_event_block(startBlock,harvestEvents):
+    for event in harvestEvents:
+        if int(event["blockNumber"]) < int(startBlock):
+            continue
+        else:
+            return int(event["blockNumber"])
+
+def fetch_current_harvest_rewards(badger,startBlock,endBlock,nextCycle):
+    farmTokenAddress = "0xa0246c9032bC3A600820415aE600c6388619A14D"
+    harvestEvents = fetch_harvest_farm_events()
+    rewards = RewardsList(nextCycle,badger.badgerTree)
+
+    def filter_events(e):
+        return int(e["blockNumber"]) > startBlock and int(e["blockNumber"]) < endBlock
+
+    unprocessedEvents = list(filter(filter_events,harvestEvents))
+    console.log("Processing {} farm events".format(len(unprocessedEvents)))
+
+    if len(unprocessedEvents) == 0:
+        return rewards
+
+    start = get_last_event_block(startBlock,harvestEvents)
+    end = int(unprocessedEvents[0]["blockNumber"])
+    totalHarvested = 0
+    for i in tqdm(range(len(unprocessedEvents))):
+        console.log("Processing between {} and {}".format(startBlock,endBlock))
+        harvestEvent = unprocessedEvents[i]
+        user_state = calc_meta_farm_rewards(badger,"harvest.renCrv",start,end)
+        farmRewards = int(harvestEvent["farmToRewards"])
+        console.print("Processing block {}, distributing {} to users".format(
+            harvestEvent["blockNumber"],
+            farmRewards/1e18,
+         ))
+        totalHarvested += farmRewards/1e18
+        console.print("{} total FARM processed".format(totalHarvested))
+        totalShareSeconds = sum([u.shareSeconds for u in user_state])
+        farmUnit = farmRewards/totalShareSeconds
+        for user in user_state:
+            rewards.increase_user_rewards(user.address,farmTokenAddress,farmUnit * user.shareSeconds)
+
+        if i+1 < len(unprocessedEvents):
+            start = int(unprocessedEvents[i]["blockNumber"])
+            end = int(unprocessedEvents[i+1]["blockNumber"])
+
+    console.log(sorted( [list(v.values())[0]/1e18 for v in list(rewards.claims.values())  ] ))
+    return rewards
+
+
+def calc_meta_farm_rewards(badger,name, startBlock, endBlock):
+>>>>>>> Stashed changes
     startBlockTime = web3.eth.getBlock(startBlock)["timestamp"]
     endBlockTime = web3.eth.getBlock(endBlock)["timestamp"]
-    harvestSettId = badger.getSett(name).address.lower()
+    settId = badger.getSett(name).address.lower()
     geyserId = badger.getGeyser(name).address.lower()
 
-    settBalances = fetch_sett_balances(harvestSettId, startBlock)
-    settTransfers = fetch_sett_transfers(harvestSettId, startBlock, endBlock)
+    settBalances = fetch_sett_balances(settId, startBlock)
+    settTransfers = fetch_sett_transfers(settId, startBlock, endBlock)
     # If there is nothing in the sett, and there have been no transfers
     if len(settBalances) == 0:
         if len(settTransfers) == 0:
             return []
     if len(settBalances) != 0:
+        console.log("Found {} balances".format(len(settBalances)))
         console.log("Geyser amount in sett Balance: {}".format(settBalances[geyserId]/1e18))
         settBalances[geyserId] = 0
 
@@ -131,7 +271,7 @@ def calc_harvest_meta_farm_rewards(badger,name, startBlock, endBlock):
     user_state = get_initial_user_state(
         settBalances, geyserBalances, startBlockTime
     )
-
+    console.log("Processing {} transfers".format(len(settTransfers)))
     for transfer in settTransfers:
         transfer_address = transfer["account"]["id"]
         transfer_amount = int(transfer["amount"])
@@ -145,7 +285,9 @@ def calc_harvest_meta_farm_rewards(badger,name, startBlock, endBlock):
         else:
             # If the user hasn't deposited before, create a new one
             newUser = User(transfer_address,transfer_amount,transfer_timestamp)
-            assert transfer_amount >= 0
+            if transfer_amount < 0:
+                console.log(transfer)
+            #assert transfer_amount >= 0
             user_state.append(newUser)
 
     for user in user_state:
@@ -185,20 +327,12 @@ def process_cumulative_rewards(current, new: RewardsList):
     return result
 
 
-def combine_rewards(list, cycle, badgerTree):
-    totals = RewardsList(cycle, badgerTree)
-    total = 0
-    # For each rewards list entry
-    for key, rewardsSet in list.items():
-        # Get the claims data
-        # claims = rewardsSet["claims"]
-        for user, userData in rewardsSet.claims.items():
-            # For each token
-            for token, tokenAmount in userData.items():
-                totals.increase_user_rewards(user, token, tokenAmount)
-                total += tokenAmount
-    totals.badgerSum = total
-    # totals.printState()
+def combine_rewards(rewardsList,cycle, badgerTree):
+    totals = RewardsList(cycle,badgerTree)
+    for rewards in rewardsList:
+        for user,claims in rewards.claims.items():
+            for token,claim in claims.items():
+                totals.increase_user_rewards(user,token,claim)
     return totals
 
 
@@ -365,12 +499,12 @@ def generate_rewards_in_range(badger, startBlock, endBlock):
 
     currentTime = chain.time()
 
-    timeSinceLastupdate = currentTime - currentMerkleData["lastUpdateTime"]
-    if timeSinceLastupdate < rewards_config.rootUpdateInterval and not test:
-        console.print(
-            "[bold yellow]===== Result: Last Update too Recent =====[/bold yellow]"
-        )
-        return False
+    #timeSinceLastupdate = currentTime - currentMerkleData["lastUpdateTime"]
+    #if timeSinceLastupdate < rewards_config.rootUpdateInterval and not test:
+    #    console.print(
+    #        "[bold yellow]===== Result: Last Update too Recent =====[/bold yellow]"
+    #    )
+    #    return False
 
     # if badgerTree.hasPendingRoot():
     #     console.print(
@@ -378,8 +512,17 @@ def generate_rewards_in_range(badger, startBlock, endBlock):
     #     )
     #     return False
     print("Geyser Rewards", startBlock, endBlock, nextCycle)
+<<<<<<< Updated upstream
 
+<<<<<<< Updated upstream
     metaFarmRewards = fetch_current_harvest_rewards(badger,startBlock, endBlock,nextCycle)
+=======
+    metaFarmRewards = calc_harvest_meta_farm_rewards(badger,"harvest.renCrv",startBlock, endBlock)
+=======
+    sushiRewards = calc_sushi_rewards(badger,startBlock,endBlock,nextCycle,retroactive=False)
+    metaFarmRewards = fetch_current_harvest_rewards(badger,startBlock, endBlock,nextCycle)
+>>>>>>> Stashed changes
+>>>>>>> Stashed changes
     geyserRewards = calc_geyser_rewards(badger, startBlock, endBlock, nextCycle)
     newRewards = process_cumulative_rewards(geyserRewards,metaFarmRewards)
 

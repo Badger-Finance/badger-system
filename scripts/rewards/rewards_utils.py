@@ -43,7 +43,11 @@ def calc_next_cycle_range(badger):
     endBlock = chain.height
 
     #Sanity check: Ensure start block is not too far in the past
+<<<<<<< Updated upstream
     assert startBlock > endBlock - rewards_config.maxStartBlockAge
+=======
+    #assert startBlock > endBlock - rewards_config.maxStartBlockAge
+>>>>>>> Stashed changes
 
     # Sanity check: Ensure start block is not too close to end block
 
