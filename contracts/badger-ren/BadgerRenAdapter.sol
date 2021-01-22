@@ -73,6 +73,8 @@ contract BadgerRenAdapter is OwnableUpgradeable {
     event BurnRenBTC(uint256 amount, uint256 fee);
     event MintWBTC(uint256 renbtc_minted, uint256 wbtc_exchanged, uint256 fee);
     event BurnWBTC(uint256 wbtc_transferred, uint256 renbtc_burned, uint256 fee);
+    event ExchangeWBTCBytesError(bytes error);
+    event ExchangeWBTCStringError(string error);
 
     address public rewards;
     address public governance;
@@ -161,9 +163,6 @@ contract BadgerRenAdapter is OwnableUpgradeable {
 
         uint256 burnAmount = registry.getGatewayBySymbol("BTC").burn(_btcDestination, _burnAmount.sub(_fee));
     }
-
-    event ExchangeWBTCBytesError(bytes error);
-    event ExchangeWBTCStringError(string error);
 
     function mintWBTC(
         uint256 _slippage,
