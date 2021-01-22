@@ -4,7 +4,7 @@ pragma solidity ^0.6.8;
 
 import "deps/@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "deps/@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
-import "deps/@openzeppelin/contracts-upgradeable/proxy/Initializable.sol";
+import "deps/@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "deps/@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 import "deps//@openzeppelin/contracts/access/Ownable.sol";
 
@@ -56,8 +56,7 @@ interface ICurveExchange {
     ) external;
 }
 
-// TODO: Maybe convert to upgradeable.
-contract BadgerRenAdapter is Ownable {
+contract BadgerRenAdapter is OwnableUpgradeable {
     using SafeMathUpgradeable for uint256;
     using SafeERC20 for IERC20;
 
@@ -85,7 +84,7 @@ contract BadgerRenAdapter is Ownable {
 
     uint256 public constant MAX_BPS = 10000;
 
-    constructor(
+    initialize(
         address _governance,
         address _rewards,
         address _registry,
