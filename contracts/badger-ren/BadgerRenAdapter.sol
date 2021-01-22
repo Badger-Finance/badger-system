@@ -71,7 +71,7 @@ contract BadgerRenAdapter is OwnableUpgradeable {
     event RecoverStuckRenBTC(uint256 amount, uint256 fee);
     event MintRenBTC(uint256 amount, uint256 fee);
     event BurnRenBTC(uint256 amount, uint256 fee);
-    event MintWBTC(uint256 renbtc_minted, uint256 wbtc_bought, uint256 fee);
+    event MintWBTC(uint256 renbtc_minted, uint256 wbtc_exchanged, uint256 fee);
     event BurnWBTC(uint256 wbtc_transferred, uint256 renbtc_burned, uint256 fee);
 
     address public rewards;
