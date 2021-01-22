@@ -8,10 +8,12 @@ from brownie import (
 
 from config.badger_config import badger_config, digg_config
 from scripts.deploy.deploy_badger import deploy_flow
+from scripts.deploy.deploy_digg import init_prod_digg
 from scripts.systems.badger_minimal import deploy_badger_minimal
 from scripts.systems.digg_minimal import deploy_digg_minimal
 from scripts.systems.constants import SettType
 from helpers.token_utils import distribute_test_ether
+from scripts.systems.digg_system import connect_digg
 from scripts.systems.badger_system import connect_badger
 from tests.helpers import distribute_from_whales
 from tests.sett.fixtures import (
@@ -277,6 +279,17 @@ def digg_distributor_unit():
     # 15% airdropped
     digg.token.transfer(digg.diggDistributor, totalSupply * .15, {"from": deployer})
 
+    return digg
+
+
+@pytest.fixture(scope="function")
+def digg_distributor_prod_unit():
+    badger = connect_badger("deploy-final.json", load_deployer=True, load_keeper=True, load_guardian=True)
+    digg = connect_digg("deploy-final.json")
+    digg.token = digg.uFragments
+
+    badger.add_existing_digg(digg)
+    init_prod_digg(badger, badger.deployer)
     return digg
 
 
