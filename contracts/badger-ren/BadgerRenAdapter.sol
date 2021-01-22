@@ -69,11 +69,11 @@ contract BadgerRenAdapter is Ownable {
     // Curve exchange contract for the renBTC/wBTC pool.
     ICurveExchange public exchange;
 
-    event RecoverStuckRenBTC(uint256 amount);
-    event MintRenBTC(uint256 amount);
-    event BurnRenBTC(uint256 amount);
-    event MintWBTC(uint256 renbtc_minted, uint256 wbtc_bought);
-    event BurnWBTC(uint256 wbtc_transferred, uint256 renbtc_burned);
+    event RecoverStuckRenBTC(uint256 amount, uint256 fee);
+    event MintRenBTC(uint256 amount, uint256 fee);
+    event BurnRenBTC(uint256 amount, uint256 fee);
+    event MintWBTC(uint256 renbtc_minted, uint256 wbtc_bought, uint256 fee);
+    event BurnWBTC(uint256 wbtc_transferred, uint256 renbtc_burned, uint256 fee);
 
     address public rewards;
     address public governance;
@@ -123,39 +123,44 @@ contract BadgerRenAdapter is Ownable {
         require(sender == msg.sender);
 
         bytes32 pHash = keccak256(encoded);
-        uint256 mintedAmount = registry.getGatewayBySymbol("BTC").mint(pHash, _amount, _nHash, _sig);
+        uint256 _mintAmount = registry.getGatewayBySymbol("BTC").mint(pHash, _amount, _nHash, _sig);
+        uint256 _fee = _processFee(renBTC, _mintAmount, mintFeeBps);
 
-        emit RecoverStuckRenBTC(mintedAmount);
+        emit RecoverStuckRenBTC(mintAmount, _fee);
 
-        renBTC.safeTransfer(msg.sender, mintedAmount);
+        renBTC.safeTransfer(msg.sender, _mintAmount.sub(fee));
     }
 
     function mintRenBTC(
         // user args
-        address payable _renBTCDestination,
+        address payable _destination,
         // darknode args
         uint256 _amount,
         bytes32 _nHash,
         bytes calldata _sig
     ) external {
         // Mint renBTC tokens
-        bytes32 pHash = keccak256(abi.encode(_renBTCDestination));
-        uint256 mintedAmount = registry.getGatewayBySymbol("BTC").mint(pHash, _amount, _nHash, _sig);
+        bytes32 pHash = keccak256(abi.encode(_destination));
+        uint256 _mintAmount = registry.getGatewayBySymbol("BTC").mint(pHash, _amount, _nHash, _sig);
+        uint256 _fee = _processFee(renBTC, _mintAmount, mintFeeBps);
 
-        emit MintRenBTC(mintedAmount);
+        emit MintRenBTC(_mintAmount, _fee);
 
-        renBTC.safeTransfer(_renBTCDestination, mintedAmount);
+        renBTC.safeTransfer(_destination, _mintAmount.sub(_fee));
     }
 
     function burnRenBTC(bytes calldata _btcDestination, uint256 _amount) external {
         require(renBTC.balanceOf(address(msg.sender)) >= _amount);
-        uint256 startRenbtcBalance = renBTC.balanceOf(address(this));
+        uint256 _startBalance = renBTC.balanceOf(address(this));
         renBTC.safeTransferFrom(msg.sender, address(this), _amount);
-        uint256 endRenbtcBalance = renBTC.balanceOf(address(this));
-        uint256 _transferred = endRenbtcBalance.sub(startRenbtcBalance);
-        uint256 burnAmount = registry.getGatewayBySymbol("BTC").burn(_btcDestination, _transferred);
+        uint256 _endBalance = renBTC.balanceOf(address(this));
 
-        emit BurnRenBTC(burnAmount);
+        uint256 _burnAmount = _endBalance.sub(_startBalance);
+        uint256 _fee = _processFee(renBTC, _burnAmount, burnFeeBps);
+
+        emit BurnRenBTC(_burnAmount, _fee);
+
+        uint256 burnAmount = registry.getGatewayBySymbol("BTC").burn(_btcDestination, _burnAmount.sub(_fee));
     }
 
     event ExchangeWBTCBytesError(bytes error);
@@ -163,56 +168,59 @@ contract BadgerRenAdapter is Ownable {
 
     function mintWBTC(
         uint256 _slippage,
-        address payable _wbtcDestination,
+        address payable _destination,
         uint256 _amount,
         bytes32 _nHash,
         bytes calldata _sig
     ) external {
         // Mint renBTC tokens
-        bytes32 pHash = keccak256(abi.encode(_slippage, _wbtcDestination));
-        uint256 mintedAmount = registry.getGatewayBySymbol("BTC").mint(pHash, _amount, _nHash, _sig);
+        bytes32 pHash = keccak256(abi.encode(_slippage, _destination));
+        uint256 _mintAmount = registry.getGatewayBySymbol("BTC").mint(pHash, _amount, _nHash, _sig);
 
         // Get price
-        uint256 dy = exchange.get_dy(0, 1, mintedAmount);
+        uint256 dy = exchange.get_dy(0, 1, _mintAmount);
         _slippage = uint256(1e4).sub(_slippage);
         uint256 min_dy = dy.mul(_slippage).div(1e4);
 
-        uint256 startWbtcBalance = wBTC.balanceOf(address(this));
+        uint256 _startBalance = wBTC.balanceOf(address(this));
         try exchange.exchange(0, 1, mintedAmount, min_dy)  {
-            uint256 endWbtcBalance = wBTC.balanceOf(address(this));
-            uint256 wbtcBought = endWbtcBalance.sub(startWbtcBalance);
-            emit MintWBTC(mintedAmount, wbtcBought);
+            uint256 _endBalance = wBTC.balanceOf(address(this));
+            uint256 _wbtcAmount = _endBalance.sub(_startBalance);
+            uint256 _fee = _processFee(wBTC, _wbtcAmount, mintFeeBps);
+            emit MintWBTC(_mintAmount, _wbtcAmount, _fee);
 
             // Send converted wBTC to user.
-            require(wBTC.transfer(_wbtcDestination, wbtcBought));
+            require(wBTC.transfer(_destination, _boughtAmount));
         } catch Error(string memory _error) {
             emit ExchangeWBTCStringError(_error);
 
             // Fallback to sending renBTC to user.
             emit MintRenBTC(mintedAmount);
-            require(renBTC.transfer(_wbtcDestination, mintedAmount));
+            require(renBTC.transfer(_destination, _mintAmount));
         } catch (bytes memory _error) {
             emit ExchangeWBTCBytesError(_error);
 
             // Fallback to sending renBTC to user.
             emit MintRenBTC(mintedAmount);
-            require(renBTC.transfer(_wbtcDestination, mintedAmount));
+            require(renBTC.transfer(_destination, _mintAmount));
         }
     }
 
     function burnWBTC(
         bytes calldata _btcDestination,
         uint256 _amount,
-        uint256 _minRenbtcAmount
+        uint256 _minAmount
     ) external {
         wBTC.safeTransferFrom(msg.sender, address(this), _amount);
-        uint256 startRenbtcBalance = renBTC.balanceOf(address(this));
-        exchange.exchange(1, 0, _amount, _minRenbtcAmount);
-        uint256 endRenbtcBalance = renBTC.balanceOf(address(this));
-        uint256 renbtcBought = endRenbtcBalance.sub(startRenbtcBalance);
+        uint256 _startBalance = renBTC.balanceOf(address(this));
+        exchange.exchange(1, 0, _amount, _minAmount);
+        uint256 _endBalance = renBTC.balanceOf(address(this));
+
+        uint256 _burnAmount = _endBalance.sub(_startBalance);
+        uint256 _fee = _processFee(renBTC, _burnAmount, burnFeeBps);
 
         // Burn and send proceeds to the User
-        uint256 burnAmount = registry.getGatewayBySymbol("BTC").burn(_btcDestination, renbtcBought);
+        uint256 burnAmount = registry.getGatewayBySymbol("BTC").burn(_btcDestination, _burnAmount.sub(_fee));
         emit BurnWBTC(_amount, burnAmount);
     }
 
@@ -234,18 +242,24 @@ contract BadgerRenAdapter is Ownable {
 
     // Admin methods.
     function setMintFeeBps(uint256 _mintFeeBps) external onlyOwner {
+        require(_mintFeeBps <= MAX_BPS, "badger-ren-adapter/excessive-mint-fee");
         mintFeeBps = _mintFeeBps;
     }
 
     function setBurnFeeBps(uint256 _burnFeeBps) external onlyOwner {
+        require(_burnFeeBps <= MAX_BPS, "badger-ren-adapter/excessive-burn-fee");
         burnFeeBps = _burnFeeBps;
     }
 
     function setPercentageFeeGovernanceBps(uint256 _percentageFeeGovernanceBps) external onlyOwner {
+        require(_percentageFeeGovernanceBps + percentageFeeRewardsBps <= MAX_BPS,
+            "badger-ren-adapter/excessive-percentage-fee-governance");
         percentageFeeGovernanceBps = _percentageFeeGovernanceBps;
     }
 
     function setPercentageFeeRewardsBps(uint256 _percentageFeeRewardsBps) external onlyOwner {
+        require(_percentageFeeRewardsBps + percentageFeeGovernanceBps <= MAX_BPS,
+            "badger-ren-adapter/excessive-percentage-fee-rewards");
         percentageFeeRewardsBps = _percentageFeeRewardsBps;
     }
 
