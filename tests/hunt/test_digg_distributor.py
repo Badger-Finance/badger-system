@@ -11,11 +11,11 @@ console = Console()
 
 
 @pytest.fixture(scope="function", autouse="True")
-def setup(digg_distributor_unit):
-    with open("airdrop/digg-test-airdrop.json") as f:
+def setup(digg_distributor_prod_unit):
+    with open("airdrops/digg-airdrop.json") as f:
         airdrop = json.load(f)
 
-    return (digg_distributor_unit, airdrop)
+    return (digg_distributor_prod_unit, airdrop)
 
 
 # @pytest.mark.skip()
@@ -23,13 +23,18 @@ def test_all_claims_full_amount(setup):
     digg = setup[0]
     airdrop = setup[1]
 
+    totalSharesClaimed = 0
+    maxBatchSize = 100
     claims = []
     loop = asyncio.get_event_loop()
     with concurrent.futures.ThreadPoolExecutor() as pool:
         for user, claim in airdrop["claims"].items():
+            if len(claims) >= maxBatchSize:
+                results = loop.run_until_complete(asyncio.gather(*claims))
+                totalSharesClaimed += sum(results)
+                claims = claims[:0]
+                continue
             claims.append(_process_claim(loop, pool, digg, user, claim))
-
-        loop.run_until_complete(asyncio.gather(*claims))
 
 
 async def _process_claim(loop, pool, digg, user, claim):
@@ -76,3 +81,6 @@ async def _process_claim(loop, pool, digg, user, claim):
 
     # Ensure their claim is correct.
     assert preShares + transferAmountShares == postShares
+    assert token.sharesOf(user) == transferAmountShares
+
+    return transferAmountShares
