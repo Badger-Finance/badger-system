@@ -7,11 +7,7 @@ from config.badger_config import badger_config
 from rich.console import Console
 from scripts.systems.badger_system import connect_badger
 
-<<<<<<< Updated upstream
-from assistant.rewards.rewards_assistant import calc_harvest_meta_farm_rewards,process_cumulative_rewards,fetch_current_rewards_tree
-=======
 from assistant.rewards.rewards_assistant import calc_meta_farm_rewards,process_cumulative_rewards,fetch_current_rewards_tree
->>>>>>> Stashed changes
 from assistant.rewards.rewards_checker import test_claims
 from assistant.subgraph.client import fetch_harvest_farm_events
 from assistant.rewards.RewardsList import RewardsList
@@ -39,10 +35,7 @@ def main():
     latestBlock = chain.height
     harvestEvents = fetch_harvest_farm_events()
     rewards = RewardsList(nextCycle,badger.badgerTree)
-<<<<<<< Updated upstream
-=======
     console.log(rewards.claims)
->>>>>>> Stashed changes
     settStartBlock = 11376266
     startBlock = settStartBlock
     endBlock = int(harvestEvents[0]["blockNumber"])
@@ -50,11 +43,7 @@ def main():
     for i in tqdm(range(len(harvestEvents))):
         console.log("Processing between {} and {}".format(startBlock,endBlock))
         harvestEvent = harvestEvents[i]
-<<<<<<< Updated upstream
-        user_state = calc_harvest_meta_farm_rewards(badger,"harvest.renCrv",startBlock,endBlock)
-=======
         user_state = calc_meta_farm_rewards(badger,"harvest.renCrv",startBlock,endBlock)
->>>>>>> Stashed changes
         farmRewards = int(harvestEvent["farmToRewards"])
         console.print("Processing block {}, distributing {} to users".format(
             harvestEvent["blockNumber"],
