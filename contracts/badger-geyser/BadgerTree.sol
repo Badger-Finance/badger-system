@@ -144,6 +144,12 @@ contract BadgerTree is Initializable, AccessControlUpgradeable, ICumulativeMulti
 
         // Claim each token
         for (uint256 i = 0; i < tokens.length; i++) {
+
+            // If none claimable for token, skip
+            if (cumulativeAmounts[i] == 0) {
+                continue;
+            }
+
             uint256 claimable = cumulativeAmounts[i].sub(claimed[msg.sender][tokens[i]]);
 
             require(claimable > 0, "Excessive claim");
