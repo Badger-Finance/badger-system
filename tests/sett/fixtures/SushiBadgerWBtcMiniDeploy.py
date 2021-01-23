@@ -18,7 +18,7 @@ class SushiBadgerWBtcMiniDeploy(SettMiniDeployBase):
 
         return (params, want)
 
-    def post_deploy_setup(self):
+    def post_deploy_setup(self, deploy=True):
         """
         Distribute badger to Geyser and allow strategy to take
         Unpause strategy (paused on initialization)
@@ -35,7 +35,7 @@ class SushiBadgerWBtcMiniDeploy(SettMiniDeployBase):
         # print(pid)
         # assert pid == self.strategy.pid()
 
-    def post_vault_deploy_setup(self):
+    def post_vault_deploy_setup(self, deploy=True):
         """
         Deploy StakingRewardsSignalOnly for Strategy
         """

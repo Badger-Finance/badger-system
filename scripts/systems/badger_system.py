@@ -860,7 +860,7 @@ class BadgerSystem:
 
         # Connect Rewards
         for key, address in sett_system["rewards"].items():
-            self.connect_sett_staking_rewards(key, address)
+            self.connect_rewards(key, address)
 
         # Connect Geysers
         for key, address in geysers.items():
@@ -925,10 +925,21 @@ class BadgerSystem:
         self.teamVesting = SmartVesting.at(address)
         self.track_contract_upgradeable("teamVesting", self.teamVesting)
 
+    # Routes rewards connection to correct underlying contract based on id.
+    def connect_rewards(self, id, address):
+        if id in [
+           "native.digg",
+           "native.uniDiggWbtc",
+           "native.sushiDiggWbtc",
+        ]:
+            self.connect_digg_rewards_faucet(id, address)
+            return
+        self.connect_sett_staking_rewards(id, address)
+
     def connect_sett_staking_rewards(self, id, address):
-        pool = StakingRewards.at(address)
-        self.sett_system.rewards[id] = pool
-        self.track_contract_upgradeable(id + ".pool", pool)
+        rewards = StakingRewards.at(address)
+        self.sett_system.rewards[id] = rewards
+        self.track_contract_upgradeable(id + ".rewards", rewards)
 
     # def connect_guardian(self, address):
     #     self.guardian = accounts.at(address)
@@ -944,6 +955,11 @@ class BadgerSystem:
             "UniswapV2Pair", address, registry.uniswap.artifacts.UniswapV2Pair["abi"]
         )
         self.uniBadgerWbtcLp = self.pair
+
+    def connect_digg_rewards_faucet(self, id, address):
+        rewards = DiggRewardsFaucet.at(address)
+        self.sett_system.rewards[id] = rewards
+        self.track_contract_upgradeable(id + ".rewards", rewards)
 
     def set_strategy_artifact(self, id, artifactName, artifact):
         self.strategy_artifacts[id] = {

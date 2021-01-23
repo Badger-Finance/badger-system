@@ -25,14 +25,13 @@ class BaseProvisioner:
                 )
 
             if self.manager.badger.digg is not None:
-                # Explicitly distribute digg to users from deployer.
-                deployer = self.manager.badger.deployer
-                digg = self.manager.badger.digg.token
-                balance = digg.balanceOf(deployer)
-                digg.transfer(
+                # Explicitly distribute digg to users from ls.
+                digg = self.manager.badger.digg
+                balance = digg.token.balanceOf(digg.daoDiggTimelock)
+                digg.token.transfer(
                     user,
                     balance * percentage,
-                    {"from": deployer},
+                    {"from": digg.daoDiggTimelock},
                 )
 
     def _distributeWant(self, users) -> None:

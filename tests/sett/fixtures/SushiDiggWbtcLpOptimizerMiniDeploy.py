@@ -35,14 +35,18 @@ class SushiDiggWbtcLpOptimizerMiniDeploy(DiggSettMiniDeployBase):
 
         return (params, want)
 
-    def post_deploy_setup(self):
+    def post_deploy_setup(self, deploy=True):
         """
         Distribute digg to geyser and allow strategy to take
         """
+        super().post_deploy_setup(deploy=deploy)
+
         # Track our digg system within badger system for convenience.
         self.badger.add_existing_digg(self.digg)
-        digg = self.digg.token
+        if not deploy:
+            return
 
+        digg = self.digg.token
         # Transfer initial emissions to DiggFaucet
         amount = digg_config_test.geyserParams.unlockSchedules.digg[0].amount
         digg.transfer(self.rewards, amount, {'from': self.deployer})
@@ -57,11 +61,14 @@ class SushiDiggWbtcLpOptimizerMiniDeploy(DiggSettMiniDeployBase):
         if self.strategy.paused():
             self.strategy.unpause({"from": self.governance})
 
-    def post_vault_deploy_setup(self):
+    def post_vault_deploy_setup(self, deploy=True):
         """
         Deploy StakingRewardsSignalOnly for Digg Strategy
         Generate LP tokens and grant to deployer
         """
+        if not deploy:
+            return
+
         # Setup sushi reward allocations.
         sushiswap = SushiswapSystem()
         pid = sushiswap.add_chef_rewards(self.want)
