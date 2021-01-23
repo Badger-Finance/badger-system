@@ -45,21 +45,17 @@ class SettMiniDeployBase:
 
             self.pre_deploy_setup(deploy=deploy)
 
-            (params, want) = self.fetch_params()
-            self.params = params
-            self.want = want
-
             distribute_test_ether(self.deployer, Wei("20 ether"))
             distribute_from_whales(self.deployer)
 
             self.controller = self.badger.sett_system.controllers[self.key]
             self.vault = self.badger.sett_system.vaults[self.key]
 
-            self.post_vault_deploy_setup()
+            self.post_vault_deploy_setup(deploy=deploy)
 
             self.strategy = self.badger.sett_system.strategies[self.key]
 
-            self.post_deploy_setup()
+            self.post_deploy_setup(deploy=deploy)
 
             if self.vault.paused():
                 self.vault.unpause({"from": self.governance})
@@ -92,7 +88,7 @@ class SettMiniDeployBase:
             sett_type=sett_type,
         )
 
-        self.post_vault_deploy_setup()
+        self.post_vault_deploy_setup(deploy=deploy)
         print("Deploying Strategy with key: ", self.key)
         self.strategy = self.badger.deploy_strategy(
             self.key,
@@ -107,7 +103,7 @@ class SettMiniDeployBase:
 
         self.badger.wire_up_sett(self.vault, self.strategy, self.controller)
 
-        self.post_deploy_setup()
+        self.post_deploy_setup(deploy=deploy)
 
         assert self.vault.paused()
 
@@ -127,8 +123,8 @@ class SettMiniDeployBase:
     def pre_deploy_setup(self, deploy=True):
         return False
 
-    def post_deploy_setup(self):
+    def post_deploy_setup(self, deploy=True):
         return False
 
-    def post_vault_deploy_setup(self):
+    def post_vault_deploy_setup(self, deploy=True):
         return False

@@ -1,9 +1,54 @@
+import random
 from brownie import Sett
 from typing import Any
 
 from helpers.constants import MaxUint256
 from helpers.sett.SnapshotManager import SnapshotManager
 from .BaseAction import BaseAction
+
+
+class DepositAndWithdrawAction(BaseAction):
+    def __init__(
+        self,
+        snap: SnapshotManager,
+        user: Any,
+        sett: Sett,
+        want: Any,
+    ):
+        self.snap = snap
+        self.user = user
+        self.want = want
+        self.sett = sett
+
+    def run(self):
+        user = self.user
+        want = self.want
+        sett = self.sett
+
+        beforeSettBalance = sett.balanceOf(user)
+        startingBalance = want.balanceOf(user)
+        depositAmount = startingBalance // 2
+        assert startingBalance >= depositAmount
+        assert startingBalance >= 0
+
+        want.approve(
+            self.sett,
+            MaxUint256,
+            {"from": user},
+        )
+        self.snap.settDeposit(
+            depositAmount,
+            {"from": user},
+        )
+
+        afterSettBalance = sett.balanceOf(user)
+        settDeposited = afterSettBalance - beforeSettBalance
+        # Confirm that before and after balance does not exceed
+        # max precision loss.
+        self.snap.settWithdraw(settDeposited, {"from": self.user})
+
+        endingBalance = want.balanceOf(user)
+        assert startingBalance - endingBalance <= 2
 
 
 class DepositAction(BaseAction):
@@ -62,10 +107,19 @@ class UserActor:
 
     def generateAction(self) -> BaseAction:
         '''
-        Only produce deposit -> withdraw -> deposit -> withdraw...
-        operations for now. May add support for interleaving ops
-        at a later time.
+        Produces deposit -> withdraw -> deposit -> withdraw...
+        ops for now and interleaved deposit/withdraw ops.
         '''
+        # Randomly confirm deposit and withdraw in same action
+        # does not exceed max precision loss. This can be interleaved
+        # between the regular deposit -> withdraw flow.
+        if random.random() > 0.5:
+            return DepositAndWithdrawAction(
+                self.snap,
+                self.user,
+                self.sett,
+                self.want,
+            )
         if self.deposited:
             self.deposited = False
             return WithdrawAction(

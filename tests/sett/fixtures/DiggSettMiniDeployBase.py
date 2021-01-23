@@ -8,7 +8,7 @@ from config.badger_config import digg_config
 
 # Generic DIGG sett mini deploy logic.
 class DiggSettMiniDeployBase(SettMiniDeployBase):
-    def post_deploy_setup(self):
+    def post_deploy_setup(self, deploy=True):
         # Track our digg system within badger system for convenience.
         self.badger.add_existing_digg(self.digg)
 
@@ -19,31 +19,11 @@ class DiggSettMiniDeployBase(SettMiniDeployBase):
         if not deploy:
             digg = connect_digg(digg_config.prod_json)
             self.digg = digg
-            self._deploy_dynamic_oracle()
+            self._deploy_dynamic_oracle(self.digg.devMultisig)
 
-            digg.constantOracle.updateAndPush({"from": digg.owner})
+            digg.constantOracle.updateAndPush({"from": digg.devMultisig})
             # Sleep long enough that the report is valid.
             chain.sleep(digg_config.cpiOracleParams.reportDelaySec)
-
-            # TODO: Can remove the following once core digg contracts
-            # are wired up.
-            # Setup frag policy & frag (required for ALL deploys).
-            digg.uFragmentsPolicy.setCpiOracle(
-                digg.cpiMedianOracle,
-                {"from": digg.owner},
-            )
-            digg.uFragmentsPolicy.setMarketOracle(
-                digg.marketMedianOracle,
-                {"from": digg.owner},
-            )
-            digg.uFragmentsPolicy.setOrchestrator(
-                digg.orchestrator,
-                {"from": digg.owner},
-            )
-            digg.uFragments.setMonetaryPolicy(
-                digg.uFragmentsPolicy,
-                {"from": digg.owner},
-            )
             return
 
         deployer = self.deployer
@@ -54,15 +34,14 @@ class DiggSettMiniDeployBase(SettMiniDeployBase):
         )
 
         self.badger.deploy_logic("DiggRewardsFaucet", DiggRewardsFaucet)
+        self._deploy_dynamic_oracle(self.deployer)
 
-        self._deploy_dynamic_oracle()
-
-    def _deploy_dynamic_oracle(self):
+    def _deploy_dynamic_oracle(self, owner):
         # Deploy dynamic oracle (used for testing ONLY).
         self.digg.deploy_dynamic_oracle()
         # Authorize dynamic oracle as a data provider to median oracle.
         self.digg.marketMedianOracle.addProvider(
             self.digg.dynamicOracle,
-            {"from": self.deployer},
+            {"from": owner},
         )
 

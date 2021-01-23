@@ -19,11 +19,15 @@ class DiggRewardsMiniDeploy(DiggSettMiniDeployBase):
 
         return (params, want)
 
-    def post_deploy_setup(self):
+    def post_deploy_setup(self, deploy=True):
         """
         Distribute digg to Geyser and allow strategy to take
         """
-        super().post_deploy_setup()
+        super().post_deploy_setup(deploy=deploy)
+
+        if not deploy:
+            return
+
         amount = digg_config_test.geyserParams.unlockSchedules.digg[0].amount
         digg = self.digg.token
 

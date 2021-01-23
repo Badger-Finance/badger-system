@@ -182,6 +182,12 @@ class StrategyCoreResolver:
         console.print("=== Compare Withdraw ===")
         self.manager.printCompare(before, after)
 
+        if params["amount"] == 0:
+            assert after.get("sett.totalSupply") == before.get("sett.totalSupply")
+            # Decrease the Sett tokens for the user based on withdrawAmount and pricePerFullShare
+            assert after.balances("sett", "user") == before.balances("sett", "user")
+            return
+
         # Decrease the totalSupply of Sett tokens
         assert after.get("sett.totalSupply") < before.get("sett.totalSupply")
 

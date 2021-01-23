@@ -13,7 +13,7 @@ class BadgerRewardsMiniDeploy(SettMiniDeployBase):
 
         return (params, want)
 
-    def post_deploy_setup(self):
+    def post_deploy_setup(self, deploy=True):
         """
         Distribute badger to Geyser and allow strategy to take
         """
