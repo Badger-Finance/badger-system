@@ -107,8 +107,9 @@ def calc_sushi_rewards(badger,startBlock,endBlock,nextCycle,retroactive):
     console.log("Total xSushi {} from claims".format(
         xSushiFromRewards/1e18
     ))
+    difference = abs(totalxSushi - xSushiFromRewards)
     console.log("Difference {}".format(abs(totalxSushi/1e18 - xSushiFromRewards/1e18)))
-
+    assert difference < 10000000
     return finalRewards
 
             
