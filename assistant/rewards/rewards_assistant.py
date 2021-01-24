@@ -68,12 +68,9 @@ def calc_geyser_rewards(badger, periodStartBlock, endBlock, cycle):
 
     return sum_rewards(rewardsByGeyser, cycle, badger.badgerTree)
 
-
-
 def calc_sushi_rewards(badger,startBlock,endBlock,nextCycle,retroactive):
     xSushiTokenAddress = "0x8798249c2e607446efb7ad49ec89dd1865ff4272"
     sushi_harvest_events = fetch_sushi_harvest_events()
-    console.log(sushi_harvest_events)
 
     def filter_events(e):
         return int(e["blockNumber"]) > startBlock and int(e["blockNumber"]) < endBlock
@@ -82,15 +79,33 @@ def calc_sushi_rewards(badger,startBlock,endBlock,nextCycle,retroactive):
     wbtcBadgerEvents = list(filter(filter_events,sushi_harvest_events["wbtcBadger"]))
     totalxSushi = sum([int(e["toBadgerTree"]) for e in wbtcEthEvents]) + sum([int(e["toBadgerTree"]) for e in wbtcBadgerEvents])
 
-    console.log("Processing {} wbtcEth sushi events".format(len(wbtcEthEvents)))
-    wbtcEthStartBlock = get_last_event_block(startBlock,wbtcEthEvents) if not retroactive else 11537600 
-    wbtcEthRewards = process_sushi_events(
-        badger,wbtcEthStartBlock,endBlock,wbtcEthEvents,"native.sushiWbtcEth",nextCycle)
 
+    console.log(wbtcEthEvents)
+    console.log(wbtcBadgerEvents)
+    
+
+
+    wbtcEthStartBlock = get_latest_event_block(wbtcEthEvents[0],sushi_harvest_events["wbtcEth"])
+    if wbtcEthStartBlock == -1 or retroactive:
+        wbtcEthStartBlock = 11537600
+
+    console.log(wbtcEthStartBlock)
+        
+    console.log("Processing {} wbtcEth sushi events".format(len(wbtcEthEvents)))
+    wbtcEthRewards = process_sushi_events(
+        badger,wbtcEthStartBlock,endBlock,wbtcEthEvents,"native.sushiWbtcEth",nextCycle) 
+
+    wbtcBadgerStartBlock = get_latest_event_block(wbtcBadgerEvents[0],sushi_harvest_events["wbtcBadger"])
+    if wbtcBadgerEvents == -1 or retroactive:
+        wbtcBadgerStartBlock = 11539529
+
+    console.log(wbtcBadgerStartBlock)
+    
     console.log("Processing {} wbtcBadger sushi events".format(len(wbtcBadgerEvents)))
-    wbtcBadgerStartBlock = get_last_event_block(startBlock,wbtcBadgerEvents) if not retroactive else 11539529
     wbtcBadgerRewards = process_sushi_events(
         badger,wbtcBadgerStartBlock,endBlock,wbtcBadgerEvents,"native.sushiBadgerWbtc",nextCycle)
+
+    # TODO: Add digg sushi strategy
 
     finalRewards = combine_rewards([wbtcEthRewards,wbtcBadgerRewards],nextCycle,badger.badgerTree)
     xSushiFromRewards = 0
@@ -115,7 +130,6 @@ def calc_sushi_rewards(badger,startBlock,endBlock,nextCycle,retroactive):
             
 def process_sushi_events(badger,startBlock,endBlock,events,name,nextCycle):
     xSushiTokenAddress = "0x8798249c2e607446efb7ad49ec89dd1865ff4272"
-
     start = startBlock
     end = int(events[0]["blockNumber"])
     totalHarvested = 0
@@ -142,12 +156,19 @@ def process_sushi_events(badger,startBlock,endBlock,events,name,nextCycle):
     console.log(sum([list(v.values())[0]/1e18 for v in list(rewards.claims.values())  ]))
     return rewards
 
-def get_last_event_block(startBlock,harvestEvents):
-    for event in harvestEvents:
-        if int(event["blockNumber"]) < int(startBlock):
-            continue
-        else:
-            return int(event["blockNumber"])
+def get_latest_event_block(firstEvent,harvestEvents):
+    try:
+        event_index = harvestEvents.index(firstEvent)
+        console.log(event_index)
+    except ValueError:
+        return -1
+    if event_index - 1 >= 0 and event_index - 1 < len(harvestEvents):
+        # startBlock starts with the last harvest that happened 
+        latestEvent = harvestEvents[event_index - 1] 
+        return latestEvent["blockNumber"]
+    else:
+        return -1
+    
 
 def fetch_current_harvest_rewards(badger,startBlock,endBlock,nextCycle):
     farmTokenAddress = "0xa0246c9032bC3A600820415aE600c6388619A14D"
@@ -163,7 +184,7 @@ def fetch_current_harvest_rewards(badger,startBlock,endBlock,nextCycle):
     if len(unprocessedEvents) == 0:
         return rewards
 
-    start = get_last_event_block(startBlock,harvestEvents)
+    start = get_latest_event_block(unprocessedEvents[0],harvestEvents)
     end = int(unprocessedEvents[0]["blockNumber"])
     totalHarvested = 0
     for i in tqdm(range(len(unprocessedEvents))):

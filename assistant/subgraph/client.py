@@ -131,7 +131,6 @@ def fetch_sett_transfers(settID, startBlock, endBlock):
     variables = {"vaultID": {"id": settID}, "blockHeight": {"number": endBlock}}
 
     results = client.execute(query, variable_values=variables)
-    console.log("Filtering by {}".format(startBlock))
 
     def filter_by_startBlock(transfer):
         return int(transfer["transaction"]["blockNumber"]) > startBlock
