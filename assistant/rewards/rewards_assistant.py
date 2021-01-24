@@ -1,22 +1,14 @@
-from helpers.utils import sec
 import json
-from tqdm import tqdm
 
+from tqdm import tqdm
 from assistant.rewards.calc_stakes import calc_geyser_stakes
 from assistant.rewards.calc_harvest import calc_balances_from_geyser_events,get_initial_user_state
 from assistant.subgraph.client import (
     fetch_sett_balances,
     fetch_geyser_events,
     fetch_sett_transfers,
-<<<<<<< Updated upstream
-    fetch_harvest_farm_events
-=======
-<<<<<<< Updated upstream
-=======
     fetch_harvest_farm_events,
     fetch_sushi_harvest_events
->>>>>>> Stashed changes
->>>>>>> Stashed changes
 )
 from assistant.rewards.User import User
 from assistant.rewards.merkle_tree import rewards_to_merkle_tree
@@ -27,7 +19,7 @@ from brownie.network.gas.strategies import GasNowStrategy
 from config.rewards_config import rewards_config
 from eth_abi import decode_single, encode_single
 from eth_abi.packed import encode_abi_packed
-from helpers.time_utils import hours, to_hours
+from helpers.time_utils import hours
 from rich.console import Console
 from scripts.systems.badger_system import BadgerSystem
 gas_strategy = GasNowStrategy("fast")
@@ -77,58 +69,12 @@ def calc_geyser_rewards(badger, periodStartBlock, endBlock, cycle):
     return sum_rewards(rewardsByGeyser, cycle, badger.badgerTree)
 
 
-<<<<<<< Updated upstream
-def fetch_current_harvest_rewards(badger,startBlock,endBlock,nextCycle):
-    farmTokenAddress = "0xa0246c9032bC3A600820415aE600c6388619A14D"
-    harvestEvents = fetch_harvest_farm_events()
-    rewards = RewardsList(nextCycle,badger.badgerTree)
-
-    def filter_events(e):
-        return int(e["blockNumber"]) > startBlock and int(e["blockNumber"]) < endBlock
-
-    unprocessedEvents = list(filter(filter_events,harvestEvents))
-    console.log("Processing {} farm events".format(len(unprocessedEvents)))
-
-    if len(unprocessedEvents) == 0:
-        return rewards
-
-    start = startBlock
-    end = int(unprocessedEvents[0]["blockNumber"])
-    totalHarvested = 0
-    for i in tqdm(range(len(unprocessedEvents))):
-        console.log("Processing between {} and {}".format(startBlock,endBlock))
-        harvestEvent = unprocessedEvents[i]
-        user_state = calc_harvest_meta_farm_rewards(badger,"harvest.renCrv",start,end)
-        farmRewards = int(harvestEvent["farmToRewards"])
-        console.print("Processing block {}, distributing {} to users".format(
-            harvestEvent["blockNumber"],
-            farmRewards/1e18,
-         ))
-        totalHarvested += farmRewards/1e18
-        console.print("{} total FARM processed".format(totalHarvested))
-        totalShareSeconds = sum([u.shareSeconds for u in user_state])
-        farmUnit = farmRewards/totalShareSeconds
-        for user in user_state:
-            rewards.increase_user_rewards(user.address,farmTokenAddress,farmUnit * user.shareSeconds)
-
-        if i+1 < len(unprocessedEvents):
-            start = int(unprocessedEvents[i]["blockNumber"])
-            end = int(unprocessedEvents[i+1]["blockNumber"])
-
-    console.log(sorted( [list(v.values())[0]/1e18 for v in list(rewards.claims.values())  ] ))
-    return rewards
-
-
-=======
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-def calc_harvest_meta_farm_rewards(badger,name, startBlock, endBlock):
-=======
 
 def calc_sushi_rewards(badger,startBlock,endBlock,nextCycle,retroactive):
     xSushiTokenAddress = "0x8798249c2e607446efb7ad49ec89dd1865ff4272"
     sushi_harvest_events = fetch_sushi_harvest_events()
     console.log(sushi_harvest_events)
+
     def filter_events(e):
         return int(e["blockNumber"]) > startBlock and int(e["blockNumber"]) < endBlock
 
@@ -137,7 +83,7 @@ def calc_sushi_rewards(badger,startBlock,endBlock,nextCycle,retroactive):
     totalxSushi = sum([int(e["toBadgerTree"]) for e in wbtcEthEvents]) + sum([int(e["toBadgerTree"]) for e in wbtcBadgerEvents])
 
     console.log("Processing {} wbtcEth sushi events".format(len(wbtcEthEvents)))
-    wbtcEthStartBlock = get_last_event_block(startBlock,wbtcEthEvents) if not retroactive else 11537600
+    wbtcEthStartBlock = get_last_event_block(startBlock,wbtcEthEvents) if not retroactive else 11537600 
     wbtcEthRewards = process_sushi_events(
         badger,wbtcEthStartBlock,endBlock,wbtcEthEvents,"native.sushiWbtcEth",nextCycle)
 
@@ -147,7 +93,6 @@ def calc_sushi_rewards(badger,startBlock,endBlock,nextCycle,retroactive):
         badger,wbtcBadgerStartBlock,endBlock,wbtcBadgerEvents,"native.sushiBadgerWbtc",nextCycle)
 
     finalRewards = combine_rewards([wbtcEthRewards,wbtcBadgerRewards],nextCycle,badger.badgerTree)
-    console.log(finalRewards.claims)
     xSushiFromRewards = 0
 
     for user,claimData in finalRewards.claims.items():
@@ -156,7 +101,7 @@ def calc_sushi_rewards(badger,startBlock,endBlock,nextCycle,retroactive):
                 console.log("Address {}: {} xSushi".format(user,int(float(tokenAmount))/1e18 ))
                 xSushiFromRewards += int(float(tokenAmount))
 
-    console.log("Total xSushi {} from  events".format(
+    console.log("Total xSushi {} from events".format(
         totalxSushi/1e18
     ))
     console.log("Total xSushi {} from claims".format(
@@ -167,9 +112,6 @@ def calc_sushi_rewards(badger,startBlock,endBlock,nextCycle,retroactive):
     return finalRewards
 
             
-
-
-
 def process_sushi_events(badger,startBlock,endBlock,events,name,nextCycle):
     xSushiTokenAddress = "0x8798249c2e607446efb7ad49ec89dd1865ff4272"
 
@@ -178,11 +120,11 @@ def process_sushi_events(badger,startBlock,endBlock,events,name,nextCycle):
     totalHarvested = 0
     rewards = RewardsList(nextCycle,badger.badgerTree)
     for i in tqdm(range(len(events))):
-        event = events[i]
         xSushiRewards = int(events[i]["toBadgerTree"])
         user_state = calc_meta_farm_rewards(badger,name,start,end)
-        console.print("Processing block {}, distributing {} to users".format(
-            event["blockNumber"],
+        console.log("Processing between blocks {} and {}, distributing {} to users".format(
+            start,
+            end,
             xSushiRewards/1e18
         ))
         totalHarvested += xSushiRewards/1e18
@@ -197,7 +139,6 @@ def process_sushi_events(badger,startBlock,endBlock,events,name,nextCycle):
            end = int(events[i+1]["blockNumber"])
 
     console.log(sum([list(v.values())[0]/1e18 for v in list(rewards.claims.values())  ]))
-    console.log(rewards.claims)
     return rewards
 
 def get_last_event_block(startBlock,harvestEvents):
@@ -249,7 +190,7 @@ def fetch_current_harvest_rewards(badger,startBlock,endBlock,nextCycle):
 
 
 def calc_meta_farm_rewards(badger,name, startBlock, endBlock):
->>>>>>> Stashed changes
+    console.log("Calculating rewards between {} and {}".format(startBlock,endBlock))
     startBlockTime = web3.eth.getBlock(startBlock)["timestamp"]
     endBlockTime = web3.eth.getBlock(endBlock)["timestamp"]
     settId = badger.getSett(name).address.lower()
@@ -283,12 +224,13 @@ def calc_meta_farm_rewards(badger,name, startBlock, endBlock):
         if user:
                user.process_transfer(transfer)
         else:
-            # If the user hasn't deposited before, create a new one
-            newUser = User(transfer_address,transfer_amount,transfer_timestamp)
+            # Prevent negative transfer from accumulated lp
             if transfer_amount < 0:
-                console.log(transfer)
-            #assert transfer_amount >= 0
-            user_state.append(newUser)
+                transfer_amount = 0
+
+            # If the user hasn't deposited before, create a new oneA
+            user = User(transfer_address,transfer_amount,transfer_timestamp)
+            user_state.append(user)
 
     for user in user_state:
         user.process_transfer({
@@ -395,6 +337,7 @@ def guardian(badger: BadgerSystem, startBlock, endBlock, test=False):
             "currentContentHash": currentContentHash,
         }
     )
+
     print("Uploading to file " + contentFileName)
 
     # TODO: Upload file to AWS & serve from server
@@ -444,21 +387,18 @@ def hash(value):
     return web3.toHex(web3.keccak(text=value))
 
 
-def fetch_current_rewards_tree(badger, print_output=False):
+def fetch_current_rewards_tree(badger):
     # TODO Files should be hashed and signed by keeper to prevent tampering
     # TODO How will we upload addresses securely?
     # We will check signature before posting
     merkle = fetchCurrentMerkleData(badger)
     # pastFile = "rewards-1-" + str(merkle["contentHash"]) + ".json"
 
-    pastFile = "rewards-1-0xedb19ff04e848620b228f1657b9232c41c080af0f4d2be1318696b5f9c0c892e.json"
+    pastFile = "rewards-1-0xf5a8ede3b252cee8a1680f10a8f721ad21e336929b8be998bff5736371d3cb06.json"
 
-    if print_output:
-        console.print(
-            "[bold yellow]===== Loading Past Rewards "
-            + pastFile
-            + " =====[/bold yellow]"
-        )
+    console.print(
+        "[bold yellow]===== Loading Past Rewards " + pastFile + " =====[/bold yellow]"
+    )
 
     # currentTree = json.loads(download(pastFile))
     with open(pastFile) as f:
@@ -468,32 +408,34 @@ def fetch_current_rewards_tree(badger, print_output=False):
     # Invariant: File shoulld have same root as latest
     # assert currentTree["merkleRoot"] == merkle["root"]
 
-    lastUpdatePublish = merkle["blockNumber"]
+    lastUpdateOnChain = merkle["blockNumber"]
     lastUpdate = int(currentTree["endBlock"])
 
-    if print_output:
-        print(
-            "lastUpdateBlock", lastUpdate, "lastUpdatePublishBlock", lastUpdatePublish
-        )
-    # Ensure upload was after file tracked
-    assert lastUpdatePublish >= lastUpdate
-
+    print("lastUpdateOnChain ", lastUpdateOnChain, " lastUpdate ", lastUpdate)
     # Ensure file tracks block within 1 day of upload
     # assert abs(lastUpdate - lastUpdateOnChain) < 6500
 
+    # Ensure upload was after file tracked
+    assert lastUpdateOnChain >= lastUpdate
     return currentTree
 
 
-def generate_rewards_in_range(badger, startBlock, endBlock):
-    blockDuration = endBlock - startBlock
-    console.print(
-        "\n[green]Calculate rewards for {} blocks: {} -> {} [/green]\n".format(
-            blockDuration, startBlock, endBlock
-        )
-    )
+def rootUpdater(badger, startBlock, endBlock, test=False):
+    """
+    Root Updater Role
+    - Check how much time has passed since the last published update
+    - If sufficient time has passed, run the rewards script and p
+    - If there is a discrepency, notify admin
 
+    (In case of a one-off failure, Script will be attempted again at the rootUpdaterInterval)
+    """
+    badgerTree = badger.badgerTree
+    keeper = badger.keeper
     nextCycle = getNextCycle(badger)
 
+    assert keeper == badger.keeper
+
+    console.print("\n[bold cyan]===== Root Updater =====[/bold cyan]\n")
     currentMerkleData = fetchCurrentMerkleData(badger)
     currentRewards = fetch_current_rewards_tree(badger)
 
@@ -512,21 +454,11 @@ def generate_rewards_in_range(badger, startBlock, endBlock):
     #     )
     #     return False
     print("Geyser Rewards", startBlock, endBlock, nextCycle)
-<<<<<<< Updated upstream
-
-<<<<<<< Updated upstream
-    metaFarmRewards = fetch_current_harvest_rewards(badger,startBlock, endBlock,nextCycle)
-=======
-    metaFarmRewards = calc_harvest_meta_farm_rewards(badger,"harvest.renCrv",startBlock, endBlock)
-=======
     sushiRewards = calc_sushi_rewards(badger,startBlock,endBlock,nextCycle,retroactive=False)
     metaFarmRewards = fetch_current_harvest_rewards(badger,startBlock, endBlock,nextCycle)
->>>>>>> Stashed changes
->>>>>>> Stashed changes
     geyserRewards = calc_geyser_rewards(badger, startBlock, endBlock, nextCycle)
-    newRewards = process_cumulative_rewards(geyserRewards,metaFarmRewards)
-
     newRewards = geyserRewards
+
     cumulativeRewards = process_cumulative_rewards(currentRewards, newRewards)
 
     # Take metadata from geyserRewards
@@ -558,7 +490,6 @@ def generate_rewards_in_range(badger, startBlock, endBlock):
     with open(contentFileName) as f:
         after_file = json.load(f)
 
-    # Sanity check new rewards file
     compare_rewards(
         badger,
         startBlock,
@@ -567,87 +498,26 @@ def generate_rewards_in_range(badger, startBlock, endBlock):
         after_file,
         currentMerkleData["contentHash"],
     )
-
-    return {
-        "contentFileName": contentFileName,
-        "merkleTree": merkleTree,
-        "rootHash": rootHash,
-    }
-
-
-def rootUpdater(badger, startBlock, endBlock, test=False):
-    """
-    Root Updater Role
-    - Check how much time has passed since the last published update
-    - If sufficient time has passed, run the rewards script and p
-    - If there is a discrepency, notify admin
-
-    (In case of a one-off failure, Script will be attempted again at the rootUpdaterInterval)
-    """
-    console.print("\n[bold cyan]===== Root Updater =====[/bold cyan]\n")
-
-    badgerTree = badger.badgerTree
-    nextCycle = getNextCycle(badger)
-
-    currentMerkleData = fetchCurrentMerkleData(badger)
-    currentTime = chain.time()
-
-    # Only run if we have sufficent time since previous root
-    timeSinceLastupdate = currentTime - currentMerkleData["lastUpdateTime"]
-    if timeSinceLastupdate < rewards_config.rootUpdateMinInterval and not test:
-        console.print(
-           "[bold yellow]===== Result: Last Update too Recent ({}) =====[/bold yellow]".format(
-                to_hours(timeSinceLastupdate)
-            )
-        )
-        return False
-
-    rewards_data = generate_rewards_in_range(badger, startBlock, endBlock)
-
     console.print("===== Root Updater Complete =====")
     if not test:
-        upload(rewards_data["contentFileName"])
+        upload(contentFileName)
         badgerTree.proposeRoot(
-            rewards_data["merkleTree"]["merkleRoot"],
-            rewards_data["rootHash"],
-            rewards_data["merkleTree"]["cycle"],
-            {"from": badger.keeper, "gas_price": gas_strategy},
+            merkleTree["merkleRoot"],
+            rootHash,
+            merkleTree["cycle"],
+            {"from": keeper, "gas_price": gas_strategy},
         )
 
     return True
 
 
-def guardian(badger: BadgerSystem, startBlock, endBlock, test=False):
+def watchdog(badger, endBlock):
     """
-    Guardian Role
-    - Check if there is a new proposed root
-    - If there is, run the rewards script at the same block height to verify the results
-    - If there is a discrepency, notify admin
-
-    (In case of a one-off failure, Script will be attempted again at the guardianInterval)
+    Watchdog
+    Ensure that the root has been updated within the maximum interval
+    If not, the system is not functioning properly, notify admin
     """
-
-    console.print("\n[bold cyan]===== Guardian =====[/bold cyan]\n")
-
-    badgerTree = badger.badgerTree
-
-    # Only run if we have a pending root
-    if not badgerTree.hasPendingRoot():
-        console.print("[bold yellow]===== Result: No Pending Root =====[/bold yellow]")
-        return False
-
-    rewards_data = generate_rewards_in_range(badger, startBlock, endBlock)
-
-    console.print("===== Guardian Complete =====")
-
-    if not test:
-        upload(rewards_data["contentFileName"]),
-        badgerTree.approveRoot(
-            rewards_data["merkleTree"]["merkleRoot"],
-            rewards_data["rootHash"],
-            rewards_data["merkleTree"]["cycle"],
-            {"from": badger.guardian, "gas_price": gas_strategy},
-        )
+    return False
 
 
 def run_action(badger, args, test):
@@ -655,6 +525,8 @@ def run_action(badger, args, test):
         return rootUpdater(badger, args["startBlock"], args["endBlock"], test)
     if args["action"] == "guardian":
         return guardian(badger, args["startBlock"], args["endBlock"], test)
+    if args["action"] == "watchdog":
+        return watchdog(badger)
     return False
 
 

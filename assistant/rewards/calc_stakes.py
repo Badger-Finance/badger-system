@@ -2,7 +2,6 @@ from collections import OrderedDict
 
 from config.rewards_config import rewards_config
 from assistant.rewards.BadgerGeyserMock import BadgerGeyserMock
-from assistant.subgraph.client import fetch_all_geyser_events
 from brownie import *
 from dotmap import DotMap
 from helpers.constants import AddressZero
@@ -64,7 +63,7 @@ def calculate_token_distributions(
 def collect_actions(geyser):
     actions = DotMap()
     # == Process Unstaked ==
-    data = fetch_all_geyser_events(geyser)
+    data = []
     staked = data["stakes"]
     unstaked = data["unstakes"]
 

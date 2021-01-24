@@ -93,7 +93,7 @@ def main():
     console.log("Difference: {}".format((farmHarvestedMerkleTree/1e18) - (claimsHarvested/1e18)))
     difference = farmHarvestedMerkleTree - claimsHarvested
     console.log("Difference: {}".format(farmHarvestedMerkleTree - claimsHarvested))
-    console.log(gas_strategy)
+    console.log(gas_strategy.get_gas_price())
     if abs(difference) < 10000000 and not test:
         badger.badgerTree.proposeRoot(
         merkleTree["merkleRoot"],

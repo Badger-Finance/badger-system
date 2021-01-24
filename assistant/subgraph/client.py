@@ -10,52 +10,7 @@ url = subgraph_config["url"]
 transport = AIOHTTPTransport(url=url)
 client = Client(transport=transport, fetch_schema_from_transport=True)
 
-
-def fetch_all_geyser_events(geyserId):
-    print("fetch_geyser_events", geyserId)
-    # Get all geysers
-    query = """
-    {
-    geysers {
-        id
-        totalStaked
-        stakeEvents(orderBy: blockNumber) {
-        id, geyser {
-            id
-        }, user, amount, total, timestamp, blockNumber, data
-            }
-        unstakeEvents(orderBy: blockNumber) {
-        id, geyser {
-            id
-        }, user, amount, total, timestamp, blockNumber, data
-            }
-    }
-    }
-    """
-
-    variables = {"geyserId": geyserId}
-    endpoint = HTTPEndpoint(url, headers)
-    result = endpoint(query)
-
-    unstakes = []
-    stakes = []
-    totalStaked = 0
-
-    # Find this geyser
-    for entry in result["data"]["geysers"]:
-        if entry["id"] == geyserId:
-            stakes = entry["stakeEvents"]
-            unstakes = entry["unstakeEvents"]
-            totalStaked = entry["totalStaked"]
-
-    # console.log(result['data'])
-    return {
-        "id": geyserId,
-        "unstakes": unstakes,
-        "stakes": stakes,
-        "totalStaked": totalStaked,
-    }
-
+    
 
 def fetch_sett_balances(settId, startBlock):
     console.print(
@@ -176,6 +131,7 @@ def fetch_sett_transfers(settID, startBlock, endBlock):
     variables = {"vaultID": {"id": settID}, "blockHeight": {"number": endBlock}}
 
     results = client.execute(query, variable_values=variables)
+    console.log("Filtering by {}".format(startBlock))
 
     def filter_by_startBlock(transfer):
         return int(transfer["transaction"]["blockNumber"]) > startBlock
