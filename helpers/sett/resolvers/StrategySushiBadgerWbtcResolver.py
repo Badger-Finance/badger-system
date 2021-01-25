@@ -40,6 +40,14 @@ class StrategySushiBadgerWbtcResolver(StrategyBaseSushiResolver, StrategyCoreRes
                 [["stakingRewards.staked", as_wei]],
             )
         )
+        calls.append(
+            Call(
+                staking_rewards_address,
+                [func.rewardPool.earned, strategy.address],
+                [["stakingRewards.earned", as_wei]],
+            )
+        )
+
         return calls
 
     def printHarvestRewardsState(self, event, keys):

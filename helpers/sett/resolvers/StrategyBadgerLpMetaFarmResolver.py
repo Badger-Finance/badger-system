@@ -1,3 +1,4 @@
+from helpers.multicall import functions, Call, func, as_wei
 from helpers.sett.resolvers.StrategyCoreResolver import StrategyCoreResolver
 from brownie import *
 
@@ -22,6 +23,28 @@ class StrategyBadgerLpMetaFarmResolver(StrategyCoreResolver):
         badger = interface.IERC20(strategy.badger())
 
         calls = self.add_entity_balances_for_tokens(calls, "badger", badger, entities)
+        return calls
+
+    def add_strategy_snap(self, calls):
+        strategy = self.manager.strategy
+        staking_rewards_address = strategy.geyser()
+
+        super().add_strategy_snap(calls)
+        calls.append(
+            Call(
+                staking_rewards_address,
+                [func.erc20.balanceOf, strategy.address],
+                [["stakingRewards.staked", as_wei]],
+            )
+        )
+        calls.append(
+            Call(
+                staking_rewards_address,
+                [func.rewardPool.earned, strategy.address],
+                [["stakingRewards.earned", as_wei]],
+            )
+        )
+
         return calls
 
     def confirm_harvest(self, before, after, tx):
