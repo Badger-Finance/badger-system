@@ -13,7 +13,7 @@
         "SmartTimelock": "0x82C9E7DC49F800820d37a12a5a17548FE3a3A40b",
         "RewardsEscrow": "0xC2Bc5fD13Ce64efD249234C870D64569155609cd",
         "BadgerGeyser": "0x51B44fFD22ddEaDdb46E28867aA9988DF919F381",
-        "BadgerTree": "0x06466a741094f51b45FB150c6D1e857B3E879967",
+        "BadgerTree": "0x48eb9b000f8c0a60784d0f96092e08efdc1e4876",
         "BadgerHunt": "0xC5C8933073B1c682aE07b4bc22d2249c220884bE",
         "SimpleTimelock": "0x4e3f56bb996ed91ba8d97ea773d3f818730d1a6f",
         "Controller": "0x6354E79F21B56C11f48bcD7c451BE456D7102A36",
@@ -40,7 +40,8 @@
         "StrategySushiDiggWbtcLpOptimizer": "0x16626Fd20b8e1541Fdb85D9e63DEf368b374fa75",
         "StrategyDiggLpMetaFarm": "0xd0b1e9f652019B993dacdd97011557ec3b2B6019",
         "DiggDistributor": "0x9a7d4078068ebb39ffe471898212353cf661580c",
-        "SimpleTimelockWithVoting": "0xa494351C6f392908321Ea90665628f7f521FE809"
+        "SimpleTimelockWithVoting": "0xa494351C6f392908321Ea90665628f7f521FE809",
+        "DiggSeeder": "0xfcC357420368195eE1F4B387d9d4335d26b0695F"
     },
     "dao": {
         "token": "0x3472A5A71965499acd81997a54BBA8D852C6E53d",
@@ -134,6 +135,7 @@
         "centralizedOracle": "0x72dc16CFa95beB42aeebD2B10F22E55bD17Ce976",
         "daoDiggTimelock": "0x5A54Ca44e8F5A1A695f8621f15Bfa159a140bB61",
         "diggTeamVesting": "0x124FD4A9bd4914b32c77C9AE51819b1181dbb3D4",
-        "diggDistributor": "0x62CF07B6878d6A1a9704505e8DBC4FBcE2EF1477"
+        "diggDistributor": "0x5E79958EfbB8AFdeDB6EC7107110F329e4EAfffA",
+        "diggSeeder": "0xb81fA24b359289b7bC8552dB6A2a606fa8B5B61c"
     }
 }

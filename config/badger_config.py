@@ -359,8 +359,8 @@ digg_config = DotMap(
         totalDuration=days(365)
     ),
     # TODO: Set this to the prod airdrop root
-    airdropRoot="0xcdf95f37a8e91841ec653f55a9d9afc600a6e0505bf4cae6db9546642eb0e42d",
-    airdropTotalShares="0x266666666666660000000000000000000007629c343934e590c7b64ae9c00000",
+    airdropRoot="0xe083d1a60e1ca84c995048be8b9b5b4d4e371f31bcbdff8b775cb47502f4108b",
+    airdropTotalShares="0x2666666666666600000000000000000000075fbb5707c39d0359f2ba7a800000",
     # TODO: Need to set this value to exact time we want allow reclaiming of airdrop.
     reclaimAllowedTimestamp=chain.time()
 )

@@ -142,6 +142,8 @@ contract BadgerTree is Initializable, AccessControlUpgradeable, ICumulativeMulti
         bytes32 node = keccak256(abi.encode(index, msg.sender, cycle, tokens, cumulativeAmounts));
         require(MerkleProofUpgradeable.verify(merkleProof, merkleRoot, node), "Invalid proof");
 
+        bool claimedAny = false;
+
         // Claim each token
         for (uint256 i = 0; i < tokens.length; i++) {
 
@@ -152,6 +154,10 @@ contract BadgerTree is Initializable, AccessControlUpgradeable, ICumulativeMulti
 
             uint256 claimable = cumulativeAmounts[i].sub(claimed[msg.sender][tokens[i]]);
 
+            if (claimable == 0) {
+                continue;
+            }
+
             require(claimable > 0, "Excessive claim");
 
             claimed[msg.sender][tokens[i]] = claimed[msg.sender][tokens[i]].add(claimable);
@@ -160,6 +166,11 @@ contract BadgerTree is Initializable, AccessControlUpgradeable, ICumulativeMulti
             require(IERC20Upgradeable(tokens[i]).transfer(msg.sender, _parseValue(tokens[i], claimable)), "Transfer failed");
 
             emit Claimed(msg.sender, tokens[i], claimable, cycle, now, block.number);
+            claimedAny = true;
+        }
+
+        if (claimedAny == false) {
+            revert("No tokens to claim");
         }
     }
 

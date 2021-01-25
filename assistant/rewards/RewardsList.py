@@ -121,44 +121,39 @@ class RewardsList:
             nodeEntry["cumulativeAmounts"].append(str(cumulativeAmount))
             intAmounts.append(int(cumulativeAmount))
 
-        print(
-            int(nodeEntry["index"]),
-            nodeEntry["user"],
-            int(nodeEntry["cycle"]),
-            nodeEntry["tokens"],
-            intAmounts,
-        )
-
-        address = nodeEntry["tokens"][0]
-        # print(address, address[2:])
-
-        bytearray.fromhex(address[2:])
+        # print(
+        #     int(nodeEntry["index"]),
+        #     nodeEntry["user"],
+        #     int(nodeEntry["cycle"]),
+        #     nodeEntry["tokens"],
+        #     intAmounts,
+        # )
 
         encoded = encode_hex(
             encode_abi(
-                ["uint", "address", "uint", "address", "uint[]"],
+                ["uint", "address", "uint", "address[]", "uint[]"],
                 (
                     int(nodeEntry["index"]),
                     nodeEntry["user"],
                     int(nodeEntry["cycle"]),
-                    address,
+                    nodeEntry["tokens"],
                     intAmounts,
                 ),
             )
         )
 
-        encoder = BadgerTree.at(badger_tree)
-        claim = encoder.encodeClaim(
-            nodeEntry["tokens"],
-            nodeEntry["cumulativeAmounts"],
-            nodeEntry["index"],
-            nodeEntry["cycle"],
-            nodeEntry["user"],
-        )[0]
+        # encoder = ClaimEncoder.at(web3.toChecksumAddress("0xf3ff1a5856b1726a8fef921ea57eab2c51466a93"))
+        # claim = encoder.encodeClaim(
+        #     nodeEntry["tokens"],
+        #     nodeEntry["cumulativeAmounts"],
+        #     nodeEntry["user"],
+        #     nodeEntry["index"],
+        #     nodeEntry["cycle"],
+        # )[0]
 
-        console.log("nodeEntry", nodeEntry)
-        console.log("encoded", encoded)
-        print("claim", claim)
+        # console.log("nodeEntry", nodeEntry)
+        # print("encoded", encoded)
+        # print("claim", claim)
 
         return (nodeEntry, encoded)
 

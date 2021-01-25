@@ -1,3 +1,4 @@
+from scripts.systems.digg_system import DiggSystem
 from helpers.time_utils import days
 from helpers.gnosis_safe import GnosisSafe, MultisigTxMetadata
 from brownie.network.gas.strategies import GasNowScalingStrategy
@@ -21,7 +22,7 @@ from scripts.systems.sett_system import (
 )
 from helpers.sett.strategy_registry import name_to_artifact
 from scripts.systems.constants import SettType
-
+from scripts.systems.digg_system import connect_digg
 from rich.console import Console
 
 console = Console()
@@ -132,7 +133,7 @@ def print_to_file(badger, path):
 
 
 def connect_badger(
-    badger_deploy_file, load_deployer=False, load_keeper=False, load_guardian=False
+    badger_deploy_file, load_deployer=True, load_keeper=False, load_guardian=False
 ):
     badger_deploy = {}
     console.print(
@@ -180,6 +181,9 @@ def connect_badger(
 
     # Connect Sett
     badger.connect_sett_system(badger_deploy["sett_system"], badger_deploy["geysers"])
+
+    digg = connect_digg(badger_deploy_file)
+    badger.add_existing_digg(digg)
 
     return badger
 
@@ -576,7 +580,7 @@ class BadgerSystem:
         self.track_contract_upgradeable(id + ".geyser", geyser)
         return geyser
 
-    def add_existing_digg(self, digg_system):
+    def add_existing_digg(self, digg_system: DiggSystem):
         self.digg = digg_system
 
     def deploy_digg_rewards_faucet(self, id, diggToken):

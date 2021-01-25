@@ -248,6 +248,8 @@ class SnapshotManager:
 
     def format(self, key, value):
         if type(value) is int:
+            if "stakingRewards.staked" or "stakingRewards.earned" in key:
+                return val(value)
             # Ether-scaled balances
             # TODO: Handle based on token decimals
             if ".digg" in key and "shares" not in key:
@@ -347,7 +349,7 @@ class SnapshotManager:
             # Don't display 0 balances:
             if "balances" in key and item == 0:
                 continue
-            table.append([key, item])
+            table.append([key, self.format(key, item)])
 
         table.append(["---------------", "--------------------"])
         print(tabulate(table, headers=["metric", "value"]))

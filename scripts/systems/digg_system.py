@@ -7,7 +7,7 @@ from dotmap import DotMap
 from scripts.systems.gnosis_safe_system import connect_gnosis_safe
 from scripts.systems.uniswap_system import UniswapSystem
 from helpers.proxy_utils import deploy_proxy, deploy_proxy_uninitialized
-from helpers.registry import registry
+from helpers.registry import GnosisSafe, registry
 from config.badger_config import (
     badger_config,
     digg_config,
@@ -83,6 +83,7 @@ def connect_digg(badger_deploy_file):
     digg.token = digg.uFragments
 
     digg.connect_logic(badger_deploy["logic"])
+    digg.connect_centralized_oracle(digg_deploy["centralizedOracle"])
 
     # TODO: read these from config, hard configured for now. (Not set on init because token is lazily populated)
     # uniswap_pairs = [("digg_wbtc", digg.token.address, registry.tokens.wbtc)]
@@ -152,6 +153,9 @@ class DiggSystem:
         self.daoProxyAdmin = Contract.from_abi(
             "ProxyAdmin", web3.toChecksumAddress(daoProxyAdmin), abi,
         )
+
+    def connect_centralized_oracle(self, address):
+        self.centralizedOracle = connect_gnosis_safe(address)
 
     def connect_dao(self):
         deployer = self.deployer

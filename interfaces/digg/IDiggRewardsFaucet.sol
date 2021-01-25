@@ -10,6 +10,16 @@ interface IDiggRewardsFaucet {
 
     function getRewardForDuration() external view returns (uint256);
 
+    function periodFinish() external view returns (uint256);
+
+    function rewardRate() external view returns (uint256);
+
+    function rewardsDuration() external view returns (uint256);
+
+    function lastUpdateTime() external view returns (uint256);
+
+    function recipient() external view returns (address);
+
     /* ========== MUTATIVE FUNCTIONS ========== */
     function getReward() external;
 
@@ -20,7 +30,11 @@ interface IDiggRewardsFaucet {
     /// @param startTimestamp Timestamp to start distribution. If in the past, all "previously" distributed rewards within the range will be immediately claimable.
     /// @param duration Duration over which to distribute the DIGG Shares.
     /// @param rewardInShares Number of DIGG Shares to distribute within the specified time.
-    function notifyRewardAmount(uint256 startTimestamp, uint256 duration, uint256 rewardInShares) external;
+    function notifyRewardAmount(
+        uint256 startTimestamp,
+        uint256 duration,
+        uint256 rewardInShares
+    ) external;
 
     function initializeRecipient(address _recipient) external;
 

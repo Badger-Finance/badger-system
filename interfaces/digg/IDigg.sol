@@ -40,6 +40,9 @@ interface IDigg {
      */
     function sharesOf(address who) external view returns (uint256);
 
+    function _sharesPerFragment() external view returns (uint256);
+    function _initialSharesPerFragment() external view returns (uint256);
+
     /**
      * @param fragments Fragment value to convert.
      * @return The underlying share value of the specified fragment amount.

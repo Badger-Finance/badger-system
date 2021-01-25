@@ -3,7 +3,7 @@ import json
 from assistant.rewards.aws_utils import download, upload
 from assistant.rewards.calc_stakes import calc_geyser_stakes
 from assistant.rewards.merkle_tree import rewards_to_merkle_tree
-from assistant.rewards.rewards_checker import compare_rewards
+from assistant.rewards.rewards_checker import compare_rewards, verify_rewards
 from assistant.rewards.RewardsList import RewardsList
 from brownie import *
 from brownie.network.gas.strategies import GasNowStrategy
@@ -102,11 +102,16 @@ def combine_rewards(list, cycle, badgerTree):
 
 
 def fetchPendingMerkleData(badger):
-    currentMerkleData = badger.badgerTree.getPendingMerkleData()
-    root = str(currentMerkleData[0])
-    contentHash = str(currentMerkleData[1])
-    lastUpdateTime = currentMerkleData[2]
-    blockNumber = currentMerkleData[3]
+    # currentMerkleData = badger.badgerTree.getPendingMerkleData()    
+    # root = str(currentMerkleData[0])
+    # contentHash = str(currentMerkleData[1])
+    # lastUpdateTime = currentMerkleData[2]
+    # blockNumber = currentMerkleData[3]
+
+    root = badger.badgerTree.pendingMerkleRoot()
+    contentHash = badger.badgerTree.pendingMerkleContentHash()
+    lastUpdateTime = badger.badgerTree.lastProposeTimestamp()
+    blockNumber = badger.badgerTree.lastProposeBlockNumber()
 
     return {
         "root": root,
@@ -117,10 +122,15 @@ def fetchPendingMerkleData(badger):
 
 
 def fetchCurrentMerkleData(badger):
-    currentMerkleData = badger.badgerTree.getCurrentMerkleData()
-    root = str(currentMerkleData[0])
-    contentHash = str(currentMerkleData[1])
-    lastUpdateTime = currentMerkleData[2]
+    # currentMerkleData = badger.badgerTree.getCurrentMerkleData()
+    # root = str(currentMerkleData[0])
+    # contentHash = str(currentMerkleData[1])
+    # lastUpdateTime = currentMerkleData[2]
+    # blockNumber = badger.badgerTree.lastPublishBlockNumber()
+
+    root = badger.badgerTree.merkleRoot()
+    contentHash = badger.badgerTree.merkleContentHash()
+    lastUpdateTime = badger.badgerTree.lastPublishTimestamp()
     blockNumber = badger.badgerTree.lastPublishBlockNumber()
 
     return {
@@ -249,13 +259,13 @@ def generate_rewards_in_range(badger, startBlock, endBlock, pastRewards):
         after_file = json.load(f)
 
     # Sanity check new rewards file
-    compare_rewards(
+    
+    verify_rewards(
         badger,
         startBlock,
         endBlock,
         pastRewards,
         after_file,
-        currentMerkleData["contentHash"],
     )
 
     return {
@@ -307,6 +317,8 @@ def rootUpdater(badger, startBlock, endBlock, pastRewards, test=False):
             rewards_data["merkleTree"]["merkleRoot"],
             rewards_data["rootHash"],
             rewards_data["merkleTree"]["cycle"],
+            rewards_data["merkleTree"]["startBlock"],
+            rewards_data["merkleTree"]["endBlock"],
             {"from": badger.keeper, "gas_price": gas_strategy},
         )
 
@@ -348,15 +360,17 @@ def guardian(badger: BadgerSystem, startBlock, endBlock, pastRewards, test=False
             rewards_data["merkleTree"]["merkleRoot"],
             rewards_data["rootHash"],
             rewards_data["merkleTree"]["cycle"],
+            rewards_data["merkleTree"]["startBlock"],
+            rewards_data["merkleTree"]["endBlock"],
             {"from": badger.guardian, "gas_price": gas_strategy},
         )
 
 
 def run_action(badger, args, test):
     if args["action"] == "rootUpdater":
-        return rootUpdater(badger, args["startBlock"], args["endBlock"], test)
+        return rootUpdater(badger, args["startBlock"], args["endBlock"], args["pastRewards"], test)
     if args["action"] == "guardian":
-        return guardian(badger, args["startBlock"], args["endBlock"], test)
+        return guardian(badger, args["startBlock"], args["endBlock"], args["pastRewards"], test)
     return False
 
 

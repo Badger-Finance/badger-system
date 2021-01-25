@@ -21,7 +21,7 @@ class DiggSettMiniDeployBase(SettMiniDeployBase):
             self.digg = digg
             self._deploy_dynamic_oracle(self.digg.devMultisig)
 
-            digg.constantOracle.updateAndPush({"from": digg.devMultisig})
+            # digg.constantOracle.updateAndPush({"from": digg.devMultisig})
             # Sleep long enough that the report is valid.
             chain.sleep(digg_config.cpiOracleParams.reportDelaySec)
             return

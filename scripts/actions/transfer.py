@@ -47,7 +47,7 @@ def transfer_badger(recipient, params):
     if params["use_test_payment"]:
         id = multi.addTx(
             MultisigTxMetadata(
-                description="Test payment: {} badger to {}",
+                description="Test payment: {} badger to {}".format(one_wei, recipient),
                 operation="transfer",
                 callInfo={"to": recipient, "amount": one_wei},
             ),
@@ -74,7 +74,7 @@ def transfer_badger(recipient, params):
 
     id = multi.addTx(
         MultisigTxMetadata(
-            description="Full payment, {} badger to {}",
+            description="Full payment, {} badger to {}".format(val(rest), recipient),
             operation="transfer",
             callInfo={"to": recipient, "amount": rest},
         ),
@@ -164,11 +164,11 @@ def main():
     multi = GnosisSafe(badger.devMultisig)
 
     # Parameters
-    recipient = "0xD4868d98849a58F743787c77738D808376210292"
+    recipient = "0xd34C1d3853214bf049B760Ef48A580bfa7A9c8a1"
     dollars = 50000
 
     # amount = from_dollars(badger, badger.token.address, dollars)
-    amount = Wei("8000 ether")
+    amount = Wei("15907.8892303 ether")
 
     params = {
         "dollars": dollars,
