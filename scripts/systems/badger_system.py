@@ -1,3 +1,6 @@
+from scripts.systems.digg_system import DiggSystem
+from helpers.time_utils import days
+from helpers.gnosis_safe import GnosisSafe, MultisigTxMetadata
 from brownie.network.gas.strategies import GasNowScalingStrategy
 from helpers.sett.strategy_registry import strategy_name_to_artifact
 import json
@@ -18,7 +21,8 @@ from scripts.systems.sett_system import (
     deploy_strategy,
 )
 from helpers.sett.strategy_registry import name_to_artifact
-
+from scripts.systems.constants import SettType
+from scripts.systems.digg_system import connect_digg
 from rich.console import Console
 
 console = Console()
@@ -102,12 +106,34 @@ def print_to_file(badger, path):
     for key, value in badger.sett_system.rewards.items():
         system["sett_system"]["rewards"][key] = value.address
 
+    if badger.digg:
+        digg = badger.digg
+        digg_system = {
+            "owner": digg.owner.address,
+            "devProxyAdmin": digg.devProxyAdmin.address,
+            "daoProxyAdmin": digg.daoProxyAdmin.address,
+            "uFragments": digg.uFragments.address,
+            "uFragmentsPolicy": digg.uFragmentsPolicy.address,
+            "orchestrator": digg.orchestrator.address,
+            "cpiMedianOracle": digg.cpiMedianOracle.address,
+            "constantOracle": digg.constantOracle.address,
+            "diggDistributor": digg.diggDistributor.address,
+            "daoDiggTimelock": digg.daoDiggTimelock.address,
+            "diggTeamVesting": digg.diggTeamVesting.address,
+            "logic": {},
+        }
+
+        for key, value in digg.logic.items():
+            digg_system["logic"][key] = value.address
+
+        system["digg_system"] = digg_system
+
     with open(path, "w") as outfile:
         json.dump(system, outfile)
 
 
 def connect_badger(
-    badger_deploy_file, load_deployer=False, load_keeper=False, load_guardian=False
+    badger_deploy_file, load_deployer=True, load_keeper=False, load_guardian=False
 ):
     badger_deploy = {}
     console.print(
@@ -128,9 +154,9 @@ def connect_badger(
         badger_deploy["keeper"],
         badger_deploy["guardian"],
         deploy=False,
-        load_deployer=False,
-        load_keeper=False,
-        load_guardian=False,
+        load_deployer=load_deployer,
+        load_keeper=load_keeper,
+        load_guardian=load_guardian,
     )
 
     badger.globalStartBlock = badger_deploy["globalStartBlock"]
@@ -156,6 +182,9 @@ def connect_badger(
     # Connect Sett
     badger.connect_sett_system(badger_deploy["sett_system"], badger_deploy["geysers"])
 
+    digg = connect_digg(badger_deploy_file)
+    badger.add_existing_digg(digg)
+
     return badger
 
 
@@ -178,6 +207,8 @@ class BadgerSystem:
         self.contracts_static = []
         self.contracts_upgradeable = {}
         self.gas_strategy = default_gas_strategy
+        # Digg system ref lazily set.
+        self.digg = None
 
         # Unlock accounts in test mode
         if rpc.is_active():
@@ -185,6 +216,7 @@ class BadgerSystem:
             self.deployer = accounts.at(deployer, force=True)
             self.keeper = accounts.at(keeper, force=True)
             self.guardian = accounts.at(guardian, force=True)
+            self.publish_source = False
         else:
             print("RPC Inactive")
             if load_deployer:
@@ -196,6 +228,7 @@ class BadgerSystem:
             if load_guardian:
                 guardian_key = decouple.config("GUARDIAN_PRIVATE_KEY")
                 self.guardian = accounts.add(guardian_key)
+            self.publish_source = False # Publish sources for deployed logic on mainnet
         if deploy:
             self.devProxyAdmin = deploy_proxy_admin(deployer)
             self.daoProxyAdmin = deploy_proxy_admin(deployer)
@@ -304,6 +337,7 @@ class BadgerSystem:
         deployer = self.deployer
         self.logic["Controller"] = Controller.deploy({"from": deployer})
         self.logic["Sett"] = Sett.deploy({"from": deployer})
+        self.logic["DiggSett"] = DiggSett.deploy({"from": deployer})
         self.logic["StakingRewards"] = StakingRewards.deploy({"from": deployer})
         self.logic["StakingRewardsSignalOnly"] = StakingRewardsSignalOnly.deploy(
             {"from": deployer}
@@ -318,7 +352,7 @@ class BadgerSystem:
         deployer = self.deployer
         artifact = strategy_name_to_artifact(name)
         self.logic[name] = artifact.deploy(
-            {"from": deployer, "gas_price": self.gas_strategy}
+            {"from": deployer}
         )
 
         # TODO: Initialize to remove that function
@@ -432,9 +466,13 @@ class BadgerSystem:
         )
         self.track_contract_upgradeable("teamVesting", self.teamVesting)
 
-    def deploy_logic(self, name, BrownieArtifact):
+    def deploy_logic(self, name, BrownieArtifact, test=False):
         deployer = self.deployer
-        self.logic[name] = BrownieArtifact.deploy({"from": deployer})
+        if test:
+            self.logic[name] = BrownieArtifact.deploy({"from": deployer})
+            return
+
+        self.logic[name] = BrownieArtifact.deploy({"from": deployer}, publish_source=self.publish_source)
 
     def deploy_sett(
         self,
@@ -448,6 +486,7 @@ class BadgerSystem:
         strategist=None,
         keeper=None,
         guardian=None,
+        sett_type=SettType.DEFAULT,
     ):
         deployer = self.deployer
         proxyAdmin = self.devProxyAdmin
@@ -460,24 +499,43 @@ class BadgerSystem:
             keeper = deployer
         if not guardian:
             guardian = deployer
-
-        sett = deploy_proxy(
-            "Sett",
-            Sett.abi,
-            self.logic.Sett.address,
-            proxyAdmin.address,
-            self.logic.Sett.initialize.encode_input(
-                token,
-                controller,
-                governance,
-                keeper,
-                guardian,
-                namePrefixOverride,
-                namePrefix,
-                symbolPrefix,
-            ),
-            deployer,
-        )
+        if sett_type == SettType.DIGG:
+            print("Deploying DIGG Sett")
+            sett = deploy_proxy(
+                "DiggSett",
+                DiggSett.abi,
+                self.logic.DiggSett.address,
+                proxyAdmin.address,
+                self.logic.DiggSett.initialize.encode_input(
+                    token,
+                    controller,
+                    governance,
+                    keeper,
+                    guardian,
+                    namePrefixOverride,
+                    namePrefix,
+                    symbolPrefix,
+                ),
+                deployer,
+            )
+        else:
+            sett = deploy_proxy(
+                "Sett",
+                Sett.abi,
+                self.logic.Sett.address,
+                proxyAdmin.address,
+                self.logic.Sett.initialize.encode_input(
+                    token,
+                    controller,
+                    governance,
+                    keeper,
+                    guardian,
+                    namePrefixOverride,
+                    namePrefix,
+                    symbolPrefix,
+                ),
+                deployer,
+            )
         self.sett_system.vaults[id] = sett
         self.track_contract_upgradeable(id + ".sett", sett)
         return sett
@@ -495,7 +553,6 @@ class BadgerSystem:
     ):
         # TODO: Replace with prod permissions config
         deployer = self.deployer
-
         strategy = deploy_strategy(
             self,
             strategyName,
@@ -523,7 +580,28 @@ class BadgerSystem:
         self.track_contract_upgradeable(id + ".geyser", geyser)
         return geyser
 
-    def deploy_set_staking_rewards_signal_only(self, id, admin, distToken):
+    def add_existing_digg(self, digg_system: DiggSystem):
+        self.digg = digg_system
+
+    def deploy_digg_rewards_faucet(self, id, diggToken):
+        deployer = self.deployer
+
+        rewards = deploy_proxy(
+            "DiggRewardsFaucet",
+            DiggRewardsFaucet.abi,
+            self.logic.DiggRewardsFaucet.address,
+            self.devProxyAdmin.address,
+            self.logic.DiggRewardsFaucet.initialize.encode_input(
+                deployer, diggToken
+            ),
+            deployer,
+        )
+
+        self.sett_system.rewards[id] = rewards
+        self.track_contract_upgradeable(id + ".rewards", rewards)
+        return rewards
+
+    def deploy_sett_staking_rewards_signal_only(self, id, admin, distToken):
         deployer = self.deployer
 
         rewards = deploy_proxy(
@@ -579,20 +657,69 @@ class BadgerSystem:
             want, strategy, {"from": deployer},
         )
 
+    def wire_up_sett_multisig(self, vault, strategy, controller):
+        multi = GnosisSafe(self.devMultisig, testMode=True)
+
+        want = strategy.want()
+        vault_want = vault.token()
+
+        assert vault_want == want
+
+        id = multi.addTx(
+            MultisigTxMetadata(
+                description="Set Vault for {} on Controller".format(want)
+            ),
+            {
+                "to": controller.address,
+                "data": controller.setVault.encode_input(
+                    want, vault
+                ),
+            },
+        )
+        multi.executeTx(id)
+
+        id = multi.addTx(
+            MultisigTxMetadata(
+                description="Approve Strategy for {} on Controller".format(want)
+            ),
+            {
+                "to": controller.address,
+                "data": controller.approveStrategy.encode_input(
+                    want, strategy
+                ),
+            },
+        )
+        multi.executeTx(id)
+
+        id = multi.addTx(
+            MultisigTxMetadata(
+                description="Set Strategy for {} on Controller".format(want)
+            ),
+            {
+                "to": controller.address,
+                "data": controller.setStrategy.encode_input(
+                    want, strategy
+                ),
+            },
+        )
+        multi.executeTx(id)
+
     def distribute_staking_rewards(self, id, amount, notify=False):
         deployer = self.deployer
         rewards = self.getSettRewards(id)
 
-        assert self.token.balanceOf(deployer) >= amount
+        rewardsToken = interface.IERC20(rewards.rewardsToken())
 
-        self.token.transfer(
+        assert rewardsToken.balanceOf(deployer) >= amount
+
+        rewardsToken.transfer(
             rewards, amount, {"from": deployer},
         )
 
-        assert self.token.balanceOf(rewards) >= amount
-        assert rewards.rewardsToken() == self.token
+        ## uint256 startTimestamp, uint256 _rewardsDuration, uint256 reward
+        assert rewardsToken.balanceOf(rewards) >= amount
         if notify:
-            rewards.notifyRewardAmount(amount, {"from": deployer})
+            rewards.notifyRewardAmount(chain.time(), days(7), amount, {"from": deployer})
 
     def signal_initial_geyser_rewards(self, id, params):
         deployer = self.deployer
@@ -703,6 +830,23 @@ class BadgerSystem:
             {"from": self.deployer},
         )
 
+    def upgrade_sett(self, id, newLogic):
+        sett = self.getSett(id)
+        multi = GnosisSafe(self.devMultisig)
+        id = multi.addTx(
+            MultisigTxMetadata(
+                description="Upgrade timelock"
+            ),
+            {
+                "to": self.proxyAdmin.address,
+                "data": self.proxyAdmin.upgrade.encode_input(
+                    sett,
+                    newLogic
+                ),
+            },
+            )
+        tx = multi.executeTx(id)
+
     # ===== Connectors =====
     def connect_sett_system(self, sett_system, geysers):
         # Connect Controllers
@@ -720,7 +864,7 @@ class BadgerSystem:
 
         # Connect Rewards
         for key, address in sett_system["rewards"].items():
-            self.connect_sett_staking_rewards(key, address)
+            self.connect_rewards(key, address)
 
         # Connect Geysers
         for key, address in geysers.items():
@@ -785,10 +929,21 @@ class BadgerSystem:
         self.teamVesting = SmartVesting.at(address)
         self.track_contract_upgradeable("teamVesting", self.teamVesting)
 
+    # Routes rewards connection to correct underlying contract based on id.
+    def connect_rewards(self, id, address):
+        if id in [
+           "native.digg",
+           "native.uniDiggWbtc",
+           "native.sushiDiggWbtc",
+        ]:
+            self.connect_digg_rewards_faucet(id, address)
+            return
+        self.connect_sett_staking_rewards(id, address)
+
     def connect_sett_staking_rewards(self, id, address):
-        pool = StakingRewards.at(address)
-        self.sett_system.rewards[id] = pool
-        self.track_contract_upgradeable(id + ".pool", pool)
+        rewards = StakingRewards.at(address)
+        self.sett_system.rewards[id] = rewards
+        self.track_contract_upgradeable(id + ".rewards", rewards)
 
     # def connect_guardian(self, address):
     #     self.guardian = accounts.at(address)
@@ -804,6 +959,11 @@ class BadgerSystem:
             "UniswapV2Pair", address, registry.uniswap.artifacts.UniswapV2Pair["abi"]
         )
         self.uniBadgerWbtcLp = self.pair
+
+    def connect_digg_rewards_faucet(self, id, address):
+        rewards = DiggRewardsFaucet.at(address)
+        self.sett_system.rewards[id] = rewards
+        self.track_contract_upgradeable(id + ".rewards", rewards)
 
     def set_strategy_artifact(self, id, artifactName, artifact):
         self.strategy_artifacts[id] = {

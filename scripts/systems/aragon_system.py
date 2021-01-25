@@ -75,6 +75,14 @@ class AragonSystem:
             registry.aragon.artifacts.CompanyTemplate["abi"],
         )
 
+    def getVotingAt(self, address):
+        return Contract.from_abi(
+            "Voting",
+            web3.toChecksumAddress(address),
+            registry.aragon.artifacts.Voting["abi"],
+        )
+
+
     def deployCompanyDao(self, params, signer):
         """
         Deploy DAO using company template with specified parameters

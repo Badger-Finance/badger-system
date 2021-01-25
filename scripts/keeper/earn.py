@@ -1,3 +1,4 @@
+from helpers.sett.SnapshotManager import SnapshotManager
 from brownie import *
 from brownie.network.gas.strategies import GasNowStrategy
 from rich.console import Console
@@ -65,79 +66,50 @@ def earn_all(badger: BadgerSystem, skip):
         assert vault.controller() == controller
         assert controller.strategies(want) == strategy
 
-        destination = get_expected_strategy_deposit_location(badger, key)
-
         vaultBefore = want.balanceOf(vault)
-        destinationBefore = want.balanceOf(destination)
         strategyBefore = strategy.balanceOf()
-        controllerBefore = want.balanceOf(controller)
-
-        if vaultBefore == 0:
-            print("No balance in Sett: ", key)
-            continue
 
         toEarn = False
         if earn_preconditions(vaultBefore, strategyBefore):
             print("Earn: " + key, vault, strategy)
             toEarn = True
 
+            snap = SnapshotManager(badger, key)
+            strategy = badger.getStrategy(key)
+            keeper = accounts.at(strategy.keeper())
+
+            before = snap.snap()
+            snap.printTable(before)
+
             keeper = accounts.at(vault.keeper())
-            vault.earn({'from': keeper, "gas_price": gas_strategy})
+            snap.settEarn({'from': keeper, "gas_price": gas_strategy, "gas_limit": 2000000, "allow_revert": True}, confirm=False)
 
-        # Post safety for test run
-        vaultAfter = want.balanceOf(vault)
-        destinationAfter = want.balanceOf(destination)
-        strategyAfter = strategy.balanceOf()
-        controllerAfter = want.balanceOf(controller)
+            after = snap.snap()
+            snap.printTable(after)
 
-        table = []
+            snap.printCompare(before, after)
 
-        table.append(
-            ["vault", val(vaultBefore), val(vaultAfter), val(vaultAfter - vaultBefore)]
-        )
-        table.append(
-            [
-                "destination",
-                val(destinationBefore),
-                val(destinationAfter),
-                val(destinationAfter - destinationBefore),
-            ]
-        )
-        table.append(
-            [
-                "strategy",
-                val(strategyBefore),
-                val(strategyAfter),
-                val(strategyAfter - strategyBefore),
-            ]
-        )
-        table.append(
-            [
-                "controller",
-                val(controllerBefore),
-                val(controllerAfter),
-                val(controllerAfter - controllerBefore),
-            ]
-        )
-
-        print(tabulate(table, headers=["name", "before", "after", "diff"]))
-        if toEarn:
-            assert strategyAfter > strategyBefore
+            
 
 
 def main():
     # TODO: Output message when failure
 
     fileName = "deploy-" + "final" + ".json"
-    badger = connect_badger(fileName)
+    badger = connect_badger(fileName, load_keeper=True)
 
     skip = [
-        # "native.uniBadgerWbtc"
+        # "native.uniBadgerWbtc",
         # "harvest.renCrv",
         # "native.sbtcCrv",
         # "native.sBtcCrv",
         # "native.tbtcCrv",
         # "native.renCrv",
         # "native.badger",
+        "native.sushiBadgerWbtc",
+        # "native.sushiWbtcEth",
+        # "native.digg",
+        # "native.uniDiggWbtc", 
+        # "native.sushiDiggWbtc"
     ]
     earn_all(badger, skip)

@@ -1,8 +1,13 @@
+from brownie import (
+    accounts,
+    interface,
+    web3,
+    chain,
+)
+
 from scripts.systems.uniswap_system import UniswapSystem
-from helpers.utils import Eth
-from brownie import *
-from helpers.constants import AddressZero, MaxUint256
 from helpers.registry import registry
+
 
 class SushiswapSystem(UniswapSystem):
     def __init__(self):
@@ -19,21 +24,31 @@ class SushiswapSystem(UniswapSystem):
     def add_chef_rewards(self, pool):
         chef = self.chef
 
-        totalAllocPoint = chef.totalAllocPoint()
-        numPools = chef.totalAllocPoint()
-        avgAllocPoint = totalAllocPoint / numPools
-
         owner = accounts.at(self.chef.owner(), force=True)
-    
-        chef.add(avgAllocPoint, pool, True, {'from': owner})
+        # Make an average allocation of lp tokens.
+        avgAllocPoint = chef.totalAllocPoint() / chef.poolLength()
 
-        numPools = chef.totalAllocPoint()
-        pid = numPools - 1
-        print(pid, numPools)
+        # Add pool if not exists and
+        pid, exists = self._get_pool(pool)
+        if exists:
+            chef.set(avgAllocPoint, pool, True, {"from": owner})
+        else:
+            chef.add(avgAllocPoint, pool, True, {"from": owner})
+
+        pid = chef.poolLength() - 1
         chain.mine()
 
-        chef.updatePool(pid)
+        chef.updatePool(pid, {"from": owner})
         chain.mine()
 
         return pid
 
+    def _get_pool(self, pool):
+        chef = self.chef
+        # Iterate over pools and look for pool first
+        # NB: THIS IS EXPENSIVE AND SHOULD ONLY BE USED FOR TESTING.
+        for pid in range(0, chef.poolLength()):
+            (address, _, _, _) = chef.poolInfo(pid)
+            if address == pool.address:
+                return (pid, True)
+        return (-1, False)

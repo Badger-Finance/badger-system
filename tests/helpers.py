@@ -19,7 +19,7 @@ def distribute_test_assets(badger):
     distribute_rewards_escrow(
         badger, badger.token, badger.deployer, Wei("100000 ether")
     )
-    distribute_from_whales(badger, badger.deployer)
+    distribute_from_whales(badger.deployer)
 
 
 def create_uniswap_pair(token0, token1, signer):
@@ -30,7 +30,7 @@ def create_uniswap_pair(token0, token1, signer):
     return uniswap.getPair(token0, token1)
 
 
-def distribute_from_whales(badger, recipient):
+def distribute_from_whales(recipient):
 
     print(len(whale_registry.items()))
     for key, whale in whale_registry.items():

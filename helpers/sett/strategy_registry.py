@@ -23,7 +23,19 @@ name_to_artifact = {
     "StrategyCurveGaugeRenBtcCrv": StrategyCurveGaugeRenBtcCrv,
     "StrategySushiBadgerWbtc": StrategySushiBadgerWbtc,
     "StrategySushiLpOptimizer": StrategySushiLpOptimizer,
+    "StrategyDiggRewards": StrategyDiggRewards,
+    "StrategyDiggLpMetaFarm": StrategyDiggLpMetaFarm,
+    "StrategySushiDiggWbtcLpOptimizer": StrategySushiDiggWbtcLpOptimizer,
+    "DiggRewardsFaucet": DiggRewardsFaucet,
+    "DiggSett": DiggSett,
     "HoneypotMeme": HoneypotMeme,
+    "UFragments": UFragments,
+    "UFragmentsPolicy": UFragmentsPolicy,
+    "SimpleTimelock": SimpleTimelock,
+    "SimpleTimelockWithVoting": SimpleTimelockWithVoting,
+    "SmartVesting": SmartVesting,
+    "DiggDistributor": DiggDistributor,
+    "DiggSeeder": DiggSeeder
 }
 
 

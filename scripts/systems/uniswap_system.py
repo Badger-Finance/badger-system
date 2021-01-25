@@ -53,9 +53,7 @@ class UniswapSystem:
         """
 
         pairAddress = self.factory.getPair(tokenA, tokenB)
-        return Contract.from_abi(
-            "UniswapV2Pair", pairAddress, self.contract_registry.artifacts["UniswapV2Pair"]["abi"]
-        )
+        return interface.IUniswapV2Pair(pairAddress)
 
     def hasPair(self, tokenA, tokenB):
         """

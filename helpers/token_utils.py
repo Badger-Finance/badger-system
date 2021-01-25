@@ -18,7 +18,7 @@ def get_token_balances(accounts, tokens):
     return balances
 
 
-def distribute_from_whales(badger, recipient):
+def distribute_from_whales(recipient, percentage=0.8):
 
     console.print(
         "[green] 🐋 Transferring assets from whales for {} assets... 🐋 [/green]".format(
@@ -33,18 +33,7 @@ def distribute_from_whales(badger, recipient):
             continue
         if key != "_pytestfixturefunction":
             console.print(" -> {}".format(key))
-
-            if whale_config.action == WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT:
-                forceEther = ForceEther.deploy({"from": recipient})
-                recipient.transfer(forceEther, Wei("1 ether"))
-                forceEther.forceSend(whale_config.whale, {"from": recipient})
-
-            token = interface.IERC20(whale_config.token)
-            token.transfer(
-                recipient,
-                token.balanceOf(whale_config.whale) // 5,
-                {"from": whale_config.whale},
-            )
+            distribute_from_whale(whale_config, recipient, percentage=0.8)
 
     # Special Transfers
     for key, whale_config in whale_registry.items():
@@ -57,6 +46,20 @@ def distribute_from_whales(badger, recipient):
             sushiswap.addMaxLiquidity(
                 whale_config.actionParams["token0"], whale_config.actionParams["token1"], recipient
             )
+
+
+def distribute_from_whale(whale_config, recipient, percentage=0.2):
+    if whale_config.action == WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT:
+        forceEther = ForceEther.deploy({"from": recipient})
+        recipient.transfer(forceEther, Wei("1 ether"))
+        forceEther.forceSend(whale_config.whale, {"from": recipient})
+
+    token = interface.IERC20(whale_config.token)
+    token.transfer(
+        recipient,
+        token.balanceOf(whale_config.whale) * percentage,
+        {"from": whale_config.whale},
+    )
 
 
 def distribute_test_ether(recipient, amount):

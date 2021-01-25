@@ -4,6 +4,8 @@ networks:
   default: mainnet-fork
   mainnet-fork:
     explorer: https://api.etherscan.io/api
+    cmd_settings:
+      accounts: 100
 
 project_structure:
   contracts: contracts

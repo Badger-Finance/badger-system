@@ -7,9 +7,14 @@ from rich.console import Console
 from tabulate import tabulate
 from config.badger_config import badger_config
 from statistics import mean
+from brownie import *
 
 console = Console()
 
+digg_token = "0x798D1bE841a82a273720CE31c822C61a67a601C3"
+badger_token = "0x3472A5A71965499acd81997a54BBA8D852C6E53d"
+badger_tree = "0x660802Fc641b154aBA66a62137e71f331B6d787A"
+digg = interface.IDigg(digg_token)
 
 class Point:
     def __init__(self, x, y):
@@ -115,11 +120,12 @@ class BadgerGeyserMock:
         Get total distribution for token within range, across unlock schedules
         """
         totalToDistribute = 0
-
+        print("get_distributed_for_token_at", token, endTime)
+        if token not in self.unlockSchedules:
+            return 0
         unlockSchedules = self.unlockSchedules[token]
         index = 0
         for schedule in unlockSchedules:
-
             if endTime < schedule.startTime:
                 toDistribute = 0
                 rangeDuration = endTime - schedule.startTime
@@ -138,19 +144,28 @@ class BadgerGeyserMock:
                     ),
                 )
 
+
                 # Output if in rewards range, or read flag is on
                 if read and (schedule.startTime <= endTime and schedule.endTime >= endTime):
                     console.print(
                         "\n[blue] == Schedule {} for {} == [/blue]".format(index, self.key)
                     )
-
-                    console.log(
-                        "Total tokens distributed by schedule starting at {} by the end of rewards cycle are {} out of {} total.".format(
-                            to_utc_date(schedule.startTime),
-                            val(toDistribute),
-                            val(schedule.initialTokensLocked),
+                    if token == digg_token:
+                        console.log(
+                            "Total tokens distributed by schedule starting at {} by the end of rewards cycle are {} out of {} total.".format(
+                                to_utc_date(schedule.startTime),
+                                val(digg.sharesToFragments(toDistribute)),
+                                val(digg.sharesToFragments(schedule.initialTokensLocked)),
+                            )
                         )
-                    )
+                    else:
+                        console.log(
+                            "Total tokens distributed by schedule starting at {} by the end of rewards cycle are {} out of {} total.".format(
+                                to_utc_date(schedule.startTime),
+                                val(toDistribute),
+                                val(schedule.initialTokensLocked),
+                            )
+                        )
                     console.log(
                         "Total duration of schedule elapsed is {} hours out of {} hours, or {}% of total duration.".format(
                             to_hours(rangeDuration), to_hours(schedule.duration), rangeDuration / schedule.duration * 100
@@ -165,6 +180,7 @@ class BadgerGeyserMock:
 
     def calc_token_distributions_in_range(self, startTime, endTime):
         tokenDistributions = DotMap()
+        print("calc_token_distributions_in_range", self.distributionTokens)
         for token in self.distributionTokens:
             tokenDistributions[token] = int(
                 (
@@ -172,9 +188,20 @@ class BadgerGeyserMock:
                     - self.get_distributed_for_token_at(token, startTime)
                 )
             )
-            console.log(
-                "Distributing {} tokens for {} in this rewards cycle, out of {} historically locked".format(
+            if token == digg_token:
+                console.log(
+                "Distributing {} {} tokens for {} geyser in this rewards cycle, out of {} historically locked".format(
+                    val(digg.sharesToFragments(tokenDistributions[token])),
+                    token,
+                    self.key,
+                    val(digg.sharesToFragments(self.get_distributed_for_token_at(token, startTime))),
+                )
+            )
+            else:
+                console.log(
+                "Distributing {} {} tokens for {} geyser in this rewards cycle, out of {} historically locked".format(
                     val(tokenDistributions[token]),
+                    token,
                     self.key,
                     val(self.get_distributed_for_token_at(token, startTime)),
                 )
@@ -227,19 +254,22 @@ class BadgerGeyserMock:
         for user, userData in self.users.items():
             userDistributions[user] = {}
             userMetadata[user] = {}
-            for token, tokenAmount in tokenDistributions.items():
-                # Record total share seconds
-                if not "shareSeconds" in userData:
-                    userMetadata[user]["shareSeconds"] = 0
-                else:
-                    userMetadata[user]["shareSeconds"] = userData.shareSeconds
+            # Record total share seconds
+            if not "shareSeconds" in userData:
+                userMetadata[user]["shareSeconds"] = 0
+            else:
+                userMetadata[user]["shareSeconds"] = userData.shareSeconds
 
-                # Track Distribution based on seconds in range
+            # Track Distribution based on seconds in range
+            if "shareSecondsInRange" in userData:
+                userMetadata[user][
+                    "shareSecondsInRange"
+                ] = userData.shareSecondsInRange
+                totalShareSecondsUsed += userData.shareSecondsInRange
+            else:
+                userMetadata[user]["shareSecondsInRange"] = 0
+            for token, tokenAmount in tokenDistributions.items():
                 if "shareSecondsInRange" in userData:
-                    userMetadata[user][
-                        "shareSecondsInRange"
-                    ] = userData.shareSecondsInRange
-                    totalShareSecondsUsed += userData.shareSecondsInRange
                     userShare = int(
                         tokenAmount
                         * userData.shareSecondsInRange
@@ -247,23 +277,24 @@ class BadgerGeyserMock:
                     )
                     userDistributions[user][token] = userShare
 
-                else:
+                else: 
                     userDistributions[user][token] = 0
-                    userMetadata[user]["shareSecondsInRange"] = 0
-
-        assert totalShareSecondsUsed == self.totalShareSecondsInRange
+        
         tokenTotals = self.get_token_totals_from_user_dists(userDistributions)
-        # self.printState()
 
         # Check values vs total for each token
         for token, totalAmount in tokenTotals.items():
             # NOTE The total distributed should be less than or equal to the actual tokens distributed. Rounding dust will go to DAO
             # NOTE The value of the distributed should only be off by a rounding error
             print("duration ", (self.endTime - self.startTime) / 3600)
-            print("totalAmount ", totalAmount / 1e18)
-            print("self.totalDistributions ", self.totalDistributions[token] / 1e18)
+            print("totalShareSecondsUsed", totalShareSecondsUsed)
+            print("self.totalShareSecondsInRange", self.totalShareSecondsInRange)
+            print("totalAmount for {}".format(token), totalAmount / 1e18)
+            print("self.totalDistributions for {}".format(token), self.totalDistributions[token] / 1e18)
             print("leftover", abs(self.totalDistributions[token] - totalAmount))
             assert abs(self.totalDistributions[token] - totalAmount) < 1e10
+
+        assert totalShareSecondsUsed == self.totalShareSecondsInRange
 
         return {
             "claims": userDistributions,
@@ -448,51 +479,74 @@ class BadgerGeyserMock:
             return badger_config.globalStartTime
         return self.users[user].lastUpdate
 
-    def printState(self):
+    def printState(self, userDistributions):
         table = []
+        numUsers = 0
+        numUsersWithClaims = 0
         # console.log("User State", self.users.toDict(), self.totalShareSeconds)
         for user, data in self.users.items():
-
-            rewards = self.userDistributions["claims"][user][
-                "0x3472A5A71965499acd81997a54BBA8D852C6E53d"
+            numUsers += 1
+            rewards = userDistributions["claims"][user][
+                badger_token
+            ]
+            digg_rewards = userDistributions["claims"][user][
+                digg_token
             ]
             data.shareSecondsInRange
 
             sharesPerReward = 0
             if rewards > 0:
+                numUsersWithClaims += 1
                 sharesPerReward = data.shareSecondsInRange / rewards
+
+            sharesPerDiggReward = 0
+            if digg_rewards > 0:
+                sharesPerDiggReward = data.shareSecondsInRange / digg_rewards
 
             table.append(
                 [
                     user,
                     val(rewards),
+                    digg_rewards,
                     sec(data.shareSecondsInRange),
                     sharesPerReward,
+                    sharesPerDiggReward,
                     sec(data.shareSeconds),
                     data.total,
                     data.lastUpdate,
                 ]
             )
         print("GEYSER " + self.key)
+        # print(
+        #     tabulate(
+        #         table,
+        #         headers=[
+        #             "user",
+        #             "rewards",
+        #             "digg_rewards",
+        #             "shareSecondsInRange",
+        #             "shareSeconds/reward",
+        #             "shareSeconds/digg_reward",
+        #             "shareSeconds",
+        #             "totalStaked",
+        #             "lastUpdate",
+        #         ],
+        #     )
+        # )
         print(
-            tabulate(
-                table,
-                headers=[
-                    "user",
-                    "rewards",
-                    "shareSecondsInRange",
-                    "shareSeconds/reward",
-                    "shareSeconds",
-                    "totalStaked",
-                    "lastUpdate",
-                ],
-            )
+            "Total Badger for Geyser", val(userDistributions["totals"][badger_token])
         )
         print(
-            self.userDistributions["totals"][
-                "0x3472A5A71965499acd81997a54BBA8D852C6E53d"
-            ]
-            / 1e18
+            "Total DIGG shares for Geyser", userDistributions["totals"][digg_token]
+        )
+        print(
+            "Total DIGG tokens for Geyser", digg.sharesToFragments(userDistributions["totals"][digg_token])
+        )
+        print(
+            "Total Users", numUsers
+        )
+        print(
+            "Total Users With Claims", numUsersWithClaims
         )
 
         # console.log('printState')
