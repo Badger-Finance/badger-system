@@ -9,6 +9,8 @@ import "deps/@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 import "deps/@openzeppelin/contracts-upgradeable/token/ERC20/SafeERC20Upgradeable.sol";
 import "deps/@openzeppelin/contracts-upgradeable/proxy/Initializable.sol";
 import "interfaces/uniswap/IUniswapRouterV2.sol";
+import "interfaces/uniswap/IUniswapV2Factory.sol";
+
 import "interfaces/badger/IController.sol";
 import "interfaces/badger/IStrategy.sol";
 
@@ -71,6 +73,16 @@ abstract contract BaseStrategyMultiSwapper is BaseStrategy {
     ) internal {
         _safeApproveHelper(startToken, sushiswap, balance);
         IUniswapRouterV2(sushiswap).swapExactTokensForETH(balance, 0, path, address(this), now);
+    }
+
+    function _get_uni_pair(address token0, address token1) internal view returns (address) {
+        address factory = IUniswapRouterV2(uniswap).factory();
+        return IUniswapV2Factory(factory).getPair(token0, token1);
+    }
+
+    function _get_sushi_pair(address token0, address token1) internal view returns (address) { 
+        address factory = IUniswapRouterV2(sushiswap).factory();
+        return IUniswapV2Factory(factory).getPair(token0, token1);
     }
 
     /// @notice Add liquidity to uniswap for specified token pair, utilizing the maximum balance possible

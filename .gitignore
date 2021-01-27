@@ -12,6 +12,9 @@ local.json
 .pytest_cache
 docs
 
+contracts-temporary
+contracts-reference
+
 flatten
 
 run-testnet.sh
@@ -32,3 +35,6 @@ deploy-1337final.json
 
 # vim swap files
 *.swp
+
+venv
+.vscode

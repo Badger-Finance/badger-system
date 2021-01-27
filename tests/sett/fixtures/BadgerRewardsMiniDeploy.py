@@ -13,7 +13,7 @@ class BadgerRewardsMiniDeploy(SettMiniDeployBase):
 
         return (params, want)
 
-    def post_deploy_setup(self):
+    def post_deploy_setup(self, deploy=True):
         """
         Distribute badger to Geyser and allow strategy to take
         """
@@ -26,7 +26,7 @@ class BadgerRewardsMiniDeploy(SettMiniDeployBase):
             APPROVED_STAKER_ROLE, self.strategy, {"from": self.deployer}
         )
 
-    def pre_deploy_setup(self):
+    def pre_deploy_setup(self, deploy=True):
         """
         Deploy StakingRewards for Strategy
         """

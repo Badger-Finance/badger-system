@@ -13,11 +13,11 @@ console = Console()
 
 def main():
     badger = connect_badger(badger_config.prod_json, load_guardian=False)
-    (startBlock, endBlock) = get_last_proposed_cycle_range(badger)
+    (currentRewards, startBlock, endBlock) = get_last_proposed_cycle_range(badger)
 
     # If there is a pending root, approve after independently verifying it
     rootApproved = run_action(
         badger,
-        {"action": "guardian", "startBlock": startBlock, "endBlock": endBlock},
+        {"action": "guardian", "startBlock": startBlock, "endBlock": endBlock, "pastRewards": currentRewards},
         test=True,
     )

@@ -170,9 +170,6 @@ contract StrategyCurveGaugeBase is BaseStrategy {
         // Take fees from LP increase, and deposit remaining into Gauge
         harvestData.wantProcessed = IERC20Upgradeable(want).balanceOf(address(this));
         if (harvestData.wantProcessed > 0) {
-            uint256 _strategistFee = harvestData.wantProcessed.mul(performanceFeeStrategist).div(MAX_FEE);
-            uint256 _governanceFee = harvestData.wantProcessed.mul(performanceFeeGovernance).div(MAX_FEE);
-
             (harvestData.governancePerformanceFee, harvestData.strategistPerformanceFee) = _processPerformanceFees(harvestData.wantProcessed);
 
             // Deposit remaining want into Gauge

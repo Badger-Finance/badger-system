@@ -12,6 +12,9 @@ from tqdm import trange
 console = Console()
 
 globalStartBlock = 11381000
+digg_token = "0x798D1bE841a82a273720CE31c822C61a67a601C3"
+badger_token = "0x3472A5A71965499acd81997a54BBA8D852C6E53d"
+badger_tree = "0x660802Fc641b154aBA66a62137e71f331B6d787A"
 
 def calc_geyser_stakes(key, geyser, periodStartBlock, periodEndBlock):
     globalStartTime = web3.eth.getBlock(globalStartBlock)["timestamp"]
@@ -27,7 +30,7 @@ def calc_geyser_stakes(key, geyser, periodStartBlock, periodEndBlock):
 
     # Process actions from the total history
     console.print("\n[grey]Process Actions: Entire History[/grey]")
-    geyserMock = process_actions(geyserMock, actions, globalStartBlock, periodEndBlock)
+    geyserMock = process_actions(geyserMock, actions, globalStartBlock, periodEndBlock, key)
 
     return calculate_token_distributions(
         geyser, geyserMock, periodStartTime, periodEndTime
@@ -43,14 +46,24 @@ def calculate_token_distributions(
     - for each token, determine how many tokens will be distritbuted between the times specified
         - ((timeInClaimPeriod / totalTime) * initialLocked)
     """
+    digg = interface.IDigg(digg_token)
     distributionTokens = geyser.getDistributionTokens()
+    
     for token in distributionTokens:
         geyserMock.add_distribution_token(token)
         unlockSchedules = geyser.getUnlockSchedulesFor(token)
         for schedule in unlockSchedules:
             if rewards_config.debug:
                 console.log(schedule)
-            geyserMock.add_unlock_schedule(token, schedule)
+            console.print("Adding Unlock Schedule", token, schedule)
+            modified=schedule
+            if token == digg_token:
+                # TEST: Convert to shares 
+                # diggSharesValue = schedule[0]
+                modified=schedule
+                # diggFragmentsValue = digg.sharesToFragments(diggSharesValue)
+                # modified = (diggFragmentsValue, schedule[1], schedule[2], schedule[3])
+            geyserMock.add_unlock_schedule(token, modified)
 
     tokenDistributions = geyserMock.calc_token_distributions_in_range(
         snapshotStartTime, periodEndTime
@@ -58,6 +71,7 @@ def calculate_token_distributions(
     userDistributions = geyserMock.calc_user_distributions(tokenDistributions)
     geyserMock.tokenDistributions = tokenDistributions
     geyserMock.userDistributions = userDistributions
+    geyserMock.printState(userDistributions)
     return userDistributions
 
 
@@ -175,13 +189,13 @@ def collect_actions_from_events(geyser, startBlock, endBlock):
 
 
 def process_actions(
-    geyserMock: BadgerGeyserMock, actions, snapshotStartBlock, periodEndBlock
+    geyserMock: BadgerGeyserMock, actions, snapshotStartBlock, periodEndBlock, key
 ):
     """
     Add stakes
     Remove stakes according to unstaking rules (LIFO)
     """
-    console.print("[green]== Processing Claim Period Actions ==[/green]\n")
+    console.print("[green]== Processing Claim Period Actions for {} ==[/green]\n".format(key))
     for user, userData in actions.items():
         table = []
         # console.print("\n= Processing actions for user: ", user + " =")

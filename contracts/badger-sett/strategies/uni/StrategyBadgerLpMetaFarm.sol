@@ -40,7 +40,7 @@ contract StrategyBadgerLpMetaFarm is BaseStrategy {
         uint256 badgerHarvested,
         uint256 totalBadger,
         uint256 badgerConvertedToWbtc,
-        uint256 wtbcFromConversion,
+        uint256 wbtcFromConversion,
         uint256 lpGained,
         uint256 lpDeposited,
         uint256 timestamp,
@@ -51,7 +51,7 @@ contract StrategyBadgerLpMetaFarm is BaseStrategy {
         uint256 badgerHarvested;
         uint256 totalBadger;
         uint256 badgerConvertedToWbtc;
-        uint256 wtbcFromConversion;
+        uint256 wbtcFromConversion;
         uint256 lpGained;
         uint256 lpDeposited;
     }
@@ -98,7 +98,7 @@ contract StrategyBadgerLpMetaFarm is BaseStrategy {
     function _onlyNotProtectedTokens(address _asset) internal override {
         require(address(want) != _asset, "want");
         require(address(geyser) != _asset, "geyser");
-        require(address(badger) != _asset, "geyser");
+        require(address(badger) != _asset, "badger");
     }
 
     /// @dev Deposit Badger into the staking contract
@@ -171,7 +171,7 @@ contract StrategyBadgerLpMetaFarm is BaseStrategy {
             harvestData.badgerHarvested,
             harvestData.totalBadger,
             harvestData.badgerConvertedToWbtc,
-            harvestData.wtbcFromConversion,
+            harvestData.wbtcFromConversion,
             harvestData.lpGained,
             harvestData.lpDeposited,
             block.timestamp,

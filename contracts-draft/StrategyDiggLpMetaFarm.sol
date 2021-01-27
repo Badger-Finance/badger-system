@@ -37,7 +37,7 @@ contract StrategyDiggLpMetaFarm is BaseStrategy {
         uint256 badgerHarvested,
         uint256 totalDigg,
         uint256 diggConvertedToWbtc,
-        uint256 wtbcFromConversion,
+        uint256 wbtcFromConversion,
         uint256 lpGained,
         uint256 lpDeposited,
         uint256 timestamp,
@@ -48,7 +48,7 @@ contract StrategyDiggLpMetaFarm is BaseStrategy {
         uint256 badgerHarvested;
         uint256 totalDigg;
         uint256 diggConvertedToWbtc;
-        uint256 wtbcFromConversion;
+        uint256 wbtcFromConversion;
         uint256 lpGained;
         uint256 lpDeposited;
     }
@@ -168,7 +168,7 @@ contract StrategyDiggLpMetaFarm is BaseStrategy {
             harvestData.badgerHarvested,
             harvestData.totalDigg,
             harvestData.diggConvertedToWbtc,
-            harvestData.wtbcFromConversion,
+            harvestData.wbtcFromConversion,
             harvestData.lpGained,
             harvestData.lpDeposited,
             block.timestamp,
