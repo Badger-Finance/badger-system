@@ -70,6 +70,13 @@ class StrategyCoreResolver:
         calls.append(
             Call(sett.address, [func.erc20.totalSupply], [["sett.totalSupply", as_wei]])
         )
+        calls.append(
+            Call(
+                sett.address,
+                [func.sett.withdrawalFee],
+                [["sett.withdrawalFee", as_wei]],
+            )
+        )
 
         return calls
 
@@ -239,12 +246,29 @@ class StrategyCoreResolver:
 
         # Controller rewards should earn
         if (
-                before.get("strategy.withdrawalFee") > 0 and
-                # Fees are only processed when withdrawing from the strategy.
-                before.balances("want", "strategy") > after.balances("want", "strategy")
+                (
+                    before.get("strategy.withdrawalFee") > 0 and
+                    # Strategy fees are only processed when withdrawing from the strategy.
+                    before.balances("want", "strategy") > after.balances("want", "strategy")
+                ) or (
+                    before.get("sett.withdrawalFee") > 0 and
+                    # Sett fees are always processed.
+                    before.balances("want", "sett") > after.balances("want", "sett")
+                )
         ):
-            assert after.balances("want", "governanceRewards") > before.balances(
+            # Fees can be split between sett and strategy withdrawals.
+            rewardsDiff = after.balances("want", "governanceRewards") - before.balances(
                 "want", "governanceRewards"
+            )
+            strategyDiff = before.balances("want", "strategy") - after.balances("want", "strategy")
+            # withdrawalFee is in bps
+            strategyFee = Decimal(strategyDiff * before.get("strategy.withdrawalFee")) / Decimal(10000)
+            settDiff = before.balances("want", "sett") - after.balances("want", "sett")
+            settFee = Decimal(settDiff * before.get("sett.withdrawalFee")) / Decimal(10000)
+            assert approx(
+                rewardsDiff,
+                strategyFee + settFee,
+                1,
             )
 
     def confirm_deposit(self, before, after, params):

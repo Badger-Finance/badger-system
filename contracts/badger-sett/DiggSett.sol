@@ -109,6 +109,9 @@ contract DiggSett is Sett {
             if (_diff < _toWithdraw) {
                 _sharesToRedeem = _sharesInSett.add(_diff);
             }
+            _processWithdrawalFee(digg.sharesToFragments(_sharesToRedeem.sub(_sharesInSett)));
+        } else {
+            _processWithdrawalFee(digg.sharesToFragments(_sharesToRedeem));
         }
 
         // Transfer the corresponding number of shares, scaled to DIGG fragments, to recipient

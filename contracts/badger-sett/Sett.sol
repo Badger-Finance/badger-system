@@ -50,6 +50,9 @@ contract Sett is ERC20Upgradeable, SettAccessControlDefended, PausableUpgradeabl
 
     address public guardian;
 
+    uint256 public withdrawalFee;
+    uint256 public constant MAX_FEE = 10000;
+
     event FullPricePerShareUpdated(uint256 value, uint256 indexed timestamp, uint256 indexed blockNumber);
 
     function initialize(
@@ -114,7 +117,7 @@ contract Sett is ERC20Upgradeable, SettAccessControlDefended, PausableUpgradeabl
         return "1.2";
     }
 
-    function getPricePerFullShare() public view virtual returns (uint256) {
+    function getPricePerFullShare() public virtual view returns (uint256) {
         if (totalSupply() == 0) {
             return 1e18;
         }
@@ -130,7 +133,7 @@ contract Sett is ERC20Upgradeable, SettAccessControlDefended, PausableUpgradeabl
     /// @notice Defines how much of the Setts' underlying can be borrowed by the Strategy for use
     /// @notice Custom logic in here for how much the vault allows to be borrowed
     /// @notice Sets minimum required on-hand to keep small withdrawals cheap
-    function available() public view virtual returns (uint256) {
+    function available() public virtual view returns (uint256) {
         return token.balanceOf(address(this)).mul(min).div(max);
     }
 
@@ -195,6 +198,12 @@ contract Sett is ERC20Upgradeable, SettAccessControlDefended, PausableUpgradeabl
     function setGuardian(address _guardian) external whenNotPaused {
         _onlyGovernance();
         guardian = _guardian;
+    }
+
+    function setWithdrawalFee(uint256 _withdrawalFee) external {
+        _onlyGovernance();
+        require(_withdrawalFee <= MAX_FEE, "sett/excessive-withdrawal-fee");
+        withdrawalFee = _withdrawalFee;
     }
 
     /// ===== Permissioned Actions: Controller =====
@@ -271,6 +280,9 @@ contract Sett is ERC20Upgradeable, SettAccessControlDefended, PausableUpgradeabl
             if (_diff < _toWithdraw) {
                 r = b.add(_diff);
             }
+            _processWithdrawalFee(r.sub(b));
+        } else {
+            _processWithdrawalFee(r);
         }
 
         token.safeTransfer(msg.sender, r);
@@ -295,5 +307,19 @@ contract Sett is ERC20Upgradeable, SettAccessControlDefended, PausableUpgradeabl
     ) public virtual override whenNotPaused returns (bool) {
         _blockLocked();
         return super.transferFrom(sender, recipient, amount);
+    }
+
+    /// ===== Internal Helper Functions =====
+
+    /// @notice If withdrawal fee is active, take the appropriate amount from the given value and transfer to rewards recipient
+    /// @return The withdrawal fee that was taken
+    function _processWithdrawalFee(uint256 _amount) internal returns (uint256) {
+        if (withdrawalFee == 0) {
+            return 0;
+        }
+
+        uint256 fee = _amount.mul(withdrawalFee).div(MAX_FEE);
+        token.safeTransfer(IController(controller).rewards(), fee);
+        return fee;
     }
 }
