@@ -29,6 +29,9 @@ import "./SettAccessControlDefended.sol";
     V1.2
     * Transfer functions are now pausable along with all other non-permissioned write functions
     * All permissioned write functions, with the exception of pause() & unpause(), are pausable as well
+
+    V1.3
+    * Withdrawals are processed from idle want in sett.
 */
 
 contract Sett is ERC20Upgradeable, SettAccessControlDefended, PausableUpgradeable {
@@ -114,7 +117,7 @@ contract Sett is ERC20Upgradeable, SettAccessControlDefended, PausableUpgradeabl
     /// ===== View Functions =====
 
     function version() public view returns (string memory) {
-        return "1.2";
+        return "1.3";
     }
 
     function getPricePerFullShare() public virtual view returns (uint256) {

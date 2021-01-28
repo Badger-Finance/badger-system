@@ -34,6 +34,7 @@ sett = DotMap(
     strategist="strategist()(address)",
     keeper="keeper()(address)",
     shares="shares()(uint256)",
+    withdrawalFee="withdrawalFee()(uint256)",
 )
 strategy = DotMap(
     balanceOfPool="balanceOfPool()(uint256)",

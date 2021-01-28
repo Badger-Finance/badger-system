@@ -1,4 +1,4 @@
-from helpers.sett.strategy_registry import strategy_name_to_artifact
+from helpers.contract_registry import contract_name_to_artifact
 import json
 import decouple
 from brownie import *
@@ -197,7 +197,7 @@ class DiggSystem:
     def connect_logic(self, logic):
         for name, address in logic.items():
             print(name, address)
-            Artifact = strategy_name_to_artifact(name)
+            Artifact = contract_name_to_artifact(name)
             self.logic[name] = Artifact.at(address)
 
     # ===== Deployers =====

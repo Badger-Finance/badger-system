@@ -2,7 +2,7 @@ from scripts.systems.digg_system import DiggSystem
 from helpers.time_utils import days
 from helpers.gnosis_safe import GnosisSafe, MultisigTxMetadata
 from brownie.network.gas.strategies import GasNowScalingStrategy
-from helpers.sett.strategy_registry import strategy_name_to_artifact
+from helpers.contract_registry import contract_name_to_artifact, name_to_artifact
 import json
 import decouple
 
@@ -20,7 +20,6 @@ from scripts.systems.sett_system import (
     deploy_controller,
     deploy_strategy,
 )
-from helpers.sett.strategy_registry import name_to_artifact
 from scripts.systems.constants import SettType
 from scripts.systems.digg_system import connect_digg
 from rich.console import Console
@@ -350,7 +349,7 @@ class BadgerSystem:
 
     def deploy_sett_strategy_logic_for(self, name):
         deployer = self.deployer
-        artifact = strategy_name_to_artifact(name)
+        artifact = contract_name_to_artifact(name)
         self.logic[name] = artifact.deploy(
             {"from": deployer}
         )
@@ -565,7 +564,7 @@ class BadgerSystem:
             guardian,
         )
 
-        Artifact = strategy_name_to_artifact(strategyName)
+        Artifact = contract_name_to_artifact(strategyName)
 
         self.sett_system.strategies[id] = strategy
         self.set_strategy_artifact(id, strategyName, Artifact)
@@ -871,7 +870,7 @@ class BadgerSystem:
             self.connect_geyser(key, address)
 
     def connect_strategy(self, id, address, strategyArtifactName):
-        Artifact = strategy_name_to_artifact(strategyArtifactName)
+        Artifact = contract_name_to_artifact(strategyArtifactName)
         strategy = Artifact.at(address)
         self.sett_system.strategies[id] = strategy
         self.set_strategy_artifact(id, strategyArtifactName, Artifact)
@@ -914,7 +913,7 @@ class BadgerSystem:
 
     def connect_logic(self, logic):
         for name, address in logic.items():
-            Artifact = strategy_name_to_artifact(name)
+            Artifact = contract_name_to_artifact(name)
             self.logic[name] = Artifact.at(address)
 
     def connect_dao_badger_timelock(self, address):
@@ -1011,6 +1010,11 @@ class BadgerSystem:
 
         return self.sett_system.vaults[id]
 
+    def getSettArtifact(self, id):
+        if id == "native.digg":
+            return DiggSett
+        return Sett
+
     def getSettRewards(self, id):
         return self.sett_system.rewards[id]
 
@@ -1025,7 +1029,25 @@ class BadgerSystem:
         return interface.IERC20(self.sett_system.strategies[id].want())
 
     def getStrategyArtifact(self, id):
-        return self.strategy_artifacts[id].artifact
+        return self.strategy_artifacts[id]["artifact"]
 
     def getStrategyArtifactName(self, id):
         return self.strategy_artifacts[id]["artifactName"]
+
+    # ===== Sync config =====
+
+    def syncWithdrawalFees(self, id):
+        sett = self.getSett(id)
+        strategy = self.getStrategy(id)
+        fee = self._getWithdrawalFees(strategy._name)
+        strategy.setWithdrawalFee(fee, {"from": strategy.governance()})
+        sett.setWithdrawalFee(fee, {"from": sett.governance()})
+
+    def _getWithdrawalFees(self, strategyName):
+        for setts in sett_config.values():
+            for opts in setts.values():
+                if opts.strategyName == strategyName:
+                    return opts.withdrawalFee
+        return 0
+
+
