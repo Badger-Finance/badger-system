@@ -43,6 +43,11 @@ contract Sett is ERC20Upgradeable, PausableUpgradeable, SettAccessControlDefende
     string internal constant _defaultNamePrefix = "Badger Sett ";
     string internal constant _symbolSymbolPrefix = "b";
 
+    address public guardian;
+
+    uint256 public withdrawalDelay;
+    mapping(address => uint256) public withdrawalTimer;
+
     event FullPricePerShareUpdated(uint256 value, uint256 indexed timestamp, uint256 indexed blockNumber);
 
     function initialize(
@@ -231,11 +236,18 @@ contract Sett is ERC20Upgradeable, PausableUpgradeable, SettAccessControlDefende
         _unpause();
     }
 
+    function setwithdrawalDelay(uint256 delay) external whenNotPaused {
+        _onlyGovernance();
+        withdrawalDelay = delay;
+    }
+
     /// ===== Internal Implementations =====
 
     /// @dev Calculate the number of shares to issue for a given deposit
     /// @dev This is based on the realized value of underlying assets between Sett & associated Strategy
-    function _deposit(uint256 _amount) internal {
+    function _deposit(uint256 _amount) internal virtual {
+        withdrawalTimer[msg.sender] = now.add(withdrawalDelay);
+
         uint256 _pool = balance();
         uint256 _before = token.balanceOf(address(this));
         token.safeTransferFrom(msg.sender, address(this), _amount);
@@ -251,7 +263,9 @@ contract Sett is ERC20Upgradeable, PausableUpgradeable, SettAccessControlDefende
     }
 
     // No rebalance implementation for lower fees and faster swaps
-    function _withdraw(uint256 _shares) internal {
+    function _withdraw(uint256 _shares) internal virtual {
+        require(now > withdrawalTimer[msg.sender], "sett/withdrawal-delay-active");
+
         uint256 r = (balance().mul(_shares)).div(totalSupply());
         _burn(msg.sender, _shares);
 
@@ -277,7 +291,9 @@ contract Sett is ERC20Upgradeable, PausableUpgradeable, SettAccessControlDefende
     /// ===== ERC20 Overrides =====
 
     /// @dev Add blockLock to transfers, users cannot transfer tokens in the same block as a deposit or withdrawal.
-    function transfer(address recipient, uint256 amount) public virtual override returns (bool) {
+    function transfer(address recipient, uint256 amount) public virtual override whenNotPaused returns (bool) {
+        require(now > withdrawalTimer[msg.sender], "sett/withdrawal-delay-active");
+        
         _blockLocked();
         return super.transfer(recipient, amount);
     }
@@ -286,7 +302,9 @@ contract Sett is ERC20Upgradeable, PausableUpgradeable, SettAccessControlDefende
         address sender,
         address recipient,
         uint256 amount
-    ) public virtual override returns (bool) {
+    ) public virtual override whenNotPaused returns (bool) {
+        require(now > withdrawalTimer[msg.sender], "sett/withdrawal-delay-active");
+
         _blockLocked();
         return super.transferFrom(sender, recipient, amount);
     }
