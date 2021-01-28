@@ -11,6 +11,8 @@ cache
 local.json
 .pytest_cache
 docs
+/.idea
+/package-lock.json
 
 contracts-temporary
 contracts-reference
