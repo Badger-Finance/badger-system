@@ -260,14 +260,13 @@ class StrategyCoreResolver:
             rewardsDiff = after.balances("want", "governanceRewards") - before.balances(
                 "want", "governanceRewards"
             )
+            userDiff = after.balances("want", "user") - before.balances("want", "user")
             strategyDiff = before.balances("want", "strategy") - after.balances("want", "strategy")
-            # withdrawalFee is in bps
-            strategyFee = Decimal(strategyDiff * before.get("strategy.withdrawalFee")) / Decimal(10000)
             settDiff = before.balances("want", "sett") - after.balances("want", "sett")
-            settFee = Decimal(settDiff * before.get("sett.withdrawalFee")) / Decimal(10000)
+            # Want diff in user/rewards should be equal to diff in strategy/sett
             assert approx(
-                rewardsDiff,
-                strategyFee + settFee,
+                rewardsDiff + userDiff,
+                strategyDiff + settDiff,
                 1,
             )
 

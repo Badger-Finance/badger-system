@@ -34,7 +34,7 @@ import "./SettAccessControlDefended.sol";
     * Withdrawals are processed from idle want in sett.
 */
 
-contract Sett is ERC20Upgradeable, SettAccessControlDefended, PausableUpgradeable {
+contract Sett is ERC20Upgradeable, PausableUpgradeable, SettAccessControlDefended {
     using SafeERC20Upgradeable for IERC20Upgradeable;
     using AddressUpgradeable for address;
     using SafeMathUpgradeable for uint256;
@@ -274,6 +274,7 @@ contract Sett is ERC20Upgradeable, SettAccessControlDefended, PausableUpgradeabl
         _burn(msg.sender, _shares);
 
         // Check balance
+        uint256 _fee;
         uint256 b = token.balanceOf(address(this));
         if (b < r) {
             uint256 _toWithdraw = r.sub(b);
@@ -283,12 +284,12 @@ contract Sett is ERC20Upgradeable, SettAccessControlDefended, PausableUpgradeabl
             if (_diff < _toWithdraw) {
                 r = b.add(_diff);
             }
-            _processWithdrawalFee(r.sub(b));
+            _fee = _processWithdrawalFee(r.sub(b));
         } else {
-            _processWithdrawalFee(r);
+            _fee = _processWithdrawalFee(r);
         }
 
-        token.safeTransfer(msg.sender, r);
+        token.safeTransfer(msg.sender, r.sub(_fee));
     }
 
     function _lockForBlock(address account) internal {

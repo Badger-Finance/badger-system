@@ -64,9 +64,6 @@ class SettMiniDeployBase:
             if upgrade:
                 self.upgrade_versioned()
 
-            # sync withdrawal fees
-            self.badger.syncWithdrawalFees(self.key)
-
             return self.badger
 
         self.badger = deploy_badger_minimal(self.deployer, self.keeper, self.guardian)

@@ -1,3 +1,4 @@
+from enum import Enum
 from scripts.systems.digg_system import DiggSystem
 from helpers.time_utils import days
 from helpers.gnosis_safe import GnosisSafe, MultisigTxMetadata
@@ -8,6 +9,7 @@ import decouple
 
 from scripts.systems.uniswap_system import UniswapSystem
 from scripts.systems.gnosis_safe_system import connect_gnosis_safe
+from helpers.constants import AddressZero
 from helpers.proxy_utils import deploy_proxy, deploy_proxy_admin
 from brownie import *
 from helpers.registry import registry
@@ -20,12 +22,15 @@ from scripts.systems.sett_system import (
     deploy_controller,
     deploy_strategy,
 )
-from scripts.systems.constants import SettType
+from scripts.systems.constants import (
+    SettType,
+    SyncFeeType,
+    WITHDRAWAL_FEE,
+)
 from scripts.systems.digg_system import connect_digg
 from rich.console import Console
 
 console = Console()
-
 
 def deploy_geyser(badger, stakingToken):
     pool_input = DotMap(
@@ -1034,20 +1039,24 @@ class BadgerSystem:
     def getStrategyArtifactName(self, id):
         return self.strategy_artifacts[id]["artifactName"]
 
-    # ===== Sync config =====
+    # ===== Configure =====
 
-    def syncWithdrawalFees(self, id):
+    def syncWithdrawalFees(self, id, syncFeeType=SyncFeeType.CONFIG):
         sett = self.getSett(id)
         strategy = self.getStrategy(id)
-        fee = self._getWithdrawalFees(strategy._name)
+        # By default, we grab the fee from config.
+        fee = self._getWithdrawalFeesFromConfig(strategy._name)
+        if syncFeeType == SyncFeeType.ZERO:
+            fee = 0
+        if syncFeeType == SyncFeeType.CONSTANT:
+            fee = WITHDRAWAL_FEE
         strategy.setWithdrawalFee(fee, {"from": strategy.governance()})
         sett.setWithdrawalFee(fee, {"from": sett.governance()})
 
-    def _getWithdrawalFees(self, strategyName):
+    def _getWithdrawalFeesFromConfig(self, strategyName):
         for setts in sett_config.values():
             for opts in setts.values():
                 if opts.strategyName == strategyName:
-                    return opts.withdrawalFee
+                    return opts.params.withdrawalFee
         return 0
-
 
