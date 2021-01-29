@@ -29,6 +29,14 @@ sett_config = DotMap(
                 withdrawalFee=0,
             ),
         ),
+        digg=DotMap(
+            strategyName="StrategyDiggRewards",
+            params=DotMap(
+                performanceFeeStrategist=0,
+                performanceFeeGovernance=0,
+                withdrawalFee=0,
+            ),
+        ),
         uniBadgerWbtc=DotMap(
             strategyName="StrategyBadgerLpMetaFarm",
             params=DotMap(
