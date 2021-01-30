@@ -8,7 +8,6 @@ import "deps/@openzeppelin/contracts-upgradeable/token/ERC20/SafeERC20Upgradeabl
 import "deps/@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "deps/@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import "deps/@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
-import "contracts/badger-timelock/Executor.sol";
 import "interfaces/badger/IStrategy.sol";
 import "interfaces/uniswap/IUniswapRouterV2.sol";
 import "contracts/badger-sett/strategies/Swapper.sol";
