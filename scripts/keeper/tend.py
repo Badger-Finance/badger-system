@@ -5,6 +5,7 @@ from scripts.systems.badger_system import BadgerSystem, connect_badger
 from tabulate import tabulate
 
 from assistant.rewards.rewards_checker import val
+
 gas_strategy = GasNowStrategy("fast")
 
 console = Console()
@@ -17,7 +18,7 @@ def tend_all(badger: BadgerSystem, skip):
             continue
 
         strategy = badger.getStrategy(key)
-        
+
         if not strategy.isTendable():
             continue
 
@@ -25,7 +26,7 @@ def tend_all(badger: BadgerSystem, skip):
         fpps_before = vault.getPricePerFullShare()
 
         keeper = accounts.at(strategy.keeper())
-        strategy.tend({'from': keeper, "gas_price": gas_strategy})
+        strategy.tend({"from": keeper, "gas_price": gas_strategy})
 
         table.append(
             [
@@ -39,6 +40,7 @@ def tend_all(badger: BadgerSystem, skip):
         print("PPFS: Tend")
         print(tabulate(table, headers=["name", "before", "after", "diff"]))
 
+
 def main():
     """
     Simulate tend operation and evaluate tendable amount
@@ -47,7 +49,7 @@ def main():
     # TODO: Output message when failure
 
     fileName = "deploy-" + "final" + ".json"
-    badger = connect_badger(fileName)
+    badger = connect_badger(fileName, load_keeper=True)
 
     skip = [
         # "native.uniBadgerWbtc"

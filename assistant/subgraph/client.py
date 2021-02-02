@@ -10,7 +10,7 @@ url = subgraph_config["url"]
 transport = AIOHTTPTransport(url=url)
 client = Client(transport=transport, fetch_schema_from_transport=True)
 
-    
+
 
 def fetch_sett_balances(settId, startBlock):
     console.print(

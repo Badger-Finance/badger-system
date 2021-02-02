@@ -12,6 +12,9 @@ local.json
 .pytest_cache
 docs
 
+contracts-temporary
+contracts-reference
+
 flatten
 
 run-testnet.sh

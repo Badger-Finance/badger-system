@@ -1,21 +1,26 @@
-from helpers.sett.resolvers.StrategySushiBadgerLpOptimizerResolver import StrategySushiBadgerLpOptimizerResolver
-from helpers.sett.resolvers.StrategySushiBadgerWbtcResolver import StrategySushiBadgerWbtcResolver
-from brownie import *
-from helpers.constants import *
-from helpers.multicall import Call, Multicall, as_wei, func
-from helpers.registry import registry
-from helpers.sett.resolvers.StrategyBadgerLpMetaFarmResolver import \
-    StrategyBadgerLpMetaFarmResolver
-from helpers.sett.resolvers.StrategyBadgerRewardsResolver import \
-    StrategyBadgerRewardsResolver
-from helpers.sett.resolvers.StrategyCurveGaugeResolver import \
-    StrategyCurveGaugeResolver
-from helpers.sett.resolvers.StrategyHarvestMetaFarmResolver import \
-    StrategyHarvestMetaFarmResolver
-from helpers.utils import val
-from rich.console import Console
-from scripts.systems.badger_system import BadgerSystem
+from brownie import (
+    Controller,
+    interface,
+    chain,
+)
 from tabulate import tabulate
+from rich.console import Console
+from helpers.multicall import Multicall
+from helpers.registry import registry
+from helpers.sett.resolvers import (
+    SettCoreResolver,
+    StrategyBadgerLpMetaFarmResolver,
+    StrategyHarvestMetaFarmResolver,
+    StrategySushiBadgerWbtcResolver,
+    StrategyBadgerRewardsResolver,
+    StrategySushiLpOptimizerResolver,
+    StrategyCurveGaugeResolver,
+    StrategyDiggRewardsResolver,
+    StrategySushiDiggWbtcLpOptimizerResolver,
+    StrategyDiggLpMetaFarmResolver,
+)
+from helpers.utils import digg_shares_to_initial_fragments, val
+from scripts.systems.badger_system import BadgerSystem
 
 console = Console()
 
@@ -51,24 +56,22 @@ def is_curve_gauge_variant(name):
 
 
 class Snap:
-    def __init__(self, data, block):
+    def __init__(self, data, block, entityKeys):
         self.data = data
         self.block = block
+        self.entityKeys = entityKeys
 
     # ===== Getters =====
 
     def balances(self, tokenKey, accountKey):
         return self.data["balances." + tokenKey + "." + accountKey]
 
-    def sumBalances(self, tokenKey, accountKeys):
-        total = 0
-        for accountKey in accountKeys:
-            total += self.data["balances." + tokenKey + "." + accountKey]
-        return total
+    def shares(self, tokenKey, accountKey):
+        return self.data["shares." + tokenKey + "." + accountKey]
 
     def get(self, key):
 
-        if not key in self.data.keys():
+        if key not in self.data.keys():
             assert False
         return self.data[key]
 
@@ -88,6 +91,7 @@ class SnapshotManager:
         self.want = interface.IERC20(self.sett.token())
         self.resolver = self.init_resolver(self.strategy.getName())
         self.snaps = {}
+        self.settSnaps = {}
         self.entities = {}
 
         assert self.want == self.strategy.want()
@@ -104,7 +108,16 @@ class SnapshotManager:
         for key, dest in destinations.items():
             self.addEntity(key, dest)
 
+    def add_snap_calls(self, entities):
+        calls = []
+        calls = self.resolver.add_balances_snap(calls, entities)
+        calls = self.resolver.add_sett_snap(calls)
+        # calls = self.resolver.add_sett_permissions_snap(calls)
+        calls = self.resolver.add_strategy_snap(calls)
+        return calls
+
     def snap(self, trackedUsers=None):
+        print("snap")
         snapBlock = chain.height
         entities = self.entities
 
@@ -112,23 +125,27 @@ class SnapshotManager:
             for key, user in trackedUsers.items():
                 entities[key] = user
 
-        calls = []
-        calls = self.resolver.add_balances_snap(calls, entities)
-        calls = self.resolver.add_sett_snap(calls)
-        calls = self.resolver.add_strategy_snap(calls)
-
+        calls = self.add_snap_calls(entities)
         multi = Multicall(calls)
 
         # for call in calls:
         #     print(call.target, call.function, call.args)
 
         data = multi()
-        self.snaps[snapBlock] = Snap(data, snapBlock)
+        self.snaps[snapBlock] = Snap(
+            data,
+            snapBlock,
+            [x[0] for x in entities.items()],
+        )
 
         return self.snaps[snapBlock]
 
     def addEntity(self, key, entity):
         self.entities[key] = entity
+
+    def init_sett_resolver(self, version):
+        print("init_sett_resolver", version)
+        return SettCoreResolver(self)
 
     def init_resolver(self, name):
         print("init_resolver", name)
@@ -145,17 +162,23 @@ class SnapshotManager:
         if name == "StrategySushiBadgerWbtc":
             return StrategySushiBadgerWbtcResolver(self)
         if name == "StrategySushiLpOptimizer":
-            print("StrategySushiBadgerLpOptimizerResolver")
-            return StrategySushiBadgerLpOptimizerResolver(self)
+            print("StrategySushiLpOptimizerResolver")
+            return StrategySushiLpOptimizerResolver(self)
+        if name == "StrategyDiggRewards":
+            return StrategyDiggRewardsResolver(self)
+        if name == "StrategySushiDiggWbtcLpOptimizer":
+            return StrategySushiDiggWbtcLpOptimizerResolver(self)
+        if name == "StrategyDiggLpMetaFarm":
+            return StrategyDiggLpMetaFarmResolver(self)
 
     def settTend(self, overrides, confirm=True):
         user = overrides["from"].address
         trackedUsers = {"user": user}
         before = self.snap(trackedUsers)
-        self.strategy.tend(overrides)
+        tx = self.strategy.tend(overrides)
         after = self.snap(trackedUsers)
         if confirm:
-            self.resolver.confirm_tend(before, after)
+            self.resolver.confirm_tend(before, after, tx)
 
     def settHarvest(self, overrides, confirm=True):
         user = overrides["from"].address
@@ -172,6 +195,7 @@ class SnapshotManager:
         before = self.snap(trackedUsers)
         self.sett.deposit(amount, overrides)
         after = self.snap(trackedUsers)
+
         if confirm:
             self.resolver.confirm_deposit(
                 before, after, {"user": user, "amount": amount}
@@ -193,7 +217,7 @@ class SnapshotManager:
         user = overrides["from"].address
         trackedUsers = {"user": user}
         before = self.snap(trackedUsers)
-        tx = self.sett.earn(overrides)
+        self.sett.earn(overrides)
         after = self.snap(trackedUsers)
         if confirm:
             self.resolver.confirm_earn(before, after, {"user": user})
@@ -202,11 +226,11 @@ class SnapshotManager:
         user = overrides["from"].address
         trackedUsers = {"user": user}
         before = self.snap(trackedUsers)
-        self.sett.withdraw(amount, overrides)
+        tx = self.sett.withdraw(amount, overrides)
         after = self.snap(trackedUsers)
         if confirm:
             self.resolver.confirm_withdraw(
-                before, after, {"user": user, "amount": amount}
+                before, after, {"user": user, "amount": amount}, tx
             )
 
     def settWithdrawAll(self, overrides, confirm=True):
@@ -214,16 +238,22 @@ class SnapshotManager:
         trackedUsers = {"user": user}
         userBalance = self.sett.balanceOf(user)
         before = self.snap(trackedUsers)
-        self.sett.withdraw(userBalance, overrides)
+        tx = self.sett.withdraw(userBalance, overrides)
         after = self.snap(trackedUsers)
 
         if confirm:
             self.resolver.confirm_withdraw(
-                before, after, {"user": user, "amount": userBalance}
+                before, after, {"user": user, "amount": userBalance}, tx
             )
 
     def format(self, key, value):
         if type(value) is int:
+            if "stakingRewards.staked" or "stakingRewards.earned" in key:
+                return val(value)
+            # Ether-scaled balances
+            # TODO: Handle based on token decimals
+            if ".digg" in key and "shares" not in key:
+                return val(value, decimals=9)
             if (
                 "balance" in key
                 or key == "sett.available"
@@ -231,6 +261,18 @@ class SnapshotManager:
                 or key == "sett.totalSupply"
             ):
                 return val(value)
+            # DIGG Shares
+            if "shares" in key or "diggFaucet.earned" in key:
+                # We expect to have a known digg instance in the strategy in this case
+                name = self.strategy.getName()
+                digg = ""
+
+                if name == "StrategyDiggRewards":
+                    digg = interface.IDigg(self.strategy.want())
+                else:
+                    digg = interface.IDigg(self.strategy.digg())
+
+                return digg_shares_to_initial_fragments(digg, value)
         return value
 
     def diff(self, a, b):
@@ -264,7 +306,11 @@ class SnapshotManager:
                     ]
                 )
 
-        print(tabulate(table, headers=["metric", "before", "after", "diff"], tablefmt="grid"))
+        print(
+            tabulate(
+                table, headers=["metric", "before", "after", "diff"], tablefmt="grid"
+            )
+        )
 
     def printPermissions(self):
         # Accounts
@@ -303,7 +349,7 @@ class SnapshotManager:
             # Don't display 0 balances:
             if "balances" in key and item == 0:
                 continue
-            table.append([key, item])
+            table.append([key, self.format(key, item)])
 
         table.append(["---------------", "--------------------"])
         print(tabulate(table, headers=["metric", "value"]))

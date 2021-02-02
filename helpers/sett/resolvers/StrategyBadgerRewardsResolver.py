@@ -1,3 +1,4 @@
+from helpers.multicall import func, as_wei, Call
 from helpers.sett.resolvers.StrategyCoreResolver import StrategyCoreResolver
 
 
@@ -18,3 +19,25 @@ class StrategyBadgerRewardsResolver(StrategyCoreResolver):
         return {
             "stakingRewards": strategy.geyser(),
         }
+
+    def add_strategy_snap(self, calls):
+        strategy = self.manager.strategy
+        staking_rewards_address = strategy.geyser()
+
+        super().add_strategy_snap(calls)
+        calls.append(
+            Call(
+                staking_rewards_address,
+                [func.erc20.balanceOf, strategy.address],
+                [["stakingRewards.staked", as_wei]],
+            )
+        )
+        calls.append(
+            Call(
+                staking_rewards_address,
+                [func.rewardPool.earned, strategy.address],
+                [["stakingRewards.earned", as_wei]],
+            )
+        )
+
+        return calls

@@ -11,7 +11,7 @@ from assistant.rewards.RewardsList import RewardsList
 from config.rewards_config import rewards_config
 from brownie.network.gas.strategies import GasNowStrategy
 from assistant.rewards.merkle_tree import rewards_to_merkle_tree
-
+from assistant.rewards.RewardsLogger import rewardsLogger
 
 gas_strategy = GasNowStrategy("fast")
 console = Console()
@@ -23,6 +23,7 @@ def main():
     startBlock = 11537600
     endBlock = chain.height
     rewards = calc_sushi_rewards(badger,startBlock,endBlock,nextCycle,retroactive=True)
+    rewardsLogger.save("retroactive-xsushi.json")
     currentRewards = fetch_current_rewards_tree(badger)
     cumulative_rewards = process_cumulative_rewards(currentRewards,rewards)
     merkleTree = rewards_to_merkle_tree(cumulative_rewards,startBlock,endBlock,{})

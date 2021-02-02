@@ -2,6 +2,7 @@
 pragma solidity >=0.5.0 <0.8.0;
 
 interface IUniswapRouterV2 {
+    function factory() external view returns (address);
     function addLiquidity(
         address tokenA,
         address tokenB,

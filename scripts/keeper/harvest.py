@@ -10,8 +10,6 @@ gas_strategy = GasNowStrategy("fast")
 
 console = Console()
 def harvest_all(badger: BadgerSystem, skip):
-    keeper = badger.deployer
-
     for key, vault in badger.sett_system.vaults.items():
         if key in skip:
             continue
@@ -25,8 +23,10 @@ def harvest_all(badger: BadgerSystem, skip):
         keeper = accounts.at(strategy.keeper())
 
         before = snap.snap()
-        snap.settHarvest({'from': keeper, "gas_price": gas_strategy})
+        snap.printTable(before)
+        snap.settHarvest({'from': keeper, "gas_price": gas_strategy, "gas_limit": 2000000, "allow_revert": True}, confirm=False)
         after = snap.snap()
+        snap.printTable(after)
 
         snap.printCompare(before, after)
 
@@ -37,16 +37,32 @@ def main():
 
     # TODO: Output message when failure
 
+    # TODO: Use test mode if RPC active, no otherwise
+
+
     fileName = "deploy-" + "final" + ".json"
-    badger = connect_badger(fileName)
+    badger = connect_badger(fileName, load_keeper=True)
+
+    if rpc.is_active():
+        """
+        Test: Load up sending accounts with ETH and whale tokens
+        """
+        accounts[0].transfer(badger.deployer, Wei("5 ether"))
+        accounts[0].transfer(badger.keeper, Wei("5 ether"))
+        accounts[0].transfer(badger.guardian, Wei("5 ether"))
 
     skip = [
-        # "native.uniBadgerWbtc"
+        # "native.uniBadgerWbtc",
         # "harvest.renCrv",
         # "native.sbtcCrv",
         # "native.sBtcCrv",
         # "native.tbtcCrv",
         # "native.renCrv",
         # "native.badger",
+        # "native.sushiBadgerWbtc",
+        # "native.sushiWbtcEth",
+        # "native.digg",
+        # "native.uniDiggWbtc",
+        # "native.sushiDiggWbtc"
     ]
     harvest_all(badger, skip)

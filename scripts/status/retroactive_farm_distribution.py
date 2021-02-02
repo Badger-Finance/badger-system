@@ -9,18 +9,19 @@ from scripts.systems.badger_system import connect_badger
 
 from assistant.rewards.rewards_assistant import calc_meta_farm_rewards,process_cumulative_rewards,fetch_current_rewards_tree
 from assistant.rewards.rewards_checker import test_claims
+from assistant.rewards.RewardsLogger import rewardsLogger
 from assistant.subgraph.client import fetch_harvest_farm_events
 from assistant.rewards.RewardsList import RewardsList
 from config.rewards_config import rewards_config
 from brownie.network.gas.strategies import GasNowStrategy
 from assistant.rewards.merkle_tree import rewards_to_merkle_tree
 
-
 gas_strategy = GasNowStrategy("fast")
 console = Console()
 
 
 def main():
+    console.log("test")
     test = True
     badger = connect_badger(badger_config.prod_json)
     farmTokenAddress = "0xa0246c9032bC3A600820415aE600c6388619A14D"
@@ -55,14 +56,16 @@ def main():
         farmUnit = farmRewards/totalShareSeconds
         for user in user_state:
             rewards.increase_user_rewards(user.address,farmTokenAddress,farmUnit * user.shareSeconds)
+            rewardsLogger.add_user_share_seconds(user.address,"harvest.renCrv",user.shareSeconds)
+            rewardsLogger.add_user_token(user.address,"harvest.renCrv",farmTokenAddress,farmUnit* user.shareSeconds)
 
         if i+1 < len(harvestEvents):
             startBlock = int(harvestEvent["blockNumber"])
             endBlock = int(harvestEvents[i+1]["blockNumber"])
 
-    console.log(rewards.claims)
-    console.log(sorted( [list(v.values())[0]/1e18 for v in list(rewards.claims.values())  ] ))
     claimsHarvested = sum( [list(v.values())[0] for v in list(rewards.claims.values())])
+    rewardsLogger.add_distribution_info("harvest.renCrv",{farmTokenAddress:claimsHarvested})
+    rewardsLogger.save("retroactive-farm.json")
     
     currentRewards = fetch_current_rewards_tree(badger)
     cumulative_rewards = process_cumulative_rewards(currentRewards,rewards)
