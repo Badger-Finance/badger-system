@@ -35,7 +35,8 @@ name_to_artifact = {
     "SimpleTimelockWithVoting": SimpleTimelockWithVoting,
     "SmartVesting": SmartVesting,
     "DiggDistributor": DiggDistributor,
-    "DiggSeeder": DiggSeeder
+    "DiggSeeder": DiggSeeder,
+    "BadgerRewardsManager": BadgerRewardsManager
 }
 
 

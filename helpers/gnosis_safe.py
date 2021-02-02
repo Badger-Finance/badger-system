@@ -51,7 +51,7 @@ class GnosisSafe:
         self.transactions = []
         self.testMode = testMode
 
-        if testMode:
+        if testMode and rpc.is_active():
             self.convert_to_test_mode()
 
     # Must be on Ganache instance and Gnosis safe must be --unlocked

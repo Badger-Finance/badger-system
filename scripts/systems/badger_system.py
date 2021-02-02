@@ -133,7 +133,7 @@ def print_to_file(badger, path):
 
 
 def connect_badger(
-    badger_deploy_file, load_deployer=True, load_keeper=False, load_guardian=False
+    badger_deploy_file, load_deployer=False, load_keeper=False, load_guardian=False
 ):
     badger_deploy = {}
     console.print(
@@ -178,6 +178,7 @@ def connect_badger(
     badger.connect_honeypot_meme(badger_deploy["honeypotMeme"])
     badger.connect_community_pool(badger_deploy["communityPool"])
     badger.connect_dao_badger_timelock(badger_deploy["daoBadgerTimelock"])
+    badger.connect_rewards_manager(badger_deploy["badgerRewardsManager"])
 
     # Connect Sett
     badger.connect_sett_system(badger_deploy["sett_system"], badger_deploy["geysers"])
@@ -921,6 +922,10 @@ class BadgerSystem:
         self.daoBadgerTimelock = SimpleTimelock.at(address)
         self.track_contract_upgradeable("daoBadgerTimelock", self.daoBadgerTimelock)
 
+    def connect_rewards_manager(self, address):
+        self.badgerRewardsManager = BadgerRewardsManager.at(address)
+        self.track_contract_upgradeable("badgerRewardsManager", self.badgerRewardsManager)
+
     def connect_dao_digg_timelock(self, address):
         # TODO: Implement with Digg
         return False
@@ -939,6 +944,7 @@ class BadgerSystem:
             self.connect_digg_rewards_faucet(id, address)
             return
         self.connect_sett_staking_rewards(id, address)
+        
 
     def connect_sett_staking_rewards(self, id, address):
         rewards = StakingRewards.at(address)
