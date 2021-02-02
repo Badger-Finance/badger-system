@@ -41,7 +41,8 @@
         "StrategyDiggLpMetaFarm": "0xd0b1e9f652019B993dacdd97011557ec3b2B6019",
         "DiggDistributor": "0x9a7d4078068ebb39ffe471898212353cf661580c",
         "SimpleTimelockWithVoting": "0xa494351C6f392908321Ea90665628f7f521FE809",
-        "DiggSeeder": "0xfcC357420368195eE1F4B387d9d4335d26b0695F"
+        "DiggSeeder": "0xfcC357420368195eE1F4B387d9d4335d26b0695F",
+        "BadgerRewardsManager": "0xE8D0A73ED68231F209bdDB1b0AAcc37C38C16E45"
     },
     "dao": {
         "token": "0x3472A5A71965499acd81997a54BBA8D852C6E53d",
@@ -110,6 +111,7 @@
     "rewardsEscrow": "0x19d099670a21bC0a8211a89B84cEdF59AbB4377F",
     "honeypotMeme": "0x9159D3BeaE435CEcC54d221675465D4C1AB04d87",
     "claimEncoder": "0xf3ff1a5856b1726a8fef921ea57eab2c51466a93",
+    "badgerRewardsManager": "0x5B60952481Eb42B66bdfFC3E049025AC5b91c127",
     "geysers": {
         "native.badger": "0xa9429271a28F8543eFFfa136994c0839E7d7bF77",
         "native.renCrv": "0x2296f174374508278DC12b806A7f27c87D53Ca15",
@@ -137,5 +139,9 @@
         "diggTeamVesting": "0x124FD4A9bd4914b32c77C9AE51819b1181dbb3D4",
         "diggDistributor": "0x5E79958EfbB8AFdeDB6EC7107110F329e4EAfffA",
         "diggSeeder": "0xb81fA24b359289b7bC8552dB6A2a606fa8B5B61c"
+    },
+    "pools": {
+        "uniDiggWbtc": "0xe86204c4eddd2f70ee00ead6805f917671f56c52",
+        "sushiDiggWbtc":"0x9a13867048e01c663ce8ce2fe0cdae69ff9f35e3" 
     }
 }
