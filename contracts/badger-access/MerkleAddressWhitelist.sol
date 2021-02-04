@@ -14,7 +14,7 @@ contract MerkleAddressWhitelist is OwnableUpgradeable, IMerkleAddressWhitelist {
     }
 
     function exists(address addr, bytes32[] calldata merkleProof) external override returns (bool) {
-        // Verify the merkle proof and existence of token in whitelist.
+        // Verify the merkle proof and existence of address in whitelist.
         bytes32 node = keccak256(abi.encodePacked(addr));
         return MerkleProofUpgradeable.verify(merkleProof, merkleRoot, node);
     }
