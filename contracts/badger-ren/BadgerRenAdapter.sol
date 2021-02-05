@@ -86,7 +86,7 @@ contract BadgerRenAdapter is OwnableUpgradeable {
 
     uint256 public constant MAX_BPS = 10000;
 
-    initialize(
+    function initialize(
         address _governance,
         address _rewards,
         address _registry,
@@ -127,9 +127,9 @@ contract BadgerRenAdapter is OwnableUpgradeable {
         uint256 _mintAmount = registry.getGatewayBySymbol("BTC").mint(pHash, _amount, _nHash, _sig);
         uint256 _fee = _processFee(renBTC, _mintAmount, mintFeeBps);
 
-        emit RecoverStuckRenBTC(mintAmount, _fee);
+        emit RecoverStuckRenBTC(_mintAmount, _fee);
 
-        renBTC.safeTransfer(msg.sender, _mintAmount.sub(fee));
+        renBTC.safeTransfer(msg.sender, _mintAmount.sub(_fee));
     }
 
     function mintRenBTC(
@@ -181,26 +181,20 @@ contract BadgerRenAdapter is OwnableUpgradeable {
         uint256 min_dy = dy.mul(_slippage).div(1e4);
 
         uint256 _startBalance = wBTC.balanceOf(address(this));
-        try exchange.exchange(0, 1, mintedAmount, min_dy)  {
+        try exchange.exchange(0, 1, _mintAmount, min_dy)  {
             uint256 _endBalance = wBTC.balanceOf(address(this));
             uint256 _wbtcAmount = _endBalance.sub(_startBalance);
             uint256 _fee = _processFee(wBTC, _wbtcAmount, mintFeeBps);
             emit MintWBTC(_mintAmount, _wbtcAmount, _fee);
 
             // Send converted wBTC to user.
-            require(wBTC.transfer(_destination, _boughtAmount));
+            require(wBTC.transfer(_destination, _wbtcAmount.sub(_fee)));
         } catch Error(string memory _error) {
             emit ExchangeWBTCStringError(_error);
-
-            // Fallback to sending renBTC to user.
-            emit MintRenBTC(mintedAmount);
-            require(renBTC.transfer(_destination, _mintAmount));
+            _fallbackTransferRenBTC(_destination, _mintAmount);
         } catch (bytes memory _error) {
             emit ExchangeWBTCBytesError(_error);
-
-            // Fallback to sending renBTC to user.
-            emit MintRenBTC(mintedAmount);
-            require(renBTC.transfer(_destination, _mintAmount));
+            _fallbackTransferRenBTC(_destination, _mintAmount);
         }
     }
 
@@ -219,11 +213,18 @@ contract BadgerRenAdapter is OwnableUpgradeable {
 
         // Burn and send proceeds to the User
         uint256 burnAmount = registry.getGatewayBySymbol("BTC").burn(_btcDestination, _burnAmount.sub(_fee));
-        emit BurnWBTC(_amount, burnAmount);
+        emit BurnWBTC(_amount, burnAmount, _fee);
+    }
+
+    // _fallbackTransferRenBTC transfers minted renBTC to user when an exchange fails.
+    function _fallbackTransferRenBTC(address _destination, uint256 _amount) internal {
+            uint256 _fee = _processFee(renBTC, _amount, mintFeeBps);
+            emit MintRenBTC(_amount, _fee);
+            require(renBTC.transfer(_destination, _amount.sub(_fee)));
     }
 
     function _processFee(
-        address token,
+        IERC20 token,
         uint256 amount,
         uint256 feeBps
     ) internal returns (uint256) {
