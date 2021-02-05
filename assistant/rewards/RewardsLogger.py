@@ -7,6 +7,7 @@ class RewardsLogger:
         self._distributionInfo = {}
         self._unlockSchedules = {}
         self._userData = {}
+        self._epochData = {}
 
     def _check_user_vault(self,address,vault):
         if vault not in self._userData:
@@ -14,6 +15,21 @@ class RewardsLogger:
         if address not in self._userData[vault]:
             self._userData[vault][address] = {}
 
+
+    def add_epoch_data(self,users,vault,token,unit,epoch):
+        if vault not in self._epochData:
+            self._epochData[vault] = {}
+        if epoch not in self._epochData[vault]:
+            self._epochData[vault][epoch] = {}
+        for user in users:
+            totals = {}
+            totals[token] = unit * user.shareSeconds
+            self._epochData[vault][epoch][user.address] = {
+                "shareSeconds":user.shareSeconds,
+                "totals":totals
+            }
+
+    
 
     def add_user_share_seconds(self,address,vault,shareSeconds):
         self._check_user_vault(address,vault)
@@ -41,19 +57,23 @@ class RewardsLogger:
     def add_distribution_info(self,geyserName,distribution):
         self._distributionInfo[geyserName] = distribution
 
+
+
+
     def save(self,fileName):
 
         data = {
             "userData":self._userData,
             "distributionInfo":self._distributionInfo,
-            "unlockSchedules":self._unlockSchedules
+            "unlockSchedules":self._unlockSchedules,
+            "retroactiveData":self._epochData
         }
         console.log(self._userData)
         console.log(self._distributionInfo)
         console.log(self._unlockSchedules)
-        with open("rewards-{}.json".format(fileName),"w") as f:
+        with open("{}.json".format(fileName),"w") as f:
             json.dump(data,f,indent=4)
-        
+    
 
 
 rewardsLogger = RewardsLogger()

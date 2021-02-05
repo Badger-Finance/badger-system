@@ -420,7 +420,7 @@ def generate_rewards_in_range(badger, startBlock, endBlock, pastRewards):
 
     geyserRewards = calc_geyser_rewards(badger, startBlock, endBlock, nextCycle)
 
-    rewardsLogger.save(nextCycle)
+    rewardsLogger.save("rewards-{}".format(nextCycle))
     sushiRewards = calc_sushi_rewards(badger,startBlock,endBlock,nextCycle,retroactive=False)
     farmRewards = fetch_current_harvest_rewards(badger,startBlock, endBlock,nextCycle)
 

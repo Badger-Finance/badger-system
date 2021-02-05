@@ -23,7 +23,7 @@ def main():
     startBlock = 11537600
     endBlock = chain.height
     rewards = calc_sushi_rewards(badger,startBlock,endBlock,nextCycle,retroactive=True)
-    rewardsLogger.save("retroactive-xsushi.json")
+    rewardsLogger.save("retroactive-xsushi")
     currentRewards = fetch_current_rewards_tree(badger)
     cumulative_rewards = process_cumulative_rewards(currentRewards,rewards)
     merkleTree = rewards_to_merkle_tree(cumulative_rewards,startBlock,endBlock,{})

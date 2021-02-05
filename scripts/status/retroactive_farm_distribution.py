@@ -59,13 +59,15 @@ def main():
             rewardsLogger.add_user_share_seconds(user.address,"harvest.renCrv",user.shareSeconds)
             rewardsLogger.add_user_token(user.address,"harvest.renCrv",farmTokenAddress,farmUnit* user.shareSeconds)
 
+        rewardsLogger.add_epoch_data(user_state,"harvest.renCrv",farmTokenAddress,farmUnit,i)
+
         if i+1 < len(harvestEvents):
             startBlock = int(harvestEvent["blockNumber"])
             endBlock = int(harvestEvents[i+1]["blockNumber"])
 
     claimsHarvested = sum( [list(v.values())[0] for v in list(rewards.claims.values())])
     rewardsLogger.add_distribution_info("harvest.renCrv",{farmTokenAddress:claimsHarvested})
-    rewardsLogger.save("retroactive-farm.json")
+    rewardsLogger.save("retroactive-farm")
     
     currentRewards = fetch_current_rewards_tree(badger)
     cumulative_rewards = process_cumulative_rewards(currentRewards,rewards)
