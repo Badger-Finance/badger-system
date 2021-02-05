@@ -6,15 +6,24 @@ from helpers.registry import WhaleRegistryAction, whale_registry, registry
 from rich.console import Console
 from scripts.systems.sushiswap_system import SushiswapSystem
 from scripts.systems.uniswap_system import UniswapSystem
+from helpers.utils import val
 
 console = Console()
 
+def diff_token_balances(before, after):
+    table = []
+    for token, accounts in before.items():
+        for account, value in accounts.items():
+            table.append([token, account, val(after[token][account] - value)])
+
+    print(tabulate(table, headers=["asset", "balance"]))
 
 def get_token_balances(tokens, accounts):
-    balances = DotMap()
+    balances = {}
     for token in tokens:
+        balances[token.address] = {}
         for account in accounts:
-            balances.token.account = token.balanceOf(account)
+            balances[token.address][account] = token.balanceOf(account)
     return balances
 
 def print_balances(tokens_by_name, account):
@@ -44,7 +53,7 @@ def to_token(address):
         return interface.IERC20(address)
 
 def distribute_from_whales(recipient, percentage=0.8):
-    accounts[0].transfer(recipient, Wei("100 ether"))
+    accounts[0].transfer(recipient, Wei("50 ether"))
 
     console.print(
         "[green] 🐋 Transferring assets from whales for {} assets... 🐋 [/green]".format(
@@ -77,7 +86,7 @@ def distribute_from_whales(recipient, percentage=0.8):
 def distribute_from_whale(whale_config, recipient, percentage=0.2):
     if whale_config.action == WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT:
         forceEther = ForceEther.deploy({"from": recipient})
-        recipient.transfer(forceEther, Wei("1 ether"))
+        recipient.transfer(forceEther, Wei("2 ether"))
         forceEther.forceSend(whale_config.whale, {"from": recipient})
 
     token = interface.IERC20(whale_config.token)

@@ -22,7 +22,7 @@ from helpers.gnosis_safe import (
 )
 from helpers.registry import registry
 from helpers.time_utils import days, hours, to_days, to_timestamp, to_utc_date
-from helpers.utils import to_digg, to_digg_shares, val
+from helpers.utils import initial_fragments_to_current_fragments, to_digg_shares, val
 from rich import pretty
 from rich.console import Console
 from scripts.systems.badger_system import BadgerSystem, connect_badger
@@ -104,19 +104,16 @@ class RewardsDist:
             key == "native.badger"
             or key == "native.uniBadgerWbtc"
             or key == "native.sushiBadgerWbtc"
-            ) and asset == "badger":
+        ) and asset == "badger":
             return True
         # digg LP have half auto compounding DIGG
         elif (
-            key == "native.uniDiggWbtc"
-            or key == "native.sushiDiggWbtc"
+            key == "native.uniDiggWbtc" or key == "native.sushiDiggWbtc"
         ) and asset == "digg":
             return True
         else:
             return False
 
-
-            
 
 class RewardsSchedule:
     def __init__(self, badger: BadgerSystem):
@@ -160,15 +157,13 @@ class RewardsSchedule:
         tree = self.badger.badgerTree
 
         before = badger.token.balanceOf(tree)
-        top_up = Wei("200000 ether")
-        top_up_digg = to_digg(192.38 / 2)
+        top_up = Wei("149606.49 ether")
+        top_up_digg = initial_fragments_to_current_fragments(89.94)
 
         # Top up Tree
         # TODO: Make the amount based on what we'll require for the next week
         id = multi.addTx(
-            MultisigTxMetadata(
-                description="Top up badger tree with Badger"
-            ),
+            MultisigTxMetadata(description="Top up badger tree with Badger"),
             {
                 "to": rewardsEscrow.address,
                 "data": rewardsEscrow.transfer.encode_input(badger.token, tree, top_up),
@@ -183,12 +178,12 @@ class RewardsSchedule:
         before = badger.digg.token.balanceOf(tree)
 
         multi.execute(
-            MultisigTxMetadata(
-                description="Top up badger tree with DIGG"
-            ),
+            MultisigTxMetadata(description="Top up badger tree with DIGG"),
             {
                 "to": rewardsEscrow.address,
-                "data": rewardsEscrow.transfer.encode_input(badger.digg.token, tree, top_up_digg),
+                "data": rewardsEscrow.transfer.encode_input(
+                    badger.digg.token, tree, top_up_digg
+                ),
             },
         )
 
@@ -220,6 +215,7 @@ class RewardsSchedule:
             #         end=self.end,
             #         )
             
+
     def printState(self, title):
         console.print(
             "\n[yellow]=== 🦡 Rewards Schedule: {} 🦡 ===[/yellow]".format(title)
@@ -227,38 +223,43 @@ class RewardsSchedule:
         table = []
 
         rewardsEscrow = self.badger.rewardsEscrow
-        for key, amount in self.amounts.items():
+        for key, dist in self.distributions.items():
+            if key == "native.digg":
+                continue
+            print(key, dist)
             geyser = self.badger.getGeyser(key)
+            print(geyser)
             assert rewardsEscrow.isApproved(geyser)
+            for asset, value in dist.toGeyser.items():
+                
+                """
+                function signalTokenLock(
+                    address geyser,
+                    address token,
+                    uint256 amount,
+                    uint256 durationSec,
+                    uint256 startTime
+                )
+                """
 
-            """
-            function signalTokenLock(
-                address geyser,
-                address token,
-                uint256 amount,
-                uint256 durationSec,
-                uint256 startTime
-            )
-            """
+                encoded = rewardsEscrow.signalTokenLock.encode_input(
+                    geyser, asset_to_address(asset), value, self.duration, self.start
+                )
 
-            encoded = rewardsEscrow.signalTokenLock.encode_input(
-                geyser, self.badger.token, amount, self.duration, self.start
-            )
-
-            table.append(
-                [
-                    key,
-                    geyser,
-                    self.badger.token,
-                    val(amount),
-                    to_utc_date(self.start),
-                    to_utc_date(self.end),
-                    to_days(self.duration),
-                    val(self.tokensPerDay(amount)),
-                    # self.badger.rewardsEscrow,
-                    # encoded,
-                ]
-            )
+                table.append(
+                    [
+                        key,
+                        geyser,
+                        asset,
+                        value,
+                        val(value),
+                        to_utc_date(self.start),
+                        to_utc_date(self.end),
+                        to_days(self.duration),
+                        geyser.address,
+                        encoded
+                    ]
+                )
 
         print(
             tabulate(
@@ -268,12 +269,13 @@ class RewardsSchedule:
                     "geyser",
                     "token",
                     "total amount",
+                    "scaled amount",
                     "start time",
                     "end time",
                     "duration",
                     "rate per day",
-                    # "destination",
-                    # "encoded call",
+                    "destination",
+                    "encoded call",
                 ],
                 tablefmt="rst",
             )
@@ -295,57 +297,82 @@ def main():
     """
     Total $BADGER 603,750
 
-    Setts
-    renbtcCRV — 83,437.5 $BADGER
-    sbtcCRV — 83,437.5 $BADGER
-    tbtcCRV — 83,437.5 $BADGER
-    Badger — 70,000 $BADGER
-    (NEW) wBTC/ETH Sushiswap LP — 40,000 $BADGER
-    Badger <>wBTC Uniswap LP — 110,000 $BADGER
-    (NEW) Badger <>wBTC Sushiswap LP— 50,000 $BADGER
+    Sett              Badger            Digg
+    ----------------  ------------      -------------
+    Badger UNI      : 23338.61 (half)   6.42
+    Badger Sushi    : 23338.61 (half)   6.42
+    Badger Native   : 11669.31 (half)   3.21
+    Sushi wbtcEth   : 18251.99          5.02
+    Crv RenBTC      : 18251.99          5.02
+    Crv SBTC        : 18251.99          5.02
+    Crv TBTC        : 18251.99          5.02
+    Harvest RenBTC  : 18251.99          5.02
 
-    wbtc/eth = 34,285 $BADGER (which should be distributed evenly over 3 days ie today 1pm to tomorrow, tomorrow to wednesday, wed- thursday then new emissions)
-    Badger <>wBTC Sushiswap LP— 30,000 $BADGER (10k/day)
-
-    Super Sett
-    Harvest renbtc CRV —83,437.5 $BADGER
+    Digg UNI        : 0                 39.00 (half)
+    Digg Sushi      : 0                 39.00 (half)
+    Digg Native     : 0                 19.50 (half)
     """
 
     rest = RewardsSchedule(badger)
 
-    rest.setStart(to_timestamp(datetime.datetime(2021, 1, 28, 12, 00)))
+    rest.setStart(to_timestamp(datetime.datetime(2021, 2, 4, 12, 00)))
     rest.setDuration(days(7))
+
+    # TODO: Set to read from config emissions. Emit auto-compounding events & on-chain readable data in Unified Rewards Logger.
 
     rest.setAmounts(
         {
             "native.uniBadgerWbtc": {
-                "badger": Wei("25897 ether"),
-                "digg": to_digg_shares(17.86),
+                "badger": Wei("23338.61 ether"),
+                "digg": to_digg_shares(6.42),
             },
             "native.sushiBadgerWbtc": {
-                "badger": Wei("25897 ether"),
-                "digg": to_digg_shares(17.86),
+                "badger": Wei("23338.61 ether"),
+                "digg": to_digg_shares(6.42),
             },
-            "native.badger": {"badger": Wei("12949 ether"), "digg": to_digg_shares(8.93)},
+            "native.badger": {
+                "badger": Wei("11669.31 ether"),
+                "digg": to_digg_shares(3.21),
+            },
             "native.sushiWbtcEth": {
-                "badger": Wei("20253 ether"),
-                "digg": to_digg_shares(13.97),
+                "badger": Wei("18251.99 ether"),
+                "digg": to_digg_shares(5.02),
             },
-            "native.renCrv": {"badger": Wei("20253 ether"), "digg": to_digg_shares(13.97)},
-            "native.sbtcCrv": {"badger": Wei("20253 ether"), "digg": to_digg_shares(13.97)},
-            "native.tbtcCrv": {"badger": Wei("20253 ether"), "digg": to_digg_shares(13.97)},
-            "harvest.renCrv": {"badger": Wei("20253 ether"), "digg": to_digg_shares(13.97)},
-            "native.uniDiggWbtc": {"badger": Wei("0 ether"), "digg": to_digg_shares(31.16)},
-            "native.sushiDiggWbtc": {"badger": Wei("0 ether"), "digg": to_digg_shares(31.16)},
-            "native.digg": {"badger": Wei("0 ether"), "digg": to_digg_shares(15.58)},
+            "native.renCrv": {
+                "badger": Wei("18251.99 ether"),
+                "digg": to_digg_shares(5.02),
+            },
+            "native.sbtcCrv": {
+                "badger": Wei("18251.99 ether"),
+                "digg": to_digg_shares(5.02),
+            },
+            "native.tbtcCrv": {
+                "badger": Wei("18251.99 ether"),
+                "digg": to_digg_shares(5.02),
+            },
+            "harvest.renCrv": {
+                "badger": Wei("18251.99 ether"),
+                "digg": to_digg_shares(5.02),
+            },
+            "native.uniDiggWbtc": {
+                "badger": Wei("0 ether"),
+                "digg": to_digg_shares(39.00),
+            },
+            "native.sushiDiggWbtc": {
+                "badger": Wei("0 ether"),
+                "digg": to_digg_shares(39.00),
+            },
+            "native.digg": {"badger": Wei("0 ether"), "digg": to_digg_shares(19.50)},
         }
     )
 
-    rest.setExpectedTotals({"badger": Wei("166008 ether"), "digg": to_digg_shares(192.38)})
-
-    rest.testTransactions()
+    rest.setExpectedTotals(
+        {"badger": Wei("149606.49 ether"), "digg": to_digg_shares(138.69)}
+    )
 
     rest.printState("Week ?? - who knows anymore")
+
+    rest.testTransactions()
 
     # print("overall total ", total)
     # print("expected total ", expected)

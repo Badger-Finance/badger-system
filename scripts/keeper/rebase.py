@@ -28,8 +28,9 @@ console = Console()
 gas_strategies.set_default(gas_strategies.rapid)
 
 def main():
+    console.print("[white]===== Checking Parameters for rebase =====[/white]")
     # Connect badger system from file
-    badger = connect_badger("deploy-final.json")
+    badger = connect_badger("deploy-final.json", load_deployer=True)
     digg = connect_digg("deploy-final.json")
 
     supplyBefore = digg.token.totalSupply()
@@ -52,24 +53,32 @@ def main():
     in_rebase_window = digg.uFragmentsPolicy.inRebaseWindow()
     now = chain.time()
 
+    time_since_last_rebase = now - last_rebase_time
+
     console.print({
         "last_rebase_time": last_rebase_time,
         "in_rebase_window": in_rebase_window,
         "now": now,
+        "time_since_last_rebase": time_since_last_rebase,
     })
 
-    tx = digg.orchestrator.rebase({'from': badger.deployer})
-    chain.mine()
-    print(tx.call_trace())
-    print(tx.events)
+    # Rebase if sufficient time has passed since last rebase and we are in the window. 
+    # Give adequate time between TX attempts
+    if (time_since_last_rebase > hours(2) and in_rebase_window):
+        console.print("[bold yellow]===== 📈 Rebase! 📉=====[/bold yellow]")
+        tx = digg.orchestrator.rebase({'from': badger.deployer})
+        chain.mine()
+        print(tx.call_trace())
+        print(tx.events)
 
-    supplyAfter = digg.token.totalSupply()
+        supplyAfter = digg.token.totalSupply()
 
-    print("spfAfter", digg.token._sharesPerFragment())
-    print("supplyAfter", supplyAfter)
-    print("supplyChange", supplyAfter / supplyBefore)
-    print("supplyChangeOtherWay", supplyBefore / supplyAfter )
+        print("spfAfter", digg.token._sharesPerFragment())
+        print("supplyAfter", supplyAfter)
+        print("supplyChange", supplyAfter / supplyBefore)
+        print("supplyChangeOtherWay", supplyBefore / supplyAfter )
 
-    print("pair after", pair.getReserves())
-    print("uniPair after", uniPair.getReserves())
-
+        print("pair after", pair.getReserves())
+        print("uniPair after", uniPair.getReserves())
+    else:
+        console.print("[white]===== No Rebase =====[/white]")

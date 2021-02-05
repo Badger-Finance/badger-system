@@ -3,7 +3,7 @@ from helpers.sett.SnapshotManager import SnapshotManager
 from brownie import *
 from brownie.network.gas.strategies import GasNowStrategy
 from rich.console import Console
-from scripts.systems.badger_system import BadgerSystem, connect_badger
+from scripts.systems.badger_system import BadgerSystem, LoadMethod, connect_badger
 from tabulate import tabulate
 from helpers.registry import registry
 from assistant.rewards.rewards_checker import val
@@ -29,16 +29,23 @@ def harvest_all(badger: BadgerSystem, skip):
         keeper = accounts.at(badger.keeper)
 
         before = snap.snap()
-        snap.settHarvestViaManager(
-            strategy,
-            {
-                "from": keeper,
-                "gas_price": gas_strategy,
-                "gas_limit": 2000000,
-                "allow_revert": True,
-            },
-            confirm=False,
-        )
+        if strategy.keeper() == badger.badgerRewardsManager:
+            snap.settHarvestViaManager(
+                strategy,
+                {
+                    "from": keeper,
+                    "gas_price": gas_strategy,
+                },
+                confirm=False,
+            )
+        else:
+            snap.settHarvest(
+                {
+                    "from": keeper,
+                    "gas_price": gas_strategy,
+                },
+                confirm=False,
+            )
 
         tx_wait()
 
@@ -59,7 +66,7 @@ def main():
     # TODO: Use test mode if RPC active, no otherwise
 
     fileName = "deploy-" + "final" + ".json"
-    badger = connect_badger(fileName, load_keeper=True)
+    badger = connect_badger(fileName, load_keeper=True, load_method=LoadMethod.SK)
 
     if rpc.is_active():
         """
@@ -71,14 +78,14 @@ def main():
 
     skip = [
         "native.uniBadgerWbtc",
-        "harvest.renCrv",
-        "native.sbtcCrv",
-        "native.sBtcCrv",
-        "native.tbtcCrv",
-        "native.renCrv",
+        # "harvest.renCrv",
+        # "native.sbtcCrv",
+        # "native.sBtcCrv",
+        # "native.tbtcCrv",
+        # "native.renCrv",
         "native.badger",
         "native.sushiBadgerWbtc",
-        "native.sushiWbtcEth",
+        # "native.sushiWbtcEth",
         "native.digg",
         "native.uniDiggWbtc",
         "native.sushiDiggWbtc",

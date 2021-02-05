@@ -8,6 +8,7 @@ from scripts.systems.gnosis_safe_system import connect_gnosis_safe
 from scripts.systems.uniswap_system import UniswapSystem
 from helpers.proxy_utils import deploy_proxy, deploy_proxy_uninitialized
 from helpers.registry import GnosisSafe, registry
+from config.env_config import env_config
 from config.badger_config import (
     badger_config,
     digg_config,
@@ -76,7 +77,8 @@ def connect_digg(badger_deploy_file):
         ("orchestrator", Orchestrator, digg_deploy["orchestrator"], False),
     ]
     for args in connectable:
-        print(args)
+        if env_config.debug:
+            print(args)
         digg.connect(*args)
 
     # token is a ref to uFragments
@@ -124,9 +126,9 @@ class DiggSystem:
             self.deployer = self.owner
         else:
             self.deployer = deployer
-        print("deployer / owner", deployer, owner, self.deployer, self.owner)
+        if env_config.debug:
+            print("deployer / owner", deployer, owner, self.deployer, self.owner)
 
-        self.owner = accounts.at("0xDA25ee226E534d868f0Dd8a459536b03fEE9079b", force=True)
         self.deployer=self.owner
 
         self.connect_proxy_admins(devProxyAdmin, daoProxyAdmin)
@@ -174,7 +176,8 @@ class DiggSystem:
         multisigParams = badger_config["devMultisigParams"]
         multisigParams.owners = [deployer.address]
 
-        print("Deploy Dev Multisig")
+        if env_config.debug:
+            print("Deploy Dev Multisig")
         self.devMultisig = connect_gnosis_safe(badger_config.multisig.address)
 
     def connect_uniswap_system(self):
@@ -196,7 +199,8 @@ class DiggSystem:
 
     def connect_logic(self, logic):
         for name, address in logic.items():
-            print(name, address)
+            if env_config.debug:
+                print("ConnectLogic:", name, address)
             Artifact = strategy_name_to_artifact(name)
             self.logic[name] = Artifact.at(address)
 

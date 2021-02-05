@@ -52,12 +52,17 @@ def main():
     badger = connect_badger(fileName, load_keeper=True)
 
     skip = [
-        # "native.uniBadgerWbtc"
-        # "harvest.renCrv",
-        # "native.sbtcCrv",
-        # "native.sBtcCrv",
-        # "native.tbtcCrv",
-        # "native.renCrv",
-        # "native.badger",
+        "native.uniBadgerWbtc",
+        "harvest.renCrv",
+        "native.sbtcCrv",
+        "native.sBtcCrv",
+        "native.tbtcCrv",
+        "native.renCrv",
+        "native.badger",
+        "native.sushiBadgerWbtc",
+        "native.sushiWbtcEth",
+        "native.digg",
+        "native.uniDiggWbtc",
+        "native.sushiDiggWbtc",
     ]
     tend_all(badger, skip)
