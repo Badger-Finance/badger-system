@@ -13,7 +13,7 @@ from scripts.systems.badger_system import BadgerSystem, connect_badger
 from tabulate import tabulate
 from helpers.registry import registry
 from assistant.rewards.rewards_checker import val
-from config.active_emissions import active_emissions, get_daily_amount, get_half_daily_amount
+from config.active_emissions import get_active_rewards_schedule
 
 gas_strategy = GasNowStrategy("fast")
 
@@ -41,7 +41,7 @@ def lp_for_strategy(badger: BadgerSystem, key):
     after = snap_strategy_balance(badger, key, manager)
     diff = diff_numbers_by_key(before, after)
 
-    console.print("[green]==Swap for {}==[/green]".format(key))
+    console.print("[cyan]==LP for {}==[/cyan]".format(key))
     to_tabulate("Diff {}".format(key), diff)
 
 
@@ -78,6 +78,10 @@ def swap_for_strategy(badger: BadgerSystem, key, amount):
 def swap_for_strategy_internal(badger, key, amount):
     digg = badger.digg
     manager = badger.badgerRewardsManager
+    console.log({
+            'swap': key,
+            'amount': amount
+        })
     if key == "native.uniBadgerWbtc":
         # ===== native.uniBadgerWbtc =====
         manager.swapExactTokensForTokensUniswap(
@@ -141,7 +145,7 @@ def main():
     """
 
     badger = connect_badger("deploy-final.json", load_keeper=True)
-    digg = badger.digg
+    rewards = get_active_rewards_schedule(badger)
 
     if rpc.is_active():
         """
@@ -157,22 +161,22 @@ def main():
 
     # # ===== native.uniBadgerWbtc =====
     key = "native.uniBadgerWbtc"
-    swap_for_strategy(badger, key, get_half_daily_amount(key, "badger"))
+    swap_for_strategy(badger, key, rewards.getDistributions(key).getToStakingRewardsDaily("badger") // 2)
     lp_for_strategy(badger, key)
 
     # ===== native.sushiBadgerWbtc =====
     key = "native.sushiBadgerWbtc"
-    swap_for_strategy(badger, key, get_half_daily_amount(key, "badger"))
+    swap_for_strategy(badger, key, rewards.getDistributions(key).getToStakingRewardsDaily("badger") // 2)
     lp_for_strategy(badger, key)
 
     # # ===== native.uniDiggWbtc =====
     key = "native.uniDiggWbtc"
-    swap_for_strategy(badger, key, get_half_daily_amount(key, "digg"))
+    swap_for_strategy(badger, key, shares_to_fragments(rewards.getDistributions(key).getToStakingRewardsDaily("digg") // 2))
     lp_for_strategy(badger, key)
 
     # # ===== native.sushiDiggWbtc =====
     key = "native.sushiDiggWbtc"
-    swap_for_strategy(badger, key, get_half_daily_amount(key, "digg"))
+    swap_for_strategy(badger, key, shares_to_fragments(rewards.getDistributions(key).getToStakingRewardsDaily("digg") // 2))
     lp_for_strategy(badger, key)
 
     rapid_harvest()

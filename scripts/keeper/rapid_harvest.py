@@ -13,15 +13,20 @@ from tabulate import tabulate
 from helpers.registry import registry
 from assistant.rewards.rewards_checker import val
 from helpers.console_utils import console
-from config.active_emissions import active_emissions, get_daily_amount, get_half_daily_amount
+from config.active_emissions import (
+    get_active_rewards_schedule,
+)
 
 gas_strategy = GasNowStrategy("fast")
 
 uniswap = UniswapSystem()
 sushiswap = SushiswapSystem()
 
+
 def transfer_for_strategy(badger: BadgerSystem, key, amount, decimals=18):
-    console.print("Transferring Amount for Strategy {}".format(key), val(amount, decimals))
+    console.print(
+        "Transferring Amount for Strategy {}".format(key), val(amount, decimals)
+    )
     manager = badger.badgerRewardsManager
     strategy = badger.getStrategy(key)
 
@@ -35,12 +40,14 @@ def transfer_for_strategy(badger: BadgerSystem, key, amount, decimals=18):
     console.print("[green]==Transfer for {}==[/green]".format(key))
     to_tabulate("Diff {}".format(key), diff)
 
+
 def transfer_for_strategy_internal(badger, key, amount):
     digg = badger.digg
     strategy = badger.getStrategy(key)
     manager = badger.badgerRewardsManager
     want = interface.IERC20(strategy.want())
     manager.transferWant(want, strategy, amount, {"from": badger.keeper})
+
 
 def rapid_harvest():
     """
@@ -53,6 +60,7 @@ def rapid_harvest():
 
     fileName = "deploy-" + "final" + ".json"
     badger = connect_badger(fileName, load_keeper=True)
+    rewards = get_active_rewards_schedule(badger)
     digg = badger.digg
     manager = badger.badgerRewardsManager
 
@@ -89,11 +97,19 @@ def rapid_harvest():
     # ===== native.badger =====
     key = "native.badger"
     # TODO: Specify actual amounts here
-    transfer_for_strategy(badger, key, get_daily_amount(key, "badger"))
+    transfer_for_strategy(
+        badger, key, rewards.getDistributions(key).getToStakingRewardsDaily("badger")
+    )
 
     # ===== native.digg =====
     key = "native.digg"
-    transfer_for_strategy(badger, key, get_daily_amount(key, "digg"), decimals=9)
+    transfer_for_strategy(
+        badger,
+        key,
+        shares_to_fragments(rewards.getDistributions(key).getToStakingRewardsDaily("digg")),
+        decimals=9,
+    )
+
 
 def main():
     rapid_harvest()
