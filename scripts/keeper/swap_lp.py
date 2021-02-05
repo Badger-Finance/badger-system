@@ -162,7 +162,7 @@ def main():
 
     # ===== native.sushiBadgerWbtc =====
     key = "native.sushiBadgerWbtc"
-    swap_for_strategy(badger, key, get_daily_amount(key, "badger"))
+    swap_for_strategy(badger, key, get_half_daily_amount(key, "badger"))
     lp_for_strategy(badger, key)
 
     # # ===== native.uniDiggWbtc =====
