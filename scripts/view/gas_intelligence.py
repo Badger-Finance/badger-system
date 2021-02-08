@@ -39,16 +39,15 @@ BINS = 60 # number of bins for histogram
 AUTH = json.load(open(os.path.dirname(__file__) + "/../../credentials.json"))
 
 # convert wei to gwei
-def to_gwei(x) -> float:
+def to_gwei(x: float) -> float:
   return x / 10**9
 
 # Initialize the ElasticSearch Client
-def initialize_elastic(network):
-    es = Elasticsearch(hosts=[network], http_auth=(AUTH['email'], AUTH['key']), timeout=180)
-    return es
+def initialize_elastic(network: str) -> any:
+    return Elasticsearch(hosts=[network], http_auth=(AUTH['email'], AUTH['key']), timeout=180)
 
 # fetch average hourly gas prices over the last specified days
-def fetch_gas_hour(network, days=7) -> list[float]:
+def fetch_gas_hour(network: str, days=7) -> list[float]:
     es = initialize_elastic(network)
     data = es.search(index='tx', doc_type='tx', body = {
         "_source":["timestamp","gasPrice.num"],
@@ -84,7 +83,7 @@ def fetch_gas_hour(network, days=7) -> list[float]:
     return [ x['avgGasHour']['value'] for x in data['aggregations']['hour_bucket']['buckets'] if x['avgGasHour']['value']]
 
 # fetch average hourly gas prices over the last specified days
-def fetch_gas_min(network, days=1) -> list[float]:
+def fetch_gas_min(network: str, days=1) -> list[float]:
     es = initialize_elastic(network)
     data = es.search(index='tx', doc_type='tx', body = {
         "_source":["timestamp","gasPrice.num"],
@@ -118,7 +117,7 @@ def fetch_gas_min(network, days=1) -> list[float]:
     })
     return [ x['avgGasMin']['value'] for x in data['aggregations']['minute_bucket']['buckets'] if x['avgGasMin']['value']]
 
-def is_outlier(points, thresh=3.5) -> list[bool]:
+def is_outlier(points: list[float], thresh=3.5) -> list[bool]:
     """
     Returns a boolean array with True if points are outliers and False 
     otherwise.
