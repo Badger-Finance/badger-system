@@ -6,7 +6,7 @@ import "deps/@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "deps/@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import "deps/@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "deps/@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
-import "deps//@openzeppelin/contracts/access/Ownable.sol";
+import "deps/@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 
 interface IGateway {
     function mint(
@@ -56,7 +56,7 @@ interface ICurveExchange {
     ) external;
 }
 
-contract BadgerRenAdapter is OwnableUpgradeable {
+contract BadgerRenAdapter is OwnableUpgradeable, ReentrancyGuardUpgradeable {
     using SafeMathUpgradeable for uint256;
     using SafeERC20 for IERC20;
 
@@ -117,7 +117,7 @@ contract BadgerRenAdapter is OwnableUpgradeable {
         uint256 _amount,
         bytes32 _nHash,
         bytes calldata _sig
-    ) external {
+    ) external nonReentrant {
         // Ensure sender matches sender of original tx.
         uint256 start = encoded.length - 32;
         address sender = abi.decode(encoded[start:], (address));
@@ -139,7 +139,7 @@ contract BadgerRenAdapter is OwnableUpgradeable {
         uint256 _amount,
         bytes32 _nHash,
         bytes calldata _sig
-    ) external {
+    ) external nonReentrant {
         // Mint renBTC tokens
         bytes32 pHash = keccak256(abi.encode(_destination));
         uint256 _mintAmount = registry.getGatewayBySymbol("BTC").mint(pHash, _amount, _nHash, _sig);
@@ -150,7 +150,7 @@ contract BadgerRenAdapter is OwnableUpgradeable {
         renBTC.safeTransfer(_destination, _mintAmount.sub(_fee));
     }
 
-    function burnRenBTC(bytes calldata _btcDestination, uint256 _amount) external {
+    function burnRenBTC(bytes calldata _btcDestination, uint256 _amount) external nonReentrant {
         require(renBTC.balanceOf(address(msg.sender)) >= _amount);
         uint256 _startBalance = renBTC.balanceOf(address(this));
         renBTC.safeTransferFrom(msg.sender, address(this), _amount);
@@ -170,7 +170,7 @@ contract BadgerRenAdapter is OwnableUpgradeable {
         uint256 _amount,
         bytes32 _nHash,
         bytes calldata _sig
-    ) external {
+    ) external nonReentrant {
         // Mint renBTC tokens
         bytes32 pHash = keccak256(abi.encode(_slippage, _destination));
         uint256 _mintAmount = registry.getGatewayBySymbol("BTC").mint(pHash, _amount, _nHash, _sig);
@@ -202,7 +202,7 @@ contract BadgerRenAdapter is OwnableUpgradeable {
         bytes calldata _btcDestination,
         uint256 _amount,
         uint256 _minAmount
-    ) external {
+    ) external nonReentrant {
         wBTC.safeTransferFrom(msg.sender, address(this), _amount);
         uint256 _startBalance = renBTC.balanceOf(address(this));
         exchange.exchange(1, 0, _amount, _minAmount);
