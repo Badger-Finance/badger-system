@@ -27,14 +27,15 @@ AUTH = {
 
 def test_main():
   results = main()
-  print('approximate most common gas price', to_gwei(results[0]))
-  print('standard deviation', to_gwei(results[1]))
-  print('average gas price', to_gwei(results[2]))
+  print('timeframe:', HISTORICAL_TIMEFRAME)
+  print('approximate most common gas price:', to_gwei(results[0]))
+  print('standard deviation:', to_gwei(results[1]))
+  print('average gas price:', to_gwei(results[2]))
   return results
 
 # convert wei to gwei
 def to_gwei(x):
-  return x // 10**9
+  return x / 10**9
 
 # Initialize the ElasticSearch Client
 def initialize_elastic(network):
@@ -154,8 +155,8 @@ def main():
   elif HISTORICAL_TIMEFRAME == 'hours':
     gas_data = fetch_gas_hour(HISTORICAL_URL)
 
-  # sort and convert to numpy array
-  gas_data = np.array(sorted(fetch_gas_hour(HISTORICAL_URL)))
+  # convert to numpy array
+  gas_data = np.array(gas_data)
 
   # remove outliers
   filtered_gas_data = gas_data[~is_outlier(gas_data)]
@@ -175,7 +176,7 @@ def main():
   midpoint = high_end - ((high_end - low_end) / 2)
 
   # standard deviation
-  standard_dev = np.std(filtered_gas_data)
+  standard_dev = np.std(filtered_gas_data, dtype=np.float64)
 
   # average
   median = np.median(filtered_gas_data, axis=0)
