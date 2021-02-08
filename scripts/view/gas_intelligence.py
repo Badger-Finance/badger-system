@@ -1,18 +1,34 @@
 from brownie import *
 from elasticsearch import Elasticsearch
-from matplotlib import pyplot as plt
 import numpy as np
+import json
+import os
 
 '''
-Find the ideal gas price based on historical gas prices.
+Find the cheapest gas price that could be expected to get mined in a reasonable amount of time.
 Historical query returns average gas price for each of the specified 
 time units (minutes or hours). 
 
+For API access:
+----------------
+1. Create a copy of 'credentials.example.json' in the project root 
+2. Rename it 'credentials.json'
+3. Create an account with https://www.anyblockanalytics.com/
+4. Fill in the values in 'credentials.json'
+
+Entry Point: 
+----------------
+analyzeGas()
+
 Returns:
 ----------------
-- Midpoint of largest bin from gas price histogram
+- Midpoint of largest bin from gas price histogram (this is the expected best gas price)
 - Standard deviation
 - Average gas price
+
+Test:
+----------------
+test()
 '''
 
 HISTORICAL_URL = 'https://api.anyblock.tools/ethereum/ethereum/mainnet/es/'
@@ -20,21 +36,10 @@ HISTORICAL_TIMEFRAME = 'minutes' # 'minutes' or 'hours'
 BINS = 60 # number of bins for histogram
 
 # Api access credentials from https://www.anyblockanalytics.com/
-AUTH = {
-  'email': '...',
-  'key': '...'
-}
-
-def test_main():
-  results = main()
-  print('timeframe:', HISTORICAL_TIMEFRAME)
-  print('approximate most common gas price:', to_gwei(results[0]))
-  print('standard deviation:', to_gwei(results[1]))
-  print('average gas price:', to_gwei(results[2]))
-  return results
+AUTH = json.load(open(os.path.dirname(__file__) + "/../../credentials.json"))
 
 # convert wei to gwei
-def to_gwei(x):
+def to_gwei(x) -> float:
   return x / 10**9
 
 # Initialize the ElasticSearch Client
@@ -43,7 +48,7 @@ def initialize_elastic(network):
     return es
 
 # fetch average hourly gas prices over the last specified days
-def fetch_gas_hour(network, days=7):
+def fetch_gas_hour(network, days=7) -> list[float]:
     es = initialize_elastic(network)
     data = es.search(index='tx', doc_type='tx', body = {
         "_source":["timestamp","gasPrice.num"],
@@ -79,7 +84,7 @@ def fetch_gas_hour(network, days=7):
     return [ x['avgGasHour']['value'] for x in data['aggregations']['hour_bucket']['buckets'] if x['avgGasHour']['value']]
 
 # fetch average hourly gas prices over the last specified days
-def fetch_gas_min(network, days=1):
+def fetch_gas_min(network, days=1) -> list[float]:
     es = initialize_elastic(network)
     data = es.search(index='tx', doc_type='tx', body = {
         "_source":["timestamp","gasPrice.num"],
@@ -113,14 +118,14 @@ def fetch_gas_min(network, days=1):
     })
     return [ x['avgGasMin']['value'] for x in data['aggregations']['minute_bucket']['buckets'] if x['avgGasMin']['value']]
 
-def is_outlier(points, thresh=3.5):
+def is_outlier(points, thresh=3.5) -> list[bool]:
     """
     Returns a boolean array with True if points are outliers and False 
     otherwise.
 
     Parameters:
     -----------
-        points : An numobservations by numdimensions array of observations
+        points : A numobservations by numdimensions array of observations
         thresh : The modified z-score to use as a threshold. Observations with
             a modified z-score (based on the median absolute deviation) greater
             than this value will be classified as outliers.
@@ -146,7 +151,8 @@ def is_outlier(points, thresh=3.5):
     
     return modified_z_score > thresh
 
-def main():
+# main entry point
+def analyzeGas() -> tuple[float, float, float]:
   gas_data = []
 
   # fetch data
@@ -154,15 +160,13 @@ def main():
     gas_data = fetch_gas_min(HISTORICAL_URL)
   elif HISTORICAL_TIMEFRAME == 'hours':
     gas_data = fetch_gas_hour(HISTORICAL_URL)
-
-  # convert to numpy array
   gas_data = np.array(gas_data)
 
   # remove outliers
   filtered_gas_data = gas_data[~is_outlier(gas_data)]
 
   # Create histogram 
-  counts, bins, patches = plt.hist(filtered_gas_data, bins = BINS) 
+  counts, bins = np.histogram(filtered_gas_data, bins = BINS)
 
   # Find most common gas price
   biggest_bin = 0
@@ -171,9 +175,7 @@ def main():
     if x > biggest_bin:
       biggest_bin = x
       biggest_index = i
-  low_end = bins[biggest_index]
-  high_end = bins[biggest_index + 1]
-  midpoint = high_end - ((high_end - low_end) / 2)
+  midpoint = (bins[biggest_index] + bins[biggest_index + 1]) / 2
 
   # standard deviation
   standard_dev = np.std(filtered_gas_data, dtype=np.float64)
@@ -182,3 +184,12 @@ def main():
   median = np.median(filtered_gas_data, axis=0)
 
   return (midpoint, standard_dev, median)
+
+# run this to test analyzeGas and print values
+def test() -> tuple[float, float, float]:
+  results = analyzeGas()
+  print('timeframe:', HISTORICAL_TIMEFRAME)
+  print('approximate most common gas price:', to_gwei(results[0]))
+  print('standard deviation:', to_gwei(results[1]))
+  print('average gas price:', to_gwei(results[2]))
+  return results

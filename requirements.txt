@@ -9,3 +9,5 @@ boto3==1.16.28
 python-dotenv==0.15.0
 multicall==0.1.1
 python-decouple==3.3
+elasticsearch==7.10.1
+numpy==1.20.1
