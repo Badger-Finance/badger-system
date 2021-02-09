@@ -18,7 +18,7 @@ For API access:
 
 Entry Point: 
 ----------------
-analyzeGas()
+analyze_gas()
 
 Returns:
 ----------------
@@ -40,11 +40,13 @@ AUTH = json.load(open(os.path.dirname(__file__) + "/../../credentials.json"))
 
 # convert wei to gwei
 def to_gwei(x: float) -> float:
-  return x / 10**9
+    return x / 10**9
+
 
 # Initialize the ElasticSearch Client
 def initialize_elastic(network: str) -> any:
     return Elasticsearch(hosts=[network], http_auth=(AUTH['email'], AUTH['key']), timeout=180)
+
 
 # fetch average hourly gas prices over the last specified days
 def fetch_gas_hour(network: str, days=7) -> list[float]:
@@ -82,6 +84,7 @@ def fetch_gas_hour(network: str, days=7) -> list[float]:
     })
     return [ x['avgGasHour']['value'] for x in data['aggregations']['hour_bucket']['buckets'] if x['avgGasHour']['value']]
 
+
 # fetch average hourly gas prices over the last specified days
 def fetch_gas_min(network: str, days=1) -> list[float]:
     es = initialize_elastic(network)
@@ -117,6 +120,7 @@ def fetch_gas_min(network: str, days=1) -> list[float]:
     })
     return [ x['avgGasMin']['value'] for x in data['aggregations']['minute_bucket']['buckets'] if x['avgGasMin']['value']]
 
+
 def is_outlier(points: list[float], thresh=3.5) -> list[bool]:
     """
     Returns a boolean array with True if points are outliers and False 
@@ -150,45 +154,47 @@ def is_outlier(points: list[float], thresh=3.5) -> list[bool]:
     
     return modified_z_score > thresh
 
+
 # main entry point
-def analyzeGas() -> tuple[float, float, float]:
-  gas_data = []
+def analyze_gas() -> tuple[float, float, float]:
+    gas_data = []
 
-  # fetch data
-  if HISTORICAL_TIMEFRAME == 'minutes':
-    gas_data = fetch_gas_min(HISTORICAL_URL)
-  elif HISTORICAL_TIMEFRAME == 'hours':
-    gas_data = fetch_gas_hour(HISTORICAL_URL)
-  gas_data = np.array(gas_data)
+    # fetch data
+    if HISTORICAL_TIMEFRAME == 'minutes':
+        gas_data = fetch_gas_min(HISTORICAL_URL)
+    elif HISTORICAL_TIMEFRAME == 'hours':
+        gas_data = fetch_gas_hour(HISTORICAL_URL)
+    gas_data = np.array(gas_data)
 
-  # remove outliers
-  filtered_gas_data = gas_data[~is_outlier(gas_data)]
+    # remove outliers
+    filtered_gas_data = gas_data[~is_outlier(gas_data)]
 
-  # Create histogram 
-  counts, bins = np.histogram(filtered_gas_data, bins = BINS)
+    # Create histogram 
+    counts, bins = np.histogram(filtered_gas_data, bins = BINS)
 
-  # Find most common gas price
-  biggest_bin = 0
-  biggest_index = 0
-  for i, x in enumerate(counts):
-    if x > biggest_bin:
-      biggest_bin = x
-      biggest_index = i
-  midpoint = (bins[biggest_index] + bins[biggest_index + 1]) / 2
+    # Find most common gas price
+    biggest_bin = 0
+    biggest_index = 0
+    for i, x in enumerate(counts):
+        if x > biggest_bin:
+            biggest_bin = x
+            biggest_index = i
+    midpoint = (bins[biggest_index] + bins[biggest_index + 1]) / 2
 
-  # standard deviation
-  standard_dev = np.std(filtered_gas_data, dtype=np.float64)
+    # standard deviation
+    standard_dev = np.std(filtered_gas_data, dtype=np.float64)
 
-  # average
-  median = np.median(filtered_gas_data, axis=0)
+    # average
+    median = np.median(filtered_gas_data, axis=0)
 
-  return (midpoint, standard_dev, median)
+    return (midpoint, standard_dev, median)
 
-# run this to test analyzeGas and print values
+
+# run this to test analyze_gas and print values
 def test() -> tuple[float, float, float]:
-  results = analyzeGas()
-  print('timeframe:', HISTORICAL_TIMEFRAME)
-  print('approximate most common gas price:', to_gwei(results[0]))
-  print('standard deviation:', to_gwei(results[1]))
-  print('average gas price:', to_gwei(results[2]))
-  return results
+    results = analyze_gas()
+    print('timeframe:', HISTORICAL_TIMEFRAME)
+    print('approximate most common gas price:', to_gwei(results[0]))
+    print('standard deviation:', to_gwei(results[1]))
+    print('average gas price:', to_gwei(results[2]))
+    return results
