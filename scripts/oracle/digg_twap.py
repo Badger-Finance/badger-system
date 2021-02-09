@@ -22,17 +22,13 @@ from tabulate import tabulate
 from helpers.gnosis_safe import convert_to_test_mode, exec_direct, get_first_owner
 from helpers.constants import MaxUint256
 from scripts.systems.sushiswap_system import SushiswapSystem
-
 console = Console()
-
 
 def test_main():
     main()
 
-
-def Average(lst):
-    return sum(lst) / len(lst)
-
+def Average(lst): 
+    return sum(lst) / len(lst) 
 
 def get_average_daily_price(file):
     with open(file + ".json") as f:
@@ -45,15 +41,18 @@ def get_average_daily_price(file):
         diggBal = float(entry["reserve1"])
         wbtcPerDigg = wbtcBal / diggBal
         locals()
-        console.print(
-            {"wbtcBal": wbtcBal, "diggBal": diggBal, "wbtcPerDigg": wbtcPerDigg,}
-        )
+        console.print({
+            "wbtcBal": wbtcBal,
+            "diggBal": diggBal,
+            "wbtcPerDigg": wbtcPerDigg,
+        })
         price_points.append(wbtcPerDigg)
-
+    
     average_price = Average(price_points)
-    console.print("Average for {} is {}".format(file, average_price))
+    console.print("Average for {} is {}".format(file, average_price)) 
     return average_price
 
+    
 
 def main():
     """
@@ -61,19 +60,6 @@ def main():
     """
 
     # Connect badger system from file
-
-    uniTWAP = get_average_daily_price("scripts/oracle/data/uni_digg_hour")
-    sushiTWAP = get_average_daily_price("scripts/oracle/data/sushi_digg_hour")
-    averageTWAP = Average([uniTWAP, sushiTWAP])
-
-    console.print(
-        {"uniTWAP": uniTWAP, "sushiTWAP": sushiTWAP, "averageTWAP": averageTWAP}
-    )
-
-    marketValue = Wei(str(averageTWAP) + " ether")
-    print(marketValue)
-
-
     badger = connect_badger("deploy-final.json")
     digg = connect_digg("deploy-final.json")
 
@@ -90,6 +76,17 @@ def main():
 
     digg_per_btc = digg_usd_coingecko / btc_usd_coingecko
 
+    uniTWAP = get_average_daily_price("scripts/oracle/data/uni_digg_hour")
+    sushiTWAP = get_average_daily_price("scripts/oracle/data/sushi_digg_hour")
+    averageTWAP = Average([uniTWAP, sushiTWAP])
+
+    console.print({
+        "uniTWAP": uniTWAP,
+        "sushiTWAP": sushiTWAP,
+        "averageTWAP": averageTWAP
+    })
+
+
     supplyBefore = digg.token.totalSupply()
 
     print("spfBefore", digg.token._sharesPerFragment())
@@ -104,7 +101,7 @@ def main():
     print("digg_per_btc", digg_per_btc, averageTWAP, marketValue)
 
     centralizedMulti = GnosisSafe(digg.centralizedOracle)
-
+    
     print(digg.marketMedianOracle.providerReports(digg.centralizedOracle, 0))
     print(digg.marketMedianOracle.providerReports(digg.centralizedOracle, 1))
 
@@ -122,9 +119,8 @@ def main():
     print("pair before", pair.getReserves())
     print("uniPair before", uniPair.getReserves())
 
-    # Oracle Report
     tx = centralizedMulti.execute(
-        MultisigTxMetadata(description="Set Market Oracle Data"),
+        MultisigTxMetadata(description="Set Market Data"),
         {
             "to": digg.marketMedianOracle.address,
             "data": digg.marketMedianOracle.pushReport.encode_input(marketValue),
@@ -135,16 +131,10 @@ def main():
     print(tx.call_trace())
     print(tx.events)
 
+    chain.sleep(hours(1.8))
+    chain.mine()
 
-    print(tx.call_trace())
-    print(tx.events)
-
-    print(digg.uFragmentsPolicy.inRebaseWindow())
-
-    # chain.sleep(hours(0.8))
-    # chain.mine()
-
-    tx = digg.orchestrator.rebase({"from": badger.deployer})
+    tx = digg.orchestrator.rebase({'from': badger.deployer})
     chain.mine()
 
     supplyAfter = digg.token.totalSupply()
@@ -152,7 +142,7 @@ def main():
     print("spfAfter", digg.token._sharesPerFragment())
     print("supplyAfter", supplyAfter)
     print("supplyChange", supplyAfter / supplyBefore)
-    print("supplyChangeOtherWay", supplyBefore / supplyAfter)
+    print("supplyChangeOtherWay", supplyBefore / supplyAfter )
 
     print("pair after", pair.getReserves())
     print("uniPair after", uniPair.getReserves())
