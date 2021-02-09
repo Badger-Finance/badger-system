@@ -162,7 +162,7 @@ def analyze_gas() -> tuple[float, float, float]:
     # fetch data
     if HISTORICAL_TIMEFRAME == 'minutes':
         gas_data = fetch_gas_min(HISTORICAL_URL)
-    elif HISTORICAL_TIMEFRAME == 'hours':
+    else:
         gas_data = fetch_gas_hour(HISTORICAL_URL)
     gas_data = np.array(gas_data)
 
@@ -193,7 +193,7 @@ def analyze_gas() -> tuple[float, float, float]:
 # run this to test analyze_gas and print values
 def test() -> tuple[float, float, float]:
     results = analyze_gas()
-    print('timeframe:', HISTORICAL_TIMEFRAME)
+    print('timeframe:', HISTORICAL_TIMEFRAME or 'hours')
     print('approximate most common gas price:', to_gwei(results[0]))
     print('standard deviation:', to_gwei(results[1]))
     print('average gas price:', to_gwei(results[2]))
