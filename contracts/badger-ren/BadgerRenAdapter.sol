@@ -174,7 +174,14 @@ contract BadgerRenAdapter is OwnableUpgradeable, ReentrancyGuardUpgradeable {
         // Mint renBTC tokens
         bytes32 pHash = keccak256(abi.encode(_slippage, _destination));
         uint256 _mintAmount = registry.getGatewayBySymbol("BTC").mint(pHash, _amount, _nHash, _sig);
+        _swapRenBTCForWBTC(_slippage, _destination, _mintAmount);
+    }
 
+    function _swapRenBTCForWBTC(
+        uint256 _slippage,
+        address payable _destination,
+        uint256 _mintAmount
+    ) internal {
         // Get price
         uint256 dy = exchange.get_dy(0, 1, _mintAmount);
         _slippage = uint256(1e4).sub(_slippage);
@@ -191,11 +198,10 @@ contract BadgerRenAdapter is OwnableUpgradeable, ReentrancyGuardUpgradeable {
             require(wBTC.transfer(_destination, _wbtcAmount.sub(_fee)));
         } catch Error(string memory _error) {
             emit ExchangeWBTCStringError(_error);
-            _fallbackTransferRenBTC(_destination, _mintAmount);
         } catch (bytes memory _error) {
             emit ExchangeWBTCBytesError(_error);
-            _fallbackTransferRenBTC(_destination, _mintAmount);
         }
+        _fallbackTransferRenBTC(_destination, _mintAmount);
     }
 
     function burnWBTC(
@@ -218,9 +224,9 @@ contract BadgerRenAdapter is OwnableUpgradeable, ReentrancyGuardUpgradeable {
 
     // _fallbackTransferRenBTC transfers minted renBTC to user when an exchange fails.
     function _fallbackTransferRenBTC(address _destination, uint256 _amount) internal {
-            uint256 _fee = _processFee(renBTC, _amount, mintFeeBps);
-            emit MintRenBTC(_amount, _fee);
-            require(renBTC.transfer(_destination, _amount.sub(_fee)));
+        uint256 _fee = _processFee(renBTC, _amount, mintFeeBps);
+        emit MintRenBTC(_amount, _fee);
+        require(renBTC.transfer(_destination, _amount.sub(_fee)));
     }
 
     function _processFee(
@@ -251,14 +257,12 @@ contract BadgerRenAdapter is OwnableUpgradeable, ReentrancyGuardUpgradeable {
     }
 
     function setPercentageFeeGovernanceBps(uint256 _percentageFeeGovernanceBps) external onlyOwner {
-        require(_percentageFeeGovernanceBps + percentageFeeRewardsBps <= MAX_BPS,
-            "badger-ren-adapter/excessive-percentage-fee-governance");
+        require(_percentageFeeGovernanceBps + percentageFeeRewardsBps <= MAX_BPS, "badger-ren-adapter/excessive-percentage-fee-governance");
         percentageFeeGovernanceBps = _percentageFeeGovernanceBps;
     }
 
     function setPercentageFeeRewardsBps(uint256 _percentageFeeRewardsBps) external onlyOwner {
-        require(_percentageFeeRewardsBps + percentageFeeGovernanceBps <= MAX_BPS,
-            "badger-ren-adapter/excessive-percentage-fee-rewards");
+        require(_percentageFeeRewardsBps + percentageFeeGovernanceBps <= MAX_BPS, "badger-ren-adapter/excessive-percentage-fee-rewards");
         percentageFeeRewardsBps = _percentageFeeRewardsBps;
     }
 
