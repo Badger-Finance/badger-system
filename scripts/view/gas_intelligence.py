@@ -85,7 +85,7 @@ def fetch_gas_hour(network: str, days=7) -> list[float]:
     return [ x['avgGasHour']['value'] for x in data['aggregations']['hour_bucket']['buckets'] if x['avgGasHour']['value']]
 
 
-# fetch average hourly gas prices over the last specified days
+# fetch average gas prices per minute over the last specified days
 def fetch_gas_min(network: str, days=1) -> list[float]:
     es = initialize_elastic(network)
     data = es.search(index='tx', doc_type='tx', body = {
