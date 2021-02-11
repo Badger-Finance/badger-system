@@ -379,4 +379,52 @@ digg_config = DotMap(
     reclaimAllowedTimestamp=chain.time()
 )
 
-config = DotMap(badger=badger_config, sett=sett_config, digg=digg_config)
+'''
+NB: The CLAW system config primarily specifies default values for the
+parameterization of EMP (expiring multiparty synthetic contracts).
+
+Also note that in the future we may be migrating to perpetual
+multiparty synthetics (to be released by UMA team).
+
+All Addresses below are MAINNET addresses.
+
+Most numerical values are denominated in wei.
+'''
+claw_config = DotMap(
+    # NB: This is just for writing out deployment addrs during local testing.
+    prod_json="deploy-claw.json",
+    empCreatorAddress="0xB3De1e212B49e68f4a68b5993f31f63946FCA2a6",
+    # This represents the delta in days to be applied to now.
+    # Actual param is `expirationTimestamp`.
+    # NB: It is recommended by UMA to set expiry @ 10:00 pm UTC on expiry date.
+    expirationTimestampDaysDelta=days(60),  # Rolling w/ 2 month lifespan EMPs.
+    collateralRequirement=1.2 * 10**18,  # Default UMA specified min collateral requirement is 1.2.
+    disputeBondPercentage=0.1 * 10**18,
+    sponsorDisputeRewardPercentage=0.1 * 10**18,
+    disputerDisputeRewardPercentage=0.1 * 10**18,
+    # This represents the minimum dollar value required to mint synthetics.
+    # The default value below of $100 in wei is a balance between sponsors setting a position
+    # so small that there's no incentive to liquidate and setting a value too large so that
+    # smaller sponsors get priced out (also creates problems for small liquidators).
+    minSponsorTokens=100 * 10**18,
+    withdrawalLiveness=7200,  # Default UMA specified min is at least 2 hours.
+    liquidationLiveness=7200,  # Default UMA specified min is at least 2 hours.
+    # Should be set to the UMA contract store, address below is the MAINNET address.
+    excessTokenBeneficiary="0x54f44eA3D2e7aA0ac089c4d8F7C93C27844057BF",
+    # Technically these are expiring but we will NEVER have more than a single active
+    # at any point in time.
+    emps=DotMap(
+        sClaw=DotMap(
+            symbol="sCLAW",
+            priceFeedIdentifier="0x5553442d5b62774254432f45544820534c505d00000000000000000000000000",
+            collateralAddress="0x758A43EE2BFf8230eeb784879CdcFF4828F2544D",
+        ),
+        bClaw=DotMap(
+            symbol="bCLAW",
+            priceFeedIdentifier="0x5553442f62426164676572000000000000000000000000000000000000000000",
+            collateralAddress="0x19D97D8fA813EE2f51aD4B4e04EA08bAf4DFfC28",
+        ),
+    ),
+)
+
+config = DotMap(badger=badger_config, sett=sett_config, digg=digg_config, claw=claw_config)

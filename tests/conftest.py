@@ -63,10 +63,16 @@ diggSettsToRun = [
     "native.sushiDiggWbtc",
 ]
 
+clawSettsToRun = [
+    "native.badger",
+    "native.sushiWbtcEth",
+]
+
 runTestSetts = True
 
 settTestConfig = generate_sett_test_config(settsToRun, runTestSetts)
 diggSettTestConfig = generate_sett_test_config(diggSettsToRun, runTestSetts)
+clawSettTestConfig = generate_sett_test_config(clawSettsToRun, runTestSetts)
 
 
 @pytest.fixture(scope="function", autouse=True)

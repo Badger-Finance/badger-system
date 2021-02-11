@@ -888,6 +888,7 @@ class BadgerSystem:
 
     def connect_sett(self, id, address):
         sett = Sett.at(address)
+        print(f"connecting sett id {id}")
         self.sett_system.vaults[id] = sett
         self.track_contract_upgradeable(id + ".sett", sett)
 

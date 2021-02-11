@@ -4,6 +4,7 @@ import os
 from scripts.systems.sushiswap_system import SushiswapSystem
 from scripts.systems.digg_system import connect_digg
 from scripts.systems.uniswap_system import UniswapSystem
+from scripts.systems.claw_minimal import deploy_claw_minimal
 import time
 
 from brownie import *
@@ -37,6 +38,9 @@ def main():
     user = accounts.at(decouple.config("TEST_ACCOUNT"), force=True)
 
     badger = connect_badger("deploy-final.json", load_deployer=False, load_keeper=False, load_guardian=False)
+
+    # TODO: After prod deployment, just connect instead.
+    deploy_claw_minimal(badger.deployer, printToFile=True)
 
     console.print("[blue]=== 🦡 Test ENV for account {} 🦡 ===[/blue]".format(user))
 
