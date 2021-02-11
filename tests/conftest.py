@@ -54,7 +54,7 @@ settsToRun = [
     # "harvest.renCrv",
     # "native.uniBadgerWbtc",
     # "sushi.sushiBadgerWBtc",
-    # "sushi.sushiWbtcWeth",
+    # "sushi.sushiWbtcEth",
     "native.digg",
     # "native.uniDiggWbtc",
     # "native.sushiDiggWbtc",
@@ -170,9 +170,9 @@ def badger_single_sett(settConfig, deploy=True):
                 keeper=keeper,
                 governance=governance,
             ).deploy(deploy=deploy)
-        if settId == "sushi.sushiWbtcWeth":
+        if settId == "native.sushiWbtcEth":
             return SushiBadgerLpOptimizerMiniDeploy(
-                "sushi.sushiWbtcWeth",
+                "native.sushiWbtcEth",
                 "StrategySushiLpOptimizer",
                 deployer,
                 strategist=strategist,
