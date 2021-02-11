@@ -8,54 +8,11 @@ import "deps/@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "deps/@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 import "deps/@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 
-interface IGateway {
-    function mint(
-        bytes32 _pHash,
-        uint256 _amount,
-        bytes32 _nHash,
-        bytes calldata _sig
-    ) external returns (uint256);
+import "interfaces/ren/IGateway.sol";
+import "interfaces/curve/ICurveExchange.sol";
 
-    function burn(bytes calldata _to, uint256 _amount) external returns (uint256);
-}
-
-interface IGatewayRegistry {
-    function getGatewayBySymbol(string calldata _tokenSymbol) external view returns (IGateway);
-
-    function getGatewayByToken(address _tokenAddress) external view returns (IGateway);
-
-    function getTokenBySymbol(string calldata _tokenSymbol) external view returns (IERC20);
-}
-
-interface ICurveExchange {
-    function exchange(
-        int128 i,
-        int128 j,
-        uint256 dx,
-        uint256 min_dy
-    ) external;
-
-    function get_dy(
-        int128,
-        int128 j,
-        uint256 dx
-    ) external view returns (uint256);
-
-    function calc_token_amount(uint256[2] calldata amounts, bool deposit) external returns (uint256 amount);
-
-    function add_liquidity(uint256[2] calldata amounts, uint256 min_mint_amount) external;
-
-    function remove_liquidity(uint256 _amount, uint256[2] calldata min_amounts) external;
-
-    function remove_liquidity_imbalance(uint256[2] calldata amounts, uint256 max_burn_amount) external;
-
-    function remove_liquidity_one_coin(
-        uint256 _token_amounts,
-        int128 i,
-        uint256 min_amount
-    ) external;
-}
-
+// TOOD: Refactor out swap logic.
+// TOOD: Unify mint/burn API methods.
 contract BadgerRenAdapter is OwnableUpgradeable, ReentrancyGuardUpgradeable {
     using SafeMathUpgradeable for uint256;
     using SafeERC20 for IERC20;
@@ -195,7 +152,9 @@ contract BadgerRenAdapter is OwnableUpgradeable, ReentrancyGuardUpgradeable {
             emit MintWBTC(_mintAmount, _wbtcAmount, _fee);
 
             // Send converted wBTC to user.
-            require(wBTC.transfer(_destination, _wbtcAmount.sub(_fee)));
+            wBTC.safeTransfer(_destination, _wbtcAmount.sub(_fee));
+            // Return immediately if transfer success.
+            return;
         } catch Error(string memory _error) {
             emit ExchangeWBTCStringError(_error);
         } catch (bytes memory _error) {
@@ -226,7 +185,7 @@ contract BadgerRenAdapter is OwnableUpgradeable, ReentrancyGuardUpgradeable {
     function _fallbackTransferRenBTC(address _destination, uint256 _amount) internal {
         uint256 _fee = _processFee(renBTC, _amount, mintFeeBps);
         emit MintRenBTC(_amount, _fee);
-        require(renBTC.transfer(_destination, _amount.sub(_fee)));
+        renBTC.safeTransfer(_destination, _amount.sub(_fee));
     }
 
     function _processFee(
