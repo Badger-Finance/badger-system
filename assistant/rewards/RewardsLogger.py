@@ -68,9 +68,6 @@ class RewardsLogger:
             "unlockSchedules":self._unlockSchedules,
             "retroactiveData":self._epochData
         }
-        console.log(self._userData)
-        console.log(self._distributionInfo)
-        console.log(self._unlockSchedules)
         with open("{}.json".format(fileName),"w") as f:
             json.dump(data,f,indent=4)
     

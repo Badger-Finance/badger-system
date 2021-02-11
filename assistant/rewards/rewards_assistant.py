@@ -63,8 +63,8 @@ def calc_geyser_rewards(badger, periodStartBlock, endBlock, cycle):
 
     # For each Geyser, get a list of user to weights
     for key, geyser in badger.geysers.items():
-        #if key != "native.badger":
-        #   continue
+        if key != "native.badger":
+           continue
         geyserRewards = calc_geyser_stakes(key, geyser, periodStartBlock, endBlock)
         rewardsByGeyser[key] = geyserRewards
     return sum_rewards(rewardsByGeyser, cycle, badger.badgerTree)
@@ -111,7 +111,7 @@ def calc_sushi_rewards(badger,startBlock,endBlock,nextCycle,retroactive):
 
     for user,claimData in finalRewards.claims.items():
         for token,tokenAmount in claimData.items():
-            if token == xSushiTokenAddress:
+            if token == web3.toChecksumAddress(xSushiTokenAddress):
                 console.log("Address {}: {} xSushi".format(user,int(float(tokenAmount))/1e18 ))
                 xSushiFromRewards += int(float(tokenAmount))
 
@@ -146,7 +146,7 @@ def process_sushi_events(badger,startBlock,endBlock,events,name,nextCycle):
         totalShareSeconds = sum([u.shareSeconds for u in user_state])
         xSushiUnit = xSushiRewards/totalShareSeconds
         for user in user_state:
-            rewards.increase_user_rewards(user.address,xSushiTokenAddress,xSushiUnit * user.shareSeconds)
+            rewards.increase_user_rewards(web3.toChecksumAddress(user.address),web3.toChecksumAddress(xSushiTokenAddress),xSushiUnit * user.shareSeconds)
             rewardsLogger.add_user_share_seconds(user.address,name,user.shareSeconds)
             rewardsLogger.add_user_token(user.address,name,xSushiTokenAddress,xSushiUnit * user.shareSeconds)
 
@@ -203,7 +203,7 @@ def fetch_current_harvest_rewards(badger,startBlock,endBlock,nextCycle):
         totalShareSeconds = sum([u.shareSeconds for u in user_state])
         farmUnit = farmRewards/totalShareSeconds
         for user in user_state:
-            rewards.increase_user_rewards(user.address,farmTokenAddress,farmUnit * user.shareSeconds)
+            rewards.increase_user_rewards(user.address,web3.toChecksumAddress(farmTokenAddress),farmUnit * user.shareSeconds)
 
         if i+1 < len(unprocessedEvents):
             start = int(unprocessedEvents[i]["blockNumber"])
@@ -285,10 +285,10 @@ def process_cumulative_rewards(current, new: RewardsList):
         for i in range(len(userData["tokens"])):
             token = userData["tokens"][i]
             amount = userData["cumulativeAmounts"][i]
-            # print(user, token, amount)
             result.increase_user_rewards(user, token, int(amount))
 
     # result.printState()
+    console.log(result.claims)
     return result
 
 
@@ -420,7 +420,7 @@ def generate_rewards_in_range(badger, startBlock, endBlock, pastRewards):
 
     geyserRewards = calc_geyser_rewards(badger, startBlock, endBlock, nextCycle)
 
-    rewardsLogger.save("rewards-{}".format(nextCycle))
+    rewardsLogger.save("rewards")
     sushiRewards = calc_sushi_rewards(badger,startBlock,endBlock,nextCycle,retroactive=False)
     farmRewards = fetch_current_harvest_rewards(badger,startBlock, endBlock,nextCycle)
 

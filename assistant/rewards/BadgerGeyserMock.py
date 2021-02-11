@@ -51,9 +51,6 @@ class LinearLogic:
         else:
             sinceStart = x - self.start.x
             y = (slope * sinceStart) + intercept
-            #console.log("slope: {} * sinceStart: {} + intercept: {} = y:{}".format(
-            #    slope,sinceStart,intercept,y
-            #))
         return y
 
     def integral(self, x1, x2):
@@ -366,13 +363,10 @@ class BadgerGeyserMock:
     def caclulate_multiplier(self, stake, timestamp):
         start = 0
         end = timestamp - stake["stakedAt"]
-        #console.log("start")
-        mult0 = self.logic.y(start)
-        #console.log("end")
+        #mult0 = self.logic.y(start)
         mult2 = self.logic.y(end)
-        mean_val = mean([mult0, mult2])
-        #console.log("mean: {}".format(mean_val))
-        return mean_val
+        #mean_val = mean([mult0, mult2])
+        return mult2
 
     def calculate_weighted_seconds(self, stake, lastUpdate, timestamp):
         """

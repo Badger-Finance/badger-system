@@ -21,9 +21,8 @@ console = Console()
 
 
 def main():
-    console.log("test")
     test = True
-    badger = connect_badger(badger_config.prod_json)
+    badger = connect_badger(badger_config.prod_json,load_deployer=False)
     farmTokenAddress = "0xa0246c9032bC3A600820415aE600c6388619A14D"
     nextCycle = badger.badgerTree.currentCycle() + 1
     console.log("next cycle: {}".format(nextCycle))
@@ -55,7 +54,7 @@ def main():
         totalShareSeconds = sum([u.shareSeconds for u in user_state])
         farmUnit = farmRewards/totalShareSeconds
         for user in user_state:
-            rewards.increase_user_rewards(user.address,farmTokenAddress,farmUnit * user.shareSeconds)
+            rewards.increase_user_rewards(web3.toChecksumAddress(user.address),farmTokenAddress,farmUnit * user.shareSeconds)
             rewardsLogger.add_user_share_seconds(user.address,"harvest.renCrv",user.shareSeconds)
             rewardsLogger.add_user_token(user.address,"harvest.renCrv",farmTokenAddress,farmUnit* user.shareSeconds)
 
