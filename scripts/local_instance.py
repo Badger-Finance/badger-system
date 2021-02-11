@@ -74,6 +74,7 @@ def main():
     airdropProxy.openAirdrop({"from": badger.deployer})
 
     console.print("[blue]Gitcoin Airdrop deployed at {}[/blue]".format(airdropProxy.address))
+
     console.print("[green]=== ✅ Test ENV Setup Complete ✅ ===[/green]")
     # Keep ganache open until closed
     time.sleep(days(365))
