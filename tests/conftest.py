@@ -51,10 +51,10 @@ settsToRun = [
     "native.renCrv",
     "native.sbtcCrv",
     "native.tbtcCrv",
-    "harvest.renCrv",
+    # "harvest.renCrv",
     "native.uniBadgerWbtc",
-    "sushi.sushiBadgerWBtc",
-    "sushi.sushiWbtcEth",
+    "native.sushiBadgerWbtc",
+    "native.sushiWbtcEth",
 ]
 
 diggSettsToRun = [
@@ -157,9 +157,9 @@ def badger_single_sett(settConfig, deploy=True):
                 keeper=keeper,
                 governance=governance,
             ).deploy(deploy=deploy)
-        if settId == "sushi.sushiBadgerWBtc":
+        if settId == "native.sushiBadgerWbtc":
             return SushiBadgerWBtcMiniDeploy(
-                "sushi.sushiBadgerWBtc",
+                "native.sushiBadgerWbtc",
                 "StrategySushiBadgerWbtc",
                 deployer,
                 strategist=strategist,
