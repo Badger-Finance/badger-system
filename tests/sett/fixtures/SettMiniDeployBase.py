@@ -1,4 +1,4 @@
-from brownie import Wei
+from brownie import Wei, exceptions
 
 from helpers.token_utils import distribute_from_whales, distribute_test_ether
 from scripts.systems.badger_system import BadgerSystem, connect_badger
@@ -57,8 +57,12 @@ class SettMiniDeployBase:
 
             self.post_deploy_setup(deploy=deploy)
 
-            if self.vault.paused():
-                self.vault.unpause({"from": self.governance})
+            # NB: Not all vaults are pauseable.
+            try:
+                if self.vault.paused():
+                    self.vault.unpause({"from": self.governance})
+            except exceptions.VirtualMachineError:
+                pass
 
             return self.badger
 

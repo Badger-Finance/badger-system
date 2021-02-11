@@ -20,7 +20,6 @@ from rich.console import Console
 from scripts.deploy.deploy_digg import (
     deploy_digg_with_existing_badger,
     digg_deploy_flow,
-    init_prod_digg,
 )
 from scripts.systems.badger_system import connect_badger
 from helpers.registry import token_registry
@@ -42,7 +41,7 @@ def main():
     console.print("[blue]=== 🦡 Test ENV for account {} 🦡 ===[/blue]".format(user))
 
     # ===== Transfer test assets to User =====
-    distribute_test_ether(user, Wei("10 ether"))
+    distribute_test_ether(user, Wei("20 ether"))
     distribute_test_ether(badger.deployer, Wei("20 ether"))
     distribute_from_whales(user)
 

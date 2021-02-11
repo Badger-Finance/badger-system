@@ -214,6 +214,11 @@ whale_registry = DotMap(
         token="0xcD7989894bc033581532D2cd88Da5db0A4b12859",
         action = WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT
     ),
+    uniDiggWbtc=DotMap(
+        whale="0xc17078fdd324cc473f8175dc5290fae5f2e84714",
+        token="0xe86204c4eddd2f70ee00ead6805f917671f56c52",
+        action = WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT
+    ),
     sbtcCrv=DotMap(
         whale="0xc25099792e9349c7dd09759744ea681c7de2cb66",
         token=curve_registry.pools.sbtcCrv.token,
@@ -239,7 +244,12 @@ whale_registry = DotMap(
         token="0x110492b31c59716AC47337E616804E3E3AdC0b4a",
         action = WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT
     ),
-    sushiWbtcWeth=DotMap(
+    sushiDiggWbtc=DotMap(
+        whale="0xd16fda96cb572da89e4e39b04b99d99a8e3071fb",
+        token="0x110492b31c59716AC47337E616804E3E3AdC0b4a",
+        action = WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT
+    ),
+    sushiWbtcEth=DotMap(
         whale="0xc2EdaD668740f1aA35E4D8f227fB8E17dcA888Cd",
         token="0xCEfF51756c56CeFFCA006cD410B03FFC46dd3a58",
         action = WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT
