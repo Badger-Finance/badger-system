@@ -1,5 +1,6 @@
 import time
 import random
+from hexbytes import HexBytes
 from brownie import accounts, web3
 from enum import Enum
 from rich.console import Console
@@ -93,7 +94,7 @@ class SimulationManager:
             idx = int(random.random()*len(self.accounts))
             if idx in accountsUsed:
                 continue
-            if web3.eth.getCode(accounts[idx].address) != "0x":
+            if web3.eth.getCode(accounts[idx].address) != HexBytes("0x"):
                 continue
 
             self.users.append(self.accounts[idx])
