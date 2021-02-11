@@ -1,21 +1,21 @@
 import pytest
 
-from helpers.sett.DiggSnapshotManager import DiggSnapshotManager
+from helpers.sett.SnapshotManager import SnapshotManager
 from helpers.sett.simulation.SimulationManager import SimulationManager
-from tests.conftest import badger_single_sett, diggSettTestConfig
+from tests.conftest import badger_single_sett, settTestConfig
 
 
 # @pytest.mark.skip()
 @pytest.mark.parametrize(
-    "settConfig", diggSettTestConfig,
+    "settConfig", settTestConfig,
 )
-def test_digg_simulation(settConfig):
+def test_simulation(settConfig):
     # connect to prod deploy and run simulation
     badger = badger_single_sett(settConfig, deploy=False)
-    snap = DiggSnapshotManager(badger, settConfig["id"])
+    snap = SnapshotManager(badger, settConfig["id"])
     simulation = SimulationManager(badger, snap, settConfig["id"])
 
     simulation.provision()
-    # Randomize 100 actions.
-    simulation.randomize(100)
+    # Randomize 50 actions.
+    simulation.randomize(50)
     simulation.run()

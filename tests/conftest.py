@@ -47,17 +47,14 @@ def generate_sett_test_config(settsToRun, runTestSetts, runProdSetts=False):
 # ===== Sett + Strategy Test Configuration =====
 
 settsToRun = [
-    # "native.badger",
-    # "native.renCrv",
-    # "native.sbtcCrv",
-    # "native.tbtcCrv",
-    # "harvest.renCrv",
-    # "native.uniBadgerWbtc",
-    # "sushi.sushiBadgerWBtc",
-    # "sushi.sushiWbtcEth",
-    "native.digg",
-    # "native.uniDiggWbtc",
-    # "native.sushiDiggWbtc",
+    "native.badger",
+    "native.renCrv",
+    "native.sbtcCrv",
+    "native.tbtcCrv",
+    "harvest.renCrv",
+    "native.uniBadgerWbtc",
+    "sushi.sushiBadgerWBtc",
+    "sushi.sushiWbtcEth",
 ]
 
 diggSettsToRun = [

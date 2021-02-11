@@ -18,7 +18,7 @@ class Balances:
             print(set)
             self.balances[token.address] = {}
         self.balances[token.address][account.address] = value
-    
+
     def get(self, token, account):
         return self.balances[token.address][account.address]
 
@@ -100,6 +100,8 @@ def distribute_from_whales(recipient, percentage=0.8):
 def distribute_from_whale(whale_config, recipient, percentage=0.2):
     if whale_config.action == WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT:
         forceEther = ForceEther.deploy({"from": recipient})
+        if recipient.balance() < 2*10**18:
+            distribute_test_ether(recipient, Wei("2 ether"))
         recipient.transfer(forceEther, Wei("2 ether"))
         forceEther.forceSend(whale_config.whale, {"from": recipient})
 
@@ -115,8 +117,12 @@ def distribute_test_ether(recipient, amount):
     """
     On test environments, transfer ETH from default ganache account to specified account
     """
-    assert accounts[0].balance() >= amount
-    accounts[0].transfer(recipient, amount)
+    idx = 0
+    while idx < len(accounts):
+        if accounts[idx].balance() >= amount:
+            break
+        idx += 1
+    accounts[idx].transfer(recipient, amount)
 
 
 def getTokenMetadata(address):
