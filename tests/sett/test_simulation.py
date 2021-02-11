@@ -16,6 +16,6 @@ def test_simulation(settConfig):
     simulation = SimulationManager(badger, snap, settConfig["id"])
 
     simulation.provision()
-    # Randomize 50 actions.
-    simulation.randomize(50)
+    # Randomize 30 actions.
+    simulation.randomize(30)
     simulation.run()
