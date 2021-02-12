@@ -8,7 +8,9 @@ import "deps/@openzeppelin/contracts-upgradeable/token/ERC20/SafeERC20Upgradeabl
 import "deps/@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "deps/@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import "deps/@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
+import "interfaces/badger/ISett.sol";
 import "interfaces/badger/IStrategy.sol";
+import "interfaces/badger/IBadgerGeyser.sol";
 import "interfaces/uniswap/IUniswapRouterV2.sol";
 import "contracts/badger-sett/strategies/Swapper.sol";
 
@@ -16,19 +18,26 @@ contract BadgerRewardsManager is AccessControlUpgradeable, ReentrancyGuardUpgrad
     using SafeMathUpgradeable for uint256;
     using SafeERC20Upgradeable for IERC20Upgradeable;
 
-    mapping (address => bool) public isApprovedStrategy;
+    mapping(address => bool) public isApprovedStrategy;
 
     event ApproveStrategy(address recipient);
     event RevokeStrategy(address recipient);
     event Call(address to, uint256 value, bytes data);
-    
+
     bytes32 public constant SWAPPER_ROLE = keccak256("SWAPPER_ROLE");
     bytes32 public constant DISTRIBUTOR_ROLE = keccak256("DISTRIBUTOR_ROLE");
     bytes32 public constant KEEPER_ROLE = keccak256("KEEPER_ROLE");
     bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
     bytes32 public constant UNPAUSER_ROLE = keccak256("UNPAUSER_ROLE");
+    bytes32 public constant APPROVED_SETT_ROLE = keccak256("APPROVED_SETT_ROLE");
 
-    function initialize(address admin, address initialDistributor, address initialSwapper, address initialPauser, address initialUnpauser) public initializer {
+    function initialize(
+        address admin,
+        address initialDistributor,
+        address initialSwapper,
+        address initialPauser,
+        address initialUnpauser
+    ) public initializer {
         __AccessControl_init();
         __Pausable_init_unchained();
 
@@ -67,7 +76,11 @@ contract BadgerRewardsManager is AccessControlUpgradeable, ReentrancyGuardUpgrad
     }
 
     function _onlyApprovedStrategies(address recipient) internal view {
-        require(isApprovedStrategy[recipient] == true, "strategy strategy not approved");
+        require(isApprovedStrategy[recipient] == true, "strategy not approved");
+    }
+
+    function _onlyApprovedSetts(address recipient) internal view {
+        require(hasRole(APPROVED_SETT_ROLE, recipient) == true, "sett not approved");
     }
 
     /// ===== Permissioned Functions: Admin =====
@@ -83,23 +96,27 @@ contract BadgerRewardsManager is AccessControlUpgradeable, ReentrancyGuardUpgrad
         emit RevokeStrategy(recipient);
     }
 
-    /// @notice Pause publishing of new roots
+    /// @notice Pause all actions
     function pause() external {
         _onlyPauser();
         _pause();
     }
 
-    /// @notice Unpause publishing of new roots
+    /// @notice Unpause all actions
     function unpause() external {
         _onlyUnpauser();
         _unpause();
     }
 
     // ===== Permissioned Functions: Distributor =====
-    function transferWant(address want, address strategy, uint256 amount) external {
+    function transferWant(
+        address want,
+        address strategy,
+        uint256 amount
+    ) external {
         _onlyDistributor();
         _onlyApprovedStrategies(strategy);
-        
+
         require(IStrategy(strategy).want() == want, "Incorrect want for strategy");
 
         require(IERC20Upgradeable(want).transfer(strategy, amount), "Want transfer failed");
@@ -112,14 +129,14 @@ contract BadgerRewardsManager is AccessControlUpgradeable, ReentrancyGuardUpgrad
     function deposit(address strategy) external {
         _onlyKeeper();
         _onlyApprovedStrategies(strategy);
-        
+
         IStrategy(strategy).deposit();
     }
 
     function tend(address strategy) external {
         _onlyKeeper();
         _onlyApprovedStrategies(strategy);
-        
+
         IStrategy(strategy).tend();
     }
 
@@ -131,11 +148,20 @@ contract BadgerRewardsManager is AccessControlUpgradeable, ReentrancyGuardUpgrad
     }
 
     // ===== Permissioned Functions: Swapper =====
-    function swapExactTokensForTokensUniswap(address token0, uint256 amount, address[] memory path) external {
+    function swapExactTokensForTokensUniswap(
+        address token0,
+        uint256 amount,
+        address[] memory path
+    ) external {
         _onlySwapper();
         _swap_uniswap(token0, amount, path);
     }
-    function swapExactTokensForTokensSushiswap(address token0, uint256 amount, address[] memory path) external {
+
+    function swapExactTokensForTokensSushiswap(
+        address token0,
+        uint256 amount,
+        address[] memory path
+    ) external {
         _onlySwapper();
         _swap_sushiswap(token0, amount, path);
     }
@@ -144,8 +170,16 @@ contract BadgerRewardsManager is AccessControlUpgradeable, ReentrancyGuardUpgrad
         _onlySwapper();
         _add_max_liquidity_uniswap(token0, token1);
     }
+
     function addLiquiditySushiswap(address token0, address token1) external {
         _onlySwapper();
         _add_max_liquidity_sushiswap(token0, token1);
+    }
+
+    function depositSett(address sett, uint256 amount) external {
+        _onlySwapper();
+        _onlyApprovedSetts(sett);
+
+        ISett(sett).deposit(amount);
     }
 }
