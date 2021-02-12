@@ -50,7 +50,8 @@ contract BadgerRenAdapter is OwnableUpgradeable, ReentrancyGuardUpgradeable {
         address _exchange,
         address _wbtc,
         uint256[4] memory _feeConfig
-    ) public {
+    ) public initializer {
+        __Ownable_init_unchained();
         governance = _governance;
         rewards = _rewards;
 

@@ -161,6 +161,7 @@ curve_registry = DotMap(
             gauge="0x705350c4BcD35c9441419DdD5d2f097d7a55410F",
         ),
         renCrv=DotMap(
+    console.log(values.amount);
             swap="0x93054188d876f558f4a66B2EF1d97d16eDf0895B",
             token="0x49849C98ae39Fff122806C06791Fa73784FB3675",
             gauge="0xB1F2cdeC61db658F091671F5f199635aEF202CAC",
