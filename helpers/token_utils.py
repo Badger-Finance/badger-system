@@ -10,7 +10,22 @@ from helpers.utils import val
 
 console = Console()
 
+class Balances:
+    def __init__(self):
+        self.balances = {}
+    def set(self, token, account, value):
+        if token.address not in self.balances:
+            print(set)
+            self.balances[token.address] = {}
+        self.balances[token.address][account.address] = value
+    
+    def get(self, token, account):
+        return self.balances[token.address][account.address]
+
+
 def diff_token_balances(before, after):
+    before = before.balances
+    after = after.balances
     table = []
     for token, accounts in before.items():
         for account, value in accounts.items():
@@ -19,11 +34,10 @@ def diff_token_balances(before, after):
     print(tabulate(table, headers=["asset", "balance"]))
 
 def get_token_balances(tokens, accounts):
-    balances = {}
+    balances = Balances()
     for token in tokens:
-        balances[token.address] = {}
         for account in accounts:
-            balances[token.address][account] = token.balanceOf(account)
+            balances.set(token, account, token.balanceOf(account))
     return balances
 
 def print_balances(tokens_by_name, account):

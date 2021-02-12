@@ -179,12 +179,26 @@ dao_config = DotMap(
 
 globalStartTime = 1607014800
 
+geyser_keys = [
+    "native.uniBadgerWbtc",
+    "harvest.renCrv",
+    "native.sbtcCrv",
+    "native.tbtcCrv",
+    "native.renCrv",
+    "native.badger",
+    "native.sushiBadgerWbtc",
+    "native.sushiWbtcEth",
+    "native.uniDiggWbtc",
+    "native.sushiDiggWbtc",
+]
+
 badger_config = DotMap(
     prod_json="deploy-final.json",
     test_mode=False,
     startMultiplier=1,
     endMultiplier=3,
     multisig=multisig_config,
+    opsMultisig=DotMap(address="0x576cD258835C529B54722F84Bb7d4170aA932C64"),
     dao=dao_config,
     globalStartTime=globalStartTime,
     huntParams=DotMap(

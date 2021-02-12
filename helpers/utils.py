@@ -39,6 +39,12 @@ def shares_to_fragments(shares):
 
     return current_fragments
 
+def fragments_to_shares(fragments_scaled):
+    digg_contract = interface.IDigg("0x798D1bE841a82a273720CE31c822C61a67a601C3")
+    fragments = int(fragments_scaled * 10 ** 9)
+    shares = fragments * digg_contract._sharesPerFragment()
+    return shares
+
 def to_digg_shares(initial_fragments_scaled):
     digg_contract = interface.IDigg("0x798D1bE841a82a273720CE31c822C61a67a601C3")
     initial_fragments = int(initial_fragments_scaled * 10 ** 9)

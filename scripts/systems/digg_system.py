@@ -118,8 +118,8 @@ class DiggSystem:
             self.owner = accounts.at(owner, force=True)
         else:
             print("RPC Inactive")
-            owner_key = decouple.config("DIGG_OWNER_PRIVATE_KEY")
-            self.owner = accounts.add(owner_key)
+            # owner_key = decouple.config("DIGG_OWNER_PRIVATE_KEY")
+            # self.owner = accounts.add(owner_key)
 
         if deployer == None:
             console.print("[yellow]No deployer specified, using Owner[/yellow]")
@@ -128,7 +128,7 @@ class DiggSystem:
             self.deployer = deployer
         if env_config.debug:
             print("deployer / owner", deployer, owner, self.deployer, self.owner)
-
+        self.owner=""
         self.deployer=self.owner
 
         self.connect_proxy_admins(devProxyAdmin, daoProxyAdmin)
@@ -172,9 +172,6 @@ class DiggSystem:
 
     def connect_multisig(self):
         deployer = self.deployer
-
-        multisigParams = badger_config["devMultisigParams"]
-        multisigParams.owners = [deployer.address]
 
         if env_config.debug:
             print("Deploy Dev Multisig")

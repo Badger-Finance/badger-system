@@ -1,6 +1,7 @@
 import datetime
 import json
 import os
+from scripts.deploy.unlock_scheduler import grant_token_locking_permission
 from scripts.actions.helpers.GeyserDistributor import GeyserDistributor
 from scripts.actions.helpers.StakingRewardsDistributor import StakingRewardsDistributor
 import time
@@ -9,7 +10,7 @@ import warnings
 import brownie
 import pytest
 from brownie import Wei, accounts, interface, rpc
-from config.badger_config import badger_config
+from config.badger_config import badger_config, geyser_keys
 from dotmap import DotMap
 from helpers.constants import *
 from helpers.gnosis_safe import (
@@ -22,7 +23,12 @@ from helpers.gnosis_safe import (
 )
 from helpers.registry import registry
 from helpers.time_utils import days, hours, to_days, to_timestamp, to_utc_date
-from helpers.utils import initial_fragments_to_current_fragments, to_digg_shares, val
+from helpers.utils import (
+    fragments_to_shares,
+    initial_fragments_to_current_fragments,
+    to_digg_shares,
+    val,
+)
 from rich import pretty
 from rich.console import Console
 from scripts.systems.badger_system import BadgerSystem, connect_badger
@@ -30,6 +36,7 @@ from tabulate import tabulate
 
 console = Console()
 pretty.install()
+
 
 def asset_to_address(asset):
     if asset == "badger":
@@ -151,6 +158,7 @@ class RewardsSchedule:
     def testTransactions(self):
         rewardsEscrow = self.badger.rewardsEscrow
         multi = GnosisSafe(self.badger.devMultisig)
+        opsMulti = GnosisSafe(self.badger.opsMultisig)
 
         # Setup
         accounts[7].transfer(multi.get_first_owner(), Wei("2 ether"))
@@ -162,64 +170,109 @@ class RewardsSchedule:
         tree = self.badger.badgerTree
 
         before = badger.token.balanceOf(tree)
-        top_up = Wei("149606.49 ether")
-        top_up_digg = initial_fragments_to_current_fragments(89.94)
+        top_up = Wei("60000 ether")
+        top_up_digg = Wei("75.55 gwei")
+        harvest_badger = Wei("30000 ether")
+        harvest_digg = Wei("65.435 ether")
 
         # Top up Tree
         # TODO: Make the amount based on what we'll require for the next week
-        id = multi.addTx(
-            MultisigTxMetadata(description="Top up badger tree with Badger"),
-            {
-                "to": rewardsEscrow.address,
-                "data": rewardsEscrow.transfer.encode_input(badger.token, tree, top_up),
-            },
-        )
+        # id = multi.addTx(
+        #     MultisigTxMetadata(description="Top up badger tree with Badger"),
+        #     {
+        #         "to": rewardsEscrow.address,
+        #         "data": rewardsEscrow.transfer.encode_input(badger.token, tree, top_up),
+        #     },
+        # )
 
-        tx = multi.executeTx(id)
+        # tx = multi.executeTx(id)
 
-        after = badger.token.balanceOf(tree)
-        assert after == before + top_up
+        # after = badger.token.balanceOf(tree)
+        # assert after == before + top_up
 
-        before = badger.digg.token.balanceOf(tree)
+        # before = badger.digg.token.balanceOf(tree)
 
-        multi.execute(
-            MultisigTxMetadata(description="Top up badger tree with DIGG"),
-            {
-                "to": rewardsEscrow.address,
-                "data": rewardsEscrow.transfer.encode_input(
-                    badger.digg.token, tree, top_up_digg
-                ),
-            },
-        )
+        # tx = multi.execute(
+        #     MultisigTxMetadata(description="Top up badger tree with DIGG"),
+        #     {
+        #         "to": rewardsEscrow.address,
+        #         "data": rewardsEscrow.transfer.encode_input(
+        #             badger.digg.token, tree, top_up_digg
+        #         ),
+        #     },
+        # )
 
-        after = badger.digg.token.balanceOf(tree)
-        assert after == before + top_up_digg
+        # print(tx.call_trace(), before, after)
+
+        # after = badger.digg.token.balanceOf(tree)
+        # assert after == before + top_up_digg
+
+        # multi.execute(
+        #     MultisigTxMetadata(description="Top up rewards manager with Badger"),
+        #     {
+        #         "to": rewardsEscrow.address,
+        #         "data": rewardsEscrow.transfer.encode_input(
+        #             badger.token, badger.badgerRewardsManager, harvest_badger
+        #         ),
+        #     },
+        # )
+
+        # multi.execute(
+        #     MultisigTxMetadata(description="Top up rewards manager with DIGG"),
+        #     {
+        #         "to": rewardsEscrow.address,
+        #         "data": rewardsEscrow.transfer.encode_input(
+        #             badger.digg.token, badger.badgerRewardsManager, harvest_digg
+        #         ),
+        #     },
+        # )
+
+        grant_token_locking_permission(self.badger, self.badger.unlockScheduler)
+
+        geyserDists = []
 
         for key, distribution in self.distributions.items():
             if distribution.hasGeyserDistribution() == True:
                 print("has geyser distribution", key)
-                GeyserDistributor(
-                    badger,
-                    multi,
-                    key,
-                    distributions=distribution.getGeyserDistributions(),
-                    start=self.start,
-                    duration=self.duration,
-                    end=self.end,
-                )
+                dist = GeyserDistributor()
 
-            # == Distribute to StakingRewards, if relevant ==
-            # if distribution.hasStakingRewardsDistribution() == True:
-            #     StakingRewardsDistributor(
-            #         badger,
-            #         multi,
-            #         key,
-            #         distributions=distribution.getStakingRewardsDistributions(),
-            #         start=self.start,
-            #         duration=self.duration,
-            #         end=self.end,
-            #         )
-            
+                dists = dist.generate(
+                        badger,
+                        multi,
+                        key,
+                        distributions=distribution.getGeyserDistributions(),
+                        start=self.start,
+                        duration=self.duration,
+                        end=self.end,
+                    )
+
+                geyserDists.extend(dists)                
+                console.log("after "+ key, geyserDists)
+
+        # Add unlock schedeules inbulk
+        console.log(geyserDists)
+        tx = opsMulti.execute(
+            MultisigTxMetadata(description="Signal unlock schedules"),
+            {
+                "to": badger.unlockScheduler.address,
+                "data": badger.unlockScheduler.signalTokenLocks.encode_input(
+                    geyserDists
+                ),
+            },
+        )
+        print(tx.call_trace())
+
+        tokens = [self.badger.token.address, self.badger.digg.token.address]
+
+        for key in geyser_keys:
+            print(key)
+            geyser = self.badger.getGeyser(key)
+            for token in tokens:
+                print(token)
+                console.log(
+                    "{} schedules for {}".format(token, key),
+                    geyser.getUnlockSchedulesFor(token),
+                )
 
     def printState(self, title):
         console.print(
@@ -236,7 +289,7 @@ class RewardsSchedule:
             print(geyser)
             assert rewardsEscrow.isApproved(geyser)
             for asset, value in dist.toGeyser.items():
-                
+
                 """
                 function signalTokenLock(
                     address geyser,
@@ -262,7 +315,7 @@ class RewardsSchedule:
                         to_utc_date(self.end),
                         to_days(self.duration),
                         geyser.address,
-                        encoded
+                        encoded,
                     ]
                 )
 

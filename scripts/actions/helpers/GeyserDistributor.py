@@ -34,9 +34,11 @@ class GeyserDistributor:
     """
     Generate geyser distribution transactions given a set of emissions
     """
-
-    def __init__(self, badger, multi, key, distributions, start=0, duration=0, end=0):
+    def generate(self, badger, multi, key, distributions, start=0, duration=0, end=0):
+        dists = []
         for asset, dist in distributions.items():
+            if dist == 0:
+                continue
             console.print(
                 "===== Distributions for asset {} on {} =====".format(asset, key),
                 style="bold yellow",
@@ -48,6 +50,7 @@ class GeyserDistributor:
             geyser = badger.getGeyser(key)
             rewardsEscrow = badger.rewardsEscrow
             multi = GnosisSafe(badger.devMultisig)
+            opsMulti = GnosisSafe(badger.opsMultisig)
 
             print(key, geyser, rewardsEscrow)
 
@@ -79,34 +82,8 @@ class GeyserDistributor:
             console.print(
                 "Geyser Distribution for {}: {}".format(key, val(dist)), style="yellow",
             )
-
-            multi.execute(
-                MultisigTxMetadata(
-                    description="Signal unlock schedule for " + key,
-                    operation="signalTokenLock",
-                ),
-                {
-                    "to": rewardsEscrow.address,
-                    "data": rewardsEscrow.signalTokenLock.encode_input(
-                        geyser, asset_to_address(asset), dist, duration, start,
-                    ),
-                },
-            )
-
-            # Verify Results
-            numSchedulesAfter = geyser.unlockScheduleCount(token)
-
-            console.print(
-                "Schedule Addition",
-                {"numSchedules": numSchedules, "numSchedulesAfter": numSchedulesAfter},
-            )
-
-            assert numSchedulesAfter == numSchedules + 1
-
-            unlockSchedules = geyser.getUnlockSchedulesFor(token)
-            schedule = unlockSchedules[-1]
-            print(schedule)
-            assert schedule[0] == dist
-            assert schedule[1] == end
-            assert schedule[2] == duration
-            assert schedule[3] == start
+            
+            dists.append((geyser, asset_to_address(asset), dist, duration, start))
+            
+        console.log(key, dists)
+        return dists
