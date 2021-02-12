@@ -25,7 +25,7 @@ from helpers.registry import registry
 from helpers.time_utils import days, hours, to_days, to_timestamp, to_utc_date
 from helpers.utils import (
     fragments_to_shares,
-    initial_fragments_to_current_fragments,
+    initial_fragments_to_current_fragments, shares_to_fragments,
     to_digg_shares,
     val,
 )
@@ -303,19 +303,25 @@ class RewardsSchedule:
                 encoded = rewardsEscrow.signalTokenLock.encode_input(
                     geyser, asset_to_address(asset), value, self.duration, self.start
                 )
+                
+                asset_contract = interface.IERC20(asset_to_address(asset))
+
+                scaled = val(value, decimals=18)
+                if asset == "digg":
+                    scaled = val(shares_to_fragments(value), decimals=9)
 
                 table.append(
                     [
                         key,
-                        geyser,
+                        # geyser,
                         asset,
                         value,
-                        val(value),
+                        scaled,
                         to_utc_date(self.start),
                         to_utc_date(self.end),
                         to_days(self.duration),
-                        geyser.address,
-                        encoded,
+                        # geyser.address,
+                        # encoded,
                     ]
                 )
 
@@ -324,16 +330,16 @@ class RewardsSchedule:
                 table,
                 headers=[
                     "key",
-                    "geyser",
+                    # "geyser",
                     "token",
                     "total amount",
                     "scaled amount",
                     "start time",
                     "end time",
                     "duration",
-                    "rate per day",
-                    "destination",
-                    "encoded call",
+                    # "rate per day",
+                    # "destination",
+                    # "encoded call",
                 ],
                 tablefmt="rst",
             )
