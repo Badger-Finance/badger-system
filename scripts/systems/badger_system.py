@@ -165,7 +165,7 @@ def connect_badger(
     badger.globalStartBlock = badger_deploy["globalStartBlock"]
 
     badger.connect_proxy_admins(
-        badger_deploy["devProxyAdmin"], badger_deploy["daoProxyAdmin"]
+        badger_deploy["devProxyAdmin"], badger_deploy["daoProxyAdmin"], badger_deploy["opsProxyAdmin"]
     )
 
     badger.connect_logic(badger_deploy["logic"])
@@ -182,6 +182,7 @@ def connect_badger(
     badger.connect_community_pool(badger_deploy["communityPool"])
     badger.connect_dao_badger_timelock(badger_deploy["daoBadgerTimelock"])
     badger.connect_rewards_manager(badger_deploy["badgerRewardsManager"])
+    badger.connect_unlock_scheduler(badger_deploy["unlockScheduler"])
 
     # Connect Sett
     badger.connect_sett_system(badger_deploy["sett_system"], badger_deploy["geysers"])
@@ -267,6 +268,7 @@ class BadgerSystem:
 
         self.connect_dao()
         self.connect_multisig()
+        self.connect_ops_multisig()
         self.connect_uniswap()
 
         self.globalStartTime = badger_config.globalStartTime
@@ -279,7 +281,7 @@ class BadgerSystem:
         self.contracts_upgradeable[key] = contract
 
     # ===== Contract Connectors =====
-    def connect_proxy_admins(self, devProxyAdmin, daoProxyAdmin):
+    def connect_proxy_admins(self, devProxyAdmin, daoProxyAdmin, opsProxyAdmin=None):
         abi = registry.open_zeppelin.artifacts["ProxyAdmin"]["abi"]
 
         self.devProxyAdmin = Contract.from_abi(
@@ -288,6 +290,10 @@ class BadgerSystem:
         self.daoProxyAdmin = Contract.from_abi(
             "ProxyAdmin", web3.toChecksumAddress(daoProxyAdmin), abi
         )
+        if opsProxyAdmin:
+            self.opsProxyAdmin = Contract.from_abi(
+                "ProxyAdmin", web3.toChecksumAddress(opsProxyAdmin), abi
+            )
 
         self.proxyAdmin = self.devProxyAdmin
 
@@ -316,6 +322,11 @@ class BadgerSystem:
     def connect_treasury_multisig(self):
         self.treasuryMultisig = connect_gnosis_safe(
             badger_config.treasury_multisig.address
+        )
+
+    def connect_ops_multisig(self):
+        self.opsMultisig = connect_gnosis_safe(
+            badger_config.opsMultisig.address
         )
 
     def connect_uniswap(self):
@@ -923,6 +934,12 @@ class BadgerSystem:
         self.badgerRewardsManager = BadgerRewardsManager.at(address)
         self.track_contract_upgradeable(
             "badgerRewardsManager", self.badgerRewardsManager
+        )
+
+    def connect_unlock_scheduler(self, address):
+        self.unlockScheduler = UnlockScheduler.at(address)
+        self.track_contract_upgradeable(
+            "unlockScheduler", self.unlockScheduler
         )
 
     def connect_dao_digg_timelock(self, address):

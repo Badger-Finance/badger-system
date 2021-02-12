@@ -37,6 +37,8 @@ def main():
     table.append(["total digg", val(total_digg, decimals=9)])
     print(tabulate(table, headers=["metric", "value"]))
 
+    rewards.printState("Geyser Emissions")
+
     # Generate Sufficient 
     multi = GnosisSafe(badger.devMultisig)
 
