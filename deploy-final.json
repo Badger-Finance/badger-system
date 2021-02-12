@@ -4,8 +4,10 @@
     "guardian": "0x29F7F8896Fb913CF7f9949C623F896a154727919",
     "keeper": "0x872213E29C85d7e30F1C8202FC47eD1Ec124BB1D",
     "devProxyAdmin": "0x20Dce41Acca85E8222D6861Aa6D23B6C941777bF",
+    "opsProxyAdmin": "0x4599f2913a3db4e73aa77a304ccc21516dd7270d",
     "daoProxyAdmin": "0x11A9D034B1bbfbbDCaC9cB3b86ca7D5Df05140F2",
     "devMultisig": "0xB65cef03b9B89f99517643226d76e286ee999e77",
+    "opsMultisig": "0x576cD258835C529B54722F84Bb7d4170aA932C64",
     "treasuryMultisig": "0xD4868d98849a58F743787c77738D808376210292",
     "token": "0x3472A5A71965499acd81997a54BBA8D852C6E53d",
     "logic": {
@@ -42,7 +44,8 @@
         "DiggDistributor": "0x9a7d4078068ebb39ffe471898212353cf661580c",
         "SimpleTimelockWithVoting": "0xa494351C6f392908321Ea90665628f7f521FE809",
         "DiggSeeder": "0xfcC357420368195eE1F4B387d9d4335d26b0695F",
-        "BadgerRewardsManager": "0xE8D0A73ED68231F209bdDB1b0AAcc37C38C16E45"
+        "BadgerRewardsManager": "0xE8D0A73ED68231F209bdDB1b0AAcc37C38C16E45",
+        "UnlockScheduler": "0xC63d8A22D18dd42a9De8343Fd7C888bdA3E7516d"
     },
     "dao": {
         "token": "0x3472A5A71965499acd81997a54BBA8D852C6E53d",
@@ -112,6 +115,7 @@
     "honeypotMeme": "0x9159D3BeaE435CEcC54d221675465D4C1AB04d87",
     "claimEncoder": "0xf3ff1a5856b1726a8fef921ea57eab2c51466a93",
     "badgerRewardsManager": "0x5B60952481Eb42B66bdfFC3E049025AC5b91c127",
+    "unlockScheduler": "0x1AADc00011939499a4d263d657Dd74b0E1176cF9",
     "geysers": {
         "native.badger": "0xa9429271a28F8543eFFfa136994c0839E7d7bF77",
         "native.renCrv": "0x2296f174374508278DC12b806A7f27c87D53Ca15",
