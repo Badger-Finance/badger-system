@@ -83,9 +83,7 @@ contract AirdropDistributor is MerkleDistributor, OwnableUpgradeable, PausableUp
     /// ===== Internal Helper Functions =====
     function _onlyClaimTesters(address account) internal view {
         require(
-            account == 0x5b908E3a23823Fd9Da157726736BACBFf472976a ||
-                account == 0x482c741b0711624d1f462E56EE5D8f776d5970dC ||
-                account == 0xe7bab002A39f9672a1bD0E949d3128eeBd883575,
+            account == 0x5b908E3a23823Fd9Da157726736BACBFf472976a,
             "onlyClaimTesters"
         );
     }
