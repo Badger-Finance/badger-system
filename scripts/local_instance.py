@@ -1,3 +1,4 @@
+from helpers.proxy_utils import deploy_proxy
 from helpers.gnosis_safe import GnosisSafe, MultisigTxMetadata
 import os
 from scripts.systems.sushiswap_system import SushiswapSystem
@@ -36,62 +37,40 @@ def main():
     # The address to test with
     user = accounts.at(decouple.config("TEST_ACCOUNT"), force=True)
 
-    badger = connect_badger("deploy-final.json", load_deployer=True, load_keeper=True, load_guardian=True)
-    digg = connect_digg("deploy-final.json")
-    digg.token = digg.uFragments
-
-    badger.add_existing_digg(digg)
+    badger = connect_badger("deploy-final.json", load_deployer=False, load_keeper=False, load_guardian=False)
 
     console.print("[blue]=== 🦡 Test ENV for account {} 🦡 ===[/blue]".format(user))
 
+    # ===== Transfer test assets to User =====
     distribute_test_ether(user, Wei("10 ether"))
     distribute_test_ether(badger.deployer, Wei("20 ether"))
     distribute_from_whales(user)
 
-    wbtc = interface.IERC20(token_registry.wbtc)
+    gitcoin_airdrop_root = "0xcd18c32591078dcb6686c5b4db427b7241f5f1209e79e2e2a31e17c1382dd3e2"
+    bBadger = badger.getSett("native.badger")
 
-    assert wbtc.balanceOf(user) >= 200000000
-    init_prod_digg(badger, user)
-
-    accounts.at(digg.daoDiggTimelock, force=True)
-    digg.token.transfer(user, 20000000000, {"from": digg.daoDiggTimelock})
-
-    digg_liquidity_amount = 1000000000
-    wbtc_liquidity_amount = 100000000
-
-    assert digg.token.balanceOf(user) >= digg_liquidity_amount * 2
-    assert wbtc.balanceOf(user) >= wbtc_liquidity_amount * 2
-
-    uni = UniswapSystem()
-    wbtc.approve(uni.router, wbtc_liquidity_amount, {"from": user})
-    digg.token.approve(uni.router, digg_liquidity_amount, {"from": user})
-    uni.router.addLiquidity(
-        digg.token,
-        wbtc,
-        digg_liquidity_amount,
-        wbtc_liquidity_amount,
-        digg_liquidity_amount,
-        wbtc_liquidity_amount,
-        user,
-        chain.time() + 1000,
-        {"from": user},
+    # ===== Local Setup =====
+    airdropLogic = AirdropDistributor.deploy({"from": badger.deployer})
+    airdropProxy = deploy_proxy(
+        "AirdropDistributor",
+        AirdropDistributor.abi,
+        airdropLogic.address,
+        badger.opsProxyAdmin.address,
+        airdropLogic.initialize.encode_input(
+            bBadger,
+            gitcoin_airdrop_root,
+            badger.rewardsEscrow,
+            chain.time() + days(7)
+        ),
+        badger.deployer
     )
 
-    sushi = SushiswapSystem()
-    wbtc.approve(sushi.router, wbtc_liquidity_amount, {"from": user})
-    digg.token.approve(sushi.router, digg_liquidity_amount, {"from": user})
-    sushi.router.addLiquidity(
-        digg.token,
-        wbtc,
-        digg_liquidity_amount,
-        wbtc_liquidity_amount,
-        digg_liquidity_amount,
-        wbtc_liquidity_amount,
-        user,
-        chain.time() + 1000,
-        {"from": user},
-    )
+    bBadger.transfer(airdropProxy, Wei("10000 ether"), {"from": user})
 
+    airdropProxy.unpause({"from": badger.deployer})
+    airdropProxy.openAirdrop({"from": badger.deployer})
+
+    console.print("[blue]Gitcoin Airdrop deployed at {}[/blue]".format(airdropProxy.address))
     console.print("[green]=== ✅ Test ENV Setup Complete ✅ ===[/green]")
     # Keep ganache open until closed
     time.sleep(days(365))
