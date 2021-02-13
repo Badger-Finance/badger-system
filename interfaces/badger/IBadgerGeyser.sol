@@ -12,4 +12,12 @@ interface IBadgerGeyser {
         uint256 durationSec,
         uint256 startTime
     ) external;
+
+    function modifyTokenLock(
+        address token,
+        uint256 index,
+        uint256 amount,
+        uint256 durationSec,
+        uint256 startTime
+    ) external;
 }

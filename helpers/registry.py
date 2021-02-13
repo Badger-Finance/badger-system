@@ -90,13 +90,7 @@ open_zeppelin_registry = DotMap(
     )
 )
 
-token_registry = DotMap(
-    weth="0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
-    wbtc="0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599",
-    crv="0xD533a949740bb3306d119CC777fa900bA034cd52",
-    tbtc="0x8daebade922df735c38c80c7ebd708af50815faa",
-    badger="0x3472A5A71965499acd81997a54BBA8D852C6E53d"
-)
+
 
 onesplit_registry = DotMap(contract="0x50FDA034C0Ce7a8f7EFDAebDA7Aa7cA21CC1267e")
 
@@ -179,6 +173,20 @@ badger_registry = DotMap(
     token="0x3472a5a71965499acd81997a54bba8d852c6e53d"
 )
 
+token_registry = DotMap(
+    weth="0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+    wbtc="0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599",
+    crv="0xD533a949740bb3306d119CC777fa900bA034cd52",
+    tbtc="0x8daebade922df735c38c80c7ebd708af50815faa",
+    usdt="0xdac17f958d2ee523a2206206994597c13d831ec7",
+    usdc="0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+    badger=badger_registry.token,
+    digg="0x798D1bE841a82a273720CE31c822C61a67a601C3",
+    farm=harvest_registry.farmToken,
+    sushi=sushi_registry.sushiToken,
+    xSushi=sushi_registry.xsushiToken,
+)
+
 class WhaleRegistryAction(Enum):
     DISTRIBUTE_FROM_EOA = 0
     DISTRIBUTE_FROM_CONTRACT = 1
@@ -231,21 +239,27 @@ whale_registry = DotMap(
         token="0xCEfF51756c56CeFFCA006cD410B03FFC46dd3a58",
         action = WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT
     ),
+    digg=DotMap(
+        whale="0x4a8651F2edD68850B944AD93f2c67af817F39F62",
+        token="0x798D1bE841a82a273720CE31c822C61a67a601C3",
+        action = WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT
+    ),
 )
 
+class ContractRegistry:
+    def __init__(self):
+        self.curve = curve_registry
+        self.uniswap = uniswap_registry
+        self.open_zeppelin = open_zeppelin_registry
+        self.aragon = aragon_registry
+        self.sushiswap = sushi_registry
+        self.sushi = sushi_registry
+        self.gnosis_safe = gnosis_safe_registry
+        self.onesplit = gnosis_safe_registry
+        self.pickle = pickle_registry
+        self.harvest = harvest_registry
+        self.tokens = token_registry
+        self.whales = whale_registry
+        self.multicall = multicall_registry
 
-registry = DotMap(
-    curve=curve_registry,
-    uniswap=uniswap_registry,
-    open_zeppelin=open_zeppelin_registry,
-    aragon=aragon_registry,
-    sushiswap=sushi_registry,
-    sushi=sushi_registry,
-    gnosis_safe=gnosis_safe_registry,
-    onesplit=gnosis_safe_registry,
-    pickle=pickle_registry,
-    harvest=harvest_registry,
-    tokens=token_registry,
-    whales=whale_registry,
-    multicall=multicall_registry,
-)
+registry = ContractRegistry()
