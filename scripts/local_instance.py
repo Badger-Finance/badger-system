@@ -60,10 +60,14 @@ def main():
             bBadger,
             gitcoin_airdrop_root,
             badger.rewardsEscrow,
-            chain.time() + days(7)
+            chain.time() + days(7),
+            [user]
         ),
         badger.deployer
     )
+
+    assert airdropProxy.isClaimTester(user) == True
+    assert airdropProxy.isClaimTester(badger.deployer) == False
 
     bBadger.transfer(airdropProxy, Wei("10000 ether"), {"from": user})
 

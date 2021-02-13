@@ -18,11 +18,14 @@ contract AirdropDistributor is MerkleDistributor, OwnableUpgradeable, PausableUp
     uint256 public reclaimAllowedTimestamp;
     bool public isOpen;
 
+    mapping(address => bool) public isClaimTester;
+
     function initialize(
         address token_,
         bytes32 merkleRoot_,
         address rewardsEscrow_,
-        uint256 reclaimAllowedTimestamp_
+        uint256 reclaimAllowedTimestamp_,
+        address[] memory claimTesters_
     ) public initializer whenNotPaused {
         __MerkleDistributor_init(token_, merkleRoot_);
         __Ownable_init();
@@ -30,6 +33,10 @@ contract AirdropDistributor is MerkleDistributor, OwnableUpgradeable, PausableUp
         rewardsEscrow = rewardsEscrow_;
         reclaimAllowedTimestamp = reclaimAllowedTimestamp_;
         isOpen = false;
+
+        for (uint256 i = 0; i < claimTesters_.length; i++) {
+            isClaimTester[claimTesters_[i]] = true;
+        }
 
         // Paused on launch
         _pause();
@@ -82,9 +89,6 @@ contract AirdropDistributor is MerkleDistributor, OwnableUpgradeable, PausableUp
 
     /// ===== Internal Helper Functions =====
     function _onlyClaimTesters(address account) internal view {
-        require(
-            account == 0x5b908E3a23823Fd9Da157726736BACBFf472976a,
-            "onlyClaimTesters"
-        );
+        require(isClaimTester[account], "onlyClaimTesters");
     }
 }
