@@ -127,8 +127,8 @@ def print_to_file(badger, path):
 
         system["digg_system"] = digg_system
 
-    with open(path, "w") as outfile:
-        json.dump(system, outfile)
+    with open(path, "w") as f:
+        f.write(json.dumps(system, indent=4, sort_keys=True))
 
 
 def connect_badger(
