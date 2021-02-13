@@ -1,4 +1,5 @@
 import pytest
+import random
 from brownie import Wei, interface, SyntheticToken
 from rich.console import Console
 
@@ -7,13 +8,13 @@ from scripts.systems.claw_minimal import deploy_claw_minimal
 from config.badger_config import claw_config
 from helpers.token_utils import distribute_from_whales, distribute_test_ether
 from helpers.sett.SnapshotManager import SnapshotManager
-from tests.conftest import badger_single_sett, clawSettTestConfig
+from tests.conftest import badger_single_sett, clawSettSyntheticTestConfig
 
 console = Console()
 
 
 @pytest.mark.parametrize(
-    "settConfig", clawSettTestConfig,
+    "settConfig", clawSettSyntheticTestConfig,
 )
 def test_claw(settConfig):
     badger = badger_single_sett(settConfig, deploy=False)
@@ -52,10 +53,10 @@ def _manage_position(claw, empName, user):
 
     console.print("[grey]Attempting to mint synthetic tokens from collateral[/grey]")
     collateralAmount = userBalance / 4
-    # Mint a synthetic amount amove the collateral requirement
-    syntheticAmount = collateralAmount / (emp.collateralRequirement() / 10**18)
-    # Give a 5% buffer above the collateral requirement.
-    syntheticAmount *= .95
+    # Mint a synthetic amount is in $, we won't try to determine the actual dollar value between
+    # the two but rather just mint a random dollar value above the min sponsor amount and a arbitrary max.
+    # Min sponsor amount is $100 so let's do w/ $200 - $5000.
+    syntheticAmount = random.random.randint(200, 5000) * 10**18
     emp.create((collateralAmount,), (syntheticAmount,), {"from": user})
 
     # We don't need all of these variables but just including them here to be transparent about

@@ -154,6 +154,15 @@ sett_config = DotMap(
                 withdrawalFee=0,
             ),
         ),
+        # These params generically cover all CLAW strategies.
+        sushiClawUSDC=DotMap(
+            strategyName="StrategySushiLpOptimizer",
+            params=DotMap(
+                performanceFeeStrategist=1000,
+                performanceFeeGovernance=1000,
+                withdrawalFee=0,
+            ),
+        ),
     ),
 )
 

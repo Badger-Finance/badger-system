@@ -91,7 +91,6 @@ open_zeppelin_registry = DotMap(
 )
 
 
-
 onesplit_registry = DotMap(contract="0x50FDA034C0Ce7a8f7EFDAebDA7Aa7cA21CC1267e")
 
 uniswap_registry = DotMap(
@@ -185,7 +184,9 @@ token_registry = DotMap(
     farm=harvest_registry.farmToken,
     sushi=sushi_registry.sushiToken,
     xSushi=sushi_registry.xsushiToken,
+    usdc="0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
 )
+
 
 class WhaleRegistryAction(Enum):
     DISTRIBUTE_FROM_EOA = 0
@@ -197,7 +198,7 @@ whale_registry = DotMap(
     badger=DotMap(
         whale="0x19d099670a21bC0a8211a89B84cEdF59AbB4377F",
         token="0x3472A5A71965499acd81997a54BBA8D852C6E53d",
-        action = WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT
+        action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT
     ),
     bBadger=DotMap(
         whale="0xa9429271a28F8543eFFfa136994c0839E7d7bF77",
@@ -207,52 +208,67 @@ whale_registry = DotMap(
     harvestSuperSett=DotMap(
         whale="0xeD0B7f5d9F6286d00763b0FFCbA886D8f9d56d5e",
         token="0xAf5A1DECfa95BAF63E0084a35c62592B774A2A87",
-        action = WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT
+        action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT
     ),
     uniBadgerWbtc=DotMap(
         whale="0x235c9e24D3FB2FAFd58a2E49D454Fdcd2DBf7FF1",
         token="0xcD7989894bc033581532D2cd88Da5db0A4b12859",
-        action = WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT
+        action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT
     ),
     uniDiggWbtc=DotMap(
         whale="0xc17078fdd324cc473f8175dc5290fae5f2e84714",
         token="0xe86204c4eddd2f70ee00ead6805f917671f56c52",
-        action = WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT
+        action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT
     ),
     sbtcCrv=DotMap(
         whale="0xc25099792e9349c7dd09759744ea681c7de2cb66",
         token=curve_registry.pools.sbtcCrv.token,
-        action = WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT
+        action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT
     ),
     renCrv=DotMap(
         whale="0xb1f2cdec61db658f091671f5f199635aef202cac",
         token=curve_registry.pools.renCrv.token,
-        action = WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT
+        action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT
     ),
     tbtcCrv=DotMap(
         whale="0xaf379f0228ad0d46bb7b4f38f9dc9bcc1ad0360c",
         token=curve_registry.pools.tbtcCrv.token,
-        action = WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT
+        action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT
     ),
     wbtc=DotMap(
         whale="0xc11b1268c1a384e55c48c2391d8d480264a3a7f4",
         token=token_registry.wbtc,
-        action = WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT
+        action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT
     ),
     sushiBadgerWbtc=DotMap(
         whale="0xc2EdaD668740f1aA35E4D8f227fB8E17dcA888Cd",
         token="0x110492b31c59716AC47337E616804E3E3AdC0b4a",
-        action = WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT
+        action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT
     ),
     sushiDiggWbtc=DotMap(
         whale="0xd16fda96cb572da89e4e39b04b99d99a8e3071fb",
         token="0x110492b31c59716AC47337E616804E3E3AdC0b4a",
-        action = WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT
+        action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT
     ),
     sushiWbtcEth=DotMap(
         whale="0xc2EdaD668740f1aA35E4D8f227fB8E17dcA888Cd",
         token="0xCEfF51756c56CeFFCA006cD410B03FFC46dd3a58",
-        action = WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT
+        action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT
+    ),
+    bBadger=DotMap(
+        whale="0x168fa4917e7cd18f4ed3dc313c4975851ca9e5e7",
+        token="0x19D97D8fA813EE2f51aD4B4e04EA08bAf4DFfC28",
+        action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT
+    ),
+    bSushiWbtcEth=DotMap(
+        whale="0x032c701886ad0317f0e58c8f4a570c6f9c0bbf4a",
+        token="0x758A43EE2BFf8230eeb784879CdcFF4828F2544D",
+        action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT
+    ),
+    usdc=DotMap(
+        whale="0xbe0eb53f46cd790cd13851d5eff43d12404d33e8",  # binance
+        token="0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+        action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT
     ),
     digg=DotMap(
         whale="0x4a8651F2edD68850B944AD93f2c67af817F39F62",

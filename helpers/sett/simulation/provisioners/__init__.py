@@ -8,3 +8,4 @@ from .SushiBadgerWbtcProvisioner import SushiBadgerWbtcProvisioner
 from .SushiLpOptimizerProvisioner import SushiLpOptimizerProvisioner
 from .BadgerLpMetaFarmProvisioner import BadgerLpMetaFarmProvisioner
 from .CurveGaugeProvisioner import CurveGaugeProvisioner
+from .SushiClawUSDCProvisioner import SushiClawUSDCProvisioner

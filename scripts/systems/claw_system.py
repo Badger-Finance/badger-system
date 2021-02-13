@@ -1,9 +1,12 @@
 import json
+import random
 from datetime import datetime, timezone
-from brownie import ExpiringMultiParty, ExpiringMultiPartyCreator
+from brownie import interface, ExpiringMultiParty, ExpiringMultiPartyCreator
 from dotmap import DotMap
 
 from helpers.time_utils import ONE_HOUR, ONE_DAY
+from helpers.token_utils import distribute_from_whale
+from helpers.registry import whale_registry
 from config.badger_config import claw_config
 
 from rich.console import Console
@@ -13,11 +16,13 @@ console = Console()
 
 def print_to_file(claw, path):
     system = {
-        "emps": {},
+        "claw_system": {
+            "emps": {},
+        },
     }
 
     for key, value in claw.emps.items():
-        system["emps"][key] = value.address
+        system["claw_system"]["emps"][key] = value.address
 
     with open(path, "w") as f:
         f.write(json.dumps(system, indent=4, sort_keys=True))
@@ -71,6 +76,10 @@ class ClawSystem:
 
         self.emps = DotMap()
 
+        # Synthetic emp lazily set for tests.
+        self.emp = None
+        self.empName = ""
+
     def connect_emp(self, attr, address) -> None:
         contract = ExpiringMultiParty.at(address)
         setattr(self.emps, attr, contract)
@@ -119,3 +128,36 @@ class ClawSystem:
         startDay += (22 * ONE_HOUR)
         # Add configured number of days from start date.
         return startDay + self.config.expirationTimestampDaysDelta
+
+    # ===== Testing fns =====
+
+    # Mints using currently set emp contract.
+    def mint(self, user):
+        collateralAddress = self.config.emps[self.empName].collateralAddress
+
+        found = False
+        whale = None
+        for whale in whale_registry.values():
+            if whale.token == collateralAddress:
+                found = True
+
+        if not found:
+            raise Exception(f"whale for collateral address {collateralAddress} not found")
+        distribute_from_whale(whale, user)
+
+        emp = self.emp
+        collateral = interface.IERC20(collateralAddress)
+
+        userBalance = collateral.balanceOf(user)
+        collateral.approve(emp.address, userBalance, {"from": user})
+        console.print("[grey]Attempting to mint synthetic tokens from collateral[/grey]")
+        collateralAmount = userBalance / 4
+        # Mint a synthetic amount is in $, we won't try to determine the actual dollar value between
+        # the two but rather just mint a random dollar value above the min sponsor amount and a arbitrary max.
+        # Min sponsor amount is $100 so let's do w/ $100 - $200.
+        syntheticAmount = random.randint(100, 200) * 10**18
+        emp.create((collateralAmount,), (syntheticAmount,), {"from": user})
+
+    def set_emp(self, empName):
+        self.emp = self.emps[empName]
+        self.empName = empName
