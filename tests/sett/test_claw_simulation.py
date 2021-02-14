@@ -13,7 +13,7 @@ def test_simulation(settConfig):
     # connect to prod deploy and run simulation
     badger = badger_single_sett(settConfig, deploy=True)
     snap = SnapshotManager(badger, settConfig["id"])
-    simulation = SimulationManager(badger, snap, settConfig["id"], seed=1613203598)
+    simulation = SimulationManager(badger, snap, settConfig["id"])
 
     simulation.provision()
     # Randomize 30 actions.

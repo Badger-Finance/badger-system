@@ -49,13 +49,13 @@ class SushiClawUSDCMiniDeploy(SettMiniDeployBase):
         params = sett_config.sushi.sushiClawUSDC.params
 
         sushiswap = SushiswapSystem()
-        token = self.claw.emps[self.empName].tokenCurrency()
-        if sushiswap.hasPair(token, registry.tokens.wbtc):
-            params.want = sushiswap.getPair(token, registry.tokens.wbtc)
+        token = self.claw.emp.tokenCurrency()
+        if sushiswap.hasPair(token, registry.tokens.usdc):
+            params.want = sushiswap.getPair(token, registry.tokens.usdc)
         else:
             params.want = sushiswap.createPair(
                 token,
-                registry.tokens.wbtc,
+                registry.tokens.usdc,
                 self.deployer,
             )
         want = params.want

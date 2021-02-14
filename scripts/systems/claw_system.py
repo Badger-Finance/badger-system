@@ -151,11 +151,22 @@ class ClawSystem:
         userBalance = collateral.balanceOf(user)
         collateral.approve(emp.address, userBalance, {"from": user})
         console.print("[grey]Attempting to mint synthetic tokens from collateral[/grey]")
-        collateralAmount = userBalance / 4
         # Mint a synthetic amount is in $, we won't try to determine the actual dollar value between
         # the two but rather just mint a random dollar value above the min sponsor amount and a arbitrary max.
         # Min sponsor amount is $100 so let's do w/ $100 - $200.
         syntheticAmount = random.randint(100, 200) * 10**18
+        # Need to  ensure that we start w/ lower amounts of collateral as subsequent mints need must keep the total
+        # position above the global collateralization ratio.
+        rawTotalPositionCollateral = emp.rawTotalPositionCollateral()
+        if rawTotalPositionCollateral == 0:
+            # arbtirarily start the collateral low (1% of user balance)
+            collateralAmount = userBalance * .01
+        else:
+            cumulativeFeeMultiplier = emp.cumulativeFeeMultiplier()
+            globalCollateralizationRatio = (cumulativeFeeMultiplier * rawTotalPositionCollateral) / emp.totalTokensOutstanding()
+            minCollateralAmount = (globalCollateralizationRatio * syntheticAmount) / cumulativeFeeMultiplier
+            # collateral amount should be between the min collateral amount to keep above GCR and 5% greater.
+            collateralAmount = random.randint(int(minCollateralAmount), int(minCollateralAmount * 1.05))
         emp.create((collateralAmount,), (syntheticAmount,), {"from": user})
 
     def set_emp(self, empName):
