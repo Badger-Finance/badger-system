@@ -11,7 +11,6 @@ transport = AIOHTTPTransport(url=url)
 client = Client(transport=transport, fetch_schema_from_transport=True)
 
 
-
 def fetch_sett_balances(settId, startBlock):
     console.print(
         "[bold green] Fetching sett balances {}[/bold green]".format(settId)
@@ -49,19 +48,19 @@ def fetch_geyser_events(geyserId, startBlock):
     )
 
     query = gql(
-        """query($geyserID: Geyser_filter,$blockHeight: Block_height)
+        """query($geyserID: Geyser_filter,$blockHeight: Block_height,$skipAmount: Int)
     {
       geysers(where: $geyserID,block: $blockHeight) {
           id
           totalStaked
-          stakeEvents(first:1000) {
+          stakeEvents(first:1000,skip: $skipAmount) {
               id
               user,
               amount
               timestamp,
               total
           }
-          unstakeEvents(first:1000) {
+          unstakeEvents(first:1000,skip: $skipAmount) {
               id
               user,
               amount
@@ -72,17 +71,32 @@ def fetch_geyser_events(geyserId, startBlock):
     }
     """
     )
-    variables = {"geyserID": {"id": geyserId}, "blockHeight": {"number": startBlock}}
-    result = client.execute(query, variable_values=variables)
-    if len(result["geysers"]) == 0:
-        stakes = []
-        unstakes = []
-        totalStaked = 0
-    else:
-        stakes = result["geysers"][0]["stakeEvents"]
-        unstakes = result["geysers"][0]["unstakeEvents"]
-        totalStaked = result["geysers"][0]["totalStaked"]
 
+    stakes = []
+    unstakes = []
+    totalStaked = 0
+    skipAmount = 0
+    variables = {"geyserID": {"id": geyserId}, "blockHeight": {"number": startBlock}}
+    while True:
+        variables["skipAmount"] = skipAmount
+        result = client.execute(query,variable_values=variables)
+        
+        if len(result["geysers"]) == 0:
+            return {
+                "stakes":[],
+                "unstakes":[],
+                "totalStaked":0
+            }
+        newStakes = result["geysers"][0]["stakeEvents"]
+        newUnstakes = result["geysers"][0]["unstakeEvents"]
+        if len(newStakes) == 0 and len(newUnstakes) == 0:
+            break 
+        console.log("Querying...")
+        skipAmount += 1000
+        stakes.extend(newStakes)
+        unstakes.extend(newUnstakes)
+        totalStaked = result["geysers"][0]["unstakeEvents"]
+        
     console.log("Processing {} stakes".format(len(stakes)))
     console.log("Processing {} unstakes".format(len(unstakes)))
     return {
@@ -196,15 +210,20 @@ def fetch_sushi_harvest_events():
     results = client.execute(query)
     wbtcEthEvents = []
     wbtcBadgerEvents = []
+    wbtcDiggEvents = []
     for event in results["sushiHarvestEvents"]:
-        sett = event["id"].split("-")[0]
-        if sett == "0x7a56d65254705b4def63c68488c0182968c452ce":
+        strategy = event["id"].split("-")[0]
+        if strategy == "0x7a56d65254705b4def63c68488c0182968c452ce":
             wbtcEthEvents.append(event)
-        elif sett == "0x3a494d79aa78118795daad8aeff5825c6c8df7f1":
+        elif strategy == "0x3a494d79aa78118795daad8aeff5825c6c8df7f1":
             wbtcBadgerEvents.append(event)
+        elif strategy == "0xaa8dddfe7dfa3c3269f1910d89e4413dd006d08a":
+            wbtcDiggEvents.append(event)
+
     
     return {
         "wbtcEth":wbtcEthEvents,
-        "wbtcBadger":wbtcBadgerEvents
+        "wbtcBadger":wbtcBadgerEvents,
+        "wbtcDigg":wbtcDiggEvents
     }
 

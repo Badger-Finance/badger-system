@@ -63,8 +63,8 @@ def calc_geyser_rewards(badger, periodStartBlock, endBlock, cycle):
 
     # For each Geyser, get a list of user to weights
     for key, geyser in badger.geysers.items():
-        if key != "native.badger":
-           continue
+        #if key != "native.badger":
+        #      continue
         geyserRewards = calc_geyser_stakes(key, geyser, periodStartBlock, endBlock)
         rewardsByGeyser[key] = geyserRewards
     return sum_rewards(rewardsByGeyser, cycle, badger.badgerTree)
@@ -80,9 +80,14 @@ def calc_sushi_rewards(badger,startBlock,endBlock,nextCycle,retroactive):
 
     wbtcEthEvents = list(filter(filter_events,sushi_harvest_events["wbtcEth"]))
     wbtcBadgerEvents = list(filter(filter_events,sushi_harvest_events["wbtcBadger"]))
-    totalxSushi = sum([int(e["toBadgerTree"]) for e in wbtcEthEvents]) + sum([int(e["toBadgerTree"]) for e in wbtcBadgerEvents])
+    wBtcDiggEvents = list(filter(filter_events,sushi_harvest_events["wbtcDigg"])) 
+    totalxSushi = sum([int(e["toBadgerTree"]) for e in wbtcEthEvents]) \
+         + sum([int(e["toBadgerTree"]) for e in wbtcBadgerEvents]) \
+         + sum([int(e["toBadgerTree"]) for e in wBtcDiggEvents])
     wbtcEthRewards = RewardsList(nextCycle,badger.badgerTree)
     wbtcBadgerRewards = RewardsList(nextCycle,badger.badgerTree)
+    wbtcDiggRewards = RewardsList(nextCycle,badger.badgerTree)
+
     if len(wbtcEthEvents) > 0:
         wbtcEthStartBlock = get_latest_event_block(wbtcEthEvents[0],sushi_harvest_events["wbtcEth"])
         if wbtcEthStartBlock == -1 or retroactive:
@@ -97,22 +102,30 @@ def calc_sushi_rewards(badger,startBlock,endBlock,nextCycle,retroactive):
 
     if len(wbtcBadgerEvents) > 0:
         wbtcBadgerStartBlock = get_latest_event_block(wbtcBadgerEvents[0],sushi_harvest_events["wbtcBadger"])
-        if wbtcBadgerEvents == -1 or retroactive:
+        if wbtcBadgerStartBlock == -1 or retroactive:
             wbtcBadgerStartBlock = 11539529
 
     
         console.log("Processing {} wbtcBadger sushi events".format(len(wbtcBadgerEvents)))
         wbtcBadgerRewards = process_sushi_events(
             badger,wbtcBadgerStartBlock,endBlock,wbtcBadgerEvents,"native.sushiBadgerWbtc",nextCycle)
+    
+    if len(wBtcDiggEvents) > 0:
+        wbtcDiggStartBlock = get_latest_event_block(wBtcDiggEvents[0],sushi_harvest_events["wbtcDigg"])
+        if wbtcDiggStartBlock == -1 or retroactive:
+            wbtcDiggStartBlock = 11676338
+        wbtcDiggRewards = process_sushi_events(
+            badger,wbtcDiggStartBlock,endBlock,wBtcDiggEvents,"native.sushiDiggWbtc",nextCycle
+        )
 
     # TODO: Add digg sushi strategy
-    finalRewards = combine_rewards([wbtcEthRewards,wbtcBadgerRewards],nextCycle,badger.badgerTree)
+    finalRewards = combine_rewards([wbtcEthRewards,wbtcBadgerRewards,wbtcDiggRewards],nextCycle,badger.badgerTree)
     xSushiFromRewards = 0
 
     for user,claimData in finalRewards.claims.items():
         for token,tokenAmount in claimData.items():
             if token == web3.toChecksumAddress(xSushiTokenAddress):
-                console.log("Address {}: {} xSushi".format(user,int(float(tokenAmount))/1e18 ))
+                #console.log("Address {}: {} xSushi".format(user,int(float(tokenAmount))/1e18 ))
                 xSushiFromRewards += int(float(tokenAmount))
 
     console.log("Total xSushi {} from events".format(
@@ -288,7 +301,6 @@ def process_cumulative_rewards(current, new: RewardsList):
             result.increase_user_rewards(user, token, int(amount))
 
     # result.printState()
-    console.log(result.claims)
     return result
 
 
@@ -453,7 +465,7 @@ def generate_rewards_in_range(badger, startBlock, endBlock, pastRewards):
     print("Uploading to file " + contentFileName)
     # TODO: Upload file to AWS & serve from server
     with open(contentFileName, "w") as outfile:
-        json.dump(merkleTree, outfile)
+        json.dump(merkleTree, outfile,indent=4)
 
     with open(contentFileName) as f:
         after_file = json.load(f)

@@ -68,7 +68,7 @@ class RewardsLogger:
             "unlockSchedules":self._unlockSchedules,
             "retroactiveData":self._epochData
         }
-        with open("{}.json".format(fileName),"w") as f:
+        with open("logs/{}.json".format(fileName),"w") as f:
             json.dump(data,f,indent=4)
     
 
