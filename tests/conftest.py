@@ -25,6 +25,7 @@ from tests.sett.fixtures import (
     SushiBadgerWBtcMiniDeploy,
     SushiDiggWbtcLpOptimizerMiniDeploy,
     UniDiggWbtcLpMiniDeploy,
+    SushiClawUSDCMiniDeploy,
 )
 
 
@@ -51,7 +52,7 @@ settsToRun = [
     "native.renCrv",
     "native.sbtcCrv",
     "native.tbtcCrv",
-    # "harvest.renCrv",
+    # # "harvest.renCrv",
     "native.uniBadgerWbtc",
     "native.sushiBadgerWbtc",
     "native.sushiWbtcEth",
@@ -63,10 +64,23 @@ diggSettsToRun = [
     "native.sushiDiggWbtc",
 ]
 
+clawSettsToRun = [
+    "native.sushiSClawUSDC",
+    "native.sushiBClawUSDC",
+]
+
+# Setts w/ backing collateral for testing the CLAW emp contract.
+clawSettsSytheticTestsToRun = [
+    "native.badger",
+    "native.sushiWbtcEth",
+]
+
 runTestSetts = True
 
 settTestConfig = generate_sett_test_config(settsToRun, runTestSetts)
 diggSettTestConfig = generate_sett_test_config(diggSettsToRun, runTestSetts)
+clawSettTestConfig = generate_sett_test_config(clawSettsToRun, runTestSetts)
+clawSettSyntheticTestConfig = generate_sett_test_config(clawSettsSytheticTestsToRun, runTestSetts)
 
 
 @pytest.fixture(scope="function", autouse=True)
@@ -202,6 +216,30 @@ def badger_single_sett(settConfig, deploy=True):
                 "native.sushiDiggWbtc",
                 "StrategySushiDiggWbtcLpOptimizer",
                 deployer,
+                strategist=strategist,
+                guardian=guardian,
+                keeper=keeper,
+                governance=governance,
+            ).deploy(deploy=deploy)
+        if settId == "native.sushiSClawUSDC":
+            # Claw/USDC mini deploy can be used for any CLAW synthetic token.
+            return SushiClawUSDCMiniDeploy(
+                "native.sushiSClawUSDC",
+                "StrategySushiLpOptimizer",  # sushi lp optimizer strat is generic
+                deployer,
+                "sClaw",  # This specifies the name of the EMP contract on the CLAW system.
+                strategist=strategist,
+                guardian=guardian,
+                keeper=keeper,
+                governance=governance,
+            ).deploy(deploy=deploy)
+        if settId == "native.sushiBClawUSDC":
+            # Claw/USDC mini deploy can be used for any CLAW synthetic token.
+            return SushiClawUSDCMiniDeploy(
+                "native.sushiBClawUSDC",
+                "StrategySushiLpOptimizer",  # sushi lp optimizer strat is generic
+                deployer,
+                "bClaw",  # This specifies the name of the EMP contract on the CLAW system.
                 strategist=strategist,
                 guardian=guardian,
                 keeper=keeper,

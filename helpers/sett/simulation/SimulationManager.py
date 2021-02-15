@@ -19,6 +19,7 @@ from .provisioners import (
     SushiLpOptimizerProvisioner,
     BadgerLpMetaFarmProvisioner,
     CurveGaugeProvisioner,
+    SushiClawUSDCProvisioner,
 )
 from .actors import (
     UserActor,
@@ -83,7 +84,7 @@ class SimulationManager:
             self.seed = int(time.time())
         console.print(f"initialized simulation manager with seed: {self.seed}")
         random.seed(self.seed)
-        self.provisioner = self._initProvisioner(self.strategy.getName())
+        self.provisioner = self._initProvisioner(settId)
 
     def provision(self) -> None:
         if self.state != SimulationManagerState.IDLE:
@@ -130,26 +131,28 @@ class SimulationManager:
         for action in self.actions:
             action.run()
 
-    def _initProvisioner(self, name) -> BaseProvisioner:
-        if name == "StrategyBadgerRewards":
+    def _initProvisioner(self, settId) -> BaseProvisioner:
+        if settId == "native.badger":
             return BadgerRewardsProvisioner(self)
-        if name == "StrategyDiggRewards":
+        if settId == "native.digg":
             return DiggRewardsProvisioner(self)
-        if name == "StrategyDiggLpMetaFarm":
+        if settId == "native.uniDiggWbtc":
             return DiggLpMetaFarmProvisioner(self)
-        if name == "StrategySushiDiggWbtcLpOptimizer":
+        if settId == "native.sushiDiggWbtc":
             return SushiDiggWbtcLpOptimizerProvisioner(self)
-        if name == "StrategyHarvestMetaFarm":
+        if settId == "harvest.renCrv":
             return HarvestMetaFarmProvisioner(self)
-        if name == "StrategySushiBadgerWbtc":
+        if settId == "native.sushiBadgerWbtc":
             return SushiBadgerWbtcProvisioner(self)
-        if name == "StrategySushiLpOptimizer":
+        if settId == "native.sushiWbtcEth":
             return SushiLpOptimizerProvisioner(self)
-        if name == "StrategyBadgerLpMetaFarm":
+        if settId == "native.uniBadgerWbtc":
             return BadgerLpMetaFarmProvisioner(self)
-        if name == "StrategyCurveGauge":
+        if settId in ["native.renCrv", "native.sbtcCrv", "native.tbtcCrv"]:
             return CurveGaugeProvisioner(self)
-        raise Exception(f"invalid strategy name (no provisioner): {name}")
+        if settId in ["native.sushiSClawUSDC", "native.sushiBClawUSDC"]:
+            return SushiClawUSDCProvisioner(self)
+        raise Exception(f"invalid strategy settID (no provisioner): {settId}")
 
     def _provisionUserActors(self) -> None:
         # Add all users as actors the sim.

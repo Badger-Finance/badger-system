@@ -14,6 +14,7 @@ from helpers.time_utils import days
 from rich.console import Console
 from scripts.systems.constants import SettType
 from scripts.systems.digg_system import DiggSystem, connect_digg
+from scripts.systems.claw_system import ClawSystem
 from scripts.systems.gnosis_safe_system import connect_gnosis_safe
 from scripts.systems.sett_system import deploy_controller, deploy_strategy
 from scripts.systems.uniswap_system import UniswapSystem
@@ -126,8 +127,8 @@ def print_to_file(badger, path):
 
         system["digg_system"] = digg_system
 
-    with open(path, "w") as outfile:
-        json.dump(system, outfile)
+    with open(path, "w") as f:
+        f.write(json.dumps(system, indent=4, sort_keys=True))
 
 
 def connect_badger(
@@ -213,8 +214,10 @@ class BadgerSystem:
         self.contracts_static = []
         self.contracts_upgradeable = {}
         self.gas_strategy = default_gas_strategy
-        # Digg system ref lazily set.
+        # Digg system ref, lazily set.
         self.digg = None
+        # Claw system ref, lazily set.
+        self.claw = None
 
         # Unlock accounts in test mode
         if rpc.is_active():
@@ -655,6 +658,9 @@ class BadgerSystem:
         self.track_contract_upgradeable(id + ".rewards", rewards)
         return rewards
 
+    def add_existing_claw(self, claw_system: ClawSystem):
+        self.claw = claw_system
+
     # ===== Function Call Macros =====
 
     def wire_up_sett(self, vault, strategy, controller):
@@ -746,22 +752,6 @@ class BadgerSystem:
         )
 
     # ===== Strategy Macros =====
-    def deploy_strategy_preconfigured(self, id):
-        if id == "native.badger":
-            self.deploy_strategy_native_badger()
-        if id == "native.renCrv":
-            self.deploy_strategy_native_rencrv()
-        if id == "native.sbtcCrv":
-            self.deploy_strategy_native_sbtccrv()
-        if id == "native.tbtcCrv":
-            self.deploy_strategy_native_tbtccrv()
-        if id == "native.uniBadgerWbtc":
-            self.deploy_strategy_native_uniBadgerWbtc()
-        if id == "pickle.renCrv":
-            self.deploy_strategy_pickle_rencrv()
-        if id == "harvest.renCrv":
-            self.deploy_strategy_harvest_rencrv()
-
     def deploy_strategy_native_badger(self):
         sett = self.getSett("native.badger")
         controller = self.getController("native")
@@ -888,6 +878,7 @@ class BadgerSystem:
 
     def connect_sett(self, id, address):
         sett = Sett.at(address)
+        print(f"connecting sett id {id}")
         self.sett_system.vaults[id] = sett
         self.track_contract_upgradeable(id + ".sett", sett)
 
