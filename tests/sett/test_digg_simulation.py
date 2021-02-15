@@ -9,7 +9,7 @@ from tests.conftest import badger_single_sett, diggSettTestConfig
 @pytest.mark.parametrize(
     "settConfig", diggSettTestConfig,
 )
-def test_simulation(settConfig):
+def test_digg_simulation(settConfig):
     # connect to prod deploy and run simulation
     badger = badger_single_sett(settConfig, deploy=False)
     snap = DiggSnapshotManager(badger, settConfig["id"])

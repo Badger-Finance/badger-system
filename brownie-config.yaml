@@ -5,7 +5,8 @@ networks:
   mainnet-fork:
     explorer: https://api.etherscan.io/api
     cmd_settings:
-      accounts: 100
+      accounts: 50
+      default_balance: 500 ether
 
 project_structure:
   contracts: contracts
