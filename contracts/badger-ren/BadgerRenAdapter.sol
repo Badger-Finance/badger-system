@@ -8,16 +8,14 @@ import "deps/@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "deps/@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 import "deps/@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 
+import "interfaces/badger/ISwapStrategyRouter.sol";
 import "interfaces/ren/IGateway.sol";
-import "interfaces/ren/ISwapStrategyRouter.sol";
 
 contract BadgerRenAdapter is OwnableUpgradeable, ReentrancyGuardUpgradeable {
     using SafeMathUpgradeable for uint256;
     using SafeERC20 for IERC20;
 
-    // TOKEN ID 1 is renBTC.
     IERC20 renBTC;
-    // TOKEN ID 2 is wBTC.
     IERC20 wBTC;
 
     // RenVM gateway registry.
@@ -95,7 +93,7 @@ contract BadgerRenAdapter is OwnableUpgradeable, ReentrancyGuardUpgradeable {
 
     function mint(
         // user args
-        address _token, // either renBTC or 2 wBTC
+        address _token, // either renBTC or wBTC
         uint256 _slippage,
         address payable _destination,
         // darknode args
@@ -109,27 +107,29 @@ contract BadgerRenAdapter is OwnableUpgradeable, ReentrancyGuardUpgradeable {
         bytes32 pHash = keccak256(abi.encode(_token, _slippage, _destination));
         uint256 mintAmount = registry.getGatewayBySymbol("BTC").mint(pHash, _amount, _nHash, _sig);
         uint256 fee = _processFee(renBTC, mintAmount, mintFeeBps);
+        uint256 mintAmountMinusFee = mintAmount.sub(fee);
 
         uint256 wbtcExchanged;
         if (_token == address(wBTC)) {
-            // Try and swap and transfer wbtc if token ID wbtc specified.
+            // Try and swap and transfer wbtc if token wbtc specified.
             uint256 startBalance = wBTC.balanceOf(address(this));
-            if (_swapRenBTCForWBTC(mintAmount.sub(fee), _slippage)) {
+            if (_swapRenBTCForWBTC(mintAmountMinusFee, _slippage)) {
                 uint256 endBalance = wBTC.balanceOf(address(this));
                 wbtcExchanged = endBalance.sub(startBalance);
                 wBTC.safeTransfer(_destination, wbtcExchanged);
+                emit Mint(mintAmount, wbtcExchanged, fee);
                 return;
             }
         }
 
-        renBTC.safeTransfer(_destination, mintAmount.sub(fee));
-
         emit Mint(mintAmount, wbtcExchanged, fee);
+
+        renBTC.safeTransfer(_destination, mintAmountMinusFee);
     }
 
     function burn(
         // user args
-        address _token, // either 1 renBTC or 2 wBTC
+        address _token, // either renBTC or wBTC
         uint256 _slippage,
         bytes calldata _btcDestination,
         uint256 _amount
