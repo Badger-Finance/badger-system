@@ -56,6 +56,8 @@ def connect_swap(badger_deploy_file):
         print(args)
         swap.connect_strategy(*args)
 
+    swap.connect_router(swap_deploy.router)
+
     return swap
 
 
@@ -67,14 +69,14 @@ name_to_artifact = {
 
 class SwapSystem:
     '''
-    The SWAP system curswaptly consists of swap router/strategies for routing of swaps.
+    The SWAP system consists of swap router/strategies for routing of swaps.
     Currently, curve is the only supported swap strategy.
     '''
-    def __init__(self, devProxyAdmin, deployer, config):
-        self.devProxyAdmin = devProxyAdmin
+    def __init__(self, deployer, config):
         self.deployer = deployer
         self.config = config
 
+        # Router ref, lazily set.
         self.router = None
         self.strategies = DotMap()
         self.logic = DotMap()
@@ -103,11 +105,11 @@ class SwapSystem:
 
     def deploy_router(self):
         config = self.config
-        deploy_proxy(
+        self.router = deploy_proxy(
             "SwapStrategyRouter",
             SwapStrategyRouter.abi,
             self.logic.SwapStrategyRouter.address,
-            self.devProxyAdmin.address,
+            config.admin,
             self.logic.SwapStrategyRouter.initialize.encode_input(
                 config.admin,
             ),
@@ -116,14 +118,19 @@ class SwapSystem:
 
     def deploy_curve_swap_strategy(self):
         config = self.config
-        deploy_proxy(
+        self.strategies.curve = deploy_proxy(
             "CurveSwapStrategy",
             CurveSwapStrategy.abi,
             self.logic.CurveSwapStrategy.address,
-            self.devProxyAdmin.address,
+            config.admin,
             self.logic.CurveSwapStrategy.initialize.encode_input(
                 config.admin,
                 config.strategies.curve.registry,
             ),
             self.deployer
         )
+
+    def configure_router(self):
+        config = self.config
+        for strategy in self.strategies.values():
+            self.router.addSwapStrategy(strategy.address, {"from": config.admin})

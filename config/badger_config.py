@@ -437,9 +437,13 @@ claw_config = DotMap(
     ),
 )
 
-ren_config = DotMap(
-    # Rewards address.
-    rewardsAddress="0x0",
+bridge_config = DotMap(
+    # TODO: Fill in with mainnet renVM gateway address.
+    registry="0x0",
+    governance="0xB65cef03b9B89f99517643226d76e286ee999e77",
+    # Dev multisig for testing.
+    rewardsAddress="0xB65cef03b9B89f99517643226d76e286ee999e77",
+    wbtc="0x2260fac5e5542a773aa44fbcfedf7c193bc2c599",
     # Fees below are in bps.
     mintFeeBps=100,
     burnFeeBps=100,
@@ -449,8 +453,7 @@ ren_config = DotMap(
 )
 
 swap_config = DotMap(
-    # Dev multisig.
-    admin="0xB65cef03b9B89f99517643226d76e286ee999e77",
+    admin="0xDA25ee226E534d868f0Dd8a459536b03fEE9079b",  # deployer
     strategies=DotMap(
         curve=DotMap(
             # Mainnet addr for the curve registry address provider.
@@ -464,6 +467,6 @@ config = DotMap(
     sett=sett_config,
     digg=digg_config,
     claw=claw_config,
-    ren=ren_config,
+    bridge=bridge_config,
     swap=swap_config,
 )

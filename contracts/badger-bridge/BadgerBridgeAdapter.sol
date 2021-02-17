@@ -9,9 +9,9 @@ import "deps/@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 import "deps/@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 
 import "interfaces/badger/ISwapStrategyRouter.sol";
-import "interfaces/ren/IGateway.sol";
+import "interfaces/bridge/IGateway.sol";
 
-contract BadgerRenAdapter is OwnableUpgradeable, ReentrancyGuardUpgradeable {
+contract BadgerBridgeAdapter is OwnableUpgradeable, ReentrancyGuardUpgradeable {
     using SafeMathUpgradeable for uint256;
     using SafeERC20 for IERC20;
 
@@ -214,22 +214,22 @@ contract BadgerRenAdapter is OwnableUpgradeable, ReentrancyGuardUpgradeable {
 
     // Admin methods.
     function setMintFeeBps(uint256 _mintFeeBps) external onlyOwner {
-        require(_mintFeeBps <= MAX_BPS, "badger-ren-adapter/excessive-mint-fee");
+        require(_mintFeeBps <= MAX_BPS, "badger-bridge-adapter/excessive-mint-fee");
         mintFeeBps = _mintFeeBps;
     }
 
     function setBurnFeeBps(uint256 _burnFeeBps) external onlyOwner {
-        require(_burnFeeBps <= MAX_BPS, "badger-ren-adapter/excessive-burn-fee");
+        require(_burnFeeBps <= MAX_BPS, "badger-bridge-adapter/excessive-burn-fee");
         burnFeeBps = _burnFeeBps;
     }
 
     function setPercentageFeeGovernanceBps(uint256 _percentageFeeGovernanceBps) external onlyOwner {
-        require(_percentageFeeGovernanceBps + percentageFeeRewardsBps <= MAX_BPS, "badger-ren-adapter/excessive-percentage-fee-governance");
+        require(_percentageFeeGovernanceBps + percentageFeeRewardsBps <= MAX_BPS, "badger-bridge-adapter/excessive-percentage-fee-governance");
         percentageFeeGovernanceBps = _percentageFeeGovernanceBps;
     }
 
     function setPercentageFeeRewardsBps(uint256 _percentageFeeRewardsBps) external onlyOwner {
-        require(_percentageFeeRewardsBps + percentageFeeGovernanceBps <= MAX_BPS, "badger-ren-adapter/excessive-percentage-fee-rewards");
+        require(_percentageFeeRewardsBps + percentageFeeGovernanceBps <= MAX_BPS, "badger-bridge-adapter/excessive-percentage-fee-rewards");
         percentageFeeRewardsBps = _percentageFeeRewardsBps;
     }
 

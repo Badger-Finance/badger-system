@@ -18,7 +18,5 @@ interface IGateway {
 interface IGatewayRegistry {
     function getGatewayBySymbol(string calldata _tokenSymbol) external view returns (IGateway);
 
-    function getGatewayByToken(address _tokenAddress) external view returns (IGateway);
-
     function getTokenBySymbol(string calldata _tokenSymbol) external view returns (IERC20);
 }

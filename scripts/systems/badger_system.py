@@ -3,10 +3,8 @@ from enum import Enum
 
 from brownie import *
 from brownie.network.gas.strategies import GasNowScalingStrategy
-from config.badger_config import badger_config, sett_config
 from dotmap import DotMap
 from config.badger_config import (
-    ren_config,
     badger_config,
     sett_config,
 )
@@ -25,6 +23,7 @@ from scripts.systems.digg_system import connect_digg
 from scripts.systems.constants import SettType
 from scripts.systems.digg_system import DiggSystem, connect_digg
 from scripts.systems.claw_system import ClawSystem
+from scripts.systems.swap_system import SwapSystem
 from scripts.systems.gnosis_safe_system import connect_gnosis_safe
 from scripts.systems.sett_system import deploy_controller, deploy_strategy
 from scripts.systems.uniswap_system import UniswapSystem
@@ -236,6 +235,8 @@ class BadgerSystem:
         self.digg = None
         # Claw system ref, lazily set.
         self.claw = None
+        # Swap system ref, lazily set.
+        self.swap = None
 
         # Unlock accounts in test mode
         if rpc.is_active():
@@ -673,6 +674,9 @@ class BadgerSystem:
 
     def add_existing_claw(self, claw_system: ClawSystem):
         self.claw = claw_system
+
+    def add_existing_swap(self, swap_system: SwapSystem):
+        self.swap = swap_system
 
     # ===== Function Call Macros =====
 
