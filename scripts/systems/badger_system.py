@@ -1,7 +1,6 @@
 import json
 from enum import Enum
 
-import decouple
 from brownie import *
 from brownie.network.gas.strategies import GasNowScalingStrategy
 from config.badger_config import badger_config, sett_config
@@ -234,6 +233,7 @@ class BadgerSystem:
             self.publish_source = False
         else:
             print("RPC Inactive")
+            import decouple
             if load_deployer and load_method == LoadMethod.SK:
                 deployer_key = decouple.config("DEPLOYER_PRIVATE_KEY")
                 self.deployer = accounts.add(deployer_key)
