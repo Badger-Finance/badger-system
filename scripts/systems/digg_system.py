@@ -1,6 +1,5 @@
 from helpers.sett.strategy_registry import strategy_name_to_artifact
 import json
-import decouple
 from brownie import *
 from dotmap import DotMap
 

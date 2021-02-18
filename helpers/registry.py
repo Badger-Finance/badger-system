@@ -184,7 +184,6 @@ token_registry = DotMap(
     farm=harvest_registry.farmToken,
     sushi=sushi_registry.sushiToken,
     xSushi=sushi_registry.xsushiToken,
-    usdc="0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
 )
 
 
@@ -199,11 +198,6 @@ whale_registry = DotMap(
         whale="0x19d099670a21bC0a8211a89B84cEdF59AbB4377F",
         token="0x3472A5A71965499acd81997a54BBA8D852C6E53d",
         action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT
-    ),
-    bBadger=DotMap(
-        whale="0xa9429271a28F8543eFFfa136994c0839E7d7bF77",
-        token="0x19D97D8fA813EE2f51aD4B4e04EA08bAf4DFfC28",
-        action = WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT
     ),
     harvestSuperSett=DotMap(
         whale="0xeD0B7f5d9F6286d00763b0FFCbA886D8f9d56d5e",

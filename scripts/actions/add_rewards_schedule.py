@@ -52,7 +52,9 @@ def main():
 
     rest.printState("Week ?? - who knows anymore")
 
-    rest.testTransactions()
+    rest.transfer(badger.digg.token, Wei("3 gwei"), badger.treasuryMultisig)
+
+    # rest.testTransactions()
 
     # print("overall total ", total)
     # print("expected total ", expected)

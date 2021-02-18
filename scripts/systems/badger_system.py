@@ -1,7 +1,6 @@
 import json
 from enum import Enum
 
-import decouple
 from brownie import *
 from brownie.network.gas.strategies import GasNowScalingStrategy
 from config.badger_config import badger_config, sett_config
@@ -166,8 +165,14 @@ def connect_badger(
     badger.globalStartBlock = badger_deploy["globalStartBlock"]
 
     badger.connect_proxy_admins(
-        badger_deploy["devProxyAdmin"], badger_deploy["daoProxyAdmin"], badger_deploy["opsProxyAdmin"]
+        badger_deploy["devProxyAdmin"],
+        badger_deploy["daoProxyAdmin"],
+        badger_deploy["opsProxyAdmin"],
     )
+
+    badger.connect_multisig(badger_deploy["devMultisig"])
+    badger.connect_ops_multisig(badger_deploy["opsMultisig"])
+    badger.connect_treasury_multisig(badger_deploy["treasuryMultisig"])
 
     badger.connect_logic(badger_deploy["logic"])
 
@@ -228,6 +233,7 @@ class BadgerSystem:
             self.publish_source = False
         else:
             print("RPC Inactive")
+            import decouple
             if load_deployer and load_method == LoadMethod.SK:
                 deployer_key = decouple.config("DEPLOYER_PRIVATE_KEY")
                 self.deployer = accounts.add(deployer_key)
@@ -270,8 +276,6 @@ class BadgerSystem:
         self.geysers = DotMap()
 
         self.connect_dao()
-        self.connect_multisig()
-        self.connect_ops_multisig()
         self.connect_uniswap()
 
         self.globalStartTime = badger_config.globalStartTime
@@ -319,18 +323,14 @@ class BadgerSystem:
 
         self.token = self.dao.token
 
-    def connect_multisig(self):
-        self.devMultisig = connect_gnosis_safe(badger_config.multisig.address)
+    def connect_multisig(self, address):
+        self.devMultisig = connect_gnosis_safe(address)
 
-    def connect_treasury_multisig(self):
-        self.treasuryMultisig = connect_gnosis_safe(
-            badger_config.treasury_multisig.address
-        )
+    def connect_treasury_multisig(self, address):
+        self.treasuryMultisig = connect_gnosis_safe(address)
 
-    def connect_ops_multisig(self):
-        self.opsMultisig = connect_gnosis_safe(
-            badger_config.opsMultisig.address
-        )
+    def connect_ops_multisig(self, address):
+        self.opsMultisig = connect_gnosis_safe(address)
 
     def connect_uniswap(self):
         self.uniswap = UniswapSystem()
@@ -674,11 +674,15 @@ class BadgerSystem:
         controller.setVault(want, vault, {"from": deployer})
 
         controller.approveStrategy(
-            want, strategy, {"from": deployer},
+            want,
+            strategy,
+            {"from": deployer},
         )
 
         controller.setStrategy(
-            want, strategy, {"from": deployer},
+            want,
+            strategy,
+            {"from": deployer},
         )
 
     def wire_up_sett_multisig(self, vault, strategy, controller):
@@ -731,7 +735,9 @@ class BadgerSystem:
         assert rewardsToken.balanceOf(deployer) >= amount
 
         rewardsToken.transfer(
-            rewards, amount, {"from": deployer},
+            rewards,
+            amount,
+            {"from": deployer},
         )
 
         ## uint256 startTimestamp, uint256 _rewardsDuration, uint256 reward
@@ -748,7 +754,11 @@ class BadgerSystem:
         self.rewardsEscrow.approveRecipient(geyser, {"from": deployer})
 
         self.rewardsEscrow.signalTokenLock(
-            self.token, params.amount, params.duration, startTime, {"from": deployer},
+            self.token,
+            params.amount,
+            params.duration,
+            startTime,
+            {"from": deployer},
         )
 
     # ===== Strategy Macros =====
@@ -929,9 +939,7 @@ class BadgerSystem:
 
     def connect_unlock_scheduler(self, address):
         self.unlockScheduler = UnlockScheduler.at(address)
-        self.track_contract_upgradeable(
-            "unlockScheduler", self.unlockScheduler
-        )
+        self.track_contract_upgradeable("unlockScheduler", self.unlockScheduler)
 
     def connect_dao_digg_timelock(self, address):
         # TODO: Implement with Digg
