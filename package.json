@@ -28,7 +28,7 @@
         "lint": "pretty-quick --pattern '**/*.*(sol|json)' --verbose",
         "lint:check": "prettier --check **/*.sol **/*.json",
         "lint:fix": "pretty-quick --pattern '**/*.*(sol|json)' --staged --verbose",
-        "test": "./run_js_tests.sh"
+        "test": "./run-js-tests.sh"
     },
     "husky": {
         "hooks": {

@@ -69,6 +69,7 @@ contract BadgerBridgeAdapter is OwnableUpgradeable, ReentrancyGuardUpgradeable {
         percentageFeeGovernanceBps = _feeConfig[3];
     }
 
+    // NB: This recovery fn only works for the BTC gateway (hardcoded and only one supported in this adapter).
     function recoverStuck(
         // encoded user args
         bytes calldata encoded,
@@ -128,8 +129,6 @@ contract BadgerBridgeAdapter is OwnableUpgradeable, ReentrancyGuardUpgradeable {
         renBTC.safeTransfer(_destination, mintAmountMinusFee);
     }
 
-    event Debug(address wbtc, uint256 _allowance, uint256 _amount);
-
     function burn(
         // user args
         address _token, // either renBTC or wBTC
@@ -159,7 +158,6 @@ contract BadgerBridgeAdapter is OwnableUpgradeable, ReentrancyGuardUpgradeable {
         emit Burn(toBurnAmount, wbtcTransferred, fee);
 
         uint256 burnAmount = registry.getGatewayBySymbol("BTC").burn(_btcDestination, toBurnAmount.sub(fee));
-        require(toBurnAmount.sub(fee) == burnAmount, "burned amount does not match to burn amount minus fees");
     }
 
     function _swapWBTCForRenBTC(uint256 _amount, uint256 _slippage) internal {

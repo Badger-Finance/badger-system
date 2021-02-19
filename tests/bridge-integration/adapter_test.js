@@ -23,14 +23,10 @@ const logger = require('pino')({
 //const logger = console
 
 const {
-  KOVAN_WBTC_TOKEN_ADDR,
   KOVAN_RENBTC_TOKEN_ADDR,
-  // Curve exchange renBTC/wBTC trading pair addr.
-  KOVAN_CURVE_TRADING_PAIR_ADDR,
   KOVAN_ADAPTER_ADDR,
 } = require('./deploy.json');
-const WBTCFaucetABI = require('./WBTCFaucet.json');
-const renBTCABI = require('./renBTC.json');
+const ERC20ABI = require('./erc20-abi.json');
 
 require('dotenv').config();
 
@@ -55,7 +51,7 @@ const renJS = new RenJS(NETWORK, {
 let web3 = null;
 let account = null;
 before(async function() {
-  this.timeout(5000);
+  this.timeout(60000);
   // Create and set default eth test account for all tests (we want to mint/burn from same eth addr).
   const provider = new HDWalletProvider(MNEMONIC, INFURA_URL, 0, 10);
   web3 = new Web3(provider);
@@ -70,51 +66,48 @@ before(async function() {
     throw `Invalid network id ${networkID}, must use kovan network`;
   }
 
-  // Approve eth account for spending of wbtc/renbtc.
-  const wbtc = new web3.eth.Contract(WBTCFaucetABI, KOVAN_WBTC_TOKEN_ADDR);
-  await approveSpend(wbtc);
-  const renBTC = new web3.eth.Contract(renBTCABI, KOVAN_RENBTC_TOKEN_ADDR);
+  const renBTC = new web3.eth.Contract(ERC20ABI, KOVAN_RENBTC_TOKEN_ADDR);
   await approveSpend(renBTC);
 });
 
 describe('BadgerRenAdapter', function() {
   this.timeout(60 * MINUTES); // 60 minute t/o for integration tests
 
-  it('should mint renBTC', async () => {
-    const params = {
-      asset: 'BTC',
-      from: Bitcoin(),
-      to: Ethereum(web3.currentProvider, ETHEREUM_NETWORK).Contract({
-      sendTo: KOVAN_ADAPTER_ADDR,
-      contractFn: 'mint',
-      // Arguments expected for calling `mint`
-      contractParams: [
-        {
-          name: '_token',
-          type: 'address',
-          value: KOVAN_RENBTC_TOKEN_ADDR,
-        },
-        {
-          name: '_slippage',
-          type: 'uint256',
-          // Max slippage is unused param since we're not swapping.
-          value: 0,
-        },
-        {
-          name: '_to',
-          type: 'address',
-          value: web3.eth.defaultAccount,
-        },
-      ],
-    }),
-  };
+  ///it('should mint renBTC', async () => {
+  //  const params = {
+  //    asset: 'BTC',
+  //    from: Bitcoin(),
+  //    to: Ethereum(web3.currentProvider, ETHEREUM_NETWORK).Contract({
+  //      sendTo: KOVAN_ADAPTER_ADDR,
+  //      contractFn: 'mint',
+  //      // Arguments expected for calling `mint`
+  //      contractParams: [
+  //        {
+  //          name: '_token',
+  //          type: 'address',
+  //          value: KOVAN_RENBTC_TOKEN_ADDR,
+  //        },
+  //        {
+  //          name: '_slippage',
+  //          type: 'uint256',
+  //          // Max slippage is unused param since we're not swapping.
+  //          value: 0,
+  //        },
+  //        {
+  //          name: '_to',
+  //          type: 'address',
+  //          value: web3.eth.defaultAccount,
+  //        },
+  //      ],
+  //    }),
+  //  };
 
-    const mint = await renJS.lockAndMint(params);
+  //  const mint = await renJS.lockAndMint(params);
 
-    logger.info('processing renBTC mint...');
-    const amount = 0.00101;
-    await processMint(mint, amount);
-  });
+  //  logger.info('processing renBTC mint...');
+  //  const amount = 0.00101;
+  //  await processMint(mint, amount);
+  //});
 
   it('should burn renBTC', async () => {
     const recipient = await account.address('btc');
@@ -125,18 +118,29 @@ describe('BadgerRenAdapter', function() {
       to: Bitcoin().Address(recipient),
       from: Ethereum(web3.currentProvider).Contract((btcAddress) => ({
         sendTo: KOVAN_ADAPTER_ADDR,
-        contractFn: 'burnRenBTC',
+        contractFn: 'burn',
         contractParams: [
-            {
-                type: 'bytes',
-                name: '_to',
-                value: Buffer.from(btcAddress),
-            },
-            {
-                type: 'uint256',
-                name: '_amount',
-                value: RenJS.utils.toSmallestUnit(amount, 8),
-            },
+          {
+            name: '_token',
+            type: 'address',
+            value: KOVAN_RENBTC_TOKEN_ADDR,
+          },
+          {
+            name: '_slippage',
+            type: 'uint256',
+            // Max slippage is unused param since we're not swapping.
+            value: 0,
+          },
+          {
+              type: 'bytes',
+              name: '_to',
+              value: Buffer.from(btcAddress),
+          },
+          {
+              type: 'uint256',
+              name: '_amount',
+              value: RenJS.utils.toSmallestUnit(amount, 8),
+          },
         ],
         // NB: Need to include gas for burn tx as the gas cost of the burn method
         // is not estimatable.
@@ -190,18 +194,20 @@ const submitMint = async (mint) => {
   await minting;
 };
 
+// NB: using console.log here due to context propagation issue w/ pino logger.
+// The logger info fn gets overwritten.
 const processBurn = async function (burn) {
   let confirmations = 0;
   await burn
     .burn()
     // Ethereum transaction confirmations.
     .on('confirmation', (confs) => {
-        logger.info(`received burn confirmation #: ${confs}`);
+        console.log(`received burn confirmation #: ${confs}`);
         confirmations = confs;
     })
     // Print Ethereum transaction hash.
     .on('transactionHash', (txHash) =>
-        logger.info(`txHash: ${String(txHash)}`),
+        console.log(`txHash: ${String(txHash)}`),
     );
 
   await burn
@@ -209,13 +215,13 @@ const processBurn = async function (burn) {
     // Print RenVM status - 'pending', 'confirming' or 'done'.
     .on('status', (status) => {
       if (status === 'confirming') {
-        logger.info(`${status} (${confirmations}/15)`);
+        console.log(`${status} (${confirmations}/15)`);
       } else {
-        logger.info(status);
+        console.log(status);
       }
     })
     // Print RenVM transaction hash
-    .on('txHash', logger.info);
+    .on('txHash', console.log);
 };
 
 const approveSpend = async (erc20) => {
