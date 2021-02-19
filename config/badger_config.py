@@ -453,7 +453,7 @@ bridge_config = DotMap(
 )
 
 swap_config = DotMap(
-    admin="0xDA25ee226E534d868f0Dd8a459536b03fEE9079b",  # deployer
+    adminMultiSig="0xB65cef03b9B89f99517643226d76e286ee999e77",  # dev multisig
     strategies=DotMap(
         curve=DotMap(
             # Mainnet addr for the curve registry address provider.

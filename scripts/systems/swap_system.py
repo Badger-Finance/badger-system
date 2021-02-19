@@ -1,7 +1,12 @@
 import json
-from brownie import SwapStrategyRouter, CurveSwapStrategy
+from brownie import (
+    web3,
+    SwapStrategyRouter,
+    CurveSwapStrategy,
+)
 from dotmap import DotMap
 
+from scripts.systems.gnosis_safe_system import connect_gnosis_safe
 from helpers.proxy_utils import deploy_proxy
 from config.badger_config import swap_config
 
@@ -72,9 +77,12 @@ class SwapSystem:
     The SWAP system consists of swap router/strategies for routing of swaps.
     Currently, curve is the only supported swap strategy.
     '''
-    def __init__(self, deployer, config):
+    def __init__(self, deployer, devProxyAdmin, config):
         self.deployer = deployer
+        self.devProxyAdmin = devProxyAdmin
         self.config = config
+        # Admin is a multisig
+        self.admin = connect_gnosis_safe(config.adminMultiSig)
 
         # Router ref, lazily set.
         self.router = None
@@ -104,33 +112,44 @@ class SwapSystem:
         )
 
     def deploy_router(self):
-        config = self.config
+        admin = self.admin
+        devProxyAdmin = self.devProxyAdmin
         self.router = deploy_proxy(
             "SwapStrategyRouter",
             SwapStrategyRouter.abi,
             self.logic.SwapStrategyRouter.address,
-            config.admin,
+            web3.toChecksumAddress(devProxyAdmin.address),
             self.logic.SwapStrategyRouter.initialize.encode_input(
-                config.admin,
+                admin.address,
             ),
             self.deployer
         )
 
     def deploy_curve_swap_strategy(self):
         config = self.config
+        admin = self.admin
+        devProxyAdmin = self.devProxyAdmin
         self.strategies.curve = deploy_proxy(
             "CurveSwapStrategy",
             CurveSwapStrategy.abi,
             self.logic.CurveSwapStrategy.address,
-            config.admin,
+            web3.toChecksumAddress(devProxyAdmin.address),
             self.logic.CurveSwapStrategy.initialize.encode_input(
-                config.admin,
+                admin.address,
                 config.strategies.curve.registry,
             ),
             self.deployer
         )
 
+    # ===== Configuration =====
+
     def configure_router(self):
-        config = self.config
+        admin = self.admin
         for strategy in self.strategies.values():
-            self.router.addSwapStrategy(strategy.address, {"from": config.admin})
+            self.router.addSwapStrategy(strategy.address, {"from": admin})
+
+    # Grant swapper role to all strategies.
+    def configure_strategies_grant_swapper_role(self, swapper):
+        admin = self.admin
+        for strategy in self.strategies.values():
+            strategy.grantRole(strategy.SWAPPER_ROLE(), swapper, {"from": admin})

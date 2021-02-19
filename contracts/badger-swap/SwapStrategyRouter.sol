@@ -48,8 +48,10 @@ contract SwapStrategyRouter is ISwapStrategyRouter, AccessControlUpgradeable, Re
     }
 
     /* ========== ADMIN ========== */
-    function addSwapStrategy(address _strategy) external onlyAdmin {
+    function addSwapStrategy(address _strategy) external returns (bool) {
         strategies.add(_strategy);
+        //return hasRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        return true;
     }
 
     /* ========== MODIFIERS ========== */

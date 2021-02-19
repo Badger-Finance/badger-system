@@ -86,9 +86,20 @@ describe('BadgerRenAdapter', function() {
       from: Bitcoin(),
       to: Ethereum(web3.currentProvider, ETHEREUM_NETWORK).Contract({
       sendTo: KOVAN_ADAPTER_ADDR,
-      contractFn: 'mintRenBTC',
+      contractFn: 'mint',
       // Arguments expected for calling `mint`
       contractParams: [
+        {
+          name: '_token',
+          type: 'address',
+          value: KOVAN_RENBTC_TOKEN_ADDR,
+        },
+        {
+          name: '_slippage',
+          type: 'uint256',
+          // Max slippage is unused param since we're not swapping.
+          value: 0,
+        },
         {
           name: '_to',
           type: 'address',
@@ -104,38 +115,6 @@ describe('BadgerRenAdapter', function() {
     const amount = 0.00101;
     await processMint(mint, amount);
   });
-
-  it('should mint wBTC', async () => {
-    const maxSlippage = 0.10;
-    const params = {
-      asset: 'BTC',
-      from: Bitcoin(),
-      to: Ethereum(web3.currentProvider, ETHEREUM_NETWORK).Contract({
-        sendTo: KOVAN_ADAPTER_ADDR,
-        contractFn: 'mintWBTC',
-        // Arguments expected for calling `mint`
-        contractParams: [
-          {
-            name: '_slippage',
-            type: 'uint256',
-            value: Number(maxSlippage * 10000).toFixed(0),
-          },
-          {
-            name: '_to',
-            type: 'address',
-            value: web3.eth.defaultAccount,
-          },
-        ],
-      }),
-    };
-
-    const mint = await renJS.lockAndMint(params);
-
-    logger.info('processing wBTC mint...');
-    const amount = 0.00101;
-    await processMint(mint, amount);
-  });
-
 
   it('should burn renBTC', async () => {
     const recipient = await account.address('btc');
@@ -168,47 +147,6 @@ describe('BadgerRenAdapter', function() {
     const burn = await renJS.burnAndRelease(params);
     logger.info('processing renBTC burn...');
     await processBurn(burn);
-  });
-
-  it('should burn wBTC', async () => {
-    const recipient = await account.address('btc');
-    const amount = .0015;
-    const maxSlippage = .1;
-    const minAmount = amount * (1 - maxSlippage);
-    const params = {
-      // Send BTC from Ethereum back to the Bitcoin blockchain.
-      asset: 'BTC',
-      to: Bitcoin().Address(recipient),
-      from: Ethereum(web3.currentProvider).Contract((btcAddress) => ({
-        sendTo: KOVAN_ADAPTER_ADDR,
-        contractFn: 'burnWBTC',
-        contractParams: [
-          {
-            type: 'bytes',
-            name: '_to',
-            value: Buffer.from(btcAddress),
-          },
-          {
-            type: 'uint256',
-            name: '_amount',
-            value: RenJS.utils.toSmallestUnit(amount, 8),
-          },
-          {
-            type: 'uint256',
-            name: '_minAmount',
-            value: RenJS.utils.toSmallestUnit(minAmount.toFixed(8), 8),
-          },
-        ],
-        // NB: Need to include gas for burn tx as the gas cost of the burn method
-        // is not estimatable.
-        txConfig: { gas: 1000000 },
-      })),
-    };
-
-    const burn = await renJS.burnAndRelease(params);
-    logger.info('processing renBTC burn...');
-    await processBurn(burn);
-    logger.info(`Withdrew ${amount} BTC to ${recipient}.`);
   });
 });
 

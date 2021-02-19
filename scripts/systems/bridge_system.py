@@ -1,5 +1,6 @@
 import json
 from brownie import (
+    web3,
     BadgerBridgeAdapter,
     MockGatewayRegistry,
     MockGateway,
@@ -7,6 +8,7 @@ from brownie import (
 )
 from dotmap import DotMap
 
+from scripts.systems.swap_system import SwapSystem
 from helpers.registry import whale_registry
 from helpers.token_utils import distribute_from_whale
 from helpers.proxy_utils import deploy_proxy
@@ -50,7 +52,7 @@ def connect_bridge(badger_deploy_file):
         bridge_config,
         badger_deploy["deployer"],
     )
-    bridge.connect_bridge(bridge_deploy.bridge)
+    bridge.connect_adapter(bridge_deploy.adapter)
 
     return bridge
 
@@ -65,51 +67,71 @@ class BridgeSystem:
     The BRIDGE system consists of a renVM mint/burn bridge and some mocking utilities for testing.
     Bridge zap contracts will be added at a later date.
     '''
-    def __init__(self, deployer, config):
+    def __init__(self, deployer, devProxyAdmin, config):
         self.deployer = deployer
+        self.devProxyAdmin = devProxyAdmin
         self.config = config
 
-        # Bridge ref, lazily set.
-        self.bridge = None
+        # Adapter ref, lazily set.
+        self.adapter = None
+        # Swap ref, lazily set.
+        self.swap = None
         self.strategies = DotMap()
         self.logic = DotMap()
         # Mocks for testing only.
         self.mocks = DotMap()
 
-    def connect_bridge(self, address) -> None:
-        self.bridge = BadgerBridgeAdapter.at(address)
+    def connect_adapter(self, address) -> None:
+        self.adapter = BadgerBridgeAdapter.at(address)
 
     def connect_logic(self, logic):
         for name, address in logic.items():
             Artifact = name_to_artifact[name]
             self.logic[name] = Artifact.at(address)
 
+    def add_existing_swap(self, swap_system: SwapSystem):
+        self.swap = swap_system
+
     # ===== Deployers =====
 
-    def deploy_bridge(
+    def deploy_adapter(
         self,
         registry,
         router,
     ):
-        self.bridge = deploy_proxy(
+        config = self.config
+        deployer = self.deployer
+        devProxyAdmin = self.devProxyAdmin
+        logic = self.logic
+        self.adapter = deploy_proxy(
             "BadgerBridgeAdapter",
             BadgerBridgeAdapter.abi,
-            self.logic.BadgerBridgeAdapter.address,
-            self.devProxyAdmin.address,
-            self.logic.BadgerBridgeAdapter.initialize.encode_input(
-                self.config.governance,
-                self.config.rewardsAddress,
+            logic.BadgerBridgeAdapter.address,
+            web3.toChecksumAddress(devProxyAdmin.address),
+            logic.BadgerBridgeAdapter.initialize.encode_input(
+                config.governance,
+                config.rewardsAddress,
                 registry,
                 router,
-                self.config.wbtc,
+                config.wbtc,
                 [
-                    self.config.mintFeeBps,
-                    self.config.burnFeeBps,
-                    self.config.percentageFeeRewardsBps,
-                    self.config.percentageFeeGovernanceBps,
+                    config.mintFeeBps,
+                    config.burnFeeBps,
+                    config.percentageFeeRewardsBps,
+                    config.percentageFeeGovernanceBps,
                 ]
             ),
-            self.deployer,
+            deployer,
+        )
+
+    def deploy_logic(self, name, BrownieArtifact, test=False):
+        deployer = self.deployer
+        if test:
+            self.logic[name] = BrownieArtifact.deploy({"from": deployer})
+            return
+
+        self.logic[name] = BrownieArtifact.deploy(
+            {"from": deployer}, publish_source=self.publish_source
         )
 
     # ===== Testing =====
@@ -117,11 +139,12 @@ class BridgeSystem:
     def deploy_mocks(self):
         deployer = self.deployer
         registry = MockGatewayRegistry.deploy({"from": deployer})
-        for (tokenName, whaleConfig) in [("BTC", whale_registry.renBTC)]:
+        for (tokenName, whaleConfig) in [("BTC", whale_registry.renbtc)]:
             token = ERC20.at(whaleConfig.token)
             gateway = MockGateway.deploy(token.address, {"from": deployer})
-            # Distribute token from whale -> mock gateway.
-            distribute_from_whale(whaleConfig, gateway)
+            # Distribute token from whale -> deployer -> mock gateway.
+            distribute_from_whale(whaleConfig, deployer, percentage=1.0)
+            token.transfer(gateway, token.balanceOf(deployer), {"from": deployer})
             self.mocks[tokenName] = DotMap(
                 token=token,
                 gateway=gateway,

@@ -183,6 +183,8 @@ token_registry = DotMap(
     farm=harvest_registry.farmToken,
     sushi=sushi_registry.sushiToken,
     xSushi=sushi_registry.xsushiToken,
+    usdc="0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+    renbtc="0xeb4c2781e4eba804ce9a9803c67d0893436bb27d",
 )
 
 
@@ -263,7 +265,7 @@ whale_registry = DotMap(
         token="0x798D1bE841a82a273720CE31c822C61a67a601C3",
         action = WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT
     ),
-    renBTC=DotMap(
+    renbtc=DotMap(
         whale="0x35ffd6e268610e764ff6944d07760d0efe5e40e5",
         token="0xeb4c2781e4eba804ce9a9803c67d0893436bb27d",
         action = WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT

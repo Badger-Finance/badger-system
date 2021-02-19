@@ -106,6 +106,7 @@ contract BadgerBridgeAdapter is OwnableUpgradeable, ReentrancyGuardUpgradeable {
         // Mint renBTC tokens
         bytes32 pHash = keccak256(abi.encode(_token, _slippage, _destination));
         uint256 mintAmount = registry.getGatewayBySymbol("BTC").mint(pHash, _amount, _nHash, _sig);
+        require(mintAmount > 0, "zero mint amount");
         uint256 fee = _processFee(renBTC, mintAmount, mintFeeBps);
         uint256 mintAmountMinusFee = mintAmount.sub(fee);
 
@@ -127,6 +128,8 @@ contract BadgerBridgeAdapter is OwnableUpgradeable, ReentrancyGuardUpgradeable {
         renBTC.safeTransfer(_destination, mintAmountMinusFee);
     }
 
+    event Debug(address wbtc, uint256 _allowance, uint256 _amount);
+
     function burn(
         // user args
         address _token, // either renBTC or wBTC
@@ -140,7 +143,6 @@ contract BadgerBridgeAdapter is OwnableUpgradeable, ReentrancyGuardUpgradeable {
         uint256 startBalance = renBTC.balanceOf(address(this));
 
         if (_token == address(renBTC)) {
-            require(renBTC.balanceOf(address(msg.sender)) >= _amount);
             renBTC.safeTransferFrom(msg.sender, address(this), _amount);
         }
 
@@ -176,7 +178,7 @@ contract BadgerBridgeAdapter is OwnableUpgradeable, ReentrancyGuardUpgradeable {
         (address strategy, uint256 estimatedAmount) = router.optimizeSwap(address(renBTC), address(wBTC), _amount);
         uint256 minAmount = _minAmount(_slippage, _amount);
         if (minAmount > estimatedAmount) {
-            // Do not swap if slippage is too high>
+            // Do not swap if slippage is too high;
             return false;
         }
 
@@ -193,7 +195,7 @@ contract BadgerBridgeAdapter is OwnableUpgradeable, ReentrancyGuardUpgradeable {
     // Minimum amount w/ slippage applied.
     function _minAmount(uint256 _slippage, uint256 _amount) internal returns (uint256) {
         _slippage = uint256(1e4).sub(_slippage);
-        return _amount.div(_slippage).mul(1e4);
+        return _amount.mul(_slippage).div(1e4);
     }
 
     function _processFee(

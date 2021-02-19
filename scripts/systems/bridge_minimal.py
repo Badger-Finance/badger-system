@@ -1,4 +1,4 @@
-from brownie import accounts, BadgerBridgeAdapter
+from brownie import BadgerBridgeAdapter
 
 from .bridge_system import BridgeSystem
 from .swap_system import SwapSystem
@@ -8,12 +8,10 @@ from config.badger_config import (
 )
 
 
-def deploy_bridge_minimal(deployer, test=False) -> BridgeSystem:
-    bridge = BridgeSystem(deployer, bridge_config)
+def deploy_bridge_minimal(deployer, devProxyAdmin, test=False) -> BridgeSystem:
+    bridge = BridgeSystem(deployer, devProxyAdmin, bridge_config)
 
-    accounts.at(swap_config.admin, force=True)
-
-    swap = SwapSystem(deployer, swap_config)
+    swap = SwapSystem(deployer, devProxyAdmin, swap_config)
     swap.deploy_logic()
     swap.deploy_router()
     swap.deploy_curve_swap_strategy()
@@ -27,9 +25,12 @@ def deploy_bridge_minimal(deployer, test=False) -> BridgeSystem:
         registry = bridge.mocks.registry
 
     bridge.deploy_logic("BadgerBridgeAdapter", BadgerBridgeAdapter, test=test)
-    bridge.deploy_bridge(
+    bridge.deploy_adapter(
         registry,
         swap.router,
     )
+    bridge.add_existing_swap(swap)
+    # Grant strategy swapper role to bridge adapter.
+    swap.configure_strategies_grant_swapper_role(bridge.adapter.address)
 
     return bridge

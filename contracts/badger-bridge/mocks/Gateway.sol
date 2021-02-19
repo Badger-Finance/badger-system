@@ -29,7 +29,7 @@ contract MockGatewayRegistry is IGatewayRegistry, Ownable {
     }
 
     function addToken(string calldata _tokenSymbol, address _token) external onlyOwner {
-        gateways[keccak256(abi.encodePacked(_tokenSymbol))] = _token;
+        tokens[keccak256(abi.encodePacked(_tokenSymbol))] = _token;
     }
 }
 
@@ -51,10 +51,15 @@ contract MockGateway is IGateway {
     ) external override returns (uint256) {
         // Just transfer the mint amount to the minter.
         IERC20(token).safeTransfer(msg.sender, _amount);
+        return _amount;
     }
 
     function burn(bytes calldata _to, uint256 _amount) external override returns (uint256) {
         // Just transfer the burned amount back to the gateway.
         IERC20(token).safeTransferFrom(msg.sender, address(this), _amount);
+        return _amount;
     }
+
+    // no-op receive funds for testing
+    receive() external payable {}
 }
