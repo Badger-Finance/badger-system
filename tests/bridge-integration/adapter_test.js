@@ -73,41 +73,41 @@ before(async function() {
 describe('BadgerRenAdapter', function() {
   this.timeout(60 * MINUTES); // 60 minute t/o for integration tests
 
-  ///it('should mint renBTC', async () => {
-  //  const params = {
-  //    asset: 'BTC',
-  //    from: Bitcoin(),
-  //    to: Ethereum(web3.currentProvider, ETHEREUM_NETWORK).Contract({
-  //      sendTo: KOVAN_ADAPTER_ADDR,
-  //      contractFn: 'mint',
-  //      // Arguments expected for calling `mint`
-  //      contractParams: [
-  //        {
-  //          name: '_token',
-  //          type: 'address',
-  //          value: KOVAN_RENBTC_TOKEN_ADDR,
-  //        },
-  //        {
-  //          name: '_slippage',
-  //          type: 'uint256',
-  //          // Max slippage is unused param since we're not swapping.
-  //          value: 0,
-  //        },
-  //        {
-  //          name: '_to',
-  //          type: 'address',
-  //          value: web3.eth.defaultAccount,
-  //        },
-  //      ],
-  //    }),
-  //  };
+  /it('should mint renBTC', async () => {
+    const params = {
+      asset: 'BTC',
+      from: Bitcoin(),
+      to: Ethereum(web3.currentProvider, ETHEREUM_NETWORK).Contract({
+        sendTo: KOVAN_ADAPTER_ADDR,
+        contractFn: 'mint',
+        // Arguments expected for calling `mint`
+        contractParams: [
+          {
+            name: '_token',
+            type: 'address',
+            value: KOVAN_RENBTC_TOKEN_ADDR,
+          },
+          {
+            name: '_slippage',
+            type: 'uint256',
+            // Max slippage is unused param since we're not swapping.
+            value: 0,
+          },
+          {
+            name: '_to',
+            type: 'address',
+            value: web3.eth.defaultAccount,
+          },
+        ],
+      }),
+    };
 
-  //  const mint = await renJS.lockAndMint(params);
+    const mint = await renJS.lockAndMint(params);
 
-  //  logger.info('processing renBTC mint...');
-  //  const amount = 0.00101;
-  //  await processMint(mint, amount);
-  //});
+    logger.info('processing renBTC mint...');
+    const amount = 0.00101;
+    await processMint(mint, amount);
+  });
 
   it('should burn renBTC', async () => {
     const recipient = await account.address('btc');
