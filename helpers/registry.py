@@ -169,7 +169,7 @@ curve_registry = DotMap(
 )
 
 badger_registry = DotMap(
-    token="0x3472a5a71965499acd81997a54bba8d852c6e53d"
+    token="0x3472a5a71965499acd81997a54bba8d852c6e53d",
 )
 
 token_registry = DotMap(
@@ -178,12 +178,13 @@ token_registry = DotMap(
     crv="0xD533a949740bb3306d119CC777fa900bA034cd52",
     tbtc="0x8daebade922df735c38c80c7ebd708af50815faa",
     usdt="0xdac17f958d2ee523a2206206994597c13d831ec7",
-    usdc="0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
     badger=badger_registry.token,
     digg="0x798D1bE841a82a273720CE31c822C61a67a601C3",
     farm=harvest_registry.farmToken,
     sushi=sushi_registry.sushiToken,
     xSushi=sushi_registry.xsushiToken,
+    usdc="0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+    renbtc="0xeb4c2781e4eba804ce9a9803c67d0893436bb27d",
 )
 
 
@@ -249,11 +250,6 @@ whale_registry = DotMap(
         token="0xCEfF51756c56CeFFCA006cD410B03FFC46dd3a58",
         action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT
     ),
-    bBadger=DotMap(
-        whale="0x168fa4917e7cd18f4ed3dc313c4975851ca9e5e7",
-        token="0x19D97D8fA813EE2f51aD4B4e04EA08bAf4DFfC28",
-        action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT
-    ),
     bSushiWbtcEth=DotMap(
         whale="0x032c701886ad0317f0e58c8f4a570c6f9c0bbf4a",
         token="0x758A43EE2BFf8230eeb784879CdcFF4828F2544D",
@@ -267,6 +263,11 @@ whale_registry = DotMap(
     digg=DotMap(
         whale="0x4a8651F2edD68850B944AD93f2c67af817F39F62",
         token="0x798D1bE841a82a273720CE31c822C61a67a601C3",
+        action = WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT
+    ),
+    renbtc=DotMap(
+        whale="0x35ffd6e268610e764ff6944d07760d0efe5e40e5",
+        token="0xeb4c2781e4eba804ce9a9803c67d0893436bb27d",
         action = WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT
     ),
 )

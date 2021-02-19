@@ -3,6 +3,7 @@ import time
 
 from brownie import Wei, web3, chain
 from dotmap import DotMap
+from helpers.proxy_utils import deploy_proxy
 from helpers.constants import AddressZero
 from helpers.registry import registry
 from helpers.time_utils import days, to_timestamp
@@ -436,4 +437,36 @@ claw_config = DotMap(
     ),
 )
 
-config = DotMap(badger=badger_config, sett=sett_config, digg=digg_config, claw=claw_config)
+bridge_config = DotMap(
+    # TODO: Fill in with mainnet renVM gateway address.
+    registry="0x0",
+    governance="0xB65cef03b9B89f99517643226d76e286ee999e77",
+    # Dev multisig for testing.
+    rewardsAddress="0xB65cef03b9B89f99517643226d76e286ee999e77",
+    wbtc="0x2260fac5e5542a773aa44fbcfedf7c193bc2c599",
+    # Fees below are in bps.
+    mintFeeBps=100,
+    burnFeeBps=100,
+    # 50/50 rewards/governance.
+    percentageFeeRewardsBps=5000,
+    percentageFeeGovernanceBps=5000,
+)
+
+swap_config = DotMap(
+    adminMultiSig="0xB65cef03b9B89f99517643226d76e286ee999e77",  # dev multisig
+    strategies=DotMap(
+        curve=DotMap(
+            # Mainnet addr for the curve registry address provider.
+            registry="0x0000000022D53366457F9d5E68Ec105046FC4383",
+        ),
+    ),
+)
+
+config = DotMap(
+    badger=badger_config,
+    sett=sett_config,
+    digg=digg_config,
+    claw=claw_config,
+    bridge=bridge_config,
+    swap=swap_config,
+)
