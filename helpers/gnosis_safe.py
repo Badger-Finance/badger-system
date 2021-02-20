@@ -81,6 +81,7 @@ class GnosisSafe:
 
         if print_output:
             self.printTx(id)
+            print(tx.call_trace())
 
         if self.testMode:
             tx = exec_direct(self.contract, tx.params)

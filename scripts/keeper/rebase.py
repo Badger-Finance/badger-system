@@ -30,7 +30,8 @@ gas_strategies.set_default(gas_strategies.rapid)
 def main():
     console.print("[white]===== Checking Parameters for rebase =====[/white]")
     # Connect badger system from file
-    badger = connect_badger("deploy-final.json", load_deployer=True)
+    account = accounts.load("badger_utility")
+    badger = connect_badger("deploy-final.json")
     digg = connect_digg("deploy-final.json")
 
     supplyBefore = digg.token.totalSupply()
@@ -66,7 +67,7 @@ def main():
     # Give adequate time between TX attempts
     if (time_since_last_rebase > hours(2) and in_rebase_window):
         console.print("[bold yellow]===== 📈 Rebase! 📉=====[/bold yellow]")
-        tx = digg.orchestrator.rebase({'from': badger.deployer})
+        tx = digg.orchestrator.rebase({'from': account})
         chain.mine()
         print(tx.call_trace())
         print(tx.events)
