@@ -20,9 +20,10 @@ contract StrategyKeeperLpOptimizer is BaseStrategyMultiSwapper {
     using AddressUpgradeable for address;
     using SafeMathUpgradeable for uint256;
 
+    // TODO: Decide on rewards harvesting strategy.
     // NB: Currently only the uni ROOK/ETH has any liquidity so the swap path we have to
     // take is ROOK -> WETH -> RenBTC on uni.
-    address public constant weth = 0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2; // WEth token
+    address public constant weth = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2; // WEth token
     // NB: There is no staking of rook available.
     address public constant rook = 0xfA5047c9c78B8877af97BDcb85Db743fD7313d4a; // Rook token
 
