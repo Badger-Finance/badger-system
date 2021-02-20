@@ -2,29 +2,29 @@
 pragma solidity 0.6.8;
 
 import "interfaces/digg/IMedianOracle.sol";
+import "deps/@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
-/* On-chain oracle data source that always push a constant value specified on creation */
-contract ConstantOracle {
-  uint256 internal _value;
-  IMedianOracle internal _medianOracle;
+/* 
+    ===== Constant "Always 1" Oracle =====
+    On-chain data source that always pushes the value representing one to the specified Oracle.
+    Intended for use with the DIGG CPI Oracle, which is effectively unused, always returning 1.
+*/
+contract ConstantOracle is OwnableUpgradeable {
+    IMedianOracle internal _medianOracle;
 
-  event UpdatePushed(IMedianOracle medianOracle, uint256 value);
+    event UpdatePushed(IMedianOracle medianOracle, uint256 value);
 
-  constructor(uint256 value, IMedianOracle medianOracle) public {
-    _value = value;
-    _medianOracle = medianOracle;
-  }
+    constructor(IMedianOracle medianOracle) public {
+        __Ownable_init();
+        _medianOracle = medianOracle;
+    }
 
-  function updateAndPush() external {
-    _medianOracle.pushReport(_value);
-    emit UpdatePushed(_medianOracle, _value);
-  }
+    function updateAndPush() external onlyOwner {
+        _medianOracle.pushReport(1 ether);
+        emit UpdatePushed(_medianOracle, 1 ether);
+    }
 
-  function value() external view returns(uint256) {
-    return _value;
-  }
-
-  function medianOracle() external view returns(IMedianOracle) {
-    return _medianOracle;
-  }
+    function medianOracle() external view returns (IMedianOracle) {
+        return _medianOracle;
+    }
 }

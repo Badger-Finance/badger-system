@@ -12,3 +12,8 @@ TOKEN_LOCKER_ROLE = web3.keccak(text="TOKEN_LOCKER_ROLE").hex()
 ROOT_UPDATER_ROLE = web3.keccak(text="ROOT_UPDATER_ROLE").hex()
 GUARDIAN_ROLE = web3.keccak(text="GUARDIAN_ROLE").hex()
 APPROVED_STAKER_ROLE = web3.keccak(text="APPROVED_STAKER_ROLE").hex()
+PAUSER_ROLE = web3.keccak(text="PAUSER_ROLE").hex()
+UNPAUSER_ROLE = web3.keccak(text="UNPAUSER_ROLE").hex()
+
+ROOT_PROPOSER_ROLE = web3.keccak(text="ROOT_PROPOSER_ROLE").hex()
+ROOT_VALIDATOR_ROLE = web3.keccak(text="ROOT_VALIDATOR_ROLE").hex()

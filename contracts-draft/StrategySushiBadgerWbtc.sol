@@ -49,7 +49,7 @@ contract StrategySushiBadgerWbtc is BaseStrategyMultiSwapper {
         uint256 sushiToGovernance,
         uint256 sushiToBadgerTree,
         uint256 badgerConvertedToWbtc,
-        uint256 wtbcFromConversion,
+        uint256 wbtcFromConversion,
         uint256 lpGained,
         uint256 timestamp,
         uint256 blockNumber
@@ -62,7 +62,7 @@ contract StrategySushiBadgerWbtc is BaseStrategyMultiSwapper {
         uint256 sushiToGovernance;
         uint256 sushiToBadgerTree;
         uint256 badgerConvertedToWbtc;
-        uint256 wtbcFromConversion;
+        uint256 wbtcFromConversion;
         uint256 lpGained;
     }
 
@@ -70,12 +70,7 @@ contract StrategySushiBadgerWbtc is BaseStrategyMultiSwapper {
         uint256 sushiTended;
     }
 
-    event WithdrawState(
-        uint256 toWithdraw,
-        uint256 preWant,
-        uint256 postWant,
-        uint256 withdrawn
-    );
+    event WithdrawState(uint256 toWithdraw, uint256 preWant, uint256 postWant, uint256 withdrawn);
 
     function initialize(
         address _governance,
@@ -146,7 +141,7 @@ contract StrategySushiBadgerWbtc is BaseStrategyMultiSwapper {
     function _deposit(uint256 _want) internal override {
         // Deposit all want in sushi chef
         ISushiChef(chef).deposit(pid, _want);
-        
+
         // "Deposit" same want into personal staking rewards via signal (note: this is a SIGNAL ONLY - the staking rewards must be locked to just this account)
         IStakingRewardsSignalOnly(geyser).stake(_want);
     }
@@ -183,7 +178,6 @@ contract StrategySushiBadgerWbtc is BaseStrategyMultiSwapper {
 
     /// @dev Withdraw want from staking rewards, using earnings first
     function _withdrawSome(uint256 _amount) internal override returns (uint256) {
-
         // Get idle want in the strategy
         uint256 _preWant = IERC20Upgradeable(want).balanceOf(address(this));
 
@@ -196,7 +190,6 @@ contract StrategySushiBadgerWbtc is BaseStrategyMultiSwapper {
             IStakingRewardsSignalOnly(geyser).withdraw(_toWithdraw);
 
             // Note: Withdrawl process will earn sushi, this will be deposited into SushiBar on next tend()
-
         }
 
         // Confirm how much want we actually end up with
@@ -205,12 +198,7 @@ contract StrategySushiBadgerWbtc is BaseStrategyMultiSwapper {
         // Return the actual amount withdrawn if less than requested
         uint256 _withdrawn = MathUpgradeable.min(_postWant, _amount);
 
-        emit WithdrawState(
-            _amount,
-            _preWant,
-            _postWant,
-            _withdrawn
-        );
+        emit WithdrawState(_amount, _preWant, _postWant, _withdrawn);
 
         return _withdrawn;
     }
@@ -264,7 +252,12 @@ contract StrategySushiBadgerWbtc is BaseStrategyMultiSwapper {
 
         // Process performance fees
         harvestData.sushiToStrategist = _processFee(sushi, harvestData.sushiHarvested, performanceFeeStrategist, strategist);
-        harvestData.sushiToGovernance = _processFee(sushi, harvestData.sushiHarvested, performanceFeeGovernance, IController(controller).rewards());
+        harvestData.sushiToGovernance = _processFee(
+            sushi,
+            harvestData.sushiHarvested,
+            performanceFeeGovernance,
+            IController(controller).rewards()
+        );
 
         // Transfer remainder to Tree
         harvestData.sushiToBadgerTree = IERC20Upgradeable(sushi).balanceOf(address(this));
@@ -307,7 +300,7 @@ contract StrategySushiBadgerWbtc is BaseStrategyMultiSwapper {
             harvestData.sushiToGovernance,
             harvestData.sushiToBadgerTree,
             harvestData.badgerConvertedToWbtc,
-            harvestData.wtbcFromConversion,
+            harvestData.wbtcFromConversion,
             harvestData.lpGained,
             block.timestamp,
             block.number

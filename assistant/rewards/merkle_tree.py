@@ -97,9 +97,9 @@ def rewards_to_merkle_tree(rewards, startBlock, endBlock, geyserRewards):
             "proof": tree.get_proof(encodedNodes[node["index"]]),
             "node": encoded,
         }
-
-    for user, data in geyserRewards.metadata.items():
-        distribution["metadata"][user] = data.toDict()
+    if len(geyserRewards) > 0:
+        for user, data in geyserRewards.metadata.items():
+            distribution["metadata"][user] = data.toDict()
 
     print(f"merkle root: {encode_hex(tree.root)}")
 

@@ -25,6 +25,12 @@ class MultisigTxMetadata:
         self.operation = operation
         self.callInfo = callInfo
 
+        if not operation:
+            self.operation = ""
+        
+        if not callInfo:
+            self.callInfo = ""
+
     def __str__(self):
         return "description: " + self.description + "\n" + 'operation: ' + str(self.operation) + "\n" + 'callInfo: ' + str(self.callInfo) + "\n"
 
@@ -54,8 +60,10 @@ class GnosisSafe:
         self.contract.changeThreshold(1, {"from": self.contract.address})
         assert self.contract.getThreshold() == 1
 
-    def execute(self, params, signer=None):
-        return exec_direct(self.contract, params, signer)
+    def execute(self, metadata: MultisigTxMetadata, params):
+        self.transactions.append(MultisigTx(params, metadata))
+        id = len(self.transactions) - 1
+        return self.executeTx(id)
 
     def addTx(self, metadata: MultisigTxMetadata, params):
         """

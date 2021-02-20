@@ -53,7 +53,7 @@ contract StrategySushiBadgerWbtc is BaseStrategyMultiSwapper {
     event HarvestBadgerState(
         uint256 badgerHarvested,
         uint256 badgerConvertedToWbtc,
-        uint256 wtbcFromConversion,
+        uint256 wbtcFromConversion,
         uint256 lpGained,
         uint256 timestamp,
         uint256 blockNumber
@@ -67,7 +67,7 @@ contract StrategySushiBadgerWbtc is BaseStrategyMultiSwapper {
         uint256 toGovernance;
         uint256 toBadgerTree;
         uint256 badgerConvertedToWbtc;
-        uint256 wtbcFromConversion;
+        uint256 wbtcFromConversion;
         uint256 lpGained;
     }
 
@@ -314,7 +314,7 @@ contract StrategySushiBadgerWbtc is BaseStrategyMultiSwapper {
         emit HarvestBadgerState(
             harvestData.badgerHarvested,
             harvestData.badgerConvertedToWbtc,
-            harvestData.wtbcFromConversion,
+            harvestData.wbtcFromConversion,
             harvestData.lpGained,
             block.timestamp,
             block.number

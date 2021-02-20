@@ -1,11 +1,11 @@
 import json
 import time
 
-from brownie import Wei, web3
+from brownie import Wei, web3, chain
 from dotmap import DotMap
 from helpers.constants import AddressZero
 from helpers.registry import registry
-from helpers.time_utils import days
+from helpers.time_utils import days, to_timestamp
 
 with open("merkle/airdrop.json") as f:
     Airdrop = json.load(f)
@@ -113,6 +113,17 @@ sett_config = DotMap(
             ),
         ),
     ),
+    uni=DotMap(
+        uniDiggWbtc=DotMap(
+            # Unfinished
+            strategyName="StrategyDiggLpMetaFarm",
+            params=DotMap(
+                performanceFeeStrategist=0,
+                performanceFeeGovernance=0,
+                withdrawalFee=0,
+            ),
+        ),
+    ),
     sushi=DotMap(
         sushiBadgerWBtc=DotMap(
             # Unfinished
@@ -132,6 +143,15 @@ sett_config = DotMap(
                 performanceFeeStrategist=1000,
                 performanceFeeGovernance=1000,
                 withdrawalFee=50,
+            ),
+        ),
+        sushiDiggWBtc=DotMap(
+            # Unfinished
+            strategyName="StrategySushiDiggWbtcLpOptimizer",
+            params=DotMap(
+                performanceFeeStrategist=1000,
+                performanceFeeGovernance=1000,
+                withdrawalFee=0,
             ),
         ),
     ),
@@ -205,10 +225,7 @@ badger_config = DotMap(
         voteDuration=days(3),
     ),
     geyserParams=DotMap(
-        initialSharesPerToken=10 ** 6,
-        founderRewardPercentage=10,
         badgerDistributionStart=globalStartTime,
-        diggDistributionStart=globalStartTime + days(15),
         unlockSchedules=DotMap(
             badger=[DotMap(amount=Wei("45000 ether"), duration=days(7),)],  # 1 week
             uniBadgerWbtc=[
@@ -229,7 +246,8 @@ badger_config = DotMap(
 
 
 # TODO: Currently a copy of badger config params, needs to be set.
-diggStartTime = globalStartTime
+# diggStartTime = globalStartTime
+diggStartTime = 1611097200 # 6PM EST 1/19
 
 """
 Test Config
@@ -237,29 +255,43 @@ Test Config
 - Anyone can call the oracle to set the price
 - Assets are distributed among
 """
+digg_decimals = 9
+total_digg = 4000 * (10 ** digg_decimals)
+
+liquidity_mining_pct = 40
+dao_treasury_pct = 40
+team_vesting_pct = 5
+airdrop_pct = 15
+
 digg_config_test = DotMap(
     startTime=diggStartTime,
-    prod_json="deploy-test-digg.json",
-    initialSupply=4000 * (10 ** 9),
+    prod_json="deploy-final.json",
+    initialSupply=total_digg,
+    airdropAmount = int(total_digg * airdrop_pct / 100),
+    liquidityMiningAmount = int(total_digg * liquidity_mining_pct / 100),
     deviationThreshold=50000000000000000,
     rebaseLag=10,
-    minRebaseTimeIntervalSec=0,
     # TODO: Need to set this value to exact time we want to start rebases.
-    rebaseStartTimeUnixSeconds=1608681600,  # 12/23/2020 @ 12:00 AM (UTC)
-    rebaseWindowOffsetSec=7200,
-    rebaseWindowLengthSec=1200,
+    minRebaseTimeIntervalSec=86400,  # 24 hours (once per day)
+    rebaseWindowOffsetSec=72000,  # 8pm UTC
+    rebaseWindowLengthSec=1200,  # 20 minute window
     baseCpi=10 ** 18,
-    rebaseDelayAfterStakingStart=30,
     marketOracleParams=DotMap(
-        reportExpirationTimeSec=88200,
+        # NB: Longer report expiration for testing purposes.
+        # We want this to cover two full rebase windows to account
+        # for shifting the rebase window forward during tests.
+        reportExpirationTimeSec=86400 * 2,
         reportDelaySec=3600,
         # TODO: This should be greater than 1, needs to be set.
         minimumProviders=1,
     ),
     # cpi oracle always reports 1
     cpiOracleParams=DotMap(
-        reportExpirationTimeSec=5356800,
-        reportDelaySec=86400,
+        # TODO: The median oracle caps report expiration time
+        # at 520 weeks.There is no way to guarantee report non-expiry.
+        # Maybe look into a constant oracle that adheres to the IOracle interface.
+        reportExpirationTimeSec=520 * 7 * 24 * 60 * 60,  # 520 weeks
+        reportDelaySec=7200,
         minimumProviders=1,
     ),
     centralizedOracleParams=DotMap(
@@ -267,32 +299,39 @@ digg_config_test = DotMap(
         threshold=1,
     ),
     tokenLockParams=DotMap(
-        diggLockAmount=3125 * (10 ** 9),
-        lockDuration=days(30),
+        diggAmount=int(total_digg * dao_treasury_pct / 100),
+        lockDuration=days(30)
     ),
     # TODO: Currently a copy of badger config params, needs to be set.
     teamVestingParams=DotMap(
+        diggAmount=int(total_digg * team_vesting_pct / 100),
         startTime=diggStartTime,
         cliffDuration=days(30),
-        totalDuration=days(365),
+        totalDuration=days(365)
     ),
-    # TODO: Currently a copy of badger config params, needs to be set.
-    founderRewardsAmount=badger_total_supply * 10 // 100,
+    geyserParams=DotMap(
+        # TODO: Needs to be set
+        diggDistributionStart=globalStartTime + days(15),
+        unlockSchedules=DotMap(
+            # Setting distribution amt to 25% for now.
+            digg=[DotMap(amount=1000 * (10 ** digg_decimals), duration=days(7),)],  # 1 week
+        ),
+    ),
 )
 
 digg_config = DotMap(
     startTime=diggStartTime,
-    prod_json="deploy-final-digg.json",
-    initialSupply=4000 * (10 ** 9),
+    prod_json="deploy-final.json",
+    initialSupply=total_digg,
+    airdropAmount = int(total_digg * airdrop_pct / 100),
+    liquidityMiningAmount = int(total_digg * liquidity_mining_pct / 100),
     deviationThreshold=50000000000000000,
     rebaseLag=10,
-    minRebaseTimeIntervalSec=86400,
     # TODO: Need to set this value to exact time we want to start rebases.
-    rebaseStartTimeUnixSeconds=1608681600,  # 12/23/2020 @ 12:00 AM (UTC)
-    rebaseWindowOffsetSec=7200,
-    rebaseWindowLengthSec=1200,
+    minRebaseTimeIntervalSec=86400,  # 24 hours (once per day)
+    rebaseWindowOffsetSec=72000,  # 8pm UTC
+    rebaseWindowLengthSec=1200,  # 20 minute window
     baseCpi=10 ** 18,
-    rebaseDelayAfterStakingStart=30,
     marketOracleParams=DotMap(
         reportExpirationTimeSec=88200,
         reportDelaySec=3600,
@@ -310,17 +349,20 @@ digg_config = DotMap(
         threshold=1,
     ),
     tokenLockParams=DotMap(
-        diggLockAmount=3125 * (10 ** 9),
-        lockDuration=days(30),
+        diggAmount=int(total_digg * dao_treasury_pct / 100),
+        lockDuration=days(7)
     ),
-    # TODO: Currently a copy of badger config params, needs to be set.
     teamVestingParams=DotMap(
+        diggAmount=int(total_digg * team_vesting_pct / 100),
         startTime=diggStartTime,
-        cliffDuration=days(30),
-        totalDuration=days(365),
+        cliffDuration=days(0),
+        totalDuration=days(365)
     ),
-    # TODO: Currently a copy of badger config params, needs to be set.
-    founderRewardsAmount=badger_total_supply * 10 // 100,
+    # TODO: Set this to the prod airdrop root
+    airdropRoot="0xe083d1a60e1ca84c995048be8b9b5b4d4e371f31bcbdff8b775cb47502f4108b",
+    airdropTotalShares="0x2666666666666600000000000000000000075fbb5707c39d0359f2ba7a800000",
+    # TODO: Need to set this value to exact time we want allow reclaiming of airdrop.
+    reclaimAllowedTimestamp=chain.time()
 )
 
 config = DotMap(badger=badger_config, sett=sett_config, digg=digg_config)
