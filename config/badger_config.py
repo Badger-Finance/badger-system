@@ -15,6 +15,7 @@ curve = registry.curve
 pickle = registry.pickle
 harvest = registry.harvest
 sushi = registry.sushi
+keeper = registry.keeper
 
 pools = curve.pools
 
@@ -162,6 +163,17 @@ sett_config = DotMap(
                 performanceFeeStrategist=1000,
                 performanceFeeGovernance=1000,
                 withdrawalFee=0,
+            ),
+        ),
+    ),
+    keeper=DotMap(
+        keeperRenbtc=DotMap(
+            strategyName="StrategyKeeperLpOptimizer",
+            params=DotMap(
+                want=keeper.kbtc,
+                performanceFeeStrategist=1000,
+                performanceFeeGovernance=1000,
+                withdrawalFee=75,
             ),
         ),
     ),
