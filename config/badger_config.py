@@ -438,11 +438,9 @@ claw_config = DotMap(
 )
 
 bridge_config = DotMap(
-    # TODO: Fill in with mainnet renVM gateway address.
-    registry="0x0",
+    registry="0xe80d347DF1209a76DD9d2319d62912ba98C54DDD",
     governance="0xB65cef03b9B89f99517643226d76e286ee999e77",
-    # Dev multisig for testing.
-    rewardsAddress="0xB65cef03b9B89f99517643226d76e286ee999e77",
+    rewardsAddress="0xE95b56685327C9caf83C3e6F0A54b8D9708f32c4",
     wbtc="0x2260fac5e5542a773aa44fbcfedf7c193bc2c599",
     # Fees below are in bps.
     mintFeeBps=100,
