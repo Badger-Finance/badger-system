@@ -73,7 +73,7 @@ before(async function() {
 describe('BadgerRenAdapter', function() {
   this.timeout(60 * MINUTES); // 60 minute t/o for integration tests
 
-  /it('should mint renBTC', async () => {
+  it('should mint renBTC', async () => {
     const params = {
       asset: 'BTC',
       from: Bitcoin(),
