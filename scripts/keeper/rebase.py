@@ -25,12 +25,12 @@ from scripts.systems.sushiswap_system import SushiswapSystem
 from helpers.gas_utils import gas_strategies
 console = Console()
 
-gas_strategies.set_default(gas_strategies.rapid)
+gas_strategies.set_default(gas_strategies.exponentialScaling)
 
 def main():
     console.print("[white]===== Checking Parameters for rebase =====[/white]")
     # Connect badger system from file
-    account = accounts.load("badger_utility")
+    account = accounts.load("badger_proxy_deployer")
     badger = connect_badger("deploy-final.json")
     digg = connect_digg("deploy-final.json")
 

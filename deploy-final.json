@@ -145,6 +145,9 @@
         "diggDistributor": "0x5E79958EfbB8AFdeDB6EC7107110F329e4EAfffA",
         "diggSeeder": "0xb81fA24b359289b7bC8552dB6A2a606fa8B5B61c"
     },
+    "airdrops": {
+        "gitcoinRound8": "0xd17c7effa924b55951e0f6d555b3a3ea34451179"
+    },
     "pools": {
         "uniDiggWbtc": "0xe86204c4eddd2f70ee00ead6805f917671f56c52",
         "sushiDiggWbtc":"0x9a13867048e01c663ce8ce2fe0cdae69ff9f35e3" 

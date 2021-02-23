@@ -20,7 +20,7 @@ class Balances:
         self.balances[token.address][account.address] = value
 
     def get(self, token, account):
-        return self.balances[token.address][account.address]
+        return self.balances[token][account]
 
 
 def diff_token_balances(before, after):
@@ -56,6 +56,47 @@ def print_balances(tokens_by_name, account):
     print("\nToken Balances for {}".format(account))
     print(tabulate(table, headers=["asset", "balance"]))
 
+class TokenMetadataRegistry:
+    def __init__(self):
+        self.tokens = {}
+    
+    def has(self, address):
+        if address in self.tokens.keys():
+            return True
+        else:
+            return False
+
+    def get_symbol(self, address):
+        """
+        Fetch token symbol from chain on first lookup.
+        """
+        if not address in self.tokens.keys():
+            self.fetch_token_data(address)
+        
+        return self.tokens[address]['symbol']
+
+    def get_name(self, address):
+        """
+        Fetch token name from chain on first lookup.
+        """
+        if not address in self.tokens.keys():
+            self.fetch_token_data(address)
+        
+        return self.tokens[address]['name']
+
+    def fetch_token_data(self, address):
+        token = interface.IERC20(address)
+        name = token.name()
+        symbol = token.symbol()
+        decimals = token.decimals()
+
+        self.tokens[address] = {
+            'name': name,
+            'symbol': symbol,
+            'decimals': decimals
+        }
+
+token_metadata = TokenMetadataRegistry()
 
 def asset_to_address(asset):
     if asset == "badger":
@@ -66,7 +107,7 @@ def asset_to_address(asset):
 def to_token(address):
         return interface.IERC20(address)
 
-def distribute_from_whales(recipient, percentage=0.8):
+def distribute_from_whales(recipient, percentage=0.8, assets="All"):
     accounts[0].transfer(recipient, Wei("50 ether"))
 
     console.print(
@@ -77,6 +118,8 @@ def distribute_from_whales(recipient, percentage=0.8):
 
     # Normal Transfers
     for key, whale_config in whale_registry.items():
+        if assets != "All" and key not in assets:
+            continue
         # Handle special cases after all standard distributions
         if whale_config.special:
             continue

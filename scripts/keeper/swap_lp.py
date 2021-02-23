@@ -1,3 +1,4 @@
+from helpers.gas_utils import gas_strategies
 from scripts.keeper.rapid_harvest import rapid_harvest
 from helpers.snapshot import diff_numbers_by_key, snap_strategy_balance
 from scripts.systems.digg_system import connect_digg
@@ -15,7 +16,7 @@ from helpers.registry import registry
 from assistant.rewards.rewards_checker import val
 from config.active_emissions import get_active_rewards_schedule
 
-gas_strategy = GasNowStrategy("fast")
+gas_strategies.set_default(gas_strategies.exponentialScaling)
 
 uniswap = UniswapSystem()
 sushiswap = SushiswapSystem()

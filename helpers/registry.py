@@ -200,6 +200,11 @@ whale_registry = DotMap(
         token="0x3472A5A71965499acd81997a54BBA8D852C6E53d",
         action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT
     ),
+    bBadger=DotMap(
+        whale="0xa9429271a28F8543eFFfa136994c0839E7d7bF77",
+        token="0x19D97D8fA813EE2f51aD4B4e04EA08bAf4DFfC28",
+        action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT
+    ),
     harvestSuperSett=DotMap(
         whale="0xeD0B7f5d9F6286d00763b0FFCbA886D8f9d56d5e",
         token="0xAf5A1DECfa95BAF63E0084a35c62592B774A2A87",
