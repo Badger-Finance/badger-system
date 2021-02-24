@@ -66,7 +66,6 @@ contract OtcEscrow {
 
         // Transfer bBadger to vesting contract
         uint256 bBadgerBalance = IERC20(bBadger).balanceOf(address(this));
-        require(bBadgerBalance == bBadgerAmount);
         IERC20(bBadger).safeTransfer(address(vesting), bBadgerBalance);
 
         // Transfer USDC to badger governance 
