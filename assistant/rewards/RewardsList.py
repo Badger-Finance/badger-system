@@ -118,7 +118,7 @@ class RewardsList:
         intAmounts = []
         for tokenAddress, cumulativeAmount in userData.items():
             nodeEntry["tokens"].append(tokenAddress)
-            nodeEntry["cumulativeAmounts"].append(str(cumulativeAmount))
+            nodeEntry["cumulativeAmounts"].append(str(format(cumulativeAmount,".0f")))
             intAmounts.append(int(cumulativeAmount))
 
         # print(
