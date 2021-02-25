@@ -76,7 +76,7 @@ def main():
     rewardsLogger.save("retroactive-farm")
 
     sushiRewards = calc_sushi_rewards(
-        badger, startBlock, endBlock, nextCycle, retroactive=True)
+        badger, 11537600, chain.height, nextCycle, retroactive=True)
     totalDistRewards = combine_rewards([harvestRewards, sushiRewards],nextCycle,badger.badgerTree)
     currentRewards = fetch_current_rewards_tree(badger)
 
