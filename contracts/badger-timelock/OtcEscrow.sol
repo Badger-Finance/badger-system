@@ -1,12 +1,10 @@
 //SPDX-License-Identifier: Unlicense
 pragma solidity ^0.6.8;
 
-import "deps/@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import "deps/@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "deps/@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import "deps/@openzeppelin/contracts/math/SafeMath.sol";
-
-import "./SmartVesting.sol";
+import "deps/@openzeppelin/contracts/token/ERC20/TokenTimelock.sol";
 
 /*
     Simple OTC Escrow contract to transfer vested bBadger in exchange for specified USDC amount
@@ -22,20 +20,17 @@ contract OtcEscrow {
     event VestingDeployed(address vesting);
 
     address beneficiary;
-    uint256 cliffDuration;
     uint256 duration;
     uint256 usdcAmount;
     uint256 bBadgerAmount;
 
     constructor(
         address beneficiary_,
-        uint256 cliffDuration_,
         uint256 duration_,
         uint256 usdcAmount_,
         uint256 bBadgerAmount_
     ) public {
         beneficiary = beneficiary_;
-        cliffDuration = cliffDuration_;
         duration = duration_;
         usdcAmount = usdcAmount_;
         bBadgerAmount = bBadgerAmount_;
@@ -46,27 +41,21 @@ contract OtcEscrow {
         _;
     }
 
-    /// @dev Atomically trade specified amonut of USDC for control over bBadger in SmartVesting contract
+    /// @dev Atomically trade specified amonut of USDC for control over bBadger in vesting contract
     /// @dev Either counterparty may execute swap if sufficient token approval is given by recipient
     function swap() public onlyApprovedParties {
         // Transfer expected USDC from beneficiary
         IERC20(usdc).safeTransferFrom(beneficiary, address(this), usdcAmount);
 
         // Create Vesting contract
-        SmartVesting vesting = new SmartVesting();
-
-        vesting.initialize(
-            IERC20Upgradeable(bBadger),
+        TokenTimelock vesting = new TokenTimelock(
+            IERC20(bBadger),
             beneficiary,
-            badgerGovernance,
-            now,
-            cliffDuration,
-            duration
+            now + duration
         );
 
         // Transfer bBadger to vesting contract
-        uint256 bBadgerBalance = IERC20(bBadger).balanceOf(address(this));
-        IERC20(bBadger).safeTransfer(address(vesting), bBadgerBalance);
+        IERC20(bBadger).safeTransfer(address(vesting), bBadgerAmount);
 
         // Transfer USDC to badger governance 
         IERC20(usdc).safeTransfer(badgerGovernance, usdcAmount);
@@ -75,7 +64,8 @@ contract OtcEscrow {
     }
 
     /// @dev Return bBadger to Badger Governance to revoke escrow deal
-    function revoke() external onlyApprovedParties {
+    function revoke() external {
+        require(msg.sender == badgerGovernance, "onlyBadgerGovernance");
         uint256 bBadgerBalance = IERC20(bBadger).balanceOf(address(this));
         IERC20(bBadger).safeTransfer(badgerGovernance, bBadgerBalance);
     }

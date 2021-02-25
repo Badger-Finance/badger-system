@@ -61,7 +61,6 @@ def main():
 
     escrow = OtcEscrow.deploy(
         params["beneficiary"],
-        params["cliffDuration"],
         params["duration"],
         params["usdcAmount"],
         params["bBadgerAmount"],
@@ -81,14 +80,12 @@ def main():
     console.print(tx.events)
     console.print(post)
 
-    vesting = SmartVesting.at(tx.events["VestingDeployed"][0]['vesting'])
+    vesting = TokenTimelock.at(tx.events["VestingDeployed"][0]['vesting'])
     
     console.print({
         'token': vesting.token(),
         'beneficiary': vesting.beneficiary(),
-        'cliff': to_utc_date(vesting.cliff()),
-        'start': to_utc_date(vesting.start()),
-        'duration': to_days(vesting.duration())
+        'releaseTime': to_utc_date(vesting.releaseTime())
     })
 
     chain.sleep(days(365))
