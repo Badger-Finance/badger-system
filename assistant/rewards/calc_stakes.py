@@ -15,13 +15,24 @@ globalStartBlock = 11381000
 digg_token = "0x798D1bE841a82a273720CE31c822C61a67a601C3"
 badger_token = "0x3472A5A71965499acd81997a54BBA8D852C6E53d"
 badger_tree = "0x660802Fc641b154aBA66a62137e71f331B6d787A"
+diggBTCFeed = "0xe49ca29a3ad94713fc14f065125e74906a6503bb"
+
+MAX_DIGG_ALLOC = 1.0
+MIN_DIGG_ALLOC = 0.3
+MAX_DIGG_THRESHOLD = 0.7
+MIN_DIGG_THRESHOLD = 1.3
+EQULIBRIUM = 0.5
+TARGET = 1.0
 
 def calc_geyser_stakes(key, geyser, periodStartBlock, periodEndBlock):
     globalStartTime = web3.eth.getBlock(globalStartBlock)["timestamp"]
     periodStartTime = web3.eth.getBlock(periodStartBlock)["timestamp"]
     periodEndTime = web3.eth.getBlock(periodEndBlock)["timestamp"]
 
-    geyserMock = BadgerGeyserMock(key)
+    diggBTCPriceFeed = Contract.from_explorer(diggBTCFeed)
+    latestData = diggBTCPriceFeed.latestRoundData()
+    ratio = latestData[1]/1e8
+    geyserMock = BadgerGeyserMock(key,calculateDiggAllocation(ratio))
     geyserMock.set_current_period(periodStartTime, periodEndTime)
 
     # Collect actions from the total history
@@ -35,6 +46,21 @@ def calc_geyser_stakes(key, geyser, periodStartBlock, periodEndBlock):
     return calculate_token_distributions(
         geyser, geyserMock, periodStartTime, periodEndTime
     )
+
+def calculateDiggAllocation(ratio):
+    if ratio >= 1.0:
+        console.log("Digg above peg")
+        diggSettAllocation = max(MIN_DIGG_ALLOC,
+        MIN_DIGG_ALLOC + (MIN_DIGG_THRESHOLD - ratio) * ((EQULIBRIUM - MIN_DIGG_ALLOC)/(MIN_DIGG_THRESHOLD - TARGET))
+        )
+    elif ratio < 1.0:
+        console.log("DIGG below peg")
+        diggSettAllocation = min(MAX_DIGG_ALLOC,
+        EQULIBRIUM + (TARGET - ratio) * ((MAX_DIGG_ALLOC - EQULIBRIUM)/(TARGET - MAX_DIGG_THRESHOLD))
+        )
+    console.log("Ratio :{} \n DiggSettAllocation :{} ".format(ratio,diggSettAllocation))
+    return diggSettAllocation
+
 
 
 def calculate_token_distributions(

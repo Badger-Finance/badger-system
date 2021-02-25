@@ -227,3 +227,15 @@ def fetch_sushi_harvest_events():
         "wbtcDigg":wbtcDiggEvents
     }
 
+
+def fetch_badger_balances():
+    pass
+
+
+
+def fetch_digg_balances():
+    pass
+
+
+def fetch_staked_balances():
+    pass
