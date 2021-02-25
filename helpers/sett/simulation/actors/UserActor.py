@@ -1,7 +1,8 @@
 import random
-from brownie import Sett
+from brownie import Sett, Controller
 from typing import Any
 
+from helpers.utils import approx
 from helpers.constants import MaxUint256
 from helpers.sett.SnapshotManager import SnapshotManager
 from .BaseAction import BaseAction
@@ -24,6 +25,7 @@ class DepositAndWithdrawAction(BaseAction):
         user = self.user
         want = self.want
         sett = self.sett
+        rewards = Controller.at(sett.controller()).rewards()
 
         beforeSettBalance = sett.balanceOf(user)
         startingBalance = want.balanceOf(user)
@@ -46,12 +48,17 @@ class DepositAndWithdrawAction(BaseAction):
 
         afterSettBalance = sett.balanceOf(user)
         settDeposited = afterSettBalance - beforeSettBalance
+        beforeRewardsBalance = want.balanceOf(rewards)
         # Confirm that before and after balance does not exceed
         # max precision loss.
         self.snap.settWithdraw(settDeposited, {"from": self.user})
-
+        rewardsDiff = want.balanceOf(rewards) - beforeRewardsBalance
         endingBalance = want.balanceOf(user)
-        assert startingBalance - endingBalance <= 2
+        assert approx(
+            startingBalance,
+            endingBalance + rewardsDiff,
+            1,
+        )
 
 
 class DepositAction(BaseAction):

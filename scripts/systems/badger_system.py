@@ -8,19 +8,16 @@ from config.badger_config import (
     badger_config,
     sett_config,
 )
-from scripts.systems.sett_system import (
-    deploy_controller,
-    deploy_strategy,
-)
 from helpers.registry import registry
 from helpers.time_utils import days
-from helpers.sett.strategy_registry import name_to_artifact, strategy_name_to_artifact
+from helpers.sett.strategy_registry import name_to_artifact, contract_name_to_artifact
 from helpers.proxy_utils import deploy_proxy, deploy_proxy_admin
 from helpers.gnosis_safe import GnosisSafe, MultisigTxMetadata
-from helpers.sett.strategy_registry import name_to_artifact
-from scripts.systems.constants import SettType
-from scripts.systems.digg_system import connect_digg
-from scripts.systems.constants import SettType
+from scripts.systems.constants import (
+    SettType,
+    SyncFeeType,
+    WITHDRAWAL_FEE,
+)
 from scripts.systems.digg_system import DiggSystem, connect_digg
 from scripts.systems.claw_system import ClawSystem
 from scripts.systems.swap_system import SwapSystem
@@ -387,8 +384,10 @@ class BadgerSystem:
 
     def deploy_sett_strategy_logic_for(self, name):
         deployer = self.deployer
-        artifact = strategy_name_to_artifact(name)
-        self.logic[name] = artifact.deploy({"from": deployer})
+        artifact = contract_name_to_artifact(name)
+        self.logic[name] = artifact.deploy(
+            {"from": deployer}
+        )
 
         # TODO: Initialize to remove that function
 
@@ -602,7 +601,7 @@ class BadgerSystem:
             guardian,
         )
 
-        Artifact = strategy_name_to_artifact(strategyName)
+        Artifact = contract_name_to_artifact(strategyName)
 
         self.sett_system.strategies[id] = strategy
         self.set_strategy_artifact(id, strategyName, Artifact)
@@ -897,7 +896,7 @@ class BadgerSystem:
             self.connect_geyser(key, address)
 
     def connect_strategy(self, id, address, strategyArtifactName):
-        Artifact = strategy_name_to_artifact(strategyArtifactName)
+        Artifact = contract_name_to_artifact(strategyArtifactName)
         strategy = Artifact.at(address)
         self.sett_system.strategies[id] = strategy
         self.set_strategy_artifact(id, strategyArtifactName, Artifact)
@@ -941,7 +940,7 @@ class BadgerSystem:
 
     def connect_logic(self, logic):
         for name, address in logic.items():
-            Artifact = strategy_name_to_artifact(name)
+            Artifact = contract_name_to_artifact(name)
             self.logic[name] = Artifact.at(address)
 
     def connect_dao_badger_timelock(self, address):
@@ -1048,6 +1047,11 @@ class BadgerSystem:
 
         return self.sett_system.vaults[id]
 
+    def getSettArtifact(self, id):
+        if id == "native.digg":
+            return DiggSett
+        return Sett
+
     def getSettRewards(self, id):
         return self.sett_system.rewards[id]
 
@@ -1062,7 +1066,29 @@ class BadgerSystem:
         return interface.IERC20(self.sett_system.strategies[id].want())
 
     def getStrategyArtifact(self, id):
-        return self.strategy_artifacts[id].artifact
+        return self.strategy_artifacts[id]["artifact"]
 
     def getStrategyArtifactName(self, id):
         return self.strategy_artifacts[id]["artifactName"]
+
+    # ===== Configure =====
+
+    def syncWithdrawalFees(self, id, syncFeeType=SyncFeeType.CONFIG):
+        sett = self.getSett(id)
+        strategy = self.getStrategy(id)
+        # By default, we grab the fee from config.
+        fee = self._getWithdrawalFeesFromConfig(strategy._name)
+        if syncFeeType == SyncFeeType.ZERO:
+            fee = 0
+        if syncFeeType == SyncFeeType.CONSTANT:
+            fee = WITHDRAWAL_FEE
+        strategy.setWithdrawalFee(fee, {"from": strategy.governance()})
+        sett.setWithdrawalFee(fee, {"from": sett.governance()})
+
+    def _getWithdrawalFeesFromConfig(self, strategyName):
+        for setts in sett_config.values():
+            for opts in setts.values():
+                if opts.strategyName == strategyName:
+                    return opts.params.withdrawalFee
+        return 0
+

@@ -41,5 +41,5 @@ name_to_artifact = {
 }
 
 
-def strategy_name_to_artifact(name):
+def contract_name_to_artifact(name):
     return name_to_artifact[name]

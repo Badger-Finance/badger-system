@@ -1,4 +1,4 @@
-from helpers.sett.strategy_registry import strategy_name_to_artifact
+from helpers.contract_registry import contract_name_to_artifact
 import json
 from brownie import *
 from dotmap import DotMap
@@ -197,7 +197,7 @@ class DiggSystem:
         for name, address in logic.items():
             if env_config.debug:
                 print("ConnectLogic:", name, address)
-            Artifact = strategy_name_to_artifact(name)
+            Artifact = contract_name_to_artifact(name)
             self.logic[name] = Artifact.at(address)
 
     # ===== Deployers =====

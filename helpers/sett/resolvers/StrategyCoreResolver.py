@@ -70,6 +70,13 @@ class StrategyCoreResolver:
         calls.append(
             Call(sett.address, [func.erc20.totalSupply], [["sett.totalSupply", as_wei]])
         )
+        calls.append(
+            Call(
+                sett.address,
+                [func.sett.withdrawalFee],
+                [["sett.withdrawalFee", as_wei]],
+            )
+        )
 
         return calls
 
@@ -239,12 +246,28 @@ class StrategyCoreResolver:
 
         # Controller rewards should earn
         if (
-                before.get("strategy.withdrawalFee") > 0 and
-                # Fees are only processed when withdrawing from the strategy.
-                before.balances("want", "strategy") > after.balances("want", "strategy")
+                (
+                    before.get("strategy.withdrawalFee") > 0 and
+                    # Strategy fees are only processed when withdrawing from the strategy.
+                    before.balances("want", "strategy") > after.balances("want", "strategy")
+                ) or (
+                    before.get("sett.withdrawalFee") > 0 and
+                    # Sett fees are always processed.
+                    before.balances("want", "sett") > after.balances("want", "sett")
+                )
         ):
-            assert after.balances("want", "governanceRewards") > before.balances(
+            # Fees can be split between sett and strategy withdrawals.
+            rewardsDiff = after.balances("want", "governanceRewards") - before.balances(
                 "want", "governanceRewards"
+            )
+            userDiff = after.balances("want", "user") - before.balances("want", "user")
+            strategyDiff = before.balances("want", "strategy") - after.balances("want", "strategy")
+            settDiff = before.balances("want", "sett") - after.balances("want", "sett")
+            # Want diff in user/rewards should be equal to diff in strategy/sett
+            assert approx(
+                rewardsDiff + userDiff,
+                strategyDiff + settDiff,
+                1,
             )
 
     def confirm_deposit(self, before, after, params):

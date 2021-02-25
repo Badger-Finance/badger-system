@@ -29,9 +29,12 @@ import "./SettAccessControlDefended.sol";
     V1.2
     * Transfer functions are now pausable along with all other non-permissioned write functions
     * All permissioned write functions, with the exception of pause() & unpause(), are pausable as well
+
+    V1.3
+    * Withdrawals are processed from idle want in sett.
 */
 
-contract Sett is ERC20Upgradeable, SettAccessControlDefended, PausableUpgradeable {
+contract Sett is ERC20Upgradeable, PausableUpgradeable, SettAccessControlDefended {
     using SafeERC20Upgradeable for IERC20Upgradeable;
     using AddressUpgradeable for address;
     using SafeMathUpgradeable for uint256;
@@ -49,6 +52,9 @@ contract Sett is ERC20Upgradeable, SettAccessControlDefended, PausableUpgradeabl
     string internal constant _symbolSymbolPrefix = "b";
 
     address public guardian;
+
+    uint256 public withdrawalFee;
+    uint256 public constant MAX_FEE = 10000;
 
     event FullPricePerShareUpdated(uint256 value, uint256 indexed timestamp, uint256 indexed blockNumber);
 
@@ -111,10 +117,10 @@ contract Sett is ERC20Upgradeable, SettAccessControlDefended, PausableUpgradeabl
     /// ===== View Functions =====
 
     function version() public view returns (string memory) {
-        return "1.2";
+        return "1.3";
     }
 
-    function getPricePerFullShare() public view virtual returns (uint256) {
+    function getPricePerFullShare() public virtual view returns (uint256) {
         if (totalSupply() == 0) {
             return 1e18;
         }
@@ -130,7 +136,7 @@ contract Sett is ERC20Upgradeable, SettAccessControlDefended, PausableUpgradeabl
     /// @notice Defines how much of the Setts' underlying can be borrowed by the Strategy for use
     /// @notice Custom logic in here for how much the vault allows to be borrowed
     /// @notice Sets minimum required on-hand to keep small withdrawals cheap
-    function available() public view virtual returns (uint256) {
+    function available() public virtual view returns (uint256) {
         return token.balanceOf(address(this)).mul(min).div(max);
     }
 
@@ -195,6 +201,12 @@ contract Sett is ERC20Upgradeable, SettAccessControlDefended, PausableUpgradeabl
     function setGuardian(address _guardian) external whenNotPaused {
         _onlyGovernance();
         guardian = _guardian;
+    }
+
+    function setWithdrawalFee(uint256 _withdrawalFee) external {
+        _onlyGovernance();
+        require(_withdrawalFee <= MAX_FEE, "sett/excessive-withdrawal-fee");
+        withdrawalFee = _withdrawalFee;
     }
 
     /// ===== Permissioned Actions: Controller =====
@@ -262,6 +274,7 @@ contract Sett is ERC20Upgradeable, SettAccessControlDefended, PausableUpgradeabl
         _burn(msg.sender, _shares);
 
         // Check balance
+        uint256 _fee;
         uint256 b = token.balanceOf(address(this));
         if (b < r) {
             uint256 _toWithdraw = r.sub(b);
@@ -271,9 +284,12 @@ contract Sett is ERC20Upgradeable, SettAccessControlDefended, PausableUpgradeabl
             if (_diff < _toWithdraw) {
                 r = b.add(_diff);
             }
+            _fee = _processWithdrawalFee(r.sub(b));
+        } else {
+            _fee = _processWithdrawalFee(r);
         }
 
-        token.safeTransfer(msg.sender, r);
+        token.safeTransfer(msg.sender, r.sub(_fee));
     }
 
     function _lockForBlock(address account) internal {
@@ -295,5 +311,19 @@ contract Sett is ERC20Upgradeable, SettAccessControlDefended, PausableUpgradeabl
     ) public virtual override whenNotPaused returns (bool) {
         _blockLocked();
         return super.transferFrom(sender, recipient, amount);
+    }
+
+    /// ===== Internal Helper Functions =====
+
+    /// @notice If withdrawal fee is active, take the appropriate amount from the given value and transfer to rewards recipient
+    /// @return The withdrawal fee that was taken
+    function _processWithdrawalFee(uint256 _amount) internal returns (uint256) {
+        if (withdrawalFee == 0) {
+            return 0;
+        }
+
+        uint256 fee = _amount.mul(withdrawalFee).div(MAX_FEE);
+        token.safeTransfer(IController(controller).rewards(), fee);
+        return fee;
     }
 }
