@@ -81,10 +81,11 @@ class GnosisSafe:
 
         if print_output:
             self.printTx(id)
-            print(tx.call_trace())
 
         if self.testMode:
             tx = exec_direct(self.contract, tx.params)
+            if print_output:
+                print(tx.call_trace())
             # try: 
             #     failEvents = tx.events['ExecutionFailure']
             #     if len(failEvents) > 0:
@@ -92,6 +93,7 @@ class GnosisSafe:
             #         assert False
             # except EventLookupError:
             return tx
+        
 
     def get_first_owner(self):
         return self.contract.getOwners()[0]

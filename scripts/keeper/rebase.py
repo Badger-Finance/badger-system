@@ -1,28 +1,31 @@
 import datetime
-from enum import Enum
 import json
 import os
-from scripts.systems.digg_system import connect_digg
-from scripts.systems.uniswap_system import UniswapSystem
 import warnings
-import requests
+from enum import Enum
+
 import brownie
 import pytest
+import requests
 from brownie import Wei, accounts, interface, rpc
 from config.badger_config import badger_config
 from dotmap import DotMap
 from helpers.constants import *
+from helpers.constants import MaxUint256
+from helpers.gas_utils import gas_strategies
+from helpers.gnosis_safe import (GnosisSafe, MultisigTxMetadata,
+                                 convert_to_test_mode, exec_direct,
+                                 get_first_owner)
 from helpers.registry import registry
-from helpers.gnosis_safe import GnosisSafe, MultisigTxMetadata
 from helpers.time_utils import days, hours, to_days, to_timestamp, to_utc_date
 from helpers.utils import val
 from rich.console import Console
 from scripts.systems.badger_system import BadgerSystem, connect_badger
-from tabulate import tabulate
-from helpers.gnosis_safe import convert_to_test_mode, exec_direct, get_first_owner
-from helpers.constants import MaxUint256
+from scripts.systems.digg_system import connect_digg
 from scripts.systems.sushiswap_system import SushiswapSystem
-from helpers.gas_utils import gas_strategies
+from scripts.systems.uniswap_system import UniswapSystem
+from tabulate import tabulate
+
 console = Console()
 
 gas_strategies.set_default(gas_strategies.exponentialScaling)
