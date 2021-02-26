@@ -57,20 +57,26 @@ def publish_new_root(badger, root, contentHash):
     lastProposeEndBlock = tree.lastProposeEndBlock()
     currentCycle = tree.currentCycle()
 
+    endBlock = chain.height
+
     tree.proposeRoot(
         root,
         contentHash,
         currentCycle + 1,
         lastProposeEndBlock + 1,
-        chain.height,
+        endBlock,
         {"from": rootProposer},
     )
+
+    chain.mine()
+
+    tx_wait()
 
     tree.approveRoot(
         root,
         contentHash,
         currentCycle + 1,
         lastProposeEndBlock + 1,
-        chain.height,
+        endBlock,
         {"from": rootValidator},
     )
