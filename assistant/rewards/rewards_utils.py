@@ -70,8 +70,6 @@ def publish_new_root(badger, root, contentHash):
 
     chain.mine()
 
-    tx_wait()
-
     tree.approveRoot(
         root,
         contentHash,
