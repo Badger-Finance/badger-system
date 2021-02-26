@@ -38,7 +38,7 @@ def internal_generate_rewards_in_range(rewards_assistant, currentMerkleData, new
     )
 
     # Publish data
-    rootHash = hash(merkleTree["merkleRoot"])
+    rootHash = rewards_assistant.hash(merkleTree["merkleRoot"])
     contentFileName = rewards_assistant.content_hash_to_filename(rootHash)
 
     console.log(
@@ -227,7 +227,8 @@ def test_rewards_flow(setup):
     
     startBlock = rewardsContract.lastPublishStartBlock() + 1
     endBlock = startBlock + 5
-    nextCycle = rewardsContract.currentCycle() + 1
+    currCycle = rewardsContract.currentCycle()
+    nextCycle = currCycle + 1
     currentRoot = rewardsContract.merkleRoot()
 
     assert user == '0x21b42413bA931038f35e7A5224FaDb065d297Ba3' # make sure we're making claims for the correct account
@@ -268,7 +269,7 @@ def test_rewards_flow(setup):
             "0x3472A5A71965499acd81997a54BBA8D852C6E53d",
             "0x798D1bE841a82a273720CE31c822C61a67a601C3"
         ],
-        'cycle': nextCycle - 1
+        'cycle': currCycle
     })
 
     rewards_data = internal_generate_rewards_in_range(
@@ -296,7 +297,7 @@ def test_rewards_flow(setup):
         rewards_data["merkleTree"]["endBlock"],
         {"from": validator}
     )
-    
+
     # Claim as user who has xSushi and FARM
 
     # This revert message means the claim was valid and it tried to transfer rewards
@@ -320,7 +321,6 @@ def test_rewards_flow(setup):
     # farmBalance = Contract.at('0xa0246c9032bC3A600820415aE600c6388619A14D').balanceOf(user)
     # assert farmClaim == farmBalance
 
-
     # Claim partial as a user 
     with brownie.reverts('ERC20: transfer amount exceeds balance'):
         rewardsContract.claim(
@@ -343,7 +343,8 @@ def test_rewards_flow(setup):
     
     startBlock = rewardsContract.lastPublishStartBlock() + 1
     endBlock = startBlock + 5
-    nextCycle = rewardsContract.currentCycle() + 1
+    currCycle = rewardsContract.currentCycle()
+    nextCycle = currCycle + 1
     currentRoot = rewardsContract.merkleRoot()
 
     geyserRewards = DotMap({
@@ -380,7 +381,7 @@ def test_rewards_flow(setup):
             "0x3472A5A71965499acd81997a54BBA8D852C6E53d",
             "0x798D1bE841a82a273720CE31c822C61a67a601C3"
         ],
-        'cycle': nextCycle - 1
+        'cycle': currCycle
     })
 
     rewards_data = internal_generate_rewards_in_range(
@@ -423,5 +424,3 @@ def test_rewards_flow(setup):
             [0, 0, 0],
             {"from": user}
         )
-    
-    # assert False
