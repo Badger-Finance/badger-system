@@ -19,10 +19,10 @@ contract OtcEscrow {
 
     event VestingDeployed(address vesting);
 
-    address beneficiary;
-    uint256 duration;
-    uint256 usdcAmount;
-    uint256 bBadgerAmount;
+    address public beneficiary;
+    uint256 public duration;
+    uint256 public usdcAmount;
+    uint256 public bBadgerAmount;
 
     constructor(
         address beneficiary_,
