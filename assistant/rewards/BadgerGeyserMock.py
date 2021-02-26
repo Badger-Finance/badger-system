@@ -69,7 +69,7 @@ class LinearLogic:
 
 
 class BadgerGeyserMock:
-    def __init__(self, key):
+    def __init__(self, key,diggSettAllocation):
         self.key = key
         self.events = DotMap()
         self.stakes = DotMap()
@@ -83,6 +83,7 @@ class BadgerGeyserMock:
             {"x": 0, "y": badger_config.startMultiplier},
             {"x": days(7 * 8), "y": badger_config.endMultiplier},
         )
+        self.diggSettAllocation = diggSettAllocation
 
     # ===== Setters =====
 
@@ -190,6 +191,10 @@ class BadgerGeyserMock:
                 )
             )
             if token == digg_token:
+                if self.key in ["native.uniDiggWbtc","native.sushiDiggWbtc"]:
+                    tokenDistributions[token] = tokenDistributions[token] * self.diggSettAllocation
+                else:
+                    tokenDistributions[token] = tokenDistributions[token] * ( 1 - self.diggSettAllocation)
                 console.log(
                 "Distributing {} {} tokens for {} geyser in this rewards cycle, out of {} historically locked".format(
                     val(digg.sharesToFragments(tokenDistributions[token])),
