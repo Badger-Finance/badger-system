@@ -23,10 +23,9 @@ def download(fileName):
     return requests.get(url=url).json()
 
 
-def upload(fileName):
+def upload(fileName, bucket="badger-json"):
     from config.env_config import env_config
 
-    upload_bucket = "badger-json"
     upload_file_key = "rewards/" + fileName
 
     console.print("Uploading file to s3: " + upload_file_key)
@@ -36,4 +35,4 @@ def upload(fileName):
         aws_access_key_id=env_config.aws_access_key_id,
         aws_secret_access_key=env_config.aws_secret_access_key,
     )
-    s3.upload_file(fileName, upload_bucket, upload_file_key)
+    s3.upload_file(fileName, bucket, upload_file_key)
