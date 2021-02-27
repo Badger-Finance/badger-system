@@ -15,11 +15,13 @@ import "../../interfaces/erc20/IERC20Detailed.sol";
 import "../badger-remote/PauseableStorageless.sol";
 import "../badger-remote/DefenderStorageless.sol";
 import "../SettAccessControlDefended.sol";
+import "./SettVersion.sol";
 
 /* 
     Source: https://github.com/iearn-finance/yearn-protocol/blob/develop/contracts/vaults/yVault.sol
 */
-contract Sett_A is ERC20Upgradeable, SettAccessControlDefended, PauseableStorageless, DefenderStorageless {
+contract Sett_A is ERC20Upgradeable, SettAccessControlDefended, PauseableStorageless, 
+    DefenderStorageless, SettVersion {
     using SafeERC20Upgradeable for IERC20Upgradeable;
     using AddressUpgradeable for address;
     using SafeMathUpgradeable for uint256;
@@ -101,10 +103,6 @@ contract Sett_A is ERC20Upgradeable, SettAccessControlDefended, PauseableStorage
     }
 
     /// ===== View Functions =====
-
-    function version() public view returns (string memory) {
-        return "1.3";
-    }
 
     function getPricePerFullShare() public virtual view returns (uint256) {
         if (totalSupply() == 0) {
