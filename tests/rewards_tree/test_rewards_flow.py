@@ -331,6 +331,80 @@ def test_rewards_flow(setup):
             {"from": user}
         )
 
+    # Claim with MockToken and confirm new balance
+    mockToken = rewards_assistant.MockToken
+    mockContract = admin.deploy(mockToken)
+    mockContract.initialize([rewardsContract], [100000000])
+
+    startBlock = rewardsContract.lastPublishStartBlock() + 1
+    endBlock = startBlock + 5
+    currCycle = rewardsContract.currentCycle()
+    nextCycle = currCycle + 1
+    currentRoot = rewardsContract.merkleRoot()
+
+    geyserRewards = DotMap({
+        'badger_tree': rewardsContract,
+        'claims': {
+            "0x21b42413bA931038f35e7A5224FaDb065d297Ba3": {},
+            "0x0063046686E46Dc6F15918b61AE2B121458534a5": {},
+            "0x33A4622B82D4c04a53e170c638B944ce27cffce3": {}
+        },
+        "tokens": [
+            mockContract
+        ],
+        'cycle': nextCycle
+    })
+    geyserRewards['claims']["0x21b42413bA931038f35e7A5224FaDb065d297Ba3"][str(mockContract)] = 100
+    geyserRewards['claims']["0x0063046686E46Dc6F15918b61AE2B121458534a5"][str(mockContract)] = 20
+    geyserRewards['claims']["0x33A4622B82D4c04a53e170c638B944ce27cffce3"][str(mockContract)] = 0
+    pastRewards = DotMap({
+        'badger_tree': rewardsContract,
+        'claims': {},
+        "tokens": [
+            mockContract
+        ],
+        'cycle': currCycle
+    })
+
+    rewards_data = internal_generate_rewards_in_range(
+        rewards_assistant,
+        {"contentHash": currentRoot},
+        geyserRewards,
+        startBlock, 
+        endBlock, 
+        pastRewards
+    )
+
+    rewardsContract.proposeRoot(
+        rewards_data["merkleTree"]["merkleRoot"],
+        rewards_data["rootHash"],
+        rewards_data["merkleTree"]["cycle"],
+        rewards_data["merkleTree"]["startBlock"],
+        rewards_data["merkleTree"]["endBlock"],
+        {"from": proposer}
+    )
+    rewardsContract.approveRoot(
+        rewards_data["merkleTree"]["merkleRoot"],
+        rewards_data["rootHash"],
+        rewards_data["merkleTree"]["cycle"],
+        rewards_data["merkleTree"]["startBlock"],
+        rewards_data["merkleTree"]["endBlock"],
+        {"from": validator}
+    )
+
+    rewardsContract.claim(
+        [mockContract],
+        [100],
+        rewards_data['merkleTree']['claims'][user]['index'],
+        rewards_data['merkleTree']['cycle'],
+        rewards_data['merkleTree']['claims'][user]['proof'],
+        [100],
+        {"from": user}
+    )
+
+    assert mockContract.balanceOf(user) == 100
+    assert mockContract.balanceOf(str(rewardsContract)) == 100000000 - 100
+
     # Try to claim with zero tokens all around, expect failure
     rewardsContract = admin.deploy(badgerTree)
     rewardsContract.initialize(admin, proposer, validator)
