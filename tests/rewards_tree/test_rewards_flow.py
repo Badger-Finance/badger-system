@@ -235,29 +235,26 @@ def test_rewards_flow(setup):
 
     # Update to new root with xSushi and FARM
     farmClaim = 100000000000
+    xSushiClaim = 5555555555
     geyserRewards = DotMap({
         'badger_tree': rewardsContract,
         'claims': {
             "0x21b42413bA931038f35e7A5224FaDb065d297Ba3": {
                 "0xa0246c9032bC3A600820415aE600c6388619A14D": farmClaim,
-                "0x3472A5A71965499acd81997a54BBA8D852C6E53d": 0,
-                "0x798D1bE841a82a273720CE31c822C61a67a601C3": 0
+                "0x8798249c2E607446EfB7Ad49eC89dD1865Ff4272": xSushiClaim
             },
             "0x0063046686E46Dc6F15918b61AE2B121458534a5": {
                 "0xa0246c9032bC3A600820415aE600c6388619A14D": 100,
-                "0x3472A5A71965499acd81997a54BBA8D852C6E53d": 100,
-                "0x798D1bE841a82a273720CE31c822C61a67a601C3": 100
+                "0x8798249c2E607446EfB7Ad49eC89dD1865Ff4272": 100
             },
             "0x33A4622B82D4c04a53e170c638B944ce27cffce3": {
                 "0xa0246c9032bC3A600820415aE600c6388619A14D": 100,
-                "0x3472A5A71965499acd81997a54BBA8D852C6E53d": 100,
-                "0x798D1bE841a82a273720CE31c822C61a67a601C3": 100
+                "0x8798249c2E607446EfB7Ad49eC89dD1865Ff4272": 100
             }
         },
         "tokens": [
             "0xa0246c9032bC3A600820415aE600c6388619A14D", #FARM
-            "0x3472A5A71965499acd81997a54BBA8D852C6E53d", #badger
-            "0x798D1bE841a82a273720CE31c822C61a67a601C3"  #digg
+            "0x8798249c2E607446EfB7Ad49eC89dD1865Ff4272" #XSUSHI
         ],
         'cycle': nextCycle
     })
@@ -266,8 +263,7 @@ def test_rewards_flow(setup):
         'claims': {},
         "tokens": [
             "0xa0246c9032bC3A600820415aE600c6388619A14D", #FARM
-            "0x3472A5A71965499acd81997a54BBA8D852C6E53d",
-            "0x798D1bE841a82a273720CE31c822C61a67a601C3"
+            "0x8798249c2E607446EfB7Ad49eC89dD1865Ff4272" #XSUSHI
         ],
         'cycle': currCycle
     })
@@ -306,14 +302,13 @@ def test_rewards_flow(setup):
         rewardsContract.claim(
             [
                 "0xa0246c9032bC3A600820415aE600c6388619A14D", #FARM
-                "0x3472A5A71965499acd81997a54BBA8D852C6E53d", #badger
-                "0x798D1bE841a82a273720CE31c822C61a67a601C3"  #digg
+                "0x8798249c2E607446EfB7Ad49eC89dD1865Ff4272" #XSUSHI
             ],
-            [farmClaim, 0, 0],
+            [farmClaim, xSushiClaim],
             rewards_data['merkleTree']['claims'][user]['index'],
             rewards_data['merkleTree']['cycle'],
             rewards_data['merkleTree']['claims'][user]['proof'],
-            [farmClaim, 0, 0],
+            [farmClaim, xSushiClaim],
             {"from": user}
         )
 
@@ -326,14 +321,13 @@ def test_rewards_flow(setup):
         rewardsContract.claim(
             [
                 "0xa0246c9032bC3A600820415aE600c6388619A14D", #FARM
-                "0x3472A5A71965499acd81997a54BBA8D852C6E53d", #badger
-                "0x798D1bE841a82a273720CE31c822C61a67a601C3"  #digg
+                "0x8798249c2E607446EfB7Ad49eC89dD1865Ff4272" #XSUSHI
             ],
-            [farmClaim, 0, 0],
+            [farmClaim, xSushiClaim],
             rewards_data['merkleTree']['claims'][user]['index'],
             rewards_data['merkleTree']['cycle'],
             rewards_data['merkleTree']['claims'][user]['proof'],
-            [farmClaim - 100, 0, 0],
+            [farmClaim - 100, xSushiClaim - 100],
             {"from": user}
         )
 
@@ -352,24 +346,20 @@ def test_rewards_flow(setup):
         'claims': {
             "0x21b42413bA931038f35e7A5224FaDb065d297Ba3": {
                 "0xa0246c9032bC3A600820415aE600c6388619A14D": 0,
-                "0x3472A5A71965499acd81997a54BBA8D852C6E53d": 0,
-                "0x798D1bE841a82a273720CE31c822C61a67a601C3": 0
+                "0x8798249c2E607446EfB7Ad49eC89dD1865Ff4272": 0
             },
             "0x0063046686E46Dc6F15918b61AE2B121458534a5": {
                 "0xa0246c9032bC3A600820415aE600c6388619A14D": 0,
-                "0x3472A5A71965499acd81997a54BBA8D852C6E53d": 0,
-                "0x798D1bE841a82a273720CE31c822C61a67a601C3": 0
+                "0x8798249c2E607446EfB7Ad49eC89dD1865Ff4272": 0
             },
             "0x33A4622B82D4c04a53e170c638B944ce27cffce3": {
                 "0xa0246c9032bC3A600820415aE600c6388619A14D": 0,
-                "0x3472A5A71965499acd81997a54BBA8D852C6E53d": 0,
-                "0x798D1bE841a82a273720CE31c822C61a67a601C3": 0
+                "0x8798249c2E607446EfB7Ad49eC89dD1865Ff4272": 0
             }
         },
         "tokens": [
             "0xa0246c9032bC3A600820415aE600c6388619A14D", #FARM
-            "0x3472A5A71965499acd81997a54BBA8D852C6E53d", #badger
-            "0x798D1bE841a82a273720CE31c822C61a67a601C3"  #digg
+            "0x8798249c2E607446EfB7Ad49eC89dD1865Ff4272" #XSUSHI
         ],
         'cycle': nextCycle
     })
@@ -378,8 +368,7 @@ def test_rewards_flow(setup):
         'claims': {},
         "tokens": [
             "0xa0246c9032bC3A600820415aE600c6388619A14D", #FARM
-            "0x3472A5A71965499acd81997a54BBA8D852C6E53d",
-            "0x798D1bE841a82a273720CE31c822C61a67a601C3"
+            "0x8798249c2E607446EfB7Ad49eC89dD1865Ff4272" #XSUSHI
         ],
         'cycle': currCycle
     })
@@ -414,13 +403,12 @@ def test_rewards_flow(setup):
         rewardsContract.claim(
             [
                 "0xa0246c9032bC3A600820415aE600c6388619A14D", #FARM
-                "0x3472A5A71965499acd81997a54BBA8D852C6E53d", #badger
-                "0x798D1bE841a82a273720CE31c822C61a67a601C3"  #digg
+                "0x8798249c2E607446EfB7Ad49eC89dD1865Ff4272" #XSUSHI
             ],
-            [0, 0, 0],
+            [0, 0],
             rewards_data['merkleTree']['claims'][user]['index'],
             rewards_data['merkleTree']['cycle'],
             rewards_data['merkleTree']['claims'][user]['proof'],
-            [0, 0, 0],
+            [0, 0],
             {"from": user}
         )
