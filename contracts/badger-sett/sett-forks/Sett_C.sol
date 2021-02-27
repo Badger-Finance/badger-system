@@ -18,8 +18,9 @@ import "./SettVersion.sol";
 
 /* 
     Source: https://github.com/iearn-finance/yearn-protocol/blob/develop/contracts/vaults/yVault.sol
+    NB: Only Digg sett inherits from/uses this fork.
 */
-contract Sett_C is ERC20Upgradeable, PausableUpgradeable, SettAccessControlDefended, 
+contract Sett_C is ERC20Upgradeable, SettAccessControlDefended, PausableUpgradeable, 
     DefenderStorageless, SettVersion {
     using SafeERC20Upgradeable for IERC20Upgradeable;
     using AddressUpgradeable for address;

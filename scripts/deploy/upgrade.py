@@ -4,7 +4,15 @@ from scripts.systems.badger_system import BadgerSystem
 from helpers.gnosis_safe import GnosisSafe, MultisigTxMetadata
 
 
-# Upgrades versioned proxy contract if not latest version.
+# try all the methods in priority order
+VERSION_METHODS = [
+    "version",
+    "baseStrategyVersion",
+]
+
+
+# Upgrades versioned proxy contract's impl/logic contract if not latest version.
+# Contracts must implement a version method above or they default to version 0.0.
 def upgrade_versioned_proxy(
     badger: BadgerSystem,
     # upgradeable proxy contract
@@ -36,13 +44,7 @@ def upgrade_versioned_proxy(
 
 
 def _get_version(contract: ProjectContract) -> float:
-    # try all the methods in priority order
-    methods = [
-        "version",
-        "baseStrategyVersion",
-    ]
-
-    for method in methods:
+    for method in VERSION_METHODS:
         version, ok = _try_get_version(contract, method)
         if ok:
             return version

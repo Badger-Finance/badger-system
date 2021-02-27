@@ -11,7 +11,7 @@ import "../../deps/@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradea
 import "interfaces/badger/IController.sol";
 import "interfaces/digg/IDigg.sol";
 import "interfaces/digg/IDiggStrategy.sol";
-import "./Sett.sol";
+import "../Sett_C.sol";
 
 /* 
     bDIGG is denominated in scaledShares.
@@ -32,7 +32,7 @@ import "./Sett.sol";
     * Transfer functions are now pausable along with all other non-permissioned write functions
     * All permissioned write functions, with the exception of pause() & unpause(), are pausable as well
 */
-contract DiggSett is Sett {
+contract DiggSett is Sett_C {
     using SafeERC20Upgradeable for IERC20Upgradeable;
     using AddressUpgradeable for address;
     using SafeMathUpgradeable for uint256;
