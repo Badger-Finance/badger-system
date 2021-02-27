@@ -19,10 +19,9 @@ V1.3
 * Withdrawals are processed from idle want in sett.
 
 
-Looking at it, all the Setts inherit from one of these (except the DIGG sett):
 "SettV1": "0xE4Ae305b08434bF3D74e0086592627F913a258A9",
 "SettV1.1": "0x175586ac3f8A7463499D1019A30120aa6fC67C5f",
-So
+
 Old:
            "native.badger": "0x19D97D8fA813EE2f51aD4B4e04EA08bAf4DFfC28",
             "native.renCrv": "0x6dEf55d2e18486B9dDfaA075bc4e4EE0B28c1545",
@@ -36,7 +35,3 @@ New:
             "native.digg": "0x7e7E112A68d8D2E221E11047a72fFC1065c38e1a",
             "native.uniDiggWbtc": "0xC17078FDd324CC473F8175Dc5290fae5f2E84714",
             "native.sushiDiggWbtc": "0x88128580ACdD9c04Ce47AFcE196875747bF2A9f6"
-Basically pausable vs not pausable
-DiggSett extends from the new variety
-Which makes the in-place migration a lot more palatable
-LegacySett / Sett
