@@ -14,19 +14,22 @@ from scripts.systems.sett_system import (
 )
 from helpers.registry import registry
 from helpers.time_utils import days
-from helpers.sett.strategy_registry import name_to_artifact, strategy_name_to_artifact
+from helpers.contract_registry import name_to_artifact, contract_name_to_artifact
 from helpers.proxy_utils import deploy_proxy, deploy_proxy_admin
 from helpers.gnosis_safe import GnosisSafe, MultisigTxMetadata
-from helpers.sett.strategy_registry import name_to_artifact
-from scripts.systems.constants import SettType
-from scripts.systems.digg_system import connect_digg
-from scripts.systems.constants import SettType
 from scripts.systems.digg_system import DiggSystem, connect_digg
 from scripts.systems.claw_system import ClawSystem
 from scripts.systems.swap_system import SwapSystem
 from scripts.systems.gnosis_safe_system import connect_gnosis_safe
-from scripts.systems.sett_system import deploy_controller, deploy_strategy
 from scripts.systems.uniswap_system import UniswapSystem
+from scripts.systems.upgrade_system import UpgradeSystem
+from scripts.systems.constants import (
+    SETT_SUFFIX,
+    STRATEGY_SUFFIX,
+    GEYSER_SUFFIX,
+    CONTROLLER_SUFFIX,
+    SettType,
+)
 
 from rich.console import Console
 
@@ -119,7 +122,7 @@ def print_to_file(badger, path):
     if badger.digg:
         digg = badger.digg
         digg_system = {
-            "owner": digg.owner.address,
+            "owner": digg.owner,
             "devProxyAdmin": digg.devProxyAdmin.address,
             "daoProxyAdmin": digg.daoProxyAdmin.address,
             "uFragments": digg.uFragments.address,
@@ -229,7 +232,6 @@ class BadgerSystem:
     ):
         self.config = config
         self.contracts_static = []
-        self.contracts_upgradeable = {}
         self.gas_strategy = default_gas_strategy
         # Digg system ref, lazily set.
         self.digg = None
@@ -237,6 +239,8 @@ class BadgerSystem:
         self.claw = None
         # Swap system ref, lazily set.
         self.swap = None
+        # Upgrade system ref, eagerly set.
+        self.upgrade = UpgradeSystem(self, deployer)
 
         # Unlock accounts in test mode
         if rpc.is_active():
@@ -298,9 +302,6 @@ class BadgerSystem:
     def track_contract_static(self, contract):
         self.contracts_static.append(contract)
 
-    def track_contract_upgradeable(self, key, contract):
-        self.contracts_upgradeable[key] = contract
-
     # ===== Contract Connectors =====
     def connect_proxy_admins(self, devProxyAdmin, daoProxyAdmin, opsProxyAdmin=None):
         abi = registry.open_zeppelin.artifacts["ProxyAdmin"]["abi"]
@@ -355,7 +356,7 @@ class BadgerSystem:
         deployer = self.deployer
         controller = deploy_controller(self, deployer)
         self.sett_system.controllers[id] = controller
-        self.track_contract_upgradeable(id + ".controller", controller)
+        self.upgrade.track_contract_upgradeable(f"{id}{CONTROLLER_SUFFIX}", controller)
         return controller
 
     def deploy_core_logic(self):
@@ -387,8 +388,10 @@ class BadgerSystem:
 
     def deploy_sett_strategy_logic_for(self, name):
         deployer = self.deployer
-        artifact = strategy_name_to_artifact(name)
-        self.logic[name] = artifact.deploy({"from": deployer})
+        artifact = contract_name_to_artifact(name)
+        self.logic[name] = artifact.deploy(
+            {"from": deployer}
+        )
 
         # TODO: Initialize to remove that function
 
@@ -406,7 +409,7 @@ class BadgerSystem:
             self.logic.RewardsEscrow.initialize.encode_input(),
             deployer,
         )
-        self.track_contract_upgradeable("rewardsEscrow", self.rewardsEscrow)
+        self.upgrade.track_contract_upgradeable("rewardsEscrow", self.rewardsEscrow)
 
     def deploy_badger_tree(self):
         deployer = self.deployer
@@ -427,7 +430,7 @@ class BadgerSystem:
             ),
             deployer,
         )
-        self.track_contract_upgradeable("badgerTree", self.badgerTree)
+        self.upgrade.track_contract_upgradeable("badgerTree", self.badgerTree)
 
     def deploy_badger_hunt(self):
         deployer = self.deployer
@@ -448,7 +451,7 @@ class BadgerSystem:
             ),
             deployer,
         )
-        self.track_contract_upgradeable("badgerHunt", self.badgerHunt)
+        self.upgrade.track_contract_upgradeable("badgerHunt", self.badgerHunt)
 
     def deploy_dao_badger_timelock(self):
         deployer = self.deployer
@@ -476,7 +479,7 @@ class BadgerSystem:
             ),
             self.deployer,
         )
-        self.track_contract_upgradeable("daoBadgerTimelock", self.daoBadgerTimelock)
+        self.upgrade.track_contract_upgradeable("daoBadgerTimelock", self.daoBadgerTimelock)
 
     def deploy_dao_digg_timelock(self):
         deployer = self.deployer
@@ -499,7 +502,7 @@ class BadgerSystem:
             ),
             self.deployer,
         )
-        self.track_contract_upgradeable("teamVesting", self.teamVesting)
+        self.upgrade.track_contract_upgradeable("teamVesting", self.teamVesting)
 
     def deploy_logic(self, name, BrownieArtifact, test=False):
         deployer = self.deployer
@@ -574,7 +577,7 @@ class BadgerSystem:
                 deployer,
             )
         self.sett_system.vaults[id] = sett
-        self.track_contract_upgradeable(id + ".sett", sett)
+        self.upgrade.track_contract_upgradeable(f"{id}{SETT_SUFFIX}", sett)
         return sett
 
     def deploy_strategy(
@@ -602,19 +605,18 @@ class BadgerSystem:
             guardian,
         )
 
-        Artifact = strategy_name_to_artifact(strategyName)
+        Artifact = contract_name_to_artifact(strategyName)
 
         self.sett_system.strategies[id] = strategy
         self.set_strategy_artifact(id, strategyName, Artifact)
-        self.track_contract_upgradeable(id + ".strategy", strategy)
+        self.upgrade.track_contract_upgradeable(f"{id}{STRATEGY_SUFFIX}", strategy)
         return strategy
 
     def deploy_geyser(self, stakingToken, id):
         print(stakingToken)
-        deployer = self.deployer
         geyser = deploy_geyser(self, stakingToken)
         self.geysers[id] = geyser
-        self.track_contract_upgradeable(id + ".geyser", geyser)
+        self.upgrade.track_contract_upgradeable(f"{id}{GEYSER_SUFFIX}", geyser)
         return geyser
 
     def add_existing_digg(self, digg_system: DiggSystem):
@@ -633,7 +635,7 @@ class BadgerSystem:
         )
 
         self.sett_system.rewards[id] = rewards
-        self.track_contract_upgradeable(id + ".rewards", rewards)
+        self.upgrade.track_contract_upgradeable(id + ".rewards", rewards)
         return rewards
 
     def deploy_sett_staking_rewards_signal_only(self, id, admin, distToken):
@@ -651,7 +653,7 @@ class BadgerSystem:
         )
 
         self.sett_system.rewards[id] = rewards
-        self.track_contract_upgradeable(id + ".rewards", rewards)
+        self.upgrade.track_contract_upgradeable(id + ".rewards", rewards)
         return rewards
 
     def deploy_sett_staking_rewards(self, id, stakingToken, distToken):
@@ -669,7 +671,7 @@ class BadgerSystem:
         )
 
         self.sett_system.rewards[id] = rewards
-        self.track_contract_upgradeable(id + ".rewards", rewards)
+        self.upgrade.track_contract_upgradeable(id + ".rewards", rewards)
         return rewards
 
     def add_existing_claw(self, claw_system: ClawSystem):
@@ -897,66 +899,66 @@ class BadgerSystem:
             self.connect_geyser(key, address)
 
     def connect_strategy(self, id, address, strategyArtifactName):
-        Artifact = strategy_name_to_artifact(strategyArtifactName)
+        Artifact = contract_name_to_artifact(strategyArtifactName)
         strategy = Artifact.at(address)
         self.sett_system.strategies[id] = strategy
         self.set_strategy_artifact(id, strategyArtifactName, Artifact)
-        self.track_contract_upgradeable(id + ".strategy", strategy)
+        self.upgrade.track_contract_upgradeable(f"{id}{STRATEGY_SUFFIX}", strategy)
 
     def connect_sett(self, id, address):
         sett = Sett.at(address)
         print(f"connecting sett id {id}")
         self.sett_system.vaults[id] = sett
-        self.track_contract_upgradeable(id + ".sett", sett)
+        self.upgrade.track_contract_upgradeable(f"{id}{SETT_SUFFIX}", sett)
 
     def connect_controller(self, id, address):
         controller = Controller.at(address)
         self.sett_system.controllers[id] = controller
-        self.track_contract_upgradeable(id + ".controller", controller)
+        self.upgrade.track_contract_upgradeable(f"{id}{CONTROLLER_SUFFIX}", controller)
 
     def connect_geyser(self, id, address):
         geyser = BadgerGeyser.at(address)
         self.geysers[id] = geyser
-        self.track_contract_upgradeable(id + ".geyser", geyser)
+        self.upgrade.track_contract_upgradeable(f"{id}{GEYSER_SUFFIX}", geyser)
 
     def connect_rewards_escrow(self, address):
         self.rewardsEscrow = RewardsEscrow.at(address)
-        self.track_contract_upgradeable("rewardsEscrow", self.rewardsEscrow)
+        self.upgrade.track_contract_upgradeable("rewardsEscrow", self.rewardsEscrow)
 
     def connect_badger_tree(self, address):
         self.badgerTree = BadgerTree.at(address)
-        self.track_contract_upgradeable("badgerTree", self.badgerTree)
+        self.upgrade.track_contract_upgradeable("badgerTree", self.badgerTree)
 
     def connect_badger_hunt(self, address):
         self.badgerHunt = BadgerHunt.at(address)
-        self.track_contract_upgradeable("badgerHunt", self.badgerHunt)
+        self.upgrade.track_contract_upgradeable("badgerHunt", self.badgerHunt)
 
     def connect_honeypot_meme(self, address):
         self.honeypotMeme = HoneypotMeme.at(address)
-        self.track_contract_upgradeable("rewardsEscrow", self.rewardsEscrow)
+        self.upgrade.track_contract_upgradeable("rewardsEscrow", self.rewardsEscrow)
 
     def connect_community_pool(self, address):
         self.communityPool = RewardsEscrow.at(address)
-        self.track_contract_upgradeable("rewardsEscrow", self.rewardsEscrow)
+        self.upgrade.track_contract_upgradeable("rewardsEscrow", self.rewardsEscrow)
 
     def connect_logic(self, logic):
         for name, address in logic.items():
-            Artifact = strategy_name_to_artifact(name)
+            Artifact = contract_name_to_artifact(name)
             self.logic[name] = Artifact.at(address)
 
     def connect_dao_badger_timelock(self, address):
         self.daoBadgerTimelock = SimpleTimelock.at(address)
-        self.track_contract_upgradeable("daoBadgerTimelock", self.daoBadgerTimelock)
+        self.upgrade.track_contract_upgradeable("daoBadgerTimelock", self.daoBadgerTimelock)
 
     def connect_rewards_manager(self, address):
         self.badgerRewardsManager = BadgerRewardsManager.at(address)
-        self.track_contract_upgradeable(
+        self.upgrade.track_contract_upgradeable(
             "badgerRewardsManager", self.badgerRewardsManager
         )
 
     def connect_unlock_scheduler(self, address):
         self.unlockScheduler = UnlockScheduler.at(address)
-        self.track_contract_upgradeable("unlockScheduler", self.unlockScheduler)
+        self.upgrade.track_contract_upgradeable("unlockScheduler", self.unlockScheduler)
 
     def connect_dao_digg_timelock(self, address):
         # TODO: Implement with Digg
@@ -964,7 +966,7 @@ class BadgerSystem:
 
     def connect_team_vesting(self, address):
         self.teamVesting = SmartVesting.at(address)
-        self.track_contract_upgradeable("teamVesting", self.teamVesting)
+        self.upgrade.track_contract_upgradeable("teamVesting", self.teamVesting)
 
     # Routes rewards connection to correct underlying contract based on id.
     def connect_rewards(self, id, address):
@@ -980,7 +982,7 @@ class BadgerSystem:
     def connect_sett_staking_rewards(self, id, address):
         rewards = StakingRewards.at(address)
         self.sett_system.rewards[id] = rewards
-        self.track_contract_upgradeable(id + ".rewards", rewards)
+        self.upgrade.track_contract_upgradeable(id + ".rewards", rewards)
 
     # def connect_guardian(self, address):
     #     self.guardian = accounts.at(address)
@@ -1000,7 +1002,7 @@ class BadgerSystem:
     def connect_digg_rewards_faucet(self, id, address):
         rewards = DiggRewardsFaucet.at(address)
         self.sett_system.rewards[id] = rewards
-        self.track_contract_upgradeable(id + ".rewards", rewards)
+        self.upgrade.track_contract_upgradeable(id + ".rewards", rewards)
 
     def set_strategy_artifact(self, id, artifactName, artifact):
         self.strategy_artifacts[id] = {
@@ -1048,6 +1050,11 @@ class BadgerSystem:
 
         return self.sett_system.vaults[id]
 
+    def getSettArtifact(self, id):
+        if id == "native.digg":
+            return DiggSett
+        return Sett
+
     def getSettRewards(self, id):
         return self.sett_system.rewards[id]
 
@@ -1062,7 +1069,7 @@ class BadgerSystem:
         return interface.IERC20(self.sett_system.strategies[id].want())
 
     def getStrategyArtifact(self, id):
-        return self.strategy_artifacts[id].artifact
+        return self.strategy_artifacts[id]["artifact"]
 
     def getStrategyArtifactName(self, id):
         return self.strategy_artifacts[id]["artifactName"]
