@@ -118,7 +118,6 @@ def calc_sushi_rewards(badger,startBlock,endBlock,nextCycle,retroactive):
             badger,wbtcDiggStartBlock,endBlock,wBtcDiggEvents,"native.sushiDiggWbtc",nextCycle
         )
 
-    # TODO: Add digg sushi strategy
     finalRewards = combine_rewards([wbtcEthRewards,wbtcBadgerRewards,wbtcDiggRewards],nextCycle,badger.badgerTree)
     xSushiFromRewards = 0
 
@@ -429,15 +428,14 @@ def generate_rewards_in_range(badger, startBlock, endBlock, pastRewards):
     nextCycle = getNextCycle(badger)
 
     currentMerkleData = fetchCurrentMerkleData(badger)
+    #sushiRewards = calc_sushi_rewards(badger,startBlock,endBlock,nextCycle,retroactive=False)
+    #farmRewards = fetch_current_harvest_rewards(badger,startBlock, endBlock,nextCycle)
 
     geyserRewards = calc_geyser_rewards(badger, startBlock, endBlock, nextCycle)
-
     rewardsLogger.save("rewards")
-    sushiRewards = calc_sushi_rewards(badger,startBlock,endBlock,nextCycle,retroactive=False)
-    farmRewards = fetch_current_harvest_rewards(badger,startBlock, endBlock,nextCycle)
 
-    newRewards = combine_rewards([geyserRewards,farmRewards,sushiRewards],nextCycle,badger.badgerTree)
-    cumulativeRewards = process_cumulative_rewards(pastRewards, newRewards)
+    #newRewards = combine_rewards([geyserRewards,farmRewards,sushiRewards],nextCycle,badger.badgerTree)
+    cumulativeRewards = process_cumulative_rewards(pastRewards, geyserRewards)
 
     # Take metadata from geyserRewards
     console.print("Processing to merkle tree")
