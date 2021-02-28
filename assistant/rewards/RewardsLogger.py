@@ -8,6 +8,8 @@ class RewardsLogger:
         self._unlockSchedules = {}
         self._userData = {}
         self._epochData = {}
+        self._metadata = {}
+
 
     def _check_user_vault(self,address,vault):
         if vault not in self._userData:
@@ -51,14 +53,14 @@ class RewardsLogger:
         self._check_user_vault(address,vault)
         self._userData[vault][address]["multiplier"] = multiplier
 
+    def add_metadata(self,key,value):
+        self._metadata[key] = value
+
     def add_unlock_schedule(self,token,schedule):
         self._unlockSchedules[token] = schedule
 
     def add_distribution_info(self,geyserName,distribution):
         self._distributionInfo[geyserName] = distribution
-
-
-
 
     def save(self,fileName):
 
@@ -66,7 +68,8 @@ class RewardsLogger:
             "userData":self._userData,
             "distributionInfo":self._distributionInfo,
             "unlockSchedules":self._unlockSchedules,
-            "retroactiveData":self._epochData
+            "retroactiveData":self._epochData,
+            "metadata":self._metadata
         }
         with open("logs/{}.json".format(fileName),"w") as f:
             json.dump(data,f,indent=4)
