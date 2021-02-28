@@ -3,12 +3,12 @@
 pragma solidity ^0.6.11;
 
 import "../../../deps/@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
-import "../../deps/@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
-import "../../deps/@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
-import "../../deps/@openzeppelin/contracts-upgradeable/token/ERC20/SafeERC20Upgradeable.sol";
-import "../../deps/@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
-import "../../deps/@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import "../../deps/@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
+import "../../../deps/@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
+import "../../../deps/@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
+import "../../../deps/@openzeppelin/contracts-upgradeable/token/ERC20/SafeERC20Upgradeable.sol";
+import "../../../deps/@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
+import "../../../deps/@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "../../../deps/@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 
 import "../../interfaces/badger/IController.sol";
 import "../../interfaces/erc20/IERC20Detailed.sol";
@@ -20,8 +20,7 @@ import "./SettVersion.sol";
     Source: https://github.com/iearn-finance/yearn-protocol/blob/develop/contracts/vaults/yVault.sol
     NB: Only Digg sett inherits from/uses this fork.
 */
-contract Sett_C is ERC20Upgradeable, SettAccessControlDefended, PausableUpgradeable, 
-    DefenderStorageless, SettVersion {
+contract Sett_C is ERC20Upgradeable, SettAccessControlDefended, PausableUpgradeable, DefenderStorageless, SettVersion {
     using SafeERC20Upgradeable for IERC20Upgradeable;
     using AddressUpgradeable for address;
     using SafeMathUpgradeable for uint256;
@@ -177,12 +176,6 @@ contract Sett_C is ERC20Upgradeable, SettAccessControlDefended, PausableUpgradea
     function setGuardian(address _guardian) external whenNotPaused {
         _onlyGovernance();
         guardian = _guardian;
-    }
-
-    function setWithdrawalFee(uint256 _withdrawalFee) external {
-        _onlyGovernance();
-        require(_withdrawalFee <= MAX_FEE, "sett/excessive-withdrawal-fee");
-        withdrawalFee = _withdrawalFee;
     }
 
     /// ===== Permissioned Actions: Controller =====

@@ -94,7 +94,6 @@ contract DiggSett is Sett_C {
 
         // Check balance
         uint256 _sharesInSett = digg.sharesOf(address(this));
-        uint256 _fee;
 
         // If we don't have sufficient idle want in Sett, withdraw from Strategy
         if (_sharesInSett < _sharesToRedeem) {
@@ -110,12 +109,9 @@ contract DiggSett is Sett_C {
             if (_diff < _toWithdraw) {
                 _sharesToRedeem = _sharesInSett.add(_diff);
             }
-            _fee = _processWithdrawalFee(digg.sharesToFragments(_sharesToRedeem.sub(_sharesInSett)));
-        } else {
-            _fee = _processWithdrawalFee(digg.sharesToFragments(_sharesToRedeem));
         }
 
         // Transfer the corresponding number of shares, scaled to DIGG fragments, to recipient
-        digg.transfer(msg.sender, digg.sharesToFragments(_sharesToRedeem).sub(_fee));
+        digg.transfer(msg.sender, digg.sharesToFragments(_sharesToRedeem));
     }
 }
