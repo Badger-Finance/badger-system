@@ -17,6 +17,16 @@ console = Console()
 
 badger_token = "0x3472A5A71965499acd81997a54BBA8D852C6E53d"
 digg_token = "0x798D1bE841a82a273720CE31c822C61a67a601C3"
+farm_token = "0xa0246c9032bC3A600820415aE600c6388619A14D"
+xSushi_token = "0x8798249c2E607446EfB7Ad49eC89dD1865Ff4272"
+
+tokens_to_check = [
+    badger_token,
+    digg_token,
+    farm_token,
+    xSushi_token
+]
+
 gas_strategy = GasNowStrategy("rapid")
 digg_contract = interface.IDigg(digg_token)
 
@@ -117,6 +127,15 @@ def get_expected_total_rewards(periodEndTime):
         "digg": digg_base + (digg_per_day * timePassed // days(1))
     }
     
+def print_token_diff_table(name, before, after, decimals=18):
+    diff = after - before
+
+    console.print("Diff for {}".format(name))
+    table = []
+    table.append(["{} before".format(name), val(before, decimals=decimals)])
+    table.append(["{} after".format(name), val(after, decimals=decimals)])
+    table.append(["{} diff".format(name), val(diff, decimals=decimals)])
+    print(tabulate(table, headers=["key", "value"]))
 
 def verify_rewards(badger: BadgerSystem, startBlock, endBlock, before_data, after_data):
     before = before_data["claims"]
@@ -136,9 +155,15 @@ def verify_rewards(badger: BadgerSystem, startBlock, endBlock, before_data, afte
 
     total_before_badger = before_data["tokenTotals"][badger_token]
     total_before_digg = before_data["tokenTotals"][digg_token]
+    
+    total_before_farm = 0
+    total_before_xsushi = 0
 
     total_after_badger = after_data["tokenTotals"][badger_token]
     total_after_digg = after_data["tokenTotals"][digg_token]
+
+    total_after_farm = int(after_data["tokenTotals"][farm_token])
+    total_after_xsushi = int(after_data["tokenTotals"][xSushi_token])
 
     digg_badger = total_after_badger - total_before_badger
     diff_digg = total_after_digg - total_before_digg
@@ -157,6 +182,9 @@ def verify_rewards(badger: BadgerSystem, startBlock, endBlock, before_data, afte
     table.append(["digg sanity", val(sanity_digg // spf, decimals=9), "-"])
 
     print(tabulate(table, headers=["key", "value", "scaled"]))
+
+    print_token_diff_table("Farm", total_before_farm, total_after_farm)
+    print_token_diff_table("xSushi", total_before_xsushi, total_after_xsushi)
 
     assert total_after_digg < sanity_digg
     assert total_after_badger < sanity_badger

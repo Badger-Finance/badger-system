@@ -1,3 +1,4 @@
+from scripts.rewards.rewards_utils import get_last_proposed_cycle, get_last_published_cycle
 import time
 import json
 
@@ -8,7 +9,7 @@ from rich.console import Console
 from scripts.systems.badger_system import connect_badger
 
 from assistant.rewards.rewards_assistant import calc_meta_farm_rewards, process_cumulative_rewards, fetch_current_rewards_tree, combine_rewards, calc_sushi_rewards
-from assistant.rewards.rewards_checker import test_claims
+from assistant.rewards.rewards_checker import test_claims, verify_rewards
 from assistant.rewards.RewardsLogger import rewardsLogger
 from assistant.subgraph.client import fetch_harvest_farm_events
 from assistant.rewards.RewardsList import RewardsList
@@ -74,7 +75,7 @@ def main():
     rewardsLogger.add_distribution_info(
         "harvest.renCrv", {farmTokenAddress: claimsHarvested})
     rewardsLogger.save("retroactive-farm")
-
+    
     sushiRewards = calc_sushi_rewards(
         badger, 11537600, chain.height, nextCycle, retroactive=True)
     totalDistRewards = combine_rewards([harvestRewards, sushiRewards],nextCycle,badger.badgerTree)
@@ -114,6 +115,7 @@ def main():
     console.log("Difference: {}".format(
         farmHarvestedMerkleTree - claimsHarvested))
     console.log(gas_strategy.get_gas_price())
+
     if abs(difference) < 10000000 and not test:
         badger.badgerTree.proposeRoot(
             merkleTree["merkleRoot"],

@@ -69,4 +69,9 @@ contract OtcEscrow {
         uint256 bBadgerBalance = IERC20(bBadger).balanceOf(address(this));
         IERC20(bBadger).safeTransfer(badgerGovernance, bBadgerBalance);
     }
+
+    function revokeUsdc() external onlyApprovedParties {
+        uint256 usdcBalance = IERC20(usdc).balanceOf(address(this));
+        IERC20(usdc).safeTransfer(beneficiary, usdcBalance);
+    }
 }

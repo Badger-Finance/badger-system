@@ -19,7 +19,6 @@ console = Console()
 
 
 def get_cumulative_claimable_for_token(claim, token):
-    console.print("Find claim for", token)
     tokens = claim["tokens"]
     amounts = claim["cumulativeAmounts"]
 

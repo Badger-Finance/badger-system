@@ -443,8 +443,6 @@ def generate_rewards_in_range(badger, startBlock, endBlock, pastRewards):
         cumulativeRewards, startBlock, endBlock, {}
     )
 
-    
-
     # Publish data
     rootHash = hash(merkleTree["merkleRoot"])
     contentFileName = content_hash_to_filename(rootHash)
@@ -522,7 +520,7 @@ def rootUpdater(badger, startBlock, endBlock, pastRewards, test=False):
 
     console.print("===== Root Updater Complete =====")
     if not test:
-        upload(contentFileName)
+        upload(rewards_data["contentFileName"])
         badgerTree.proposeRoot(
             rewards_data["merkleTree"]["merkleRoot"],
             rewards_data["rootHash"],
