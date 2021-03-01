@@ -11,3 +11,5 @@ multicall==0.1.1
 python-decouple==3.3
 elasticsearch==7.10.1
 numpy==1.20.1
+gql==3.0.0a5
+aiohttp==3.7.3

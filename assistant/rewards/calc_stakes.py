@@ -2,7 +2,7 @@ from collections import OrderedDict
 
 from config.rewards_config import rewards_config
 from assistant.rewards.BadgerGeyserMock import BadgerGeyserMock
-from assistant.subgraph.client import fetch_all_geyser_events
+from assistant.rewards.RewardsLogger import rewardsLogger
 from brownie import *
 from dotmap import DotMap
 from helpers.constants import AddressZero
@@ -56,6 +56,7 @@ def calculate_token_distributions(
             if rewards_config.debug:
                 console.log(schedule)
             console.print("Adding Unlock Schedule", token, schedule)
+            rewardsLogger.add_unlock_schedule(token,schedule)
             modified=schedule
             if token == digg_token:
                 # TEST: Convert to shares 
@@ -71,14 +72,23 @@ def calculate_token_distributions(
     userDistributions = geyserMock.calc_user_distributions(tokenDistributions)
     geyserMock.tokenDistributions = tokenDistributions
     geyserMock.userDistributions = userDistributions
-    geyserMock.printState(userDistributions)
+    mockData = geyserMock.getMockState(userDistributions)
+    for user,tokens in userDistributions["claims"].items():
+        for token, tokenValue in tokens.items():
+            rewardsLogger.add_user_token(user,geyserMock.key,token,tokenValue)
+    for user,userMetadata in userDistributions["metadata"].items():
+        rewardsLogger.add_user_share_seconds(
+            user,geyserMock.key,userMetadata["shareSecondsInRange"]
+        )
+    
+    rewardsLogger.add_distribution_info(geyserMock.key,mockData)
     return userDistributions
 
 
 def collect_actions(geyser):
     actions = DotMap()
     # == Process Unstaked ==
-    data = fetch_all_geyser_events(geyser)
+    data = []
     staked = data["stakes"]
     unstaked = data["unstakes"]
 
@@ -134,7 +144,7 @@ def collect_actions_from_events(geyser, startBlock, endBlock):
     """
     contract = web3.eth.contract(geyser.address, abi=BadgerGeyser.abi)
     actions = DotMap()
-
+    console.log("collecting actions")
     # Add stake actions
     for start in trange(startBlock, endBlock, 1000):
         end = min(start + 999, endBlock)
@@ -142,7 +152,7 @@ def collect_actions_from_events(geyser, startBlock, endBlock):
         for log in logs:
             timestamp = log["args"]["timestamp"]
             user = log["args"]["user"]
-            # console.log("Staked", log["args"])
+            #console.log("Staked", log["args"])
             if user != AddressZero:
                 if not actions[user]:
                     actions[user] = OrderedDict()
@@ -166,7 +176,6 @@ def collect_actions_from_events(geyser, startBlock, endBlock):
         for log in logs:
             timestamp = log["args"]["timestamp"]
             user = log["args"]["user"]
-            # console.log("Unstaked", log["args"])
             if user != AddressZero:
                 if not actions[user]:
                     actions[user] = OrderedDict()
@@ -219,9 +228,10 @@ def process_actions(
         # Print results
         # print(tabulate(table, headers=["action", "amount", "timestamp"]))
         # print("\n")
-        user = geyserMock.users[user]
-        table = []
-        table.append([user.shareSecondsInRange, user.shareSeconds, user.total])
+        userData = geyserMock.users[user]
+        #table = []
+        #table.append([user.shareSecondsInRange, user.shareSeconds, user.total])
+        rewardsLogger.add_multiplier(user,geyserMock.key,userData.stakeMultiplier)
         # print(tabulate(table, headers=["shareSecondsInRange", "shareSeconds", "total"]))
 
     return geyserMock
