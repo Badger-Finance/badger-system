@@ -8,11 +8,13 @@ from scripts.systems.badger_system import connect_badger
 from assistant.rewards.classes.RewardsList import RewardsList
 from config.rewards_config import rewards_config
 from brownie.network.gas.strategies import GasNowStrategy
+
 from assistant.rewards.rewards_assistant import fetch_current_rewards_tree
 from assistant.rewards.classes.MerkleTree import rewards_to_merkle_tree
 from assistant.rewards.classes.RewardsLogger import rewardsLogger
 from assistant.rewards.meta_rewards.harvest import calc_farm_rewards
-from assistant.rewards.rewards_utils import process_cumulative_rewards
+from assistant.rewards.meta_rewards.sushi import calc_all_sushi_rewards
+from assistant.rewards.rewards_utils import combine_rewards,process_cumulative_rewards
 
 gas_strategy = GasNowStrategy("fast")
 console = Console()
@@ -23,8 +25,9 @@ def main():
     nextCycle = badger.badgerTree.currentCycle() + 1
     startBlock = 0
     endBlock = chain.height
-    rewards = calc_farm_rewards(badger,startBlock,endBlock,nextCycle,retroactive=True)
-    rewardsLogger.save("retroactive-farm")
+    farmRewards = calc_farm_rewards(badger,startBlock,endBlock,nextCycle,retroactive=True)
+    sushiRewards = calc_all_sushi_rewards(badger,startBlock,endBlock,nextCycle,retroactive=True)
+    rewards = combine_rewards([farmRewards,sushiRewards],nextCycle,badger.badgerTree)
     currentRewards = fetch_current_rewards_tree(badger)
     
     cumulative_rewards = process_cumulative_rewards(currentRewards,rewards)

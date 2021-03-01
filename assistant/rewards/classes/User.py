@@ -26,7 +26,6 @@ class User:
         self.shareSeconds += secondsSinceLastAction * self.currentDeposited
         self.currentDeposited += transfer_amount
         if self.currentDeposited < 0:
-            console.log(self)
             self.currentDeposited = 0
 
 

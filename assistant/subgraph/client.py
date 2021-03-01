@@ -175,7 +175,7 @@ def fetch_sett_transfers(settID, startBlock, endBlock):
         key=lambda t: t["transaction"]["timestamp"],
     )
 
-def fetch_harvest_farm_events():
+def fetch_farm_harvest_events():
     query = gql("""
         query fetch_harvest_events {
             farmHarvestEvents(first:1000,orderBy: blockNumber,orderDirection:asc) {
@@ -189,6 +189,9 @@ def fetch_harvest_farm_events():
 
     """)
     results = client.execute(query)
+    for event in results["farmHarvestEvents"]:
+        event["rewardAmount"] = event.pop("farmToRewards")
+    
     return results["farmHarvestEvents"]
 
 
@@ -212,6 +215,7 @@ def fetch_sushi_harvest_events():
     wbtcBadgerEvents = []
     wbtcDiggEvents = []
     for event in results["sushiHarvestEvents"]:
+        event["rewardAmount"] = event.pop("toBadgerTree")
         strategy = event["id"].split("-")[0]
         if strategy == "0x7a56d65254705b4def63c68488c0182968c452ce":
             wbtcEthEvents.append(event)
