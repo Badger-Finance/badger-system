@@ -14,7 +14,7 @@ console = Console()
 
 def main():
     badger = connect_badger("deploy-final.json")
-    bridge = deploy_bridge_minimal(badger.deployer, badger.devProxyAdmin, test=False)
+    bridge = deploy_bridge_minimal(badger.deployer, badger.devProxyAdmin, test=False, publish_source=True)
     confirm_deploy(bridge)
     console.print("[green]deployed bridge adapter at {}[/green]".format(bridge.adapter.address))
     console.print("[green]deployed swap router at {}[/green]".format(bridge.swap.router.address))
