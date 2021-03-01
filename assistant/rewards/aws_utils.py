@@ -26,13 +26,18 @@ def download(fileName):
 def upload(fileName, bucket="badger-json"):
     from config.env_config import env_config
 
-    upload_file_key = "rewards/" + fileName
-
-    console.print("Uploading file to s3: " + upload_file_key)
+    # enumeration of reward api dependency upload targets
+    upload_targets = [
+        {"bucket": "badger-json", "key": "rewards/" + fileName} # badger-json rewards api
+        {"bucket": "badger-staging-merkle-proofs", "key": "badger-tree.json"} # badger-api staging
+        {"bucket": "badger-merkle-proofs", "key": "badger-tree.json"} # badger-api production
+    ]
 
     s3 = boto3.client(
         "s3",
         aws_access_key_id=env_config.aws_access_key_id,
         aws_secret_access_key=env_config.aws_secret_access_key,
     )
-    s3.upload_file(fileName, bucket, upload_file_key)
+    for target in upload_targets:
+        console.print("Uploading file to s3://" + target["bucket"] + "/" + target["key"])
+        s3.upload_file(fileName, target["bucket"], target["key"])
