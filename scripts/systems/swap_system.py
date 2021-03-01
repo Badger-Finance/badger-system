@@ -77,10 +77,11 @@ class SwapSystem:
     The SWAP system consists of swap router/strategies for routing of swaps.
     Currently, curve is the only supported swap strategy.
     '''
-    def __init__(self, deployer, devProxyAdmin, config):
+    def __init__(self, deployer, devProxyAdmin, config, publish_source=False):
         self.deployer = deployer
         self.devProxyAdmin = devProxyAdmin
         self.config = config
+        self.publish_source = publish_source
         # Admin is a multisig
         self.admin = connect_gnosis_safe(config.adminMultiSig)
 
@@ -107,8 +108,14 @@ class SwapSystem:
     def deploy_logic(self):
         deployer = self.deployer
         self.logic = DotMap(
-            CurveSwapStrategy=CurveSwapStrategy.deploy({"from": deployer}),
-            SwapStrategyRouter=SwapStrategyRouter.deploy({"from": deployer}),
+            CurveSwapStrategy=CurveSwapStrategy.deploy(
+                {"from": deployer},
+                publish_source=self.publish_source,
+            ),
+            SwapStrategyRouter=SwapStrategyRouter.deploy(
+                {"from": deployer},
+                publish_source=self.publish_source,
+            ),
         )
 
     def deploy_router(self):

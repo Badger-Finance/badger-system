@@ -67,10 +67,11 @@ class BridgeSystem:
     The BRIDGE system consists of a renVM mint/burn bridge and some mocking utilities for testing.
     Bridge zap contracts will be added at a later date.
     '''
-    def __init__(self, deployer, devProxyAdmin, config):
+    def __init__(self, deployer, devProxyAdmin, config, publish_source=False):
         self.deployer = deployer
         self.devProxyAdmin = devProxyAdmin
         self.config = config
+        self.publish_source = publish_source
 
         # Adapter ref, lazily set.
         self.adapter = None
@@ -110,7 +111,7 @@ class BridgeSystem:
             web3.toChecksumAddress(devProxyAdmin.address),
             logic.BadgerBridgeAdapter.initialize.encode_input(
                 config.governance,
-                config.rewardsAddress,
+                config.rewards,
                 registry,
                 router,
                 config.wbtc,

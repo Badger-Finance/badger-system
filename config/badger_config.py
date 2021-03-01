@@ -438,10 +438,13 @@ claw_config = DotMap(
 )
 
 bridge_config = DotMap(
+    # Mainnet addr for the renVM gateway registry
+    # See: https://docs.renproject.io/developers/docs/deployed-contracts
     registry="0xe80d347DF1209a76DD9d2319d62912ba98C54DDD",
-    governance="0xB65cef03b9B89f99517643226d76e286ee999e77",
-    rewardsAddress="0xE95b56685327C9caf83C3e6F0A54b8D9708f32c4",
-    wbtc="0x2260fac5e5542a773aa44fbcfedf7c193bc2c599",
+    # Dev multisig
+    governance=multisig_config.address,
+    rewards="0xE95b56685327C9caf83C3e6F0A54b8D9708f32c4",
+    wbtc=registry.tokens.wbtc,
     # Fees below are in bps.
     mintFeeBps=100,
     burnFeeBps=100,
@@ -451,10 +454,11 @@ bridge_config = DotMap(
 )
 
 swap_config = DotMap(
-    adminMultiSig="0xB65cef03b9B89f99517643226d76e286ee999e77",  # dev multisig
+    adminMultiSig=multisig_config.address,  # dev multisig
     strategies=DotMap(
         curve=DotMap(
             # Mainnet addr for the curve registry address provider.
+            # See: https://curve.readthedocs.io/registry-address-provider.html
             registry="0x0000000022D53366457F9d5E68Ec105046FC4383",
         ),
     ),

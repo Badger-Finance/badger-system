@@ -8,10 +8,10 @@ from config.badger_config import (
 )
 
 
-def deploy_bridge_minimal(deployer, devProxyAdmin, test=False) -> BridgeSystem:
-    bridge = BridgeSystem(deployer, devProxyAdmin, bridge_config)
+def deploy_bridge_minimal(deployer, devProxyAdmin, test=False, publish_source=False) -> BridgeSystem:
+    bridge = BridgeSystem(deployer, devProxyAdmin, bridge_config, publish_source=publish_source)
 
-    swap = SwapSystem(deployer, devProxyAdmin, swap_config)
+    swap = SwapSystem(deployer, devProxyAdmin, swap_config, publish_source=publish_source)
     swap.deploy_logic()
     swap.deploy_router()
     swap.deploy_curve_swap_strategy()

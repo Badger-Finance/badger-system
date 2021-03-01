@@ -15,8 +15,8 @@ contract BadgerBridgeAdapter is OwnableUpgradeable, ReentrancyGuardUpgradeable {
     using SafeMathUpgradeable for uint256;
     using SafeERC20 for IERC20;
 
-    IERC20 renBTC;
-    IERC20 wBTC;
+    IERC20 public renBTC;
+    IERC20 public wBTC;
 
     // RenVM gateway registry.
     IGatewayRegistry public registry;
@@ -235,5 +235,14 @@ contract BadgerBridgeAdapter is OwnableUpgradeable, ReentrancyGuardUpgradeable {
 
     function setRewards(address _rewards) external onlyOwner {
         rewards = _rewards;
+    }
+
+    function setRouter(address _router) external onlyOwner {
+        router = ISwapStrategyRouter(_router);
+    }
+
+    function setRegistry(address _registry) external onlyOwner {
+        registry = IGatewayRegistry(_registry);
+        renBTC = registry.getTokenBySymbol("BTC");
     }
 }
