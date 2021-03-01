@@ -5,10 +5,10 @@ pragma solidity ^0.6.0;
 import "interfaces/remote/IPauser.sol";
 
 /*
-    RemotePauser only handles paused state for msg.sender (only msg.sender can modifies his own state)
+    RemotePauserUpgradeable only handles paused state for msg.sender (only msg.sender can modifies his own state)
     and takes care of state storage away from the originating contract.
  */
-contract RemotePauser {
+contract RemotePauserUpgradeable {
     mapping(address => bool) private _paused;
 
     function paused() external view returns (bool) {
@@ -22,4 +22,7 @@ contract RemotePauser {
     function unpause() external {
         _paused[msg.sender] = false;
     }
+
+    // Reserve storage space for upgrades.
+    uint256[49] private __gap;
 }

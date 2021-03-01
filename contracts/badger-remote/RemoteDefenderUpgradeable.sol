@@ -4,10 +4,14 @@ pragma solidity ^0.6.0;
 
 import "deps/@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
+import "./RemotePauserUpgradeable.sol";
+import "./RemoteFreezerUpgradeable.sol";
+
 /*
-    RemoteDefender defends against unapproved address access.
+    RemoteDefenderUpgradeable defends against unapproved address access.
+    It also handles freezing/pausing of contract addresses and EOAs.
  */
-contract RemoteDefender is OwnableUpgradeable {
+contract RemoteDefenderUpgradeable is OwnableUpgradeable, RemoteFreezerUpgradeable, RemotePauserUpgradeable {
     mapping(address => bool) private _approved;
 
     function initialize() public initializer {
@@ -25,4 +29,7 @@ contract RemoteDefender is OwnableUpgradeable {
     function revoke(address account) external onlyOwner {
         _approved[account] = false;
     }
+
+    // Reserve storage space for upgrades.
+    uint256[49] private __gap;
 }

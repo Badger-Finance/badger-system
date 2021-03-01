@@ -12,7 +12,6 @@ import "../../../deps/@openzeppelin/contracts-upgradeable/utils/PausableUpgradea
 
 import "../../interfaces/badger/IController.sol";
 import "../../interfaces/erc20/IERC20Detailed.sol";
-import "../badger-remote/PauseableStorageless.sol";
 import "../badger-remote/DefenderStorageless.sol";
 import "../SettAccessControlDefended.sol";
 import "./SettVersion.sol";
@@ -20,7 +19,7 @@ import "./SettVersion.sol";
 /* 
     Source: https://github.com/iearn-finance/yearn-protocol/blob/develop/contracts/vaults/yVault.sol
 */
-contract Sett_A is ERC20Upgradeable, SettAccessControlDefended, PauseableStorageless, DefenderStorageless, SettVersion {
+contract Sett_A is ERC20Upgradeable, SettAccessControlDefended, DefenderStorageless, SettVersion {
     using SafeERC20Upgradeable for IERC20Upgradeable;
     using AddressUpgradeable for address;
     using SafeMathUpgradeable for uint256;
@@ -40,8 +39,6 @@ contract Sett_A is ERC20Upgradeable, SettAccessControlDefended, PauseableStorage
     event FullPricePerShareUpdated(uint256 value, uint256 indexed timestamp, uint256 indexed blockNumber);
 
     address public guardian;
-    // Remote pauser.
-    address public pauser;
     // Remote defender.
     address public defender;
 
@@ -127,7 +124,7 @@ contract Sett_A is ERC20Upgradeable, SettAccessControlDefended, PauseableStorage
 
     /// @notice Deposit assets into the Sett, and return corresponding shares to the user
     /// @notice Only callable by EOA accounts that pass the defend() check
-    function deposit(uint256 _amount) public whenNotPaused(pauser) defend(defender) {
+    function deposit(uint256 _amount) public whenNotPaused(defender) defend(defender) {
         _blockLocked();
 
         _lockForBlock(msg.sender);
@@ -136,7 +133,7 @@ contract Sett_A is ERC20Upgradeable, SettAccessControlDefended, PauseableStorage
 
     /// @notice Convenience function: Deposit entire balance of asset into the Sett, and return corresponding shares to the user
     /// @notice Only callable by EOA accounts that pass the defend() check
-    function depositAll() external whenNotPaused(pauser) defend(defender) {
+    function depositAll() external whenNotPaused(defender) defend(defender) {
         _blockLocked();
 
         _lockForBlock(msg.sender);
@@ -144,7 +141,7 @@ contract Sett_A is ERC20Upgradeable, SettAccessControlDefended, PauseableStorage
     }
 
     /// @notice No rebalance implementation for lower fees and faster swaps
-    function withdraw(uint256 _shares) public whenNotPaused(pauser) defend(defender) {
+    function withdraw(uint256 _shares) public whenNotPaused(defender) defend(defender) {
         _blockLocked();
 
         _lockForBlock(msg.sender);
@@ -152,7 +149,7 @@ contract Sett_A is ERC20Upgradeable, SettAccessControlDefended, PauseableStorage
     }
 
     /// @notice Convenience function: Withdraw all shares of the sender
-    function withdrawAll() external whenNotPaused(pauser) defend(defender) {
+    function withdrawAll() external whenNotPaused(defender) defend(defender) {
         _blockLocked();
 
         _lockForBlock(msg.sender);
@@ -280,5 +277,10 @@ contract Sett_A is ERC20Upgradeable, SettAccessControlDefended, PauseableStorage
     ) public virtual override whenNotPaused(pauser) returns (bool) {
         _blockLocked();
         return super.transferFrom(sender, recipient, amount);
+    }
+
+    function setDefender(address _defender) {
+        _onlyGovernance();
+        defender = _defender
     }
 }

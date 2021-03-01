@@ -5,10 +5,10 @@ pragma solidity ^0.6.0;
 import "deps/@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 /*
-    RemoteFreezer handles reporting of frozen state and 
+    RemoteFreezerUpgradeable handles reporting of frozen state and 
     freezing of addresses  by the owner.
  */
-contract RemoteFreezer is OwnableUpgradeable {
+contract RemoteFreezerUpgradeable is OwnableUpgradeable {
     mapping(address => bool) private _frozen;
 
     function initialize() public initializer {
@@ -26,4 +26,7 @@ contract RemoteFreezer is OwnableUpgradeable {
     function unfreeze(address account) external onlyOwner {
         _frozen[account] = false;
     }
+
+    // Reserve storage space for upgrades.
+    uint256[49] private __gap;
 }
