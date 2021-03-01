@@ -1,3 +1,4 @@
+from decimal import Decimal
 from brownie import *
 from dotmap import DotMap
 from rich.console import Console
@@ -118,18 +119,23 @@ class RewardsList:
         intAmounts = []
         for tokenAddress, cumulativeAmount in userData.items():
             nodeEntry["tokens"].append(tokenAddress)
-            nodeEntry["cumulativeAmounts"].append(str(cumulativeAmount))
+            nodeEntry["cumulativeAmounts"].append(str(int(cumulativeAmount)))
             intAmounts.append(int(cumulativeAmount))
 
-        # print(
-        #     int(nodeEntry["index"]),
-        #     nodeEntry["user"],
-        #     int(nodeEntry["cycle"]),
-        #     nodeEntry["tokens"],
-        #     intAmounts,
+
+        # console.print(
+        #     "Encoding Node entry...",
+        #     {
+        #         "index": int(nodeEntry["index"]),
+        #         "account": nodeEntry["user"],
+        #         "cycle": int(nodeEntry["cycle"]),
+        #         "tokens": nodeEntry["tokens"],
+        #         "cumulativeAmounts": nodeEntry["cumulativeAmounts"],
+        #         "(integer encoded)": intAmounts,
+        #     }
         # )
 
-        encoded = encode_hex(
+        encoded_local = encode_hex(
             encode_abi(
                 ["uint", "address", "uint", "address[]", "uint[]"],
                 (
@@ -142,8 +148,13 @@ class RewardsList:
             )
         )
 
-        # encoder = ClaimEncoder.at(web3.toChecksumAddress("0xf3ff1a5856b1726a8fef921ea57eab2c51466a93"))
-        # claim = encoder.encodeClaim(
+        encoder = BadgerTree.at(web3.toChecksumAddress("0x660802Fc641b154aBA66a62137e71f331B6d787A"))
+
+        # console.print("nodeEntry", nodeEntry)
+        # console.print("encoded_local", encoded_local)
+
+        # ===== Verify encoding on-chain =====
+        # encoded_chain = encoder.encodeClaim(
         #     nodeEntry["tokens"],
         #     nodeEntry["cumulativeAmounts"],
         #     nodeEntry["user"],
@@ -151,11 +162,10 @@ class RewardsList:
         #     nodeEntry["cycle"],
         # )[0]
 
-        # console.log("nodeEntry", nodeEntry)
-        # print("encoded", encoded)
-        # print("claim", claim)
+        # console.print("encoded_onchain", encoded_chain)
+        # assert encoded_local == encoded_chain
 
-        return (nodeEntry, encoded)
+        return (nodeEntry, encoded_local)
 
     def to_merkle_format(self):
         """
