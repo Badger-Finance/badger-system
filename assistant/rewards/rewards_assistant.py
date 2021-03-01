@@ -70,8 +70,6 @@ def calc_geyser_rewards(badger, periodStartBlock, endBlock, cycle):
     return sum_rewards(rewardsByGeyser, cycle, badger.badgerTree)
 
 def calc_sushi_rewards(badger,startBlock,endBlock,nextCycle,retroactive):
-    console.log(startBlock)
-    console.log(endBlock)
     xSushiTokenAddress = "0x8798249c2e607446efb7ad49ec89dd1865ff4272"
     sushi_harvest_events = fetch_sushi_harvest_events()
 
@@ -184,7 +182,6 @@ def get_latest_event_block(firstEvent,harvestEvents):
     else:
         return -1
     
-
 def fetch_current_harvest_rewards(badger,startBlock,endBlock,nextCycle):
     farmTokenAddress = "0xa0246c9032bC3A600820415aE600c6388619A14D"
     harvestEvents = fetch_harvest_farm_events()
@@ -225,7 +222,6 @@ def fetch_current_harvest_rewards(badger,startBlock,endBlock,nextCycle):
     totalFarm = sum( [list(v.values())[0]/1e18 for v in list(rewards.claims.values())  ] )
     return rewards
 
-
 def calc_meta_farm_rewards(badger,name, startBlock, endBlock):
     console.log("Calculating rewards between {} and {}".format(startBlock,endBlock))
     startBlockTime = web3.eth.getBlock(startBlock)["timestamp"]
@@ -265,7 +261,7 @@ def calc_meta_farm_rewards(badger,name, startBlock, endBlock):
             if transfer_amount < 0:
                 transfer_amount = 0
 
-            # If the user hasn't deposited before, create a new oneA
+            # If the user hasn't deposited before, create a new one
             user = User(transfer_address,transfer_amount,transfer_timestamp)
             user_state.append(user)
 

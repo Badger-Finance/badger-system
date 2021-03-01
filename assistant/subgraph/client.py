@@ -3,11 +3,14 @@ from rich.console import Console
 from gql import gql, Client
 from gql.transport.aiohttp import AIOHTTPTransport
 from decimal import *
+import requests
+import json
 getcontext().prec = 20
 console = Console()
 
-url = subgraph_config["url"]
-transport = AIOHTTPTransport(url=url)
+sett_prices_url = "https://laiv44udi0.execute-api.us-west-1.amazonaws.com/staging/v2/protocol/sett"
+subgraph_url = subgraph_config["url"]
+transport = AIOHTTPTransport(url=subgraph_url)
 client = Client(transport=transport, fetch_schema_from_transport=True)
 
 
@@ -175,6 +178,7 @@ def fetch_sett_transfers(settID, startBlock, endBlock):
         key=lambda t: t["transaction"]["timestamp"],
     )
 
+
 def fetch_harvest_farm_events():
     query = gql("""
         query fetch_harvest_events {
@@ -219,11 +223,9 @@ def fetch_sushi_harvest_events():
             wbtcBadgerEvents.append(event)
         elif strategy == "0xaa8dddfe7dfa3c3269f1910d89e4413dd006d08a":
             wbtcDiggEvents.append(event)
-
     
     return {
         "wbtcEth":wbtcEthEvents,
         "wbtcBadger":wbtcBadgerEvents,
         "wbtcDigg":wbtcDiggEvents
     }
-

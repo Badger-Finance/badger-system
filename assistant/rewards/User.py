@@ -2,7 +2,7 @@ from rich.console import Console
 
 console = Console()
 class User:
-    def __init__(self, address, currentDeposited, lastUpdated):
+    def __init__(self, address, currentDeposited, lastUpdated,):
         self.address = address
         self.currentDeposited = currentDeposited
         self.lastUpdated = lastUpdated
