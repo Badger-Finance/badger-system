@@ -1,7 +1,7 @@
 from brownie import *
 from rich.console import Console
-from assistant.subgraph.client import fetch_sett_balances,fetch_geyser_events,fetch_sett_token_prices_usd
-from assistant.rewards.calc_harvest import combine_balances
+from assistant.subgraph.client import fetch_sett_balances,fetch_geyser_events
+from assistant.rewards.calc_harvest import combine_balances,calc_balances_from_geyser_events
 console = Console()
 
 APPROVED_CONTRACTS = {}
@@ -13,7 +13,6 @@ def get_balance_data(badger,currentBlock):
     badgerSetts = []
     nonNativeSetts = []
     for name,sett in allSetts.items():
-        console.log(sett.token)
         balances = calculate_sett_balances(badger,name,sett,currentBlock)
         data = {}
         data[name] = balances
@@ -25,24 +24,29 @@ def get_balance_data(badger,currentBlock):
             nonNativeSetts.append(data)
 
 
-
-
-
 def calculate_sett_balances(badger,name,sett,currentBlock):
     settBalances = fetch_sett_balances(sett.address.lower(),currentBlock)
-    geyserBalances = calc_balances_from_geyser_events(fetch_geyser_events(badger.getGeyser(name),startBlock))
+    console.log(len(settBalances))
+    console.log(name)
+    geyserBalances = {}
+    # Digg doesn't have a geyser so we have to ignore it 
+    if name != "native.digg":
+        geyserEvents = fetch_geyser_events(badger.getGeyser(name).address.lower(),currentBlock)
+        geyserBalances = calc_balances_from_geyser_events(geyserEvents)
+
     balances = combine_balances(settBalances,geyserBalances)
-    token_prices = fetch_sett_token_prices_usd()
+    console.log(balances)
 
     for from_contract,to_contract in APPROVED_CONTRACTS:
-        if contract in settBalances:
-            amount = settBalances[from_contract]
-            settBalances[contract] = 0
-            # Where we should send the rewards 
+        if contract in balances:
+            amount = balances[from_contract]
+            balances[contract] = 0
             # The address that stores the bToken might not be able 
             # to claim so we they should provide an address that can
             # claim on their behalf
-            settBalances[to_contract] = amount
+            balances[to_contract] = amount
+    return balances
+    
 
     # Convert token to usd
 

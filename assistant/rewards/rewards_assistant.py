@@ -334,7 +334,7 @@ def fetchCurrentMerkleData(badger):
     # root = str(currentMerkleData[0])
     # contentHash = str(currentMerkleData[1])
     # lastUpdateTime = currentMerkleData[2]
-    # blockNumber = badger.badgerTree.lastPublishBlockNumber()
+    # blockNumber = badger.badgerTree.lastPublishBloc)
 
     root = badger.badgerTree.merkleRoot()
     contentHash = badger.badgerTree.merkleContentHash()

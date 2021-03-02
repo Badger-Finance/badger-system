@@ -20,9 +20,9 @@ def fetch_sett_balances(settId, startBlock):
     )
     query = gql(
         """
-        query balances_and_events($vaultID: Vault_filter, $blockHeight: Block_height) {
+        query balances_and_events($vaultID: Vault_filter, $blockHeight: Block_height,$lastBalanceId:AccountVaultBalance_filter) {
             vaults(block: $blockHeight, where: $vaultID) {
-                balances(first:1000,orderBy: netDeposits, orderDirection: desc) {
+                balances(first:1000,where: $lastBalanceId) {
                     id
                     account {
                         id
@@ -33,15 +33,30 @@ def fetch_sett_balances(settId, startBlock):
             }
         """
     )
+    lastBalanceId = ""
     variables = {"blockHeight": {"number": startBlock}, "vaultID": {"id": settId}}
-    results = client.execute(query, variable_values=variables)
-    if len(results["vaults"]) == 0:
-        return {}
-
     balances = {}
-    for result in results["vaults"][0]["balances"]:
-        account = result["id"].split("-")[0]
-        balances[account] = int(result["shareBalanceRaw"])
+    while True:
+        variables["lastBalanceId"] = {
+            "id_gt":lastBalanceId
+        }
+        results = client.execute(query, variable_values=variables)
+        if len(results["vaults"]) == 0:
+            return {}
+        newBalances = {}
+        balance_data = results["vaults"][0]["balances"]
+        for result in balance_data:
+            account = result["id"].split("-")[0]
+            newBalances[account] = int(result["shareBalanceRaw"])
+
+        if len(balance_data) == 0:
+            break
+
+        if len(balance_data) > 0:
+            lastBalanceId = balance_data[-1]["id"]
+            
+        balances = {**newBalances,**balances}
+    console.log("Processing {} balances".format(len(balances)))
     return balances
 
 
@@ -51,19 +66,19 @@ def fetch_geyser_events(geyserId, startBlock):
     )
 
     query = gql(
-        """query($geyserID: Geyser_filter,$blockHeight: Block_height,$skipAmount: Int)
+        """query($geyserID: Geyser_filter,$blockHeight: Block_height,$lastStakedId: StakedEvent_filter,$lastUnstakedId: UnstakedEvent_filter)
     {
       geysers(where: $geyserID,block: $blockHeight) {
           id
           totalStaked
-          stakeEvents(first:1000,skip: $skipAmount) {
+          stakeEvents(first:1000,where: $lastStakedId) {
               id
               user,
               amount
               timestamp,
               total
           }
-          unstakeEvents(first:1000,skip: $skipAmount) {
+          unstakeEvents(first:1000,where: $lastUnstakedId) {
               id
               user,
               amount
@@ -78,10 +93,16 @@ def fetch_geyser_events(geyserId, startBlock):
     stakes = []
     unstakes = []
     totalStaked = 0
-    skipAmount = 0
+    lastStakedId = ""
+    lastUnstakedId = ""
     variables = {"geyserID": {"id": geyserId}, "blockHeight": {"number": startBlock}}
     while True:
-        variables["skipAmount"] = skipAmount
+        variables["lastStakedId"] = {
+            "id_gt": lastStakedId
+        }
+        variables["lastUnstakedId"] = {
+            "id_gt": lastUnstakedId
+        }
         result = client.execute(query,variable_values=variables)
         
         if len(result["geysers"]) == 0:
@@ -94,8 +115,12 @@ def fetch_geyser_events(geyserId, startBlock):
         newUnstakes = result["geysers"][0]["unstakeEvents"]
         if len(newStakes) == 0 and len(newUnstakes) == 0:
             break 
-        console.log("Querying...")
-        skipAmount += 1000
+        if len(newStakes) > 0:
+            lastStakedId = newStakes[-1]["id"]
+        if len(newUnstakes) > 0:
+            lastUnstakedId = newUnstakes[-1]["id"]
+        console.log("Querying events...")
+
         stakes.extend(newStakes)
         unstakes.extend(newUnstakes)
         totalStaked = result["geysers"][0]["unstakeEvents"]
