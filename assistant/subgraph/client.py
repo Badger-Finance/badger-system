@@ -222,7 +222,6 @@ def fetch_farm_harvest_events():
     
     return results["farmHarvestEvents"]
 
-
 def fetch_sushi_harvest_events():
     query = gql("""
         query fetch_harvest_events {
@@ -257,3 +256,5 @@ def fetch_sushi_harvest_events():
         "wbtcBadger":wbtcBadgerEvents,
         "wbtcDigg":wbtcDiggEvents
     }
+
+

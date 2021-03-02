@@ -1,3 +1,5 @@
+import json
+import requests
 from brownie import *
 from rich.console import Console
 from collections import Counter
@@ -8,7 +10,9 @@ from assistant.subgraph.client import (
 )
 from assistant.rewards.classes.User import User
 from assistant.rewards.classes.RewardsList import RewardsList
+
 console = Console()
+badger_api_url = "https://laiv44udi0.execute-api.us-west-1.amazonaws.com/staging/v2"
 
 def keccak(value):
     return web3.toHex(web3.keccak(text=value))
@@ -157,3 +161,15 @@ def calc_balances_from_geyser_events(geyserEvents):
 def combine_balances(settBalances, geyserBalances):
     return dict(Counter(settBalances) + Counter(geyserBalances))
 
+
+def fetch_sett_ppfs(token):
+    response = requests.get("{}/protocol/sett".format(badger_api_url))
+    result = response.json()
+    sett = next(filter( lambda sett: sett["underlyingToken"] == token,result),None)
+    return sett and sett["ppfs"]
+        
+
+def fetch_sett_price(token):
+    response = requests.get("{}/price".format(badger_api_url))
+    result = response.json()
+    return result[token]
