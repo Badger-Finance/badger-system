@@ -11,7 +11,7 @@ import "deps/@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.s
 
 import "interfaces/badger/ISwapStrategyRouter.sol";
 
-contract SwapStrategyRouter is ISwapStrategyRouter, AccessControlUpgradeable, ReentrancyGuardUpgradeable {
+contract SwapStrategyRouter is AccessControlUpgradeable, ReentrancyGuardUpgradeable {
     using SafeMathUpgradeable for uint256;
     using SafeERC20Upgradeable for IERC20Upgradeable;
 
@@ -31,7 +31,7 @@ contract SwapStrategyRouter is ISwapStrategyRouter, AccessControlUpgradeable, Re
         address _from,
         address _to,
         uint256 _amount
-    ) external override nonReentrant returns (address strategy, uint256 amount) {
+    ) external nonReentrant returns (address strategy, uint256 amount) {
         require(strategies.length() > 0, "no registered strategies");
 
         uint256 _optimalAmount;
