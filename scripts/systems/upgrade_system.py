@@ -1,9 +1,10 @@
 from brownie import (
-        ProjectContract,
         DiggSett,
         Sett_A,
         Sett_B,
+        exceptions,
 )
+from brownie.network.contract import ProjectContract
 from typing import Optional, List, Tuple, Any
 from rich.console import Console
 
@@ -79,24 +80,26 @@ class UpgradeSystem:
         }
 
     def upgrade_sett_contract(self, contractKey: str, validate: bool = False) -> None:
-        self._upgrade_with_suffix(
+        self._upgrade_contract(
             SETT_SUFFIX,
             self.badger.getSettArtifact,
             contractKey=contractKey,
+            validate=validate,
         )
 
     def upgrade_strategy_contract(self, contractKey: str, validate: bool = False) -> None:
-        self._upgrade_with_suffix(
+        self._upgrade_contract(
             STRATEGY_SUFFIX,
             self.badger.getStrategyArtifact,
             contractKey=contractKey,
+            validate=validate,
         )
 
     def upgrade_sett_contracts(self, validate: bool = False) -> None:
-        self._upgrade_with_suffix(SETT_SUFFIX, self.getSettArtifact)
+        self._upgrade_contract(SETT_SUFFIX, self.getSettArtifact, validate=validate)
 
     def upgrade_strategy_contracts(self, validate: bool = False) -> None:
-        self._upgrade_with_suffix(STRATEGY_SUFFIX, self.badger.getStrategyArtifact)
+        self._upgrade_contract(STRATEGY_SUFFIX, self.badger.getStrategyArtifact, validate=validate)
 
     def _upgrade_contract(
             self,
@@ -123,8 +126,11 @@ class UpgradeSystem:
                 )
                 validator.snapshot(contract)
 
-                if not validator.validate():
-                    console.print("[red]=== Failed to validate upgrade non matching storage vars: {}[/red]".format(validator.snapshots))
+                if validate:
+                    if not validator.validate():
+                        console.print("[red]=== Failed to validate upgrade non matching storage vars: {}[/red]".format(validator.snapshots))
+                        raise Exception("validation failed")
+                    validator.reset()
 
     def track_contract_upgradeable(self, key: str, contract: ProjectContract) -> None:
         self.contracts_upgradeable[key] = contract
@@ -156,7 +162,11 @@ class UpgradeValidator:
     def snapshot(self, contract: ProjectContract) -> None:
         snapshot = ()
         for field in self.fields:
-            snapshot += getattr(contract, field)()
+            try:
+                snapshot += (getattr(contract, field)(),)
+            except exceptions.VirtualMachineError:
+                # Return None if the field doesn't exist (revert).
+                snapshot += (None,)
         self.snapshots.append(snapshot)
 
     def validate(self) -> bool:
@@ -166,3 +176,6 @@ class UpgradeValidator:
                 return False
             prev = snapshot
         return True
+
+    def reset(self) -> None:
+        self.snapshots = []

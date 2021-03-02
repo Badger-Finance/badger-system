@@ -1,16 +1,22 @@
-# Layout Upgradeable
+# Sett Forks
 
-In order to maintain layout backwards compatibilty w/ different versions of contracts (e.g. Sett).
+In order to maintain layout backwards compatibilty w/ different versions of Sett contracts.
 
-Changelog:
+Sett A/B forks service upgrades for the following setts.
+```
+SETT_A = (
+   "native.badger",
+   "native.renCrv",
+   "native.sbtcCrv",
+   "native.tbtcCrv",
+   "native.uniBadgerWbtc",
+   "harvest.renCrv",
+)
 
-V1.1
-* Strategist no longer has special function calling permissions
-* Version function added to contract
-* All write functions, with the exception of transfer, are pausable
-* Keeper or governance can pause
-* Only governance can unpause
-
-V1.2
-* Transfer functions are now pausable along with all other non-permissioned write functions
-* All permissioned write functions, with the exception of pause() & unpause(), are pausable as well
+SETT_B = (
+    "native.sushiWbtcEth",
+    "native.sushiBadgerWbtc",
+    "native.uniDiggWbtc",
+    "native.sushiDiggWbtc",
+)
+```

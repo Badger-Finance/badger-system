@@ -8,4 +8,8 @@ interface IRemotePauser {
     function pause() external;
 
     function unpause() external;
+
+    function pauseGlobal() external;
+
+    function unpauseGlobal() external;
 }

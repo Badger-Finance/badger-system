@@ -27,7 +27,7 @@ class MultisigTxMetadata:
 
         if not operation:
             self.operation = ""
-        
+
         if not callInfo:
             self.callInfo = ""
 
@@ -39,7 +39,7 @@ class MultisigTx:
     def __init__(self, params, metadata: MultisigTxMetadata):
         self.params = params
         self.metadata = metadata
-    
+
     # def printMetadata(self):
 
     # def printParams(self):
@@ -84,16 +84,16 @@ class GnosisSafe:
 
         if self.testMode:
             tx = exec_direct(self.contract, tx.params)
-            if print_output:
+            if print_output and hasattr(tx, "call_trace"):
                 print(tx.call_trace())
-            # try: 
+            # try:
             #     failEvents = tx.events['ExecutionFailure']
             #     if len(failEvents) > 0:
             #         print(tx.events)
             #         assert False
             # except EventLookupError:
             return tx
-        
+
 
     def get_first_owner(self):
         return self.contract.getOwners()[0]

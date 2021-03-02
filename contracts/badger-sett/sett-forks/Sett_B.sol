@@ -10,16 +10,17 @@ import "../../../deps/@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgra
 import "../../../deps/@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "../../../deps/@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 
-import "../../interfaces/badger/IController.sol";
-import "../../interfaces/erc20/IERC20Detailed.sol";
-import "../badger-remote/DefenderStorageless.sol";
+import "../../../interfaces/badger/IController.sol";
+import "../../../interfaces/erc20/IERC20Detailed.sol";
+import "../../badger-remote/DefenderStorageless.sol";
+import "../../badger-remote/PauseableStorageless.sol";
 import "../SettAccessControlDefended.sol";
-import "./SettVersion.sol";
+import "../SettVersion.sol";
 
 /* 
     Source: https://github.com/iearn-finance/yearn-protocol/blob/develop/contracts/vaults/yVault.sol
 */
-contract Sett_B is ERC20Upgradeable, PausableUpgradeable, SettAccessControlDefended, DefenderStorageless, SettVersion {
+contract Sett_B is SettVersion, ERC20Upgradeable, PausableUpgradeable, SettAccessControlDefended, DefenderStorageless, PauseableStorageless {
     using SafeERC20Upgradeable for IERC20Upgradeable;
     using AddressUpgradeable for address;
     using SafeMathUpgradeable for uint256;
@@ -37,8 +38,12 @@ contract Sett_B is ERC20Upgradeable, PausableUpgradeable, SettAccessControlDefen
     string internal constant _defaultNamePrefix = "Badger Sett ";
     string internal constant _symbolSymbolPrefix = "b";
 
+    // Remote defender.
+    address public defender;
+
     event FullPricePerShareUpdated(uint256 value, uint256 indexed timestamp, uint256 indexed blockNumber);
 
+    // NB: This is a maintenance fork and initialize is not intended to be used.
     function initialize(
         address _token,
         address _controller,
@@ -48,7 +53,7 @@ contract Sett_B is ERC20Upgradeable, PausableUpgradeable, SettAccessControlDefen
         bool _overrideTokenName,
         string memory _namePrefix,
         string memory _symbolPrefix
-    ) public initializer whenNotPaused {
+    ) public initializer whenNotPausedRemote(defender) {
         IERC20Detailed namedToken = IERC20Detailed(_token);
         string memory tokenName = namedToken.name();
         string memory tokenSymbol = namedToken.symbol();
@@ -76,9 +81,6 @@ contract Sett_B is ERC20Upgradeable, PausableUpgradeable, SettAccessControlDefen
         min = 9500;
 
         emit FullPricePerShareUpdated(getPricePerFullShare(), now, block.number);
-
-        // Paused on launch
-        _pause();
     }
 
     /// ===== Modifiers =====
@@ -121,7 +123,7 @@ contract Sett_B is ERC20Upgradeable, PausableUpgradeable, SettAccessControlDefen
 
     /// @notice Deposit assets into the Sett, and return corresponding shares to the user
     /// @notice Only callable by EOA accounts that pass the defend() check
-    function deposit(uint256 _amount) public whenNotPaused defend(defender) {
+    function deposit(uint256 _amount) public whenNotPausedRemote(defender) defend(defender) {
         _blockLocked();
 
         _lockForBlock(msg.sender);
@@ -130,7 +132,7 @@ contract Sett_B is ERC20Upgradeable, PausableUpgradeable, SettAccessControlDefen
 
     /// @notice Convenience function: Deposit entire balance of asset into the Sett, and return corresponding shares to the user
     /// @notice Only callable by EOA accounts that pass the defend() check
-    function depositAll() external whenNotPaused defend(defender) {
+    function depositAll() external whenNotPausedRemote(defender) defend(defender) {
         _blockLocked();
 
         _lockForBlock(msg.sender);
@@ -138,7 +140,7 @@ contract Sett_B is ERC20Upgradeable, PausableUpgradeable, SettAccessControlDefen
     }
 
     /// @notice No rebalance implementation for lower fees and faster swaps
-    function withdraw(uint256 _shares) public whenNotPaused defend(defender) {
+    function withdraw(uint256 _shares) public whenNotPausedRemote(defender) defend(defender) {
         _blockLocked();
 
         _lockForBlock(msg.sender);
@@ -146,7 +148,7 @@ contract Sett_B is ERC20Upgradeable, PausableUpgradeable, SettAccessControlDefen
     }
 
     /// @notice Convenience function: Withdraw all shares of the sender
-    function withdrawAll() external whenNotPaused defend(defender) {
+    function withdrawAll() external whenNotPausedRemote(defender) defend(defender) {
         _blockLocked();
 
         _lockForBlock(msg.sender);
@@ -157,36 +159,30 @@ contract Sett_B is ERC20Upgradeable, PausableUpgradeable, SettAccessControlDefen
 
     /// @notice Set minimum threshold of underlying that must be deposited in strategy
     /// @notice Can only be changed by governance
-    function setMin(uint256 _min) external whenNotPaused {
+    function setMin(uint256 _min) external whenNotPausedRemote(defender) {
         _onlyGovernance();
         min = _min;
     }
 
     /// @notice Change controller address
     /// @notice Can only be changed by governance
-    function setController(address _controller) public whenNotPaused {
+    function setController(address _controller) public whenNotPausedRemote(defender) {
         _onlyGovernance();
         controller = _controller;
     }
 
     /// @notice Change guardian address
     /// @notice Can only be changed by governance
-    function setGuardian(address _guardian) external whenNotPaused {
+    function setGuardian(address _guardian) external whenNotPausedRemote(defender) {
         _onlyGovernance();
         guardian = _guardian;
-    }
-
-    function setWithdrawalFee(uint256 _withdrawalFee) external {
-        _onlyGovernance();
-        require(_withdrawalFee <= MAX_FEE, "sett/excessive-withdrawal-fee");
-        withdrawalFee = _withdrawalFee;
     }
 
     /// ===== Permissioned Actions: Controller =====
 
     /// @notice Used to swap any borrowed reserve over the debt limit to liquidate to 'token'
     /// @notice Only controller can trigger harvests
-    function harvest(address reserve, uint256 amount) external whenNotPaused {
+    function harvest(address reserve, uint256 amount) external whenNotPausedRemote(defender) {
         _onlyController();
         require(reserve != address(token), "token");
         IERC20Upgradeable(reserve).safeTransfer(controller, amount);
@@ -197,7 +193,7 @@ contract Sett_B is ERC20Upgradeable, PausableUpgradeable, SettAccessControlDefen
     /// @notice Transfer the underlying available to be claimed to the controller
     /// @notice The controller will deposit into the Strategy for yield-generating activities
     /// @notice Permissionless operation
-    function earn() public whenNotPaused {
+    function earn() public whenNotPausedRemote(defender) {
         _onlyAuthorizedActors();
 
         uint256 _bal = available();
@@ -207,19 +203,19 @@ contract Sett_B is ERC20Upgradeable, PausableUpgradeable, SettAccessControlDefen
 
     /// @dev Emit event tracking current full price per share
     /// @dev Provides a pure on-chain way of approximating APY
-    function trackFullPricePerShare() external whenNotPaused {
+    function trackFullPricePerShare() external whenNotPausedRemote(defender) {
         _onlyAuthorizedActors();
         emit FullPricePerShareUpdated(getPricePerFullShare(), now, block.number);
     }
 
     function pause() external {
         _onlyAuthorizedPausers();
-        _pause();
+        _pause(defender);
     }
 
     function unpause() external {
         _onlyGovernance();
-        _unpause();
+        _unpause(defender);
     }
 
     /// ===== Internal Implementations =====
@@ -268,7 +264,7 @@ contract Sett_B is ERC20Upgradeable, PausableUpgradeable, SettAccessControlDefen
     /// ===== ERC20 Overrides =====
 
     /// @dev Add blockLock to transfers, users cannot transfer tokens in the same block as a deposit or withdrawal.
-    function transfer(address recipient, uint256 amount) public virtual override whenNotPaused returns (bool) {
+    function transfer(address recipient, uint256 amount) public virtual override whenNotPausedRemote(defender) returns (bool) {
         _blockLocked();
         return super.transfer(recipient, amount);
     }
@@ -277,8 +273,13 @@ contract Sett_B is ERC20Upgradeable, PausableUpgradeable, SettAccessControlDefen
         address sender,
         address recipient,
         uint256 amount
-    ) public virtual override whenNotPaused returns (bool) {
+    ) public virtual override whenNotPausedRemote(defender) returns (bool) {
         _blockLocked();
         return super.transferFrom(sender, recipient, amount);
+    }
+
+    function setDefender(address _defender) external {
+        _onlyGovernance();
+        defender = _defender;
     }
 }

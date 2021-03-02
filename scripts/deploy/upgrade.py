@@ -1,6 +1,5 @@
 from brownie.network.contract import ProjectContract
 
-from scripts.systems.badger_system import BadgerSystem
 from helpers.gnosis_safe import GnosisSafe, MultisigTxMetadata
 
 
@@ -14,7 +13,7 @@ VERSION_METHODS = [
 # Upgrades versioned proxy contract's impl/logic contract if not latest version.
 # Contracts must implement a version method above or they default to version 0.0.
 def upgrade_versioned_proxy(
-    badger: BadgerSystem,
+    badger,
     # upgradeable proxy contract
     proxy: ProjectContract,
     # latest logic contract

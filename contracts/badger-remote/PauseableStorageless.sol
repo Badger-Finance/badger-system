@@ -26,7 +26,7 @@ contract PauseableStorageless {
      *
      * - The contract must not be paused.
      */
-    modifier whenNotPaused(address pauser) {
+    modifier whenNotPausedRemote(address pauser) {
         require(!IRemotePauser(pauser).paused(), "Pausable: paused");
         _;
     }
@@ -38,7 +38,7 @@ contract PauseableStorageless {
      *
      * - The contract must be paused.
      */
-    modifier whenPaused(address pauser) {
+    modifier whenPausedRemote(address pauser) {
         require(IRemotePauser(pauser).paused(), "Pausable: not paused");
         _;
     }
@@ -50,8 +50,8 @@ contract PauseableStorageless {
      *
      * - The contract must not be paused.
      */
-    function _pause(address pauser) internal virtual whenNotPaused {
-        IRemotePauser(pauser).pause();  
+    function _pause(address pauser) internal virtual {
+        IRemotePauser(pauser).pause();
         emit Paused(msg.sender);
     }
 
@@ -62,8 +62,8 @@ contract PauseableStorageless {
      *
      * - The contract must be paused.
      */
-    function _unpause() internal virtual whenPaused {
-        IRemotePauser(pauser).unpause();  
+    function _unpause(address pauser) internal virtual {
+        IRemotePauser(pauser).unpause();
         emit Unpaused(msg.sender);
     }
 }
