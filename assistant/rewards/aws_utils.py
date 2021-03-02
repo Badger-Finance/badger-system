@@ -28,8 +28,8 @@ def upload(fileName, bucket="badger-json"):
 
     # enumeration of reward api dependency upload targets
     upload_targets = [
-        {"bucket": "badger-json", "key": "rewards/" + fileName} # badger-json rewards api
-        {"bucket": "badger-staging-merkle-proofs", "key": "badger-tree.json"} # badger-api staging
+        {"bucket": "badger-json", "key": "rewards/" + fileName}, # badger-json rewards api
+        {"bucket": "badger-staging-merkle-proofs", "key": "badger-tree.json"}, # badger-api staging
         {"bucket": "badger-merkle-proofs", "key": "badger-tree.json"} # badger-api production
     ]
 
