@@ -1,8 +1,8 @@
 from collections import OrderedDict
 
 from config.rewards_config import rewards_config
-from assistant.rewards.BadgerGeyserMock import BadgerGeyserMock
-from assistant.rewards.RewardsLogger import rewardsLogger
+from assistant.rewards.classes.BadgerGeyserMock import BadgerGeyserMock
+from assistant.rewards.classes.RewardsLogger import rewardsLogger
 from brownie import *
 from dotmap import DotMap
 from helpers.constants import AddressZero

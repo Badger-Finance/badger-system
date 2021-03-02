@@ -3,7 +3,7 @@ from brownie.network.gas.strategies import GasNowStrategy
 from scripts.systems.digg_system import connect_digg
 from helpers.time_utils import days, hours
 from tabulate import tabulate
-from assistant.rewards.BadgerGeyserMock import BadgerGeyserMock
+from assistant.rewards.classes.BadgerGeyserMock import BadgerGeyserMock
 from scripts.systems.badger_system import BadgerSystem
 from brownie import *
 from rich.console import Console
