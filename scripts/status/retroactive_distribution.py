@@ -1,3 +1,4 @@
+from assistant.rewards.aws_utils import upload
 from scripts.rewards.rewards_utils import get_last_proposed_cycle, get_last_published_cycle
 import time
 import json
@@ -17,13 +18,13 @@ from config.rewards_config import rewards_config
 from brownie.network.gas.strategies import GasNowStrategy
 from assistant.rewards.merkle_tree import rewards_to_merkle_tree
 
-gas_strategy = GasNowStrategy("fast")
+gas_strategy = GasNowStrategy("rapid")
 console = Console()
 
 
 def main():
     test = True
-    badger = connect_badger(badger_config.prod_json, load_deployer=False)
+    badger = connect_badger(badger_config.prod_json, load_deployer=False, load_keeper=False)
     farmTokenAddress = "0xa0246c9032bC3A600820415aE600c6388619A14D"
     nextCycle = badger.badgerTree.currentCycle() + 1
     console.log("next cycle: {}".format(nextCycle))
@@ -75,9 +76,11 @@ def main():
     rewardsLogger.add_distribution_info(
         "harvest.renCrv", {farmTokenAddress: claimsHarvested})
     rewardsLogger.save("retroactive-farm")
+
+    lastBlock = chain.height
     
     sushiRewards = calc_sushi_rewards(
-        badger, 11537600, chain.height, nextCycle, retroactive=True)
+        badger, 11537600, lastBlock, nextCycle, retroactive=True)
     totalDistRewards = combine_rewards([harvestRewards, sushiRewards],nextCycle,badger.badgerTree)
     currentRewards = fetch_current_rewards_tree(badger)
 
@@ -94,6 +97,8 @@ def main():
     console.log("Saving merkle tree as {}".format(contentFileName))
     with open(contentFileName, "w") as f:
         json.dump(merkleTree, f, indent=4)
+    
+    upload(contentFileName),
 
     farmHarvestedMerkleTree = 0
     claims = merkleTree["claims"]
@@ -116,11 +121,18 @@ def main():
         farmHarvestedMerkleTree - claimsHarvested))
     console.log(gas_strategy.get_gas_price())
 
+    startBlock = badger.badgerTree.lastPublishEndBlock() + 1
+    endBlock = badger.badgerTree.lastPublishEndBlock() + 1
+
+    print(startBlock, endBlock)
+
     if abs(difference) < 10000000 and not test:
         badger.badgerTree.proposeRoot(
             merkleTree["merkleRoot"],
             rootHash,
             nextCycle,
+            startBlock,
+            endBlock,
             {"from": badger.keeper, "gas_price": gas_strategy})
 
         badger.badgerTree.approveRoot(

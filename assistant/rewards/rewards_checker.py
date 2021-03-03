@@ -127,7 +127,7 @@ def get_expected_total_rewards(periodEndTime):
         "digg": digg_base + (digg_per_day * timePassed // days(1))
     }
     
-def print_token_diff_table(name, before, after, decimals=18):
+def print_token_diff_table(name, before, after, sanity_diff, decimals=18):
     diff = after - before
 
     console.print("Diff for {}".format(name))
@@ -136,6 +136,8 @@ def print_token_diff_table(name, before, after, decimals=18):
     table.append(["{} after".format(name), val(after, decimals=decimals)])
     table.append(["{} diff".format(name), val(diff, decimals=decimals)])
     print(tabulate(table, headers=["key", "value"]))
+
+    assert diff <= sanity_diff
 
 def verify_rewards(badger: BadgerSystem, startBlock, endBlock, before_data, after_data):
     before = before_data["claims"]
@@ -156,8 +158,8 @@ def verify_rewards(badger: BadgerSystem, startBlock, endBlock, before_data, afte
     total_before_badger = before_data["tokenTotals"][badger_token]
     total_before_digg = before_data["tokenTotals"][digg_token]
     
-    total_before_farm = 0
-    total_before_xsushi = 0
+    total_before_farm = int(before_data["tokenTotals"][farm_token])
+    total_before_xsushi = int(before_data["tokenTotals"][xSushi_token])
 
     total_after_badger = after_data["tokenTotals"][badger_token]
     total_after_digg = after_data["tokenTotals"][digg_token]
@@ -183,8 +185,8 @@ def verify_rewards(badger: BadgerSystem, startBlock, endBlock, before_data, afte
 
     print(tabulate(table, headers=["key", "value", "scaled"]))
 
-    print_token_diff_table("Farm", total_before_farm, total_after_farm)
-    print_token_diff_table("xSushi", total_before_xsushi, total_after_xsushi)
+    print_token_diff_table("Farm", total_before_farm, total_after_farm, 0)
+    print_token_diff_table("xSushi", total_before_xsushi, total_after_xsushi, 0)
 
     assert total_after_digg < sanity_digg
     assert total_after_badger < sanity_badger

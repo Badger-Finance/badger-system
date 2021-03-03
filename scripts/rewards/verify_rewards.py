@@ -22,7 +22,7 @@ def test_main():
 
 def main():
     badger = connect_badger(badger_config.prod_json, load_keeper=True, load_guardian=True)
-    pendingContentHash = "0x3ec9be31c53299f08d8ca607648ba6eec3375af4f75d10dd881288698ef4b36d"
+    pendingContentHash = "0x346ec98585b52d981d43584477e1b831ce32165cb8e0a06d14d236241b36328e"
     pendingFile = "rewards-1-" + str(pendingContentHash) + ".json"
     with open(pendingFile) as f:
         after_file = json.load(f)

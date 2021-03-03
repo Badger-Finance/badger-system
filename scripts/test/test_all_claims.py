@@ -181,15 +181,6 @@ def test_rewards_flow():
 
     multi = GnosisSafe(badger.opsMultisig)
 
-    # Upgrade Tree
-    multi.execute(
-        MultisigTxMetadata(description="Upgrade Tree"),
-        {
-            "to": badger.opsProxyAdmin.address,
-            "data": badger.opsProxyAdmin.upgrade.encode_input(tree, newLogic),
-        },
-    )
-
     # Test claimable amounts
 
     # ===== Test VS Existing List =====
@@ -206,7 +197,7 @@ def test_rewards_flow():
             users_to_verify.append(user)
             test_claim(badger, user, claim, tokens_to_check)
 
-    retroactive_content_hash = "0x3ec9be31c53299f08d8ca607648ba6eec3375af4f75d10dd881288698ef4b36d"
+    retroactive_content_hash = "0x346ec98585b52d981d43584477e1b831ce32165cb8e0a06d14d236241b36328e"
     retroactive_file_name = "rewards-1-" + retroactive_content_hash + ".json"
 
     with open(retroactive_file_name) as f:
