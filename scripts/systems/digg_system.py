@@ -60,7 +60,7 @@ def connect_digg(badger_deploy_file):
         badger_deploy["deployer"],
         badger_deploy["devProxyAdmin"],
         badger_deploy["daoProxyAdmin"],
-        owner=badger_deploy["deployer"],
+        owner=badger_deploy["digg_system"]["owner"],
     )
     # arguments: (attr name, brownie artifact, address, upgradeable (default=True))
     connectable = [
@@ -127,7 +127,6 @@ class DiggSystem:
             self.deployer = deployer
         if env_config.debug:
             print("deployer / owner", deployer, owner, self.deployer, self.owner)
-        self.owner=""
         self.deployer=self.owner
 
         self.connect_proxy_admins(devProxyAdmin, daoProxyAdmin)
