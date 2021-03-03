@@ -90,13 +90,6 @@ open_zeppelin_registry = DotMap(
     )
 )
 
-token_registry = DotMap(
-    weth="0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
-    wbtc="0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599",
-    crv="0xD533a949740bb3306d119CC777fa900bA034cd52",
-    tbtc="0x8daebade922df735c38c80c7ebd708af50815faa",
-    badger="0x3472A5A71965499acd81997a54BBA8D852C6E53d"
-)
 
 onesplit_registry = DotMap(contract="0x50FDA034C0Ce7a8f7EFDAebDA7Aa7cA21CC1267e")
 
@@ -176,8 +169,24 @@ curve_registry = DotMap(
 )
 
 badger_registry = DotMap(
-    token="0x3472a5a71965499acd81997a54bba8d852c6e53d"
+    token="0x3472a5a71965499acd81997a54bba8d852c6e53d",
 )
+
+token_registry = DotMap(
+    weth="0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+    wbtc="0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599",
+    crv="0xD533a949740bb3306d119CC777fa900bA034cd52",
+    tbtc="0x8daebade922df735c38c80c7ebd708af50815faa",
+    usdt="0xdac17f958d2ee523a2206206994597c13d831ec7",
+    badger=badger_registry.token,
+    digg="0x798D1bE841a82a273720CE31c822C61a67a601C3",
+    farm=harvest_registry.farmToken,
+    sushi=sushi_registry.sushiToken,
+    xSushi=sushi_registry.xsushiToken,
+    usdc="0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+    renbtc="0xeb4c2781e4eba804ce9a9803c67d0893436bb27d",
+)
+
 
 class WhaleRegistryAction(Enum):
     DISTRIBUTE_FROM_EOA = 0
@@ -189,63 +198,99 @@ whale_registry = DotMap(
     badger=DotMap(
         whale="0x19d099670a21bC0a8211a89B84cEdF59AbB4377F",
         token="0x3472A5A71965499acd81997a54BBA8D852C6E53d",
-        action = WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT
+        action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT
+    ),
+    bBadger=DotMap(
+        whale="0xa9429271a28F8543eFFfa136994c0839E7d7bF77",
+        token="0x19D97D8fA813EE2f51aD4B4e04EA08bAf4DFfC28",
+        action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT
     ),
     harvestSuperSett=DotMap(
         whale="0xeD0B7f5d9F6286d00763b0FFCbA886D8f9d56d5e",
         token="0xAf5A1DECfa95BAF63E0084a35c62592B774A2A87",
-        action = WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT
+        action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT
     ),
     uniBadgerWbtc=DotMap(
         whale="0x235c9e24D3FB2FAFd58a2E49D454Fdcd2DBf7FF1",
         token="0xcD7989894bc033581532D2cd88Da5db0A4b12859",
-        action = WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT
+        action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT
+    ),
+    uniDiggWbtc=DotMap(
+        whale="0xc17078fdd324cc473f8175dc5290fae5f2e84714",
+        token="0xe86204c4eddd2f70ee00ead6805f917671f56c52",
+        action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT
     ),
     sbtcCrv=DotMap(
         whale="0xc25099792e9349c7dd09759744ea681c7de2cb66",
         token=curve_registry.pools.sbtcCrv.token,
-        action = WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT
+        action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT
     ),
     renCrv=DotMap(
         whale="0xb1f2cdec61db658f091671f5f199635aef202cac",
         token=curve_registry.pools.renCrv.token,
-        action = WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT
+        action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT
     ),
     tbtcCrv=DotMap(
         whale="0xaf379f0228ad0d46bb7b4f38f9dc9bcc1ad0360c",
         token=curve_registry.pools.tbtcCrv.token,
-        action = WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT
+        action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT
     ),
     wbtc=DotMap(
         whale="0xc11b1268c1a384e55c48c2391d8d480264a3a7f4",
         token=token_registry.wbtc,
-        action = WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT
+        action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT
     ),
     sushiBadgerWbtc=DotMap(
         whale="0xc2EdaD668740f1aA35E4D8f227fB8E17dcA888Cd",
         token="0x110492b31c59716AC47337E616804E3E3AdC0b4a",
-        action = WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT
+        action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT
     ),
-    sushiWbtcWeth=DotMap(
+    sushiDiggWbtc=DotMap(
+        whale="0xd16fda96cb572da89e4e39b04b99d99a8e3071fb",
+        token="0x110492b31c59716AC47337E616804E3E3AdC0b4a",
+        action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT
+    ),
+    sushiWbtcEth=DotMap(
         whale="0xc2EdaD668740f1aA35E4D8f227fB8E17dcA888Cd",
         token="0xCEfF51756c56CeFFCA006cD410B03FFC46dd3a58",
+        action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT
+    ),
+    bSushiWbtcEth=DotMap(
+        whale="0x032c701886ad0317f0e58c8f4a570c6f9c0bbf4a",
+        token="0x758A43EE2BFf8230eeb784879CdcFF4828F2544D",
+        action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT
+    ),
+    usdc=DotMap(
+        whale="0xbe0eb53f46cd790cd13851d5eff43d12404d33e8",  # binance
+        token="0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+        action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT
+    ),
+    digg=DotMap(
+        whale="0x4a8651F2edD68850B944AD93f2c67af817F39F62",
+        token="0x798D1bE841a82a273720CE31c822C61a67a601C3",
+        action = WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT
+    ),
+    renbtc=DotMap(
+        whale="0x35ffd6e268610e764ff6944d07760d0efe5e40e5",
+        token="0xeb4c2781e4eba804ce9a9803c67d0893436bb27d",
         action = WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT
     ),
 )
 
+class ContractRegistry:
+    def __init__(self):
+        self.curve = curve_registry
+        self.uniswap = uniswap_registry
+        self.open_zeppelin = open_zeppelin_registry
+        self.aragon = aragon_registry
+        self.sushiswap = sushi_registry
+        self.sushi = sushi_registry
+        self.gnosis_safe = gnosis_safe_registry
+        self.onesplit = gnosis_safe_registry
+        self.pickle = pickle_registry
+        self.harvest = harvest_registry
+        self.tokens = token_registry
+        self.whales = whale_registry
+        self.multicall = multicall_registry
 
-registry = DotMap(
-    curve=curve_registry,
-    uniswap=uniswap_registry,
-    open_zeppelin=open_zeppelin_registry,
-    aragon=aragon_registry,
-    sushiswap=sushi_registry,
-    sushi=sushi_registry,
-    gnosis_safe=gnosis_safe_registry,
-    onesplit=gnosis_safe_registry,
-    pickle=pickle_registry,
-    harvest=harvest_registry,
-    tokens=token_registry,
-    whales=whale_registry,
-    multicall=multicall_registry,
-)
+registry = ContractRegistry()

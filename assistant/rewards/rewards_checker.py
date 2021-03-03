@@ -106,7 +106,7 @@ def get_expected_total_rewards(periodEndTime):
     timePassed = periodEndTime - startTime
     print('timePassed', timePassed)
 
-    badger_base = Wei("4085652 ether")
+    badger_base = Wei("4248761 ether")
     badger_per_day = Wei("184452 ether") // 7
 
     digg_base = Wei("45 gwei")
@@ -142,7 +142,7 @@ def verify_rewards(badger: BadgerSystem, startBlock, endBlock, before_data, afte
 
     digg_badger = total_after_badger - total_before_badger
     diff_digg = total_after_digg - total_before_digg
-    
+
     table = []
     table.append(["block range", startBlock, endBlock])
     table.append(["block duration", int(endBlock) - int(startBlock), "-"])

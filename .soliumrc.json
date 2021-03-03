@@ -2,6 +2,7 @@
     "extends": "solium:recommended",
     "plugins": ["security"],
     "rules": {
+        "no-call-value": "off",
         "imports-on-top": "error",
         "variable-declarations": "error",
         "array-declarations": "error",

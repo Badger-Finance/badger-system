@@ -9,7 +9,23 @@ from assistant.rewards.rewards_assistant import fetch_current_rewards_tree, fetc
 
 console = Console()
 
-def get_last_proposed_cycle_range(badger):
+def get_last_published_cycle(badger):
+    # Fetch the appropriate file
+    currentRewards = fetch_current_rewards_tree(badger)
+
+    lastClaimEnd = int(currentRewards["endBlock"])
+    lastClaimStart = int(currentRewards["startBlock"])
+
+    # Sanity check: Ensure previous cycle was not too long
+    assert lastClaimStart > lastClaimEnd - rewards_config.maxStartBlockAge
+    
+    # Sanity check: Ensure previous end block is not too far in the past
+    assert lastClaimEnd > chain.height - rewards_config.maxStartBlockAge
+
+    # Sanity check: Ensure start block is not too close to end block
+    return (currentRewards, lastClaimStart, lastClaimEnd)
+
+def get_last_proposed_cycle(badger):
     # Fetch the appropriate file
     currentRewards = fetch_pending_rewards_tree(badger)
 

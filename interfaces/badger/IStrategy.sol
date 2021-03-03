@@ -33,4 +33,8 @@ interface IStrategy {
     function setGovernance(address _governance) external;
 
     function setController(address _controller) external;
+
+    function tend() external;
+
+    function harvest() external;
 }
