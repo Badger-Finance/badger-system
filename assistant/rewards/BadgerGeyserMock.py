@@ -213,6 +213,8 @@ class BadgerGeyserMock:
                 )
             )
             self.totalDistributions[token] = tokenDistributions[token]
+        console.log("Token distribution:")
+        console.log(tokenDistributions)
         return tokenDistributions
 
     def calc_token_distributions_at_time(self, endTime):

@@ -54,7 +54,6 @@ def calculate_token_distributions(
         for schedule in unlockSchedules:
             if rewards_config.debug:
                 console.log(schedule)
-            console.print("Adding Unlock Schedule", token, schedule)
             rewardsLogger.add_unlock_schedule(token,schedule)
             modified=schedule
             if token == digg_token:

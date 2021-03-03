@@ -15,7 +15,8 @@ from scripts.systems.digg_system import connect_digg
 from scripts.systems.sushiswap_system import SushiswapSystem
 from scripts.systems.uniswap_system import UniswapSystem
 from tabulate import tabulate
-
+from assistant.rewards.twap import digg_btc_twap,calculate_digg_allocation
+from scripts.rewards.rewards_utils import calc_next_cycle_range
 gas_strategies.set_default(gas_strategies.exponentialScaling)
 
 uniswap = UniswapSystem()
@@ -59,6 +60,8 @@ def rapid_harvest():
 
     fileName = "deploy-" + "final" + ".json"
     badger = connect_badger(fileName, load_keeper=True)
+    (currentRewards,startBlock,endBlock) = calc_next_cycle_range(badger)
+    diggAllocation = calculate_digg_allocation(digg_btc_twap(startBlock,endBlock))
     rewards = get_active_rewards_schedule(badger)
     digg = badger.digg
     manager = badger.badgerRewardsManager
@@ -105,7 +108,7 @@ def rapid_harvest():
     transfer_for_strategy(
         badger,
         key,
-        shares_to_fragments(rewards.getDistributions(key).getToStakingRewardsDaily("digg")),
+        shares_to_fragments(rewards.getDistributions(key).getToStakingRewardsDaily("digg")) * diggAllocation,
         decimals=9,
     )
 

@@ -5,7 +5,7 @@ from assistant.rewards.aws_utils import download,upload
 from assistant.rewards.calc_stakes import calc_geyser_stakes
 from assistant.rewards.calc_harvest import calc_balances_from_geyser_events,get_initial_user_state
 from assistant.rewards.RewardsLogger import rewardsLogger
-from assistant.rewards.twap import digg_btc_twap
+from assistant.rewards.twap import digg_btc_twap,calculate_digg_allocation
 from assistant.subgraph.client import (
     fetch_sett_balances,
     fetch_geyser_events,
@@ -26,14 +26,8 @@ from scripts.systems.badger_system import BadgerSystem
 gas_strategy = GasNowStrategy("fast")
 
 console = Console()
-
 diggBTCFeed = "0xe49ca29a3ad94713fc14f065125e74906a6503bb"
-MAX_DIGG_ALLOC = 1.0
-MIN_DIGG_ALLOC = 0.3
-MAX_DIGG_THRESHOLD = 0.7
-MIN_DIGG_THRESHOLD = 1.3
-EQULIBRIUM = 0.5
-TARGET = 1.0
+
 
 def sum_rewards(sources, cycle, badgerTree):
     """
@@ -76,8 +70,8 @@ def calc_geyser_rewards(badger, periodStartBlock, endBlock, cycle):
     })
     # For each Geyser, get a list of user to weights
     for key, geyser in badger.geysers.items():
-        #if key != "native.badger":
-        #      continue
+        #if key != "native.badger" and key != "native.uniDiggWbtc":
+        #    continue
         geyserRewards = calc_geyser_stakes(key, geyser, periodStartBlock, endBlock,diggAllocation)
         rewardsByGeyser[key] = geyserRewards
     return sum_rewards(rewardsByGeyser, cycle, badger.badgerTree)
