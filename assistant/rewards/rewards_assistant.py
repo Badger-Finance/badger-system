@@ -70,8 +70,8 @@ def calc_geyser_rewards(badger, periodStartBlock, endBlock, cycle):
     })
     # For each Geyser, get a list of user to weights
     for key, geyser in badger.geysers.items():
-        #if key != "native.badger" and key != "native.uniDiggWbtc":
-        #    continue
+        if key != "native.badger" and key != "native.uniDiggWbtc":
+            continue
         geyserRewards = calc_geyser_stakes(key, geyser, periodStartBlock, endBlock,diggAllocation)
         rewardsByGeyser[key] = geyserRewards
     return sum_rewards(rewardsByGeyser, cycle, badger.badgerTree)
@@ -177,21 +177,6 @@ def process_sushi_events(badger,startBlock,endBlock,events,name,nextCycle):
     distr[xSushiTokenAddress] = totalXSushi
     rewardsLogger.add_distribution_info(name,distr)
     return rewards
-
-def calculate_digg_allocation(ratio):
-    if ratio >= 1.0:
-        console.log("Digg above peg")
-        diggSettAllocation = max(MIN_DIGG_ALLOC,
-        MIN_DIGG_ALLOC + (MIN_DIGG_THRESHOLD - ratio) * ((EQULIBRIUM - MIN_DIGG_ALLOC)/(MIN_DIGG_THRESHOLD - TARGET))
-        )
-    elif ratio < 1.0:
-        console.log("DIGG below peg")
-        diggSettAllocation = min(MAX_DIGG_ALLOC,
-        EQULIBRIUM + (TARGET - ratio) * ((MAX_DIGG_ALLOC - EQULIBRIUM)/(TARGET - MAX_DIGG_THRESHOLD))
-        )
-    console.log("Ratio :{} \nDiggSettAllocation :{} \nBadgerSettAllocation:{} ".format(ratio,diggSettAllocation,1-diggSettAllocation))
-    return diggSettAllocation
-
 
 
 def get_latest_event_block(firstEvent,harvestEvents):
@@ -395,7 +380,7 @@ def fetch_pending_rewards_tree(badger, print_output=False):
             "[green]===== Loading Pending Rewards " + pastFile + " =====[/green]"
         )
 
-    currentTree = json.loads(download(pastFile))
+    currentTree = download(pastFile)
 
     # Invariant: File shoulld have same root as latest
     assert currentTree["merkleRoot"] == merkle["root"]
@@ -466,7 +451,6 @@ def generate_rewards_in_range(badger, startBlock, endBlock, pastRewards):
         cumulativeRewards, startBlock, endBlock, {}
     )
 
-    
 
     # Publish data
     rootHash = hash(merkleTree["merkleRoot"])

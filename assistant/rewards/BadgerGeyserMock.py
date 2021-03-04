@@ -190,18 +190,24 @@ class BadgerGeyserMock:
                     - self.get_distributed_for_token_at(token, startTime)
                 )
             )
+            lockedTokens = self.get_distributed_for_token_at(token, startTime)
+
             if token == digg_token:
+                diggAtPeg = tokenDistributions[token] * 0.5
                 if self.key in ["native.uniDiggWbtc","native.sushiDiggWbtc"]:
                     tokenDistributions[token] = tokenDistributions[token] * self.diggSettAllocation
                 else:
                     tokenDistributions[token] = tokenDistributions[token] * ( 1 - self.diggSettAllocation)
+
                 console.log(
                 "Distributing {} {} tokens for {} geyser in this rewards cycle, out of {} historically locked".format(
                     val(digg.sharesToFragments(tokenDistributions[token])),
                     token,
                     self.key,
-                    val(digg.sharesToFragments(self.get_distributed_for_token_at(token, startTime))),
+                    val(digg.sharesToFragments(lockedTokens))),
                 )
+                # Check that any amount distributed should not deviate by 2x from the historical locked value
+                assert digg.sharesToFragments(tokenDistributions[token]) < 2 * digg.sharesToFragments(lockedTokens))
             )
             else:
                 console.log(
@@ -209,12 +215,10 @@ class BadgerGeyserMock:
                     val(tokenDistributions[token]),
                     token,
                     self.key,
-                    val(self.get_distributed_for_token_at(token, startTime)),
+                    val(lockedTokens)),
                 )
             )
             self.totalDistributions[token] = tokenDistributions[token]
-        console.log("Token distribution:")
-        console.log(tokenDistributions)
         return tokenDistributions
 
     def calc_token_distributions_at_time(self, endTime):
