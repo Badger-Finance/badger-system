@@ -16,6 +16,12 @@ task("accounts", "Prints the list of accounts", async () => {
  */
 module.exports = {
   networks: {
+    remote_na: {
+      url: "http://54.151.84.72:8545",
+    },
+    remote_sa: {
+      url: "http://18.230.155.239:8545",
+    },
     hardhat: {
       blockGasLimit: 9999999999,
       gas: 99999,

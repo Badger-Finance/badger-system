@@ -47,6 +47,7 @@ async function main() {
 
     const token = new ethers.Contract(tokenAddress, erc20abi, signer);
     const balance = await token.balanceOf(whale);
+    //const balance = ethers.BigNumber.from("1000000000000000000")
     console.log("checking whale, token balance:", balance)
     const account = process.env.TEST_ACCOUNT;
     const transferBalance = balance.div(2);
