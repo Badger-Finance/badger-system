@@ -202,6 +202,7 @@ def connect_badger(
     badger.connect_honeypot_meme(badger_deploy["honeypotMeme"])
     badger.connect_community_pool(badger_deploy["communityPool"])
     badger.connect_dao_badger_timelock(badger_deploy["daoBadgerTimelock"])
+    badger.connect_governance_timelock(badger_deploy["timelock"])
     badger.connect_rewards_manager(badger_deploy["badgerRewardsManager"])
     badger.connect_unlock_scheduler(badger_deploy["unlockScheduler"])
 
@@ -949,6 +950,9 @@ class BadgerSystem:
     def connect_dao_badger_timelock(self, address):
         self.daoBadgerTimelock = SimpleTimelock.at(address)
         self.upgrade.track_contract_upgradeable("daoBadgerTimelock", self.daoBadgerTimelock)
+
+    def connect_governance_timelock(self, address):
+        self.governanceTimelock = GovernanceTimelock.at(address)
 
     def connect_rewards_manager(self, address):
         self.badgerRewardsManager = BadgerRewardsManager.at(address)

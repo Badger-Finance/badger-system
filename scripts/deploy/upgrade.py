@@ -1,7 +1,5 @@
 from brownie.network.contract import ProjectContract
 
-from helpers.gnosis_safe import GnosisSafe, MultisigTxMetadata
-
 
 # try all the methods in priority order
 VERSION_METHODS = [
@@ -29,17 +27,7 @@ def upgrade_versioned_proxy(
     ):
         return
 
-    multi = GnosisSafe(badger.devMultisig)
-
-    multi.execute(
-        MultisigTxMetadata(description="Upgrade versioned proxy contract with new logic version",),
-        {
-            "to": badger.devProxyAdmin.address,
-            "data": badger.devProxyAdmin.upgrade.encode_input(
-                proxy, logic
-            ),
-        },
-    )
+    badger.devProxyAdmin.upgrade(proxy, logic, {"from": badger.governanceTimelock})
 
 
 def _get_version(contract: ProjectContract) -> float:

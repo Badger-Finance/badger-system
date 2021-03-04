@@ -172,8 +172,13 @@ class UpgradeValidator:
     def validate(self) -> bool:
         prev = self.snapshots[0]
         for snapshot in self.snapshots[1:]:
-            if snapshot != prev:
-                return False
+            # Snapshots should be the same length.
+            for idx in range(0, len(snapshot)):
+                # If field unimpl in last version, skip comparison.
+                if prev[idx] is None:
+                    continue
+                if snapshot[idx] != prev[idx]:
+                    return False
             prev = snapshot
         return True
 
