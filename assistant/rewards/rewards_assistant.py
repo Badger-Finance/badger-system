@@ -64,17 +64,25 @@ def calc_geyser_rewards(badger, periodStartBlock, endBlock, cycle):
     ratio = digg_btc_twap(periodStartBlock,endBlock)
     diggAllocation = calculate_digg_allocation(ratio)
     rewardsByGeyser = {}
+    rewardsByGeyserAtPeg = {}
     rewardsLogger.add_metadata("pegData", {
         "ratio":ratio,
         "diggAllocation":diggAllocation
     })
     # For each Geyser, get a list of user to weights
     for key, geyser in badger.geysers.items():
-        if key != "native.badger" and key != "native.uniDiggWbtc":
-            continue
-        geyserRewards = calc_geyser_stakes(key, geyser, periodStartBlock, endBlock,diggAllocation)
+       #if key != "native.badger" and key != "native.uniDiggWbtc":
+       #     continue
+        (atPegGeyserRewards,geyserRewards) = calc_geyser_stakes(key, geyser, periodStartBlock, endBlock,diggAllocation)
         rewardsByGeyser[key] = geyserRewards
-    return sum_rewards(rewardsByGeyser, cycle, badger.badgerTree)
+        rewardsByGeyserAtPeg[key] = geyserRewards
+
+    totalRewardsByGeyser = sum_rewards(rewardsByGeyser, cycle, badger.badgerTree)
+    totalRewardsByGeyserAtPeg = sum_rewards(rewardsByGeyserAtPeg,cycle,badger.badgerTree)
+    for token in totalRewardsByGeyser.totals.keys():
+        assert totalRewardsByGeyser.totals[token] == totalRewardsByGeyserAtPeg.totals[token]
+
+    return totalRewardsByGeyser
 
 def calc_sushi_rewards(badger,startBlock,endBlock,nextCycle,retroactive):
     console.log(startBlock)
@@ -412,7 +420,6 @@ def fetch_current_rewards_tree(badger, print_output=False):
     console.print(
         "[bold yellow]===== Loading Past Rewards " + pastFile + " =====[/bold yellow]"
     )
-
     currentTree = download(pastFile)
 
     # Invariant: File shoulld have same root as latest

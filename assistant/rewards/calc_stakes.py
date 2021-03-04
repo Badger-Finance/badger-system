@@ -30,10 +30,15 @@ def calc_geyser_stakes(key, geyser, periodStartBlock, periodEndBlock,diggAllocat
     # Process actions from the total history
     console.print("\n[grey]Process Actions: Entire History[/grey]")
     geyserMock = process_actions(geyserMock, actions, globalStartBlock, periodEndBlock, key)
-
-    return calculate_token_distributions(
+    geyserMock.diggSettAllocation = 0.5
+    atPegDistribution = calculate_token_distributions(
+        geyser,geyserMock,periodStartTime,periodEndTime
+    )
+    geyser.diggSetAllocation = diggAllocation
+    currentDistribution = calculate_token_distributions(
         geyser, geyserMock, periodStartTime, periodEndTime
     )
+    return (atPegDistribution,currentDistribution)
 
 
 def calculate_token_distributions(

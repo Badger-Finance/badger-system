@@ -1,5 +1,6 @@
 import boto3
 from brownie import *
+import json
 import requests
 from rich.console import Console
 
@@ -19,11 +20,13 @@ def download(fileName):
     #s3_clientdata = s3_clientobj["Body"].read().decode("utf-8")
 
     #return s3_clientdata
-    url = "https://d5haax09x7ee2.cloudfront.net/rewards/{}".format(fileName)
-    return requests.get(url=url).json()
+    #url = "https://laiv44udi0.execute-api.us-west-1.amazonaws.com/staging/v2/reward/tree/{}".format(fileName)
+    #return requests.get(url=url).json()k
+    with open(fileName,"r") as f:
+        return json.load(f)
 
 
-def upload(fileName):
+def upload(fileName):   
     from config.env_config import env_config
 
     upload_bucket = "badger-json"

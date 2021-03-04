@@ -204,11 +204,11 @@ class BadgerGeyserMock:
                     val(digg.sharesToFragments(tokenDistributions[token])),
                     token,
                     self.key,
-                    val(digg.sharesToFragments(lockedTokens))),
-                )
+                    val(digg.sharesToFragments(lockedTokens)),
+                ))
                 # Check that any amount distributed should not deviate by 2x from the historical locked value
-                assert digg.sharesToFragments(tokenDistributions[token]) < 2 * digg.sharesToFragments(lockedTokens))
-            )
+                assert digg.sharesToFragments(tokenDistributions[token]) < 2 * digg.sharesToFragments(lockedTokens)
+            
             else:
                 console.log(
                 "Distributing {} {} tokens for {} geyser in this rewards cycle, out of {} historically locked".format(
@@ -217,7 +217,7 @@ class BadgerGeyserMock:
                     self.key,
                     val(lockedTokens)),
                 )
-            )
+            
             self.totalDistributions[token] = tokenDistributions[token]
         return tokenDistributions
 
