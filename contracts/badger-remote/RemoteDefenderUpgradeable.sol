@@ -88,5 +88,5 @@ contract RemoteDefenderUpgradeable is OwnableUpgradeable {
     }
 
     // Reserve storage space for upgrades.
-    uint256[49] private __gap;
+    uint256[50] private __gap;
 }
