@@ -29,7 +29,7 @@ def get_balance_data(badger,currentBlock):
             nonNativeSetts.append(data)
 
 
-def calculate_sett_balances_usd(badger,name,sett,currentBlock):
+def calculate_sett_balances(badger,name,sett,currentBlock):
     settBalances = fetch_sett_balances(sett.address.lower(),currentBlock)
     geyserBalances = {}
     # Digg doesn't have a geyser so we have to ignore it 
@@ -38,26 +38,18 @@ def calculate_sett_balances_usd(badger,name,sett,currentBlock):
         geyserBalances = calc_balances_from_geyser_events(geyserEvents)
 
     balances = combine_balances(settBalances,geyserBalances)
+    # TODO: whitelist certain contracts so they dont count for balances
+    # TODO: Use extra subgraphs to determine seperate balances
+
+    return convert_balances_to_usd(sett,balances)
+
+    # Convert token to usd
+
+def convert_balances_to_usd(sett,balances): 
     price = fetch_sett_price(sett.token().lower())
     ppfs = fetch_sett_ppfs(sett.token().lower())
-
-    for from_contract,to_contract in APPROVED_CONTRACTS:
-        if contract in balances:
-            amount = balances[from_contract]
-            balances[contract] = 0
-            # The address that stores the bToken might not be able 
-            # to claim so we they should provide an address that can
-            # claim on their behalf
-            balances[to_contract] = amount
-    return balances
-
     for account,bBalance in balances.items():
         balances[account] = price * bBalance * ppfs
-
-    console.log(balances)
-    
     return balances
-    
-    # Convert token to usd
 
     
