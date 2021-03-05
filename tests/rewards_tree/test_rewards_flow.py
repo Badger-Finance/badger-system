@@ -231,30 +231,31 @@ def test_rewards_flow(setup):
     nextCycle = currCycle + 1
     currentRoot = rewardsContract.merkleRoot()
 
-    assert user == '0x21b42413bA931038f35e7A5224FaDb065d297Ba3' # make sure we're making claims for the correct account
-
     # Update to new root with xSushi and FARM
     farmClaim = 100000000000
     xSushiClaim = 5555555555
+    farmAddress = "0xa0246c9032bC3A600820415aE600c6388619A14D"
+    xSushiAddress = "0x8798249c2E607446EfB7Ad49eC89dD1865Ff4272"
+
     geyserRewards = DotMap({
         'badger_tree': rewardsContract,
         'claims': {
-            "0x21b42413bA931038f35e7A5224FaDb065d297Ba3": {
-                "0xa0246c9032bC3A600820415aE600c6388619A14D": farmClaim,
-                "0x8798249c2E607446EfB7Ad49eC89dD1865Ff4272": xSushiClaim
+            user.address: {
+                farmAddress: farmClaim,
+                xSushiAddress: xSushiClaim
             },
-            "0x0063046686E46Dc6F15918b61AE2B121458534a5": {
-                "0xa0246c9032bC3A600820415aE600c6388619A14D": 100,
-                "0x8798249c2E607446EfB7Ad49eC89dD1865Ff4272": 100
+            accounts[5].address: {
+                farmAddress: 100,
+                xSushiAddress: 100
             },
-            "0x33A4622B82D4c04a53e170c638B944ce27cffce3": {
-                "0xa0246c9032bC3A600820415aE600c6388619A14D": 100,
-                "0x8798249c2E607446EfB7Ad49eC89dD1865Ff4272": 100
+            accounts[6].address: {
+                farmAddress: 100,
+                xSushiAddress: 100
             }
         },
         "tokens": [
-            "0xa0246c9032bC3A600820415aE600c6388619A14D", #FARM
-            "0x8798249c2E607446EfB7Ad49eC89dD1865Ff4272" #XSUSHI
+            farmAddress, #FARM
+            xSushiAddress #XSUSHI
         ],
         'cycle': nextCycle
     })
@@ -262,8 +263,8 @@ def test_rewards_flow(setup):
         'badger_tree': rewardsContract,
         'claims': {},
         "tokens": [
-            "0xa0246c9032bC3A600820415aE600c6388619A14D", #FARM
-            "0x8798249c2E607446EfB7Ad49eC89dD1865Ff4272" #XSUSHI
+            farmAddress, #FARM
+            xSushiAddress #XSUSHI
         ],
         'cycle': currCycle
     })
@@ -301,8 +302,8 @@ def test_rewards_flow(setup):
     with brownie.reverts('ERC20: transfer amount exceeds balance'):
         rewardsContract.claim(
             [
-                "0xa0246c9032bC3A600820415aE600c6388619A14D", #FARM
-                "0x8798249c2E607446EfB7Ad49eC89dD1865Ff4272" #XSUSHI
+                farmAddress, #FARM
+                xSushiAddress #XSUSHI
             ],
             [farmClaim, xSushiClaim],
             rewards_data['merkleTree']['claims'][user]['index'],
@@ -320,8 +321,8 @@ def test_rewards_flow(setup):
     with brownie.reverts('ERC20: transfer amount exceeds balance'):
         rewardsContract.claim(
             [
-                "0xa0246c9032bC3A600820415aE600c6388619A14D", #FARM
-                "0x8798249c2E607446EfB7Ad49eC89dD1865Ff4272" #XSUSHI
+                farmAddress, #FARM
+                xSushiAddress #XSUSHI
             ],
             [farmClaim, xSushiClaim],
             rewards_data['merkleTree']['claims'][user]['index'],
@@ -345,18 +346,18 @@ def test_rewards_flow(setup):
     geyserRewards = DotMap({
         'badger_tree': rewardsContract,
         'claims': {
-            "0x21b42413bA931038f35e7A5224FaDb065d297Ba3": {},
-            "0x0063046686E46Dc6F15918b61AE2B121458534a5": {},
-            "0x33A4622B82D4c04a53e170c638B944ce27cffce3": {}
+            user.address: {},
+            accounts[5].address: {},
+            accounts[6].address: {}
         },
         "tokens": [
             mockContract
         ],
         'cycle': nextCycle
     })
-    geyserRewards['claims']["0x21b42413bA931038f35e7A5224FaDb065d297Ba3"][str(mockContract)] = 100
-    geyserRewards['claims']["0x0063046686E46Dc6F15918b61AE2B121458534a5"][str(mockContract)] = 20
-    geyserRewards['claims']["0x33A4622B82D4c04a53e170c638B944ce27cffce3"][str(mockContract)] = 0
+    geyserRewards['claims'][user.address][str(mockContract)] = 100
+    geyserRewards['claims'][accounts[5].address][str(mockContract)] = 20
+    geyserRewards['claims'][accounts[6].address][str(mockContract)] = 0
     pastRewards = DotMap({
         'badger_tree': rewardsContract,
         'claims': {},
@@ -418,22 +419,22 @@ def test_rewards_flow(setup):
     geyserRewards = DotMap({
         'badger_tree': rewardsContract,
         'claims': {
-            "0x21b42413bA931038f35e7A5224FaDb065d297Ba3": {
-                "0xa0246c9032bC3A600820415aE600c6388619A14D": 0,
-                "0x8798249c2E607446EfB7Ad49eC89dD1865Ff4272": 0
+            user.address: {
+                farmAddress: 0,
+                xSushiAddress: 0
             },
-            "0x0063046686E46Dc6F15918b61AE2B121458534a5": {
-                "0xa0246c9032bC3A600820415aE600c6388619A14D": 0,
-                "0x8798249c2E607446EfB7Ad49eC89dD1865Ff4272": 0
+            accounts[5].address: {
+                farmAddress: 0,
+                xSushiAddress: 0
             },
-            "0x33A4622B82D4c04a53e170c638B944ce27cffce3": {
-                "0xa0246c9032bC3A600820415aE600c6388619A14D": 0,
-                "0x8798249c2E607446EfB7Ad49eC89dD1865Ff4272": 0
+            accounts[6].address: {
+                farmAddress: 0,
+                xSushiAddress: 0
             }
         },
         "tokens": [
-            "0xa0246c9032bC3A600820415aE600c6388619A14D", #FARM
-            "0x8798249c2E607446EfB7Ad49eC89dD1865Ff4272" #XSUSHI
+            farmAddress, #FARM
+            xSushiAddress #XSUSHI
         ],
         'cycle': nextCycle
     })
@@ -441,8 +442,8 @@ def test_rewards_flow(setup):
         'badger_tree': rewardsContract,
         'claims': {},
         "tokens": [
-            "0xa0246c9032bC3A600820415aE600c6388619A14D", #FARM
-            "0x8798249c2E607446EfB7Ad49eC89dD1865Ff4272" #XSUSHI
+            farmAddress, #FARM
+            xSushiAddress #XSUSHI
         ],
         'cycle': currCycle
     })
@@ -476,8 +477,8 @@ def test_rewards_flow(setup):
     with brownie.reverts("No tokens to claim"):
         rewardsContract.claim(
             [
-                "0xa0246c9032bC3A600820415aE600c6388619A14D", #FARM
-                "0x8798249c2E607446EfB7Ad49eC89dD1865Ff4272" #XSUSHI
+                farmAddress, #FARM
+                xSushiAddress #XSUSHI
             ],
             [0, 0],
             rewards_data['merkleTree']['claims'][user]['index'],
