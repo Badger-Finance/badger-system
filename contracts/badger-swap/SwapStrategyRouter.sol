@@ -48,10 +48,8 @@ contract SwapStrategyRouter is AccessControlUpgradeable, ReentrancyGuardUpgradea
     }
 
     /* ========== ADMIN ========== */
-    function addSwapStrategy(address _strategy) external returns (bool) {
+    function addSwapStrategy(address _strategy) external onlyAdmin {
         strategies.add(_strategy);
-        //return hasRole(DEFAULT_ADMIN_ROLE, msg.sender);
-        return true;
     }
 
     /* ========== MODIFIERS ========== */
