@@ -1,20 +1,23 @@
 from rich.console import Console
 from brownie import interface
 
-from scripts.systems.bridge_minimal import deploy_bridge_minimal
-from scripts.systems.badger_system import connect_badger
+# from scripts.systems.badger_system import connect_badger
 from scripts.systems import (
     swap_system,
     bridge_system,
 )
-from config.badger_config import bridge_config
+from config.badger_config import bridge_config, badger_config
 
 console = Console()
 
 
 def main():
-    badger = connect_badger("deploy-final.json")
-    bridge = deploy_bridge_minimal(badger.deployer, badger.devProxyAdmin, test=False, publish_source=True)
+    swap = swap_system.connect_swap(badger_config.prod_json)
+    swap.configure_router()
+    bridge = bridge_system.connect_bridge(badger_config.prod_json)
+    bridge.add_existing_swap(swap)
+    swap.configure_strategies_grant_swapper_role(bridge.adapter.address)
+
     confirm_deploy(bridge)
     console.print("[green]deployed bridge adapter at {}[/green]".format(bridge.adapter.address))
     console.print("[green]deployed swap router at {}[/green]".format(bridge.swap.router.address))
