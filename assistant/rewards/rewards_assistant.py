@@ -1,7 +1,7 @@
 import json
 
 from tqdm import tqdm
-from assistant.rewards.aws_utils import download,upload
+from assistant.rewards.aws_utils import download, download_bucket ,upload
 from assistant.rewards.calc_stakes import calc_geyser_stakes
 from assistant.rewards.calc_harvest import calc_balances_from_geyser_events,get_initial_user_state
 from assistant.rewards.RewardsLogger import rewardsLogger
@@ -372,7 +372,7 @@ def fetch_pending_rewards_tree(badger, print_output=False):
             "[green]===== Loading Pending Rewards " + pastFile + " =====[/green]"
         )
 
-    currentTree = json.loads(download(pastFile))
+    currentTree = json.loads(download_bucket(pastFile))
 
     # Invariant: File shoulld have same root as latest
     assert currentTree["merkleRoot"] == merkle["root"]
@@ -405,9 +405,13 @@ def fetch_current_rewards_tree(badger, print_output=False):
         "[bold yellow]===== Loading Past Rewards " + pastFile + " =====[/bold yellow]"
     )
 
-    currentTree = download(pastFile)
+    currentTree = json.loads(download_bucket(pastFile))
 
     # Invariant: File shoulld have same root as latest
+    console.print(merkle)
+    console.print("liveRoot", merkle["root"])
+    console.print("fileRoot", currentTree["merkleRoot"])
+
     assert currentTree["merkleRoot"] == merkle["root"]
 
     lastUpdateOnChain = merkle["blockNumber"]
