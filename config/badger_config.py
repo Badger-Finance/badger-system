@@ -1,3 +1,4 @@
+from helpers import registry
 import json
 import time
 

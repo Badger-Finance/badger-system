@@ -12,7 +12,7 @@ from scripts.systems.sett_system import (
     deploy_controller,
     deploy_strategy,
 )
-from helpers.registry import registry
+from helpers.registry import registry, artifacts
 from helpers.time_utils import days
 from helpers.sett.strategy_registry import name_to_artifact, strategy_name_to_artifact
 from helpers.proxy_utils import deploy_proxy, deploy_proxy_admin
@@ -31,7 +31,6 @@ from scripts.systems.uniswap_system import UniswapSystem
 from rich.console import Console
 
 console = Console()
-
 
 class LoadMethod(Enum):
     SK = 0
@@ -269,7 +268,7 @@ class BadgerSystem:
             self.daoProxyAdmin = deploy_proxy_admin(deployer)
             self.proxyAdmin = self.devProxyAdmin
         else:
-            abi = registry.open_zeppelin.artifacts["ProxyAdmin"]["abi"]
+            abi = artifacts.open_zeppelin["ProxyAdmin"]["abi"]
             self.devProxyAdmin = Contract.from_abi(
                 "ProxyAdmin",
                 web3.toChecksumAddress("0x20dce41acca85e8222d6861aa6d23b6c941777bf"),

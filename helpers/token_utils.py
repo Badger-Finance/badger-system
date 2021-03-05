@@ -2,7 +2,7 @@ from brownie import *
 from dotmap import DotMap
 from tabulate import tabulate
 
-from helpers.registry import WhaleRegistryAction, whale_registry, registry
+from helpers.registry import WhaleRegistryAction, registry
 from rich.console import Console
 from scripts.systems.sushiswap_system import SushiswapSystem
 from scripts.systems.uniswap_system import UniswapSystem
@@ -149,12 +149,12 @@ def distribute_from_whales(recipient, percentage=0.8, assets="All"):
 
     console.print(
         "[green] 🐋 Transferring assets from whales for {} assets... 🐋 [/green]".format(
-            len(whale_registry.items())
+            len(registry.whales.items())
         )
     )
 
     # Normal Transfers
-    for key, whale_config in whale_registry.items():
+    for key, whale_config in registry.whales.items():
         if assets != "All" and key not in assets:
             continue
         # Handle special cases after all standard distributions
@@ -165,7 +165,7 @@ def distribute_from_whales(recipient, percentage=0.8, assets="All"):
             distribute_from_whale(whale_config, recipient, percentage=0.8)
 
     # Special Transfers
-    for key, whale_config in whale_registry.items():
+    for key, whale_config in registry.whales.items():
         if not whale_config.special:
             continue
         if whale_config.action == WhaleRegistryAction.POPULATE_NEW_SUSHI_LP:
