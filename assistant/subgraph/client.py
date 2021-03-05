@@ -257,4 +257,27 @@ def fetch_sushi_harvest_events():
         "wbtcDigg":wbtcDiggEvents
     }
 
-
+def fetch_cream_bbadger_deposits():
+    cream_transport = AIOHTTPTransport(url=subgraph_config["cream_url"])
+    cream_client = Client(transport=cream_transport, fetch_schema_from_transport=True)
+    query = gql("""
+        query fetchCreambBadgerDeposits{
+            accountCTokens(
+                where: {
+                    symbol: "crBBADGER"
+                    enteredMarket:true
+                }
+            ) {
+                totalUnderlyingBorrowed
+                totalUnderlyingSupplied
+                account {
+                    id
+                }
+            }
+        }
+    """)
+    results = cream_client.execute(query)
+    retVal = {}
+    for entry in results["accountCTokens"]:
+        retVal[entry["account"]["id"]] = float(entry["totalUnderlyingSupplied"]) * 1e18
+    return retVal

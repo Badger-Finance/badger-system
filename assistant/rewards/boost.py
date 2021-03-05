@@ -1,6 +1,10 @@
 from brownie import *
 from rich.console import Console
-from assistant.subgraph.client import fetch_sett_balances,fetch_geyser_events
+from assistant.subgraph.client import (
+    fetch_sett_balances, 
+    fetch_geyser_events, 
+    fetch_cream_bbadger_deposits
+)
 from assistant.rewards.rewards_utils import (
     combine_balances,
     calc_balances_from_geyser_events,
@@ -21,12 +25,17 @@ def get_balance_data(badger,currentBlock):
         balances = calculate_sett_balances_usd(badger,name,sett,currentBlock)
         data = {}
         data[name] = balances
-        if name in ["native.uniDiggWbtc","native,sushiDiggWbtc","native.digg"]:
+        if name in ["native.uniDiggWbtc","native.sushiDiggWbtc","native.digg"]:
             diggSetts.append(data)
         elif name in ["native.badger","native.uniBadgerWbtc","native.sushiBadgerWbtc"]:
             badgerSetts.append(data)
         else:
             nonNativeSetts.append(data)
+    
+    # Include bBadger deposits on CREAM
+    badgerSetts.append({
+        "crBBADGER": fetch_cream_bbadger_deposits()
+    })
 
 
 def calculate_sett_balances_usd(badger,name,sett,currentBlock):
