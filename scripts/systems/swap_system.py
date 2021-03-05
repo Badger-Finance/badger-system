@@ -3,11 +3,13 @@ from brownie import (
     web3,
     SwapStrategyRouter,
     CurveSwapStrategy,
+    Contract,
 )
 from dotmap import DotMap
 
 from scripts.systems.gnosis_safe_system import connect_gnosis_safe
 from helpers.proxy_utils import deploy_proxy
+from helpers.registry import registry
 from config.badger_config import swap_config
 
 from rich.console import Console
@@ -48,20 +50,27 @@ def connect_swap(badger_deploy_file):
 
     swap_deploy = badger_deploy["swap_system"]
 
+    abi = registry.open_zeppelin.artifacts["ProxyAdmin"]["abi"]
     swap = SwapSystem(
-        swap_config,
         badger_deploy["deployer"],
+        Contract.from_abi(
+            "ProxyAdmin",
+            web3.toChecksumAddress(badger_deploy["devProxyAdmin"]),
+            abi,
+        ),
+        swap_config,
     )
+    swap.connect_logic(swap_deploy["logic"])
+
     # arguments: (attr name, address)
     strategies = swap_deploy["strategies"]
     connectable = [
-        ("CurveSwapStrategy", strategies["curve"],),
+        ("curve", "CurveSwapStrategy", strategies["curve"],),
     ]
     for args in connectable:
-        print(args)
         swap.connect_strategy(*args)
 
-    swap.connect_router(swap_deploy.router)
+    swap.connect_router(swap_deploy["router"])
 
     return swap
 
@@ -93,10 +102,9 @@ class SwapSystem:
     def connect_router(self, address) -> None:
         self.router = SwapStrategyRouter.at(address)
 
-    def connect_strategies(self, strategies):
-        for name, address in strategies.items():
-            Artifact = name_to_artifact[name]
-            self.strategies[name] = Artifact.at(address)
+    def connect_strategy(self, name, artifactName, address):
+        Artifact = name_to_artifact[artifactName]
+        self.strategies[name] = Artifact.at(address)
 
     def connect_logic(self, logic):
         for name, address in logic.items():
@@ -108,14 +116,14 @@ class SwapSystem:
     def deploy_logic(self):
         deployer = self.deployer
         self.logic = DotMap(
-            CurveSwapStrategy=CurveSwapStrategy.deploy(
+           CurveSwapStrategy=CurveSwapStrategy.deploy(
                 {"from": deployer},
                 publish_source=self.publish_source,
             ),
-            SwapStrategyRouter=SwapStrategyRouter.deploy(
-                {"from": deployer},
-                publish_source=self.publish_source,
-            ),
+           SwapStrategyRouter=SwapStrategyRouter.deploy(
+               {"from": deployer},
+               publish_source=self.publish_source,
+           ),
         )
 
     def deploy_router(self):
