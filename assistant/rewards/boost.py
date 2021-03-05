@@ -5,6 +5,7 @@ from assistant.subgraph.client import (
     fetch_geyser_events, 
     fetch_cream_bbadger_deposits
 )
+from collections import Counter
 from assistant.rewards.rewards_utils import (
     combine_balances,
     calc_balances_from_geyser_events,
@@ -15,28 +16,54 @@ console = Console()
 
 APPROVED_CONTRACTS = {}
 
+
+def get_sett_addresses(setts):
+    addresses = []
+    for name,balances in setts.items():
+        addresses.extend(list(balances.keys()))
+
+    return set(addresses)
+        
+
+def calc_stake_ratio(address,diggSetts,badgerSetts,nonNativeSetts):
+    diggBalance = 0
+    badgerBalance = 0
+    nonNativeBalance = 0
+    for name,balances in diggSetts.items():
+        diggBalance += balances.get(address,0)
+    for name,balances in badgerSetts.items():
+        badgerBalance += balances.get(address,0)
+    for name,balances in diggSetts.items():
+        nonNativeBalance += balances.get(address,0)
+    
+    if nonNativeBalance == 0:
+        return 0
+    else:
+        return (diggBalance + badgerBalance )/ nonNativeBalance
+
 def get_balance_data(badger,currentBlock):
     allSetts = badger.sett_system.vaults
     console.log(allSetts)
-    diggSetts = []
-    badgerSetts = []
-    nonNativeSetts = []
+    diggSetts = {}
+    badgerSetts = {}
+    nonNativeSetts = {}
     for name,sett in allSetts.items():
-        balances = calculate_sett_balances_usd(badger,name,sett,currentBlock)
-        data = {}
-        data[name] = balances
+        balances = calculate_sett_balances(badger,name,sett,currentBlock)
         if name in ["native.uniDiggWbtc","native.sushiDiggWbtc","native.digg"]:
-            diggSetts.append(data)
+            diggSetts[name] = balances
         elif name in ["native.badger","native.uniBadgerWbtc","native.sushiBadgerWbtc"]:
-            badgerSetts.append(data)
+            badgerSetts[name] = balances
         else:
-            nonNativeSetts.append(data)
+            nonNativeSetts[name] = balances
+    # Include bBadger deposits on CREAM (merge this with native.badger)
+    badgerSetts["native.badger"] = dict(
+        Counter(fetch_cream_bbadger_deposits()) + Counter(badgerSetts["native.badger"])
+    )
+    allAddresses = get_sett_addresses(diggSetts).union(get_sett_addresses(badgerSetts).union(get_sett_addresses(nonNativeSetts)))
     
-    # Include bBadger deposits on CREAM
-    badgerSetts.append({
-        "crBBADGER": fetch_cream_bbadger_deposits()
-    })
-
+    stakeRatios = [calc_stake_ratio(addr,diggSetts,badgerSetts,nonNativeSetts) for addr in allAddresses]
+    console.log(stakeRatios)
+    
 
 def calculate_sett_balances(badger,name,sett,currentBlock):
     settBalances = fetch_sett_balances(sett.address.lower(),currentBlock)
@@ -48,11 +75,8 @@ def calculate_sett_balances(badger,name,sett,currentBlock):
 
     balances = combine_balances(settBalances,geyserBalances)
     # TODO: whitelist certain contracts so they dont count for balances
-    # TODO: Use extra subgraphs to determine seperate balances
 
     return convert_balances_to_usd(sett,balances)
-
-    # Convert token to usd
 
 def convert_balances_to_usd(sett,balances): 
     price = fetch_sett_price(sett.token().lower())
@@ -60,5 +84,3 @@ def convert_balances_to_usd(sett,balances):
     for account,bBalance in balances.items():
         balances[account] = price * bBalance * ppfs
     return balances
-
-    

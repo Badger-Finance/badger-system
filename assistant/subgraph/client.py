@@ -260,9 +260,10 @@ def fetch_sushi_harvest_events():
 def fetch_cream_bbadger_deposits():
     cream_transport = AIOHTTPTransport(url=subgraph_config["cream_url"])
     cream_client = Client(transport=cream_transport, fetch_schema_from_transport=True)
+    console.log("Fetching cream deposits...")
     query = gql("""
         query fetchCreambBadgerDeposits{
-            accountCTokens(
+            accountCTokens(first:1000,
                 where: {
                     symbol: "crBBADGER"
                     enteredMarket:true
@@ -274,10 +275,21 @@ def fetch_cream_bbadger_deposits():
                     id
                 }
             }
+           markets(
+               where:{
+               symbol:"crBBADGER"
+           }) {
+               exchangeRate
+           }
         }
     """)
+    ## Paginate this for more than 1000 balances
     results = cream_client.execute(query)
     retVal = {}
+    exchangeRate = results["markets"][0]["exchangeRate"]
+    console.log(exchangeRate)
+    console.log(len(results["accountCTokens"]))
     for entry in results["accountCTokens"]:
-        retVal[entry["account"]["id"]] = float(entry["totalUnderlyingSupplied"]) * 1e18
+        retVal[entry["account"]["id"]] = float(entry["totalUnderlyingSupplied"]) * 1e18 / (1+float(exchangeRate))
+    console.log(retVal)
     return retVal
