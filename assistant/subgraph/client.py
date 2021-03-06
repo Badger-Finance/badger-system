@@ -264,46 +264,45 @@ def fetch_cream_bbadger_deposits():
     currentOffset = 0
     increment = 1000
 
-    def generate_query_string(offset):
-        return gql("""
-            query fetchCreambBadgerDeposits {
-                accountCTokens(first: %s, skip: %s
-                    where: {
-                        symbol: "crBBADGER"
-                        enteredMarket: true
-                    }
-                ) {
-                    totalUnderlyingBorrowed
-                    totalUnderlyingSupplied
-                    account {
-                        id
-                    }
+    query = gql("""
+        query fetchCreambBadgerDeposits($firstAmount: Int, $skipAmount: Int) {
+            accountCTokens(first: $firstAmount, skip: $skipAmount
+                where: {
+                    symbol: "crBBADGER"
+                    enteredMarket: true
                 }
-            markets(
-                where:{
-                symbol:"crBBADGER"
-            }) {
-                exchangeRate
+            ) {
+                totalUnderlyingBorrowed
+                totalUnderlyingSupplied
+                account {
+                    id
+                }
             }
-            }
-        """ %(increment, offset))
+        markets(
+            where:{
+            symbol:"crBBADGER"
+        }) {
+            exchangeRate
+        }
+        }
+    """)
 
     ## Paginate this for more than 1000 balances
-    query = generate_query_string(currentOffset)
-    results = cream_client.execute(query)
+    results = []
     continueFetching = True
 
     while continueFetching:
-        currentOffset += increment
-        query = generate_query_string(currentOffset)
-        nextPage = cream_client.execute(query)
+        variables = {"firstAmount": increment, "skipAmount": currentOffset}
+        nextPage = cream_client.execute(query, variable_values=variables)
         if len(nextPage["accountCTokens"]) == 0:
+            exchangeRate = nextPage["markets"][0]["exchangeRate"]
             continueFetching = False
         else:
-            results["accountCTokens"] += nextPage["accountCTokens"]
+            currentOffset += increment
+            results += nextPage["accountCTokens"]
 
     retVal = {}
-    exchangeRate = results["markets"][0]["exchangeRate"]
-    for entry in results["accountCTokens"]:
+    for entry in results:
         retVal[entry["account"]["id"]] = float(entry["totalUnderlyingSupplied"]) * 1e18 / (1+float(exchangeRate))
+
     return retVal
