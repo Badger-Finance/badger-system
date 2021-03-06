@@ -261,35 +261,49 @@ def fetch_cream_bbadger_deposits():
     cream_transport = AIOHTTPTransport(url=subgraph_config["cream_url"])
     cream_client = Client(transport=cream_transport, fetch_schema_from_transport=True)
     console.log("Fetching cream deposits...")
-    query = gql("""
-        query fetchCreambBadgerDeposits{
-            accountCTokens(first:1000,
-                where: {
-                    symbol: "crBBADGER"
-                    enteredMarket:true
+    currentOffset = 0
+    increment = 1000
+
+    def generate_query_string(offset):
+        return gql("""
+            query fetchCreambBadgerDeposits {
+                accountCTokens(first: %s, skip: %s
+                    where: {
+                        symbol: "crBBADGER"
+                        enteredMarket: true
+                    }
+                ) {
+                    totalUnderlyingBorrowed
+                    totalUnderlyingSupplied
+                    account {
+                        id
+                    }
                 }
-            ) {
-                totalUnderlyingBorrowed
-                totalUnderlyingSupplied
-                account {
-                    id
-                }
+            markets(
+                where:{
+                symbol:"crBBADGER"
+            }) {
+                exchangeRate
             }
-           markets(
-               where:{
-               symbol:"crBBADGER"
-           }) {
-               exchangeRate
-           }
-        }
-    """)
+            }
+        """ %(increment, offset))
+
     ## Paginate this for more than 1000 balances
+    query = generate_query_string(currentOffset)
     results = cream_client.execute(query)
+    continueFetching = True
+
+    while continueFetching:
+        currentOffset += increment
+        query = generate_query_string(currentOffset)
+        nextPage = cream_client.execute(query)
+        if len(nextPage["accountCTokens"]) == 0:
+            continueFetching = False
+        else:
+            results["accountCTokens"] += nextPage["accountCTokens"]
+
     retVal = {}
     exchangeRate = results["markets"][0]["exchangeRate"]
-    console.log(exchangeRate)
-    console.log(len(results["accountCTokens"]))
     for entry in results["accountCTokens"]:
         retVal[entry["account"]["id"]] = float(entry["totalUnderlyingSupplied"]) * 1e18 / (1+float(exchangeRate))
-    console.log(retVal)
     return retVal
