@@ -257,21 +257,22 @@ def fetch_sushi_harvest_events():
         "wbtcDigg":wbtcDiggEvents
     }
 
-def fetch_cream_bbadger_deposits():
+def fetch_cream_bbadger_deposits() -> dict[str: float]:
     cream_transport = AIOHTTPTransport(url=subgraph_config["cream_url"])
     cream_client = Client(transport=cream_transport, fetch_schema_from_transport=True)
     console.log("Fetching cream deposits...")
-    currentOffset = 0
     increment = 1000
 
     query = gql("""
-        query fetchCreambBadgerDeposits($firstAmount: Int, $skipAmount: Int) {
-            accountCTokens(first: $firstAmount, skip: $skipAmount
+        query fetchCreambBadgerDeposits($firstAmount: Int, $lastID: ID) {
+            accountCTokens(first: $firstAmount,
                 where: {
+                    id_gt: $lastID
                     symbol: "crBBADGER"
                     enteredMarket: true
                 }
             ) {
+                id
                 totalUnderlyingBorrowed
                 totalUnderlyingSupplied
                 account {
@@ -290,19 +291,61 @@ def fetch_cream_bbadger_deposits():
     ## Paginate this for more than 1000 balances
     results = []
     continueFetching = True
+    lastID = "0x0000000000000000000000000000000000000000"
 
     while continueFetching:
-        variables = {"firstAmount": increment, "skipAmount": currentOffset}
+        variables = {"firstAmount": increment, "lastID": lastID}
         nextPage = cream_client.execute(query, variable_values=variables)
         if len(nextPage["accountCTokens"]) == 0:
             exchangeRate = nextPage["markets"][0]["exchangeRate"]
             continueFetching = False
         else:
-            currentOffset += increment
+            lastID = nextPage["accountCTokens"][-1]["id"]
             results += nextPage["accountCTokens"]
 
     retVal = {}
     for entry in results:
         retVal[entry["account"]["id"]] = float(entry["totalUnderlyingSupplied"]) * 1e18 / (1+float(exchangeRate))
-
     return retVal
+
+
+def fetch_wallet_balances() -> tuple[dict[str: int], dict[str: float]]:
+    console.log("Fetching Badger wallet balances")
+    increment = 1000
+    query = gql("""
+        query fetchWalletBalance($firstAmount: Int, $lastID: ID) {
+            tokenBalances(first: $firstAmount, where: { id_gt: $lastID  }) {
+                id
+                balance
+                token {
+                    symbol
+                }
+            }
+        }
+    """)
+    
+    ## Paginate this for more than 1000 balances
+    results = []
+    continueFetching = True
+    lastID = "0x0000000000000000000000000000000000000000"
+
+    while continueFetching:
+        variables = {"firstAmount": increment, "lastID": lastID}
+        nextPage = client.execute(query, variable_values=variables)
+        if len(nextPage["tokenBalances"]) == 0:
+            continueFetching = False
+        else:
+            lastID = nextPage["tokenBalances"][-1]["id"]
+            results += nextPage["tokenBalances"]
+
+    ## Format data into dictionary
+    badger_balances = {}
+    digg_balances = {}
+
+    for entry in results:
+        if entry["token"]["symbol"] == "BADGER":
+            badger_balances[entry["id"]] = entry["balance"]
+        if entry["token"]["symbol"] == "DIGG":
+            digg_balances[entry["id"]] = entry["balance"]
+
+    return badger_balances, digg_balances
