@@ -447,8 +447,8 @@ bridge_config = DotMap(
     rewards="0xE95b56685327C9caf83C3e6F0A54b8D9708f32c4",
     wbtc=registry.tokens.wbtc,
     # Fees below are in bps.
-    mintFeeBps=100,
-    burnFeeBps=100,
+    mintFeeBps=25,
+    burnFeeBps=40,
     # 50/50 rewards/governance.
     percentageFeeRewardsBps=5000,
     percentageFeeGovernanceBps=5000,

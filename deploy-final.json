@@ -150,6 +150,22 @@
     },
     "pools": {
         "uniDiggWbtc": "0xe86204c4eddd2f70ee00ead6805f917671f56c52",
-        "sushiDiggWbtc":"0x9a13867048e01c663ce8ce2fe0cdae69ff9f35e3" 
+        "sushiDiggWbtc": "0x9a13867048e01c663ce8ce2fe0cdae69ff9f35e3"
+    },
+    "bridge_system": {
+        "adapter": "0x3e2Ba76558350c7DF7077379f7D429707623c9D2",
+        "logic": {
+            "BadgerBridgeAdapter": "0x835C1532f6fF4022fF098C752c1D008cd444b7a3"
+        }
+    },
+    "swap_system": {
+        "router": "0x0e831bE5ED39fA9CaC685006d673A5e731967846",
+        "strategies": {
+            "curve": "0xFaE8bd34190615f3388f38191DC332B44C53e10B"
+        },
+        "logic": {
+            "SwapStrategyRouter": "0x2cb501d371ba2248BB48455D3293d47cE773E0F7",
+            "CurveSwapStrategy": "0x883c6631248605Ee33E99060B7E8910D3dAB2Cf3"
+        }
     }
 }

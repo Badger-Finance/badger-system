@@ -11,7 +11,7 @@ import "deps/@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.s
 import "interfaces/curve/ICurveExchange.sol";
 import "interfaces/badger/ISwapStrategyRouter.sol";
 
-contract CurveSwapStrategy is ISwapStrategy, AccessControlUpgradeable, ReentrancyGuardUpgradeable {
+contract CurveSwapStrategy is AccessControlUpgradeable, ReentrancyGuardUpgradeable {
     using SafeMathUpgradeable for uint256;
     using SafeERC20Upgradeable for IERC20Upgradeable;
 
@@ -38,7 +38,7 @@ contract CurveSwapStrategy is ISwapStrategy, AccessControlUpgradeable, Reentranc
         address _to,
         uint256 _amount,
         uint256 _slippage
-    ) external override nonReentrant onlySwapper returns (uint256 amount) {
+    ) external nonReentrant onlySwapper returns (uint256 amount) {
         (address registry, address pool, uint256 exchangeAmount) = _estimateSwapAmount(_from, _to, _amount);
 
         _slippage = uint256(1e4).sub(_slippage);
@@ -65,7 +65,7 @@ contract CurveSwapStrategy is ISwapStrategy, AccessControlUpgradeable, Reentranc
         address _from,
         address _to,
         uint256 _amount
-    ) external override nonReentrant returns (uint256) {
+    ) external nonReentrant returns (uint256) {
         (address _, address __, uint256 amount) = _estimateSwapAmount(_from, _to, _amount);
         return amount;
     }

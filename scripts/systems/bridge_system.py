@@ -5,11 +5,12 @@ from brownie import (
     MockGatewayRegistry,
     MockGateway,
     ERC20,
+    Contract,
 )
 from dotmap import DotMap
 
 from scripts.systems.swap_system import SwapSystem
-from helpers.registry import whale_registry
+from helpers.registry import whale_registry, registry
 from helpers.token_utils import distribute_from_whale
 from helpers.proxy_utils import deploy_proxy
 from config.badger_config import bridge_config
@@ -48,11 +49,18 @@ def connect_bridge(badger_deploy_file):
 
     bridge_deploy = badger_deploy["bridge_system"]
 
+    abi = registry.open_zeppelin.artifacts["ProxyAdmin"]["abi"]
     bridge = BridgeSystem(
-        bridge_config,
         badger_deploy["deployer"],
+        Contract.from_abi(
+            "ProxyAdmin",
+            web3.toChecksumAddress(badger_deploy["devProxyAdmin"]),
+            abi,
+        ),
+        bridge_config,
     )
-    bridge.connect_adapter(bridge_deploy.adapter)
+    bridge.connect_logic(bridge_deploy["logic"])
+    bridge.connect_adapter(bridge_deploy["adapter"])
 
     return bridge
 
@@ -99,9 +107,10 @@ class BridgeSystem:
         self,
         registry,
         router,
+        deployer
     ):
         config = self.config
-        deployer = self.deployer
+        # deployer = self.deployer
         devProxyAdmin = self.devProxyAdmin
         logic = self.logic
         self.adapter = deploy_proxy(
@@ -127,12 +136,9 @@ class BridgeSystem:
 
     def deploy_logic(self, name, BrownieArtifact, test=False):
         deployer = self.deployer
-        if test:
-            self.logic[name] = BrownieArtifact.deploy({"from": deployer})
-            return
-
         self.logic[name] = BrownieArtifact.deploy(
-            {"from": deployer}, publish_source=self.publish_source
+            {"from": deployer},
+            publish_source=self.publish_source if not test else False,
         )
 
     # ===== Testing =====
