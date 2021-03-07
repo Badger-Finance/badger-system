@@ -110,7 +110,11 @@ contract BadgerTree is Initializable, AccessControlUpgradeable, ICumulativeMulti
     }
 
     /// @dev Get the number of tokens claimable for an account, given a list of tokens and latest cumulativeAmounts data
-    function getClaimableFor(address user, address[] memory tokens, uint256[] memory cumulativeAmounts) public view returns (address[] memory, uint256[] memory) {
+    function getClaimableFor(
+        address user,
+        address[] memory tokens,
+        uint256[] memory cumulativeAmounts
+    ) public view returns (address[] memory, uint256[] memory) {
         uint256[] memory userClaimable = new uint256[](tokens.length);
         for (uint256 i = 0; i < tokens.length; i++) {
             userClaimable[i] = cumulativeAmounts[i].sub(_getClaimed(user, tokens[i]));
@@ -139,7 +143,7 @@ contract BadgerTree is Initializable, AccessControlUpgradeable, ICumulativeMulti
         hash = keccak256(encoded);
     }
 
-    /// @notice Claim specifiedrewards for a set of tokens at a given cycle number
+    /// @notice Claim specified rewards for a set of tokens at a given cycle number
     /// @notice Can choose to skip certain tokens by setting amount to claim to zero for that token index
     function claim(
         address[] calldata tokens,
@@ -156,15 +160,8 @@ contract BadgerTree is Initializable, AccessControlUpgradeable, ICumulativeMulti
 
         // Claim each token
         for (uint256 i = 0; i < tokens.length; i++) {
-            
             // Run claim and register claimedAny if a claim occurs
-            if (_tryClaim(
-                msg.sender,
-                cycle,
-                tokens[i], 
-                cumulativeAmounts[i], 
-                amountsToClaim[i]
-            )) {
+            if (_tryClaim(msg.sender, cycle, tokens[i], cumulativeAmounts[i], amountsToClaim[i])) {
                 claimedAny = true;
             }
         }
@@ -187,7 +184,7 @@ contract BadgerTree is Initializable, AccessControlUpgradeable, ICumulativeMulti
     ) external whenNotPaused {
         _onlyRootProposer();
         require(cycle == currentCycle.add(1), "Incorrect cycle");
-        require(startBlock == lastPublishStartBlock.add(1), "Incorrect start block");
+        require(startBlock == lastPublishEndBlock.add(1), "Incorrect start block");
 
         pendingCycle = cycle;
         pendingMerkleRoot = root;
@@ -276,28 +273,28 @@ contract BadgerTree is Initializable, AccessControlUpgradeable, ICumulativeMulti
         uint256 cumulativeClaimable,
         uint256 toClaim
     ) internal returns (bool claimAttempted) {
-            // If none claimable for token or none specifed to claim, skip this token
-            if (cumulativeClaimable == 0 || toClaim == 0) {
-                return false;
-            }
+        // If none claimable for token or none specifed to claim, skip this token
+        if (cumulativeClaimable == 0 || toClaim == 0) {
+            return false;
+        }
 
-            uint256 claimedBefore = _getClaimed(account, token);
-            uint256 claimable = cumulativeClaimable.sub(claimedBefore);
-            
-            if (claimable == 0) {
-                return false;
-            }
+        uint256 claimedBefore = _getClaimed(account, token);
+        uint256 claimable = cumulativeClaimable.sub(claimedBefore);
 
-            require(claimable > 0, "None available to claim"); // This is reduntant, it is kept to ward off evil claimers.
-            require(toClaim <= claimable, "Excessive claim");
+        if (claimable == 0) {
+            return false;
+        }
 
-            uint256 claimedAfter = claimedBefore.add(toClaim);
-            _setClaimed(account, token, claimedAfter);
+        require(claimable > 0, "None available to claim"); // This is reduntant, it is kept to ward off evil claimers.
+        require(toClaim <= claimable, "Excessive claim");
 
-            require(IERC20Upgradeable(token).transfer(account, _parseValue(token, toClaim)), "Transfer failed");
+        uint256 claimedAfter = claimedBefore.add(toClaim);
+        _setClaimed(account, token, claimedAfter);
 
-            emit Claimed(account, token, toClaim, claimedAfter, cycle, now, block.number);
-            return true;
+        require(IERC20Upgradeable(token).transfer(account, _parseValue(token, toClaim)), "Transfer failed");
+
+        emit Claimed(account, token, toClaim, claimedAfter, cycle, now, block.number);
+        return true;
     }
 
     /// @dev Determine how many tokens to distribute based on cumulativeAmount
