@@ -3,7 +3,8 @@ from rich.console import Console
 from assistant.subgraph.client import (
     fetch_sett_balances, 
     fetch_geyser_events, 
-    fetch_cream_bbadger_deposits
+    fetch_cream_bbadger_deposits,
+    fetch_wallet_balances
 )
 from collections import Counter
 from assistant.rewards.rewards_utils import (
@@ -55,9 +56,16 @@ def get_balance_data(badger,currentBlock):
             badgerSetts[name] = balances
         else:
             nonNativeSetts[name] = balances
-    # Include bBadger deposits on CREAM (merge this with native.badger)
+
+    badger_wallet_balances, digg_wallet_balances = fetch_wallet_balances()
+
+    # Include bBadger deposits on CREAM and Badger wallet balances (merge this with native.badger)
     badgerSetts["native.badger"] = dict(
-        Counter(fetch_cream_bbadger_deposits()) + Counter(badgerSetts["native.badger"])
+        Counter(fetch_cream_bbadger_deposits()) + Counter(badgerSetts["native.badger"]) + Counter(badger_wallet_balances)
+    )
+    # Include Digg wallet balances (merge this with native.digg)
+    diggSetts["native.digg"] = dict(
+        Counter(digg_wallet_balances) + Counter(diggSetts["native.digg"])
     )
     allAddresses = get_sett_addresses(diggSetts).union(get_sett_addresses(badgerSetts).union(get_sett_addresses(nonNativeSetts)))
     

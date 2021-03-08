@@ -272,6 +272,8 @@ def address_to_id(token_address):
         return "wrapped-bitcoin"
     if token_address == registry.tokens.badger:
         return "badger-dao"
+    if token_address == registry.tokens.digg:
+        return "digg"
     else:
         assert False
 
