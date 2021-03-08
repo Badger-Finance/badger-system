@@ -4,7 +4,6 @@
 // When running the script with `hardhat run <script>` you'll find the Hardhat
 // Runtime Environment's members available in the global scope.
 const hre = require("hardhat");
-const ETHERS_JSONRPC_PROVIDER = new ethers.providers.JsonRpcProvider('http://localhost:8545/')
 
 // Load TEST_ACCOUNT into env vars.
 require('dotenv').config()
@@ -46,9 +45,12 @@ async function main() {
     const signer = await ethers.provider.getSigner(whale);
 
     const token = new ethers.Contract(tokenAddress, erc20abi, signer);
-    const balance = await token.balanceOf(whale);
-    //const balance = ethers.BigNumber.from("1000000000000000000")
-    console.log("checking whale, token balance:", balance)
+    let balance;
+    try {
+      balance = await token.balanceOf(whale);
+    } catch (e) {
+      balance = ethers.BigNumber.from("1000000000000000000")
+    }
     const account = process.env.TEST_ACCOUNT;
     const transferBalance = balance.div(2);
     await token.transfer(account, transferBalance)
