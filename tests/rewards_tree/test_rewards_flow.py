@@ -1,16 +1,14 @@
-import json
 import secrets
+from types import ModuleType
+from typing import Any
 
 import brownie
-from dotmap import DotMap
 import pytest
-
-import pprint
-
-from brownie import *
-from helpers.constants import *
-from helpers.registry import registry
+from brownie.network.contract import ProjectContract
+from dotmap import DotMap
 from rich.console import Console
+
+from helpers.constants import *
 
 FARM_ADDRESS = "0xa0246c9032bC3A600820415aE600c6388619A14D"
 XSUSHI_ADDRESS = "0x8798249c2E607446EfB7Ad49eC89dD1865Ff4272"
@@ -19,7 +17,8 @@ SECS_PER_DAY = 86400
 
 console = Console()
 
-@pytest.fixture(scope="function", autouse="True")
+
+@pytest.fixture(scope="function", autouse=True)
 def setup():
     from assistant.rewards import rewards_assistant
     return rewards_assistant
@@ -32,107 +31,106 @@ def setup():
 def random_32_bytes():
     return "0x" + secrets.token_hex(32)
 
+
 # generates merkle root purely off dummy data
 def internal_generate_rewards_in_range(
-        rewards_assistant,
-        currentMerkleData,
-        newRewards,
-        startBlock,
-        endBlock,
-        pastRewards
-):
-    cumulativeRewards = rewards_assistant.process_cumulative_rewards(pastRewards, newRewards)
+        rewards_assistant: ModuleType('rewards_assistant'),
+        contract: ProjectContract,
+        new_rewards: dict[str, Any],
+        start_block: int,
+        end_block: int,
+        past_rewards: dict[str, Any]
+) -> dict[str, Any]:
+    cumulative_rewards = rewards_assistant.process_cumulative_rewards(past_rewards, new_rewards)
 
     # Take metadata from geyserRewards
     console.print("Processing to merkle tree")
-    merkleTree = rewards_assistant.rewards_to_merkle_tree(
-        cumulativeRewards, startBlock, endBlock, newRewards
+    merkle_tree = rewards_assistant.rewards_to_merkle_tree(
+        cumulative_rewards, start_block, end_block, new_rewards
     )
 
     # Publish data
-    rootHash = rewards_assistant.hash(merkleTree["merkleRoot"])
-    contentFileName = rewards_assistant.content_hash_to_filename(rootHash)
+    root_hash = rewards_assistant.hash(merkle_tree["merkleRoot"])
+    content_file_name = rewards_assistant.content_hash_to_filename(root_hash)
 
     console.log(
         {
-            "merkleRoot": merkleTree["merkleRoot"],
-            "rootHash": str(rootHash),
-            "contentFile": contentFileName,
-            "startBlock": startBlock,
-            "endBlock": endBlock,
-            "currentContentHash": currentMerkleData["contentHash"],
+            "merkleRoot": merkle_tree["merkleRoot"],
+            "rootHash": str(root_hash),
+            "contentFile": content_file_name,
+            "startBlock": start_block,
+            "endBlock": end_block,
+            "currentContentHash": contract.merkleRoot(),
         }
     )
 
     return {
-        "contentFileName": contentFileName,
-        "merkleTree": merkleTree,
-        "rootHash": rootHash,
+        "contentFileName": content_file_name,
+        "merkleTree": merkle_tree,
+        "rootHash": root_hash,
     }
 
 
 # @pytest.mark.skip()
-def test_rewards_flow(setup):
+def test_rewards_flow(setup: ModuleType('rewards_assistant')):
     rewards_assistant = setup
-    badgerTree = rewards_assistant.BadgerTree
-    guardian = rewards_assistant.guardian
-    rootUpdater = rewards_assistant.rootUpdater
+    badger_tree = rewards_assistant.BadgerTree
 
     admin, proposer, validator, user = accounts[:4]
 
-    rewardsContract = admin.deploy(badgerTree)
-    rewardsContract.initialize(admin, proposer, validator)
+    rewards_contract = admin.deploy(badger_tree)
+    rewards_contract.initialize(admin, proposer, validator)
 
     # Propose root
     root = random_32_bytes()
-    contentHash = random_32_bytes()
-    startBlock = rewardsContract.lastPublishEndBlock() + 1
+    content_hash = random_32_bytes()
+    start_block = rewards_contract.lastPublishEndBlock() + 1
 
     # Test variations of invalid data upload and verify revert string
     with brownie.reverts("Incorrect cycle"):
-        rewardsContract.proposeRoot(
+        rewards_contract.proposeRoot(
             root,
-            contentHash,
-            rewardsContract.currentCycle(),
-            startBlock,
-            startBlock + 1,
+            content_hash,
+            rewards_contract.currentCycle(),
+            start_block,
+            start_block + 1,
             {"from": proposer}
         )
     with brownie.reverts("Incorrect cycle"):
-        rewardsContract.proposeRoot(
+        rewards_contract.proposeRoot(
             root,
-            contentHash,
-            rewardsContract.currentCycle() + 2,
-            startBlock,
-            startBlock + 1,
+            content_hash,
+            rewards_contract.currentCycle() + 2,
+            start_block,
+            start_block + 1,
             {"from": proposer}
         )
     with brownie.reverts("Incorrect start block"):
-        rewardsContract.proposeRoot(
+        rewards_contract.proposeRoot(
             root,
-            contentHash,
-            rewardsContract.currentCycle() + 1,
-            rewardsContract.lastPublishEndBlock() + 2,
-            startBlock + 1,
+            content_hash,
+            rewards_contract.currentCycle() + 1,
+            rewards_contract.lastPublishEndBlock() + 2,
+            start_block + 1,
             {"from": proposer}
         )
     with brownie.reverts("Incorrect start block"):
-        rewardsContract.proposeRoot(
+        rewards_contract.proposeRoot(
             root,
-            contentHash,
-            rewardsContract.currentCycle() + 1,
-            rewardsContract.lastPublishEndBlock(),
-            startBlock + 1,
+            content_hash,
+            rewards_contract.currentCycle() + 1,
+            rewards_contract.lastPublishEndBlock(),
+            start_block + 1,
             {"from": proposer}
         )
 
     # Ensure event
-    tx = rewardsContract.proposeRoot(
+    tx = rewards_contract.proposeRoot(
         root,
-        contentHash,
-        rewardsContract.currentCycle() + 1,
-        startBlock,
-        startBlock + 1,
+        content_hash,
+        rewards_contract.currentCycle() + 1,
+        start_block,
+        start_block + 1,
         {"from": proposer}
     )
     assert "RootProposed" in tx.events.keys()
@@ -141,128 +139,127 @@ def test_rewards_flow(setup):
 
     # Test variations of invalid data upload and verify revert string
     with brownie.reverts("Incorrect root"):
-        rewardsContract.approveRoot(
+        rewards_contract.approveRoot(
             random_32_bytes(),
-            contentHash,
-            rewardsContract.currentCycle(),
-            startBlock,
-            startBlock + 1,
+            content_hash,
+            rewards_contract.currentCycle(),
+            start_block,
+            start_block + 1,
             {"from": validator}
         )
     with brownie.reverts("Incorrect content hash"):
-        rewardsContract.approveRoot(
+        rewards_contract.approveRoot(
             root,
             random_32_bytes(),
-            rewardsContract.currentCycle(),
-            startBlock,
-            startBlock + 1,
+            rewards_contract.currentCycle(),
+            start_block,
+            start_block + 1,
             {"from": validator}
         )
     with brownie.reverts("Incorrect cycle"):
-        rewardsContract.approveRoot(
+        rewards_contract.approveRoot(
             root,
-            contentHash,
-            rewardsContract.currentCycle(),
-            startBlock,
-            startBlock + 1,
+            content_hash,
+            rewards_contract.currentCycle(),
+            start_block,
+            start_block + 1,
             {"from": validator}
         )
     with brownie.reverts("Incorrect cycle"):
-        rewardsContract.approveRoot(
+        rewards_contract.approveRoot(
             root,
-            contentHash,
-            rewardsContract.currentCycle() + 2,
-            startBlock,
-            startBlock + 1,
+            content_hash,
+            rewards_contract.currentCycle() + 2,
+            start_block,
+            start_block + 1,
             {"from": validator}
         )
     with brownie.reverts("Incorrect cycle start block"):
-        rewardsContract.approveRoot(
+        rewards_contract.approveRoot(
             root,
-            contentHash,
-            rewardsContract.pendingCycle(),
-            startBlock + 1,
-            startBlock + 1,
+            content_hash,
+            rewards_contract.pendingCycle(),
+            start_block + 1,
+            start_block + 1,
             {"from": validator}
         )
     with brownie.reverts("Incorrect cycle start block"):
-        rewardsContract.approveRoot(
+        rewards_contract.approveRoot(
             root,
-            contentHash,
-            rewardsContract.pendingCycle(),
-            startBlock - 1,
-            startBlock + 1,
+            content_hash,
+            rewards_contract.pendingCycle(),
+            start_block - 1,
+            start_block + 1,
             {"from": validator}
         )
     with brownie.reverts("Incorrect cycle end block"):
-        rewardsContract.approveRoot(
+        rewards_contract.approveRoot(
             root,
-            contentHash,
-            rewardsContract.pendingCycle(),
-            startBlock,
-            startBlock + 9,
+            content_hash,
+            rewards_contract.pendingCycle(),
+            start_block,
+            start_block + 9,
             {"from": validator}
         )
     with brownie.reverts("Incorrect cycle end block"):
-        rewardsContract.approveRoot(
+        rewards_contract.approveRoot(
             root,
-            contentHash,
-            rewardsContract.pendingCycle(),
-            startBlock,
-            startBlock + 11,
+            content_hash,
+            rewards_contract.pendingCycle(),
+            start_block,
+            start_block + 11,
             {"from": validator}
         )
     with brownie.reverts("Incorrect cycle end block"):
-        rewardsContract.approveRoot(
+        rewards_contract.approveRoot(
             root,
-            contentHash,
-            rewardsContract.pendingCycle(),
-            startBlock,
-            startBlock,
+            content_hash,
+            rewards_contract.pendingCycle(),
+            start_block,
+            start_block,
             {"from": validator}
         )
 
     # Ensure event
-    tx = rewardsContract.approveRoot(
+    tx = rewards_contract.approveRoot(
         root,
-        contentHash,
-        rewardsContract.pendingCycle(),
-        startBlock,
-        startBlock + 1,
+        content_hash,
+        rewards_contract.pendingCycle(),
+        start_block,
+        start_block + 1,
         {"from": validator}
     )
     assert "RootUpdated" in tx.events.keys()
 
     with brownie.reverts("Incorrect start block"):
-        rewardsContract.proposeRoot(
+        rewards_contract.proposeRoot(
             root,
-            contentHash,
-            rewardsContract.currentCycle() + 1,
-            rewardsContract.lastPublishStartBlock() + 1,
-            startBlock + 1,
+            content_hash,
+            rewards_contract.currentCycle() + 1,
+            rewards_contract.lastPublishStartBlock() + 1,
+            start_block + 1,
             {"from": proposer}
         )
 
-    # Claim as a user 
-    rewardsContract = admin.deploy(badgerTree)
-    rewardsContract.initialize(admin, proposer, validator)
+    # Claim as a user
+    rewards_contract = admin.deploy(badger_tree)
+    rewards_contract.initialize(admin, proposer, validator)
 
-    startBlock = rewardsContract.lastPublishEndBlock() + 1
-    endBlock = startBlock + 5
-    currCycle = rewardsContract.currentCycle()
-    nextCycle = currCycle + 1
-    currentRoot = rewardsContract.merkleRoot()
+    start_block = rewards_contract.lastPublishEndBlock() + 1
+    end_block = start_block + 5
+    curr_cycle = rewards_contract.currentCycle()
+    next_cycle = curr_cycle + 1
 
     # Update to new root with xSushi and FARM
-    farmClaim = 100000000000
-    xSushiClaim = 5555555555
+    farm_claim = 100000000000
+    xsushi_claim = 5555555555
 
-    geyserRewards = DotMap({
-        "badger_tree": rewardsContract,
+    geyser_rewards = DotMap({
+        "badger_tree": rewards_contract,
         "claims": {
             user.address: {
-                FARM_ADDRESS: farmClaim,
-                XSUSHI_ADDRESS: xSushiClaim
+                FARM_ADDRESS: farm_claim,
+                XSUSHI_ADDRESS: xsushi_claim
             },
             accounts[5].address: {
                 FARM_ADDRESS: 100,
@@ -277,28 +274,28 @@ def test_rewards_flow(setup):
             FARM_ADDRESS,
             XSUSHI_ADDRESS
         ],
-        "cycle": nextCycle
+        "cycle": next_cycle
     })
-    pastRewards = DotMap({
-        "badger_tree": rewardsContract,
+    past_rewards = DotMap({
+        "badger_tree": rewards_contract,
         "claims": {},
         "tokens": [
             FARM_ADDRESS,
             XSUSHI_ADDRESS
         ],
-        "cycle": currCycle
+        "cycle": curr_cycle
     })
 
     rewards_data = internal_generate_rewards_in_range(
         rewards_assistant,
-        {"contentHash": currentRoot},
-        geyserRewards,
-        startBlock,
-        endBlock,
-        pastRewards
+        rewards_contract,
+        geyser_rewards,
+        start_block,
+        end_block,
+        past_rewards
     )
 
-    rewardsContract.proposeRoot(
+    rewards_contract.proposeRoot(
         rewards_data["merkleTree"]["merkleRoot"],
         rewards_data["rootHash"],
         rewards_data["merkleTree"]["cycle"],
@@ -306,7 +303,7 @@ def test_rewards_flow(setup):
         rewards_data["merkleTree"]["endBlock"],
         {"from": proposer}
     )
-    rewardsContract.approveRoot(
+    rewards_contract.approveRoot(
         rewards_data["merkleTree"]["merkleRoot"],
         rewards_data["rootHash"],
         rewards_data["merkleTree"]["cycle"],
@@ -318,18 +315,18 @@ def test_rewards_flow(setup):
     # Claim as user who has xSushi and FARM
 
     # This revert message means the claim was valid and it tried to transfer rewards
-    # it can't actually transfer any with this setup 
+    # it can't actually transfer any with this setup
     with brownie.reverts("ERC20: transfer amount exceeds balance"):
-        rewardsContract.claim(
+        rewards_contract.claim(
             [
-                FARM_ADDRESS, #FARM
-                XSUSHI_ADDRESS #XSUSHI
+                FARM_ADDRESS,  # FARM
+                XSUSHI_ADDRESS  # XSUSHI
             ],
-            [farmClaim, xSushiClaim],
+            [farm_claim, xsushi_claim],
             rewards_data["merkleTree"]["claims"][user]["index"],
             rewards_data["merkleTree"]["cycle"],
             rewards_data["merkleTree"]["claims"][user]["proof"],
-            [farmClaim, xSushiClaim],
+            [farm_claim, xsushi_claim],
             {"from": user}
         )
 
@@ -337,63 +334,62 @@ def test_rewards_flow(setup):
     # farmBalance = Contract.at("0xa0246c9032bC3A600820415aE600c6388619A14D").balanceOf(user)
     # assert farmClaim == farmBalance
 
-    # Claim partial as a user 
+    # Claim partial as a user
     with brownie.reverts("ERC20: transfer amount exceeds balance"):
-        rewardsContract.claim(
-            [FARM_ADDRESS,  XSUSHI_ADDRESS],
-            [farmClaim, xSushiClaim],
+        rewards_contract.claim(
+            [FARM_ADDRESS, XSUSHI_ADDRESS],
+            [farm_claim, xsushi_claim],
             rewards_data["merkleTree"]["claims"][user]["index"],
             rewards_data["merkleTree"]["cycle"],
             rewards_data["merkleTree"]["claims"][user]["proof"],
-            [farmClaim - 100, xSushiClaim - 100],
+            [farm_claim - 100, xsushi_claim - 100],
             {"from": user}
         )
 
     # Claim with MockToken and confirm new balance
-    mockToken = rewards_assistant.MockToken
-    mockContract = admin.deploy(mockToken)
-    mockContract.initialize([rewardsContract], [100000000])
+    mock_token = rewards_assistant.MockToken
+    mock_contract = admin.deploy(mock_token)
+    mock_contract.initialize([rewards_contract], [100000000])
 
-    startBlock = rewardsContract.lastPublishEndBlock() + 1
-    endBlock = startBlock + 5
-    currCycle = rewardsContract.currentCycle()
-    nextCycle = currCycle + 1
-    currentRoot = rewardsContract.merkleRoot()
+    start_block = rewards_contract.lastPublishEndBlock() + 1
+    end_block = start_block + 5
+    curr_cycle = rewards_contract.currentCycle()
+    next_cycle = curr_cycle + 1
 
-    geyserRewards = DotMap({
-        "badger_tree": rewardsContract,
+    geyser_rewards = DotMap({
+        "badger_tree": rewards_contract,
         "claims": {
             user.address: {},
             accounts[5].address: {},
             accounts[6].address: {}
         },
         "tokens": [
-            mockContract
+            mock_contract
         ],
-        "cycle": nextCycle
+        "cycle": next_cycle
     })
-    geyserRewards["claims"][user.address][str(mockContract)] = 100
-    geyserRewards["claims"][accounts[5].address][str(mockContract)] = 20
-    geyserRewards["claims"][accounts[6].address][str(mockContract)] = 0
-    pastRewards = DotMap({
-        "badger_tree": rewardsContract,
+    geyser_rewards["claims"][user.address][str(mock_contract)] = 100
+    geyser_rewards["claims"][accounts[5].address][str(mock_contract)] = 20
+    geyser_rewards["claims"][accounts[6].address][str(mock_contract)] = 0
+    past_rewards = DotMap({
+        "badger_tree": rewards_contract,
         "claims": {},
         "tokens": [
-            mockContract
+            mock_contract
         ],
-        "cycle": currCycle
+        "cycle": curr_cycle
     })
 
     rewards_data = internal_generate_rewards_in_range(
         rewards_assistant,
-        {"contentHash": currentRoot},
-        geyserRewards,
-        startBlock,
-        endBlock,
-        pastRewards
+        rewards_contract,
+        geyser_rewards,
+        start_block,
+        end_block,
+        past_rewards
     )
 
-    rewardsContract.proposeRoot(
+    rewards_contract.proposeRoot(
         rewards_data["merkleTree"]["merkleRoot"],
         rewards_data["rootHash"],
         rewards_data["merkleTree"]["cycle"],
@@ -401,7 +397,7 @@ def test_rewards_flow(setup):
         rewards_data["merkleTree"]["endBlock"],
         {"from": proposer}
     )
-    rewardsContract.approveRoot(
+    rewards_contract.approveRoot(
         rewards_data["merkleTree"]["merkleRoot"],
         rewards_data["rootHash"],
         rewards_data["merkleTree"]["cycle"],
@@ -410,8 +406,8 @@ def test_rewards_flow(setup):
         {"from": validator}
     )
 
-    rewardsContract.claim(
-        [mockContract],
+    rewards_contract.claim(
+        [mock_contract],
         [100],
         rewards_data["merkleTree"]["claims"][user]["index"],
         rewards_data["merkleTree"]["cycle"],
@@ -420,21 +416,20 @@ def test_rewards_flow(setup):
         {"from": user}
     )
 
-    assert mockContract.balanceOf(user) == 100
-    assert mockContract.balanceOf(str(rewardsContract)) == 100000000 - 100
+    assert mock_contract.balanceOf(user) == 100
+    assert mock_contract.balanceOf(str(rewards_contract)) == 100000000 - 100
 
     # Try to claim with zero tokens all around, expect failure
-    rewardsContract = admin.deploy(badgerTree)
-    rewardsContract.initialize(admin, proposer, validator)
+    rewards_contract = admin.deploy(badger_tree)
+    rewards_contract.initialize(admin, proposer, validator)
 
-    startBlock = rewardsContract.lastPublishEndBlock() + 1
-    endBlock = startBlock + 5
-    currCycle = rewardsContract.currentCycle()
-    nextCycle = currCycle + 1
-    currentRoot = rewardsContract.merkleRoot()
+    start_block = rewards_contract.lastPublishEndBlock() + 1
+    end_block = start_block + 5
+    curr_cycle = rewards_contract.currentCycle()
+    next_cycle = curr_cycle + 1
 
-    geyserRewards = DotMap({
-        "badger_tree": rewardsContract,
+    geyser_rewards = DotMap({
+        "badger_tree": rewards_contract,
         "claims": {
             user.address: {
                 FARM_ADDRESS: 0,
@@ -450,31 +445,31 @@ def test_rewards_flow(setup):
             }
         },
         "tokens": [
-            FARM_ADDRESS, #FARM
-            XSUSHI_ADDRESS #XSUSHI
+            FARM_ADDRESS,  # FARM
+            XSUSHI_ADDRESS  # XSUSHI
         ],
-        "cycle": nextCycle
+        "cycle": next_cycle
     })
-    pastRewards = DotMap({
-        "badger_tree": rewardsContract,
+    past_rewards = DotMap({
+        "badger_tree": rewards_contract,
         "claims": {},
         "tokens": [
-            FARM_ADDRESS, #FARM
-            XSUSHI_ADDRESS #XSUSHI
+            FARM_ADDRESS,  # FARM
+            XSUSHI_ADDRESS  # XSUSHI
         ],
-        "cycle": currCycle
+        "cycle": curr_cycle
     })
 
     rewards_data = internal_generate_rewards_in_range(
         rewards_assistant,
-        {"contentHash": currentRoot},
-        geyserRewards,
-        startBlock,
-        endBlock,
-        pastRewards
+        rewards_contract,
+        geyser_rewards,
+        start_block,
+        end_block,
+        past_rewards
     )
 
-    rewardsContract.proposeRoot(
+    rewards_contract.proposeRoot(
         rewards_data["merkleTree"]["merkleRoot"],
         rewards_data["rootHash"],
         rewards_data["merkleTree"]["cycle"],
@@ -482,7 +477,7 @@ def test_rewards_flow(setup):
         rewards_data["merkleTree"]["endBlock"],
         {"from": proposer}
     )
-    rewardsContract.approveRoot(
+    rewards_contract.approveRoot(
         rewards_data["merkleTree"]["merkleRoot"],
         rewards_data["rootHash"],
         rewards_data["merkleTree"]["cycle"],
@@ -492,10 +487,10 @@ def test_rewards_flow(setup):
     )
 
     with brownie.reverts("No tokens to claim"):
-        rewardsContract.claim(
+        rewards_contract.claim(
             [
-                FARM_ADDRESS, #FARM
-                XSUSHI_ADDRESS #XSUSHI
+                FARM_ADDRESS,  # FARM
+                XSUSHI_ADDRESS  # XSUSHI
             ],
             [0, 0],
             rewards_data["merkleTree"]["claims"][user]["index"],
@@ -506,7 +501,7 @@ def test_rewards_flow(setup):
         )
 
 
-def test_salary(setup):
+def test_salary(setup: ModuleType('rewards_assistant')):
     rewards_assistant = setup
 
     admin, proposer, validator = accounts[:3]
@@ -515,7 +510,13 @@ def test_salary(setup):
     rewards_contract = admin.deploy(rewards_assistant.BadgerTree)
     rewards_contract.initialize(admin, proposer, validator)
 
-    def make_salary_entry(recipient, token, total_amount, duration, start_time):
+    def make_salary_entry(
+            recipient: str,
+            token: ProjectContract,
+            total_amount: int,
+            duration: int,
+            start_time: int
+    ) -> DotMap[str, Any]:
         return DotMap({
             "recipient": recipient,
             "token": token,
@@ -525,26 +526,27 @@ def test_salary(setup):
             "endTime": start_time + duration
         })
 
-    def update_root(rewards_data):
+    def update_root(new_rewards_data: dict[str, Any]):
         rewards_contract.proposeRoot(
-            rewards_data["merkleTree"]["merkleRoot"],
-            rewards_data["rootHash"],
-            rewards_data["merkleTree"]["cycle"],
-            rewards_data["merkleTree"]["startBlock"],
-            rewards_data["merkleTree"]["endBlock"],
+            new_rewards_data["merkleTree"]["merkleRoot"],
+            new_rewards_data["rootHash"],
+            new_rewards_data["merkleTree"]["cycle"],
+            new_rewards_data["merkleTree"]["startBlock"],
+            new_rewards_data["merkleTree"]["endBlock"],
             {"from": proposer}
         )
         rewards_contract.approveRoot(
-            rewards_data["merkleTree"]["merkleRoot"],
-            rewards_data["rootHash"],
-            rewards_data["merkleTree"]["cycle"],
-            rewards_data["merkleTree"]["startBlock"],
-            rewards_data["merkleTree"]["endBlock"],
+            new_rewards_data["merkleTree"]["merkleRoot"],
+            new_rewards_data["rootHash"],
+            new_rewards_data["merkleTree"]["cycle"],
+            new_rewards_data["merkleTree"]["startBlock"],
+            new_rewards_data["merkleTree"]["endBlock"],
             {"from": validator}
         )
 
-    def calculate_payment(salary_entry, start_block_time, end_block_time):
-        print(f"salary_entry: {salary_entry}\nstart_block_time:\t{start_block_time}\nend_block_time:  \t{end_block_time}")
+    def calculate_payment(salary_entry: DotMap[str, Any], start_block_time: int, end_block_time: int) -> int:
+        print(
+            f"salary_entry: {salary_entry}\nstart_block_time:\t{start_block_time}\nend_block_time:  \t{end_block_time}")
         if salary_entry.startTime <= end_block_time and salary_entry.endTime > start_block_time:
             start_time = max(salary_entry.startTime, start_block_time)
             end_time = min(salary_entry.endTime, end_block_time)
@@ -603,7 +605,7 @@ def test_salary(setup):
 
     update_root(internal_generate_rewards_in_range(
         rewards_assistant,
-        {"contentHash": rewards_contract.merkleRoot()},
+        rewards_contract,
         initial_state,
         rewards_contract.lastPublishEndBlock() + 1,
         web3.eth.blockNumber,
@@ -618,8 +620,8 @@ def test_salary(setup):
     chain_time = chain.time()
 
     claims = {entry.recipient: {
-            mock_contract.address: calculate_payment(entry, rewards_contract.lastPublishTimestamp(), chain.time())
-        } for entry in salaries}
+        mock_contract.address: calculate_payment(entry, rewards_contract.lastPublishTimestamp(), chain.time())
+    } for entry in salaries}
 
     assert claims[users[0]][mock_contract.address] > 0
     assert claims[users[1]][mock_contract.address] == 0
@@ -635,7 +637,7 @@ def test_salary(setup):
 
     rewards_data = internal_generate_rewards_in_range(
         rewards_assistant,
-        {"contentHash": rewards_contract.merkleRoot()},
+        rewards_contract,
         update_state,
         rewards_contract.lastPublishEndBlock() + 1,
         web3.eth.blockNumber,
