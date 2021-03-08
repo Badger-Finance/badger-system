@@ -132,6 +132,8 @@ class UpgradeSystem:
                         raise Exception("validation failed")
                     validator.reset()
 
+                console.print(f"[green]upgraded sett {key} @ {contract.address}")
+
     def track_contract_upgradeable(self, key: str, contract: ProjectContract) -> None:
         self.contracts_upgradeable[key] = contract
 

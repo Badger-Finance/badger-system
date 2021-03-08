@@ -505,12 +505,8 @@ class BadgerSystem:
         )
         self.upgrade.track_contract_upgradeable("teamVesting", self.teamVesting)
 
-    def deploy_logic(self, name, BrownieArtifact, test=False):
+    def deploy_logic(self, name, BrownieArtifact):
         deployer = self.deployer
-        if test:
-            self.logic[name] = BrownieArtifact.deploy({"from": deployer})
-            return
-
         self.logic[name] = BrownieArtifact.deploy(
             {"from": deployer}, publish_source=self.publish_source
         )
@@ -853,6 +849,18 @@ class BadgerSystem:
 
         self.wire_up_sett(sett, strategy, controller)
 
+    def deploy_defender(self):
+        deployer = self.deployer
+        self.defender = deploy_proxy(
+            "RemoteDefenderUpgradeable",
+            RemoteDefenderUpgradeable.abi,
+            self.logic.RemoteDefenderUpgradeable.address,
+            self.devProxyAdmin.address,
+            # no args, owner is deployer
+            self.logic.RemoteDefenderUpgradeable.initialize.encode_input(),
+            deployer,
+        )
+
     def signal_token_lock(self, id, params):
         geyser = self.getGeyser(id)
         self.rewardsEscrow.signalTokenLock(
@@ -1077,3 +1085,19 @@ class BadgerSystem:
 
     def getStrategyArtifactName(self, id):
         return self.strategy_artifacts[id]["artifactName"]
+
+    # ===== Configuration =====
+
+    # configureDefender configures defender globally for all contracts.
+    def configureDefender(self):
+        multi = GnosisSafe(self.devMultisig)
+        for key, sett in self.sett_system.vaults.items():
+            multi.execute(
+                    MultisigTxMetadata(
+                        description=f"Configure defender on Sett {sett.address}"
+                    ),
+                    {
+                        "to": sett.address,
+                        "data": sett.setDefender.encode_input(self.defender.address),
+                    },
+            )

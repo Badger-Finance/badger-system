@@ -125,12 +125,8 @@ class BridgeSystem:
             deployer,
         )
 
-    def deploy_logic(self, name, BrownieArtifact, test=False):
+    def deploy_logic(self, name, BrownieArtifact):
         deployer = self.deployer
-        if test:
-            self.logic[name] = BrownieArtifact.deploy({"from": deployer})
-            return
-
         self.logic[name] = BrownieArtifact.deploy(
             {"from": deployer}, publish_source=self.publish_source
         )

@@ -21,19 +21,6 @@ import "./SettVersion.sol";
     All new sett deploys should be based on this contract. There are some maintenance forks under `./sett-forks`.
 
     Source: https://github.com/iearn-finance/yearn-protocol/blob/develop/contracts/vaults/yVault.sol
-
-    Changelog:
-    
-    V1.1
-    * Strategist no longer has special function calling permissions
-    * Version function added to contract
-    * All write functions, with the exception of transfer, are pausable
-    * Keeper or governance can pause
-    * Only governance can unpause
-    
-    V1.2
-    * Transfer functions are now pausable along with all other non-permissioned write functions
-    * All permissioned write functions, with the exception of pause() & unpause(), are pausable as well
 */
 contract Sett is SettVersion, ERC20Upgradeable, SettAccessControlDefended, PausableUpgradeable, DefenderStorageless, PauseableStorageless {
     using SafeERC20Upgradeable for IERC20Upgradeable;
