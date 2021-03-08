@@ -6,9 +6,9 @@ from typing import (
     Any,
 )
 from brownie import (
+    reverts,
     accounts,
     network,
-    exceptions,
     RemoteDefenderUpgradeable,
     ThirdPartyContractAccess,
 )
@@ -94,15 +94,9 @@ def _testContractMethod(
     args: List[Any],
     error: Optional[str] = None,
 ) -> None:
-    reverted = False
-    try:
+    if error is None:
         getattr(contract, method)(*args)
-    except exceptions.VirtualMachineError as e:
-        if error is None:
-            __import__('pdb').set_trace()
-        assert error in e.message
-        reverted = True
+        return
 
-    # Ensure that the method has reverted if expected error is supplied.
-    if error is not None:
-        assert reverted
+    with reverts(error):
+        getattr(contract, method)(*args)
