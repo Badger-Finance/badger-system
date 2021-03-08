@@ -57,7 +57,7 @@ def fetch_sett_balances(settId, startBlock):
 
         if len(balance_data) > 0:
             lastBalanceId = balance_data[-1]["id"]
-            
+
         balances = {**newBalances,**balances}
     console.log("Processing {} balances".format(len(balances)))
     return balances
@@ -107,7 +107,7 @@ def fetch_geyser_events(geyserId, startBlock):
             "id_gt": lastUnstakedId
         }
         result = client.execute(query,variable_values=variables)
-        
+
         if len(result["geysers"]) == 0:
             return {
                 "stakes":[],
@@ -117,7 +117,7 @@ def fetch_geyser_events(geyserId, startBlock):
         newStakes = result["geysers"][0]["stakeEvents"]
         newUnstakes = result["geysers"][0]["unstakeEvents"]
         if len(newStakes) == 0 and len(newUnstakes) == 0:
-            break 
+            break
         if len(newStakes) > 0:
             lastStakedId = newStakes[-1]["id"]
         if len(newUnstakes) > 0:
@@ -127,7 +127,7 @@ def fetch_geyser_events(geyserId, startBlock):
         stakes.extend(newStakes)
         unstakes.extend(newUnstakes)
         totalStaked = result["geysers"][0]["unstakeEvents"]
-        
+
     console.log("Processing {} stakes".format(len(stakes)))
     console.log("Processing {} unstakes".format(len(unstakes)))
     return {
@@ -222,7 +222,7 @@ def fetch_farm_harvest_events():
     results = client.execute(query)
     for event in results["farmHarvestEvents"]:
         event["rewardAmount"] = event.pop("farmToRewards")
-    
+
     return results["farmHarvestEvents"]
 
 def fetch_sushi_harvest_events():
@@ -253,25 +253,24 @@ def fetch_sushi_harvest_events():
             wbtcBadgerEvents.append(event)
         elif strategy == "0xaa8dddfe7dfa3c3269f1910d89e4413dd006d08a":
             wbtcDiggEvents.append(event)
-    
+
     return {
         "wbtcEth":wbtcEthEvents,
         "wbtcBadger":wbtcBadgerEvents,
         "wbtcDigg":wbtcDiggEvents
     }
 
-def fetch_cream_bbadger_deposits() -> dict[str: float]:
     cream_transport = AIOHTTPTransport(url=subgraph_config["cream_url"])
     cream_client = Client(transport=cream_transport, fetch_schema_from_transport=True)
     console.log("Fetching cream deposits...")
     increment = 1000
 
     query = gql("""
-        query fetchCreambBadgerDeposits($firstAmount: Int, $lastID: ID) {
+        query fetchCreambDeposits($firstAmount: Int, $lastID: ID,$symbol: String) {
             accountCTokens(first: $firstAmount,
                 where: {
                     id_gt: $lastID
-                    symbol: "crBBADGER"
+                    symbol: $symbol
                     enteredMarket: true
                 }
             ) {
@@ -284,23 +283,25 @@ def fetch_cream_bbadger_deposits() -> dict[str: float]:
             }
         markets(
             where:{
-            symbol:"crBBADGER"
+            symbol:$symbol
         }) {
             exchangeRate
         }
         }
     """)
 
-    ## Paginate this for more than 1000 balances
     retVal = {}
     continueFetching = True
     lastID = "0x0000000000000000000000000000000000000000"
 
     while continueFetching:
-        variables = {"firstAmount": increment, "lastID": lastID}
+        variables = {"firstAmount": increment, "lastID": lastID,"symbol": tokenSymbol}
         nextPage = cream_client.execute(query, variable_values=variables)
         if len(nextPage["accountCTokens"]) == 0:
-            continueFetching = False
+            if len(nextPage["markets"]) == 0:
+                return {}
+            exchangeRate = nextPage["markets"][0]["exchangeRate"]
+            ontinueFetching = False
         else:
             exchangeRate = nextPage["markets"][0]["exchangeRate"]
             lastID = nextPage["accountCTokens"][-1]["id"]
@@ -310,7 +311,7 @@ def fetch_cream_bbadger_deposits() -> dict[str: float]:
     return retVal
 
 
-def fetch_wallet_balances() -> tuple[dict[str: int], dict[str: float]]:
+def fetch_wallet_balances():
     console.log("Fetching Badger wallet balances")
     increment = 1000
     query = gql("""
@@ -324,7 +325,7 @@ def fetch_wallet_balances() -> tuple[dict[str: int], dict[str: float]]:
             }
         }
     """)
-    
+
     ## Paginate this for more than 1000 balances
     continueFetching = True
     lastID = "0x0000000000000000000000000000000000000000"

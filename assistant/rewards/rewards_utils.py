@@ -130,7 +130,6 @@ def calc_meta_farm_rewards(badger,name, startBlock, endBlock):
             },
             "amount":0
         })
-    
     totalShareSeconds = sum([u.shareSeconds for u in user_state])
     #for user in sorted(user_state,key=lambda u: u.shareSeconds,reverse=True):
     #    percentage = (user.shareSeconds/totalShareSeconds) * 100
@@ -139,7 +138,7 @@ def calc_meta_farm_rewards(badger,name, startBlock, endBlock):
     return user_state
 
 def get_initial_user_state(settBalances,geyserBalances, startBlockTime):
-    balances = combine_balances(settBalances,geyserBalances)
+    balances = combine_balances([settBalances,geyserBalances])
     users = []
     for addr, balance in balances.items():
         users.append(User(addr, balance, startBlockTime))
@@ -158,8 +157,11 @@ def calc_balances_from_geyser_events(geyserEvents):
     console.log("Sum of geyser balances: {}".format(sum(balances.values()) / 10 ** 18))
     return balances
 
-def combine_balances(settBalances, geyserBalances):
-    return dict(Counter(settBalances) + Counter(geyserBalances))
+def combine_balances(balances):
+    allBalances = {}
+    for b in balances:
+        allBalances = dict(Counter(allBalances) + Counter(b))
+    return allBalances
 
 
 def fetch_sett_ppfs(token):
@@ -167,7 +169,6 @@ def fetch_sett_ppfs(token):
     result = response.json()
     sett = next(filter( lambda sett: sett["underlyingToken"] == token,result),None)
     return sett and sett["ppfs"]
-        
 
 def fetch_sett_price(token):
     response = requests.get("{}/price".format(badger_api_url))
