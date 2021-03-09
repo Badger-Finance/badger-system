@@ -1,7 +1,11 @@
-import datetime
+from datetime import datetime, timezone
 from enum import Enum
 import json
 import os
+
+import gql
+from gql.transport.aiohttp import AIOHTTPTransport
+
 from scripts.systems.digg_system import connect_digg
 from scripts.systems.uniswap_system import UniswapSystem
 import warnings
@@ -24,35 +28,34 @@ from helpers.constants import MaxUint256
 from scripts.systems.sushiswap_system import SushiswapSystem
 console = Console()
 
+SUBGRAPH_URL_UNISWAP = "https://api.thegraph.com/subgraphs/name/uniswap/uniswap-v2"
+SUBGRAPH_URL_SUSHISWAP = "https://api.thegraph.com/subgraphs/name/dmihal/sushiswap"
+# WBTC-DIGG pair addresses
+PAIR_ADDRESS_UNISWAP = "0xe86204c4eddd2f70ee00ead6805f917671f56c52"
+PAIR_ADDRESS_SUSHISWAP = "0x9a13867048e01c663ce8ce2fe0cdae69ff9f35e3"
+
+
 def test_main():
     main()
 
-def Average(lst): 
-    return sum(lst) / len(lst) 
 
-def get_average_daily_price(file):
-    with open(file + ".json") as f:
-        data = json.load(f)
+def fetch_average_price(oracle_subgraph: gql.Client, pair_address: str, num_hours: int) -> float:
+    start_time = int(datetime.now(timezone.utc).timestamp()) - hours(num_hours + 2)
+    query = gql.gql(f"""
+    {{
+      pairHourDatas(where: {{pair: "{pair_address}" hourStartUnix_gte: {start_time}}}) {{
+        id
+        hourStartUnix
+        reserve0
+        reserve1
+        reserveUSD
+      }}
+    }}
+    """)
+    data = oracle_subgraph.execute(query)["pairHourDatas"][-num_hours:]
+    # console.log(data)
+    return sum(float(price_point["reserve0"]) / float(price_point["reserve1"]) for price_point in data) / num_hours
 
-    price_points = []
-
-    for entry in data["data"]["pairHourDatas"]:
-        wbtcBal = float(entry["reserve0"])
-        diggBal = float(entry["reserve1"])
-        wbtcPerDigg = wbtcBal / diggBal
-        locals()
-        console.print({
-            "wbtcBal": wbtcBal,
-            "diggBal": diggBal,
-            "wbtcPerDigg": wbtcPerDigg,
-        })
-        price_points.append(wbtcPerDigg)
-    
-    average_price = Average(price_points)
-    console.print("Average for {} is {}".format(file, average_price)) 
-    return average_price
-
-    
 
 def main():
     """
@@ -76,29 +79,31 @@ def main():
 
     digg_per_btc = digg_usd_coingecko / btc_usd_coingecko
 
-    uniTWAP = get_average_daily_price("scripts/oracle/data/uni_digg_hour")
-    sushiTWAP = get_average_daily_price("scripts/oracle/data/sushi_digg_hour")
-    averageTWAP = Average([uniTWAP, sushiTWAP])
+    oracle_uniswap = gql.Client(
+        transport=AIOHTTPTransport(url=SUBGRAPH_URL_UNISWAP),
+        fetch_schema_from_transport=True
+    )
+    oracle_sushiswap = gql.Client(
+        transport=AIOHTTPTransport(url=SUBGRAPH_URL_SUSHISWAP),
+        fetch_schema_from_transport=True
+    )
+    twap_uniswap = fetch_average_price(oracle_uniswap, PAIR_ADDRESS_UNISWAP, 24)
+    twap_sushiswap = fetch_average_price(oracle_sushiswap, PAIR_ADDRESS_SUSHISWAP, 24)
+    twap = (twap_uniswap + twap_sushiswap) / 2
+    print(f'twap_uniswap = {twap_uniswap}\ntwap_sushiswap = {twap_sushiswap}\naverage = {twap}\n')
 
-    console.print({
-        "uniTWAP": uniTWAP,
-        "sushiTWAP": sushiTWAP,
-        "averageTWAP": averageTWAP
-    })
-
-
-    supplyBefore = digg.token.totalSupply()
+    supply_before = digg.token.totalSupply()
 
     print("spfBefore", digg.token._sharesPerFragment())
-    print("supplyBefore", digg.token.totalSupply())
+    print("supply_before", digg.token.totalSupply())
 
-    marketValue = Wei(str(averageTWAP) + " ether")
+    marketValue = Wei(str(twap) + " ether")
 
     print(marketValue)
 
     print(int(marketValue * 10 ** 18))
 
-    print("digg_per_btc", digg_per_btc, averageTWAP, marketValue)
+    print("digg_per_btc", digg_per_btc, twap, marketValue)
 
     centralizedMulti = GnosisSafe(digg.centralizedOracle)
     
@@ -141,8 +146,8 @@ def main():
 
     print("spfAfter", digg.token._sharesPerFragment())
     print("supplyAfter", supplyAfter)
-    print("supplyChange", supplyAfter / supplyBefore)
-    print("supplyChangeOtherWay", supplyBefore / supplyAfter )
+    print("supplyChange", supplyAfter / supply_before)
+    print("supplyChangeOtherWay", supply_before / supplyAfter )
 
     print("pair after", pair.getReserves())
     print("uniPair after", uniPair.getReserves())
