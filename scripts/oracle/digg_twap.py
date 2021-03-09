@@ -26,6 +26,9 @@ from tabulate import tabulate
 from helpers.gnosis_safe import convert_to_test_mode, exec_direct, get_first_owner
 from helpers.constants import MaxUint256
 from scripts.systems.sushiswap_system import SushiswapSystem
+from pycoingecko import CoinGeckoAPI
+
+cg = CoinGeckoAPI()
 console = Console()
 
 SUBGRAPH_URL_UNISWAP = "https://api.thegraph.com/subgraphs/name/uniswap/uniswap-v2"
@@ -74,10 +77,8 @@ def main():
     multi = GnosisSafe(badger.devMultisig, testMode=True)
 
     # Get price data from sushiswap, uniswap, and coingecko
-    digg_usd_coingecko = 41531.72
-    btc_usd_coingecko = 32601.13
 
-    digg_per_btc = digg_usd_coingecko / btc_usd_coingecko
+    digg_per_btc = cg.get_price(ids="digg", vs_currencies="btc")["digg"]["btc"]
 
     oracle_uniswap = gql.Client(
         transport=AIOHTTPTransport(url=SUBGRAPH_URL_UNISWAP),
