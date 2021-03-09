@@ -1,4 +1,3 @@
-from scripts.actions.swap_transfer import fetch_usd_price
 from assistant.subgraph.config import subgraph_config
 from rich.console import Console
 from gql import gql, Client
@@ -13,8 +12,6 @@ sett_prices_url = "https://laiv44udi0.execute-api.us-west-1.amazonaws.com/stagin
 subgraph_url = subgraph_config["url"]
 transport = AIOHTTPTransport(url=subgraph_url)
 client = Client(transport=transport, fetch_schema_from_transport=True)
-digg_token = "0x798D1bE841a82a273720CE31c822C61a67a601C3"
-badger_token = "0x3472A5A71965499acd81997a54BBA8D852C6E53d"
 
 
 def fetch_sett_balances(settId, startBlock):
@@ -311,8 +308,7 @@ def fetch_sushi_harvest_events():
     return retVal
 
 
-def fetch_wallet_balances():
-    console.log("Fetching Badger wallet balances")
+def fetch_wallet_balances(badger_price,digg_price,digg):
     increment = 1000
     query = gql("""
         query fetchWalletBalance($firstAmount: Int, $lastID: ID) {
@@ -333,9 +329,6 @@ def fetch_wallet_balances():
     badger_balances = {}
     digg_balances = {}
 
-    badger_price = fetch_usd_price(badger_token)
-    digg_price = fetch_usd_price(digg_token)
-
     while continueFetching:
         variables = {"firstAmount": increment, "lastID": lastID}
         nextPage = client.execute(query, variable_values=variables)
@@ -344,9 +337,66 @@ def fetch_wallet_balances():
         else:
             lastID = nextPage["tokenBalances"][-1]["id"]
             for entry in nextPage["tokenBalances"]:
+                address = entry["id"].split("-")[0]
                 if entry["token"]["symbol"] == "BADGER" and int(entry["balance"]) > 0:
                     badger_balances[entry["id"]] = float(entry["balance"]) / 1e18 * badger_price
                 if entry["token"]["symbol"] == "DIGG" and int(entry["balance"]) > 0:
-                    digg_balances[entry["id"]] = float(entry["balance"]) / 1e9 * digg_price
+                    # Convert
+                    fragmentBalance = digg.logic.UFragments.sharesToFragments(entry["balance"])
+                    digg_balances[entry["id"]] = float(fragmentBalance) / 1e9 * digg_price
 
     return badger_balances, digg_balances
+
+def fetch_cream_balances(tokenSymbol):
+    cream_transport = AIOHTTPTransport(url=subgraph_config["cream_url"])
+    cream_client = Client(transport=cream_transport, fetch_schema_from_transport=True)
+    console.log("Fetching cream deposits...")
+    increment = 1000
+
+    query = gql("""
+        query fetchCreambBadgerDeposits($firstAmount: Int, $lastID: ID, $symbol: String) {
+            accountCTokens(first: $firstAmount,
+                where: {
+                    id_gt: $lastID
+                    symbol: $symbol
+                    enteredMarket: true
+                }
+            ) {
+                id
+                totalUnderlyingBorrowed
+                totalUnderlyingSupplied
+                account {
+                    id
+                }
+            }
+        markets(
+            where:{
+            symbol:$symbol
+        }) {
+            exchangeRate
+        }
+        }
+    """)
+
+    ## Paginate this for more than 1000 balances
+    results = []
+    continueFetching = True
+    lastID = "0x0000000000000000000000000000000000000000"
+
+    while continueFetching:
+        variables = {"firstAmount": increment, "lastID": lastID,"symbol":tokenSymbol}
+        nextPage = cream_client.execute(query, variable_values=variables)
+        if len(nextPage["accountCTokens"]) == 0:
+            if len(nextPage["markets"]) == 0:
+                return {}
+            exchangeRate = nextPage["markets"][0]["exchangeRate"]
+            continueFetching = False
+        else:
+            lastID = nextPage["accountCTokens"][-1]["id"]
+            results += nextPage["accountCTokens"]
+
+    retVal = {}
+    console.log("Queried {} cream balances".format(len(results)))
+    for entry in results:
+        retVal[entry["account"]["id"]] = float(entry["totalUnderlyingSupplied"]) * 1e18 / (1+float(exchangeRate))
+    return retVal

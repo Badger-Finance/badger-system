@@ -167,10 +167,10 @@ def combine_balances(balances):
 def fetch_sett_ppfs(token):
     response = requests.get("{}/protocol/sett".format(badger_api_url))
     result = response.json()
-    sett = next(filter( lambda sett: sett["underlyingToken"] == token,result),None)
-    return sett and sett["ppfs"]
+    sett = list(filter( lambda sett: sett["underlyingToken"] == token,result))
+    return sett[0]["ppfs"]
 
-def fetch_sett_price(token):
+def fetch_token_price(token):
     response = requests.get("{}/price".format(badger_api_url))
     result = response.json()
     return result[token]

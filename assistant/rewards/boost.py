@@ -5,21 +5,23 @@ from rich.console import Console
 from assistant.subgraph.client import (
     fetch_sett_balances,
     fetch_geyser_events,
-    fetch_cream_deposits
+    fetch_cream_balances,
+    fetch_wallet_balances
 )
 from collections import Counter,OrderedDict
 from assistant.rewards.rewards_utils import (
     combine_balances,
     calc_balances_from_geyser_events,
-    fetch_sett_price,
+    fetch_token_price,
     fetch_sett_ppfs
 )
 console = Console()
-
+digg_token = "0x798D1bE841a82a273720CE31c822C61a67a601C3"
+badger_token = "0x3472A5A71965499acd81997a54BBA8D852C6E53d"
 APPROVED_CONTRACTS = {}
 
 def convert_balances_to_usd(sett,balances):
-    price = fetch_sett_price(sett.token().lower())
+    price = fetch_token_price(sett.token().lower())
     ppfs = fetch_sett_ppfs(sett.token().lower())
     for account,bBalance in balances.items():
         balances[account] = (price * bBalance * ppfs)/1e18
@@ -40,6 +42,22 @@ def get_sett_addresses(setts):
         addresses.extend(list(balances.keys()))
     return set(addresses)
 
+def calc_stake_ratio(address,diggSetts,badgerSetts,nonNativeSetts):
+    diggBalance = 0
+    badgerBalance = 0
+    nonNativeBalance = 0
+    for name,balances in diggSetts.items():
+        diggBalance += balances.get(address,0)
+    for name,balances in badgerSetts.items():
+        badgerBalance += balances.get(address,0)
+    for name,balances in diggSetts.items():
+        nonNativeBalance += balances.get(address,0)
+    
+    if nonNativeBalance == 0:
+        return 0
+    else:
+        return (diggBalance + badgerBalance )/ nonNativeBalance
+
 
 def calculate_sett_balances(badger,name,sett,currentBlock):
     settBalances = fetch_sett_balances(sett.address.lower(),currentBlock)
@@ -51,7 +69,7 @@ def calculate_sett_balances(badger,name,sett,currentBlock):
         geyserEvents = fetch_geyser_events(badger.getGeyser(name).address.lower(),currentBlock)
         geyserBalances = calc_balances_from_geyser_events(geyserEvents)
 
-    creamBalances = fetch_cream_deposits("cr{}".format(settUnderlyingToken.symbol()))
+    creamBalances = fetch_cream_balances("cr{}".format(settUnderlyingToken.symbol()))
     return combine_balances([settBalances,geyserBalances,creamBalances])
 
 
@@ -83,7 +101,13 @@ def get_balance_data(badger,currentBlock):
         else:
             nonNativeSetts[name] = balances
 
-    badger_wallet_balances, digg_wallet_balances = fetch_wallet_balances()
+    badger_wallet_balances, digg_wallet_balances = fetch_wallet_balances(
+        fetch_token_price(badger_token.lower()),
+        fetch_token_price(digg_token.lower()),
+        badger.digg
+    )
+    console.log(badger_wallet_balances)
+    console.log(digg_wallet_balances)
     # TODO: Merge the usd value of these with the correct balances
 
     allAddresses = get_sett_addresses(diggSetts).union(get_sett_addresses(badgerSetts).union(get_sett_addresses(nonNativeSetts)))
