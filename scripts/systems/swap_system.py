@@ -126,10 +126,6 @@ class SwapSystem:
             SwapStrategyRouter=SwapStrategyRouter.deploy(
                 {"from": deployer}, publish_source=self.publish_source,
             ),
-           SwapStrategyRouter=SwapStrategyRouter.deploy(
-               {"from": deployer},
-               publish_source=self.publish_source,
-           ),
         )
 
     def deploy_router(self):

@@ -3,6 +3,7 @@ from enum import Enum
 from brownie import *
 from rich.console import Console
 from tabulate import tabulate
+from scripts.systems.gnosis_safe_system import connect_gnosis_safe
 from helpers.multicall import func
 console = Console()
 
@@ -46,7 +47,9 @@ class MultisigTx:
 
 class GnosisSafe:
     def __init__(self, contract, testMode=True):
-        self.contract = contract
+        self.contract = connect_gnosis_safe(contract)
+        
+        console.print("contract", contract)
         self.firstOwner = get_first_owner(contract)
         self.transactions = []
         self.testMode = testMode

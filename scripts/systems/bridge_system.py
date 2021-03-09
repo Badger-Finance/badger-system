@@ -10,7 +10,7 @@ from brownie import (
 from dotmap import DotMap
 
 from scripts.systems.swap_system import SwapSystem
-from helpers.registry import whale_registry, registry
+from helpers.registry import registry
 from helpers.token_utils import distribute_from_whale
 from helpers.proxy_utils import deploy_proxy
 from config.badger_config import bridge_config
@@ -146,7 +146,7 @@ class BridgeSystem:
     def deploy_mocks(self):
         deployer = self.deployer
         registry = MockGatewayRegistry.deploy({"from": deployer})
-        for (tokenName, whaleConfig) in [("BTC", whale_registry.renbtc)]:
+        for (tokenName, whaleConfig) in [("BTC", registry.whales.renbtc)]:
             token = ERC20.at(whaleConfig.token)
             gateway = MockGateway.deploy(token.address, {"from": deployer})
             # Distribute token from whale -> deployer -> mock gateway.

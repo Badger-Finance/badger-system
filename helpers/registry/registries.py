@@ -2,6 +2,7 @@ from re import error
 from dotmap import DotMap
 from enum import Enum
 from helpers.registry.eth import eth_registry
+from helpers.registry.bsc import bsc_registry
 from helpers.registry.artifacts import artifacts
 
 from helpers.network import Chains, network_manager
@@ -41,6 +42,12 @@ class ContractRegistries:
             whales= eth_registry.whale_registry,
             multicall= eth_registry.multicall_registry,
         )
+        self.registries["bsc"] = DotMap(
+            pancake= bsc_registry.pancake,
+            gnosis_safe= bsc_registry.gnosis_safe_registry,
+            tokens= bsc_registry.token_registry,
+            multicall= bsc_registry.multicall_registry,
+        )
 
     def has_registry(self, chain: Chains):
         return chain in self.registries.keys()
@@ -54,8 +61,6 @@ class ContractRegistries:
         if not self.has_registry(network_id):
             console.print("[red]Chain ID {} not found[/red]".format(network_id))
         return self.get_registry(network_id)
-
-
 
 registries = ContractRegistries()
 registry = registries.get_active_chain_registry()

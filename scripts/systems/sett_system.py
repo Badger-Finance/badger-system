@@ -350,14 +350,29 @@ def deploy_strategy(
         )
 
 
-def deploy_controller(badger, deployer):
+def deploy_controller(
+    badger, 
+    deployer,
+    governance=None,
+    strategist=None,
+    keeper=None,
+    rewards=None,
+    proxyAdmin=None
+):
     # TODO: Change to prod config
-    governance = deployer
-    strategist = deployer
-    keeper = badger.keeper
-    rewards = badger.dao.agent
-    proxyAdmin = badger.devProxyAdmin
 
+    # Set default roles if not specified
+    if not governance:
+        governance = deployer
+    if not strategist:
+        strategist = deployer
+    if not keeper:
+        keeper = badger.keeper
+    if not rewards:
+        rewards = badger.dao.agent
+    if not proxyAdmin:
+        proxyAdmin = badger.devProxyAdmin
+    
     return deploy_proxy(
         "Controller",
         Controller.abi,

@@ -32,6 +32,7 @@ from rich.console import Console
 
 console = Console()
 
+
 class LoadMethod(Enum):
     SK = 0
     KEYSTORE = 1
@@ -148,6 +149,17 @@ def connect_badger(
     load_guardian=False,
     load_method=LoadMethod.SK,
 ):
+    """
+    Connect to an existing badger deploy from file
+    Required Fields:
+    devMultisig
+    opsMultisig
+    deployer
+    keeper
+    guardian
+
+    """
+
     badger_deploy = {}
     console.print(
         "[grey]Connecting to Existing Badger 🦡 System at {}...[/grey]".format(
@@ -183,7 +195,9 @@ def connect_badger(
 
     badger.connect_multisig(badger_deploy["devMultisig"])
     badger.connect_ops_multisig(badger_deploy["opsMultisig"])
-    badger.connect_treasury_multisig(badger_deploy["treasuryMultisig"])
+
+    if "treasuryMultisig" in badger_deploy:
+        badger.connect_treasury_multisig(badger_deploy["treasuryMultisig"])
 
     badger.connect_logic(badger_deploy["logic"])
 
@@ -191,21 +205,32 @@ def connect_badger(
     badger.connect_uni_badger_wbtc_lp(badger_deploy["uniBadgerWbtcLp"])
 
     # Connect Vesting / Rewards Infrastructure
-    badger.connect_team_vesting(badger_deploy["teamVesting"])
-    badger.connect_badger_hunt(badger_deploy["badgerHunt"])
-    badger.connect_badger_tree(badger_deploy["badgerTree"])
-    badger.connect_rewards_escrow(badger_deploy["rewardsEscrow"])
-    badger.connect_honeypot_meme(badger_deploy["honeypotMeme"])
-    badger.connect_community_pool(badger_deploy["communityPool"])
-    badger.connect_dao_badger_timelock(badger_deploy["daoBadgerTimelock"])
-    badger.connect_rewards_manager(badger_deploy["badgerRewardsManager"])
-    badger.connect_unlock_scheduler(badger_deploy["unlockScheduler"])
+    if "teamVesting" in badger_deploy:
+        badger.connect_team_vesting(badger_deploy["teamVesting"])
+    if "badgerHunt" in badger_deploy:
+        badger.connect_badger_hunt(badger_deploy["badgerHunt"])
+    if "badgerTree" in badger_deploy:
+        badger.connect_badger_tree(badger_deploy["badgerTree"])
+    if "rewardsEscrow" in badger_deploy:
+        badger.connect_rewards_escrow(badger_deploy["rewardsEscrow"])
+    if "honeypotMeme" in badger_deploy:
+        badger.connect_honeypot_meme(badger_deploy["honeypotMeme"])
+    if "communityPool" in badger_deploy:
+        badger.connect_community_pool(badger_deploy["communityPool"])
+    if "daoBadgerTimelock" in badger_deploy:
+        badger.connect_dao_badger_timelock(badger_deploy["daoBadgerTimelock"])
+    if "badgerRewardsManager" in badger_deploy:
+        badger.connect_rewards_manager(badger_deploy["badgerRewardsManager"])
+    if "unlockScheduler" in badger_deploy:
+        badger.connect_unlock_scheduler(badger_deploy["unlockScheduler"])
 
     # Connect Sett
     badger.connect_sett_system(badger_deploy["sett_system"], badger_deploy["geysers"])
 
-    digg = connect_digg(badger_deploy_file)
-    badger.add_existing_digg(digg)
+    # Connect DIGG
+    if "digg" in badger_deploy:
+        digg = connect_digg(badger_deploy_file)
+        badger.add_existing_digg(digg)
 
     return badger
 
@@ -247,6 +272,7 @@ class BadgerSystem:
         else:
             print("RPC Inactive")
             import decouple
+
             if load_deployer and load_method == LoadMethod.SK:
                 deployer_key = decouple.config("DEPLOYER_PRIVATE_KEY")
                 self.deployer = accounts.add(deployer_key)
@@ -301,15 +327,21 @@ class BadgerSystem:
         self.contracts_upgradeable[key] = contract
 
     # ===== Contract Connectors =====
-    def connect_proxy_admins(self, devProxyAdmin, daoProxyAdmin, opsProxyAdmin=None):
-        abi = registry.open_zeppelin.artifacts["ProxyAdmin"]["abi"]
+    def connect_proxy_admins(
+        self, devProxyAdmin=None, daoProxyAdmin=None, opsProxyAdmin=None
+    ):
+        abi = artifacts.open_zeppelin["ProxyAdmin"]["abi"]
 
-        self.devProxyAdmin = Contract.from_abi(
-            "ProxyAdmin", web3.toChecksumAddress(devProxyAdmin), abi
-        )
-        self.daoProxyAdmin = Contract.from_abi(
-            "ProxyAdmin", web3.toChecksumAddress(daoProxyAdmin), abi
-        )
+        if devProxyAdmin:
+            self.devProxyAdmin = Contract.from_abi(
+                "ProxyAdmin", web3.toChecksumAddress(devProxyAdmin), abi
+            )
+
+        if daoProxyAdmin:
+            self.daoProxyAdmin = Contract.from_abi(
+                "ProxyAdmin", web3.toChecksumAddress(daoProxyAdmin), abi
+            )
+
         if opsProxyAdmin:
             self.opsProxyAdmin = Contract.from_abi(
                 "ProxyAdmin", web3.toChecksumAddress(opsProxyAdmin), abi
@@ -322,15 +354,13 @@ class BadgerSystem:
             token=Contract.from_abi(
                 "MiniMeToken",
                 badger_config.dao.token,
-                registry.aragon.artifacts.MiniMeToken["abi"],
+                artifacts.aragon.MiniMeToken["abi"],
             ),
             kernel=Contract.from_abi(
-                "Agent",
-                badger_config.dao.kernel,
-                registry.aragon.artifacts.Agent["abi"],
+                "Agent", badger_config.dao.kernel, artifacts.aragon.Agent["abi"],
             ),
             agent=Contract.from_abi(
-                "Agent", badger_config.dao.agent, registry.aragon.artifacts.Agent["abi"]
+                "Agent", badger_config.dao.agent, artifacts.aragon.Agent["abi"]
             ),
         )
 
@@ -350,9 +380,20 @@ class BadgerSystem:
 
     # ===== Deployers =====
 
-    def add_controller(self, id):
+    def add_controller(
+        self,
+        id,
+        governance=None,
+        strategist=None,
+        keeper=None,
+        rewards=None,
+        proxyAdmin=None,
+    ):
         deployer = self.deployer
-        controller = deploy_controller(self, deployer)
+
+        controller = deploy_controller(
+            self, deployer, governance, strategist, keeper, rewards, proxyAdmin
+        )
         self.sett_system.controllers[id] = controller
         self.track_contract_upgradeable(id + ".controller", controller)
         return controller
@@ -374,6 +415,8 @@ class BadgerSystem:
         self.logic["Controller"] = Controller.deploy({"from": deployer})
         self.logic["Sett"] = Sett.deploy({"from": deployer})
         self.logic["DiggSett"] = DiggSett.deploy({"from": deployer})
+
+    def deploy_staking_rewards_logic(self):
         self.logic["StakingRewards"] = StakingRewards.deploy({"from": deployer})
         self.logic["StakingRewardsSignalOnly"] = StakingRewardsSignalOnly.deploy(
             {"from": deployer}
@@ -690,15 +733,11 @@ class BadgerSystem:
         controller.setVault(want, vault, {"from": deployer})
 
         controller.approveStrategy(
-            want,
-            strategy,
-            {"from": deployer},
+            want, strategy, {"from": deployer},
         )
 
         controller.setStrategy(
-            want,
-            strategy,
-            {"from": deployer},
+            want, strategy, {"from": deployer},
         )
 
     def wire_up_sett_multisig(self, vault, strategy, controller):
@@ -751,9 +790,7 @@ class BadgerSystem:
         assert rewardsToken.balanceOf(deployer) >= amount
 
         rewardsToken.transfer(
-            rewards,
-            amount,
-            {"from": deployer},
+            rewards, amount, {"from": deployer},
         )
 
         ## uint256 startTimestamp, uint256 _rewardsDuration, uint256 reward
@@ -770,11 +807,7 @@ class BadgerSystem:
         self.rewardsEscrow.approveRecipient(geyser, {"from": deployer})
 
         self.rewardsEscrow.signalTokenLock(
-            self.token,
-            params.amount,
-            params.duration,
-            startTime,
-            {"from": deployer},
+            self.token, params.amount, params.duration, startTime, {"from": deployer},
         )
 
     # ===== Strategy Macros =====
@@ -873,7 +906,7 @@ class BadgerSystem:
         tx = multi.executeTx(id)
 
     # ===== Connectors =====
-    def connect_sett_system(self, sett_system, geysers):
+    def connect_sett_system(self, sett_system, geysers=None):
         # Connect Controllers
         for key, address in sett_system["controllers"].items():
             self.connect_controller(key, address)
@@ -892,8 +925,9 @@ class BadgerSystem:
             self.connect_rewards(key, address)
 
         # Connect Geysers
-        for key, address in geysers.items():
-            self.connect_geyser(key, address)
+        if geysers:
+            for key, address in geysers.items():
+                self.connect_geyser(key, address)
 
     def connect_strategy(self, id, address, strategyArtifactName):
         Artifact = strategy_name_to_artifact(strategyArtifactName)
@@ -992,7 +1026,7 @@ class BadgerSystem:
 
     def connect_uni_badger_wbtc_lp(self, address):
         self.pair = Contract.from_abi(
-            "UniswapV2Pair", address, registry.uniswap.artifacts.UniswapV2Pair["abi"]
+            "UniswapV2Pair", address, artifacts.uniswap.UniswapV2Pair["abi"]
         )
         self.uniBadgerWbtcLp = self.pair
 
