@@ -2,6 +2,7 @@ from tests.conftest import badger
 from time import time
 from helpers.utils import sec, val
 from helpers.time_utils import days, to_days, to_hours, to_utc_date
+from assistant.rewards.RewardsLogger import rewardsLogger
 from dotmap import DotMap
 from rich.console import Console
 from tabulate import tabulate
@@ -80,7 +81,7 @@ class BadgerGeyserMock:
         self.totalShareSecondsInRange = 0
         self.logic = LinearLogic(
             {"x": 0, "y": badger_config.startMultiplier},
-            {"x": days(7 * 8), "y": badger_config.endMultiplier,},
+            {"x": days(7 * 8), "y": badger_config.endMultiplier},
         )
 
     # ===== Setters =====
@@ -279,10 +280,11 @@ class BadgerGeyserMock:
 
                 else: 
                     userDistributions[user][token] = 0
+
         
         tokenTotals = self.get_token_totals_from_user_dists(userDistributions)
 
-        # Check values vs total for each token
+        # Check values vs total for each tokeM
         for token, totalAmount in tokenTotals.items():
             # NOTE The total distributed should be less than or equal to the actual tokens distributed. Rounding dust will go to DAO
             # NOTE The value of the distributed should only be off by a rounding error
@@ -361,11 +363,10 @@ class BadgerGeyserMock:
     def caclulate_multiplier(self, stake, timestamp):
         start = 0
         end = timestamp - stake["stakedAt"]
-
-        mult0 = self.logic.y(start)
+        #mult0 = self.logic.y(start)
         mult2 = self.logic.y(end)
-
-        return mean([mult0, mult2])
+        #mean_val = mean([mult0, mult2])
+        return mult2
 
     def calculate_weighted_seconds(self, stake, lastUpdate, timestamp):
         """
@@ -442,6 +443,9 @@ class BadgerGeyserMock:
 
         for stake in data.stakes:
             stakeMultiplier = self.caclulate_multiplier(stake, timestamp)
+
+            if not data.stakeMultiplier or data.stakeMultiplier < stakeMultiplier:
+                data.stakeMultiplier = stakeMultiplier
             toAdd += stake["amount"] * self.calculate_weighted_seconds(
                 stake, lastUpdate, timestamp
             )
@@ -479,7 +483,7 @@ class BadgerGeyserMock:
             return badger_config.globalStartTime
         return self.users[user].lastUpdate
 
-    def printState(self, userDistributions):
+    def getMockState(self, userDistributions):
         table = []
         numUsers = 0
         numUsersWithClaims = 0
@@ -547,6 +551,11 @@ class BadgerGeyserMock:
         )
         print(
             "Total Users With Claims", numUsersWithClaims
+
         )
+        return {
+            "0x3472A5A71965499acd81997a54BBA8D852C6E53d":userDistributions["totals"][badger_token],
+            "0x798D1bE841a82a273720CE31c822C61a67a601C3":userDistributions["totals"][digg_token]
+        }
 
         # console.log('printState')

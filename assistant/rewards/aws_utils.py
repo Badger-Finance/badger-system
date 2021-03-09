@@ -1,23 +1,26 @@
 import boto3
 from brownie import *
+import requests
 from rich.console import Console
 
 console = Console()
 
 
 def download(fileName):
-    s3 = boto3.client("s3")
+    #s3 = boto3.client("s3")
 
-    upload_bucket = "badger-json"
-    upload_file_key = "rewards/" + fileName
+    #upload_bucket = "badger-json"
+    #upload_file_key = "rewards/" + fileName
 
-    console.print("Downloading file from s3: " + upload_file_key)
+    #console.print("Downloading file from s3: " + upload_file_key)
 
-    s3_clientobj = s3.get_object(Bucket=upload_bucket, Key=upload_file_key)
+    #s3_clientobj = s3.get_object(Bucket=upload_bucket, Key=upload_file_key)
     # console.print(s3_clientobj)
-    s3_clientdata = s3_clientobj["Body"].read().decode("utf-8")
+    #s3_clientdata = s3_clientobj["Body"].read().decode("utf-8")
 
-    return s3_clientdata
+    #return s3_clientdata
+    url = "https://d5haax09x7ee2.cloudfront.net/rewards/{}".format(fileName)
+    return requests.get(url=url).json()
 
 
 def upload(fileName):
