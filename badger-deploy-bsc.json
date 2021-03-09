@@ -17,7 +17,7 @@
             "native": "0xB18D0bC54829bdFeAE998b8FE9a8df10953DcAeC"
         },
         "vaults": {
-            "native.pancakeBNB<>BtcB": "0xF6BC36280F32398A031A7294e81131aEE787D178"
+            "native.pancakeBnbBtcb": "0xF6BC36280F32398A031A7294e81131aEE787D178"
         }
     }
 }
