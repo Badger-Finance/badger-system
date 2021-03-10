@@ -164,9 +164,6 @@ def combine_balances(balances):
         allBalances = dict(Counter(allBalances) + Counter(b))
     return allBalances
 
-
-
-
 def calculate_sett_balances(badger, name, sett, currentBlock):
     settBalances = fetch_sett_balances(sett.address.lower(), currentBlock)
     settUnderlyingToken = interface.ERC20(sett.token())

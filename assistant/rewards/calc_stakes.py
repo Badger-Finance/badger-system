@@ -70,9 +70,12 @@ def calculate_token_distributions(
         snapshotStartTime, periodEndTime
     )
     userDistributions = geyserMock.calc_user_distributions(tokenDistributions)
+
     geyserMock.tokenDistributions = tokenDistributions
     geyserMock.userDistributions = userDistributions
+
     mockData = geyserMock.getMockState(userDistributions)
+
     for user,tokens in userDistributions["claims"].items():
         for token, tokenValue in tokens.items():
             rewardsLogger.add_user_token(user,geyserMock.key,token,tokenValue)
