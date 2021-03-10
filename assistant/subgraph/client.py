@@ -339,11 +339,11 @@ def fetch_wallet_balances(badger_price,digg_price,digg):
             for entry in nextPage["tokenBalances"]:
                 address = entry["id"].split("-")[0]
                 if entry["token"]["symbol"] == "BADGER" and int(entry["balance"]) > 0:
-                    badger_balances[entry["id"]] = float(entry["balance"]) / 1e18 * badger_price
+                    badger_balances[address] = float(entry["balance"]) / 1e18 * badger_price
                 if entry["token"]["symbol"] == "DIGG" and int(entry["balance"]) > 0:
                     # Convert
                     fragmentBalance = digg.logic.UFragments.sharesToFragments(entry["balance"])
-                    digg_balances[entry["id"]] = float(fragmentBalance) / 1e9 * digg_price
+                    digg_balances[address] = float(fragmentBalance) / 1e9 * digg_price
 
     return badger_balances, digg_balances
 
@@ -388,6 +388,7 @@ def fetch_cream_balances(tokenSymbol):
         nextPage = cream_client.execute(query, variable_values=variables)
         if len(nextPage["accountCTokens"]) == 0:
             if len(nextPage["markets"]) == 0:
+                console.log("No Cream deposits found for {}".format(tokenSymbol))
                 return {}
             exchangeRate = nextPage["markets"][0]["exchangeRate"]
             continueFetching = False
