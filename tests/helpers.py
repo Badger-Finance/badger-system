@@ -4,8 +4,9 @@ from scripts.systems.uniswap_system import UniswapSystem
 from tabulate import tabulate
 
 from helpers.gnosis_safe import exec_direct
-from helpers.registry import whale_registry
+from helpers.registry import registry
 
+whale_registry = registry.whale_registry
 
 def get_token_balances(accounts, tokens):
     balances = DotMap()

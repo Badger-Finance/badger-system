@@ -1,4 +1,4 @@
-from helpers import registry
+from helpers.registry import registry
 import json
 import time
 
@@ -16,7 +16,6 @@ curve = registry.curve
 pickle = registry.pickle
 harvest = registry.harvest
 sushi = registry.sushi
-
 pools = curve.pools
 
 sett_config = DotMap(

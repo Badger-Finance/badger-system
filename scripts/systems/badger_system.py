@@ -3,32 +3,23 @@ from enum import Enum
 
 from brownie import *
 from brownie.network.gas.strategies import GasNowScalingStrategy
+from config.badger_config import badger_config, sett_config
 from dotmap import DotMap
-from config.badger_config import (
-    badger_config,
-    sett_config,
-)
-from scripts.systems.sett_system import (
-    deploy_controller,
-    deploy_strategy,
-)
-from helpers.registry import registry, artifacts
-from helpers.time_utils import days
-from helpers.sett.strategy_registry import name_to_artifact, strategy_name_to_artifact
-from helpers.proxy_utils import deploy_proxy, deploy_proxy_admin
 from helpers.gnosis_safe import GnosisSafe, MultisigTxMetadata
-from helpers.sett.strategy_registry import name_to_artifact
-from scripts.systems.constants import SettType
-from scripts.systems.digg_system import connect_digg
+from helpers.network import network_manager
+from helpers.proxy_utils import deploy_proxy, deploy_proxy_admin
+from helpers.registry import artifacts, registry
+from helpers.sett.strategy_registry import (name_to_artifact,
+                                            strategy_name_to_artifact)
+from helpers.time_utils import days
+from rich.console import Console
+from scripts.systems.claw_system import ClawSystem
 from scripts.systems.constants import SettType
 from scripts.systems.digg_system import DiggSystem, connect_digg
-from scripts.systems.claw_system import ClawSystem
-from scripts.systems.swap_system import SwapSystem
 from scripts.systems.gnosis_safe_system import connect_gnosis_safe
 from scripts.systems.sett_system import deploy_controller, deploy_strategy
+from scripts.systems.swap_system import SwapSystem
 from scripts.systems.uniswap_system import UniswapSystem
-
-from rich.console import Console
 
 console = Console()
 
@@ -141,9 +132,8 @@ def print_to_file(badger, path):
     with open(path, "w") as f:
         f.write(json.dumps(system, indent=4, sort_keys=True))
 
-
 def connect_badger(
-    badger_deploy_file,
+    badger_deploy_file=False,
     load_deployer=False,
     load_keeper=False,
     load_guardian=False,
@@ -159,6 +149,9 @@ def connect_badger(
     guardian
 
     """
+
+    if not badger_deploy_file:
+        badger_deploy_file = network_manager.get_active_network_badger_deploy()
 
     badger_deploy = {}
     console.print(
@@ -228,9 +221,11 @@ def connect_badger(
     badger.connect_sett_system(badger_deploy["sett_system"], badger_deploy["geysers"])
 
     # Connect DIGG
-    if "digg" in badger_deploy:
+    if "digg_system" in badger_deploy:
         digg = connect_digg(badger_deploy_file)
         badger.add_existing_digg(digg)
+    else:
+        console.print("[yellow]No Digg found[/yellow]")
 
     return badger
 

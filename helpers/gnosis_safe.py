@@ -1,4 +1,5 @@
 from enum import Enum
+from helpers.token_utils import distribute_test_ether
 
 from brownie import *
 from rich.console import Console
@@ -55,6 +56,7 @@ class GnosisSafe:
         self.testMode = testMode
 
         if testMode and rpc.is_active():
+            distribute_test_ether(self.firstOwner, Wei("2 ether"))
             self.convert_to_test_mode()
 
     # Must be on Ganache instance and Gnosis safe must be --unlocked

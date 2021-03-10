@@ -1,4 +1,5 @@
 from dotmap import DotMap
+from helpers.registry.WhaleRegistryAction import WhaleRegistryAction
 
 bsc_registry = DotMap(
     gnosis_safe_registry=DotMap(
@@ -39,5 +40,11 @@ bsc_registry.tokens = DotMap(
     ),
 )
 
-bsc_registry.whale_registry = DotMap()
+bsc_registry.whale_registry = DotMap(
+    badger=DotMap(
+        whale=bsc_registry.pancake.masterChef,
+        token=bsc_registry.pancake.chefPairs.bnbBtcb,
+        action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT,
+    ),
+)
 

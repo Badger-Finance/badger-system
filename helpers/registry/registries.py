@@ -5,7 +5,7 @@ from helpers.registry.eth import eth_registry
 from helpers.registry.bsc import bsc_registry
 from helpers.registry.artifacts import artifacts
 
-from helpers.network import Chains, network_manager
+from helpers.network import network_manager
 from helpers.console_utils import console
 
 class ContractSystems(Enum):
@@ -27,7 +27,7 @@ class ContractRegistries:
 
     def __init__(self):
         self.registries = {}
-        self.registries[Chains.ETH] = DotMap(
+        self.registries["eth"] = DotMap(
             curve= eth_registry.curve_registry,
             uniswap= eth_registry.uniswap_registry,
             open_zeppelin= eth_registry.open_zeppelin_registry,
@@ -49,10 +49,11 @@ class ContractRegistries:
             multicall= bsc_registry.multicall_registry,
         )
 
-    def has_registry(self, chain: Chains):
+    def has_registry(self, chain: str):
         return chain in self.registries.keys()
 
-    def get_registry(self, chain: Chains):
+    def get_registry(self, chain: str):
+        console.print("get_registry", chain)
         return self.registries[chain]
 
     def get_active_chain_registry(self) -> DotMap:
