@@ -3,15 +3,14 @@ import math
 import json
 from rich.console import Console
 from assistant.subgraph.client import (
-    fetch_sett_balances,
-    fetch_geyser_events,
-    fetch_cream_balances,
     fetch_wallet_balances,
 )
 from collections import Counter, OrderedDict
 from assistant.rewards.rewards_utils import (
     combine_balances,
-    calc_balances_from_geyser_events,
+    calculate_sett_balances
+)
+from assistant.badger_api.prices import (
     fetch_token_price,
     fetch_sett_ppfs,
 )
@@ -20,7 +19,6 @@ console = Console()
 digg_token = "0x798D1bE841a82a273720CE31c822C61a67a601C3"
 badger_token = "0x3472A5A71965499acd81997a54BBA8D852C6E53d"
 MAX_MULTIPLIER = 3
-APPROVED_CONTRACTS = {}
 
 
 def convert_balances_to_usd(sett, name, settType, balances):
@@ -58,23 +56,6 @@ def calc_stake_ratio(address, diggSetts, badgerSetts, nonNativeSetts):
         return 0
     else:
         return (diggBalance + badgerBalance) / nonNativeBalance
-
-
-def calculate_sett_balances(badger, name, sett, currentBlock):
-    settBalances = fetch_sett_balances(sett.address.lower(), currentBlock)
-    settUnderlyingToken = interface.ERC20(sett.token())
-    geyserBalances = {}
-    creamBalances = {}
-    # Digg doesn't have a geyser so we have to ignore it
-    if name != "native.digg":
-        geyserEvents = fetch_geyser_events(
-            badger.getGeyser(name).address.lower(), currentBlock
-        )
-        geyserBalances = calc_balances_from_geyser_events(geyserEvents)
-
-    creamBalances = fetch_cream_balances("crB{}".format(settUnderlyingToken.symbol()))
-    return combine_balances([settBalances, geyserBalances, creamBalances])
-
 
 def calc_address_balances(address, diggSetts, badgerSetts, nonNativeSetts):
     diggBalance = 0
@@ -138,16 +119,13 @@ def get_balance_data(badger, currentBlock):
     sortedNonNative = OrderedDict(
         sorted(nonNativeSetts.items(), key=lambda t: stakeRatios[t[0]], reverse=True)
     )
-    console.log(sortedNonNative)
     nonNativeTotal = sum(sortedNonNative.values())
     for addr, nonNativeBalance in sortedNonNative.items():
         percentage = nonNativeBalance / nonNativeTotal
         sortedNonNative[addr] = percentage
-    console.log(sortedNonNative)
     cumulativePercentages = dict(
         zip(sortedNonNative.keys(), calc_cumulative(sortedNonNative.values()))
     )
-    console.log(cumulativePercentages)
     badgerBoost = dict(
         zip(cumulativePercentages.keys(), calc_boost(cumulativePercentages.values()))
     )
@@ -155,4 +133,6 @@ def get_balance_data(badger, currentBlock):
     console.log(len(badgerBoost))
     with open('badger-boost.json', 'w') as fp:
         json.dump(badgerBoost, fp)
+
+    return badgerBoost
 

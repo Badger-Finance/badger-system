@@ -1,3 +1,3 @@
 urls = {
-    "prices":"https://laiv44udi0.execute-api.us-west-1.amazonaws.com/staging/v2/protocol/sett"
+    "staging":"https://laiv44udi0.execute-api.us-west-1.amazonaws.com/staging/v2"
 }

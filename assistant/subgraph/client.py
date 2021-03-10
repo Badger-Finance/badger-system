@@ -3,7 +3,6 @@ from rich.console import Console
 from gql import gql, Client
 from gql.transport.aiohttp import AIOHTTPTransport
 from decimal import *
-import requests
 import json
 getcontext().prec = 20
 console = Console()

@@ -7,6 +7,7 @@ from assistant.subgraph.client import (
     fetch_sett_balances,
     fetch_sett_transfers,
     fetch_geyser_events,
+    fetch_cream_balances
 )
 from assistant.rewards.classes.User import User
 from assistant.rewards.classes.RewardsList import RewardsList
@@ -164,13 +165,19 @@ def combine_balances(balances):
     return allBalances
 
 
-def fetch_sett_ppfs(token):
-    response = requests.get("{}/protocol/sett".format(badger_api_url))
-    result = response.json()
-    sett = list(filter( lambda sett: sett["underlyingToken"] == token,result))
-    return sett[0]["ppfs"]
 
-def fetch_token_price(token):
-    response = requests.get("{}/price".format(badger_api_url))
-    result = response.json()
-    return result[token]
+
+def calculate_sett_balances(badger, name, sett, currentBlock):
+    settBalances = fetch_sett_balances(sett.address.lower(), currentBlock)
+    settUnderlyingToken = interface.ERC20(sett.token())
+    geyserBalances = {}
+    creamBalances = {}
+    # Digg doesn't have a geyser so we have to ignore it
+    if name != "native.digg":
+        geyserEvents = fetch_geyser_events(
+            badger.getGeyser(name).address.lower(), currentBlock
+        )
+        geyserBalances = calc_balances_from_geyser_events(geyserEvents)
+
+    creamBalances = fetch_cream_balances("crB{}".format(settUnderlyingToken.symbol()))
+    return combine_balances([settBalances, geyserBalances, creamBalances])
