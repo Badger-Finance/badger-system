@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from enum import Enum
 import json
 import os
@@ -28,14 +28,11 @@ from helpers.constants import MaxUint256
 from scripts.systems.sushiswap_system import SushiswapSystem
 from pycoingecko import CoinGeckoAPI
 
-cg = CoinGeckoAPI()
+coingecko = CoinGeckoAPI()
 console = Console()
 
 SUBGRAPH_URL_UNISWAP = "https://api.thegraph.com/subgraphs/name/uniswap/uniswap-v2"
 SUBGRAPH_URL_SUSHISWAP = "https://api.thegraph.com/subgraphs/name/dmihal/sushiswap"
-# WBTC-DIGG pair addresses
-PAIR_ADDRESS_UNISWAP = "0xe86204c4eddd2f70ee00ead6805f917671f56c52"
-PAIR_ADDRESS_SUSHISWAP = "0x9a13867048e01c663ce8ce2fe0cdae69ff9f35e3"
 
 
 def test_main():
@@ -43,21 +40,31 @@ def test_main():
 
 
 def fetch_average_price(oracle_subgraph: gql.Client, pair_address: str, num_hours: int) -> float:
-    start_time = int(datetime.now(timezone.utc).timestamp()) - hours(num_hours + 2)
-    query = gql.gql(f"""
+    start_time = datetime.now(timezone.utc).replace(minute=0, second=0, microsecond=0) - timedelta(hours=num_hours - 1)
+    query = f"""
     {{
-      pairHourDatas(where: {{pair: "{pair_address}" hourStartUnix_gte: {start_time}}}) {{
-        id
+      pairHourDatas(where: {{pair: "{pair_address.lower()}" hourStartUnix_gte: {int(start_time.timestamp())}}}) {{
         hourStartUnix
         reserve0
         reserve1
-        reserveUSD
       }}
-    }}
-    """)
-    data = oracle_subgraph.execute(query)["pairHourDatas"][-num_hours:]
-    # console.log(data)
-    return sum(float(price_point["reserve0"]) / float(price_point["reserve1"]) for price_point in data) / num_hours
+    }}"""
+    print(query)
+
+    data = [
+        {
+            "time": datetime.fromtimestamp(price_point['hourStartUnix'], tz=timezone.utc).
+                strftime('%Y-%m-%d %H:%M:%S'),
+            "digg": float(price_point["reserve0"]),
+            'wbtc': float(price_point["reserve1"])
+        }
+        for price_point in oracle_subgraph.execute(gql.gql(query))["pairHourDatas"]
+    ]
+    for price_point in data:
+        price_point["digg/wbtc"] = price_point["digg"] / price_point["wbtc"]
+    console.log(data)
+
+    return sum(price_point["digg/wbtc"] for price_point in data) / len(data)
 
 
 def main():
@@ -69,6 +76,12 @@ def main():
     badger = connect_badger("deploy-final.json")
     digg = connect_digg("deploy-final.json")
 
+    uniswap = UniswapSystem()
+    sushiswap = SushiswapSystem()
+
+    token_pair_uni = uniswap.getPair(digg.token, registry.tokens.wbtc)
+    token_pair_sushi = sushiswap.getPair(digg.token, registry.tokens.wbtc)
+
     # Sanity check file addresses
     expectedMultisig = "0xB65cef03b9B89f99517643226d76e286ee999e77"
     assert badger.devMultisig == expectedMultisig
@@ -78,7 +91,7 @@ def main():
 
     # Get price data from sushiswap, uniswap, and coingecko
 
-    digg_per_btc = cg.get_price(ids="digg", vs_currencies="btc")["digg"]["btc"]
+    digg_per_btc = coingecko.get_price(ids="digg", vs_currencies="btc")["digg"]["btc"]
 
     oracle_uniswap = gql.Client(
         transport=AIOHTTPTransport(url=SUBGRAPH_URL_UNISWAP),
@@ -88,26 +101,26 @@ def main():
         transport=AIOHTTPTransport(url=SUBGRAPH_URL_SUSHISWAP),
         fetch_schema_from_transport=True
     )
-    twap_uniswap = fetch_average_price(oracle_uniswap, PAIR_ADDRESS_UNISWAP, 24)
-    twap_sushiswap = fetch_average_price(oracle_sushiswap, PAIR_ADDRESS_SUSHISWAP, 24)
+    twap_uniswap = fetch_average_price(oracle_uniswap, token_pair_uni.address, 24)
+    twap_sushiswap = fetch_average_price(oracle_sushiswap, token_pair_sushi.address, 24)
     twap = (twap_uniswap + twap_sushiswap) / 2
     print(f'twap_uniswap = {twap_uniswap}\ntwap_sushiswap = {twap_sushiswap}\naverage = {twap}\n')
 
     supply_before = digg.token.totalSupply()
 
-    print("spfBefore", digg.token._sharesPerFragment())
-    print("supply_before", digg.token.totalSupply())
+    print("spf before", digg.token._sharesPerFragment())
+    print("supply before", digg.token.totalSupply())
 
-    marketValue = Wei(str(twap) + " ether")
+    market_value = Wei(str(twap) + " ether")
 
-    print(marketValue)
+    print(market_value)
 
-    print(int(marketValue * 10 ** 18))
+    print(int(market_value * 10 ** 18))
 
-    print("digg_per_btc", digg_per_btc, twap, marketValue)
+    print("digg_per_btc", digg_per_btc, twap, market_value)
 
-    centralizedMulti = GnosisSafe(digg.centralizedOracle)
-    
+    centralized_multi = GnosisSafe(digg.centralizedOracle)
+
     print(digg.marketMedianOracle.providerReports(digg.centralizedOracle, 0))
     print(digg.marketMedianOracle.providerReports(digg.centralizedOracle, 1))
 
@@ -116,20 +129,14 @@ def main():
 
     print(digg.cpiMedianOracle.getData.call())
 
-    sushi = SushiswapSystem()
-    pair = sushi.getPair(digg.token, registry.tokens.wbtc)
+    print("sushi pair before", token_pair_sushi.getReserves())
+    print("uni pair before", token_pair_uni.getReserves())
 
-    uni = UniswapSystem()
-    uniPair = uni.getPair(digg.token, registry.tokens.wbtc)
-
-    print("pair before", pair.getReserves())
-    print("uniPair before", uniPair.getReserves())
-
-    tx = centralizedMulti.execute(
+    tx = centralized_multi.execute(
         MultisigTxMetadata(description="Set Market Data"),
         {
             "to": digg.marketMedianOracle.address,
-            "data": digg.marketMedianOracle.pushReport.encode_input(marketValue),
+            "data": digg.marketMedianOracle.pushReport.encode_input(market_value),
         },
     )
     chain.mine()
@@ -143,17 +150,16 @@ def main():
     tx = digg.orchestrator.rebase({'from': badger.deployer})
     chain.mine()
 
-    supplyAfter = digg.token.totalSupply()
+    supply_after = digg.token.totalSupply()
 
-    print("spfAfter", digg.token._sharesPerFragment())
-    print("supplyAfter", supplyAfter)
-    print("supplyChange", supplyAfter / supply_before)
-    print("supplyChangeOtherWay", supply_before / supplyAfter )
+    print("spf after", digg.token._sharesPerFragment())
+    print("supply after", supply_after)
+    print("supply change", supply_after / supply_before)
+    print("supply change other way", supply_before / supply_after )
 
-    print("pair after", pair.getReserves())
-    print("uniPair after", uniPair.getReserves())
+    print("sushi pair after", token_pair_sushi.getReserves())
+    print("uni pair after", token_pair_uni.getReserves())
 
     # Make sure sync() was called on the pools from call trace or events
 
     # Call Sync manually as deployer
-
