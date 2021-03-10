@@ -48,7 +48,7 @@ interface IPancakeStaking {
     function poolInfo(uint256 _pid) external view returns (PoolInfo memory);
 
     // Info of each user that stakes LP tokens.
-    function userInfo(uint256 _pid, address _user) external view returns (UserInfo memory);
+    function userInfo(uint256 _pid, address _user) external view returns (uint256, uint256);
     
     // Total allocation poitns. Must be the sum of all allocation points in all pools.
     function totalAllocPoint() external returns(uint256);
