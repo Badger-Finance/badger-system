@@ -44,7 +44,7 @@ contract StrategyPancakeLpOptimizer is PancakeSwapper {
     IERC20Upgradeable public token0;
     IERC20Upgradeable public token1;
 
-    mapping (address => mapping (address => address[])) tokenSwapPaths;
+    mapping (address => mapping (address => address[])) public tokenSwapPaths;
 
     event HarvestState(
         uint256 cakeHarvested,
@@ -108,8 +108,9 @@ contract StrategyPancakeLpOptimizer is PancakeSwapper {
         performanceFeeStrategist = _feeConfig[1];
         withdrawalFee = _feeConfig[2];
 
-        // Approve Chef
+        // Approve Chef for want and cake staking
         IERC20Upgradeable(want).approve(address(chef), uint256(-1));
+        cake.approve(address(chef), uint256(-1));
     }
 
     /// ===== View Functions =====
@@ -140,7 +141,7 @@ contract StrategyPancakeLpOptimizer is PancakeSwapper {
         return true;
     }
 
-    function getTokenSwapPath(address tokenIn, address tokenOut) public returns(address[] memory) {
+    function getTokenSwapPath(address tokenIn, address tokenOut) public view returns(address[] memory) {
         return tokenSwapPaths[tokenIn][tokenOut];
     }
 

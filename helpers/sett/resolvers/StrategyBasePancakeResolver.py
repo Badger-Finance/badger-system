@@ -59,11 +59,12 @@ class StrategyBasePancakeResolver(StrategyCoreResolver):
         # Expect increase in staked Cake position in Chef if we have tended cake.
         event = tx.events["Tend"][0]
         if event["tended"] > 0:
+            console.print("Tend Event", event)
             # TODO: Ensure cake balance staked in chef increases 
-            console.print('Tend Results', {
-                'before': before.get("pancakeInfo.userInfo"),
-                'after': after.get("pancakeInfo.userInfo"),
-            })
+            # console.print('Tend Results', {
+            #     'before': before.get("pancakeInfo.userInfo"),
+            #     'after': after.get("pancakeInfo.userInfo"),
+            # })
 
     def add_entity_balances_for_tokens(self, calls, tokenKey, token, entities):
         super().add_entity_balances_for_tokens(calls, tokenKey, token, entities)

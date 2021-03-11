@@ -71,9 +71,8 @@ class Snap:
         return self.data["shares." + tokenKey + "." + accountKey]
 
     def get(self, key):
-
         if key not in self.data.keys():
-            assert False
+            raise Exception("Key {} not found in snap data".format(key))
         return self.data[key]
 
     # ===== Setters =====
