@@ -7,6 +7,7 @@ from rich.console import Console
 
 console = Console()
 digg_token = "0x798D1bE841a82a273720CE31c822C61a67a601C3"
+digg = interface.IDigg(digg_token)
 
 
 def calc_geyser_snapshot(badger, name, startBlock, endBlock, nextCycle):
@@ -21,24 +22,31 @@ def calc_geyser_snapshot(badger, name, startBlock, endBlock, nextCycle):
     unlockSchedules = {}
     for token in geyser.getDistributionTokens():
         unlockSchedules = parse_schedules(geyser.getUnlockSchedulesFor(token))
-        if token == digg_token:
-            console.log("Digg Rewards")
-        else:
-            console.log("Badger Rewards")
-            # Add peg based rewards here
         tokenDistribution = int(
             get_distributed_for_token_at(token, endTime, unlockSchedules, name)
             - get_distributed_for_token_at(token, startTime, unlockSchedules, name)
         )
         # Distribute to users with rewards list
-        # Make sure there are tokens to distribute (some geyser only 
+        # Make sure there are tokens to distribute (some geysers only 
         # distribute one token)
+        if token == digg_token:
+            console.log(
+                "{} DIGG tokens distributed".format(
+                digg.sharesToFragments(tokenDistribution)/1e18)
+            )
+        else:
+            console.log(
+                "{} Badger tokens distributed".format(
+                tokenDistribution/1e18)
+            )
+ 
         if tokenDistribution > 0:
-            rewardsUnit = sum(balances.values()) / tokenDistribution
+            rewardsUnit = tokenDistribution/sum(balances.values())
             for addr, balance in balances.items():
                 #  Add badger boost here (for non native setts)
-                rewards.increase_user_rewards(addr, token, balance * rewardsUnit)
+                rewards.increase_user_rewards(addr, token, balance*rewardsUnit)
 
+    console.log(sum([list(v.values())[0]/1e18 for v in list(rewards.claims.values())  ]) )
     return rewards
 
 

@@ -135,20 +135,20 @@ def fetch_current_rewards_tree(badger, print_output=False):
         "[bold yellow]===== Loading Past Rewards " + pastFile + " =====[/bold yellow]"
     )
     pastFile = "rewards-1-0x9be51936a17545ba8d70abb3513e9fa3ff6c2ccda281909262920f4f180e282f.json"
-    currentTree = download(pastFile)
+    currentTree = json.loads(download(pastFile))
 
-    # Invariant: File shoulld have same root as latest
-    #assert currentTree["merkleRoot"] == merkle["root"]
-
+    # Invariant: File should have same root as latest
+    assert currentTree["merkleRoot"] == merkle["root"]
+    console.log(currentTree["endBlock"])
     lastUpdateOnChain = merkle["blockNumber"]
     lastUpdate = int(currentTree["endBlock"])
 
     print("lastUpdateOnChain ", lastUpdateOnChain, " lastUpdate ", lastUpdate)
     # Ensure file tracks block within 1 day of upload
-    # assert abs(lastUpdate - lastUpdateOnChain) < 6500
+    assert abs(lastUpdate - lastUpdateOnChain) < 6500
 
     # Ensure upload was after file tracked
-    #assert lastUpdateOnChain >= lastUpdate
+    assert lastUpdateOnChain >= lastUpdate
     return currentTree
 
 
