@@ -39,11 +39,12 @@ def calc_geyser_rewards(badger, periodStartBlock, endBlock, cycle):
 
     # For each Geyser, get a list of user to weights
     for key, geyser in badger.geysers.items():
-        if key != "native.badger":
-            continue
+        #if key != "native.badger":
+        #    continue
         geyserRewards = calc_geyser_snapshot(badger, key, periodStartBlock, endBlock,cycle)
         rewardsByGeyser[key] = geyserRewards
-    return sum_rewards(rewardsByGeyser, cycle, badger.badgerTree)
+    #return sum_rewards(rewardsByGeyser, cycle, badger.badgerTree)
+    return combine_rewards(list(rewardsByGeyser.values()),cycle,badger.badgerTree)
 
 
 def fetchPendingMerkleData(badger):
@@ -158,18 +159,19 @@ def generate_rewards_in_range(badger, startBlock, endBlock, pastRewards):
 
     currentMerkleData = fetchCurrentMerkleData(badger)
 
-    farmRewards = calc_farm_rewards(
-        badger, startBlock, endBlock, nextCycle, retroactive=False
-    )
-    sushiRewards = calc_all_sushi_rewards(
-        badger, startBlock, endBlock, nextCycle, retroactive=False
-    )
     geyserRewards = calc_geyser_rewards(badger, startBlock, endBlock, nextCycle)
+
+    #farmRewards = calc_farm_rewards(
+    #    badger, startBlock, endBlock, nextCycle, retroactive=False
+    #)
+    #sushiRewards = calc_all_sushi_rewards(
+    #    badger, startBlock, endBlock, nextCycle, retroactive=False
+    #)
 
     rewardsLogger.save("rewards")
 
     newRewards = combine_rewards(
-        [geyserRewards, farmRewards, sushiRewards], nextCycle, badger.badgerTree
+        [geyserRewards], nextCycle, badger.badgerTree
     )
     cumulativeRewards = process_cumulative_rewards(pastRewards, newRewards)
 

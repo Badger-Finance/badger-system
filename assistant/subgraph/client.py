@@ -118,7 +118,6 @@ def fetch_geyser_events(geyserId, startBlock):
             lastStakedId = newStakes[-1]["id"]
         if len(newUnstakes) > 0:
             lastUnstakedId = newUnstakes[-1]["id"]
-        console.log("Querying events...")
 
         stakes.extend(newStakes)
         unstakes.extend(newUnstakes)

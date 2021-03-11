@@ -160,6 +160,7 @@ def calc_balances_from_geyser_events(geyserEvents):
         balances[event["user"]] = int(event["total"])
 
     console.log("Sum of geyser balances: {}".format(sum(balances.values()) / 10 ** 18))
+    console.log("Fetched {} geyser balances".format(len(balances)))
     return balances
 
 def combine_balances(balances):

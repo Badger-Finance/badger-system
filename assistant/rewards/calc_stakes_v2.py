@@ -1,10 +1,16 @@
 from assistant.rewards.rewards_utils import calculate_sett_balances
 from assistant.rewards.classes.RewardsList import RewardsList
+from helpers.time_utils import days,to_days,to_hours,to_utc_date
+from dotmap import DotMap
 from brownie import *
+from rich.console import Console
+
+console = Console()
 digg_token = "0x798D1bE841a82a273720CE31c822C61a67a601C3"
 
 
 def calc_geyser_snapshot(badger, name, startBlock, endBlock, nextCycle):
+    console.log("Processing rewards for {}".format(name))
     rewards = RewardsList(nextCycle, badger.badgerTree)
     sett = badger.getSett(name)
     geyser = badger.getGeyser(name)
@@ -14,34 +20,76 @@ def calc_geyser_snapshot(badger, name, startBlock, endBlock, nextCycle):
     balances = calculate_sett_balances(badger, name, sett, endBlock)
     unlockSchedules = {}
     for token in geyser.getDistributionTokens():
-        unlockSchedules = geyser.getUnlockSchedulesFor(token)
+        unlockSchedules = parse_schedules(geyser.getUnlockSchedulesFor(token))
         if token == digg_token:
-            pass
+            console.log("Digg Rewards")
+        else:
+            console.log("Badger Rewards")
             # Add peg based rewards here
         tokenDistribution = int(
-            get_distributed_for_token_at(token, endTime, unlockSchedules)
-            - get_distributed_for_token_at(token, startTime, unlockSchedules)
+            get_distributed_for_token_at(token, endTime, unlockSchedules, name)
+            - get_distributed_for_token_at(token, startTime, unlockSchedules, name)
         )
-        rewardsUnit = sum(balances.values()) / tokenDistribution
-        ## Distribute to users with rewards list
-        for addr, balance in balances.items():
-            #  Add badger boost here (for non native setts)
-            rewards.increase_user_rewards(addr, token, balance * rewardsUnit)
+        # Distribute to users with rewards list
+        # Make sure there are tokens to distribute (some geyser only 
+        # distribute one token)
+        if tokenDistribution > 0:
+            rewardsUnit = sum(balances.values()) / tokenDistribution
+            for addr, balance in balances.items():
+                #  Add badger boost here (for non native setts)
+                rewards.increase_user_rewards(addr, token, balance * rewardsUnit)
 
     return rewards
 
 
-def get_distributed_for_token_at(token, endTime, schedules):
+def get_distributed_for_token_at(token, endTime, schedules, name):
+    totalToDistribute = 0
     for index, schedule in enumerate(schedules):
-        if endTime < schedule.startTime:
+        if endTime < schedule["startTime"]:
             toDistribute = 0
-            console.log("\nSchedule {} for {} completed".format(index, name))
+            console.log("\nSchedule {} for {} completed\n".format(index, name))
         else:
-            rangeDuration = endTime - schedule.startTime
+            rangeDuration = endTime - schedule["startTime"]
             toDistribute = min(
-                schedule.initialTokensLocked,
-                int(schedule.initalTokensLocked * rangeDuration // schedule.duration),
+                schedule["initialTokensLocked"],
+                int(
+                    schedule["initialTokensLocked"]
+                    * rangeDuration
+                    // schedule["duration"]
+                ),
             )
+            if schedule["startTime"] <= endTime and schedule["endTime"] >= endTime:
+                console.log("Tokens distributed by schedule {} at {} are {} out of {}, or {}% of total\n"
+                .format(
+                        index,
+                        to_utc_date(schedule["startTime"]),
+                        toDistribute,
+                        schedule["initialTokensLocked"],
+                        (int(toDistribute)/int(schedule["initialTokensLocked"])) * 100
+                    )
+                )
+                console.log(
+                            "Total duration of schedule elapsed is {} hours out of {} hours, or {}% of total duration.\n"
+                            .format(
+                                to_hours(rangeDuration),
+                                to_hours(schedule["duration"]),
+                                rangeDuration / schedule["duration"] * 100
+                            )
+                        )
+            
         totalToDistribute += toDistribute
-
     return totalToDistribute
+
+
+def parse_schedules(schedules):
+    parsedSchedules = []
+    for schedule in schedules:
+        parsedSchedules.append(
+            {
+                "initialTokensLocked": schedule[0],
+                "endTime": schedule[1],
+                "duration": schedule[2],
+                "startTime": schedule[3],
+            }
+        )
+    return parsedSchedules
