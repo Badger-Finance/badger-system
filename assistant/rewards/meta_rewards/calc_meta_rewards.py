@@ -6,17 +6,19 @@ from assistant.rewards.rewards_utils import get_latest_event_block,calc_meta_far
 from rich.console import Console
 console = Console()
 def calc_rewards(badger,start,end,nextCycle,events,name,token,retroactive,retroactiveStart):
+    
     def filter_events(e):
         return int(e["blockNumber"]) > start and int(e["blockNumber"]) < end
     
-    events = list(filter(filter_events,events))
+    filteredEvents = list(filter(filter_events,events))
     rewards = RewardsList(nextCycle,badger.badgerTree)
-    if len(events) > 0:
-        console.log("{} events to process for {}".format(len(events),name))
-        startBlock = get_latest_event_block(events[0],events)
+    if len(filteredEvents) > 0:
+        console.log(filteredEvents)
+        console.log("{} events to process for {}".format(len(filteredEvents),name))
+        startBlock = get_latest_event_block(filteredEvents[0],events)
         if retroactive:
             startBlock = retroactiveStart 
-        rewards = process_rewards(badger,startBlock,end,events,name,nextCycle,token)
+        rewards = process_rewards(badger,startBlock,end,filteredEvents,name,nextCycle,token)
     else:
         console.log("No events to process")
     return rewards

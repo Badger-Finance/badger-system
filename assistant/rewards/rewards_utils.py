@@ -74,17 +74,21 @@ def get_latest_event_block(firstEvent,events):
         event_index = events.index(firstEvent)
     except ValueError:
         return -1
-    if event_index - 1 >= 0 and event_index - 1 < len(harvestEvents):
+    if event_index - 1 >= 0 and event_index - 1 < len(events):
         # startBlock starts with the last harvest that happened 
-        latestEvent = harvestEvents[event_index - 1] 
+        latestEvent = events[event_index - 1] 
         return latestEvent["blockNumber"]
     else:
         return -1
 
 def calc_meta_farm_rewards(badger,name, startBlock, endBlock):
     console.log("Calculating rewards between {} and {}".format(startBlock,endBlock))
+    startBlock = int(startBlock)
+    endBlock = int(endBlock)
     startBlockTime = web3.eth.getBlock(startBlock)["timestamp"]
     endBlockTime = web3.eth.getBlock(endBlock)["timestamp"]
+    console.log(startBlockTime)
+    console.log(endBlockTime)
     settId = badger.getSett(name).address.lower()
     geyserId = badger.getGeyser(name).address.lower()
 

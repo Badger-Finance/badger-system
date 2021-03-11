@@ -2,6 +2,7 @@ import boto3
 from brownie import *
 import requests
 from rich.console import Console
+import json
 
 console = Console()
 
@@ -19,8 +20,11 @@ def download(fileName):
     #s3_clientdata = s3_clientobj["Body"].read().decode("utf-8")
 
     #return s3_clientdata
-    url = "https://d5haax09x7ee2.cloudfront.net/rewards/{}".format(fileName)
-    return requests.get(url=url).json()
+    #url = "https://d5haax09x7ee2.cloudfront.net/rewards/{}".format(fileName)
+    #return requests.get(url=url).json()
+    with open(fileName) as f:
+        return json.load(f)
+
 
 
 def upload(fileName):

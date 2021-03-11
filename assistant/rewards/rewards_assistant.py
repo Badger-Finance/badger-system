@@ -6,15 +6,16 @@ from helpers.time_utils import to_hours
 from rich.console import Console
 from tqdm import tqdm
 
-from assistant.rewards.aws_utils import download,upload
+from assistant.rewards.aws_utils import download, upload
 from assistant.rewards.calc_stakes import calc_geyser_stakes
+from assistant.rewards.calc_stakes_v2 import calc_geyser_snapshot
 from assistant.rewards.meta_rewards.harvest import calc_farm_rewards
 from assistant.rewards.meta_rewards.sushi import calc_all_sushi_rewards
 from assistant.rewards.rewards_utils import (
     sum_rewards,
     keccak,
     process_cumulative_rewards,
-    combine_rewards
+    combine_rewards,
 )
 from assistant.rewards.classes.User import User
 from assistant.rewards.classes.MerkleTree import rewards_to_merkle_tree
@@ -38,15 +39,15 @@ def calc_geyser_rewards(badger, periodStartBlock, endBlock, cycle):
 
     # For each Geyser, get a list of user to weights
     for key, geyser in badger.geysers.items():
-        #if key != "native.badger":
-        #      continue
-        geyserRewards = calc_geyser_stakes(key, geyser, periodStartBlock, endBlock)
+        if key != "native.badger":
+            continue
+        geyserRewards = calc_geyser_snapshot(badger, key, periodStartBlock, endBlock,cycle)
         rewardsByGeyser[key] = geyserRewards
     return sum_rewards(rewardsByGeyser, cycle, badger.badgerTree)
 
 
 def fetchPendingMerkleData(badger):
-    # currentMerkleData = badger.badgerTree.getPendingMerkleData()    
+    # currentMerkleData = badger.badgerTree.getPendingMerkleData()
     # root = str(currentMerkleData[0])
     # contentHash = str(currentMerkleData[1])
     # lastUpdateTime = currentMerkleData[2]
@@ -129,15 +130,14 @@ def fetch_current_rewards_tree(badger, print_output=False):
     merkle = fetchCurrentMerkleData(badger)
     pastFile = "rewards-1-" + str(merkle["contentHash"]) + ".json"
 
-
     console.print(
         "[bold yellow]===== Loading Past Rewards " + pastFile + " =====[/bold yellow]"
     )
-
+    pastFile = "rewards-1-0x9be51936a17545ba8d70abb3513e9fa3ff6c2ccda281909262920f4f180e282f.json"
     currentTree = download(pastFile)
 
     # Invariant: File shoulld have same root as latest
-    assert currentTree["merkleRoot"] == merkle["root"]
+    #assert currentTree["merkleRoot"] == merkle["root"]
 
     lastUpdateOnChain = merkle["blockNumber"]
     lastUpdate = int(currentTree["endBlock"])
@@ -147,7 +147,7 @@ def fetch_current_rewards_tree(badger, print_output=False):
     # assert abs(lastUpdate - lastUpdateOnChain) < 6500
 
     # Ensure upload was after file tracked
-    assert lastUpdateOnChain >= lastUpdate
+    #assert lastUpdateOnChain >= lastUpdate
     return currentTree
 
 
@@ -158,23 +158,24 @@ def generate_rewards_in_range(badger, startBlock, endBlock, pastRewards):
 
     currentMerkleData = fetchCurrentMerkleData(badger)
 
-    farmRewards = calc_farm_rewards(badger,startBlock,endBlock,nextCycle,retroactive=False)
-    sushiRewards = calc_all_sushi_rewards(badger,startBlock,endBlock,nextCycle,retroactive=False)
-
+    farmRewards = calc_farm_rewards(
+        badger, startBlock, endBlock, nextCycle, retroactive=False
+    )
+    sushiRewards = calc_all_sushi_rewards(
+        badger, startBlock, endBlock, nextCycle, retroactive=False
+    )
     geyserRewards = calc_geyser_rewards(badger, startBlock, endBlock, nextCycle)
 
     rewardsLogger.save("rewards")
 
-    newRewards = combine_rewards([geyserRewards,farmRewards,sushiRewards],nextCycle,badger.badgerTree)
+    newRewards = combine_rewards(
+        [geyserRewards, farmRewards, sushiRewards], nextCycle, badger.badgerTree
+    )
     cumulativeRewards = process_cumulative_rewards(pastRewards, newRewards)
 
     # Take metadata from geyserRewards
     console.print("Processing to merkle tree")
-    merkleTree = rewards_to_merkle_tree(
-        cumulativeRewards, startBlock, endBlock, {}
-    )
-
-    
+    merkleTree = rewards_to_merkle_tree(cumulativeRewards, startBlock, endBlock, {})
 
     # Publish data
     rootHash = keccak(merkleTree["merkleRoot"])
@@ -194,13 +195,13 @@ def generate_rewards_in_range(badger, startBlock, endBlock, pastRewards):
     print("Uploading to file " + contentFileName)
     # TODO: Upload file to AWS & serve from server
     with open(contentFileName, "w") as outfile:
-        json.dump(merkleTree, outfile,indent=4)
+        json.dump(merkleTree, outfile, indent=4)
 
     with open(contentFileName) as f:
         after_file = json.load(f)
 
     # Sanity check new rewards file
-    
+
     verify_rewards(
         badger,
         startBlock,
@@ -308,9 +309,13 @@ def guardian(badger: BadgerSystem, startBlock, endBlock, pastRewards, test=False
 
 def run_action(badger, args, test):
     if args["action"] == "rootUpdater":
-        return rootUpdater(badger, args["startBlock"], args["endBlock"], args["pastRewards"], test)
+        return rootUpdater(
+            badger, args["startBlock"], args["endBlock"], args["pastRewards"], test
+        )
     if args["action"] == "guardian":
-        return guardian(badger, args["startBlock"], args["endBlock"], args["pastRewards"], test)
+        return guardian(
+            badger, args["startBlock"], args["endBlock"], args["pastRewards"], test
+        )
     return False
 
 
