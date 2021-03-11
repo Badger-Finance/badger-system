@@ -178,16 +178,32 @@ def connect_badger(
         load_method=load_method,
     )
 
-    badger.globalStartBlock = badger_deploy["globalStartBlock"]
+    # badger.globalStartBlock = badger_deploy["globalStartBlock"]
+
+    dev_proxy_admin = None
+    dao_proxy_admin = None
+    ops_proxy_admin = None
+
+    if "devProxyAdmin" in badger_deploy:
+        dev_proxy_admin = badger_deploy["devProxyAdmin"]
+
+    if "daoProxyAdmin" in badger_deploy:
+        dao_proxy_admin = badger_deploy["daoProxyAdmin"]
+
+    if "opsProxyAdmin" in badger_deploy:
+        ops_proxy_admin = badger_deploy["opsProxyAdmin"]
 
     badger.connect_proxy_admins(
-        badger_deploy["devProxyAdmin"],
-        badger_deploy["daoProxyAdmin"],
-        badger_deploy["opsProxyAdmin"],
+        dev_proxy_admin,
+        dao_proxy_admin,
+        ops_proxy_admin
     )
 
     badger.connect_multisig(badger_deploy["devMultisig"])
     badger.connect_ops_multisig(badger_deploy["opsMultisig"])
+
+    if "dao" in badger_deploy:
+        badger.connect_dao()
 
     if "treasuryMultisig" in badger_deploy:
         badger.connect_treasury_multisig(badger_deploy["treasuryMultisig"])
@@ -195,7 +211,6 @@ def connect_badger(
     badger.connect_logic(badger_deploy["logic"])
 
     # badger.connect_dev_multisig(badger_deploy["devMultisig"])
-    badger.connect_uni_badger_wbtc_lp(badger_deploy["uniBadgerWbtcLp"])
 
     # Connect Vesting / Rewards Infrastructure
     if "teamVesting" in badger_deploy:
@@ -218,7 +233,10 @@ def connect_badger(
         badger.connect_unlock_scheduler(badger_deploy["unlockScheduler"])
 
     # Connect Sett
-    badger.connect_sett_system(badger_deploy["sett_system"], badger_deploy["geysers"])
+    if "geysers" in badger_deploy:
+        badger.connect_sett_system(badger_deploy["sett_system"], geysers=badger_deploy["geysers"])
+    else:
+        badger.connect_sett_system(badger_deploy["sett_system"], geysers=None)
 
     # Connect DIGG
     if "digg_system" in badger_deploy:
@@ -288,19 +306,6 @@ class BadgerSystem:
             self.devProxyAdmin = deploy_proxy_admin(deployer)
             self.daoProxyAdmin = deploy_proxy_admin(deployer)
             self.proxyAdmin = self.devProxyAdmin
-        else:
-            abi = artifacts.open_zeppelin["ProxyAdmin"]["abi"]
-            self.devProxyAdmin = Contract.from_abi(
-                "ProxyAdmin",
-                web3.toChecksumAddress("0x20dce41acca85e8222d6861aa6d23b6c941777bf"),
-                abi,
-            )
-            self.daoProxyAdmin = Contract.from_abi(
-                "ProxyAdmin",
-                web3.toChecksumAddress("0x11a9d034b1bbfbbdcac9cb3b86ca7d5df05140f2"),
-                abi,
-            )
-            self.proxyAdmin = self.devProxyAdmin
 
         self.strategy_artifacts = DotMap()
         self.logic = DotMap()
@@ -308,9 +313,6 @@ class BadgerSystem:
             controllers=DotMap(), vaults=DotMap(), strategies=DotMap(), rewards=DotMap()
         )
         self.geysers = DotMap()
-
-        self.connect_dao()
-        self.connect_uniswap()
 
         self.globalStartTime = badger_config.globalStartTime
         self.globalStartBlock = badger_config.globalStartBlock
@@ -1056,6 +1058,9 @@ class BadgerSystem:
                 if priv
                 else accounts.load(input("guardian account: "))
             )
+    
+    def setStrategy(self, id, strategy):
+        self.sett_system.strategies[id] = strategy
 
     # ===== Getters =====
 

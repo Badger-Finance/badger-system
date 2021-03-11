@@ -10,6 +10,12 @@ console = Console()
 
 
 class StrategyBasePancakeResolver(StrategyCoreResolver):
+    def __init__(self, manager):
+        self.manager = manager
+        strategy = self.manager.strategy
+        self.cakePid = strategy.cakePid()
+        self.wantPid = strategy.wantPid()
+
     def confirm_harvest(self, before, after, tx):
         console.print("=== Compare Harvest Basse ===")
         self.confirm_harvest_events(before, after, tx)
@@ -60,7 +66,6 @@ class StrategyBasePancakeResolver(StrategyCoreResolver):
             })
 
     def add_entity_balances_for_tokens(self, calls, tokenKey, token, entities):
-        entities['badgerTree'] = self.manager.strategy.badgerTree()
         super().add_entity_balances_for_tokens(calls, tokenKey, token, entities)
         return calls
 
@@ -68,28 +73,38 @@ class StrategyBasePancakeResolver(StrategyCoreResolver):
         super().add_balances_snap(calls, entities)
         strategy = self.manager.strategy
 
-        sushi = interface.IERC20(strategy.sushi())
-        xsushi = interface.IERC20(strategy.xsushi())
+        cake = interface.IERC20(strategy.cake())
+        syrup = interface.IERC20(strategy.syrup())
 
-        calls = self.add_entity_balances_for_tokens(calls, "sushi", sushi, entities)
-        calls = self.add_entity_balances_for_tokens(calls, "xsushi", xsushi, entities)
+        calls = self.add_entity_balances_for_tokens(calls, "cake", cake, entities)
+        calls = self.add_entity_balances_for_tokens(calls, "syrup", syrup, entities)
         return calls
 
-    def add_strategy_snap(self, calls):
+    def add_strategy_snap(self, calls, entities=None):
         strategy = self.manager.strategy
         pancake_chef_address = strategy.chef()
 
         super().add_strategy_snap(calls)
-        calls.append(
-            Call(
-                pancake_chef_address,
-                [func.pancakeChef.userInfo, strategy.address],
-                [["pancakeChef.userInfo", as_wei]],
-            )
-        )
+
+        if entities:
+            for entityKey, entity in entities.items():
+                calls.append(
+                    Call(
+                        pancake_chef_address,
+                        [func.pancakeChef.userInfo, self.wantPid, entity],
+                        [["pancakeChef.userInfo.want." + entityKey , as_wei]],
+                    )
+                )
+                calls.append(
+                    Call(
+                        pancake_chef_address,
+                        [func.pancakeChef.userInfo, self.cakePid, entity],
+                        [["pancakeChef.userInfo.cake." + entityKey, as_wei]],
+                    )
+                )
 
         return calls
 
     def get_strategy_destinations(self):
         strategy = self.manager.strategy
-        return {"chef": strategy.chef(), "bar": strategy.xsushi()}
+        return {"chef": strategy.chef()}

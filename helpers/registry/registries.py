@@ -47,6 +47,7 @@ class ContractRegistries:
             gnosis_safe= bsc_registry.gnosis_safe_registry,
             tokens= bsc_registry.token_registry,
             multicall= bsc_registry.multicall_registry,
+            whales= bsc_registry.whale_registry,
         )
 
     def has_registry(self, chain: str):

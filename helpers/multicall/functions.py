@@ -65,7 +65,7 @@ diggFaucet = DotMap(
 )
 pancakeChef = DotMap(
     pendingCake="pendingCake(uint256,uint256)(uint256)",
-    userInfo="userInfo(uint256,uint256)(uint256,uint256)",
+    userInfo="userInfo(uint256,address)(uint256,uint256)",
 )
 
 func = DotMap(

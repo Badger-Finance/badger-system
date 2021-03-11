@@ -14,12 +14,8 @@ bsc_registry = DotMap(
         masterChef="0x73feaa1eE314F8c655E354234017bE2193C9E24E",
         factoryV2="0xBCfCcbde45cE874adCB698cC183deBcF17952812",
         routerV2="0x05fF2B0DB69458A0750badebc4f9e13aDd608C7F",
-        chefPairs=DotMap(
-            bnbBtcb="0x7561EEe90e24F3b348E1087A005F78B4c8453524"
-        ),
-        chefPids=DotMap(
-            bnbBtcb=15,
-        )
+        chefPairs=DotMap(bnbBtcb="0x7561EEe90e24F3b348E1087A005F78B4c8453524"),
+        chefPids=DotMap(bnbBtcb=15),
     ),
     multicall=DotMap(multicall="0xE1dDc30f691CA671518090931e3bFC1184BFa4Aa",),
     sushi=DotMap(
@@ -31,14 +27,18 @@ bsc_registry = DotMap(
         lpTokens=DotMap(sushiBadgerWBtc="", sushiWbtcWeth="",),
         pids=DotMap(sushiBadgerWBtc=0, sushiEthWBtc=0),
     ),
-)
-
-bsc_registry.tokens = DotMap(
-    DotMap(
+    token_registry=DotMap(
+        bnb="0x7561EEe90e24F3b348E1087A005F78B4c8453524",
         btcb="0x7130d2a12b9bcbfae4f2634d864a1ee1ce3ead9c",
         usdc="0x8ac76a51cc950d9822d68b83fe1ad97b32cd580d",
-    ),
+    )
 )
+
+# bsc_registry.tokens = DotMap(
+#     bnb="0x7561EEe90e24F3b348E1087A005F78B4c8453524",
+#     btcb="0x7130d2a12b9bcbfae4f2634d864a1ee1ce3ead9c",
+#     usdc="0x8ac76a51cc950d9822d68b83fe1ad97b32cd580d",
+# )
 
 bsc_registry.whale_registry = DotMap(
     badger=DotMap(

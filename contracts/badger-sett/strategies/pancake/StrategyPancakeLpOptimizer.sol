@@ -102,7 +102,7 @@ contract StrategyPancakeLpOptimizer is PancakeSwapper {
         token0 = IERC20Upgradeable(_wantConfig[1]);
         token1 = IERC20Upgradeable(_wantConfig[2]);
 
-        wantPid - _wantPid;
+        wantPid = _wantPid;
 
         performanceFeeGovernance = _feeConfig[0];
         performanceFeeStrategist = _feeConfig[1];
@@ -118,7 +118,7 @@ contract StrategyPancakeLpOptimizer is PancakeSwapper {
     }
 
     function getName() external override pure returns (string memory) {
-        return "StrategySushiBadgerWbtc";
+        return "StrategyPancakeLpOptimizer";
     }
 
     function balanceOfPool() public override view returns (uint256) {
