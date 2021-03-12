@@ -2,7 +2,7 @@ import json
 from typing import Any
 
 from tqdm import tqdm
-from assistant.rewards.aws_utils import download,upload
+from assistant.rewards.aws_utils import download, download_bucket ,upload
 from assistant.rewards.calc_stakes import calc_geyser_stakes
 from assistant.rewards.calc_harvest import calc_balances_from_geyser_events,get_initial_user_state
 from assistant.rewards.RewardsLogger import rewardsLogger
@@ -119,7 +119,6 @@ def calc_sushi_rewards(badger,startBlock,endBlock,nextCycle,retroactive):
             badger,wbtcDiggStartBlock,endBlock,wBtcDiggEvents,"native.sushiDiggWbtc",nextCycle
         )
 
-    # TODO: Add digg sushi strategy
     finalRewards = combine_rewards([wbtcEthRewards,wbtcBadgerRewards,wbtcDiggRewards],nextCycle,badger.badgerTree)
     xSushiFromRewards = 0
 
@@ -374,7 +373,7 @@ def fetch_pending_rewards_tree(badger, print_output=False):
             "[green]===== Loading Pending Rewards " + pastFile + " =====[/green]"
         )
 
-    currentTree = json.loads(download(pastFile))
+    currentTree = json.loads(download_bucket(pastFile))
 
     # Invariant: File shoulld have same root as latest
     assert currentTree["merkleRoot"] == merkle["root"]
@@ -407,9 +406,13 @@ def fetch_current_rewards_tree(badger, print_output=False):
         "[bold yellow]===== Loading Past Rewards " + pastFile + " =====[/bold yellow]"
     )
 
-    currentTree = download(pastFile)
+    currentTree = json.loads(download_bucket(pastFile))
 
     # Invariant: File shoulld have same root as latest
+    console.print(merkle)
+    console.print("liveRoot", merkle["root"])
+    console.print("fileRoot", currentTree["merkleRoot"])
+
     assert currentTree["merkleRoot"] == merkle["root"]
 
     lastUpdateOnChain = merkle["blockNumber"]
@@ -430,23 +433,20 @@ def generate_rewards_in_range(badger, startBlock, endBlock, pastRewards):
     nextCycle = getNextCycle(badger)
 
     currentMerkleData = fetchCurrentMerkleData(badger)
+    #sushiRewards = calc_sushi_rewards(badger,startBlock,endBlock,nextCycle,retroactive=False)
+    #farmRewards = fetch_current_harvest_rewards(badger,startBlock, endBlock,nextCycle)
 
     geyserRewards = calc_geyser_rewards(badger, startBlock, endBlock, nextCycle)
-
     rewardsLogger.save("rewards")
-    sushiRewards = calc_sushi_rewards(badger,startBlock,endBlock,nextCycle,retroactive=False)
-    farmRewards = fetch_current_harvest_rewards(badger,startBlock, endBlock,nextCycle)
 
-    newRewards = combine_rewards([geyserRewards,farmRewards,sushiRewards],nextCycle,badger.badgerTree)
-    cumulativeRewards = process_cumulative_rewards(pastRewards, newRewards)
+    #newRewards = combine_rewards([geyserRewards,farmRewards,sushiRewards],nextCycle,badger.badgerTree)
+    cumulativeRewards = process_cumulative_rewards(pastRewards, geyserRewards)
 
     # Take metadata from geyserRewards
     console.print("Processing to merkle tree")
     merkleTree = rewards_to_merkle_tree(
         cumulativeRewards, startBlock, endBlock, {}
     )
-
-    
 
     # Publish data
     rootHash = hash(merkleTree["merkleRoot"])
@@ -525,7 +525,7 @@ def rootUpdater(badger, startBlock, endBlock, pastRewards, test=False):
 
     console.print("===== Root Updater Complete =====")
     if not test:
-        upload(contentFileName)
+        upload(rewards_data["contentFileName"])
         badgerTree.proposeRoot(
             rewards_data["merkleTree"]["merkleRoot"],
             rewards_data["rootHash"],

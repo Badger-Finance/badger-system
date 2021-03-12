@@ -1,12 +1,12 @@
+from assistant.rewards.rewards_checker import val
 from brownie import *
 from brownie.network.gas.strategies import GasNowStrategy
+from helpers.gas_utils import gas_strategies
 from rich.console import Console
 from scripts.systems.badger_system import BadgerSystem, connect_badger
 from tabulate import tabulate
 
-from assistant.rewards.rewards_checker import val
-
-gas_strategy = GasNowStrategy("fast")
+gas_strategies.set_default(gas_strategies.exponentialScaling)
 
 console = Console()
 
@@ -26,7 +26,7 @@ def tend_all(badger: BadgerSystem, skip):
         fpps_before = vault.getPricePerFullShare()
 
         keeper = accounts.at(strategy.keeper())
-        strategy.tend({"from": keeper, "gas_price": gas_strategy})
+        strategy.tend({"from": keeper})
 
         table.append(
             [

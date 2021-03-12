@@ -10,9 +10,11 @@ from helpers.utils import val
 
 console = Console()
 
+
 class Balances:
     def __init__(self):
         self.balances = {}
+
     def set(self, token, account, value):
         if token.address not in self.balances:
             print(set)
@@ -20,7 +22,21 @@ class Balances:
         self.balances[token.address][account.address] = value
 
     def get(self, token, account):
-        return self.balances[token.address][account.address]
+        return self.balances[token][account]
+
+    def print(self):
+        table = []
+        for token, accounts in self.balances.items():
+            for account, value in accounts.items():
+                table.append(
+                    [
+                        account,
+                        val(value, decimals=token_metadata.get_decimals(token)),
+                        token_metadata.get_symbol(token),
+                    ]
+                )
+
+        print(tabulate(table, headers=["account", "balance", "asset"]))
 
 
 def diff_token_balances(before, after):
@@ -29,9 +45,19 @@ def diff_token_balances(before, after):
     table = []
     for token, accounts in before.items():
         for account, value in accounts.items():
-            table.append([token, account, val(after[token][account] - value)])
+            table.append(
+                [
+                    token_metadata.get_symbol(token),
+                    account,
+                    val(
+                        after[token][account] - value,
+                        decimals=token_metadata.get_decimals(token),
+                    ),
+                ]
+            )
 
-    print(tabulate(table, headers=["asset", "balance"]))
+    print(tabulate(table, headers=["asset", "account", "balance"]))
+
 
 def get_token_balances(tokens, accounts):
     balances = Balances()
@@ -39,6 +65,7 @@ def get_token_balances(tokens, accounts):
         for account in accounts:
             balances.set(token, account, token.balanceOf(account))
     return balances
+
 
 def print_balances(tokens_by_name, account):
     token_contracts = []
@@ -57,16 +84,67 @@ def print_balances(tokens_by_name, account):
     print(tabulate(table, headers=["asset", "balance"]))
 
 
+class TokenMetadataRegistry:
+    def __init__(self):
+        self.tokens = {}
+
+    def has(self, address):
+        if address in self.tokens.keys():
+            return True
+        else:
+            return False
+
+    def get_decimals(self, address):
+        """
+        Fetch token decimals from chain on first lookup.
+        """
+        if not address in self.tokens.keys():
+            self.fetch_token_data(address)
+
+        return self.tokens[address]["decimals"]
+
+    def get_symbol(self, address):
+        """
+        Fetch token symbol from chain on first lookup.
+        """
+        if not address in self.tokens.keys():
+            self.fetch_token_data(address)
+
+        return self.tokens[address]["symbol"]
+
+    def get_name(self, address):
+        """
+        Fetch token name from chain on first lookup.
+        """
+        if not address in self.tokens.keys():
+            self.fetch_token_data(address)
+
+        return self.tokens[address]["name"]
+
+    def fetch_token_data(self, address):
+        token = interface.IERC20(address)
+        name = token.name()
+        symbol = token.symbol()
+        decimals = token.decimals()
+
+        self.tokens[address] = {"name": name, "symbol": symbol, "decimals": decimals}
+
+
+token_metadata = TokenMetadataRegistry()
+
+
 def asset_to_address(asset):
     if asset == "badger":
         return "0x3472A5A71965499acd81997a54BBA8D852C6E53d"
     if asset == "digg":
         return "0x798D1bE841a82a273720CE31c822C61a67a601C3"
 
-def to_token(address):
-        return interface.IERC20(address)
 
-def distribute_from_whales(recipient, percentage=0.8):
+def to_token(address):
+    return interface.IERC20(address)
+
+
+def distribute_from_whales(recipient, percentage=0.8, assets="All"):
     accounts[0].transfer(recipient, Wei("50 ether"))
 
     console.print(
@@ -77,6 +155,8 @@ def distribute_from_whales(recipient, percentage=0.8):
 
     # Normal Transfers
     for key, whale_config in whale_registry.items():
+        if assets != "All" and key not in assets:
+            continue
         # Handle special cases after all standard distributions
         if whale_config.special:
             continue
@@ -93,14 +173,16 @@ def distribute_from_whales(recipient, percentage=0.8):
             # NOTE: Account should have been distributed both underlying components previously
             sushiswap = SushiswapSystem()
             sushiswap.addMaxLiquidity(
-                whale_config.actionParams["token0"], whale_config.actionParams["token1"], recipient
+                whale_config.actionParams["token0"],
+                whale_config.actionParams["token1"],
+                recipient,
             )
 
 
 def distribute_from_whale(whale_config, recipient, percentage=0.2):
     if whale_config.action == WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT:
         forceEther = ForceEther.deploy({"from": recipient})
-        if recipient.balance() < 2*10**18:
+        if recipient.balance() < 2 * 10 ** 18:
             distribute_test_ether(recipient, Wei("2 ether"))
         recipient.transfer(forceEther, Wei("2 ether"))
         forceEther.forceSend(whale_config.whale, {"from": recipient})

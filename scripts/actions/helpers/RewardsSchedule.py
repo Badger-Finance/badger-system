@@ -1,9 +1,6 @@
 import datetime
 import json
 import os
-from scripts.deploy.unlock_scheduler import grant_token_locking_permission
-from scripts.actions.helpers.GeyserDistributor import GeyserDistributor
-from scripts.actions.helpers.StakingRewardsDistributor import StakingRewardsDistributor
 import time
 import warnings
 
@@ -12,27 +9,24 @@ import pytest
 from brownie import Wei, accounts, interface, rpc
 from config.badger_config import badger_config, geyser_keys
 from dotmap import DotMap
-from helpers.constants import *
-from helpers.gnosis_safe import (
-    GnosisSafe,
-    MultisigTx,
-    MultisigTxMetadata,
-    convert_to_test_mode,
-    exec_direct,
-    get_first_owner,
-)
-from helpers.registry import registry
-from helpers.time_utils import days, hours, to_days, to_timestamp, to_utc_date
-from helpers.utils import (
-    fragments_to_shares,
-    initial_fragments_to_current_fragments, shares_to_fragments,
-    to_digg_shares,
-    val,
-)
 from rich import pretty
 from rich.console import Console
+from scripts.actions.helpers.GeyserDistributor import GeyserDistributor
+from scripts.actions.helpers.StakingRewardsDistributor import \
+    StakingRewardsDistributor
+from scripts.deploy.unlock_scheduler import grant_token_locking_permission
 from scripts.systems.badger_system import BadgerSystem, connect_badger
 from tabulate import tabulate
+
+from helpers.constants import *
+from helpers.gnosis_safe import (GnosisSafe, MultisigTx, MultisigTxMetadata,
+                                 convert_to_test_mode, exec_direct,
+                                 get_first_owner)
+from helpers.registry import registry
+from helpers.time_utils import days, hours, to_days, to_timestamp, to_utc_date
+from helpers.utils import (fragments_to_shares,
+                           initial_fragments_to_current_fragments,
+                           shares_to_fragments, to_digg_shares, val)
 
 console = Console()
 pretty.install()
@@ -143,7 +137,9 @@ class RewardsSchedule:
 
     def setAmounts(self, amounts):
         for key, values in amounts.items():
-            print(key,)
+            print(
+                key,
+            )
             self.distributions[key] = RewardsDist(key, values)
 
     def tokensPerDay(self, amount):
@@ -154,6 +150,18 @@ class RewardsSchedule:
 
     def setExpectedTotals(self, totals):
         self.expectedTotals = totals
+
+    def setTotals(self, amounts):
+        self.totals = {}
+
+        for sett, assetValues in amounts.items():
+            for asset, amount in assetValues.items():
+                if not asset in self.totals:
+                    self.totals[asset] = 0
+                self.totals[asset] += amount
+        
+        console.print('totals', self.totals)
+        return self.totals
 
     def transfer(self, token, amount, recipient):
 
@@ -177,7 +185,9 @@ class RewardsSchedule:
         # Top up Tree
         # TODO: Make the amount based on what we'll require for the next week
         id = multi.addTx(
-            MultisigTxMetadata(description="Send {} {} to {}".format(token, amount, recipient)),
+            MultisigTxMetadata(
+                description="Send {} {} to {}".format(token, amount, recipient)
+            ),
             {
                 "to": rewardsEscrow.address,
                 "data": rewardsEscrow.transfer.encode_input(token, recipient, amount),
@@ -187,15 +197,9 @@ class RewardsSchedule:
         tx = multi.executeTx(id)
         print(tx.call_trace())
 
-
         after = token.balanceOf(recipient)
-        console.print({
-            'before': before,
-            'after': after
-        })
+        console.print({"before": before, "after": after})
         assert after == before + amount
-
-
 
     def testTransactions(self):
         rewardsEscrow = self.badger.rewardsEscrow
@@ -205,17 +209,18 @@ class RewardsSchedule:
         # Setup
         accounts[7].transfer(multi.get_first_owner(), Wei("2 ether"))
         print(
-            "Supplied ETH", accounts.at(multi.get_first_owner(), force=True).balance(),
+            "Supplied ETH",
+            accounts.at(multi.get_first_owner(), force=True).balance(),
         )
 
         badger = self.badger
         tree = self.badger.badgerTree
 
         before = badger.token.balanceOf(tree)
-        top_up = Wei("60000 ether")
-        top_up_digg = Wei("75.55 gwei")
+        top_up = Wei("100000 ether")
+        top_up_digg = Wei("90 gwei")
         harvest_badger = Wei("30000 ether")
-        harvest_digg = Wei("65.435 gwei")
+        harvest_digg = Wei("60 gwei")
 
         # Top up Tree
         # TODO: Make the amount based on what we'll require for the next week
@@ -279,17 +284,17 @@ class RewardsSchedule:
                 dist = GeyserDistributor()
 
                 dists = dist.generate(
-                        badger,
-                        multi,
-                        key,
-                        distributions=distribution.getGeyserDistributions(),
-                        start=self.start,
-                        duration=self.duration,
-                        end=self.end,
-                    )
+                    badger,
+                    multi,
+                    key,
+                    distributions=distribution.getGeyserDistributions(),
+                    start=self.start,
+                    duration=self.duration,
+                    end=self.end,
+                )
 
-                geyserDists.extend(dists)                
-                console.log("after "+ key, geyserDists)
+                geyserDists.extend(dists)
+                console.log("after " + key, geyserDists)
 
         # Add unlock schedeules inbulk
         console.log(geyserDists)
@@ -345,7 +350,7 @@ class RewardsSchedule:
                 encoded = rewardsEscrow.signalTokenLock.encode_input(
                     geyser, asset_to_address(asset), value, self.duration, self.start
                 )
-                
+
                 asset_contract = interface.IERC20(asset_to_address(asset))
 
                 scaled = val(value, decimals=18)
@@ -386,6 +391,6 @@ class RewardsSchedule:
                 tablefmt="rst",
             )
         )
+        print("total distributed for {}: ".format(asset), val(self.totals[asset]))
 
-        print("total distributed: ", val(self.total))
 

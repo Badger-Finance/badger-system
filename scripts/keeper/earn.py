@@ -1,17 +1,18 @@
-from helpers.sett.SnapshotManager import SnapshotManager
+from assistant.rewards.rewards_checker import val
 from brownie import *
 from brownie.network.gas.strategies import GasNowStrategy
+from helpers.gas_utils import gas_strategies
+from helpers.registry import registry
+from helpers.sett.SnapshotManager import SnapshotManager
 from rich.console import Console
 from scripts.systems.badger_system import BadgerSystem, connect_badger
 from tabulate import tabulate
-from helpers.registry import registry
-from assistant.rewards.rewards_checker import val
 
 console = Console()
 
 earn_deposit_threshold = 0.05
 
-gas_strategy = GasNowStrategy("fast")
+gas_strategies.set_default(gas_strategies.exponentialScaling)
 
 def get_expected_strategy_deposit_location(badger: BadgerSystem, id):
     if id == "native.badger":

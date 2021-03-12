@@ -29,7 +29,6 @@ interface ICumulativeMultiTokenMerkleDistributor {
         address indexed user,
         address indexed token,
         uint256 amount,
-        uint256 claimedAfter,
         uint256 indexed cycle,
         uint256 timestamp,
         uint256 blockNumber

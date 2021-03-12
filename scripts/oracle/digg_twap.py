@@ -144,8 +144,16 @@ def main():
     print(tx.call_trace())
     print(tx.events)
 
-    chain.sleep(hours(1.8))
+    chain.sleep(hours(0.4))
     chain.mine()
+
+    in_rebase_window = digg.uFragmentsPolicy.inRebaseWindow()
+
+    while not in_rebase_window:
+        print("Not in rebase window...")
+        chain.sleep(hours(0.1))
+        chain.mine()
+        in_rebase_window = digg.uFragmentsPolicy.inRebaseWindow()
 
     tx = digg.orchestrator.rebase({'from': badger.deployer})
     chain.mine()
