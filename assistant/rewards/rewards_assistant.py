@@ -134,7 +134,6 @@ def fetch_current_rewards_tree(badger, print_output=False):
     console.print(
         "[bold yellow]===== Loading Past Rewards " + pastFile + " =====[/bold yellow]"
     )
-    pastFile = "rewards-1-0x9be51936a17545ba8d70abb3513e9fa3ff6c2ccda281909262920f4f180e282f.json"
     currentTree = json.loads(download(pastFile))
 
     # Invariant: File should have same root as latest

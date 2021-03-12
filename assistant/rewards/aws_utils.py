@@ -18,6 +18,7 @@ def download(fileName):
     file_key = "badger-tree.json"
     console.print("Downloading file from s3: " + file_key)
     s3_clientobj = s3.get_object(Bucket=download_bucket, Key=file_key)
+    console.log(s3_clientobj)
     s3_clientdata = s3_clientobj["Body"].read().decode()
     return s3_clientdata
 

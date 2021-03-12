@@ -46,7 +46,6 @@ def calc_geyser_snapshot(badger, name, startBlock, endBlock, nextCycle):
                 #  Add badger boost here (for non native setts)
                 rewards.increase_user_rewards(addr, token, balance*rewardsUnit)
 
-    console.log(sum([list(v.values())[0]/1e18 for v in list(rewards.claims.values())  ]) )
     return rewards
 
 
@@ -71,8 +70,8 @@ def get_distributed_for_token_at(token, endTime, schedules, name):
                 .format(
                         index,
                         to_utc_date(schedule["startTime"]),
-                        toDistribute,
-                        schedule["initialTokensLocked"],
+                        digg.sharesToFragment(toDistribute),
+                        digg.sharesToFragment(schedule["initialTokensLocked"]),
                         (int(toDistribute)/int(schedule["initialTokensLocked"])) * 100
                     )
                 )

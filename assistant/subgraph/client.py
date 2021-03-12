@@ -14,9 +14,6 @@ client = Client(transport=transport, fetch_schema_from_transport=True)
 
 
 def fetch_sett_balances(settId, startBlock):
-    console.print(
-        "[bold green] Fetching sett balances {}[/bold green]".format(settId)
-    )
     query = gql(
         """
         query balances_and_events($vaultID: Vault_filter, $blockHeight: Block_height,$lastBalanceId:AccountVaultBalance_filter) {
@@ -348,7 +345,6 @@ def fetch_wallet_balances(badger_price,digg_price,digg):
 def fetch_cream_balances(tokenSymbol):
     cream_transport = AIOHTTPTransport(url=subgraph_config["cream_url"])
     cream_client = Client(transport=cream_transport, fetch_schema_from_transport=True)
-    console.log("Fetching cream deposits...")
     increment = 1000
 
     query = gql("""
@@ -395,7 +391,7 @@ def fetch_cream_balances(tokenSymbol):
             results += nextPage["accountCTokens"]
 
     retVal = {}
-    console.log("Queried {} cream balances".format(len(results)))
+    console.log("Queried {} cream balances\n".format(len(results)))
     for entry in results:
         retVal[entry["account"]["id"]] = float(entry["totalUnderlyingSupplied"]) * 1e18 / (1+float(exchangeRate))
     return retVal
