@@ -348,10 +348,36 @@ def deploy_strategy(
             ),
             deployer,
         )
+    if strategyName == "StrategyPancakeLpOptimizer":
+        return deploy_proxy(
+            "StrategyPancakeLpOptimizer",
+            StrategyPancakeLpOptimizer.abi,
+            badger.logic.StrategyPancakeLpOptimizer.address,
+            badger.devProxyAdmin.address,
+            badger.logic.StrategyPancakeLpOptimizer.initialize.encode_input(
+                badger.devMultisig,
+                badger.deployer,
+                controller,
+                badger.keeper,
+                badger.guardian,
+                [
+                    params.want,
+                    params.token0,
+                    params.token1,
+                ],
+                [
+                    params.performanceFeeGovernance,
+                    params.performanceFeeStrategist,
+                    params.withdrawalFee,
+                ],
+                params.pid,
+            ),
+            badger.deployer,
+        )
 
 
 def deploy_controller(
-    badger, 
+    badger,
     deployer,
     governance=None,
     strategist=None,
@@ -372,7 +398,7 @@ def deploy_controller(
         rewards = badger.dao.agent
     if not proxyAdmin:
         proxyAdmin = badger.devProxyAdmin
-    
+
     return deploy_proxy(
         "Controller",
         Controller.abi,

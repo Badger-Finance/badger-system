@@ -6,12 +6,14 @@ from brownie import (
     accounts,
 )
 
-from config.badger_config import badger_config, digg_config
+from config.badger_config import badger_config, digg_config, sett_config
 from scripts.deploy.deploy_badger import deploy_flow
+from scripts.systems.badger_system import connect_badger
 from scripts.systems.badger_minimal import deploy_badger_minimal
 from scripts.systems.constants import SettType
 from helpers.token_utils import distribute_test_ether
-from scripts.systems.badger_system import connect_badger
+from helpers.registry import registry
+from helpers.network import network_manager
 from tests.helpers import distribute_from_whales
 from tests.sett.fixtures import (
     SushiBadgerLpOptimizerMiniDeploy,
@@ -26,6 +28,7 @@ from tests.sett.fixtures import (
     SushiDiggWbtcLpOptimizerMiniDeploy,
     UniDiggWbtcLpMiniDeploy,
     SushiClawUSDCMiniDeploy,
+    PancakeMiniDeploy,
 )
 
 
@@ -75,9 +78,20 @@ clawSettsSytheticTestsToRun = [
     "native.sushiWbtcEth",
 ]
 
+bscSettsToRun = [
+    "native.pancakeBnbBtcb",
+]
+
 runTestSetts = True
 
-settTestConfig = generate_sett_test_config(settsToRun, runTestSetts)
+networkSettsMap = {
+    "eth": settsToRun,
+    "bsc": bscSettsToRun,
+}
+# NB: This is expected to fail if the network ID does not exist.
+baseSettsToRun = networkSettsMap[network_manager.get_active_network()]
+
+settTestConfig = generate_sett_test_config(baseSettsToRun, runTestSetts)
 diggSettTestConfig = generate_sett_test_config(diggSettsToRun, runTestSetts)
 clawSettTestConfig = generate_sett_test_config(clawSettsToRun, runTestSetts)
 clawSettSyntheticTestConfig = generate_sett_test_config(clawSettsSytheticTestsToRun, runTestSetts)
@@ -240,6 +254,27 @@ def badger_single_sett(settConfig, deploy=True):
                 "StrategySushiLpOptimizer",  # sushi lp optimizer strat is generic
                 deployer,
                 "bClaw",  # This specifies the name of the EMP contract on the CLAW system.
+                strategist=strategist,
+                guardian=guardian,
+                keeper=keeper,
+                governance=governance,
+            ).deploy(deploy=deploy)
+        if settId == "native.pancakeBnbBtcb":
+            return PancakeMiniDeploy(
+                "native.pancakeBnbBtcb",
+                "StrategyPancakeLpOptimzier",  # pancake lp optimizer strat is generic
+                deployer,
+                # Base strategy params (perf/withdrawal fees)
+                sett_config.pancake.pancakeBnbBtcb,
+                # Lp pair tokens (bnb/btcb) for this strategy.
+                [
+                    registry.tokens.btcb,
+                    registry.tokens.bnb,
+                ],
+                # Both want/pid are optional params and used for validation.
+                # In this case, both the lp token and pid (pool id) exist so we can pass them in.
+                want=registry.pancake.chefPairs.bnbBtcb,
+                pid=registry.pancake.chefPids.bnbBtcb,
                 strategist=strategist,
                 guardian=guardian,
                 keeper=keeper,

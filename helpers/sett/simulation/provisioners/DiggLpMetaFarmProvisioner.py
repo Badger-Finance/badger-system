@@ -9,6 +9,7 @@ class DiggLpMetaFarmProvisioner(BaseProvisioner):
         # Whales are hard coded for now.
         self.whales = [
             registry.whales.wbtc,
+            registry.whales.uniBadgerWbtc,
         ]
 
     def _distributeWant(self, users) -> None:
