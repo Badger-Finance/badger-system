@@ -14,12 +14,10 @@ from assistant.badger_api.prices import (
     fetch_token_price,
     fetch_sett_ppfs,
 )
+from assistant.rewards.enums import Token
 
 console = Console()
-digg_token = "0x798D1bE841a82a273720CE31c822C61a67a601C3"
-badger_token = "0x3472A5A71965499acd81997a54BBA8D852C6E53d"
 MAX_MULTIPLIER = 3
-
 
 def convert_balances_to_usd(sett, name, settType, balances):
     price = fetch_token_price(sett.token().lower())
@@ -93,8 +91,8 @@ def get_balance_data(badger, currentBlock):
             nonNativeSetts = combine_balances([nonNativeSetts, balances])
 
     badger_wallet_balances, digg_wallet_balances = fetch_wallet_balances(
-        fetch_token_price(badger_token.lower()),
-        fetch_token_price(digg_token.lower()),
+        fetch_token_price(Token.badger.lower()),
+        fetch_token_price(Token.digg.lower()),
         badger.digg,
     )
 
@@ -131,7 +129,7 @@ def get_balance_data(badger, currentBlock):
     )
     console.log(badgerBoost)
     console.log(len(badgerBoost))
-    with open('badger-boost.json', 'w') as fp:
+    with open('logs/badger-boost.json', 'w') as fp:
         json.dump(badgerBoost, fp)
 
     return badgerBoost

@@ -8,9 +8,6 @@ from tabulate import tabulate
 
 console = Console()
 
-digg_token = "0x798D1bE841a82a273720CE31c822C61a67a601C3"
-badger_token = "0x3472A5A71965499acd81997a54BBA8D852C6E53d"
-badger_tree = "0x660802Fc641b154aBA66a62137e71f331B6d787A"
 
 class RewardsList:
     def __init__(self, cycle, badgerTree) -> None:

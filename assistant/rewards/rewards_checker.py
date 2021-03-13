@@ -15,10 +15,9 @@ from helpers.utils import val
 
 console = Console()
 
-badger_token = "0x3472A5A71965499acd81997a54BBA8D852C6E53d"
-digg_token = "0x798D1bE841a82a273720CE31c822C61a67a601C3"
+from assistant.rewards.enums import Token
 gas_strategy = GasNowStrategy("rapid")
-digg_contract = interface.IDigg(digg_token)
+digg_contract = interface.IDigg(Token.digg)
 
 def sec(amount):
     return "{:,.1f}".format(amount / 1e12)
@@ -29,8 +28,8 @@ def get_distributed_in_range(key, geyser, startBlock, endBlock):
     periodStartTime = web3.eth.getBlock(startBlock)["timestamp"]
 
     geyserMock = BadgerGeyserMock(key)
-    distributionTokens = geyser.getDistributionTokens()
-    for token in distributionTokens:
+    distributionTokenss = geyser.getDistributionTokenss()
+    for token in distributionTokenss:
         geyserMock.add_distribution_token(token)
         unlockSchedules = geyser.getUnlockSchedulesFor(token)
         for schedule in unlockSchedules:
@@ -55,12 +54,12 @@ def getExpectedDistributionInRange(badger: BadgerSystem, startBlock, endBlock):
 
     # TODO: Only Badger for now
     totals = {}
-    totals[digg_token] = 0
-    totals[badger_token] = 0
+    totals[Token.digg] = 0
+    totals[Token.badger] = 0
 
     for key, gains in distributions.items():
-        totals[badger_token] += gains[badger_token]
-        totals[digg_token] += gains[digg_token]
+        totals[Token.badger] += gains[Token.badger]
+        totals[Token.digg] += gains[Token.digg]
 
     return totals
 
@@ -134,11 +133,11 @@ def verify_rewards(badger: BadgerSystem, startBlock, endBlock, before_data, afte
     sanity_badger = expected_totals["badger"]
     sanity_digg = expected_totals["digg"] * digg_contract._initialSharesPerFragment()
 
-    total_before_badger = before_data["tokenTotals"][badger_token]
-    total_before_digg = before_data["tokenTotals"][digg_token]
+    total_before_badger = before_data["tokenTotals"][Token.badger]
+    total_before_digg = before_data["tokenTotals"][Token.digg]
 
-    total_after_badger = after_data["tokenTotals"][badger_token]
-    total_after_digg = after_data["tokenTotals"][digg_token]
+    total_after_badger = after_data["tokenTotals"][Token.badger]
+    total_after_digg = after_data["tokenTotals"][Token.digg]
 
     digg_badger = total_after_badger - total_before_badger
     diff_digg = total_after_digg - total_before_digg
@@ -201,7 +200,7 @@ def compare_rewards(
     sanitySum = Wei("5000000 ether")
 
     sum_digg_after = sum_digg_claims(after)
-    digg_contract = interface.IDigg(digg_token)
+    digg_contract = interface.IDigg(Token.digg)
 
     table = []
     table.append(["block range", startBlock, endBlock])
@@ -220,7 +219,7 @@ def compare_rewards(
 
     assert sum_after >= sum_before
     assert sum_after <= sanitySum
-    # assert sum_after - (sum_before + expectedGains[badger_token]) < 10000
+    # assert sum_after - (sum_before + expectedGains[Token.badger]) < 10000
     table = []
     # Each users' cumulative claims must only increase
     for user, claim in after.items():

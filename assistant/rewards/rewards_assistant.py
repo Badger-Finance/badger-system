@@ -102,7 +102,7 @@ def fetch_pending_rewards_tree(badger, print_output=False):
         console.print(
             "[green]===== Loading Pending Rewards " + pastFile + " =====[/green]"
         )
-
+    #TODO: Use different end point for latest tree file
     currentTree = json.loads(download(pastFile))
 
     # Invariant: File shoulld have same root as latest
@@ -265,7 +265,7 @@ def rootUpdater(badger, startBlock, endBlock, pastRewards, test=False):
             {"from": badger.keeper, "gas_price": gas_strategy},
         )
 
-    return True
+    return rewards_data
 
 
 def guardian(badger: BadgerSystem, startBlock, endBlock, pastRewards, test=False):

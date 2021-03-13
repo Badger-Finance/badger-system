@@ -1,5 +1,6 @@
 from assistant.rewards.rewards_utils import calculate_sett_balances
 from assistant.rewards.classes.RewardsList import RewardsList
+from assistant.rewards.enums import Token
 from helpers.time_utils import days,to_days,to_hours,to_utc_date
 from dotmap import DotMap
 from brownie import *
@@ -7,7 +8,8 @@ from rich.console import Console
 
 console = Console()
 digg_token = "0x798D1bE841a82a273720CE31c822C61a67a601C3"
-digg = interface.IDigg(digg_token)
+
+digg = interface.IDigg(Token.digg)
 
 
 def calc_geyser_snapshot(badger, name, startBlock, endBlock, nextCycle):
@@ -29,7 +31,7 @@ def calc_geyser_snapshot(badger, name, startBlock, endBlock, nextCycle):
         # Distribute to users with rewards list
         # Make sure there are tokens to distribute (some geysers only 
         # distribute one token)
-        if token == digg_token:
+        if token == Token.digg:
             console.log(
                 "{} DIGG tokens distributed".format(
                 digg.sharesToFragments(tokenDistribution)/1e18)
@@ -70,8 +72,8 @@ def get_distributed_for_token_at(token, endTime, schedules, name):
                 .format(
                         index,
                         to_utc_date(schedule["startTime"]),
-                        digg.sharesToFragment(toDistribute),
-                        digg.sharesToFragment(schedule["initialTokensLocked"]),
+                        digg.sharesToFragments(toDistribute),
+                        digg.sharesToFragmentss(schedule["initialTokensLocked"]),
                         (int(toDistribute)/int(schedule["initialTokensLocked"])) * 100
                     )
                 )
