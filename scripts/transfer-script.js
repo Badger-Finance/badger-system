@@ -37,30 +37,25 @@ async function main() {
     ["0x9e67D018488aD636B538e4158E9e7577F2ECac12", bBADGER],
     ["0x6ff0be40314fdf5e07bcba38c69be4955d5e6197", bSushiWbtcEth],
   ];
-  const forkAccount = (await ethers.provider.listAccounts())[0];
-  const signer = await ethers.provider.getSigner(forkAccount);
-  await signer.sendTransaction({
+  const provider = new ethers.providers.JsonRpcProvider();
+  const localSigner = await provider.getSigner();
+  await localSigner.sendTransaction({
     to: account,
-    value: ethers.utils.parseEther("10.0"),
+    value: ethers.utils.parseEther("1.0"),
   })
   for (const [whale, tokenAddress] of whales) {
-    await hre.network.provider.request({
-      method: "hardhat_impersonateAccount",
-      params: [whale]},
-    )
-    console.log("impersonated", whale);
-    const signer = await ethers.provider.getSigner(whale);
-
-    const token = new ethers.Contract(tokenAddress, erc20abi, signer);
-    let balance;
-    try {
-      balance = await token.balanceOf(whale);
-    } catch (e) {
-      balance = ethers.BigNumber.from("1000000000000000000")
-    }
-    const transferBalance = balance.div(2);
-    await token.transfer(account, transferBalance)
-    console.log(`transferred ${transferBalance} to ${account} of token ${tokenAddress}`);
+    await localSigner.sendTransaction({
+      to: whale,
+      value: ethers.utils.parseEther("1.0"),
+    })
+    await provider.send(
+      "hardhat_impersonateAccount",
+      [whale],
+    );
+    const whaleSigner = await provider.getSigner(whale);
+    const token = new ethers.Contract(tokenAddress, erc20abi, whaleSigner);
+    await token.transfer(account, (await token.balanceOf(whale)).div(2));
+    console.log(`token (${tokenAddress}) test account balance: ${(await token.balanceOf(account)).toString()}`);
   }
 }
 
