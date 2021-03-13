@@ -132,6 +132,7 @@ def print_to_file(badger, path):
     with open(path, "w") as f:
         f.write(json.dumps(system, indent=4, sort_keys=True))
 
+
 def connect_badger(
     badger_deploy_file=False,
     load_deployer=False,
@@ -193,11 +194,7 @@ def connect_badger(
     if "opsProxyAdmin" in badger_deploy:
         ops_proxy_admin = badger_deploy["opsProxyAdmin"]
 
-    badger.connect_proxy_admins(
-        dev_proxy_admin,
-        dao_proxy_admin,
-        ops_proxy_admin
-    )
+    badger.connect_proxy_admins(dev_proxy_admin, dao_proxy_admin, ops_proxy_admin)
 
     badger.connect_multisig(badger_deploy["devMultisig"])
     badger.connect_ops_multisig(badger_deploy["opsMultisig"])
@@ -234,7 +231,9 @@ def connect_badger(
 
     # Connect Sett
     if "geysers" in badger_deploy:
-        badger.connect_sett_system(badger_deploy["sett_system"], geysers=badger_deploy["geysers"])
+        badger.connect_sett_system(
+            badger_deploy["sett_system"], geysers=badger_deploy["geysers"]
+        )
     else:
         badger.connect_sett_system(badger_deploy["sett_system"], geysers=None)
 
@@ -323,6 +322,13 @@ class BadgerSystem:
     def track_contract_upgradeable(self, key, contract):
         self.contracts_upgradeable[key] = contract
 
+    def connect_test_proxy_admin(self, name, address):
+        abi = artifacts.open_zeppelin["ProxyAdmin"]["abi"]
+        self.testProxyAdmin = Contract.from_abi(
+                "ProxyAdmin", web3.toChecksumAddress(address), abi
+            )
+        return self.testProxyAdmin
+
     # ===== Contract Connectors =====
     def connect_proxy_admins(
         self, devProxyAdmin=None, daoProxyAdmin=None, opsProxyAdmin=None
@@ -385,8 +391,11 @@ class BadgerSystem:
         keeper=None,
         rewards=None,
         proxyAdmin=None,
-    ):
-        deployer = self.deployer
+        deployer=None
+    ):  
+
+        if not deployer:
+            deployer = self.deployer
 
         controller = deploy_controller(
             self, deployer, governance, strategist, keeper, rewards, proxyAdmin
@@ -563,10 +572,13 @@ class BadgerSystem:
         keeper=None,
         guardian=None,
         sett_type=SettType.DEFAULT,
-    ):
-        deployer = self.deployer
-        proxyAdmin = self.devProxyAdmin
-
+        deployer=None,
+        proxyAdmin=None
+    ):  
+        if not deployer:
+            deployer = self.deployer
+        if not proxyAdmin:
+            proxyAdmin = self.devProxyAdmin
         if not governance:
             governance = deployer
         if not strategist:
@@ -575,6 +587,7 @@ class BadgerSystem:
             keeper = deployer
         if not guardian:
             guardian = deployer
+
         if sett_type == SettType.DIGG:
             print("Deploying DIGG Sett")
             sett = deploy_proxy(
@@ -1058,7 +1071,7 @@ class BadgerSystem:
                 if priv
                 else accounts.load(input("guardian account: "))
             )
-    
+
     def setStrategy(self, id, strategy):
         self.sett_system.strategies[id] = strategy
 

@@ -132,7 +132,6 @@ class DiggSystem:
 
         self.connect_proxy_admins(devProxyAdmin, daoProxyAdmin)
         self.connect_dao()
-        self.connect_uniswap_system()
         self.connect_multisig()
 
     def track_contract_static(self, contract):
