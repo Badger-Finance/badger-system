@@ -37,11 +37,11 @@ async function main() {
     ["0x9e67D018488aD636B538e4158E9e7577F2ECac12", bBADGER],
     ["0x6ff0be40314fdf5e07bcba38c69be4955d5e6197", bSushiWbtcEth],
   ];
-  const provider = new ethers.providers.JsonRpcProvider();
+  const provider = new ethers.providers.JsonRpcProvider(hre.network.config.url);
   const localSigner = await provider.getSigner();
   await localSigner.sendTransaction({
     to: account,
-    value: ethers.utils.parseEther("1.0"),
+    value: ethers.utils.parseEther("100.0"),
   })
   for (const [whale, tokenAddress] of whales) {
     await localSigner.sendTransaction({
