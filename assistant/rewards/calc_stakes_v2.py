@@ -7,9 +7,7 @@ from brownie import *
 from rich.console import Console
 
 console = Console()
-digg_token = "0x798D1bE841a82a273720CE31c822C61a67a601C3"
-
-digg = interface.IDigg(Token.digg)
+digg = interface.IDigg(Token.digg.value)
 
 
 def calc_geyser_snapshot(badger, name, startBlock, endBlock, nextCycle):
@@ -31,7 +29,7 @@ def calc_geyser_snapshot(badger, name, startBlock, endBlock, nextCycle):
         # Distribute to users with rewards list
         # Make sure there are tokens to distribute (some geysers only 
         # distribute one token)
-        if token == Token.digg:
+        if token == Token.digg.value:
             console.log(
                 "{} DIGG tokens distributed".format(
                 digg.sharesToFragments(tokenDistribution)/1e18)
@@ -73,7 +71,7 @@ def get_distributed_for_token_at(token, endTime, schedules, name):
                         index,
                         to_utc_date(schedule["startTime"]),
                         digg.sharesToFragments(toDistribute),
-                        digg.sharesToFragmentss(schedule["initialTokensLocked"]),
+                        digg.sharesToFragments(schedule["initialTokensLocked"]),
                         (int(toDistribute)/int(schedule["initialTokensLocked"])) * 100
                     )
                 )

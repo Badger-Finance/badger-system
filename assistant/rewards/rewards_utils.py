@@ -93,10 +93,7 @@ def calc_meta_farm_rewards(badger,name, startBlock, endBlock):
     geyserId = badger.getGeyser(name).address.lower()
 
     settBalances = fetch_sett_balances(settId, startBlock)
-    settTransfers = fetch_sett_transfers(settId, startBlock, endBlock)
-    # If there is nothing in the sett, and there have been no transfers
     if len(settBalances) == 0:
-        if len(settTransfers) == 0:
             return []
     if len(settBalances) != 0:
         console.log("Found {} balances".format(len(settBalances)))
@@ -105,49 +102,10 @@ def calc_meta_farm_rewards(badger,name, startBlock, endBlock):
 
     geyserEvents = fetch_geyser_events(geyserId, startBlock)
     geyserBalances = calc_balances_from_geyser_events(geyserEvents)
-    user_state = get_initial_user_state(
-        settBalances, geyserBalances, startBlockTime
-    )
-    console.log("Processing {} transfers".format(len(settTransfers)))
-    for transfer in settTransfers:
-        transfer_address = transfer["account"]["id"]
-        transfer_amount = int(transfer["amount"])
-        transfer_timestamp = int(transfer["transaction"]["timestamp"])
-        user = None
-        for u in user_state:
-            if u.address == transfer_address:
-               user = u
-        if user:
-               user.process_transfer(transfer)
-        else:
-            # Prevent negative transfer from accumulated lp
-            if transfer_amount < 0:
-                transfer_amount = 0
-
-            # If the user hasn't deposited before, create a new oneA
-            user = User(transfer_address,transfer_amount,transfer_timestamp)
-            user_state.append(user)
-
-    for user in user_state:
-        user.process_transfer({
-            "transaction": {
-                "timestamp": endBlockTime
-            },
-            "amount":0
-        })
-    totalShareSeconds = sum([u.shareSeconds for u in user_state])
-    #for user in sorted(user_state,key=lambda u: u.shareSeconds,reverse=True):
-    #    percentage = (user.shareSeconds/totalShareSeconds) * 100
-    #    console.log(user,"{}%".format(percentage))
-
+    user_state = combine_balances([settBalances,geyserBalances])
+    # TODO: Do we want to use snapshot here or do we use shareSeconds 
     return user_state
 
-def get_initial_user_state(settBalances,geyserBalances, startBlockTime):
-    balances = combine_balances([settBalances,geyserBalances])
-    users = []
-    for addr, balance in balances.items():
-        users.append(User(addr, balance, startBlockTime))
-    return users
 
 def calc_balances_from_geyser_events(geyserEvents):
     balances = {}
@@ -158,6 +116,7 @@ def calc_balances_from_geyser_events(geyserEvents):
         timestamp = int(event["timestamp"])
         assert timestamp >= currentTime
         balances[event["user"]] = int(event["total"])
+
 
     console.log("Sum of geyser balances: {}".format(sum(balances.values()) / 10 ** 18))
     console.log("Fetched {} geyser balances".format(len(balances)))
@@ -175,6 +134,8 @@ def calculate_sett_balances(badger, name, sett, currentBlock):
     geyserBalances = {}
     creamBalances = {}
     # Digg doesn't have a geyser so we have to ignore it
+
+    # TODO: We need to discount certain balances (e.g LP addresses, cream etc)
     if name != "native.digg":
         geyserEvents = fetch_geyser_events(
             badger.getGeyser(name).address.lower(), currentBlock

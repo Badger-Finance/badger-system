@@ -17,7 +17,7 @@ console = Console()
 
 from assistant.rewards.enums import Token
 gas_strategy = GasNowStrategy("rapid")
-digg_contract = interface.IDigg(Token.digg)
+digg_contract = interface.IDigg(Token.digg.value)
 
 def sec(amount):
     return "{:,.1f}".format(amount / 1e12)
@@ -54,12 +54,12 @@ def getExpectedDistributionInRange(badger: BadgerSystem, startBlock, endBlock):
 
     # TODO: Only Badger for now
     totals = {}
-    totals[Token.digg] = 0
-    totals[Token.badger] = 0
+    totals[Token.digg.value] = 0
+    totals[Token.badger.value] = 0
 
     for key, gains in distributions.items():
-        totals[Token.badger] += gains[Token.badger]
-        totals[Token.digg] += gains[Token.digg]
+        totals[Token.badger.value] += gains[Token.badger.value]
+        totals[Token.digg.value] += gains[Token.digg.value]
 
     return totals
 
@@ -133,11 +133,11 @@ def verify_rewards(badger: BadgerSystem, startBlock, endBlock, before_data, afte
     sanity_badger = expected_totals["badger"]
     sanity_digg = expected_totals["digg"] * digg_contract._initialSharesPerFragment()
 
-    total_before_badger = before_data["tokenTotals"][Token.badger]
-    total_before_digg = before_data["tokenTotals"][Token.digg]
+    total_before_badger = before_data["tokenTotals"][Token.badger.value]
+    total_before_digg = before_data["tokenTotals"][Token.digg.value]
 
-    total_after_badger = after_data["tokenTotals"][Token.badger]
-    total_after_digg = after_data["tokenTotals"][Token.digg]
+    total_after_badger = after_data["tokenTotals"][Token.badger.value]
+    total_after_digg = after_data["tokenTotals"][Token.digg.value]
 
     digg_badger = total_after_badger - total_before_badger
     diff_digg = total_after_digg - total_before_digg
@@ -200,7 +200,7 @@ def compare_rewards(
     sanitySum = Wei("5000000 ether")
 
     sum_digg_after = sum_digg_claims(after)
-    digg_contract = interface.IDigg(Token.digg)
+    digg_contract = interface.IDigg(Token.digg.value)
 
     table = []
     table.append(["block range", startBlock, endBlock])

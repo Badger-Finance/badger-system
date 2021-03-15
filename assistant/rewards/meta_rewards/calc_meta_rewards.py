@@ -32,21 +32,16 @@ def process_rewards(badger,startBlock,endBlock,events,name,nextCycle,token):
     for i in tqdm(range(len(events))):
         event = events[i]
         userState = calc_meta_farm_rewards(badger,name,startBlock,endBlock)
-        totalShareSeconds = sum([u.shareSeconds for u in userState])
+        totalBalance = sum([u.balance for u in userState])
         total += int(event["rewardAmount"])
         console.log("{} total {} processed".format(total/1e18,token))
-        rewardsUnit = int(event["rewardAmount"])/totalShareSeconds
-        for user in userState:
+        rewardsUnit = int(event["rewardAmount"])/totalBalance
+        for addr,balance in userState.items():
             rewards.increase_user_rewards(
-                web3.toChecksumAddress(user.address),
+                web3.toChecksumAddress(addr),
                 web3.toChecksumAddress(token),
-                rewardsUnit * user.shareSeconds
+                rewardsUnit * user
             )
-        rewardsLogger.add_user_share_seconds(user.address,name,user.shareSeconds)
-        rewardsLogger.add_user_token(
-            user.address,name,
-            token,
-            rewardsUnit * user.shareSeconds)
 
         if i+1 < len(events):
             startBlock = int(events[i]["blockNumber"])

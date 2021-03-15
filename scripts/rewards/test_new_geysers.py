@@ -9,9 +9,9 @@ from assistant.rewards.aws_utils import download_past_trees
 from assistant.rewards.rewards_assistant import run_action
 
 console = Console()
-geyser_test = {}
+rewardsInfo = {}
 def main():
-    trees = download_past_trees(20)
+    trees = download_past_trees(5)
     badger = connect_badger(
         badger_config.prod_json, load_keeper=False, load_deployer=False
     )
@@ -26,30 +26,34 @@ def main():
             badger,
             {
                 "action": "rootUpdater",
-                "startBlock": int(previousTree["startBlock"]),
-                "endBlock": int(previousTree["endBlock"]),
+                "startBlock": int(currentTree["startBlock"]),
+                "endBlock": int(currentTree["endBlock"]),
                 "pastRewards": previousTree,
             },
             test=True,
         )["merkleTree"]
         compare_trees(newRewardsTree,previousTree)
 
-    with open('logs/geyser-test.json', 'w') as fp:
-        json.dump(geyser_test, fp,indent=4)
+    with open('logs/rewards-data.json', 'w') as fp:
+        json.dump(rewardsInfo, fp,indent=4)
 
 
 def compare_trees(current, previous):
     console.log("Comparing {} and {}".format(
         current["merkleRoot"],previous["merkleRoot"]
     ))
-    geyser_test["{}-{}".format(
+    rewardsKey = "{}-{}".format(
         current["merkleRoot"],
         previous["merkleRoot"]
-    )] = {}
+    )
+    rewardsInfo[rewardsKey] = {
+        "diff":{},
+        "startBlock":current["startBlock"],
+        "endBlock":current["endBlock"],
+    }
+
     assert previous["cycle"] < current["cycle"]
     for token, total in current["tokenTotals"].items():
         diff = total - previous["tokenTotals"][token]
-        geyser_test["{}-{}".format(
-            current["merkleRoot"],
-            previous["merkleRoot"])][token] = diff 
+        rewardsInfo[rewardsKey]["diff"][token] = int(diff)
         console.log("Diff of {} is {}".format(token, diff))

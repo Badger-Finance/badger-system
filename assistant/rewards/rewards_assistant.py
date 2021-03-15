@@ -102,7 +102,7 @@ def fetch_pending_rewards_tree(badger, print_output=False):
         console.print(
             "[green]===== Loading Pending Rewards " + pastFile + " =====[/green]"
         )
-    #TODO: Use different end point for latest tree file
+    # TODO: Use different end point for pending tree file
     currentTree = json.loads(download(pastFile))
 
     # Invariant: File shoulld have same root as latest
