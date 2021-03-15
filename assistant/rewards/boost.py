@@ -69,7 +69,7 @@ def calc_address_balances(address, diggSetts, badgerSetts, nonNativeSetts):
     return (diggBalance, badgerBalance, nonNativeBalance)
 
 
-def get_balance_data(badger, currentBlock):
+def badger_boost(badger, currentBlock):
     allSetts = badger.sett_system.vaults
     diggSetts = {}
     badgerSetts = {}
@@ -111,7 +111,7 @@ def get_balance_data(badger, currentBlock):
     ]
     stakeRatios = dict(zip(allAddresses, stakeRatiosList))
     stakeRatios = OrderedDict(
-        sorted(stakeRatios.items(), key=lambda t: t[1]), reverse=True
+        sorted(stakeRatios.items(), key=lambda t: t[1],reverse=True)
     )
     console.log(stakeRatios)
     sortedNonNative = OrderedDict(
