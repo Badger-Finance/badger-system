@@ -1,4 +1,5 @@
 from brownie import *
+from brownie.network.account import Account
 from brownie.network.gas.strategies import GasNowStrategy
 
 from helpers.registry.artifacts import artifacts
@@ -20,7 +21,7 @@ def deploy_proxy_admin(deployer):
     )
 
 
-def deploy_proxy_uninitialized(contractName, logicAbi, logic, proxyAdmin, deployer):
+def deploy_proxy_uninitialized(contractName, logicAbi, logic, proxyAdmin, deployer: Account):
     abi = artifacts.open_zeppelin["AdminUpgradeabilityProxy"]["abi"]
     bytecode = artifacts.open_zeppelin["AdminUpgradeabilityProxy"]["bytecode"]
 
@@ -30,12 +31,12 @@ def deploy_proxy_uninitialized(contractName, logicAbi, logic, proxyAdmin, deploy
         logic, proxyAdmin, web3.toBytes(hexstr="0x")
     ).buildTransaction()
 
-    tx = deployer.transfer(data=deploy_txn["data"], gas_price=40000000000)
+    tx = deployer.transfer(data=deploy_txn["data"])
 
     return Contract.from_abi(contractName, tx.contract_address, logicAbi)
 
 
-def deploy_proxy(contractName, logicAbi, logic, proxyAdmin, initializer, deployer):
+def deploy_proxy(contractName, logicAbi, logic, proxyAdmin, initializer, deployer: Account):
     abi = artifacts.open_zeppelin["AdminUpgradeabilityProxy"]["abi"]
     bytecode = artifacts.open_zeppelin["AdminUpgradeabilityProxy"]["bytecode"]
 

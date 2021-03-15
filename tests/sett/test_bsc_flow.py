@@ -158,7 +158,7 @@ def single_user_harvest_flow(badger: BadgerSystem, settConfig, user):
         with brownie.reverts("onlyAuthorizedActors"):
             strategy.tend({"from": randomUser})
 
-        snap.settTend({"from": strategyKeeper})
+    # snap.settTend({"from": strategyKeeper})
 
     chain.sleep(days(0.5))
     chain.mine()
@@ -166,29 +166,24 @@ def single_user_harvest_flow(badger: BadgerSystem, settConfig, user):
     if tendable:
         snap.settTend({"from": strategyKeeper})
 
-    chain.sleep(days(1))
+    chain.sleep(days(0.5))
     chain.mine()
 
     with brownie.reverts("onlyAuthorizedActors"):
         strategy.harvest({"from": randomUser})
 
-    tx = strategy.harvest({"from": strategyKeeper})
+    snap.settHarvest({"from": strategyKeeper})
+
+    # if tendable:
+    #     snap.settTend({"from": strategyKeeper})
+
+    # snap.settWithdraw(depositAmount // 2, {"from": user})
+
+    # chain.sleep(days(3))
+    # chain.mine()
 
     # snap.settHarvest({"from": strategyKeeper})
-
-    chain.sleep(days(1))
-    chain.mine()
-
-    if tendable:
-        snap.settTend({"from": strategyKeeper})
-
-    snap.settWithdraw(depositAmount // 2, {"from": user})
-
-    chain.sleep(days(3))
-    chain.mine()
-
-    snap.settHarvest({"from": strategyKeeper})
-    snap.settWithdraw(depositAmount // 2 - 1, {"from": user})
+    # snap.settWithdraw(depositAmount // 2 - 1, {"from": user})
 
     assert False
 

@@ -8,7 +8,8 @@
     "testProxyAdmin": "0x58A3123f350A469eB4fCA01d8F6E857bc1F61b76",
     "tokens": {
         "badger": "0x753fbc5800a8C8e3Fb6DC6415810d627A387Dfc9",
-        "bBadger": "0x1F7216fdB338247512Ec99715587bb97BBf96eae"
+        "bBadger": "0x1F7216fdB338247512Ec99715587bb97BBf96eae",
+        "bDigg": "0x5986D5c77c65e5801a5cAa4fAE80089f870A71dA"
     },
     "logic": {
         "StrategyPancakeLpOptimizer": "0xd9dBD1C136e0B7aA7b490Eb7A341924C7c80BBE9",
@@ -20,13 +21,19 @@
             "native": "0x4f7d83623eeb135eb13dbcea1a87a96945abe9cc"
         },
         "vaults": {
-            "native.pancakeBnbBtcb": "0x34769b18279800d5598a101a93a34cfe86bd6694"
+            "native.pancakeBnbBtcb": "0x34769b18279800d5598a101a93a34cfe86bd6694",
+            "native.bBadgerBtcb": "0xba89fec5081ce1cdf24ab897fb80f6e9e6d3fda1",
+            "native.bDiggBtcb": "0xa71ebba5f3f24e84be96240264ae5de38b63860d"
         },
         "strategies": {
-            "native.pancakeBnbBtcb": "0xB4ec0173bA05Dd8DC65c594a39A126a0fd31117f"
+            "native.pancakeBnbBtcb": "0xcf9b07E775C8C9ec4CE7C7541F241D30C90cbf78",
+            "native.bBadgerBtcb": "0x4c5d19da5eaec298b79879a5f7481bede055f4f8",
+            "native.bDiggBtcb": "0x98dd0cbd5d32ba198a445de0c4f0ae6b5b56261a"
         },
         "strategy_artifacts": {
-            "native.pancakeBnbBtcb": "StrategyPancakeLpOptimizer"
+            "native.pancakeBnbBtcb": "StrategyPancakeLpOptimizer",
+            "native.bBadgerBtcb": "StrategyPancakeLpOptimizer",
+            "native.bDiggBtcb": "StrategyPancakeLpOptimizer"
         },
         "rewards": {}
     }

@@ -9,6 +9,8 @@ def address_to_id(token_address):
         return "wrapped-bitcoin"
     if checksummed == web3.toChecksumAddress(registry.tokens.badger):
         return "badger-dao"
+    if checksummed == web3.toChecksumAddress(registry.tokens.digg):
+        return "digg"
     else:
         assert False
 

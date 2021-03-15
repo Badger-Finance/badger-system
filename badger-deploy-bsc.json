@@ -5,8 +5,9 @@
     "devMultisig": "0x6DA4c138Dd178F6179091C260de643529A2dAcfe",
     "opsMultisig": "0x7c7054bd87431378C837B2679f223f6d6aa602C1",
     "devProxyAdmin": "0x6354e79f21b56c11f48bcd7c451be456d7102a36",
-    "tokens":{
-        "badger": "0x753fbc5800a8C8e3Fb6DC6415810d627A387Dfc9"
+    "tokens": {
+        "badger": "0x753fbc5800a8C8e3Fb6DC6415810d627A387Dfc9",
+        "bBadger": "0x1F7216fdB338247512Ec99715587bb97BBf96eae"
     },
     "logic": {
         "Sett": "0x6daCCed8D6d80b0e93a51A4303961678e8A46Fa5",
@@ -17,7 +18,10 @@
             "native": "0xB18D0bC54829bdFeAE998b8FE9a8df10953DcAeC"
         },
         "vaults": {
-            "native.pancakeBnbBtcb": "0xF6BC36280F32398A031A7294e81131aEE787D178"
-        }
+            "native.pancakeBnbBtcb": "0xF6BC36280F32398A031A7294e81131aEE787D178",
+            "native.pancakeBbadgerBtcb": "0xF6BC36280F32398A031A7294e81131aEE787D178"
+        },
+        "strategies": {},
+        "rewards": {}
     }
 }

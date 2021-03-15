@@ -1,7 +1,10 @@
 import datetime
 from enum import Enum
+from helpers.token_utils import distribute_test_ether
 import json
 import os
+
+from ape_safe import ApeSafe
 from scripts.systems.digg_system import connect_digg
 from scripts.systems.uniswap_system import UniswapSystem
 import warnings
@@ -22,7 +25,10 @@ from tabulate import tabulate
 from helpers.gnosis_safe import convert_to_test_mode, exec_direct, get_first_owner
 from helpers.constants import MaxUint256
 from scripts.systems.sushiswap_system import SushiswapSystem
+from helpers.gas_utils import gas_strategies
 console = Console()
+
+gas_strategies.set_default(gas_strategies.rapid)
 
 def test_main():
     main()
@@ -61,14 +67,15 @@ def main():
 
     # Connect badger system from file
     badger = connect_badger("deploy-final.json")
-    digg = connect_digg("deploy-final.json")
-
+    digg = badger.digg
+    
     # Sanity check file addresses
     expectedMultisig = "0xB65cef03b9B89f99517643226d76e286ee999e77"
     assert badger.devMultisig == expectedMultisig
 
     # Multisig wrapper
     multi = GnosisSafe(badger.devMultisig, testMode=True)
+
 
     # Get price data from sushiswap, uniswap, and coingecko
     digg_usd_coingecko = 41531.72
@@ -86,6 +93,7 @@ def main():
         "averageTWAP": averageTWAP
     })
 
+    
 
     supplyBefore = digg.token.totalSupply()
 
@@ -99,6 +107,9 @@ def main():
     print(int(marketValue * 10 ** 18))
 
     print("digg_per_btc", digg_per_btc, averageTWAP, marketValue)
+
+    if rpc.is_active():
+        distribute_test_ether(digg.centralizedOracle, Wei("5 ether"))
 
     centralizedMulti = GnosisSafe(digg.centralizedOracle)
     
@@ -142,7 +153,7 @@ def main():
         chain.mine()
         in_rebase_window = digg.uFragmentsPolicy.inRebaseWindow()
 
-    tx = digg.orchestrator.rebase({'from': badger.deployer})
+    tx = digg.orchestrator.rebase({'from': accounts[0]})
     chain.mine()
 
     supplyAfter = digg.token.totalSupply()
