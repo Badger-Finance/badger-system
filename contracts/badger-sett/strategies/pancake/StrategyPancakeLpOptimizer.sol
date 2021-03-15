@@ -152,6 +152,11 @@ contract StrategyPancakeLpOptimizer is PancakeSwapper {
         emit TokenSwapPathSet(tokenIn, tokenOut, path);
     }
 
+    function setWantPid(uint256 _wantPid) external {
+        _onlyGovernance();
+        wantPid = _wantPid;
+    }
+
     /// ===== Internal Core Implementations =====
 
     function _onlyNotProtectedTokens(address _asset) internal override {

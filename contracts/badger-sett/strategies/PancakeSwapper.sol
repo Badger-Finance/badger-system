@@ -48,11 +48,13 @@ abstract contract PancakeSwapper is BaseStrategy {
     function _add_max_liquidity_pancakeswap(address token0, address token1) internal {
         uint256 _token0Balance = IERC20Upgradeable(token0).balanceOf(address(this));
         uint256 _token1Balance = IERC20Upgradeable(token1).balanceOf(address(this));
+        
+        if (_token0Balance > 0 && _token1Balance > 0) {
+            _safeApproveHelper(token0, pancakeswap, _token0Balance);
+            _safeApproveHelper(token1, pancakeswap, _token1Balance);
 
-        _safeApproveHelper(token0, pancakeswap, _token0Balance);
-        _safeApproveHelper(token1, pancakeswap, _token1Balance);
-
-        IUniswapRouterV2(pancakeswap).addLiquidity(token0, token1, _token0Balance, _token1Balance, 0, 0, address(this), block.timestamp);
+            IUniswapRouterV2(pancakeswap).addLiquidity(token0, token1, _token0Balance, _token1Balance, 0, 0, address(this), block.timestamp);
+        }
     }
 
     uint256[50] private __gap;
