@@ -19,8 +19,8 @@ class NetworkManager():
         if active == "eth":
             return "deploy-final.json"
         elif active == "bsc":
-            # return "badger-deploy-bsc.json"
-            return "badger-test-bsc.json"
+            return "badger-deploy-bsc.json"
+            # return "badger-test-bsc.json"
         else:
             raise Exception("No badger deploy file registered for network {}".format(active))
 
