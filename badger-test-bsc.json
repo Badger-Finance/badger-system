@@ -6,6 +6,7 @@
     "opsMultisig": "0x7c7054bd87431378C837B2679f223f6d6aa602C1",
     "devProxyAdmin": "0x6354e79f21b56c11f48bcd7c451be456d7102a36",
     "testProxyAdmin": "0x58A3123f350A469eB4fCA01d8F6E857bc1F61b76",
+    "token": "0x753fbc5800a8C8e3Fb6DC6415810d627A387Dfc9",
     "tokens": {
         "badger": "0x753fbc5800a8C8e3Fb6DC6415810d627A387Dfc9",
         "bBadger": "0x1F7216fdB338247512Ec99715587bb97BBf96eae",
@@ -36,5 +37,6 @@
             "native.bDiggBtcb": "StrategyPancakeLpOptimizer"
         },
         "rewards": {}
-    }
+    },
+    "geysers": {}
 }
