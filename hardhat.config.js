@@ -23,8 +23,9 @@ module.exports = {
       url: "http://18.230.155.239:8545",
     },
     hardhat: {
+      chainId: 31337,
       blockGasLimit: 9999999999,
-      gas: 99999,
+      gas: 999999999,
     }
   },
   paths: {
