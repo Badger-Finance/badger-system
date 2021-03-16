@@ -12,6 +12,10 @@ from assistant.subgraph.client import (
 from assistant.rewards.classes.User import User
 from assistant.rewards.classes.RewardsList import RewardsList
 
+cream_addresses = {
+    "native.badger":"0x8b950f43fcac4931d408f1fcda55c6cb6cbf3096"
+}
+
 console = Console()
 badger_api_url = "https://laiv44udi0.execute-api.us-west-1.amazonaws.com/staging/v2"
 
@@ -130,15 +134,20 @@ def combine_balances(balances):
 
 def calculate_sett_balances(badger, name, sett, currentBlock):
     settBalances = fetch_sett_balances(sett.address.lower(), currentBlock)
+    geyserAddr = badger.getGeyser(name).address.lower()
     settUnderlyingToken = interface.ERC20(sett.token())
+    # Cream address and geyser address zerod out
+    settBalances[cream_addresses[name].lower()] = 0
+    settBalances[geyserAddr] = 0
+
+
     geyserBalances = {}
     creamBalances = {}
     # Digg doesn't have a geyser so we have to ignore it
 
-    # TODO: We need to discount certain balances (e.g LP addresses, cream etc)
     if name != "native.digg":
         geyserEvents = fetch_geyser_events(
-            badger.getGeyser(name).address.lower(), currentBlock
+            geyserAddr, currentBlock
         )
         geyserBalances = calc_balances_from_geyser_events(geyserEvents)
 
