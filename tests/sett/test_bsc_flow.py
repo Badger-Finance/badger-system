@@ -140,7 +140,7 @@ def single_user_harvest_flow(badger: BadgerSystem, settConfig, user):
 
     startingBalance = want.balanceOf(user)
 
-    depositAmount = startingBalance // 2
+    depositAmount = startingBalance // 200
     assert startingBalance >= depositAmount
     assert startingBalance >= 0
 
@@ -158,16 +158,19 @@ def single_user_harvest_flow(badger: BadgerSystem, settConfig, user):
         with brownie.reverts("onlyAuthorizedActors"):
             strategy.tend({"from": randomUser})
 
-    # snap.settTend({"from": strategyKeeper})
+    numTends = 48
+    timeBetweenTends = days(365) // numTends
 
-    chain.sleep(days(0.5))
-    chain.mine()
+    console.print({
+        "numTends": numTends,
+        "timeBetweenTends": timeBetweenTends
+    })
 
-    if tendable:
+    for i in range (0,numTends):
+        console.print("Tend {}".format(i))
         snap.settTend({"from": strategyKeeper})
-
-    chain.sleep(days(0.5))
-    chain.mine()
+        chain.sleep(timeBetweenTends)
+        chain.mine()
 
     with brownie.reverts("onlyAuthorizedActors"):
         strategy.harvest({"from": randomUser})
