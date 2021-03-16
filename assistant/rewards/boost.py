@@ -42,7 +42,7 @@ def calc_cumulative(l):
     return result
 
 def calc_boost(percentages):
-    return [MAX_MULTIPLIER - (p * (MAX_MULTIPLIER - 1)) for p in percentages ]
+    return [(MAX_MULTIPLIER - (p * (MAX_MULTIPLIER - 1))*1e18) for p in percentages ]
 
 
 def calc_stake_ratio(address, diggSetts, badgerSetts, nonNativeSetts):

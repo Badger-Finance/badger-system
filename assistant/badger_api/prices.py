@@ -10,4 +10,4 @@ def fetch_sett_ppfs(token):
 def fetch_token_price(token):
     response = requests.get("{}/prices".format(urls["staging"]))
     result = response.json()
-    return result[token]
+    return result[token.lower()]

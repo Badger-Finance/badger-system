@@ -14,6 +14,7 @@ class RewardsList:
         self.claims = DotMap()
         self.tokens = DotMap()
         self.totals = DotMap()
+        self.boost = DotMap()
         self.cycle = cycle
         self.badgerTree = badgerTree
         self.metadata = DotMap()
@@ -29,6 +30,9 @@ class RewardsList:
         if not self.sourceMetadata[source][user][metadata]:
             self.sourceMetadata[source][user][metadata] = DotMap()
         self.sourceMetadata[source][user][metadata] = metadata
+    
+    def add_user_boost(self,user,boostAmount):
+        self.boost[user] = boostAmount
 
     def increase_user_rewards(self, user, token, toAdd):
         if toAdd < 0:
