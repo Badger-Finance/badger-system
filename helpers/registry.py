@@ -277,6 +277,12 @@ whale_registry = DotMap(
     ),
 )
 
+keeper_registry = DotMap(
+    pool="0x35fFd6E268610E764fF6944d07760D0EFe5E40E5",
+    kbtc="0xDcAF89b0937c15eAb969Ea01f57AAacc92A21995",
+)
+
+
 class ContractRegistry:
     def __init__(self):
         self.curve = curve_registry
@@ -285,6 +291,7 @@ class ContractRegistry:
         self.aragon = aragon_registry
         self.sushiswap = sushi_registry
         self.sushi = sushi_registry
+        self.keeper = keeper_registry
         self.gnosis_safe = gnosis_safe_registry
         self.onesplit = gnosis_safe_registry
         self.pickle = pickle_registry

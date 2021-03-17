@@ -348,6 +348,31 @@ def deploy_strategy(
             ),
             deployer,
         )
+    if strategyName == "StrategyKeeperLpOptimizer":
+        return deploy_proxy(
+            "StrategyKeeperLpOptimizer",
+            StrategyKeeperLpOptimizer.abi,
+            badger.logic.StrategyKeeperLpOptimizer.address,
+            proxyAdmin.address,
+            badger.logic.StrategyKeeperLpOptimizer.initialize.encode_input(
+                governance,
+                strategist,
+                controller,
+                keeper,
+                guardian,
+                [
+                    params.want,
+                    params.badgerRewardsManager,
+
+                ],
+                [
+                    params.performanceFeeGovernance,
+                    params.performanceFeeStrategist,
+                    params.withdrawalFee,
+                ],
+            ),
+            deployer,
+        )
 
 
 def deploy_controller(badger, deployer):

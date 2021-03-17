@@ -26,6 +26,7 @@ from tests.sett.fixtures import (
     SushiDiggWbtcLpOptimizerMiniDeploy,
     UniDiggWbtcLpMiniDeploy,
     SushiClawUSDCMiniDeploy,
+    KeeperRenbtcLpOptimizerMiniDeploy,
 )
 
 
@@ -56,6 +57,7 @@ settsToRun = [
     "native.uniBadgerWbtc",
     "native.sushiBadgerWbtc",
     "native.sushiWbtcEth",
+    "native.keeperRenbtc",
 ]
 
 diggSettsToRun = [
@@ -240,6 +242,16 @@ def badger_single_sett(settConfig, deploy=True):
                 "StrategySushiLpOptimizer",  # sushi lp optimizer strat is generic
                 deployer,
                 "bClaw",  # This specifies the name of the EMP contract on the CLAW system.
+                strategist=strategist,
+                guardian=guardian,
+                keeper=keeper,
+                governance=governance,
+            ).deploy(deploy=deploy)
+        if settId == "native.keeperRenbtc":
+            return KeeperRenbtcLpOptimizerMiniDeploy(
+                "native.keeperRenbtc",
+                "StrategyKeeperLpOptimizer",  # keeper lp optimizer strat is generic
+                deployer,
                 strategist=strategist,
                 guardian=guardian,
                 keeper=keeper,
