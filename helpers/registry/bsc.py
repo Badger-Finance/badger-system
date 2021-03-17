@@ -51,7 +51,7 @@ bsc_registry = DotMap(
 # )
 
 bsc_registry.whale_registry = DotMap(
-    badger=DotMap(
+    bnbBtcb=DotMap(
         whale=bsc_registry.pancake.masterChef,
         token=bsc_registry.pancake.chefPairs.bnbBtcb,
         action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT,

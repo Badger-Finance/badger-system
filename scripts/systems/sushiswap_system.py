@@ -28,11 +28,13 @@ class SushiswapSystem(UniswapSystem):
         # Make an average allocation of lp tokens.
         avgAllocPoint = chef.totalAllocPoint() / chef.poolLength()
 
-        # Add pool if not exists and
+        # Add staking pool (for rewards) if not exists or set the current allocation
+        # to be receive average allocation points.
         pid, exists = self._get_pool(pool)
         if exists:
             chef.set(avgAllocPoint, pool, True, {"from": owner})
         else:
+            # NB: If the lp token is added more than once, rewards will get messed up.
             chef.add(avgAllocPoint, pool, True, {"from": owner})
 
         pid = chef.poolLength() - 1
