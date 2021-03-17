@@ -91,7 +91,7 @@ def isolate(fn_isolation):
 
 
 # @pytest.fixture()
-def badger_single_sett(settConfig, deploy=True):
+def badger_single_sett(settConfig, deploy=True, upgrade=False):
     if deploy:
         deployer = accounts[0]
         guardian = accounts[1]
@@ -120,7 +120,7 @@ def badger_single_sett(settConfig, deploy=True):
                 guardian=guardian,
                 keeper=keeper,
                 governance=governance,
-            ).deploy(deploy=deploy)
+            ).deploy(deploy=deploy, upgrade=upgrade)
         if settId == "native.renCrv":
             return CurveGaugeRenBtcMiniDeploy(
                 "native.renCrv",
@@ -130,7 +130,7 @@ def badger_single_sett(settConfig, deploy=True):
                 guardian=guardian,
                 keeper=keeper,
                 governance=governance,
-            ).deploy(deploy=deploy)
+            ).deploy(deploy=deploy, upgrade=upgrade)
         if settId == "native.sbtcCrv":
             return CurveGaugeSBtcMiniDeploy(
                 "native.sbtcCrv",
@@ -140,7 +140,7 @@ def badger_single_sett(settConfig, deploy=True):
                 guardian=guardian,
                 keeper=keeper,
                 governance=governance,
-            ).deploy(deploy=deploy)
+            ).deploy(deploy=deploy, upgrade=upgrade)
         if settId == "native.tbtcCrv":
             return CurveGaugeTBtcMiniDeploy(
                 "native.tbtcCrv",
@@ -150,7 +150,7 @@ def badger_single_sett(settConfig, deploy=True):
                 guardian=guardian,
                 keeper=keeper,
                 governance=governance,
-            ).deploy(deploy=deploy)
+            ).deploy(deploy=deploy, upgrade=upgrade)
         if settId == "native.uniBadgerWbtc":
             return BadgerLpMetaFarmMiniDeploy(
                 "native.uniBadgerWbtc",
@@ -160,7 +160,7 @@ def badger_single_sett(settConfig, deploy=True):
                 guardian=guardian,
                 keeper=keeper,
                 governance=governance,
-            ).deploy(deploy=deploy)
+            ).deploy(deploy=deploy, upgrade=upgrade)
         if settId == "harvest.renCrv":
             return HarvestMetaFarmMiniDeploy(
                 "harvest.renCrv",
@@ -170,8 +170,8 @@ def badger_single_sett(settConfig, deploy=True):
                 guardian=guardian,
                 keeper=keeper,
                 governance=governance,
-            ).deploy(deploy=deploy)
-        if settId == "native.sushiBadgerWbtc":
+            ).deploy(deploy=deploy, upgrade=upgrade)
+        if settId == "sushi.sushiBadgerWbtc":
             return SushiBadgerWBtcMiniDeploy(
                 "native.sushiBadgerWbtc",
                 "StrategySushiBadgerWbtc",
@@ -180,7 +180,7 @@ def badger_single_sett(settConfig, deploy=True):
                 guardian=guardian,
                 keeper=keeper,
                 governance=governance,
-            ).deploy(deploy=deploy)
+            ).deploy(deploy=deploy, upgrade=upgrade)
         if settId == "native.sushiWbtcEth":
             return SushiBadgerLpOptimizerMiniDeploy(
                 "native.sushiWbtcEth",
@@ -190,7 +190,7 @@ def badger_single_sett(settConfig, deploy=True):
                 guardian=guardian,
                 keeper=keeper,
                 governance=governance,
-            ).deploy(deploy=deploy)
+            ).deploy(deploy=deploy, upgrade=upgrade)
         if settId == "native.digg":
             return DiggRewardsMiniDeploy(
                 "native.digg",
@@ -200,7 +200,7 @@ def badger_single_sett(settConfig, deploy=True):
                 guardian=guardian,
                 keeper=keeper,
                 governance=governance,
-            ).deploy(sett_type=SettType.DIGG, deploy=deploy)
+            ).deploy(sett_type=SettType.DIGG, deploy=deploy, upgrade=upgrade)
         if settId == "native.uniDiggWbtc":
             return UniDiggWbtcLpMiniDeploy(
                 "native.uniDiggWbtc",
@@ -210,7 +210,7 @@ def badger_single_sett(settConfig, deploy=True):
                 guardian=guardian,
                 keeper=keeper,
                 governance=governance,
-            ).deploy(deploy=deploy)
+            ).deploy(deploy=deploy, upgrade=upgrade)
         if settId == "native.sushiDiggWbtc":
             return SushiDiggWbtcLpOptimizerMiniDeploy(
                 "native.sushiDiggWbtc",
@@ -220,7 +220,7 @@ def badger_single_sett(settConfig, deploy=True):
                 guardian=guardian,
                 keeper=keeper,
                 governance=governance,
-            ).deploy(deploy=deploy)
+            ).deploy(deploy=deploy, upgrade=upgrade)
         if settId == "native.sushiSClawUSDC":
             # Claw/USDC mini deploy can be used for any CLAW synthetic token.
             return SushiClawUSDCMiniDeploy(
@@ -232,7 +232,7 @@ def badger_single_sett(settConfig, deploy=True):
                 guardian=guardian,
                 keeper=keeper,
                 governance=governance,
-            ).deploy(deploy=deploy)
+            ).deploy(deploy=deploy, upgrade=upgrade)
         if settId == "native.sushiBClawUSDC":
             # Claw/USDC mini deploy can be used for any CLAW synthetic token.
             return SushiClawUSDCMiniDeploy(
@@ -244,7 +244,7 @@ def badger_single_sett(settConfig, deploy=True):
                 guardian=guardian,
                 keeper=keeper,
                 governance=governance,
-            ).deploy(deploy=deploy)
+            ).deploy(deploy=deploy, upgrade=upgrade)
     if settConfig['mode'] == 'prod':
         """
         Run vs prod contracts, transferring assets to the test user

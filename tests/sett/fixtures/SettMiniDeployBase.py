@@ -4,6 +4,7 @@ from helpers.token_utils import distribute_from_whales, distribute_test_ether
 from scripts.systems.badger_system import BadgerSystem, connect_badger
 from scripts.systems.badger_minimal import deploy_badger_minimal
 from scripts.systems.constants import SettType
+from scripts.deploy.upgrade import upgrade_versioned_proxy
 from config.badger_config import badger_config
 from rich.console import Console
 
@@ -39,7 +40,7 @@ class SettMiniDeployBase:
         self.guardian = guardian
         self.deployer = deployer
 
-    def deploy(self, sett_type=SettType.DEFAULT, deploy=True) -> BadgerSystem:
+    def deploy(self, sett_type=SettType.DEFAULT, deploy=True, upgrade=False) -> BadgerSystem:
         if not deploy:
             self.badger = connect_badger(badger_config.prod_json)
 
@@ -63,6 +64,9 @@ class SettMiniDeployBase:
                     self.vault.unpause({"from": self.governance})
             except exceptions.VirtualMachineError:
                 pass
+
+            if upgrade:
+                self.upgrade_versioned()
 
             return self.badger
 
@@ -119,6 +123,38 @@ class SettMiniDeployBase:
         self.badger.deploy_core_logic()
         self.badger.deploy_sett_core_logic()
         self.badger.deploy_sett_strategy_logic_for(self.strategyName)
+
+    # Upgrade versioned contracts if not up to date.
+    # Currently the only versioned contracts are strategy/sett contracts.
+    # NB: This must be run AFTER connecting to the badger system.
+    def upgrade_versioned(self):
+        badger = self.badger
+        deployer = self.deployer
+        for key, contract in badger.contracts_upgradeable.items():
+            if key.removesuffix(".strategy").removesuffix(".sett") != self.key:
+                continue
+
+            if key.endswith(".strategy"):
+                Artifact = badger.getStrategyArtifact(
+                    key.removesuffix(".strategy")
+                )
+                latest = Artifact.deploy({"from": deployer})
+                upgrade_versioned_proxy(
+                    badger,
+                    contract,
+                    latest,
+                )
+
+            if key.endswith(".sett"):
+                Artifact = badger.getSettArtifact(
+                    key.removesuffix(".sett")
+                )
+                latest = Artifact.deploy({"from": deployer})
+                upgrade_versioned_proxy(
+                    badger,
+                    contract,
+                    latest,
+                )
 
     # ===== Specific instance must implement =====
     def fetch_params(self):

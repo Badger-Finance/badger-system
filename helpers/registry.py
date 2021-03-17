@@ -138,10 +138,10 @@ sushi_registry = DotMap(
     router="0xd9e1cE17f2641f24aE83637ab66a2cca9C378B9F",
     factory="0xC0AEe478e3658e2610c5F7A4A2E1777cE9e4f2Ac",
     lpTokens=DotMap(
-        sushiBadgerWBtc="0x110492b31c59716AC47337E616804E3E3AdC0b4a",
-        sushiWbtcWeth="0xCEfF51756c56CeFFCA006cD410B03FFC46dd3a58"
+        sushiBadgerWbtc="0x110492b31c59716AC47337E616804E3E3AdC0b4a",
+        sushiWbtcEth="0xCEfF51756c56CeFFCA006cD410B03FFC46dd3a58"
     ),
-    pids=DotMap(sushiBadgerWBtc=73, sushiEthWBtc=21),
+    pids=DotMap(sushiBadgerWbtc=73, sushiEthWBtc=21),
 )
 
 curve_registry = DotMap(
