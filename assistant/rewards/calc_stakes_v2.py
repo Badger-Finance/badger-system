@@ -9,8 +9,14 @@ from rich.console import Console
 console = Console()
 digg = interface.IDigg(Token.digg.value)
 
-
-def calc_geyser_snapshot(badger, name, startBlock, endBlock, nextCycle):
+nonNativeSetts = [
+    "native.renCrv",
+    "native.sbtcCrv"
+    "native.tbtcCrv"
+    "harvest.renCrv"
+    "native.sushiWbtcEth"
+]
+def calc_geyser_snapshot(badger, name, startBlock, endBlock, nextCycle,boosts):
     console.log("Processing rewards for {}".format(name))
     rewards = RewardsList(nextCycle, badger.badgerTree)
     sett = badger.getSett(name)
@@ -42,9 +48,10 @@ def calc_geyser_snapshot(badger, name, startBlock, endBlock, nextCycle):
  
         if tokenDistribution > 0:
             rewardsUnit = tokenDistribution/sum(balances.values())
+            console.log("Processing rewards for {} addresses".format(balances))
             for addr, balance in balances.items():
-                #  Add badger boost here (for non native setts)
-                rewards.increase_user_rewards(addr, token, balance*rewardsUnit)
+                rewardAmount = balance * rewardsUnit
+                rewards.increase_user_rewards(addr, token, rewardAmount)
 
     return rewards
 

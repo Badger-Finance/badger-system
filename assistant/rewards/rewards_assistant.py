@@ -6,7 +6,7 @@ from helpers.time_utils import to_hours
 from rich.console import Console
 from tqdm import tqdm
 
-from assistant.rewards.aws_utils import download, upload
+from assistant.rewards.aws_utils import download_tree,download_latest, upload
 from assistant.rewards.calc_stakes import calc_geyser_stakes
 from assistant.rewards.calc_stakes_v2 import calc_geyser_snapshot
 from assistant.rewards.meta_rewards.harvest import calc_farm_rewards
@@ -36,15 +36,18 @@ def calc_geyser_rewards(badger, periodStartBlock, endBlock, cycle):
     (For each token, for the time period)
     """
     rewardsByGeyser = {}
-
     # For each Geyser, get a list of user to weights
     for key, geyser in badger.geysers.items():
         #if key != "native.badger":
         #    continue
-        geyserRewards = calc_geyser_snapshot(badger, key, periodStartBlock, endBlock,cycle)
+        geyserRewards = calc_geyser_snapshot(badger, key, periodStartBlock, endBlock,cycle,{})
         rewardsByGeyser[key] = geyserRewards
     #return sum_rewards(rewardsByGeyser, cycle, badger.badgerTree)
-    return combine_rewards(list(rewardsByGeyser.values()),cycle,badger.badgerTree)
+    rewards = combine_rewards(list(rewardsByGeyser.values()),cycle,badger.badgerTree)
+    for addr,boost in boosts.items():
+        rewards.add_user_boost(addr,boost)
+
+    return rewards
 
 
 def fetchPendingMerkleData(badger):
@@ -103,7 +106,7 @@ def fetch_pending_rewards_tree(badger, print_output=False):
             "[green]===== Loading Pending Rewards " + pastFile + " =====[/green]"
         )
     # TODO: Use different end point for pending tree file
-    currentTree = json.loads(download(pastFile))
+    currentTree = json.loads(download_tree(pastFile))
 
     # Invariant: File shoulld have same root as latest
     assert currentTree["merkleRoot"] == merkle["root"]
@@ -134,7 +137,7 @@ def fetch_current_rewards_tree(badger, print_output=False):
     console.print(
         "[bold yellow]===== Loading Past Rewards " + pastFile + " =====[/bold yellow]"
     )
-    currentTree = json.loads(download(pastFile))
+    currentTree = json.loads(download_latest())
 
     # Invariant: File should have same root as latest
     assert currentTree["merkleRoot"] == merkle["root"]

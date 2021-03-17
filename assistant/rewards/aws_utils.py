@@ -12,7 +12,8 @@ s3 = boto3.client(
     aws_access_key_id=env_config.aws_access_key_id,
     aws_secret_access_key=env_config.aws_secret_access_key,
 )
-merkle_bucket = "badger-staging-merkle-proofs"
+merkle_bucket = "badger-merkle-proofs"
+rewards_bucket = "badger.json"
 def download_past_trees(number):
     trees = []
     key = "badger-tree.json"
@@ -30,7 +31,7 @@ def download_past_trees(number):
     return trees
        
 
-def download(fileName):
+def download_latest():
     
     file_key = "badger-tree.json"
     console.print("Downloading file from s3: " + file_key)
@@ -39,6 +40,13 @@ def download(fileName):
     s3_clientdata = s3_clientobj["Body"].read().decode()
     return s3_clientdata
 
+def download_tree(fileName):
+    file_key = "rewards/rewards-1-{}".format(fileName)
+    console.print("Downloading file from s3: " + file_key)
+    s3_clientobj = s3.get_object(Bucket=rewards_bucket, Key=file_key)
+    console.log(s3_clientobj)
+    s3_clientdata = s3_clientobj["Body"].read().decode()
+    return s3_clientdata
 
 
 def upload(fileName):

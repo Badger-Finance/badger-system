@@ -134,7 +134,6 @@ def combine_balances(balances):
 
 def calculate_sett_balances(badger, name, sett, currentBlock):
     settBalances = fetch_sett_balances(sett.address.lower(), currentBlock)
-    settUnderlyingToken = interface.ERC20(sett.token())
     geyserBalances = {}
     creamBalances = {}
     # Digg doesn't have a geyser so we have to ignore it
@@ -145,9 +144,10 @@ def calculate_sett_balances(badger, name, sett, currentBlock):
         )
         geyserBalances = calc_balances_from_geyser_events(geyserEvents)
         settBalances[geyserAddr] = 0
-
-    creamBalances = fetch_cream_balances("crB{}".format(settUnderlyingToken.symbol()))
+    if name in ["native.badger"]:
+        settUnderlyingToken = interface.ERC20(sett.token())
+        creamBalances = fetch_cream_balances("crB{}".format(settUnderlyingToken.symbol()))
     if name in cream_addresses:
-            settBalances[cream_addresses[name]] = 0
+        settBalances[cream_addresses[name]] = 0
 
     return combine_balances([settBalances, geyserBalances, creamBalances])

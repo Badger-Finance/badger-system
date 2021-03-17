@@ -7,7 +7,6 @@ import json
 getcontext().prec = 20
 console = Console()
 
-sett_prices_url = "https://laiv44udi0.execute-api.us-west-1.amazonaws.com/staging/v2/protocol/sett"
 subgraph_url = subgraph_config["url"]
 transport = AIOHTTPTransport(url=subgraph_url)
 client = Client(transport=transport, fetch_schema_from_transport=True)
@@ -336,7 +335,6 @@ def fetch_wallet_balances(badger_price,digg_price,digg):
                 if entry["token"]["symbol"] == "BADGER" and int(entry["balance"]) > 0:
                     badger_balances[address] = float(entry["balance"]) / 1e18 * badger_price
                 if entry["token"]["symbol"] == "DIGG" and int(entry["balance"]) > 0:
-                    # Convert
                     fragmentBalance = digg.logic.UFragments.sharesToFragments(entry["balance"])
                     digg_balances[address] = float(fragmentBalance) / 1e9 * digg_price
 
