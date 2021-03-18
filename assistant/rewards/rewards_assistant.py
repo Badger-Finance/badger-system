@@ -36,16 +36,22 @@ def calc_geyser_rewards(badger, periodStartBlock, endBlock, cycle):
     (For each token, for the time period)
     """
     rewardsByGeyser = {}
-    # For each Geyser, get a list of user to weights
+    # Temporarily freeze until badger boost is ready
+    boostsByGeyser = {}
+    with open("logs/boosts.json") as fp:
+        boostsByGeyser = json.load(fp)
+
     for key, geyser in badger.geysers.items():
         #if key != "native.badger":
         #    continue
-        geyserRewards = calc_geyser_snapshot(badger, key, periodStartBlock, endBlock,cycle,{})
+        geyserRewards = calc_geyser_snapshot(badger, key, periodStartBlock, endBlock,cycle,boostsByGeyser[key])
         rewardsByGeyser[key] = geyserRewards
     #return sum_rewards(rewardsByGeyser, cycle, badger.badgerTree)
     rewards = combine_rewards(list(rewardsByGeyser.values()),cycle,badger.badgerTree)
-    for addr,boost in boosts.items():
-        rewards.add_user_boost(addr,boost)
+    
+    
+    #for addr,boost in boosts.items():
+    #    rewards.add_user_boost(addr,boost)
 
     return rewards
 

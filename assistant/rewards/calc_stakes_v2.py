@@ -17,6 +17,7 @@ nonNativeSetts = [
     "native.sushiWbtcEth"
 ]
 def calc_geyser_snapshot(badger, name, startBlock, endBlock, nextCycle,boosts):
+
     console.log("Processing rewards for {}".format(name))
     rewards = RewardsList(nextCycle, badger.badgerTree)
     sett = badger.getSett(name)
@@ -48,10 +49,13 @@ def calc_geyser_snapshot(badger, name, startBlock, endBlock, nextCycle,boosts):
  
         if tokenDistribution > 0:
             rewardsUnit = tokenDistribution/sum(balances.values())
-            console.log("Processing rewards for {} addresses".format(balances))
+            console.log("Processing rewards for {} addresses".format(len(balances)))
             for addr, balance in balances.items():
-                rewardAmount = balance * rewardsUnit
-                rewards.increase_user_rewards(addr, token, rewardAmount)
+                boostAmount = boosts.get(addr,1)
+                if addr in boosts:
+                    console.log("{} boosted by {}".format(addr,boostAmount))
+                rewardAmount = balance * rewardsUnit * boostAmount
+                rewards.increase_user_rewards(web3.toChecksumAddress(addr), token, rewardAmount)
 
     return rewards
 
