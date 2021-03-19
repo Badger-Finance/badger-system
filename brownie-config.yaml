@@ -7,6 +7,15 @@ networks:
     cmd_settings:
       accounts: 50
       default_balance: 500 ether
+  binance-fork:
+    explorer: https://www.bscscan.com/
+    cmd_settings:
+      accounts: 50
+      default_balance: 500 ether
+      fork: https://bsc-dataseed1.binance.org
+      chain_id: 56
+      mnemonic: brownie 
+
 
 project_structure:
   contracts: contracts

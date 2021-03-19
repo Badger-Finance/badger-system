@@ -21,7 +21,16 @@
             "native.pancakeBnbBtcb": "0xF6BC36280F32398A031A7294e81131aEE787D178",
             "native.pancakeBbadgerBtcb": "0xF6BC36280F32398A031A7294e81131aEE787D178"
         },
-        "strategies": {},
+        "strategies": {
+            "native.pancakeBnbBtcb": "0xcf9b07E775C8C9ec4CE7C7541F241D30C90cbf78",
+            "native.bBadgerBtcb": "0x4c5d19da5eaec298b79879a5f7481bede055f4f8",
+            "native.bDiggBtcb": "0x98dd0cbd5d32ba198a445de0c4f0ae6b5b56261a"
+        },
+        "strategy_artifacts": {
+            "native.pancakeBnbBtcb": "StrategyPancakeLpOptimizer",
+            "native.bBadgerBtcb": "StrategyPancakeLpOptimizer",
+            "native.bDiggBtcb": "StrategyPancakeLpOptimizer"
+        },
         "rewards": {}
     }
 }

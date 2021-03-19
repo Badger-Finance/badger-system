@@ -18,7 +18,7 @@ class PancakeBnbBtcbProvisioner(BaseProvisioner):
             pancakeswap = PancakeswapSystem()
             # Generate lp tokens.
             pancakeswap.addMaxLiquidity(
-                registry.token_registry.bnb,
-                registry.token_registry.btcb,
+                registry.tokens.bnb,
+                registry.tokens.btcb,
                 user,
             )

@@ -260,7 +260,7 @@ def badger_single_sett(settConfig, deploy=True):
                 governance=governance,
             ).deploy(deploy=deploy)
         if settId == "native.pancakeBnbBtcb":
-            return PancakeMiniDeploy(
+            return PancakeMiniDeploy.PancakeMiniDeploy(
                 "native.pancakeBnbBtcb",
                 "StrategyPancakeLpOptimzier",  # pancake lp optimizer strat is generic
                 deployer,
