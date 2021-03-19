@@ -4,6 +4,7 @@ from gql import gql, Client
 from gql.transport.aiohttp import AIOHTTPTransport
 from decimal import *
 import json
+
 getcontext().prec = 20
 console = Console()
 
@@ -32,9 +33,7 @@ def fetch_sett_balances(settId, startBlock):
     variables = {"blockHeight": {"number": startBlock}, "vaultID": {"id": settId}}
     balances = {}
     while True:
-        variables["lastBalanceId"] = {
-            "id_gt":lastBalanceId
-        }
+        variables["lastBalanceId"] = {"id_gt": lastBalanceId}
         results = client.execute(query, variable_values=variables)
         if len(results["vaults"]) == 0:
             return {}
@@ -50,7 +49,7 @@ def fetch_sett_balances(settId, startBlock):
         if len(balance_data) > 0:
             lastBalanceId = balance_data[-1]["id"]
 
-        balances = {**newBalances,**balances}
+        balances = {**newBalances, **balances}
     console.log("Processing {} balances".format(len(balances)))
     return balances
 
@@ -92,20 +91,12 @@ def fetch_geyser_events(geyserId, startBlock):
     lastUnstakedId = ""
     variables = {"geyserID": {"id": geyserId}, "blockHeight": {"number": startBlock}}
     while True:
-        variables["lastStakedId"] = {
-            "id_gt": lastStakedId
-        }
-        variables["lastUnstakedId"] = {
-            "id_gt": lastUnstakedId
-        }
-        result = client.execute(query,variable_values=variables)
+        variables["lastStakedId"] = {"id_gt": lastStakedId}
+        variables["lastUnstakedId"] = {"id_gt": lastUnstakedId}
+        result = client.execute(query, variable_values=variables)
 
         if len(result["geysers"]) == 0:
-            return {
-                "stakes":[],
-                "unstakes":[],
-                "totalStaked":0
-            }
+            return {"stakes": [], "unstakes": [], "totalStaked": 0}
         newStakes = result["geysers"][0]["stakeEvents"]
         newUnstakes = result["geysers"][0]["unstakeEvents"]
         if len(newStakes) == 0 and len(newUnstakes) == 0:
@@ -121,11 +112,7 @@ def fetch_geyser_events(geyserId, startBlock):
 
     console.log("Processing {} stakes".format(len(stakes)))
     console.log("Processing {} unstakes".format(len(unstakes)))
-    return {
-        "stakes": stakes,
-        "unstakes": unstakes,
-        "totalStaked": totalStaked
-    }
+    return {"stakes": stakes, "unstakes": unstakes, "totalStaked": totalStaked}
 
 
 def fetch_sett_transfers(settID, startBlock, endBlock):
@@ -180,7 +167,6 @@ def fetch_sett_transfers(settID, startBlock, endBlock):
         withdrawal["amount"] = -withdrawal["amount"]
         return withdrawal
 
-
     deposits = map(convert_amount, results["vaults"][0]["deposits"])
     withdrawals = map(
         negate_withdrawals,
@@ -197,8 +183,10 @@ def fetch_sett_transfers(settID, startBlock, endBlock):
         key=lambda t: t["transaction"]["timestamp"],
     )
 
+
 def fetch_farm_harvest_events():
-    query = gql("""
+    query = gql(
+        """
         query fetch_harvest_events {
             farmHarvestEvents(first:1000,orderBy: blockNumber,orderDirection:asc) {
                 id
@@ -209,15 +197,18 @@ def fetch_farm_harvest_events():
             }
         }
 
-    """)
+    """
+    )
     results = client.execute(query)
     for event in results["farmHarvestEvents"]:
         event["rewardAmount"] = event.pop("farmToRewards")
 
     return results["farmHarvestEvents"]
 
+
 def fetch_sushi_harvest_events():
-    query = gql("""
+    query = gql(
+        """
         query fetch_harvest_events {
             sushiHarvestEvents(first:1000,orderBy:blockNumber,orderDirection:asc) {
                 id
@@ -230,7 +221,8 @@ def fetch_sushi_harvest_events():
                 blockNumber
             }
         }
-    """)
+    """
+    )
     results = client.execute(query)
     wbtcEthEvents = []
     wbtcBadgerEvents = []
@@ -246,9 +238,9 @@ def fetch_sushi_harvest_events():
             wbtcDiggEvents.append(event)
 
     return {
-        "wbtcEth":wbtcEthEvents,
-        "wbtcBadger":wbtcBadgerEvents,
-        "wbtcDigg":wbtcDiggEvents
+        "wbtcEth": wbtcEthEvents,
+        "wbtcBadger": wbtcBadgerEvents,
+        "wbtcDigg": wbtcDiggEvents,
     }
 
     cream_transport = AIOHTTPTransport(url=subgraph_config["cream_url"])
@@ -256,7 +248,8 @@ def fetch_sushi_harvest_events():
     console.log("Fetching cream deposits...")
     increment = 1000
 
-    query = gql("""
+    query = gql(
+        """
         query fetchCreambDeposits($firstAmount: Int, $lastID: ID,$symbol: String) {
             accountCTokens(first: $firstAmount,
                 where: {
@@ -279,14 +272,15 @@ def fetch_sushi_harvest_events():
             exchangeRate
         }
         }
-    """)
+    """
+    )
 
     retVal = {}
     continueFetching = True
     lastID = "0x0000000000000000000000000000000000000000"
 
     while continueFetching:
-        variables = {"firstAmount": increment, "lastID": lastID,"symbol": tokenSymbol}
+        variables = {"firstAmount": increment, "lastID": lastID, "symbol": tokenSymbol}
         nextPage = cream_client.execute(query, variable_values=variables)
         if len(nextPage["accountCTokens"]) == 0:
             if len(nextPage["markets"]) == 0:
@@ -297,15 +291,20 @@ def fetch_sushi_harvest_events():
             exchangeRate = nextPage["markets"][0]["exchangeRate"]
             lastID = nextPage["accountCTokens"][-1]["id"]
             for entry in nextPage["accountCTokens"]:
-                retVal[entry["account"]["id"]] = float(entry["totalUnderlyingSupplied"]) * 1e18 / (1+float(exchangeRate))
+                retVal[entry["account"]["id"]] = (
+                    float(entry["totalUnderlyingSupplied"])
+                    * 1e18
+                    / (1 + float(exchangeRate))
+                )
 
     return retVal
 
 
-def fetch_wallet_balances(badger_price,digg_price,digg):
+def fetch_wallet_balances(badger_price, digg_price, digg, blockNumber):
     increment = 1000
-    query = gql("""
-        query fetchWalletBalance($firstAmount: Int, $lastID: ID) {
+    query = gql(
+        """
+        query fetchWalletBalance($firstAmount: Int, $lastID: ID,$blockNumber:Block_height) {
             tokenBalances(first: $firstAmount, where: { id_gt: $lastID  }) {
                 id
                 balance
@@ -314,7 +313,8 @@ def fetch_wallet_balances(badger_price,digg_price,digg):
                 }
             }
         }
-    """)
+    """
+    )
 
     ## Paginate this for more than 1000 balances
     continueFetching = True
@@ -324,7 +324,11 @@ def fetch_wallet_balances(badger_price,digg_price,digg):
     digg_balances = {}
 
     while continueFetching:
-        variables = {"firstAmount": increment, "lastID": lastID}
+        variables = {
+            "firstAmount": increment,
+            "lastID": lastID,
+            "blockNumber": {"number": blockNumber},
+        }
         nextPage = client.execute(query, variable_values=variables)
         if len(nextPage["tokenBalances"]) == 0:
             continueFetching = False
@@ -333,21 +337,27 @@ def fetch_wallet_balances(badger_price,digg_price,digg):
             for entry in nextPage["tokenBalances"]:
                 address = entry["id"].split("-")[0]
                 if entry["token"]["symbol"] == "BADGER" and int(entry["balance"]) > 0:
-                    badger_balances[address] = float(entry["balance"]) / 1e18 * badger_price
+                    badger_balances[address] = (
+                        float(entry["balance"]) / 1e18 * badger_price
+                    )
                 if entry["token"]["symbol"] == "DIGG" and int(entry["balance"]) > 0:
-                    fragmentBalance = digg.logic.UFragments.sharesToFragments(entry["balance"])
+                    fragmentBalance = digg.logic.UFragments.sharesToFragments(
+                        entry["balance"]
+                    )
                     digg_balances[address] = float(fragmentBalance) / 1e9 * digg_price
 
     return badger_balances, digg_balances
 
-def fetch_cream_balances(tokenSymbol):
+
+def fetch_cream_balances(tokenSymbol, blockNumber):
     cream_transport = AIOHTTPTransport(url=subgraph_config["cream_url"])
     cream_client = Client(transport=cream_transport, fetch_schema_from_transport=True)
     increment = 1000
 
-    query = gql("""
-        query fetchCreambBadgerDeposits($firstAmount: Int, $lastID: ID, $symbol: String) {
-            accountCTokens(first: $firstAmount,
+    query = gql(
+        """
+        query fetchCreambBadgerDeposits($firstAmount: Int, $lastID: ID, $symbol: String,$blockNumber: Block_height) {
+            accountCTokens(first: $firstAmount,block:$blockNumber
                 where: {
                     id_gt: $lastID
                     symbol: $symbol
@@ -361,14 +371,15 @@ def fetch_cream_balances(tokenSymbol):
                     id
                 }
             }
-        markets(
+        markets(block:$blockNumber,
             where:{
             symbol:$symbol
         }) {
             exchangeRate
         }
         }
-    """)
+    """
+    )
 
     ## Paginate this for more than 1000 balances
     results = []
@@ -376,7 +387,12 @@ def fetch_cream_balances(tokenSymbol):
     lastID = "0x0000000000000000000000000000000000000000"
 
     while continueFetching:
-        variables = {"firstAmount": increment, "lastID": lastID,"symbol":tokenSymbol}
+        variables = {
+            "firstAmount": increment,
+            "lastID": lastID,
+            "symbol": tokenSymbol,
+            "blockNumber": {"number": blockNumber},
+        }
         nextPage = cream_client.execute(query, variable_values=variables)
         if len(nextPage["accountCTokens"]) == 0:
             if len(nextPage["markets"]) == 0:
@@ -391,5 +407,7 @@ def fetch_cream_balances(tokenSymbol):
     retVal = {}
     console.log("Queried {} cream balances\n".format(len(results)))
     for entry in results:
-        retVal[entry["account"]["id"]] = float(entry["totalUnderlyingSupplied"]) * 1e18 / (1+float(exchangeRate))
+        retVal[entry["account"]["id"]] = (
+            float(entry["totalUnderlyingSupplied"]) * 1e18 / (1 + float(exchangeRate))
+        )
     return retVal
