@@ -11,13 +11,47 @@ from helpers.utils import val
 console = Console()
 
 
+class BalanceSnapshotter:
+    def __init__(self, tokens, accounts):
+        self.tokens = tokens
+        self.accounts = accounts
+        self.snaps = []
+
+    def snap(self, name="", print=False):
+        balances = get_token_balances(self.tokens, self.accounts)
+        self.snaps.append({"name": name, "balances": balances})
+        if print:
+            if name != "":
+                console.print("[green]== Balances: {} ==[/green]".format(name,))
+            balances.print()
+
+    def diff_last_two(self):
+        num_snaps = len(self.snaps)
+        if num_snaps < 2:
+            raise Exception("Insufficient snaps have been taken to compare last two")
+
+        before = self.snaps[num_snaps - 2]
+        after = self.snaps[num_snaps - 1]
+
+        if before["name"] != "" and after["name"] != "":
+            console.print(
+                "[green]== Comparing Balances: {} and {} ==[/green]".format(
+                    before["name"], after["name"]
+                )
+            )
+        else:
+            console.print(
+                "[green]== Comparing Balances: Latest two snapshots ==[/green]"
+            )
+        diff_token_balances(before["balances"], after["balances"])
+
+
 class Balances:
     def __init__(self):
         self.balances = {}
 
     def set(self, token, account, value):
         if token.address not in self.balances:
-            print(set)
             self.balances[token.address] = {}
         self.balances[token.address][account.address] = value
 

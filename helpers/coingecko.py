@@ -40,3 +40,13 @@ def fetch_usd_price(token_address):
     usd_price = data["market_data"]["current_price"]["usd"]
     console.print(usd_price)
     return usd_price
+
+def fetch_usd_price_eth():
+    url = "https://api.coingecko.com/api/v3/coins/" + "ethereum"
+    params = "?tickers=false&community_data=false&developer_data=false&sparkline=false"
+
+    r = requests.get(url, params)
+    data = r.json()
+    usd_price = data["market_data"]["current_price"]["usd"]
+    console.print(usd_price)
+    return usd_price

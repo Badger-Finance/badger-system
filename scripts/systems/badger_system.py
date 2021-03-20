@@ -1087,6 +1087,12 @@ class BadgerSystem:
         controllerId = id.split(".", 1)[0]
         return self.sett_system.controllers[id]
 
+    def getAllSettIds(self):
+        ids = []
+        for id in self.sett_system.vaults.keys():
+            ids.append(id)
+        return ids
+
     def getSett(self, id):
         if not id in self.sett_system.vaults.keys():
             console.print("[bold red]Sett not found:[/bold red] {}".format(id))

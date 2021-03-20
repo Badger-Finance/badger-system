@@ -1,13 +1,13 @@
 from enum import Enum
-from brownie import rpc, network
+from brownie import rpc, network, config
+from helpers.console_utils import console
 
 class NetworkManager():
     def is_forknet(self):
         return rpc.is_active()
     def get_active_network(self):
         active_network = network.show_active()
-        print(active_network)
-        return "bsc" # TODO: This is not working with brownie test - it does not read the network data
+        console.print("[cyan]🖲  Active network: {}[/cyan]".format(active_network))
         if "mainnet" in active_network:
             return "eth"
         if "bsc" in active_network:
@@ -19,8 +19,8 @@ class NetworkManager():
         if active == "eth":
             return "deploy-final.json"
         elif active == "bsc":
-            return "badger-deploy-bsc.json"
-            # return "badger-test-bsc.json"
+            # return "badger-deploy-bsc.json"
+            return "badger-test-bsc.json"
         else:
             raise Exception("No badger deploy file registered for network {}".format(active))
 

@@ -1,12 +1,13 @@
-from assistant.rewards.rewards_checker import val
+from helpers.sett.SnapshotManager import SnapshotManager
+from config.keeper import keeper_config
+from helpers.utils import tx_wait, val
 from brownie import *
-from brownie.network.gas.strategies import GasNowStrategy
 from helpers.gas_utils import gas_strategies
 from rich.console import Console
 from scripts.systems.badger_system import BadgerSystem, connect_badger
 from tabulate import tabulate
 
-gas_strategies.set_default(gas_strategies.exponentialScaling)
+gas_strategies.set_default_for_active_chain()
 
 console = Console()
 
@@ -23,46 +24,33 @@ def tend_all(badger: BadgerSystem, skip):
             continue
 
         console.print("\n[bold green]===== Tend: " + key + " =====[/bold green]\n")
-        fpps_before = vault.getPricePerFullShare()
 
-        keeper = accounts.at(strategy.keeper())
-        strategy.tend({"from": keeper})
+        snap = SnapshotManager(badger, key)
+        strategy = badger.getStrategy(key)
+        keeper = accounts.at(badger.keeper)
 
-        table.append(
-            [
-                key,
-                val(fpps_before),
-                val(vault.getPricePerFullShare()),
-                val(vault.getPricePerFullShare() - fpps_before),
-            ]
-        )
+        before = snap.snap()
 
-        print("PPFS: Tend")
-        print(tabulate(table, headers=["name", "before", "after", "diff"]))
+        if strategy.keeper() == badger.badgerRewardsManager:
+            snap.settTendViaManager(
+                strategy, {"from": keeper}, confirm=False,
+            )
+        else:
+            snap.settTend(
+                {"from": keeper}, confirm=False,
+            )
 
+        tx_wait()
+
+        if rpc.is_active():
+            chain.mine()
+        after = snap.snap()
+
+        snap.printCompare(before, after)
 
 def main():
-    """
-    Simulate tend operation and evaluate tendable amount
-    """
+    badger = connect_badger(load_keeper=True)
+    skip = keeper_config.get_active_chain_skipped_setts("tend")
+    console.print(badger.getAllSettIds())
 
-    # TODO: Output message when failure
-
-    fileName = "deploy-" + "final" + ".json"
-    badger = connect_badger(fileName, load_keeper=True)
-
-    skip = [
-        "native.uniBadgerWbtc",
-        "harvest.renCrv",
-        "native.sbtcCrv",
-        "native.sBtcCrv",
-        "native.tbtcCrv",
-        "native.renCrv",
-        "native.badger",
-        "native.sushiBadgerWbtc",
-        "native.sushiWbtcEth",
-        "native.digg",
-        "native.uniDiggWbtc",
-        "native.sushiDiggWbtc",
-    ]
     tend_all(badger, skip)

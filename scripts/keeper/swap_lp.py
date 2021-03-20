@@ -16,7 +16,7 @@ from scripts.systems.sushiswap_system import SushiswapSystem
 from scripts.systems.uniswap_system import UniswapSystem
 from tabulate import tabulate
 
-gas_strategies.set_default(gas_strategies.exponentialScaling)
+gas_strategies.set_default_for_active_chain()
 
 uniswap = UniswapSystem()
 sushiswap = SushiswapSystem()

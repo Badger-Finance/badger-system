@@ -181,6 +181,15 @@ class SnapshotManager:
         if confirm:
             self.resolver.confirm_tend(before, after, tx)
 
+    def settTendViaManager(self, strategy, overrides, confirm=True):
+        user = overrides["from"].address
+        trackedUsers = {"user": user}
+        before = self.snap(trackedUsers)
+        tx = self.badger.badgerRewardsManager.tend(strategy, overrides)
+        after = self.snap(trackedUsers)
+        if confirm:
+            self.resolver.confirm_tend(before, after, tx)
+
     def settHarvestViaManager(self, strategy, overrides, confirm=True):
         user = overrides["from"].address
         trackedUsers = {"user": user}

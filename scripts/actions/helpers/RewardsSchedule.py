@@ -217,10 +217,10 @@ class RewardsSchedule:
         tree = self.badger.badgerTree
 
         before = badger.token.balanceOf(tree)
-        top_up = Wei("100000 ether")
-        top_up_digg = Wei("90 gwei")
+        top_up = Wei("82520.48 ether")
+        top_up_digg = Wei("40 gwei")
         harvest_badger = Wei("30000 ether")
-        harvest_digg = Wei("60 gwei")
+        harvest_digg = Wei("40 gwei")
 
         # Top up Tree
         # TODO: Make the amount based on what we'll require for the next week
@@ -254,15 +254,15 @@ class RewardsSchedule:
         after = badger.digg.token.balanceOf(tree)
         assert after == before + top_up_digg
 
-        multi.execute(
-            MultisigTxMetadata(description="Top up rewards manager with Badger"),
-            {
-                "to": rewardsEscrow.address,
-                "data": rewardsEscrow.transfer.encode_input(
-                    badger.token, badger.badgerRewardsManager, harvest_badger
-                ),
-            },
-        )
+        # multi.execute(
+        #     MultisigTxMetadata(description="Top up rewards manager with Badger"),
+        #     {
+        #         "to": rewardsEscrow.address,
+        #         "data": rewardsEscrow.transfer.encode_input(
+        #             badger.token, badger.badgerRewardsManager, harvest_badger
+        #         ),
+        #     },
+        # )
 
         multi.execute(
             MultisigTxMetadata(description="Top up rewards manager with DIGG"),
