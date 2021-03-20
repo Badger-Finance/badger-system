@@ -14,7 +14,7 @@ gas_strategies.set_default_for_active_chain()
 
 
 def main():
-    badger = connect_badger(load_keeper=True)
+    badger = connect_badger(load_deployer=True)
     skip = keeper_config.get_active_chain_skipped_setts("earn")
     run_interval = keeper_config.get_active_chain_run_interval("earn")
 
