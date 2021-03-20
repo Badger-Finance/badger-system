@@ -150,9 +150,9 @@ def connect_badger(
     guardian
 
     """
-
-    if not badger_deploy_file:
-        badger_deploy_file = network_manager.get_active_network_badger_deploy()
+    # TODO: fix this for networks
+    # if not badger_deploy_file:
+    badger_deploy_file = network_manager.get_active_network_badger_deploy()
 
     badger_deploy = {}
     console.print(

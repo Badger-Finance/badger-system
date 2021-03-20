@@ -165,6 +165,16 @@ sett_config = DotMap(
             ),
         ),
     ),
+    pancake=DotMap(
+        pancakeBnbBtcb=DotMap(
+            strategyName="StrategyPancakeLpOptimizer",
+            params=DotMap(
+                performanceFeeStrategist=1000,
+                performanceFeeGovernance=1000,
+                withdrawalFee=50,
+            ),
+        ),
+    ),
 )
 
 badger_total_supply = Wei("21000000 ether")
