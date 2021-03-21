@@ -17,12 +17,12 @@
     },
     "sett_system": {
         "controllers": {
-            "native": "0xB18D0bC54829bdFeAE998b8FE9a8df10953DcAeC"
+            "native": "0xD3148Ffd6fe1298e275456509229a09018E299e3"
         },
         "vaults": {
-            "native.pancakeBnbBtcb": "0xF6BC36280F32398A031A7294e81131aEE787D178",
-            "native.bBadgerBtcb": "0x9ab3fd50fcae73a1aeda959468fd0d662c881b42",
-            "native.bDiggBtcb": "0xC2Bc5fD13Ce64efD249234C870D64569155609cd"
+            "native.pancakeBnbBtcb": "0xaf4B9C4b545D5324904bAa15e29796D2E2f90813",
+            "native.bBadgerBtcb": "0x857F91f735f4B03b19D2b5c6E476C73DB8241F55",
+            "native.bDiggBtcb": "0xa861Ba302674b08f7F2F24381b705870521DDfed"
         },
         "strategies": {
             "native.pancakeBnbBtcb": "0x120BB9F87bAB3C49b89c7745eDC07FED50786534",
