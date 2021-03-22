@@ -1,5 +1,6 @@
 from assistant.rewards.rewards_utils import calculate_sett_balances
 from assistant.rewards.classes.RewardsList import RewardsList
+from assistant.rewards.classes.RewardsLogger import rewardsLogger
 from assistant.rewards.enums import Token
 from helpers.time_utils import days,to_days,to_hours,to_utc_date
 from dotmap import DotMap
@@ -26,6 +27,11 @@ def calc_geyser_snapshot(badger, name, startBlock, endBlock, nextCycle,boosts):
     endTime = web3.eth.getBlock(endBlock)["timestamp"]
 
     balances = calculate_sett_balances(badger, name, sett, endBlock)
+    for addr,bal in balances.items():
+        boostAmount = boosts.get(addr,1)
+        rewardsLogger.add_multiplier(web3.toChecksumAddress(addr),name,boostAmount)
+        balances[addr] = bal * boostAmount
+
     unlockSchedules = {}
     for token in geyser.getDistributionTokens():
         unlockSchedules = parse_schedules(geyser.getUnlockSchedulesFor(token))
@@ -49,13 +55,14 @@ def calc_geyser_snapshot(badger, name, startBlock, endBlock, nextCycle,boosts):
  
         if tokenDistribution > 0:
             rewardsUnit = tokenDistribution/sum(balances.values())
+            console.log(rewardsUnit)
             console.log("Processing rewards for {} addresses".format(len(balances)))
             for addr, balance in balances.items():
-                boostAmount = boosts.get(addr,1)
-                if addr in boosts:
-                    console.log("{} boosted by {}".format(addr,boostAmount))
-                rewardAmount = balance * rewardsUnit * boostAmount
-                rewards.increase_user_rewards(web3.toChecksumAddress(addr), token, rewardAmount)
+                addr = web3.toChecksumAddress(addr)
+                token = web3.toChecksumAddress(token)
+                rewardAmount = balance * rewardsUnit
+                rewards.increase_user_rewards(addr, token, int(rewardAmount))
+                rewardsLogger.add_user_token(addr,name,token,int(rewardAmount))
 
     return rewards
 

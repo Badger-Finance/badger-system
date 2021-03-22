@@ -49,10 +49,6 @@ def calc_geyser_rewards(badger, periodStartBlock, endBlock, cycle):
     #return sum_rewards(rewardsByGeyser, cycle, badger.badgerTree)
     rewards = combine_rewards(list(rewardsByGeyser.values()),cycle,badger.badgerTree)
     
-    
-    #for addr,boost in boosts.items():
-    #    rewards.add_user_boost(addr,boost)
-
     return rewards
 
 
@@ -146,8 +142,6 @@ def fetch_current_rewards_tree(badger, print_output=False):
     currentTree = json.loads(download_latest())
 
     # Invariant: File should have same root as latest
-    assert currentTree["merkleRoot"] == merkle["root"]
-    console.log(currentTree["endBlock"])
     lastUpdateOnChain = merkle["blockNumber"]
     lastUpdate = int(currentTree["endBlock"])
 
@@ -176,7 +170,6 @@ def generate_rewards_in_range(badger, startBlock, endBlock, pastRewards):
     #    badger, startBlock, endBlock, nextCycle, retroactive=False
     #)
 
-    rewardsLogger.save("rewards")
 
     newRewards = combine_rewards(
         [geyserRewards], nextCycle, badger.badgerTree
@@ -189,6 +182,7 @@ def generate_rewards_in_range(badger, startBlock, endBlock, pastRewards):
 
     # Publish data
     rootHash = keccak(merkleTree["merkleRoot"])
+    rewardsLogger.save("rewards-{}".format(rootHash))
     contentFileName = content_hash_to_filename(rootHash)
 
     console.log(
