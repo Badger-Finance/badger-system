@@ -14,6 +14,7 @@ bsc_registry = DotMap(
         masterChef="0x73feaa1eE314F8c655E354234017bE2193C9E24E",
         factoryV2="0xBCfCcbde45cE874adCB698cC183deBcF17952812",
         routerV2="0x05fF2B0DB69458A0750badebc4f9e13aDd608C7F",
+        smartChefs="0xe4dD0C50fb314A8B2e84D211546F5B57eDd7c2b9",
         chefPairs=DotMap(
             bnbBtcb="0x7561EEe90e24F3b348E1087A005F78B4c8453524",
             bBadgerBtcb="0x10f461ceac7a17f59e249954db0784d42eff5db5",
@@ -22,7 +23,7 @@ bsc_registry = DotMap(
         chefPids=DotMap(
             bnbBtcb=15,
             bBadgerBtcb=0,
-            bDiggBtcb=0,
+            bDiggBtcb=104,
         ),
     ),
     multicall=DotMap(multicall="0xE1dDc30f691CA671518090931e3bFC1184BFa4Aa",),
@@ -56,15 +57,20 @@ bsc_registry.whale_registry = DotMap(
         token=bsc_registry.pancake.chefPairs.bnbBtcb,
         action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT,
     ),
-    bnb=DotMap(
-        whale="0x1B82850E491e6176170b32eC3f29AF48Eb2Fe372",
-        token=bsc_registry.token_registry.bnb,
+    bDiggBtcb=DotMap(
+        whale=bsc_registry.pancake.masterChef,
+        token=bsc_registry.pancake.chefPairs.bDiggBtcb,
         action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT,
     ),
-    btcb=DotMap(
-        whale="0x631Fc1EA2270e98fbD9D92658eCe0F5a269Aa161",
-        token=bsc_registry.token_registry.btcb,
-        action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT,
-    ),
+    # bnb=DotMap(
+    #     whale="0x1B82850E491e6176170b32eC3f29AF48Eb2Fe372",
+    #     token=bsc_registry.token_registry.bnb,
+    #     action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT,
+    # ),
+    # btcb=DotMap(
+    #     whale="0x631Fc1EA2270e98fbD9D92658eCe0F5a269Aa161",
+    #     token=bsc_registry.token_registry.btcb,
+    #     action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT,
+    # ),
 )
 

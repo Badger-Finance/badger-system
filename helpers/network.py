@@ -7,6 +7,7 @@ class NetworkManager():
         return rpc.is_active()
     def get_active_network(self):
         active_network = network.show_active()
+        return "bsc"
         console.print("[cyan]🖲  Active network: {}[/cyan]".format(active_network))
         if "mainnet" in active_network:
             return "eth"
@@ -19,8 +20,8 @@ class NetworkManager():
         if active == "eth":
             return "deploy-final.json"
         elif active == "bsc":
-            # return "badger-deploy-bsc.json"
-            return "badger-test-bsc.json"
+            return "badger-deploy-bsc.json"
+            # return "badger-test-bsc.json"
         else:
             raise Exception("No badger deploy file registered for network {}".format(active))
 
