@@ -16,7 +16,14 @@ setts_to_skip = {
             "native.sushiDiggWbtc"
         ],
         "tend": [],
-        "earn": [],
+        "earn": [
+            "native.uniBadgerWbtc",
+            "native.badger",
+            "native.sushiBadgerWbtc",
+            "native.digg",
+            "native.uniDiggWbtc",
+            "native.sushiDiggWbtc"
+        ],
     },
     "bsc": {
         "harvest": [],
@@ -33,7 +40,7 @@ run_intervals = {
     },
     "bsc": {
         "harvest": days(1),
-        "tend": minutes(30),
+        "tend": minutes(15),
         "earn": minutes(10),
     }
 }
