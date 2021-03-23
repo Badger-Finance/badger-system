@@ -7,8 +7,10 @@ networks:
     cmd_settings:
       accounts: 50
       default_balance: 500 ether
-  binance-fork:
+  bsc:
+    id: bsc
     explorer: https://www.bscscan.com/
+    cmd: ganache-cli
     cmd_settings:
       accounts: 50
       default_balance: 500 ether
