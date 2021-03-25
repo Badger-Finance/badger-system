@@ -5,6 +5,8 @@
     "devMultisig": "0x6DA4c138Dd178F6179091C260de643529A2dAcfe",
     "opsMultisig": "0x777061674751834993bfBa2269A1F4de5B4a6E7c",
     "devProxyAdmin": "0x6354e79f21b56c11f48bcd7c451be456d7102a36",
+    "governanceTimelock": "0x75b8E21BD623012Efb3b69E1B562465A68944eE6",
+    "badgerRewardsManager": "0x753fbc5800a8C8e3Fb6DC6415810d627A387Dfc9",
     "tokens": {
         "badger": "0x753fbc5800a8C8e3Fb6DC6415810d627A387Dfc9",
         "bBadger": "0x1F7216fdB338247512Ec99715587bb97BBf96eae",

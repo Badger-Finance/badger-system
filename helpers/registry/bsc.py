@@ -62,6 +62,11 @@ bsc_registry.whale_registry = DotMap(
         token=bsc_registry.pancake.chefPairs.bDiggBtcb,
         action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT,
     ),
+    bBadgerBtcb=DotMap(
+        whale=bsc_registry.pancake.masterChef,
+        token=bsc_registry.pancake.chefPairs.bBadgerBtcb,
+        action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT,
+    ),
     # bnb=DotMap(
     #     whale="0x1B82850E491e6176170b32eC3f29AF48Eb2Fe372",
     #     token=bsc_registry.token_registry.bnb,

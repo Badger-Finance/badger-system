@@ -1118,3 +1118,13 @@ class BadgerSystem:
 
     def getStrategyArtifactName(self, id):
         return self.strategy_artifacts[id]["artifactName"]
+    
+    def getSeeder(self):
+        """
+        Return seeder account
+        """
+        if rpc.is_active():
+            seeder = accounts.at("0x3131B6964d96DE3Ad36C7Fe82e9bA9CcdBaf6baa", force=True)
+        else:
+            seeder = accounts.load("badger_proxy_deployer")
+        return seeder

@@ -217,7 +217,7 @@ class RewardsSchedule:
         tree = self.badger.badgerTree
 
         before = badger.token.balanceOf(tree)
-        top_up = Wei("82520.48 ether")
+        top_up = Wei("100000 ether")
         top_up_digg = Wei("40 gwei")
         harvest_badger = Wei("30000 ether")
         harvest_digg = Wei("40 gwei")

@@ -22,7 +22,7 @@ class NetworkManager():
 
     def get_active_network(self):
         active_network = network.show_active()
-        return "bsc"
+        # return "bsc"
         console.print("[cyan]🖲  Active network: {}[/cyan]".format(active_network))
 
         if active_network == None:
