@@ -15,7 +15,7 @@ class NetworkManager():
             return None
         if "mainnet" in s:
             return "eth"
-        if "bsc" in s or "binance-fork" in s:
+        if "bsc" in s or "binance" in s:
             return "bsc"
         return None
 
@@ -23,14 +23,19 @@ class NetworkManager():
     def get_active_network(self):
         active_network = network.show_active()
         # return "bsc"
-        console.print("[cyan]🖲  Active network: {}[/cyan]".format(active_network))
 
         if active_network == None:
-            name = self.network_name(sys.argv)
+            if "--network" not in sys.argv:
+                console.print("Network not found, defaulting to 'eth' (did you set the --network flag?)")
+                name = "eth"
+            else:
+                network_idx = sys.argv.index("--network")
+                name = self.network_name(sys.argv[network_idx + 1])
         else:
             name = self.network_name(active_network)
 
         if name:
+            console.print("[cyan]🖲  Active network: {}[/cyan]".format(name))
             return name
         else:
             raise Exception("Chain ID {} not recognized".format(active_network))

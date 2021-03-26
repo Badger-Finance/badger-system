@@ -1,6 +1,5 @@
 from helpers.token_utils import distribute_test_ether
 import brownie
-import decouple
 import pytest
 from brownie import *
 from helpers.constants import *
@@ -55,14 +54,10 @@ def setup_badger(badger: BadgerSystem, settConfig):
     strategy.setTokenSwapPath(cake, token0, [cake, token0], {'from': badger.deployer})
     strategy.setTokenSwapPath(cake, token1, [cake, token1], {'from': badger.deployer})
 
-    want = interface.IERC20(registry.pancake.chefPairs.bnbBtcb)
-    multi = accounts.at(badger.devMultisig.address, force=True)
+    # want = interface.IERC20(registry.pancake.chefPairs.bnbBtcb)
+    # multi = accounts.at(badger.devMultisig.address, force=True)
 
-    controller.approveStrategy(want, strategy, {"from": multi})
-    controller.setStrategy(want, strategy, {"from": multi})
-
-    badger.setStrategy(settConfig["id"], strategy)
-    snap = SnapshotManager(badger, settConfig["id"])
+    # snap = SnapshotManager(badger, settConfig["id"])
 
     table = []
 
@@ -80,23 +75,19 @@ def setup_badger(badger: BadgerSystem, settConfig):
 
 
 def deposit_withdraw_single_user_flow(badger, settConfig, user):
-    controller = badger.getController("native")
     strategy = badger.getStrategy(settConfig["id"])
     want = interface.IERC20(registry.pancake.chefPairs.bnbBtcb)
     snap = SnapshotManager(badger, settConfig["id"])
     sett = badger.getSett(settConfig["id"])
-    strategist = badger.deployer
     settKeeper = accounts.at(sett.keeper(), force=True)
-    randomUser = accounts[6]
 
     # Deposit
     assert want.balanceOf(user) > 0
 
-    depositAmount = int(want.balanceOf(user) * 0.8)
+    depositAmount = int(want.balanceOf(user) * 0.8) 
     assert depositAmount > 0
 
     want.approve(sett, MaxUint256, {"from": user})
-    # sett.deposit(depositAmount, {"from": deployer})
     snap.settDeposit(depositAmount, {"from": user})
 
     # Earn
@@ -118,7 +109,7 @@ def deposit_withdraw_single_user_flow(badger, settConfig, user):
     chain.sleep(10000)
     chain.mine(1)
 
-    snap.settWithdraw(depositAmount // 2 - 1, {"from": user})
+    snap.settWithdrawAll({"from": user})
 
 
 # @pytest.mark.skip()
@@ -126,12 +117,10 @@ def deposit_withdraw_single_user_flow(badger, settConfig, user):
     "settConfig", settTestConfig,
 )
 def single_user_harvest_flow(badger: BadgerSystem, settConfig, user):
-    controller = badger.getController("native")
     strategy = badger.getStrategy(settConfig["id"])
     want = interface.IERC20(registry.pancake.chefPairs.bnbBtcb)
     snap = SnapshotManager(badger, settConfig["id"])
     sett = badger.getSett(settConfig["id"])
-    strategist = badger.deployer
     settKeeper = accounts.at(sett.keeper(), force=True)
     strategyKeeper = accounts.at(strategy.keeper(), force=True)
     randomUser = accounts[6]
@@ -188,8 +177,6 @@ def single_user_harvest_flow(badger: BadgerSystem, settConfig, user):
     # snap.settHarvest({"from": strategyKeeper})
     # snap.settWithdraw(depositAmount // 2 - 1, {"from": user})
 
-    assert False
-
 
 def test_main():
     badger = connect_badger()
@@ -198,5 +185,5 @@ def test_main():
     distribute_from_whales(user)
     settConfig = {"id": "native.pancakeBnbBtcb"}
     setup_badger(badger, settConfig)
-    # deposit_withdraw_single_user_flow(badger, settConfig, user)
+    deposit_withdraw_single_user_flow(badger, settConfig, user)
     single_user_harvest_flow(badger, settConfig, user)

@@ -67,15 +67,16 @@ bsc_registry.whale_registry = DotMap(
         token=bsc_registry.pancake.chefPairs.bBadgerBtcb,
         action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT,
     ),
-    # bnb=DotMap(
-    #     whale="0x1B82850E491e6176170b32eC3f29AF48Eb2Fe372",
-    #     token=bsc_registry.token_registry.bnb,
-    #     action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT,
-    # ),
-    # btcb=DotMap(
-    #     whale="0x631Fc1EA2270e98fbD9D92658eCe0F5a269Aa161",
-    #     token=bsc_registry.token_registry.btcb,
-    #     action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT,
-    # ),
+    # Need these for `test_simulation.py` on bsc
+    bnb=DotMap(
+        whale="0xd7D069493685A581d27824Fc46EdA46B7EfC0063",
+        token=bsc_registry.token_registry.bnb,
+        action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT,
+    ),
+    btcb=DotMap(
+        whale="0x631Fc1EA2270e98fbD9D92658eCe0F5a269Aa161",
+        token=bsc_registry.token_registry.btcb,
+        action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT,
+    ),
 )
 
