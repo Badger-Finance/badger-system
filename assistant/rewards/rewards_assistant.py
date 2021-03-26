@@ -182,7 +182,9 @@ def generate_rewards_in_range(badger, startBlock, endBlock, pastRewards):
 
     # Publish data
     rootHash = keccak(merkleTree["merkleRoot"])
-    rewardsLogger.save("rewards-{}".format(rootHash))
+    rewardsLogger.set_merkle_root(rootHash)
+
+
     contentFileName = content_hash_to_filename(rootHash)
 
     console.log(
@@ -195,8 +197,9 @@ def generate_rewards_in_range(badger, startBlock, endBlock, pastRewards):
             "currentContentHash": currentMerkleData["contentHash"],
         }
     )
-
     print("Uploading to file " + contentFileName)
+
+    rewardsLogger.save("rewards-log-{}".format(nextCycle))
     # TODO: Upload file to AWS & serve from server
     with open(contentFileName, "w") as outfile:
         json.dump(merkleTree, outfile, indent=4)

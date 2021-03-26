@@ -1,10 +1,12 @@
 from assistant.subgraph.config import subgraph_config
+from assistant.rewards.enums import Token
+from brownie import interface
 from rich.console import Console
 from gql import gql, Client
 from gql.transport.aiohttp import AIOHTTPTransport
 from decimal import *
+from assistant.rewards.enums import Token
 import json
-
 getcontext().prec = 20
 console = Console()
 
@@ -305,7 +307,7 @@ def fetch_wallet_balances(badger_price, digg_price, digg, blockNumber):
     query = gql(
         """
         query fetchWalletBalance($firstAmount: Int, $lastID: ID,$blockNumber:Block_height) {
-            tokenBalances(first: $firstAmount, where: { id_gt: $lastID  }) {
+            tokenBalances(first: $firstAmount, where: { id_gt: $lastID  },block: $blockNumber) {
                 id
                 balance
                 token {

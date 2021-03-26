@@ -35,6 +35,7 @@ def calc_geyser_snapshot(badger, name, startBlock, endBlock, nextCycle,boosts):
     unlockSchedules = {}
     for token in geyser.getDistributionTokens():
         unlockSchedules = parse_schedules(geyser.getUnlockSchedulesFor(token))
+        rewardsLogger.add_unlock_schedules(name,token,unlockSchedules)
         tokenDistribution = int(
             get_distributed_for_token_at(token, endTime, unlockSchedules, name)
             - get_distributed_for_token_at(token, startTime, unlockSchedules, name)

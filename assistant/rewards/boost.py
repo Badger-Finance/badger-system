@@ -20,8 +20,9 @@ console = Console()
 MAX_MULTIPLIER = 3
 
 def convert_balances_to_usd(sett, name, settType, balances,prices,settData):
-    price = prices[sett.token().lower()]
-    settInfo = list(filter( lambda sett: settData["underlyingToken"] == token,result))
+    token = sett.token()
+    price = prices[token]
+    settInfo = list(filter( lambda sett: sett["underlyingToken"] == token,settData))
     ppfs = settInfo[0]["ppfs"]
 
     price_ratio = 1
@@ -30,7 +31,7 @@ def convert_balances_to_usd(sett, name, settType, balances,prices,settData):
         price_ratio = 0.5
 
     for account, bBalance in balances.items():
-        balances[account] = (price * bBalance * ppfs) / 1e18 * price_ratio
+        balances[account] = ((price * bBalance * ppfs) / 1e18) * price_ratio
 
     return balances
 
@@ -96,16 +97,17 @@ def badger_boost(badger, currentBlock):
             "native.uniBadgerWbtc",
             "native.sushiBadgerWbtc",
         ]:
-            balances = convert_balances_to_usd(sett, name, "badger", balances)
+            balances = convert_balances_to_usd(sett, name, "badger", balances,prices,ppfs)
             badgerSetts = combine_balances([badgerSetts, balances])
         else:
-            balances = convert_balances_to_usd(sett, name, "nonnative", balances)
+            balances = convert_balances_to_usd(sett, name, "nonnative", balances,prices,ppfs)
             nonNativeSetts = combine_balances([nonNativeSetts, balances])
 
     badger_wallet_balances, digg_wallet_balances = fetch_wallet_balances(
-        fetch_token_price(Token.badger.lower()),
-        fetch_token_price(Token.digg.lower()),
+        prices[Token.badger.value],
+        prices[Token.digg.value],
         badger.digg,
+        currentBlock
     )
 
     console.log(len(badger_wallet_balances))
@@ -118,22 +120,15 @@ def badger_boost(badger, currentBlock):
     console.log(len(badgerSetts.keys()))
     console.log(len(nonNativeSetts.keys()))
 
+    allAddresses = set.union(*[set(diggSetts.keys()),set(badgerSetts.keys()),set(nonNativeSetts.keys())])
 
-    allAddresses = list(
-        set(diggSetts.keys())
-        .union(
-        set(badgerSetts.keys())
-        .union(
-         set(nonNativeSetts.keys())
-         )
-        )
-    )
-    console.log(len(allAddresses))
+re    console.log(len(allAddresses))
+
     stakeRatiosList = [
         calc_stake_ratio(addr, diggSetts, badgerSetts, nonNativeSetts)
         for addr in allAddresses
     ]
-    console.log(len(st))
+    console.log(len(stakeRatiosList))
     stakeRatios = dict(zip(allAddresses, stakeRatiosList))
 
     stakeRatios = OrderedDict(
