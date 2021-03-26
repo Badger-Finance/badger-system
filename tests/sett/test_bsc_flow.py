@@ -75,6 +75,7 @@ def setup_badger(badger: BadgerSystem, settConfig):
 
 
 def deposit_withdraw_single_user_flow(badger, settConfig, user):
+    strategy = badger.getStrategy(settConfig["id"])
     want = interface.IERC20(registry.pancake.chefPairs.bnbBtcb)
     snap = SnapshotManager(badger, settConfig["id"])
     sett = badger.getSett(settConfig["id"])
@@ -83,7 +84,7 @@ def deposit_withdraw_single_user_flow(badger, settConfig, user):
     # Deposit
     assert want.balanceOf(user) > 0
 
-    depositAmount = int(want.balanceOf(user) * 0.8)
+    depositAmount = int(want.balanceOf(user) * 0.8) 
     assert depositAmount > 0
 
     want.approve(sett, MaxUint256, {"from": user})
@@ -103,12 +104,12 @@ def deposit_withdraw_single_user_flow(badger, settConfig, user):
     chain.sleep(15)
     chain.mine(1)
 
-    snap.settWithdraw((depositAmount // 2) * 0.999, {"from": user})
+    snap.settWithdraw(depositAmount // 2, {"from": user})
 
     chain.sleep(10000)
     chain.mine(1)
 
-    snap.settWithdraw((depositAmount // 2) * 0.999, {"from": user})
+    snap.settWithdrawAll({"from": user})
 
 
 # @pytest.mark.skip()
