@@ -45,7 +45,7 @@ def transfer_for_strategy_internal(badger, key, amount):
     strategy = badger.getStrategy(key)
     manager = badger.badgerRewardsManager
     want = interface.IERC20(strategy.want())
-    manager.transferWant(want, strategy, amount, {"from": badger.keeper})
+    manager.transferWant(want, strategy, amount, {"from": badger.keeper, "gas_limit": 1000000})
 
 
 def rapid_harvest():
