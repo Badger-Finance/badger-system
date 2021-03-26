@@ -33,11 +33,11 @@ def tend_all(badger: BadgerSystem, skip):
 
         if strategy.keeper() == badger.badgerRewardsManager:
             snap.settTendViaManager(
-                strategy, {"from": keeper}, confirm=False,
+                strategy, {"from": keeper, "gas_limit": 1000000}, confirm=False,
             )
         else:
             snap.settTend(
-                {"from": keeper}, confirm=False,
+                {"from": keeper, "gas_limit": 1000000}, confirm=False,
             )
 
         tx_wait()
@@ -47,6 +47,7 @@ def tend_all(badger: BadgerSystem, skip):
         after = snap.snap()
 
         snap.printCompare(before, after)
+
 
 def main():
     badger = connect_badger(load_keeper=True)
