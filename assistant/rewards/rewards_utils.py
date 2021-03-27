@@ -23,12 +23,13 @@ def keccak(value):
     return web3.toHex(web3.keccak(text=value))
 
 def combine_rewards(rewardsList,cycle, badgerTree):
-    totals = RewardsList(cycle,badgerTree)
-    for rewards in rewardsList:
+    # make sure first element has all meta info
+    firstRewards = rewardsList[0]
+    for rewards in rewardsList[1:]:
         for user,claims in rewards.claims.items():
             for token,claim in claims.items():
-                totals.increase_user_rewards(user,token,claim)
-    return totals
+                firstRewards.increase_user_rewards(user,token,claim)
+    return firstRewards
 
 def process_cumulative_rewards(current, new: RewardsList):
     result = RewardsList(new.cycle, new.badgerTree)
@@ -46,6 +47,7 @@ def process_cumulative_rewards(current, new: RewardsList):
             result.increase_user_rewards(user, token, int(amount))
 
     # result.printState()
+    result.boosts = new.boosts
     return result
 
 def sum_rewards(sources, cycle, badgerTree):

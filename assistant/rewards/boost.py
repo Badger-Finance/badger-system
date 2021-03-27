@@ -19,10 +19,12 @@ from assistant.rewards.enums import Token
 console = Console()
 MAX_MULTIPLIER = 3
 
-def convert_balances_to_usd(sett, name, settType, balances,prices,settData):
+
+def convert_balances_to_usd(sett, name, settType, balances, prices, settData):
     token = sett.token()
     price = prices[token]
-    settInfo = list(filter( lambda sett: sett["underlyingToken"] == token,settData))
+    settInfo = list(
+        filter(lambda sett: sett["underlyingToken"] == token, settData))
     ppfs = settInfo[0]["ppfs"]
 
     price_ratio = 1
@@ -44,6 +46,7 @@ def calc_cumulative(l):
         result[idx] = cumulative
     return result
 
+
 def calc_boost(percentages):
     boosts = []
     for p in percentages:
@@ -58,11 +61,11 @@ def calc_stake_ratio(address, diggSetts, badgerSetts, nonNativeSetts):
     diggBalance = diggSetts.get(address, 0)
     badgerBalance = badgerSetts.get(address, 0)
     nonNativeBalance = nonNativeSetts.get(address, 0)
-    console.log
     if nonNativeBalance == 0:
         return 0
     else:
         return (diggBalance + badgerBalance) / nonNativeBalance
+
 
 def calc_address_balances(address, diggSetts, badgerSetts, nonNativeSetts):
     diggBalance = 0
@@ -89,18 +92,20 @@ def badger_boost(badger, currentBlock):
         balances = calculate_sett_balances(badger, name, sett, currentBlock)
         if name in ["native.uniDiggWbtc", "native.sushiDiggWbtc", "native.digg"]:
             balances = convert_balances_to_usd(
-                sett, name, "digg", balances,prices,ppfs
-             )
+                sett, name, "digg", balances, prices, ppfs
+            )
             diggSetts = combine_balances([diggSetts, balances])
         elif name in [
             "native.badger",
             "native.uniBadgerWbtc",
             "native.sushiBadgerWbtc",
         ]:
-            balances = convert_balances_to_usd(sett, name, "badger", balances,prices,ppfs)
+            balances = convert_balances_to_usd(
+                sett, name, "badger", balances, prices, ppfs)
             badgerSetts = combine_balances([badgerSetts, balances])
         else:
-            balances = convert_balances_to_usd(sett, name, "nonnative", balances,prices,ppfs)
+            balances = convert_balances_to_usd(
+                sett, name, "nonnative", balances, prices, ppfs)
             nonNativeSetts = combine_balances([nonNativeSetts, balances])
 
     badger_wallet_balances, digg_wallet_balances = fetch_wallet_balances(
@@ -120,9 +125,10 @@ def badger_boost(badger, currentBlock):
     console.log(len(badgerSetts.keys()))
     console.log(len(nonNativeSetts.keys()))
 
-    allAddresses = set.union(*[set(diggSetts.keys()),set(badgerSetts.keys()),set(nonNativeSetts.keys())])
+    allAddresses = set.union(
+        *[set(diggSetts.keys()), set(badgerSetts.keys()), set(nonNativeSetts.keys())])
 
-re    console.log(len(allAddresses))
+    console.log(len(allAddresses))
 
     stakeRatiosList = [
         calc_stake_ratio(addr, diggSetts, badgerSetts, nonNativeSetts)
@@ -132,32 +138,29 @@ re    console.log(len(allAddresses))
     stakeRatios = dict(zip(allAddresses, stakeRatiosList))
 
     stakeRatios = OrderedDict(
-        sorted(stakeRatios.items(), key=lambda t: t[1],reverse=True)
+        sorted(stakeRatios.items(), key=lambda t: t[1], reverse=True)
     )
-    console.log(stakeRatios)
     sortedNonNative = OrderedDict(
-        sorted(nonNativeSetts.items(), key=lambda t: stakeRatios[t[0]], reverse=True)
+        sorted(nonNativeSetts.items(),
+               key=lambda t: stakeRatios[t[0]], reverse=True)
     )
     nonNativeTotal = sum(sortedNonNative.values())
 
     for addr, nonNativeBalance in sortedNonNative.items():
         percentage = nonNativeBalance / nonNativeTotal
         sortedNonNative[addr] = percentage
-    
+
     cumulativePercentages = dict(
         zip(sortedNonNative.keys(), calc_cumulative(sortedNonNative.values()))
     )
 
     badgerBoost = dict(
         zip(
-        cumulativePercentages.keys(),
-        calc_boost(cumulativePercentages.values())
+            cumulativePercentages.keys(),
+            calc_boost(cumulativePercentages.values())
         )
     )
-    console.log(badgerBoost)
-    console.log(len(badgerBoost))
     with open('logs/badger-boost.json', 'w') as fp:
         json.dump(badgerBoost, fp)
 
     return badgerBoost
-

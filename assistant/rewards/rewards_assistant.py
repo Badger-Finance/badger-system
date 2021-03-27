@@ -5,8 +5,8 @@ from config.rewards_config import rewards_config
 from helpers.time_utils import to_hours
 from rich.console import Console
 from tqdm import tqdm
-
-from assistant.rewards.aws_utils import download_tree,download_latest, upload
+from assistant.rewards.boost import badger_boost
+from assistant.rewards.aws_utils import download_tree, download_latest, upload
 from assistant.rewards.calc_stakes import calc_geyser_stakes
 from assistant.rewards.calc_stakes_v2 import calc_geyser_snapshot
 from assistant.rewards.meta_rewards.harvest import calc_farm_rewards
@@ -36,19 +36,18 @@ def calc_geyser_rewards(badger, periodStartBlock, endBlock, cycle):
     (For each token, for the time period)
     """
     rewardsByGeyser = {}
-    # Temporarily freeze until badger boost is ready
-    boostsByGeyser = {}
-    with open("logs/boosts.json") as fp:
-        boostsByGeyser = json.load(fp)
-
+    boosts = badger_boost(badger, endBlock -5)
     for key, geyser in badger.geysers.items():
         #if key != "native.badger":
         #    continue
-        geyserRewards = calc_geyser_snapshot(badger, key, periodStartBlock, endBlock,cycle,boostsByGeyser[key])
+        geyserRewards = calc_geyser_snapshot(
+            badger, key, periodStartBlock, endBlock, cycle, boosts)
         rewardsByGeyser[key] = geyserRewards
     #return sum_rewards(rewardsByGeyser, cycle, badger.badgerTree)
-    rewards = combine_rewards(list(rewardsByGeyser.values()),cycle,badger.badgerTree)
-    
+    rewards = combine_rewards(
+        list(rewardsByGeyser.values()), cycle, badger.badgerTree)
+    for addr,boost in boosts.items():
+        rewards.add_user_boost(addr,boost)
     return rewards
 
 
@@ -105,7 +104,8 @@ def fetch_pending_rewards_tree(badger, print_output=False):
 
     if print_output:
         console.print(
-            "[green]===== Loading Pending Rewards " + pastFile + " =====[/green]"
+            "[green]===== Loading Pending Rewards " +
+            pastFile + " =====[/green]"
         )
     # TODO: Use different end point for pending tree file
     currentTree = json.loads(download_tree(pastFile))
@@ -137,7 +137,8 @@ def fetch_current_rewards_tree(badger, print_output=False):
     pastFile = "rewards-1-" + str(merkle["contentHash"]) + ".json"
 
     console.print(
-        "[bold yellow]===== Loading Past Rewards " + pastFile + " =====[/bold yellow]"
+        "[bold yellow]===== Loading Past Rewards " +
+        pastFile + " =====[/bold yellow]"
     )
     currentTree = json.loads(download_latest())
 
@@ -161,7 +162,8 @@ def generate_rewards_in_range(badger, startBlock, endBlock, pastRewards):
 
     currentMerkleData = fetchCurrentMerkleData(badger)
 
-    geyserRewards = calc_geyser_rewards(badger, startBlock, endBlock, nextCycle)
+    geyserRewards = calc_geyser_rewards(
+        badger, startBlock, endBlock, nextCycle)
 
     #farmRewards = calc_farm_rewards(
     #    badger, startBlock, endBlock, nextCycle, retroactive=False
@@ -170,7 +172,6 @@ def generate_rewards_in_range(badger, startBlock, endBlock, pastRewards):
     #    badger, startBlock, endBlock, nextCycle, retroactive=False
     #)
 
-
     newRewards = combine_rewards(
         [geyserRewards], nextCycle, badger.badgerTree
     )
@@ -178,12 +179,12 @@ def generate_rewards_in_range(badger, startBlock, endBlock, pastRewards):
 
     # Take metadata from geyserRewards
     console.print("Processing to merkle tree")
-    merkleTree = rewards_to_merkle_tree(cumulativeRewards, startBlock, endBlock, {})
+    merkleTree = rewards_to_merkle_tree(
+        cumulativeRewards, startBlock, endBlock, {})
 
     # Publish data
     rootHash = keccak(merkleTree["merkleRoot"])
     rewardsLogger.set_merkle_root(rootHash)
-
 
     contentFileName = content_hash_to_filename(rootHash)
 
@@ -200,7 +201,7 @@ def generate_rewards_in_range(badger, startBlock, endBlock, pastRewards):
     print("Uploading to file " + contentFileName)
 
     rewardsLogger.save("rewards-log-{}".format(nextCycle))
-    # TODO: Upload file to AWS & serve from server
+   # TODO: Upload file to AWS & serve from server
     with open(contentFileName, "w") as outfile:
         json.dump(merkleTree, outfile, indent=4)
 
@@ -257,7 +258,8 @@ def rootUpdater(badger, startBlock, endBlock, pastRewards, test=False):
         )
         return False
 
-    rewards_data = generate_rewards_in_range(badger, startBlock, endBlock, pastRewards)
+    rewards_data = generate_rewards_in_range(
+        badger, startBlock, endBlock, pastRewards)
 
     console.print("===== Root Updater Complete =====")
     if not test:
@@ -295,10 +297,12 @@ def guardian(badger: BadgerSystem, startBlock, endBlock, pastRewards, test=False
 
     # Only run if we have a pending root
     if not badgerTree.hasPendingRoot():
-        console.print("[bold yellow]===== Result: No Pending Root =====[/bold yellow]")
+        console.print(
+            "[bold yellow]===== Result: No Pending Root =====[/bold yellow]")
         return False
 
-    rewards_data = generate_rewards_in_range(badger, startBlock, endBlock, pastRewards)
+    rewards_data = generate_rewards_in_range(
+        badger, startBlock, endBlock, pastRewards)
 
     console.print("===== Guardian Complete =====")
 

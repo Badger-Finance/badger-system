@@ -56,7 +56,6 @@ def calc_geyser_snapshot(badger, name, startBlock, endBlock, nextCycle,boosts):
  
         if tokenDistribution > 0:
             rewardsUnit = tokenDistribution/sum(balances.values())
-            console.log(rewardsUnit)
             console.log("Processing rewards for {} addresses".format(len(balances)))
             for addr, balance in balances.items():
                 addr = web3.toChecksumAddress(addr)
@@ -102,7 +101,6 @@ def get_distributed_for_token_at(token, endTime, schedules, name):
                                 rangeDuration / schedule["duration"] * 100
                             )
                         )
-            
         totalToDistribute += toDistribute
     return totalToDistribute
 

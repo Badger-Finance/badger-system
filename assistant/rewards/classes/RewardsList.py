@@ -14,7 +14,7 @@ class RewardsList:
         self.claims = DotMap()
         self.tokens = DotMap()
         self.totals = DotMap()
-        self.boost = DotMap()
+        self.boosts = {}
         self.cycle = cycle
         self.badgerTree = badgerTree
         self.metadata = DotMap()
@@ -30,9 +30,9 @@ class RewardsList:
         if not self.sourceMetadata[source][user][metadata]:
             self.sourceMetadata[source][user][metadata] = DotMap()
         self.sourceMetadata[source][user][metadata] = metadata
-    
+
     def add_user_boost(self,user,boostAmount):
-        self.boost[user] = boostAmount
+        self.boosts[user] = boostAmount
 
     def increase_user_rewards(self, user, token, toAdd):
         if toAdd < 0:
@@ -107,14 +107,21 @@ class RewardsList:
     def to_node_entry(self, user, userData, cycle, index):
         """
         Use abi.encode() to encode data into the hex format used as raw node information in the tree
-        This is the value that will be hashed to form the rest of the tree  
+        This is the value that will be hashed to form the rest of the tree
         """
+        user_str = str(user).lower()
+        if user_str in self.boosts:
+            console.log("Boosted {} by {}".format(user_str,self.boosts[user_str]))
+            boost = self.boosts[user_str]
+        else:
+            boost = 1
         nodeEntry = {
             "user": user,
             "tokens": [],
             "cumulativeAmounts": [],
             "cycle": cycle,
             "index": index,
+            "boost": boost * 1e18
         }
         intAmounts = []
         for tokenAddress, cumulativeAmount in userData.items():
@@ -132,11 +139,12 @@ class RewardsList:
 
         encoded = encode_hex(
             encode_abi(
-                ["uint", "address", "uint", "address[]", "uint[]"],
+                ["uint", "address", "uint","uint", "address[]", "uint[]"],
                 (
                     int(nodeEntry["index"]),
                     nodeEntry["user"],
                     int(nodeEntry["cycle"]),
+                    int(nodeEntry["boost"]),
                     nodeEntry["tokens"],
                     intAmounts,
                 ),
