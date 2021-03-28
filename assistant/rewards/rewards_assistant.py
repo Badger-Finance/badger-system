@@ -533,7 +533,7 @@ def rootUpdater(badger, startBlock, endBlock, pastRewards, test=False):
             rewards_data["merkleTree"]["endBlock"],
             {"from": badger.keeper, "gas_price": gas_strategy},
         )
-        upload(rewards_data["contentFileName"], publish=True)
+        upload(rewards_data["contentFileName"], publish=False)
 
     return True
 
