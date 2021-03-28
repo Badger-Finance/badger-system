@@ -1,11 +1,3 @@
-import datetime
-import json
-import os
-import time
-import warnings
-
-import brownie
-import pytest
 from brownie import Wei, accounts, interface, rpc
 from config.badger_config import badger_config, geyser_keys
 from dotmap import DotMap
@@ -392,5 +384,3 @@ class RewardsSchedule:
             )
         )
         print("total distributed for {}: ".format(asset), val(self.totals[asset]))
-
-

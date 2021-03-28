@@ -1,3 +1,4 @@
+import time
 from scripts.rewards.rewards_utils import get_last_proposed_cycle
 
 from brownie import *
@@ -9,8 +10,7 @@ from assistant.rewards.rewards_assistant import fetch_current_rewards_tree, run_
 
 console = Console()
 
-
-def main():
+def approve_root():
     badger = connect_badger(badger_config.prod_json, load_guardian=True)
     (currentRewards, startBlock, endBlock) = get_last_proposed_cycle(badger)
 
@@ -25,3 +25,16 @@ def main():
         },
         test=False,
     )
+
+
+def main():
+    badger = connect_badger(badger_config.prod_json, load_keeper=True)
+
+    while True:
+        try:
+            approve_root(badger)
+        except Exception as e:
+            console.print("[red]Error[/red]", e)
+        finally:
+            time.sleep(10 * 60)
+

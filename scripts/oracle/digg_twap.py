@@ -77,7 +77,6 @@ def main():
         distribute_test_ether(badger.devMultisig, Wei("5 ether"))
 
     # Multisig wrapper
-    multi = GnosisSafe(badger.devMultisig, testMode=True)
 
     # Get price data from sushiswap, uniswap, and coingecko
     digg_usd_coingecko = 41531.72
@@ -94,8 +93,6 @@ def main():
         "sushiTWAP": sushiTWAP,
         "averageTWAP": averageTWAP
     })
-
-    
 
     supplyBefore = digg.token.totalSupply()
 

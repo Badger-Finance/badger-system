@@ -524,7 +524,7 @@ def rootUpdater(badger, startBlock, endBlock, pastRewards, test=False):
 
     console.print("===== Root Updater Complete =====")
     if not test:
-        upload(rewards_data["contentFileName"])
+        
         badgerTree.proposeRoot(
             rewards_data["merkleTree"]["merkleRoot"],
             rewards_data["rootHash"],
@@ -533,6 +533,7 @@ def rootUpdater(badger, startBlock, endBlock, pastRewards, test=False):
             rewards_data["merkleTree"]["endBlock"],
             {"from": badger.keeper, "gas_price": gas_strategy},
         )
+        upload(rewards_data["contentFileName"], publish=True)
 
     return True
 
@@ -575,6 +576,7 @@ def guardian(badger: BadgerSystem, startBlock, endBlock, pastRewards, test=False
             rewards_data["merkleTree"]["endBlock"],
             {"from": badger.guardian, "gas_price": gas_strategy},
         )
+        
 
 
 def run_action(badger, args, test):

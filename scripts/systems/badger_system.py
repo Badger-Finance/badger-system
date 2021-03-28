@@ -138,7 +138,7 @@ def connect_badger(
     load_deployer=False,
     load_keeper=False,
     load_guardian=False,
-    load_method=LoadMethod.SK,
+    load_method=LoadMethod.KEYSTORE,
 ):
     """
     Connect to an existing badger deploy from file
@@ -261,7 +261,7 @@ class BadgerSystem:
         load_deployer=False,
         load_keeper=False,
         load_guardian=False,
-        load_method=LoadMethod.SK,
+        load_method=LoadMethod.KEYSTORE,
     ):
         self.config = config
         self.contracts_static = []
@@ -285,6 +285,13 @@ class BadgerSystem:
             print("RPC Inactive")
             import decouple
 
+            print(
+                load_deployer,
+                load_keeper,
+                load_guardian,
+                load_method
+            )
+
             if load_deployer and load_method == LoadMethod.SK:
                 deployer_key = decouple.config("DEPLOYER_PRIVATE_KEY")
                 self.deployer = accounts.add(deployer_key)
@@ -295,11 +302,11 @@ class BadgerSystem:
                 guardian_key = decouple.config("GUARDIAN_PRIVATE_KEY")
                 self.guardian = accounts.add(guardian_key)
             if load_deployer and load_method == LoadMethod.KEYSTORE:
-                self.deployer = accounts.load("badger_deployer")
+                self.deployer = accounts.load("badger-deployer")
             if load_keeper and load_method == LoadMethod.KEYSTORE:
-                self.keeper = accounts.load("badger_keeper")
+                self.keeper = accounts.load("badger-keeper")
             if load_guardian and load_method == LoadMethod.KEYSTORE:
-                self.guardian = accounts.load("badger_guardian")
+                self.guardian = accounts.load("badger-guardian")
             self.publish_source = False  # Publish sources for deployed logic on mainnet
         if deploy:
             self.devProxyAdmin = deploy_proxy_admin(deployer)
