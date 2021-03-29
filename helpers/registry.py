@@ -90,7 +90,6 @@ open_zeppelin_registry = DotMap(
     )
 )
 
-<<<<<<< HEAD
 token_registry = DotMap(
     weth="0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
     wbtc="0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599",
@@ -99,8 +98,6 @@ token_registry = DotMap(
     badger="0x3472A5A71965499acd81997a54BBA8D852C6E53d",
     digg="0x798D1bE841a82a273720CE31c822C61a67a601C3"
 )
-=======
->>>>>>> origin/peg-rewards
 
 onesplit_registry = DotMap(contract="0x50FDA034C0Ce7a8f7EFDAebDA7Aa7cA21CC1267e")
 

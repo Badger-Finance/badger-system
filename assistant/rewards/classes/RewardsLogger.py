@@ -8,12 +8,25 @@ class RewardsLogger:
     def __init__(self):
         self._unlockSchedules = {}
         self._userData = {}
+        self._totalTokenDist = {}
+        self._pegTokenDist = {}
         self._merkleRoot = ""
         self._diggAllocation = 0
         self._startBlock = 0
 
     def set_merkle_root(self,root):
         self._merkleRoot = root
+
+    def add_peg_token_dist(self,name,token,amount):
+        if name not in self._pegTokenDist:
+            self._pegTokenDist[name] = {}
+        self._pegTokenDist[name][token] = amount
+
+    def add_total_token_dist(self,name,token,amount):
+        if name not in self._totalTokenDist:
+            self._totalTokenDist[name] = {}
+        self._totalTokenDist[name][token] = amount
+
 
     def set_start_block(self,block):
         self._startBlock = block
@@ -53,6 +66,8 @@ class RewardsLogger:
             "merkleRoot": self._merkleRoot,
             "userData":self._userData,
             "unlockSchedules":self._unlockSchedules,
+            "totalTokenDist":self._totalTokenDist,
+            "pegTokenDist":self._pegTokenDist,
             "startBlock":self._startBlock,
             "diggAllocation":self._diggAllocation
         }

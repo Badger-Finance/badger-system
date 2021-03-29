@@ -35,10 +35,13 @@ def calc_geyser_snapshot(badger, name, startBlock, endBlock, nextCycle,boosts,di
             get_distributed_for_token_at(token, endTime, unlockSchedules, name)
             - get_distributed_for_token_at(token, startTime, unlockSchedules, name)
         )
+        rewardsLogger.add_total_token_dist(name,token,tokenDistribution)
         # Distribute to users with rewards list
         # Make sure there are tokens to distribute (some geysers only 
         # distribute one token)
         if token == Token.digg.value:
+            rewardsLogger.add_total_token_dist(name,token,digg.sharesToFragments(tokenDistribution))
+
             if name in nativeSetts:
                 tokenDistribution = tokenDistribution * diggAllocation
             else:
@@ -48,12 +51,16 @@ def calc_geyser_snapshot(badger, name, startBlock, endBlock, nextCycle,boosts,di
                 "{} DIGG tokens distributed".format(
                 digg.sharesToFragments(tokenDistribution)/1e18)
             )
+
+            rewardsLogger.add_peg_token_dist(name,token,digg.sharesToFragments(tokenDistribution))
+
         else:
             console.log(
                 "{} Badger tokens distributed".format(
                 tokenDistribution/1e18)
             )
- 
+            rewardsLogger.add_peg_token_dist(name,token,tokenDistribution)
+
         if tokenDistribution > 0:
             rewardsUnit = tokenDistribution/sum(balances.values())
             console.log("Processing rewards for {} addresses".format(len(balances)))
