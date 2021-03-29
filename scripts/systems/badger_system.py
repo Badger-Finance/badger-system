@@ -205,10 +205,6 @@ def connect_badger(
     # Connect Sett
     badger.connect_sett_system(badger_deploy["sett_system"], badger_deploy["geysers"])
 
-<<<<<<< HEAD
-    
-=======
->>>>>>> origin/peg-rewards
     digg = connect_digg(badger_deploy_file)
     badger.add_existing_digg(digg)
 

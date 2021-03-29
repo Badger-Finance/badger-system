@@ -17,7 +17,7 @@ nonNativeSetts = [
     "harvest.renCrv"
     "native.sushiWbtcEth"
 ]
-def calc_geyser_snapshot(badger, name, startBlock, endBlock, nextCycle,boosts):
+def calc_geyser_snapshot(badger, name, startBlock, endBlock, nextCycle,boosts,diggAllocation):
 
     console.log("Processing rewards for {}".format(name))
     rewards = RewardsList(nextCycle, badger.badgerTree)

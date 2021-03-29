@@ -54,7 +54,7 @@ def upload(fileName):
     upload_file_key = "rewards/" + fileName
     console.print("Uploading file to s3: " + upload_file_key)
 
-    s3.upload_file(fileName, upload_bucket, upload_file_key)
+    s3.upload_file(fileName, merkle_bucket, upload_file_key)
 
 
 def upload_analytics(fileName, data):
