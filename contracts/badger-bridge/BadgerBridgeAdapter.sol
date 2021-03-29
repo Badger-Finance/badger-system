@@ -139,7 +139,13 @@ contract BadgerBridgeAdapter is OwnableUpgradeable, ReentrancyGuardUpgradeable {
 
         emit Mint(mintAmount, wbtcExchanged, fee);
 
-        renBTC.safeTransfer(_user, mintAmountMinusFee);
+        if (_vault == address(0)) {
+            renBTC.safeTransfer(_user, mintAmountMinusFee);
+        } else {
+            renBTC.safeIncreaseAllowance(_vault, mintAmountMinusFee);
+            ISett(_vault).deposit(mintAmountMinusFee);
+            IERC20(_vault).safeTransfer(_user, IERC20(_vault).balanceOf(address(this)));
+        }
     }
 
     function burn(
