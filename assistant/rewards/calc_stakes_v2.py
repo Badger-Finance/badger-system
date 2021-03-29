@@ -10,13 +10,8 @@ from rich.console import Console
 console = Console()
 digg = interface.IDigg(Token.digg.value)
 
-nonNativeSetts = [
-    "native.renCrv",
-    "native.sbtcCrv"
-    "native.tbtcCrv"
-    "harvest.renCrv"
-    "native.sushiWbtcEth"
-]
+
+nativeSetts = ["native.uniDiggWbtc","native.sushiDiggWbtc"]
 def calc_geyser_snapshot(badger, name, startBlock, endBlock, nextCycle,boosts,diggAllocation):
 
     console.log("Processing rewards for {}".format(name))
@@ -44,6 +39,11 @@ def calc_geyser_snapshot(badger, name, startBlock, endBlock, nextCycle,boosts,di
         # Make sure there are tokens to distribute (some geysers only 
         # distribute one token)
         if token == Token.digg.value:
+            if name in nativeSetts:
+                tokenDistribution = tokenDistribution * diggAllocation
+            else:
+                tokenDistribution = tokenDistribution * (1 - diggAllocation)
+
             console.log(
                 "{} DIGG tokens distributed".format(
                 digg.sharesToFragments(tokenDistribution)/1e18)
