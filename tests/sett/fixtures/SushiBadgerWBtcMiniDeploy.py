@@ -23,6 +23,8 @@ class SushiBadgerWBtcMiniDeploy(SettMiniDeployBase):
         Distribute badger to Geyser and allow strategy to take
         Unpause strategy (paused on initialization)
         """
+        if not deploy:
+            return
         self.badger.distribute_staking_rewards(
             self.key, badger_config.geyserParams.unlockSchedules.badger[0].amount
         )
@@ -39,6 +41,8 @@ class SushiBadgerWBtcMiniDeploy(SettMiniDeployBase):
         """
         Deploy StakingRewardsSignalOnly for Strategy
         """
+        if not deploy:
+            return
 
         self.rewards = self.badger.deploy_sett_staking_rewards_signal_only(
             self.key, self.deployer, self.badger.token

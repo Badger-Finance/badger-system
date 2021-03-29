@@ -245,6 +245,7 @@ def fetch_sushi_harvest_events():
         "wbtcDigg": wbtcDiggEvents,
     }
 
+<<<<<<< HEAD
     cream_transport = AIOHTTPTransport(url=subgraph_config["cream_url"])
     cream_client = Client(transport=cream_transport, fetch_schema_from_transport=True)
     console.log("Fetching cream deposits...")
@@ -413,3 +414,17 @@ def fetch_cream_balances(tokenSymbol, blockNumber):
             float(entry["totalUnderlyingSupplied"]) * 1e18 / (1 + float(exchangeRate))
         )
     return retVal
+=======
+
+def fetch_badger_balances():
+    pass
+
+
+
+def fetch_digg_balances():
+    pass
+
+
+def fetch_staked_balances():
+    pass
+>>>>>>> origin/peg-rewards

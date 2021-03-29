@@ -51,7 +51,7 @@ class GnosisSafe:
         self.transactions = []
         self.testMode = testMode
 
-        if testMode:
+        if testMode and rpc.is_active():
             self.convert_to_test_mode()
 
     # Must be on Ganache instance and Gnosis safe must be --unlocked
@@ -60,7 +60,7 @@ class GnosisSafe:
         self.contract.changeThreshold(1, {"from": self.contract.address})
         assert self.contract.getThreshold() == 1
 
-    def execute(self, metadata: MultisigTxMetadata, params):
+    def execute(self, metadata: MultisigTxMetadata, params, print_output=True):
         self.transactions.append(MultisigTx(params, metadata))
         id = len(self.transactions) - 1
         return self.executeTx(id)
@@ -72,17 +72,20 @@ class GnosisSafe:
         self.transactions.append(MultisigTx(params, metadata))
         return len(self.transactions) - 1
 
-    def executeTx(self, id=None):
+    def executeTx(self, id=None, print_output=True):
         tx = None
         if not id:
             tx = self.transactions[-1]
         else:
             tx = self.transactions[id]
 
-        self.printTx(id)
+        if print_output:
+            self.printTx(id)
 
         if self.testMode:
             tx = exec_direct(self.contract, tx.params)
+            if print_output:
+                print(tx.call_trace())
             # try: 
             #     failEvents = tx.events['ExecutionFailure']
             #     if len(failEvents) > 0:
@@ -90,6 +93,7 @@ class GnosisSafe:
             #         assert False
             # except EventLookupError:
             return tx
+        
 
     def get_first_owner(self):
         return self.contract.getOwners()[0]

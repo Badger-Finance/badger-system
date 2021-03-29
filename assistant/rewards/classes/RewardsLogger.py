@@ -8,10 +8,16 @@ class RewardsLogger:
     def __init__(self):
         self._unlockSchedules = {}
         self._userData = {}
+<<<<<<< HEAD:assistant/rewards/classes/RewardsLogger.py
         self._merkleRoot = ""
 
     def set_merkle_root(self,root):
         self._merkleRoot = root
+=======
+        self._epochData = {}
+        self._metadata = {}
+
+>>>>>>> origin/peg-rewards:assistant/rewards/RewardsLogger.py
 
     def _check_user_vault(self,address,vault):
         if vault not in self._userData:
@@ -32,12 +38,23 @@ class RewardsLogger:
         self._check_user_vault(address,vault)
         self._userData[vault][address]["multiplier"] = multiplier
 
+<<<<<<< HEAD:assistant/rewards/classes/RewardsLogger.py
     def add_unlock_schedules(self,name,token,schedule):
         if name not in self._unlockSchedules:
             self._unlockSchedules[name] = {}
         else:   
             self._unlockSchedules[name][token] = schedule
 
+=======
+    def add_metadata(self,key,value):
+        self._metadata[key] = value
+
+    def add_unlock_schedule(self,token,schedule):
+        self._unlockSchedules[token] = schedule
+
+    def add_distribution_info(self,geyserName,distribution):
+        self._distributionInfo[geyserName] = distribution
+>>>>>>> origin/peg-rewards:assistant/rewards/RewardsLogger.py
 
     def save(self,fileName):
 
@@ -45,6 +62,11 @@ class RewardsLogger:
             "merkleRoot": self._merkleRoot,
             "userData":self._userData,
             "unlockSchedules":self._unlockSchedules,
+<<<<<<< HEAD:assistant/rewards/classes/RewardsLogger.py
+=======
+            "retroactiveData":self._epochData,
+            "metadata":self._metadata
+>>>>>>> origin/peg-rewards:assistant/rewards/RewardsLogger.py
         }
         upload_analytics(fileName,data)
         with open("logs/{}.json".format(fileName),"w") as f:

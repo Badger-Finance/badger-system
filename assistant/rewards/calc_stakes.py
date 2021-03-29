@@ -16,12 +16,11 @@ digg_token = "0x798D1bE841a82a273720CE31c822C61a67a601C3"
 badger_token = "0x3472A5A71965499acd81997a54BBA8D852C6E53d"
 badger_tree = "0x660802Fc641b154aBA66a62137e71f331B6d787A"
 
-def calc_geyser_stakes(key, geyser, periodStartBlock, periodEndBlock):
+def calc_geyser_stakes(key, geyser, periodStartBlock, periodEndBlock,diggAllocation):
     globalStartTime = web3.eth.getBlock(globalStartBlock)["timestamp"]
     periodStartTime = web3.eth.getBlock(periodStartBlock)["timestamp"]
     periodEndTime = web3.eth.getBlock(periodEndBlock)["timestamp"]
-
-    geyserMock = BadgerGeyserMock(key)
+    geyserMock = BadgerGeyserMock(key,diggAllocation)
     geyserMock.set_current_period(periodStartTime, periodEndTime)
 
     # Collect actions from the total history
@@ -31,10 +30,15 @@ def calc_geyser_stakes(key, geyser, periodStartBlock, periodEndBlock):
     # Process actions from the total history
     console.print("\n[grey]Process Actions: Entire History[/grey]")
     geyserMock = process_actions(geyserMock, actions, globalStartBlock, periodEndBlock, key)
-
-    return calculate_token_distributions(
+    geyserMock.diggSettAllocation = 0.5
+    atPegDistribution = calculate_token_distributions(
+        geyser,geyserMock,periodStartTime,periodEndTime
+    )
+    geyser.diggSetAllocation = diggAllocation
+    currentDistribution = calculate_token_distributions(
         geyser, geyserMock, periodStartTime, periodEndTime
     )
+    return (atPegDistribution,currentDistribution)
 
 
 def calculate_token_distributions(
@@ -55,7 +59,6 @@ def calculate_token_distributions(
         for schedule in unlockSchedules:
             if rewards_config.debug:
                 console.log(schedule)
-            console.print("Adding Unlock Schedule", token, schedule)
             rewardsLogger.add_unlock_schedule(token,schedule)
             modified=schedule
             if token == digg_token:

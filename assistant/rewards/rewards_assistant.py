@@ -1,4 +1,25 @@
 import json
+<<<<<<< HEAD
+=======
+
+from tqdm import tqdm
+from assistant.rewards.aws_utils import download,upload
+from assistant.rewards.calc_stakes import calc_geyser_stakes
+from assistant.rewards.calc_harvest import calc_balances_from_geyser_events,get_initial_user_state
+from assistant.rewards.RewardsLogger import rewardsLogger
+from assistant.rewards.twap import digg_btc_twap,calculate_digg_allocation
+from assistant.subgraph.client import (
+    fetch_sett_balances,
+    fetch_geyser_events,
+    fetch_sett_transfers,
+    fetch_harvest_farm_events,
+    fetch_sushi_harvest_events
+)
+from assistant.rewards.User import User
+from assistant.rewards.merkle_tree import rewards_to_merkle_tree
+from assistant.rewards.rewards_checker import compare_rewards, verify_rewards
+from assistant.rewards.RewardsList import RewardsList
+>>>>>>> origin/peg-rewards
 from brownie import *
 from brownie.network.gas.strategies import GasNowStrategy
 from config.rewards_config import rewards_config
@@ -27,6 +48,7 @@ from scripts.systems.badger_system import BadgerSystem
 
 gas_strategy = GasNowStrategy("fast")
 console = Console()
+diggBTCFeed = "0xe49ca29a3ad94713fc14f065125e74906a6503bb"
 
 
 def calc_geyser_rewards(badger, periodStartBlock, endBlock, cycle):
@@ -35,7 +57,10 @@ def calc_geyser_rewards(badger, periodStartBlock, endBlock, cycle):
     userRewards = (userShareSeconds / totalShareSeconds) / tokensReleased
     (For each token, for the time period)
     """
+    ratio = digg_btc_twap(periodStartBlock,endBlock)
+    diggAllocation = calculate_digg_allocation(ratio)
     rewardsByGeyser = {}
+<<<<<<< HEAD
     boosts = badger_boost(badger, endBlock -5)
     for key, geyser in badger.geysers.items():
         #if key != "native.badger":
@@ -48,6 +73,182 @@ def calc_geyser_rewards(badger, periodStartBlock, endBlock, cycle):
         list(rewardsByGeyser.values()), cycle, badger.badgerTree)
     for addr,boost in boosts.items():
         rewards.add_user_boost(addr,boost)
+=======
+    rewardsByGeyserAtPeg = {}
+    rewardsLogger.add_metadata("pegData", {
+        "ratio":ratio,
+        "diggAllocation":diggAllocation
+    })
+    # For each Geyser, get a list of user to weights
+    for key, geyser in badger.geysers.items():
+       #if key != "native.badger" and key != "native.uniDiggWbtc":
+       #     continue
+        (atPegGeyserRewards,geyserRewards) = calc_geyser_stakes(key, geyser, periodStartBlock, endBlock,diggAllocation)
+        rewardsByGeyser[key] = geyserRewards
+        rewardsByGeyserAtPeg[key] = geyserRewards
+
+    totalRewardsByGeyser = sum_rewards(rewardsByGeyser, cycle, badger.badgerTree)
+    totalRewardsByGeyserAtPeg = sum_rewards(rewardsByGeyserAtPeg,cycle,badger.badgerTree)
+    for token in totalRewardsByGeyser.totals.keys():
+        assert totalRewardsByGeyser.totals[token] == totalRewardsByGeyserAtPeg.totals[token]
+
+    return totalRewardsByGeyser
+
+def calc_sushi_rewards(badger,startBlock,endBlock,nextCycle,retroactive):
+    console.log(startBlock)
+    console.log(endBlock)
+    xSushiTokenAddress = "0x8798249c2e607446efb7ad49ec89dd1865ff4272"
+    sushi_harvest_events = fetch_sushi_harvest_events()
+
+    def filter_events(e):
+        return int(e["blockNumber"]) > startBlock and int(e["blockNumber"]) < endBlock
+
+    wbtcEthEvents = list(filter(filter_events,sushi_harvest_events["wbtcEth"]))
+    wbtcBadgerEvents = list(filter(filter_events,sushi_harvest_events["wbtcBadger"]))
+    wBtcDiggEvents = list(filter(filter_events,sushi_harvest_events["wbtcDigg"])) 
+    totalxSushi = sum([int(e["toBadgerTree"]) for e in wbtcEthEvents]) \
+         + sum([int(e["toBadgerTree"]) for e in wbtcBadgerEvents]) \
+         + sum([int(e["toBadgerTree"]) for e in wBtcDiggEvents])
+    wbtcEthRewards = RewardsList(nextCycle,badger.badgerTree)
+    wbtcBadgerRewards = RewardsList(nextCycle,badger.badgerTree)
+    wbtcDiggRewards = RewardsList(nextCycle,badger.badgerTree)
+
+    if len(wbtcEthEvents) > 0:
+        wbtcEthStartBlock = get_latest_event_block(wbtcEthEvents[0],sushi_harvest_events["wbtcEth"])
+        if wbtcEthStartBlock == -1 or retroactive:
+            wbtcEthStartBlock = 11537600
+
+        console.log(wbtcEthStartBlock)
+            
+        console.log("Processing {} wbtcEth sushi events".format(len(wbtcEthEvents)))
+        wbtcEthRewards = process_sushi_events(
+            badger,wbtcEthStartBlock,endBlock,wbtcEthEvents,"native.sushiWbtcEth",nextCycle) 
+
+
+    if len(wbtcBadgerEvents) > 0:
+        wbtcBadgerStartBlock = get_latest_event_block(wbtcBadgerEvents[0],sushi_harvest_events["wbtcBadger"])
+        if wbtcBadgerStartBlock == -1 or retroactive:
+            wbtcBadgerStartBlock = 11539529
+
+    
+        console.log("Processing {} wbtcBadger sushi events".format(len(wbtcBadgerEvents)))
+        wbtcBadgerRewards = process_sushi_events(
+            badger,wbtcBadgerStartBlock,endBlock,wbtcBadgerEvents,"native.sushiBadgerWbtc",nextCycle)
+    
+    if len(wBtcDiggEvents) > 0:
+        wbtcDiggStartBlock = get_latest_event_block(wBtcDiggEvents[0],sushi_harvest_events["wbtcDigg"])
+        if wbtcDiggStartBlock == -1 or retroactive:
+            wbtcDiggStartBlock = 11676338
+        wbtcDiggRewards = process_sushi_events(
+            badger,wbtcDiggStartBlock,endBlock,wBtcDiggEvents,"native.sushiDiggWbtc",nextCycle
+        )
+
+    finalRewards = combine_rewards([wbtcEthRewards,wbtcBadgerRewards,wbtcDiggRewards],nextCycle,badger.badgerTree)
+    xSushiFromRewards = 0
+
+    for user,claimData in finalRewards.claims.items():
+        for token,tokenAmount in claimData.items():
+            if token == web3.toChecksumAddress(xSushiTokenAddress):
+                #console.log("Address {}: {} xSushi".format(user,int(float(tokenAmount))/1e18 ))
+                xSushiFromRewards += int(float(tokenAmount))
+
+    console.log("Total xSushi {} from events".format(
+        totalxSushi/1e18
+    ))
+    console.log("Total xSushi {} from claims".format(
+        xSushiFromRewards/1e18
+    ))
+    difference = abs(totalxSushi - xSushiFromRewards)
+    console.log("Difference {}".format(abs(totalxSushi/1e18 - xSushiFromRewards/1e18)))
+    assert difference < 10000000
+    return finalRewards
+
+            
+def process_sushi_events(badger,startBlock,endBlock,events,name,nextCycle):
+    xSushiTokenAddress = "0x8798249c2e607446efb7ad49ec89dd1865ff4272"
+    start = startBlock
+    end = int(events[0]["blockNumber"])
+    totalHarvested = 0
+    rewards = RewardsList(nextCycle,badger.badgerTree)
+    for i in tqdm(range(len(events))):
+        xSushiRewards = int(events[i]["toBadgerTree"])
+        user_state = calc_meta_farm_rewards(badger,name,start,end)
+        console.log("Processing between blocks {} and {}, distributing {} to users".format(
+            start,
+            end,
+            xSushiRewards/1e18
+        ))
+        totalHarvested += xSushiRewards/1e18
+        console.print("{} total xSushi processed".format(totalHarvested))
+        totalShareSeconds = sum([u.shareSeconds for u in user_state])
+        xSushiUnit = xSushiRewards/totalShareSeconds
+        for user in user_state:
+            rewards.increase_user_rewards(web3.toChecksumAddress(user.address),web3.toChecksumAddress(xSushiTokenAddress),xSushiUnit * user.shareSeconds)
+            rewardsLogger.add_user_share_seconds(user.address,name,user.shareSeconds)
+            rewardsLogger.add_user_token(user.address,name,xSushiTokenAddress,xSushiUnit * user.shareSeconds)
+
+        if i+1 < len(events):
+           start = int(events[i]["blockNumber"])
+           end = int(events[i+1]["blockNumber"])
+    totalXSushi = sum([list(v.values())[0]/1e18 for v in list(rewards.claims.values())  ])
+    distr = {}
+    distr[xSushiTokenAddress] = totalXSushi
+    rewardsLogger.add_distribution_info(name,distr)
+    return rewards
+
+
+def get_latest_event_block(firstEvent,harvestEvents):
+    try:
+        event_index = harvestEvents.index(firstEvent)
+    except ValueError:
+        return -1
+    if event_index - 1 >= 0 and event_index - 1 < len(harvestEvents):
+        # startBlock starts with the last harvest that happened 
+        latestEvent = harvestEvents[event_index - 1] 
+        return latestEvent["blockNumber"]
+    else:
+        return -1
+    
+
+def fetch_current_harvest_rewards(badger,startBlock,endBlock,nextCycle):
+    farmTokenAddress = "0xa0246c9032bC3A600820415aE600c6388619A14D"
+    harvestEvents = fetch_harvest_farm_events()
+    rewards = RewardsList(nextCycle,badger.badgerTree)
+
+    def filter_events(e):
+        return int(e["blockNumber"]) > startBlock and int(e["blockNumber"]) < endBlock
+
+    unprocessedEvents = list(filter(filter_events,harvestEvents))
+    console.log("Processing {} farm events".format(len(unprocessedEvents)))
+
+    if len(unprocessedEvents) == 0:
+        return rewards
+
+    start = get_latest_event_block(unprocessedEvents[0],harvestEvents)
+    end = int(unprocessedEvents[0]["blockNumber"])
+    totalHarvested = 0
+    for i in tqdm(range(len(unprocessedEvents))):
+        console.log("Processing between {} and {}".format(startBlock,endBlock))
+        harvestEvent = unprocessedEvents[i]
+        user_state = calc_meta_farm_rewards(badger,"harvest.renCrv",start,end)
+        farmRewards = int(harvestEvent["farmToRewards"])
+        console.print("Processing block {}, distributing {} to users".format(
+            harvestEvent["blockNumber"],
+            farmRewards/1e18,
+         ))
+        totalHarvested += farmRewards/1e18
+        console.print("{} total FARM processed".format(totalHarvested))
+        totalShareSeconds = sum([u.shareSeconds for u in user_state])
+        farmUnit = farmRewards/totalShareSeconds
+        for user in user_state:
+            rewards.increase_user_rewards(user.address,web3.toChecksumAddress(farmTokenAddress),farmUnit * user.shareSeconds)
+
+        if i+1 < len(unprocessedEvents):
+            start = int(unprocessedEvents[i]["blockNumber"])
+            end = int(unprocessedEvents[i+1]["blockNumber"])
+    
+    totalFarm = sum( [list(v.values())[0]/1e18 for v in list(rewards.claims.values())  ] )
+>>>>>>> origin/peg-rewards
     return rewards
 
 
@@ -107,8 +308,13 @@ def fetch_pending_rewards_tree(badger, print_output=False):
             "[green]===== Loading Pending Rewards " +
             pastFile + " =====[/green]"
         )
+<<<<<<< HEAD
     # TODO: Use different end point for pending tree file
     currentTree = json.loads(download_tree(pastFile))
+=======
+
+    currentTree = download(pastFile)
+>>>>>>> origin/peg-rewards
 
     # Invariant: File shoulld have same root as latest
     assert currentTree["merkleRoot"] == merkle["root"]
@@ -140,9 +346,17 @@ def fetch_current_rewards_tree(badger, print_output=False):
         "[bold yellow]===== Loading Past Rewards " +
         pastFile + " =====[/bold yellow]"
     )
+<<<<<<< HEAD
     currentTree = json.loads(download_latest())
 
     # Invariant: File should have same root as latest
+=======
+    currentTree = download(pastFile)
+
+    # Invariant: File shoulld have same root as latest
+    assert currentTree["merkleRoot"] == merkle["root"]
+
+>>>>>>> origin/peg-rewards
     lastUpdateOnChain = merkle["blockNumber"]
     lastUpdate = int(currentTree["endBlock"])
 
@@ -161,7 +375,10 @@ def generate_rewards_in_range(badger, startBlock, endBlock, pastRewards):
     nextCycle = getNextCycle(badger)
 
     currentMerkleData = fetchCurrentMerkleData(badger)
+    #sushiRewards = calc_sushi_rewards(badger,startBlock,endBlock,nextCycle,retroactive=False)
+    #farmRewards = fetch_current_harvest_rewards(badger,startBlock, endBlock,nextCycle)
 
+<<<<<<< HEAD
     geyserRewards = calc_geyser_rewards(
         badger, startBlock, endBlock, nextCycle)
 
@@ -176,11 +393,24 @@ def generate_rewards_in_range(badger, startBlock, endBlock, pastRewards):
         [geyserRewards], nextCycle, badger.badgerTree
     )
     cumulativeRewards = process_cumulative_rewards(pastRewards, newRewards)
+=======
+    geyserRewards = calc_geyser_rewards(badger, startBlock, endBlock, nextCycle)
+    rewardsLogger.save("rewards")
+
+    #newRewards = combine_rewards([geyserRewards,farmRewards,sushiRewards],nextCycle,badger.badgerTree)
+    cumulativeRewards = process_cumulative_rewards(pastRewards, geyserRewards)
+>>>>>>> origin/peg-rewards
 
     # Take metadata from geyserRewards
     console.print("Processing to merkle tree")
     merkleTree = rewards_to_merkle_tree(
+<<<<<<< HEAD
         cumulativeRewards, startBlock, endBlock, {})
+=======
+        cumulativeRewards, startBlock, endBlock, {}
+    )
+
+>>>>>>> origin/peg-rewards
 
     # Publish data
     rootHash = keccak(merkleTree["merkleRoot"])

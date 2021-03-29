@@ -31,11 +31,14 @@ class DepositAndWithdrawAction(BaseAction):
         assert startingBalance >= depositAmount
         assert startingBalance >= 0
 
-        want.approve(
-            self.sett,
-            MaxUint256,
-            {"from": user},
-        )
+        # Reset allowance before approval. Some ERC20 impl revert if
+        # you try to approve an allowance w/o reset + has remaining.
+        for amount in [0, MaxUint256]:
+            want.approve(
+                self.sett,
+                amount,
+                {"from": user},
+            )
         self.snap.settDeposit(
             depositAmount,
             {"from": user},
@@ -73,11 +76,14 @@ class DepositAction(BaseAction):
         assert startingBalance >= depositAmount
         assert startingBalance >= 0
 
-        want.approve(
-            self.sett,
-            MaxUint256,
-            {"from": user},
-        )
+        # Reset allowance before approval. Some ERC20 impl revert if
+        # you try to approve an allowance w/o reset + has remaining.
+        for amount in [0, MaxUint256]:
+            want.approve(
+                self.sett,
+                amount,
+                {"from": user},
+            )
         self.snap.settDeposit(
             depositAmount,
             {"from": user},

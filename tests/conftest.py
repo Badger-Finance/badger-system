@@ -25,6 +25,7 @@ from tests.sett.fixtures import (
     SushiBadgerWBtcMiniDeploy,
     SushiDiggWbtcLpOptimizerMiniDeploy,
     UniDiggWbtcLpMiniDeploy,
+    SushiClawUSDCMiniDeploy,
 )
 
 
@@ -47,17 +48,14 @@ def generate_sett_test_config(settsToRun, runTestSetts, runProdSetts=False):
 # ===== Sett + Strategy Test Configuration =====
 
 settsToRun = [
-    # "native.badger",
-    # "native.renCrv",
-    # "native.sbtcCrv",
-    # "native.tbtcCrv",
-    # "harvest.renCrv",
-    # "native.uniBadgerWbtc",
-    # "sushi.sushiBadgerWBtc",
-    # "sushi.sushiWbtcWeth",
-    "native.digg",
-    # "native.uniDiggWbtc",
-    # "native.sushiDiggWbtc",
+    "native.badger",
+    "native.renCrv",
+    "native.sbtcCrv",
+    "native.tbtcCrv",
+    # # "harvest.renCrv",
+    "native.uniBadgerWbtc",
+    "native.sushiBadgerWbtc",
+    "native.sushiWbtcEth",
 ]
 
 diggSettsToRun = [
@@ -66,10 +64,23 @@ diggSettsToRun = [
     "native.sushiDiggWbtc",
 ]
 
+clawSettsToRun = [
+    "native.sushiSClawUSDC",
+    "native.sushiBClawUSDC",
+]
+
+# Setts w/ backing collateral for testing the CLAW emp contract.
+clawSettsSytheticTestsToRun = [
+    "native.badger",
+    "native.sushiWbtcEth",
+]
+
 runTestSetts = True
 
 settTestConfig = generate_sett_test_config(settsToRun, runTestSetts)
 diggSettTestConfig = generate_sett_test_config(diggSettsToRun, runTestSetts)
+clawSettTestConfig = generate_sett_test_config(clawSettsToRun, runTestSetts)
+clawSettSyntheticTestConfig = generate_sett_test_config(clawSettsSytheticTestsToRun, runTestSetts)
 
 
 @pytest.fixture(scope="function", autouse=True)
@@ -160,9 +171,9 @@ def badger_single_sett(settConfig, deploy=True):
                 keeper=keeper,
                 governance=governance,
             ).deploy(deploy=deploy)
-        if settId == "sushi.sushiBadgerWBtc":
+        if settId == "native.sushiBadgerWbtc":
             return SushiBadgerWBtcMiniDeploy(
-                "sushi.sushiBadgerWBtc",
+                "native.sushiBadgerWbtc",
                 "StrategySushiBadgerWbtc",
                 deployer,
                 strategist=strategist,
@@ -170,9 +181,9 @@ def badger_single_sett(settConfig, deploy=True):
                 keeper=keeper,
                 governance=governance,
             ).deploy(deploy=deploy)
-        if settId == "sushi.sushiWbtcWeth":
+        if settId == "native.sushiWbtcEth":
             return SushiBadgerLpOptimizerMiniDeploy(
-                "sushi.sushiWbtcWeth",
+                "native.sushiWbtcEth",
                 "StrategySushiLpOptimizer",
                 deployer,
                 strategist=strategist,
@@ -205,6 +216,30 @@ def badger_single_sett(settConfig, deploy=True):
                 "native.sushiDiggWbtc",
                 "StrategySushiDiggWbtcLpOptimizer",
                 deployer,
+                strategist=strategist,
+                guardian=guardian,
+                keeper=keeper,
+                governance=governance,
+            ).deploy(deploy=deploy)
+        if settId == "native.sushiSClawUSDC":
+            # Claw/USDC mini deploy can be used for any CLAW synthetic token.
+            return SushiClawUSDCMiniDeploy(
+                "native.sushiSClawUSDC",
+                "StrategySushiLpOptimizer",  # sushi lp optimizer strat is generic
+                deployer,
+                "sClaw",  # This specifies the name of the EMP contract on the CLAW system.
+                strategist=strategist,
+                guardian=guardian,
+                keeper=keeper,
+                governance=governance,
+            ).deploy(deploy=deploy)
+        if settId == "native.sushiBClawUSDC":
+            # Claw/USDC mini deploy can be used for any CLAW synthetic token.
+            return SushiClawUSDCMiniDeploy(
+                "native.sushiBClawUSDC",
+                "StrategySushiLpOptimizer",  # sushi lp optimizer strat is generic
+                deployer,
+                "bClaw",  # This specifies the name of the EMP contract on the CLAW system.
                 strategist=strategist,
                 guardian=guardian,
                 keeper=keeper,

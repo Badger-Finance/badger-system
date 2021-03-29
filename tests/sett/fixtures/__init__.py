@@ -9,3 +9,4 @@ from .SushiDiggWbtcLpOptimizerMiniDeploy import SushiDiggWbtcLpOptimizerMiniDepl
 from .DiggRewardsMiniDeploy import DiggRewardsMiniDeploy
 from .SushiBadgerLpOptimizerMiniDeploy import SushiBadgerLpOptimizerMiniDeploy
 from .UniDiggWbtcLpMiniDeploy import UniDiggWbtcLpMiniDeploy
+from .SushiClawUSDCMiniDeploy import SushiClawUSDCMiniDeploy
