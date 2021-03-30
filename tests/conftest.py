@@ -26,6 +26,7 @@ from tests.sett.fixtures import (
     SushiDiggWbtcLpOptimizerMiniDeploy,
     UniDiggWbtcLpMiniDeploy,
     SushiClawUSDCMiniDeploy,
+    SushiWbtcIbBtcLpOptimizerMiniDeploy,
 )
 
 
@@ -52,10 +53,11 @@ settsToRun = [
     "native.renCrv",
     "native.sbtcCrv",
     "native.tbtcCrv",
-    # # "harvest.renCrv",
+    # "harvest.renCrv",
     "native.uniBadgerWbtc",
     "native.sushiBadgerWbtc",
     "native.sushiWbtcEth",
+    "native.sushiWbtcIbBtc",
 ]
 
 diggSettsToRun = [
@@ -245,6 +247,16 @@ def badger_single_sett(settConfig, deploy=True):
                 keeper=keeper,
                 governance=governance,
             ).deploy(deploy=deploy)
+        if settId == "native.sushiWbtcIbBtc":
+            return SushiWbtcIbBtcLpOptimizerMiniDeploy(
+                "native.sushiWbtcIbBtc",
+                "StrategySushiLpOptimizer",
+                deployer,
+                strategist=strategist,
+                guardian=guardian,
+                keeper=keeper,
+                governance=governance,
+            ).deploy(deploy=True)  # TODO: Remove force deploy after deployed.
     if settConfig['mode'] == 'prod':
         """
         Run vs prod contracts, transferring assets to the test user

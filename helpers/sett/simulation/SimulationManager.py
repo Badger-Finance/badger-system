@@ -20,6 +20,7 @@ from .provisioners import (
     BadgerLpMetaFarmProvisioner,
     CurveGaugeProvisioner,
     SushiClawUSDCProvisioner,
+    SushiWbtcIbBtcLpOptimizerProvisioner,
 )
 from .actors import (
     UserActor,
@@ -95,7 +96,7 @@ class SimulationManager:
             idx = int(random.random()*len(self.accounts))
             if idx in accountsUsed:
                 continue
-            if web3.eth.getCode(accounts[idx].address) != HexBytes("0x"):
+            if web3.eth.getCode(self.accounts[idx].address) != HexBytes("0x"):
                 continue
 
             self.users.append(self.accounts[idx])
@@ -152,6 +153,8 @@ class SimulationManager:
             return CurveGaugeProvisioner(self)
         if settId in ["native.sushiSClawUSDC", "native.sushiBClawUSDC"]:
             return SushiClawUSDCProvisioner(self)
+        if settId == "native.sushiWbtcIbBtc":
+            return SushiWbtcIbBtcLpOptimizerProvisioner(self)
         raise Exception(f"invalid strategy settID (no provisioner): {settId}")
 
     def _provisionUserActors(self) -> None:
