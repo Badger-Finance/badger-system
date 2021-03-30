@@ -32,6 +32,8 @@ contract AffiliateTokenGatedUpgradeable is ERC20Upgradeable, BaseWrapperUpgradea
 
     address public pendingAffiliate;
 
+    // ===== GatedUpgradeable additional parameters =====
+
     GuestListAPI public guestList;
 
     address public manager;
@@ -136,8 +138,10 @@ contract AffiliateTokenGatedUpgradeable is ERC20Upgradeable, BaseWrapperUpgradea
     }
 
     function deposit(uint256 amount) public returns (uint256 deposited) {
-        require(guestList.authorized(msg.sender, amount), "onlyGuestListAuthorized");
-
+        if (address(guestList) != address(0)) {
+            require(guestList.authorized(msg.sender, amount), "guest-list-authorization");
+        }
+        
         uint256 shares = _sharesForValue(amount); // NOTE: Must be calculated before deposit is handled
         deposited = _deposit(msg.sender, address(this), amount, true); // `true` = pull from `msg.sender`
         _mint(msg.sender, shares);
@@ -163,15 +167,7 @@ contract AffiliateTokenGatedUpgradeable is ERC20Upgradeable, BaseWrapperUpgradea
     function migrate(uint256 amount, uint256 maxMigrationLoss) external onlyAffiliate returns (uint256) {
         return _migrate(address(this), amount, maxMigrationLoss);
     }
-
-    function pause() external {
-        _pause();
-    }
-
-    function unpause() external {
-        _unpause();
-    }
-
+    
     /**
      * @notice Triggers an approval from owner to spends
      * @param owner The address to approve from
@@ -202,4 +198,18 @@ contract AffiliateTokenGatedUpgradeable is ERC20Upgradeable, BaseWrapperUpgradea
 
         _approve(owner, spender, amount);
     }
+
+    // @dev Pausing is optimized for speed of action. The guardian is intended to be the option with the least friction, though manager or affiliate can pause as well.
+    function pause() external {
+        require(msg.sender == guardian || msg.sender == manager || msg.sender == affiliate, "only-authorized-pausers");
+        _pause();
+    }
+
+
+    // @dev Unpausing requires a higher permission level than pausing, which is optimized for speed of action. The manager or affiliate can unpause
+    function unpause() external {
+        require(msg.sender == manager || msg.sender == affiliate, "only-authorized-unpausers");
+        _unpause();
+    }
+
 }
