@@ -1,27 +1,40 @@
 import json
-from assistant.rewards.aws_utils import upload
-from assistant.rewards.rewards_checker import verify_rewards
-from scripts.rewards.rewards_utils import get_last_proposed_cycle, get_last_published_cycle
 import time
 
+from assistant.rewards.aws_utils import upload
+from assistant.rewards.rewards_assistant import (
+    content_hash_to_filename,
+    fetch_current_rewards_tree,
+    fetchCurrentMerkleData,
+    fetchPendingMerkleData,
+    run_action,
+)
+from assistant.rewards.rewards_checker import verify_rewards
 from brownie import *
 from config.badger_config import badger_config
+from helpers.gas_utils import gas_strategies
 from rich.console import Console
+from scripts.rewards.rewards_utils import (
+    get_last_proposed_cycle,
+    get_last_published_cycle,
+)
 from scripts.systems.badger_system import BadgerSystem, connect_badger
-
-from assistant.rewards.rewards_assistant import content_hash_to_filename, fetchCurrentMerkleData, fetchPendingMerkleData, fetch_current_rewards_tree, run_action
 
 console = Console()
 
+gas_strategies.set_default(gas_strategies.exponentialScaling)
+
+
 def hash(value):
     return web3.toHex(web3.keccak(text=value))
+
 
 def approve_root(badger: BadgerSystem):
     badgerTree = badger.badgerTree
     if not badgerTree.hasPendingRoot():
         console.print("No pending root")
         return False
-    
+
     current = fetchCurrentMerkleData(badger)
     pending = fetchPendingMerkleData(badger)
 
@@ -35,7 +48,7 @@ def approve_root(badger: BadgerSystem):
     print("Uploading to file " + contentFileName)
 
     with open(contentFileName, "w") as outfile:
-        json.dump(proposedRewards, outfile,indent=4)
+        json.dump(proposedRewards, outfile, indent=4)
 
     with open(contentFileName) as f:
         after_file = json.load(f)
@@ -50,26 +63,18 @@ def approve_root(badger: BadgerSystem):
         badgerTree.lastProposeEndBlock(),
     )
 
-
-    verify_rewards(
-        badger,
-        startBlock,
-        endBlock,
-        publishedRewards,
-        proposedRewards
-    )
+    verify_rewards(badger, startBlock, endBlock, publishedRewards, proposedRewards)
 
     upload(contentFileName)
 
     badgerTree.approveRoot(
-            proposedRewards["merkleRoot"],
-            pending["contentHash"],
-            proposedRewards["cycle"],
-            startBlock,
-            endBlock,
-            {"from": badger.guardian},
-        )   
-
+        proposedRewards["merkleRoot"],
+        pending["contentHash"],
+        proposedRewards["cycle"],
+        startBlock,
+        endBlock,
+        {"from": badger.guardian},
+    )
 
     # (currentRewards, startBlock, endBlock) = get_last_proposed_cycle(badger)
     # rootApproved = run_action(
@@ -83,9 +88,9 @@ def approve_root(badger: BadgerSystem):
     #     test=False,
     # )
 
+
 def main():
     badger = connect_badger(load_guardian=True)
-    
 
     # If there is a pending root, approve after independently verifying it
     while True:

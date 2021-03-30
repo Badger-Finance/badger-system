@@ -49,15 +49,21 @@ interface VaultAPI is IERC20 {
 
     function token() external view returns (address);
 
+    function guestList() external view returns (address);
+
     function strategies(address _strategy) external view returns (StrategyParams memory);
 
     function pricePerShare() external view returns (uint256);
 
     function totalAssets() external view returns (uint256);
 
+    function setDepositLimit(uint256 limit) external;
+
     function depositLimit() external view returns (uint256);
 
     function maxAvailableShares() external view returns (uint256);
+
+    function setGuestList(address guestList) external;
 
     /**
      * View how much the Vault would increase this Strategy's borrow limit,

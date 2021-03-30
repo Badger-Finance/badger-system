@@ -2,7 +2,6 @@
 from dotmap import DotMap
 from helpers.registry.WhaleRegistryAction import WhaleRegistryAction
 
-print(WhaleRegistryAction)
 eth_registry = DotMap(
 aragon_registry = DotMap(
     addresses=DotMap(
@@ -151,7 +150,7 @@ eth_registry.whale_registry = DotMap(
     ),
     wbtc=DotMap(
         whale="0xc11b1268c1a384e55c48c2391d8d480264a3a7f4",
-        token=eth_registry.token_registry.wbtc,
+        token="0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599",
         action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT,
     ),
     sushiBadgerWbtc=DotMap(

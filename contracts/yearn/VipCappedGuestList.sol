@@ -3,7 +3,9 @@ pragma solidity >=0.6.0 <0.7.0;
 pragma experimental ABIEncoderV2;
 
 import "deps/@openzeppelin/contracts/cryptography/MerkleProof.sol";
+import "deps/@openzeppelin/contracts/math/SafeMath.sol";
 import "interfaces/yearn/GuestlistApi.sol";
+import "interfaces/yearn/VaultAPI.sol";
 
 /**
  * @notice A basic guest list contract for testing.
@@ -14,12 +16,14 @@ import "interfaces/yearn/GuestlistApi.sol";
  * The bouncer can change the merkle root at any time
  * Merkle-based permission that has been claimed cannot be revoked permissionlessly.
  * Any guests can be revoked by the bouncer at-will
- * The TVL cap is based on the number of want tokens in the underlying vaults. 
+ * The TVL cap is based on the number of want tokens in the underlying vaults.
  * This can only be made more permissive over time. If decreased, existing TVL is maintained and no deposits are possible until the TVL has gone below the threshold
  * A variant of the yearn AffiliateToken that supports guest list control of deposits
  * A guest list that gates access by merkle root and a TVL cap
  */
 contract VipCappedGuestList {
+    using SafeMath for uint256;
+
     address public vault;
     address public bouncer;
 
@@ -38,7 +42,8 @@ contract VipCappedGuestList {
      * @dev Note that since this is just for testing, you're unable to change
      * `bouncer`.
      */
-    constructor() public {
+    constructor(address vault_) public {
+        vault = vault_;
         bouncer = msg.sender;
     }
 
@@ -53,11 +58,19 @@ contract VipCappedGuestList {
         _setGuests(_guests, _invited);
     }
 
+    function vaultBalance(address user) public view returns (uint256) {
+        return (VaultAPI(vault).balanceOf(user).mul(VaultAPI(vault).pricePerShare())).div((10**VaultAPI(vault).decimals()));
+    }
+
+    function remainingDepositAllowed(address user) public view returns (uint256) {
+        return userDepositCap - vaultBalance(user);
+    }
+
     /**
-    * @notice Permissionly prove an address is included in the current merkle root, thereby granting access
-    * @notice Note that the list is designed to ONLY EXPAND in future instances
-    * @notice The admin does retain the ability to ban individual addresses
-    */
+     * @notice Permissionly prove an address is included in the current merkle root, thereby granting access
+     * @notice Note that the list is designed to ONLY EXPAND in future instances
+     * @notice The admin does retain the ability to ban individual addresses
+     */
     function proveInvitation(address account, bytes32[] calldata merkleProof) external {
         // Verify Merkle Proof
         bytes32 node = keccak256(abi.encode(account));
@@ -75,9 +88,9 @@ contract VipCappedGuestList {
     }
 
     /**
-    * @notice Set the merkle root to verify invitation proofs against.
-    * @notice Note that accounts not included in the root will still be invited if their inviation was previously approved.
-    */
+     * @notice Set the merkle root to verify invitation proofs against.
+     * @notice Note that accounts not included in the root will still be invited if their inviation was previously approved.
+     */
     function setGuestRoot(bytes32 guestRoot_) external {
         require(msg.sender == bouncer, "onlyBouncer");
         guestRoot = guestRoot_;
@@ -86,9 +99,9 @@ contract VipCappedGuestList {
     }
 
     /**
-    * @notice Set the merkle root to verify invitation proofs against.
-    * @notice Note that accounts not included in the root will still be invited if their inviation was previously approved.
-    */
+     * @notice Set the merkle root to verify invitation proofs against.
+     * @notice Note that accounts not included in the root will still be invited if their inviation was previously approved.
+     */
     function setUserDepositCap(uint256 cap_) external {
         require(msg.sender == bouncer, "onlyBouncer");
         userDepositCap = cap_;
@@ -102,12 +115,9 @@ contract VipCappedGuestList {
      * @dev Note that `_amount` isn't checked to keep test setup simple, since
      * from the vault tests' perspective this is a pass/fail call anyway.
      * @param _guest The guest's address to check.
-     * @param _amount Not used. The amount of tokens the guest is bringing.
      */
-    function authorized(address _guest, uint256 _amount, bytes calldata _data) external view returns (bool) {
-        // Allow access to approved guests only when guest list is active
-        // Guests must previously be approved via the proveInvitation() function
-        return guests[_guest];
+    function authorized(address _guest, uint256 _amount) external view returns (bool) {
+        return guests[_guest] && (vaultBalance(_guest) + _amount <= userDepositCap);
     }
 
     function _setGuests(address[] memory _guests, bool[] memory _invited) internal {

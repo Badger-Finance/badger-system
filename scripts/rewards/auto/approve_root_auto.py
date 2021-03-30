@@ -5,10 +5,13 @@ from brownie import *
 from config.badger_config import badger_config
 from rich.console import Console
 from scripts.systems.badger_system import connect_badger
+from helpers.gas_utils import gas_strategies
 
 from assistant.rewards.rewards_assistant import fetch_current_rewards_tree, run_action
 
 console = Console()
+
+gas_strategies.set_default(gas_strategies.exponentialScaling)
 
 def approve_root():
     badger = connect_badger(badger_config.prod_json, load_guardian=True)
