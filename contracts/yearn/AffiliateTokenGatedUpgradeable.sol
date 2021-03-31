@@ -50,6 +50,10 @@ contract AffiliateTokenGatedUpgradeable is ERC20Upgradeable, BaseWrapperUpgradea
     event SetGuardian(address guardian);
     event SetManager(address manager);
     event UpdateGuestList(address guestList);
+    event Deposit(address indexed account, uint256 amount);
+    event Withdraw(address indexed account, uint256 amount);
+    event Mint(address indexed account, uint256 shares);
+    event Burn(address indexed account, uint256 shares);
 
     function initialize(
         address _token,
@@ -145,6 +149,9 @@ contract AffiliateTokenGatedUpgradeable is ERC20Upgradeable, BaseWrapperUpgradea
         uint256 shares = _sharesForValue(amount); // NOTE: Must be calculated before deposit is handled
         deposited = _deposit(msg.sender, address(this), amount, true); // `true` = pull from `msg.sender`
         _mint(msg.sender, shares);
+
+        emit Deposit(msg.sender, deposited);
+        emit Mint(msg.sender, shares);
     }
 
     function withdraw() external returns (uint256) {
@@ -153,7 +160,10 @@ contract AffiliateTokenGatedUpgradeable is ERC20Upgradeable, BaseWrapperUpgradea
 
     function withdraw(uint256 shares) public returns (uint256) {
         _burn(msg.sender, shares);
-        return _withdraw(address(this), msg.sender, _shareValue(shares), true); // `true` = withdraw from `bestVault`
+        uint256 withdrawn = _withdraw(address(this), msg.sender, _shareValue(shares), true); // `true` = withdraw from `bestVault`
+
+        emit Withdraw(msg.sender, withdrawn);
+        emit Burn(msg.sender, shares);
     }
 
     function migrate() external onlyAffiliate returns (uint256) {
