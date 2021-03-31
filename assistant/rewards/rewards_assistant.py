@@ -54,7 +54,7 @@ def calc_geyser_rewards(badger, periodStartBlock, endBlock, cycle):
         rewards.add_user_boost(addr,boost)
 
     rewardsLogger.set_start_block(periodStartBlock)
-    rewardsLogger.set_digg_Allocation(diggAllocation)
+    rewardsLogger.set_digg_allocation(diggAllocation)
     return rewards
 
 

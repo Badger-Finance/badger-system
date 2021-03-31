@@ -12,6 +12,13 @@ digg = interface.IDigg(Token.digg.value)
 
 
 nativeSetts = ["native.uniDiggWbtc","native.sushiDiggWbtc"]
+nonNativeSetts = [
+    "native.renCrv",
+    "native.sbtcCrv",
+    "native.tbtcCrv",
+    "native,sushiWbtcEth"
+    "harvest.renCrv"
+]
 def calc_geyser_snapshot(badger, name, startBlock, endBlock, nextCycle,boosts,diggAllocation):
 
     console.log("Processing rewards for {}".format(name))
@@ -22,10 +29,12 @@ def calc_geyser_snapshot(badger, name, startBlock, endBlock, nextCycle,boosts,di
     endTime = web3.eth.getBlock(endBlock)["timestamp"]
 
     balances = calculate_sett_balances(badger, name, sett, endBlock)
-    for addr,bal in balances.items():
-        boostAmount = boosts.get(addr,1)
-        rewardsLogger.add_multiplier(web3.toChecksumAddress(addr),name,boostAmount)
-        balances[addr] = bal * boostAmount
+    # Only boost non-native setts
+    if name in nonNativeSetts:
+        for addr,bal in balances.items():
+            boostAmount = boosts.get(addr,1)
+            rewardsLogger.add_multiplier(web3.toChecksumAddress(addr),name,boostAmount)
+            balances[addr] = bal * boostAmount
 
     unlockSchedules = {}
     for token in geyser.getDistributionTokens():

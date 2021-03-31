@@ -31,7 +31,7 @@ class RewardsLogger:
     def set_start_block(self,block):
         self._startBlock = block
 
-    def set_digg_Allocation(self,diggAllocation):
+    def set_digg_allocation(self,diggAllocation):
         self._diggAllocation = diggAllocation
 
     def _check_user_vault(self,address,vault):
@@ -56,7 +56,7 @@ class RewardsLogger:
     def add_unlock_schedules(self,name,token,schedule):
         if name not in self._unlockSchedules:
             self._unlockSchedules[name] = {}
-        else:   
+        else:
             self._unlockSchedules[name][token] = schedule
 
 
