@@ -148,8 +148,6 @@ def calculate_sett_balances(badger, name, sett, currentBlock):
         settBalances[geyserAddr] = 0
     if name in ["native.badger"]:
         settUnderlyingToken = interface.ERC20(sett.token())
-        creamBalances = fetch_cream_balances("crB{}".format(settUnderlyingToken.symbol()),currentBlock)
-    if name in cream_addresses:
-        settBalances[cream_addresses[name]] = 0
+        #creamBalances = fetch_cream_balances("crB{}".format(settUnderlyingToken.symbol()),currentBlock)
 
     return combine_balances([settBalances, geyserBalances, creamBalances])
