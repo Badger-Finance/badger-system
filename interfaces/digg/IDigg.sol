@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT
 pragma solidity >=0.5.0 <0.8.0;
 
 interface IDigg {
@@ -41,6 +42,7 @@ interface IDigg {
     function sharesOf(address who) external view returns (uint256);
 
     function _sharesPerFragment() external view returns (uint256);
+
     function _initialSharesPerFragment() external view returns (uint256);
 
     /**
@@ -56,6 +58,7 @@ interface IDigg {
     function sharesToFragments(uint256 shares) external view returns (uint256);
 
     function scaledSharesToShares(uint256 fragments) external view returns (uint256);
+
     function sharesToScaledShares(uint256 shares) external view returns (uint256);
 
     /**
