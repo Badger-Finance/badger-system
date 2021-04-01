@@ -9,8 +9,8 @@ import "deps/@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 import "deps/@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 import "deps/@openzeppelin/contracts-upgradeable/proxy/Initializable.sol";
 
-import "interfaces/yearn/VaultAPI.sol";
-import "interfaces/yearn/RegistryAPI.sol";
+import "interfaces/yearn/VaultApi.sol";
+import "interfaces/yearn/RegistryApi.sol";
 
 abstract contract BaseWrapperUpgradeable is Initializable {
     using MathUpgradeable for uint256;
