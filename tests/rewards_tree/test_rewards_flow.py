@@ -35,14 +35,14 @@ def test_rewards_flow(setup):
 
     # Ensure event
 
-    # Claim as a user 
+    # Claim as a user
 
     # Update to new root with xSushi and FARM
-    
+
     # Claim as user who has xSushi and FARM
 
     # Ensure tokens are as expected
 
-    # Claim partial as a user 
+    # Claim partial as a user
 
     # Try to claim with zero tokens all around, expect failure

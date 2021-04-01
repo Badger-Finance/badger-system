@@ -164,6 +164,13 @@ sett_config = DotMap(
                 withdrawalFee=0,
             ),
         ),
+        sushiWbtcIbBtc=DotMap(
+            params=DotMap(
+                    performanceFeeStrategist=1000,
+                    performanceFeeGovernance=1000,
+                    withdrawalFee=0,
+            ),
+        ),
     ),
 )
 
