@@ -39,6 +39,7 @@ name_to_artifact = {
     "DiggSeeder": DiggSeeder,
     "BadgerRewardsManager": BadgerRewardsManager,
     "UnlockScheduler": UnlockScheduler,
+    "AffiliateTokenGatedUpgradeable": AffiliateTokenGatedUpgradeable,
 }
 
 

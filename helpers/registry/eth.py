@@ -1,4 +1,5 @@
 
+from brownie.network import web3
 from dotmap import DotMap
 from helpers.registry.WhaleRegistryAction import WhaleRegistryAction
 
@@ -96,15 +97,15 @@ eth_registry.token_registry = DotMap(
     weth="0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
     wbtc="0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599",
     crv="0xD533a949740bb3306d119CC777fa900bA034cd52",
-    tbtc="0x8daebade922df735c38c80c7ebd708af50815faa",
-    usdt="0xdac17f958d2ee523a2206206994597c13d831ec7",
+    tbtc=web3.toChecksumAddress("0x8daebade922df735c38c80c7ebd708af50815faa"),
+    usdt=web3.toChecksumAddress("0xdac17f958d2ee523a2206206994597c13d831ec7"),
     badger=eth_registry.badger_registry.token,
     digg="0x798D1bE841a82a273720CE31c822C61a67a601C3",
     farm=eth_registry.harvest_registry.farmToken,
     sushi=eth_registry.sushi_registry.sushiToken,
     xSushi=eth_registry.sushi_registry.xsushiToken,
-    usdc="0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
-    renbtc="0xeb4c2781e4eba804ce9a9803c67d0893436bb27d",
+    usdc=web3.toChecksumAddress("0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"),
+    renbtc=web3.toChecksumAddress("0xeb4c2781e4eba804ce9a9803c67d0893436bb27d"),
 )
 
 eth_registry.whale_registry = DotMap(
