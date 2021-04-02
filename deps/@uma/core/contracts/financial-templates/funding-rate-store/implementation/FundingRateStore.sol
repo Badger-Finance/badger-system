@@ -2,9 +2,9 @@
 pragma solidity ^0.6.0;
 pragma experimental ABIEncoderV2;
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
-import "@openzeppelin/contracts/math/SafeMath.sol";
+import "deps/@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "deps/@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
+import "deps/@openzeppelin/contracts/math/SafeMath.sol";
 
 import "../../../oracle/interfaces/StoreInterface.sol";
 import "../../../oracle/interfaces/OracleInterface.sol";

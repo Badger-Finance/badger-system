@@ -2,8 +2,8 @@
 pragma solidity ^0.6.0;
 pragma experimental ABIEncoderV2;
 
-import "@openzeppelin/contracts/math/SafeMath.sol";
-import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
+import "deps/@openzeppelin/contracts/math/SafeMath.sol";
+import "deps/@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 
 import "./PricelessPositionManager.sol";
 

@@ -5,9 +5,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity ^0.6.0;
 
-import "@openzeppelin/contracts/utils/Address.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
+import "deps/@openzeppelin/contracts/utils/Address.sol";
+import "deps/@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "deps/@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 
 import "./MultiRole.sol";
 

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity ^0.6.0;
 
-import "@openzeppelin/contracts/math/SafeMath.sol";
+import "deps/@openzeppelin/contracts/math/SafeMath.sol";
 import "../interfaces/VotingInterface.sol";
 
 /**
