@@ -5,7 +5,7 @@ pragma experimental ABIEncoderV2;
 import "../../common/implementation/MultiRole.sol";
 import "../interfaces/RegistryInterface.sol";
 
-import "deps/@openzeppelin/contracts/math/SafeMath.sol";
+import "@openzeppelin/contracts/math/SafeMath.sol";
 
 /**
  * @title Registry for financial contracts and approved financial contract creators.

@@ -14,9 +14,9 @@ import "./VoteTiming.sol";
 import "./VotingToken.sol";
 import "./Constants.sol";
 
-import "deps/@openzeppelin/contracts/access/Ownable.sol";
-import "deps/@openzeppelin/contracts/math/SafeMath.sol";
-import "deps/@openzeppelin/contracts/cryptography/ECDSA.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/math/SafeMath.sol";
+import "@openzeppelin/contracts/cryptography/ECDSA.sol";
 
 /**
  * @title Voting system for Oracle.

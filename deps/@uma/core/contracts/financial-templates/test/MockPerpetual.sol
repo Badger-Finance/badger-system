@@ -1,7 +1,7 @@
 pragma solidity ^0.6.0;
 pragma experimental ABIEncoderV2;
 
-import "deps/@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import "../perpetual-multiparty/PerpetualInterface.sol";
 import "../../financial-templates/funding-rate-store/interfaces/FundingRateStoreInterface.sol";
 import "../../oracle/interfaces/AdministrateeInterface.sol";

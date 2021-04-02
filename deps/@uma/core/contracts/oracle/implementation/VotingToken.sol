@@ -2,7 +2,7 @@
 pragma solidity ^0.6.0;
 
 import "../../common/implementation/ExpandedERC20.sol";
-import "deps/@openzeppelin/contracts/token/ERC20/ERC20Snapshot.sol";
+import "@openzeppelin/contracts/token/ERC20/ERC20Snapshot.sol";
 
 /**
  * @title Ownership of this token allows a voter to respond to price requests.

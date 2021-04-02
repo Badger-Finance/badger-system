@@ -10,8 +10,8 @@ import "../interfaces/IdentifierWhitelistInterface.sol";
 import "../interfaces/OracleInterface.sol";
 import "./Constants.sol";
 
-import "deps/@openzeppelin/contracts/math/SafeMath.sol";
-import "deps/@openzeppelin/contracts/utils/Address.sol";
+import "@openzeppelin/contracts/math/SafeMath.sol";
+import "@openzeppelin/contracts/utils/Address.sol";
 
 /**
  * @title Takes proposals for certain governance actions and allows UMA token holders to vote on them.

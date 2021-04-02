@@ -3,7 +3,7 @@ pragma solidity ^0.6.0;
 
 import "../interfaces/OneSplit.sol";
 
-import "deps/@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 /**
  * @title OneSplit Mock that allows manual price injection.

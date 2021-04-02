@@ -2,9 +2,9 @@
 pragma solidity ^0.6.0;
 pragma experimental ABIEncoderV2;
 
-import "deps/@openzeppelin/contracts/utils/SafeCast.sol";
-import "deps/@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "deps/@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
+import "@openzeppelin/contracts/utils/SafeCast.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 
 import "../../common/implementation/Lockable.sol";
 import "../../common/implementation/FixedPoint.sol";
