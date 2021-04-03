@@ -1,0 +1,278 @@
+Metadata-Version: 2.1
+Name: web3
+Version: 5.11.1
+Summary: Web3.py
+Home-page: https://github.com/ethereum/web3.py
+Author: Piper Merriam
+Author-email: pipermerriam@gmail.com
+License: MIT
+Keywords: ethereum
+Platform: UNKNOWN
+Classifier: Development Status :: 5 - Production/Stable
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Natural Language :: English
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.6
+Classifier: Programming Language :: Python :: 3.7
+Classifier: Programming Language :: Python :: 3.8
+Requires-Python: >=3.6,<4
+Description-Content-Type: text/markdown
+Requires-Dist: eth-abi (<3.0.0,>=2.0.0b6)
+Requires-Dist: eth-account (<0.6.0,>=0.5.2)
+Requires-Dist: eth-hash[pycryptodome] (<1.0.0,>=0.2.0)
+Requires-Dist: eth-typing (<3.0.0,>=2.0.0)
+Requires-Dist: eth-utils (<2.0.0,>=1.8.4)
+Requires-Dist: hexbytes (<1.0.0,>=0.1.0)
+Requires-Dist: ipfshttpclient (<1,>=0.4.12)
+Requires-Dist: jsonschema (<4.0.0,>=3.0.0)
+Requires-Dist: lru-dict (<2.0.0,>=1.1.6)
+Requires-Dist: protobuf (<4,>=3.10.0)
+Requires-Dist: requests (<3.0.0,>=2.16.0)
+Requires-Dist: websockets (<9.0.0,>=8.1.0)
+Requires-Dist: pypiwin32 (>=223) ; platform_system == "Windows"
+Requires-Dist: typing-extensions (<4,>=3.7.4.1) ; python_version < "3.8"
+Provides-Extra: dev
+Requires-Dist: eth-tester[py-evm] (==v0.5.0-beta.1) ; extra == 'dev'
+Requires-Dist: py-geth (<3,>=2.2.0) ; extra == 'dev'
+Requires-Dist: flake8 (==3.4.1) ; extra == 'dev'
+Requires-Dist: isort (<4.3.5,>=4.2.15) ; extra == 'dev'
+Requires-Dist: mypy (==0.730) ; extra == 'dev'
+Requires-Dist: mock ; extra == 'dev'
+Requires-Dist: sphinx-better-theme (>=0.1.4) ; extra == 'dev'
+Requires-Dist: click (>=5.1) ; extra == 'dev'
+Requires-Dist: configparser (==3.5.0) ; extra == 'dev'
+Requires-Dist: contextlib2 (>=0.5.4) ; extra == 'dev'
+Requires-Dist: py-solc (>=0.4.0) ; extra == 'dev'
+Requires-Dist: pytest (<5.0.0,>=4.4.0) ; extra == 'dev'
+Requires-Dist: sphinx (<3,>=2.4.4) ; extra == 'dev'
+Requires-Dist: sphinx-rtd-theme (>=0.1.9) ; extra == 'dev'
+Requires-Dist: toposort (>=1.4) ; extra == 'dev'
+Requires-Dist: towncrier (<20,>=19.2.0) ; extra == 'dev'
+Requires-Dist: urllib3 ; extra == 'dev'
+Requires-Dist: web3 (>=2.1.0) ; extra == 'dev'
+Requires-Dist: wheel ; extra == 'dev'
+Requires-Dist: bumpversion ; extra == 'dev'
+Requires-Dist: flaky (>=3.3.0) ; extra == 'dev'
+Requires-Dist: hypothesis (>=3.31.2) ; extra == 'dev'
+Requires-Dist: pytest-asyncio (<0.11,>=0.10.0) ; extra == 'dev'
+Requires-Dist: pytest-mock (<2,>=1.10) ; extra == 'dev'
+Requires-Dist: pytest-pythonpath (>=0.3) ; extra == 'dev'
+Requires-Dist: pytest-watch (<5,>=4.2) ; extra == 'dev'
+Requires-Dist: pytest-xdist (<2,>=1.29) ; extra == 'dev'
+Requires-Dist: setuptools (>=36.2.0) ; extra == 'dev'
+Requires-Dist: tox (>=1.8.0) ; extra == 'dev'
+Requires-Dist: tqdm (<5,>4.32) ; extra == 'dev'
+Requires-Dist: twine (<2,>=1.13) ; extra == 'dev'
+Requires-Dist: when-changed (<0.4,>=0.3.0) ; extra == 'dev'
+Provides-Extra: docs
+Requires-Dist: mock ; extra == 'docs'
+Requires-Dist: sphinx-better-theme (>=0.1.4) ; extra == 'docs'
+Requires-Dist: click (>=5.1) ; extra == 'docs'
+Requires-Dist: configparser (==3.5.0) ; extra == 'docs'
+Requires-Dist: contextlib2 (>=0.5.4) ; extra == 'docs'
+Requires-Dist: py-geth (<3,>=2.2.0) ; extra == 'docs'
+Requires-Dist: py-solc (>=0.4.0) ; extra == 'docs'
+Requires-Dist: pytest (<5.0.0,>=4.4.0) ; extra == 'docs'
+Requires-Dist: sphinx (<3,>=2.4.4) ; extra == 'docs'
+Requires-Dist: sphinx-rtd-theme (>=0.1.9) ; extra == 'docs'
+Requires-Dist: toposort (>=1.4) ; extra == 'docs'
+Requires-Dist: towncrier (<20,>=19.2.0) ; extra == 'docs'
+Requires-Dist: urllib3 ; extra == 'docs'
+Requires-Dist: web3 (>=2.1.0) ; extra == 'docs'
+Requires-Dist: wheel ; extra == 'docs'
+Provides-Extra: linter
+Requires-Dist: flake8 (==3.4.1) ; extra == 'linter'
+Requires-Dist: isort (<4.3.5,>=4.2.15) ; extra == 'linter'
+Requires-Dist: mypy (==0.730) ; extra == 'linter'
+Provides-Extra: tester
+Requires-Dist: eth-tester[py-evm] (==v0.5.0-beta.1) ; extra == 'tester'
+Requires-Dist: py-geth (<3,>=2.2.0) ; extra == 'tester'
+
+# Web3.py
+[![Join the chat at https://gitter.im/ethereum/web3.py](https://badges.gitter.im/ethereum/web3.py.svg)](https://gitter.im/ethereum/web3.py?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
+[![Build Status](https://circleci.com/gh/ethereum/web3.py.svg?style=shield)](https://circleci.com/gh/ethereum/web3.py)
+
+
+A Python implementation of [web3.js](https://github.com/ethereum/web3.js)
+
+* Python 3.6+ support
+
+Read more in the [documentation on ReadTheDocs](http://web3py.readthedocs.io/). [View the change log on Github](docs/releases.rst).
+
+## Developer Setup
+
+```sh
+git clone git@github.com:ethereum/web3.py.git
+cd web3.py
+```
+
+Please see OS-specific instructions for:
+
+- [Linux](docs/README-linux.md#Developer-Setup)
+- [Mac](docs/README-osx.md#Developer-Setup)
+- [Windows](docs/README-windows.md#Developer-Setup)
+- [FreeBSD](docs/README-freebsd.md#Developer-Setup)
+
+Then run these install commands:
+
+```sh
+virtualenv venv
+. venv/bin/activate
+pip install -e .[dev]
+```
+
+For different environments, you can set up multiple `virtualenv`. For example, if you want to create a `venvdocs`, then you do the following:
+
+```sh
+virtualenv venvdocs
+. venvdocs/bin/activate
+pip install -e .[docs]
+pip install -e .
+```
+
+## Using Docker
+
+If you would like to develop and test inside a Docker environment, use the *sandbox* container provided in the **docker-compose.yml** file.
+
+To start up the test environment, run:
+
+```
+docker-compose up -d
+```
+
+This will build a Docker container set up with an environment to run the Python test code.
+
+**Note: This container does not have `go-ethereum` installed, so you cannot run the go-ethereum test suite.**
+
+To run the Python tests from your local machine:
+
+```
+docker-compose exec sandbox bash -c 'pytest -n 4 -f -k "not goethereum"'
+```
+
+You can run arbitrary commands inside the Docker container by using the `bash -c` prefix.
+
+```
+docker-compose exec sandbox bash -c ''
+```
+
+Or, if you would like to just open a session to the container, run:
+
+```
+docker-compose exec sandbox bash
+```
+
+### Testing Setup
+
+During development, you might like to have tests run on every file save.
+
+Show flake8 errors on file change:
+
+```sh
+# Test flake8
+when-changed -v -s -r -1 web3/ tests/ ens/ -c "clear; flake8 web3 tests ens && echo 'flake8 success' || echo 'error'"
+```
+
+You can use `pytest-watch`, running one for every Python environment:
+
+```sh
+pip install pytest-watch
+
+cd venv
+ptw --onfail "notify-send -t 5000 'Test failure ⚠⚠⚠⚠⚠' 'python 3 test on web3.py failed'" ../tests ../web3
+```
+
+Or, you can run multi-process tests in one command, but without color:
+
+```sh
+# in the project root:
+pytest --numprocesses=4 --looponfail --maxfail=1
+# the same thing, succinctly:
+pytest -n 4 -f --maxfail=1
+```
+
+#### How to Execute the Tests?
+
+1. [Setup your development environment](https://github.com/ethereum/web3.py/#developer-setup).
+
+2. Execute `tox` for the tests
+
+There are multiple [components](https://github.com/ethereum/web3.py/blob/master/.circleci/config.yml#L144) of the tests. You can run test to against specific component. For example:
+
+```sh
+# Run Tests for the Core component (for Python 3.6):
+tox -e py36-core
+
+# Run Tests for the Core component (for Python 3.7):
+tox -e py37-core
+```
+
+If for some reason it is not working, add `--recreate` params.
+
+`tox` is good for testing against the full set of build targets. But if you want to run the tests individually, `pytest` is better for development workflow. For example, to run only the tests in one file:
+
+```sh
+pytest tests/core/gas-strategies/test_time_based_gas_price_strategy.py
+```
+
+### Release setup
+
+For Debian-like systems:
+```
+apt install pandoc
+```
+
+The final step before releasing is to build and test the code that will be released.
+There is a test script that will build and install the wheel locally,
+then generate a temporary virtualenv where you can do some smoke testing:
+
+```
+# Branch name could be either master or a version branch - ex. v5
+
+$ git checkout <branch name> && git pull
+
+$ make package
+
+# in another shell, navigate to the virtualenv mentioned in output of ^
+
+# load the virtualenv with the packaged trinity release
+$ source package-smoke-test/bin/activate
+
+# smoke test the release
+$ pip install ipython
+$ ipython
+>>> from web3.auto import w3
+>>> w3.isConnected()
+>>> ...
+
+# Preview the upcoming release notes
+$ towncrier --draft
+```
+
+To release a new version:
+
+```sh
+make release bump=$$VERSION_PART_TO_BUMP$$
+```
+
+To preview the upcoming release notes:
+
+```sh
+towncrier --draft
+```
+
+#### How to bumpversion
+
+The version format for this repo is `{major}.{minor}.{patch}` for stable, and
+`{major}.{minor}.{patch}-{stage}.{devnum}` for unstable (`stage` can be alpha or beta).
+
+To issue the next version in line, specify which part to bump,
+like `make release bump=minor` or `make release bump=devnum`.
+
+If you are in a beta version, `make release bump=stage` will switch to a stable.
+
+To issue an unstable version when the current version is stable, specify the
+new version explicitly, like `make release bump="--new-version 4.0.0-alpha.1 devnum"`
+

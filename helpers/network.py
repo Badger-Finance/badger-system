@@ -1,6 +1,7 @@
 from enum import Enum
 from brownie import rpc, network, config
 from helpers.console_utils import console
+import re
 import sys
 
 class NetworkManager():
@@ -11,11 +12,9 @@ class NetworkManager():
 
 
     def network_name(self, s):
-        if s == None:
-            return None
-        if "mainnet" in s:
+        if re.match(r"^mainnet", s):
             return "eth"
-        if "bsc" in s or "binance" in s:
+        if re.match(r"(?:bsc|binance)", s):
             return "bsc"
         return None
 
@@ -23,6 +22,7 @@ class NetworkManager():
     def get_active_network(self):
         active_network = network.show_active()
         # return "bsc"
+        name = None
 
         if active_network == None:
             if "--network" not in sys.argv:

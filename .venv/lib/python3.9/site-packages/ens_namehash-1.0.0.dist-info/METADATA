@@ -1,0 +1,48 @@
+Metadata-Version: 2.0
+Name: ens-namehash
+Version: 1.0.0
+Summary: Implementation of the namehash algorithm from EIP137
+Home-page: https://github.com/ConsenSys/ens-namehash-py
+Author: Piper Merriam
+Author-email: pipermerriam@gmail.com
+License: MIT
+Keywords: ethereum ens namehash
+Platform: UNKNOWN
+Classifier: Development Status :: 2 - Pre-Alpha
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Natural Language :: English
+Classifier: Programming Language :: Python :: 2
+Classifier: Programming Language :: Python :: 2.7
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.3
+Classifier: Programming Language :: Python :: 3.4
+Requires-Dist: pysha3 (>=0.3,<1.0)
+
+# ENS Namehash
+
+This package is an implementation of the *namehash* algorithm from
+[EIP137](https://github.com/ethereum/EIPs/issues/137).
+
+### Quickstart
+
+Install the package:
+
+```bash
+$ pip install ens-namehash
+```
+
+Hash some names!
+
+
+```python
+>>> from namehash import namehash
+>>> namehash('')
+... b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
+>>> namehash('eth')
+... b'\x93\xcd\xebp\x8buE\xdcf\x8e\xb9(\x01v\x16\x9d\x1c3\xcf\xd8\xedo\x04i\n\x0b\xcc\x88\xa9?\xc4\xae'
+>>> namehash('foo.eth')
+... b'\xde\x9b\t\xfd|_\x90\x1e#\xa3\xf1\x9f\xec\xc5H(\xe9\xc8HS\x98\x01\xe8e\x91\xbd\x98\x01\xb0\x19\xf8O'
+```
+
+

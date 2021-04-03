@@ -1,0 +1,13 @@
+Metadata-Version: 2.1
+Name: multicall
+Version: 0.1.1
+Summary: aggregate results from multiple ethereum contract calls
+Author: banteg
+Author-email: banteeg@gmail.com
+Requires-Python: >=3.7,<4.0
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.7
+Classifier: Programming Language :: Python :: 3.8
+Requires-Dist: eth_abi (>=2.1.0,<3.0.0)
+Requires-Dist: eth_utils (>=1.8.4,<2.0.0)
+Requires-Dist: web3 (>=5.4.0,<6.0.0)

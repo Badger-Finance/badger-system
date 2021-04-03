@@ -1,0 +1,249 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "array",
+    "items": {
+        "type": "object",
+        "required": [
+            "issues",
+            "sourceType",
+            "sourceFormat",
+            "sourceList",
+            "meta"
+        ],
+        "properties": {
+            "issues": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "required": [
+                        "swcID",
+                        "swcTitle",
+                        "description",
+                        "severity",
+                        "locations",
+                        "extra"
+                    ],
+                    "properties": {
+                        "decodedLocations": {
+                            "type": [
+                                "null",
+                                "array"
+                            ],
+                            "items": {
+                                "type": "array",
+                                "items": {
+                                    "anyOf": [
+                                        {
+                                            "type": "boolean"
+                                        },
+                                        {
+                                            "type": "object",
+                                            "required": [
+                                                "column",
+                                                "line"
+                                            ],
+                                            "properties": {
+                                                "column": {
+                                                    "type": "integer"
+                                                },
+                                                "line": {
+                                                    "type": "integer"
+                                                }
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
+                        },
+                        "swcID": {
+                            "type": "string",
+                            "default": ""
+                        },
+                        "swcTitle": {
+                            "type": "string"
+                        },
+                        "description": {
+                            "type": "object",
+                            "required": [
+                                "head",
+                                "tail"
+                            ],
+                            "properties": {
+                                "head": {
+                                    "type": "string"
+                                },
+                                "tail": {
+                                    "type": "string"
+                                }
+                            }
+                        },
+                        "severity": {
+                            "type": [
+                                "string",
+                                "null"
+                            ]
+                        },
+                        "locations": {
+                            "type": [
+                                "array",
+                                "null"
+                            ],
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "sourceMap": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ]
+                                    },
+                                    "sourceType": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ]
+                                    },
+                                    "sourceFormat": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ]
+                                    },
+                                    "sourceList": {
+                                        "type": [
+                                            "array",
+                                            "null"
+                                        ],
+                                        "items": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        "extra": {
+                            "type": "object"
+                        }
+                    }
+                }
+            },
+            "sourceType": {
+                "type": [
+                    "string",
+                    "null"
+                ]
+            },
+            "sourceFormat": {
+                "type": [
+                    "string",
+                    "null"
+                ]
+            },
+            "sourceList": {
+                "type": [
+                    "array",
+                    "null"
+                ],
+                "items": {
+                    "type": "string"
+                }
+            },
+            "meta": {
+                "type": "object"
+            }
+        }
+    },
+    "definitions": {
+        "issue": {
+            "type": "object",
+            "required": [
+                "swcID",
+                "swcTitle",
+                "description",
+                "severity",
+                "locations",
+                "extra"
+            ],
+            "properties": {
+                "swcID": {
+                    "type": [
+                        "null",
+                        "string"
+                    ],
+                    "default": ""
+                },
+                "swcTitle": {
+                    "type": [
+                        "null",
+                        "string"
+                    ]
+                },
+                "description": {
+                    "type": [
+                        "null",
+                        "object"
+                    ],
+                    "required": [
+                        "head",
+                        "tail"
+                    ],
+                    "properties": {
+                        "head": {
+                            "type": "string"
+                        },
+                        "tail": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "severity": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "locations": {
+                    "type": [
+                        "array",
+                        "null"
+                    ],
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "sourceMap": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "sourceType": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "sourceFormat": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "sourceList": {
+                                "type": [
+                                    "array",
+                                    "null"
+                                ],
+                                "items": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                },
+                "extra": {
+                    "type": "object"
+                }
+            }
+        }
+    }
+}

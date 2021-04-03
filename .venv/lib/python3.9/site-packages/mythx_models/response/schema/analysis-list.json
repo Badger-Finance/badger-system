@@ -1,0 +1,107 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "required": [
+        "total",
+        "analyses"
+    ],
+    "properties": {
+        "total": {
+            "type": "integer"
+        },
+        "analyses": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "required": [
+                    "apiVersion",
+                    "harveyVersion",
+                    "maruVersion",
+                    "mythrilVersion",
+                    "queueTime",
+                    "runTime",
+                    "status",
+                    "submittedAt",
+                    "submittedBy",
+                    "uuid"
+                ],
+                "properties": {
+                    "apiVersion": {
+                        "type": "string"
+                    },
+                    "harveyVersion": {
+                        "type": "string"
+                    },
+                    "maruVersion": {
+                        "type": "string"
+                    },
+                    "mythrilVersion": {
+                        "type": "string"
+                    },
+                    "queueTime": {
+                        "type": "integer"
+                    },
+                    "runTime": {
+                        "type": "integer"
+                    },
+                    "status": {
+                        "type": "string"
+                    },
+                    "submittedAt": {
+                        "type": "string"
+                    },
+                    "submittedBy": {
+                        "type": "string"
+                    },
+                    "mainSource": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "numSources": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "numVulnerabilities": {
+                        "type": [
+                            "object",
+                            "null"
+                        ],
+                        "properties": {
+                            "high": {
+                                "type": [
+                                    "integer",
+                                    "null"
+                                ]
+                            },
+                            "medium": {
+                                "type": [
+                                    "integer",
+                                    "null"
+                                ]
+                            },
+                            "low": {
+                                "type": [
+                                    "integer",
+                                    "null"
+                                ]
+                            },
+                            "none": {
+                                "type": [
+                                    "integer",
+                                    "null"
+                                ]
+                            }
+                        },
+                        "additionalProperties": false
+                    },
+                    "uuid": {
+                        "type": "string"
+                    }
+                }
+            }
+        }
+    }
+}

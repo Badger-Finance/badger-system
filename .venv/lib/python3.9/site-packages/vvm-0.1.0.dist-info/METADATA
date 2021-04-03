@@ -1,0 +1,86 @@
+Metadata-Version: 2.1
+Name: vvm
+Version: 0.1.0
+Summary: Vyper version management tool
+Home-page: https://github.com/vyperlang/vvm
+Author: Ben Hauser
+Author-email: ben@hauser.id
+License: MIT
+Keywords: ethereum vyper
+Platform: UNKNOWN
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Natural Language :: English
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.6
+Classifier: Programming Language :: Python :: 3.7
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Requires-Python: >=3.6, <4
+Requires-Dist: requests (<3,>=2.19.0)
+Requires-Dist: semantic-version (<3,>=2.8.1)
+
+vvm
+===
+
+|Pypi Status| |Build Status| |Coverage Status|
+
+Vyper version management tool.
+
+Installation
+------------
+
+via ``pip``
+~~~~~~~~~~~
+
+.. code:: bash
+
+   pip install vvm
+
+via ``setuptools``
+~~~~~~~~~~~~~~~~~~
+
+.. code:: bash
+
+   git clone https://github.com/vyperlang/vvm.git
+   cd vvm
+   python3 setup.py install
+
+Testing
+-------
+
+``vvm`` is tested on Linux, OSX and Windows with Vyper versions
+``>=0.1.0-beta.16``.
+
+To run the test suite:
+
+.. code:: bash
+
+   pytest tests/
+
+By default, the test suite installs all available ``vyper`` versions for
+your OS. If you only wish to test against already installed versions,
+include the ``--no-install`` flag. Use the ``--vyper-verions`` flag to
+test against one or more specific versions.
+
+Contributing
+------------
+
+Help is always appreciated! Feel free to open an issue if you find a
+problem, or a pull request if you’ve solved an issue.
+
+Please check out our `Contribution Guide <CONTRIBUTING.md>`__ prior to
+opening a pull request.
+
+License
+-------
+
+This project is licensed under the `MIT license <LICENSE>`__.
+
+.. |Pypi Status| image:: https://img.shields.io/pypi/v/vvm.svg
+   :target: https://pypi.org/project/vvm/
+.. |Build Status| image:: https://img.shields.io/github/workflow/status/vyperlang/vvm/vvm%20workflow
+   :target: https://github.com/vyperlang/vvm/actions
+.. |Coverage Status| image:: https://img.shields.io/codecov/c/github/vyperlang/vvm
+   :target: https://codecov.io/gh/vyperlang/vvm
+

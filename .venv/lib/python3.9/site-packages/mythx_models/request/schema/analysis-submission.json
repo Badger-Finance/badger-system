@@ -1,0 +1,62 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "anyOf": [{
+            "required": ["bytecode", "analysisMode"]
+        },
+        {
+            "required": ["sources", "analysisMode"]
+        },
+        {
+            "required": ["sources", "bytecode", "analysisMode"]
+        }
+    ],
+    "properties": {
+        "contractName": {
+            "type": ["null" ,"string"]
+        },
+        "bytecode": {
+            "type": ["null" ,"string"]
+        },
+        "deployedBytecode": {
+            "type": ["null" ,"string"]
+        },
+        "sourceMap": {
+            "type": ["null" ,"string"]
+        },
+        "deployedSourceMap": {
+            "type": ["null" ,"string"]
+        },
+        "mainSource": {
+            "type": ["null" ,"string"]
+        },
+        "sources": {
+            "type": ["null" ,"object"],
+            "patternProperties": {
+                ".*": {
+                    "type": "object",
+                    "anyOf": [{
+                            "required": ["source"]
+                        },
+                        {
+                            "required": ["ast"]
+                        }
+                    ]
+                }
+            },
+            "additionalProperties": false
+        },
+        "sourceList": {
+            "type": ["null" ,"array"],
+            "items": {
+                "type": "string"
+            }
+        },
+        "version": {
+            "type": ["null" ,"string"]
+        },
+        "analysisMode": {
+            "enum": ["quick", "standard", "deep"]
+        }
+    }
+}

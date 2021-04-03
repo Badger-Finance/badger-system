@@ -1,0 +1,45 @@
+[
+    {
+        "issues": [
+            {
+                "swcID": "SWC-103",
+                "swcTitle": "Floating Pragma",
+                "description": {
+                    "head": "A floating pragma is set.",
+                    "tail": "It is recommended to make a conscious choice on what version of Solidity is used for compilation. Currently any version equal or greater than \\\"0.4.24\\\" is allowed."
+                },
+                "severity": "Low",
+                "locations": [
+                    {
+                        "sourceMap": "25:75:0:-;;;59:38;;;;;;;;;94:1;86:10;;59:38;;;;;;;;;;;:::i;:::-;;25:75;8:9:-1;5:2;;;30:1;27;20:12;5:2;25:75:0;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;:::i;:::-;;;:::o;:::-;;;;;;;;;;;;;;;;;;;;;;;;;;;:::o;:::-;;;;;;;",
+                        "sourceType": "raw-bytecode",
+                        "sourceFormat": "evm-byzantium-bytecode",
+                        "sourceList": [
+                            "PublicStorageArray.sol"
+                        ]
+                    }
+                ],
+                "extra": {},
+                "decodedLocations": [
+                    [
+                        {
+                            "line": 1,
+                            "column": 2
+                        },
+                        {
+                            "line": 3,
+                            "column": 4
+                        },
+                        false
+                    ]
+                ]
+            }
+        ],
+        "sourceType": "raw-bytecode",
+        "sourceFormat": "evm-byzantium-bytecode",
+        "sourceList": [
+            "PublicStorageArray.sol"
+        ],
+        "meta": {}
+    }
+]

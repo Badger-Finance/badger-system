@@ -1,0 +1,88 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "required": [
+        "apiVersion",
+        "queueTime",
+        "status",
+        "submittedAt",
+        "submittedBy",
+        "mainSource",
+        "numSources",
+        "numVulnerabilities",
+        "uuid"
+    ],
+    "properties": {
+        "apiVersion": {
+            "type": "string"
+        },
+        "harveyVersion": {
+            "type": "string"
+        },
+        "maruVersion": {
+            "type": "string"
+        },
+        "mythrilVersion": {
+            "type": "string"
+        },
+        "queueTime": {
+            "type": "integer"
+        },
+        "status": {
+            "type": "string"
+        },
+        "submittedAt": {
+            "type": "string"
+        },
+        "submittedBy": {
+            "type": "string"
+        },
+        "mainSource": {
+            "type": [
+                "string",
+                "null"
+            ]
+        },
+        "numSources": {
+            "type": [
+                "integer",
+                "null"
+            ]
+        },
+        "numVulnerabilities": {
+            "type": [
+                "object",
+                "null"
+            ],
+            "properties": {
+                "high": {
+                    "type": [
+                        "integer",
+                        "null"
+                    ]
+                },
+                "medium": {
+                    "type": [
+                        "integer",
+                        "null"
+                    ]
+                },
+                "low": {
+                    "type": [
+                        "integer",
+                        "null"
+                    ]
+                },
+                "none": {
+                    "type": [
+                        "integer",
+                        "null"
+                    ]
+                }
+            },
+            "additionalProperties": false
+        },
+        "uuid": {
+            "type": "string"
+        }
+    }
+}

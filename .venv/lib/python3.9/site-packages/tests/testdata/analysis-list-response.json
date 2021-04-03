@@ -1,0 +1,37 @@
+{
+    "analyses": [
+        {
+            "uuid": "0680a1e2-b908-4c9a-a15b-636ef9b61486",
+            "apiVersion": "v1.3.0",
+            "mythrilVersion": "0.19.11",
+            "harveyVersion": "0.0.8",
+            "maruVersion": "v0.2.0",
+            "queueTime": 1,
+            "runTime": 300,
+            "status": "In Progress",
+            "submittedAt": "2019-01-10T01:29:38.410Z",
+            "submittedBy": "000008544b0aa00010a91111",
+            "clientToolName": "pythx",
+            "analysisMode": "full",
+            "groupName": "test",
+            "groupId": "1680a1e2-b908-4c9a-a15b-636ef9b61487"
+        },
+        {
+            "uuid": "0680a1e2-b908-4c9a-a15b-636ef9b61487",
+            "apiVersion": "v1.4.0",
+            "mythrilVersion": "0.20.1",
+            "harveyVersion": "0.0.9",
+            "maruVersion": "v0.3.0",
+            "queueTime": 2,
+            "runTime": 200,
+            "status": "Finished",
+            "submittedAt": "2019-01-09T01:29:38.410Z",
+            "submittedBy": "000008544b0aa00010a91112",
+            "clientToolName": "Edelweiss",
+            "analysisMode": "full",
+            "groupName": "test",
+            "groupId": "2680a1e2-b908-4c9a-a15b-636ef9b61487"
+        }
+    ],
+    "total": 2
+}

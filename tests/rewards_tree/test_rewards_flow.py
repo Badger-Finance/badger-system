@@ -223,11 +223,6 @@ def test_rewards_flow(setup):
     )
     assert 'RootUpdated' in tx.events.keys()
 
-<<<<<<< HEAD
-    # Claim as a user
-
-    # Update to new root with xSushi and FARM
-=======
     # Claim as a user 
     rewardsContract = admin.deploy(badgerTree)
     rewardsContract.initialize(admin, proposer, validator)
@@ -301,7 +296,6 @@ def test_rewards_flow(setup):
         rewards_data["merkleTree"]["endBlock"],
         {"from": validator}
     )
->>>>>>> 627f032829f55e49d2b6c12e67409c11e60cae52
 
     # Claim as user who has xSushi and FARM
 

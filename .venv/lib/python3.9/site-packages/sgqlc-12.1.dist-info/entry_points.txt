@@ -1,0 +1,3 @@
+[console_scripts]
+sgqlc-codegen = sgqlc.codegen:main
+

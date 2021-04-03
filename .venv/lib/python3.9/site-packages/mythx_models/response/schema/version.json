@@ -1,0 +1,28 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "required": [
+        "api",
+        "hash",
+        "harvey",
+        "maru",
+        "mythril"
+    ],
+    "properties": {
+        "api": {
+            "type": "string"
+        },
+        "hash": {
+            "type": "string"
+        },
+        "harvey": {
+            "type": "string"
+        },
+        "maru": {
+            "type": "string"
+        },
+        "mythril": {
+            "type": "string"
+        }
+    }
+}

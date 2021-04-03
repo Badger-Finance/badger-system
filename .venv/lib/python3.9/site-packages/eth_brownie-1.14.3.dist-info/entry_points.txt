@@ -1,0 +1,6 @@
+[console_scripts]
+brownie = brownie._cli.__main__:main
+
+[pytest11]
+pytest-brownie = brownie.test.plugin
+
