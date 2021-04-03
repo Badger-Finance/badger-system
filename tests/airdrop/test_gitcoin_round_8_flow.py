@@ -14,7 +14,7 @@ from config.badger_config import (
 )
 from helpers.constants import *
 from helpers.proxy_utils import deploy_proxy
-from helpers.registry import token_registry
+from helpers.registry import registry
 from helpers.time_utils import days
 from helpers.token_utils import (
     distribute_from_whales,
@@ -23,6 +23,7 @@ from helpers.token_utils import (
 )
 from rich.console import Console
 from scripts.systems.badger_system import connect_badger
+token_registry = registry.tokens
 
 console = Console()
 

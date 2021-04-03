@@ -1,9 +1,10 @@
 import json
 from brownie import accounts, interface
 
-from helpers.registry import token_registry
+from helpers.registry import registry
 from config.badger_config import badger_config
 from scripts.systems.bridge_minimal import deploy_bridge_minimal
+token_registry = registry.tokens
 
 
 def test_bridge():

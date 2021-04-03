@@ -11,6 +11,7 @@ from rich.console import Console
 
 console = Console()
 
+
 @pytest.fixture(scope="function", autouse="True")
 def setup(rewards_tree_unit):
     return rewards_tree_unit
@@ -35,14 +36,15 @@ def test_rewards_flow(setup):
 
     # Ensure event
 
-    # Claim as a user 
+    # Claim as a user
 
     # Update to new root with xSushi and FARM
-    
+
     # Claim as user who has xSushi and FARM
 
     # Ensure tokens are as expected
 
-    # Claim partial as a user 
+    # Claim partial as a user
 
     # Try to claim with zero tokens all around, expect failure
+    pass

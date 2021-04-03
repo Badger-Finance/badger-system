@@ -1,6 +1,8 @@
 import json
 
 from tqdm import tqdm
+from brownie import *
+from brownie.network.gas.strategies import GasNowStrategy
 from assistant.rewards.aws_utils import download, download_bucket ,upload
 from assistant.rewards.calc_stakes import calc_geyser_stakes
 from assistant.rewards.calc_harvest import calc_balances_from_geyser_events,get_initial_user_state
@@ -16,8 +18,6 @@ from assistant.rewards.User import User
 from assistant.rewards.merkle_tree import rewards_to_merkle_tree
 from assistant.rewards.rewards_checker import compare_rewards, verify_rewards
 from assistant.rewards.RewardsList import RewardsList
-from brownie import *
-from brownie.network.gas.strategies import GasNowStrategy
 from config.rewards_config import rewards_config
 from helpers.time_utils import to_hours
 from rich.console import Console
