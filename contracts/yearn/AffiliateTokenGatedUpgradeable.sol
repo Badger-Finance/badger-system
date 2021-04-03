@@ -145,7 +145,7 @@ contract AffiliateTokenGatedUpgradeable is ERC20Upgradeable, BaseWrapperUpgradea
         if (address(guestList) != address(0)) {
             require(guestList.authorized(msg.sender, amount), "guest-list-authorization");
         }
-        
+
         uint256 shares = _sharesForValue(amount); // NOTE: Must be calculated before deposit is handled
         deposited = _deposit(msg.sender, address(this), amount, true); // `true` = pull from `msg.sender`
         _mint(msg.sender, shares);
@@ -177,7 +177,7 @@ contract AffiliateTokenGatedUpgradeable is ERC20Upgradeable, BaseWrapperUpgradea
     function migrate(uint256 amount, uint256 maxMigrationLoss) external onlyAffiliate returns (uint256) {
         return _migrate(address(this), amount, maxMigrationLoss);
     }
-    
+
     /**
      * @notice Triggers an approval from owner to spends
      * @param owner The address to approve from
@@ -215,11 +215,9 @@ contract AffiliateTokenGatedUpgradeable is ERC20Upgradeable, BaseWrapperUpgradea
         _pause();
     }
 
-
     // @dev Unpausing requires a higher permission level than pausing, which is optimized for speed of action. The manager or affiliate can unpause
     function unpause() external {
         require(msg.sender == manager || msg.sender == affiliate, "only-authorized-unpausers");
         _unpause();
     }
-
 }

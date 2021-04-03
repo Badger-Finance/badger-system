@@ -17,6 +17,12 @@ class BalanceSnapshotter:
         self.accounts = accounts
         self.snaps = []
 
+    def add_account(self, account):
+        # Convert raw addresses into account objects
+        if type(account) == str:
+            account = accounts.at(account, force=True)
+        self.accounts.append(account)
+
     def snap(self, name="", print=False):
         balances = get_token_balances(self.tokens, self.accounts)
         self.snaps.append({"name": name, "balances": balances})
@@ -117,6 +123,17 @@ def print_balances(tokens_by_name, account):
     print("\nToken Balances for {}".format(account))
     print(tabulate(table, headers=["asset", "balance"]))
 
+def to_token_scale(asset, unscaled):
+    unscaled = float(unscaled)
+
+    address = asset_to_address(asset)
+    decimals = token_metadata.get_decimals(address)
+    
+    scale_factor = (10**decimals)
+    
+    scaled = unscaled * scale_factor
+    print("unscaled", unscaled, decimals, scale_factor, scaled, int(scaled))
+    return int(scaled)
 
 class TokenMetadataRegistry:
     def __init__(self):
@@ -169,9 +186,11 @@ token_metadata = TokenMetadataRegistry()
 
 def asset_to_address(asset):
     if asset == "badger":
-        return "0x3472A5A71965499acd81997a54BBA8D852C6E53d"
+        return registry.tokens.badger
     if asset == "digg":
-        return "0x798D1bE841a82a273720CE31c822C61a67a601C3"
+        return registry.tokens.digg
+    if asset == "usdc":
+        return registry.tokens.usdc
 
 
 def to_token(address):
