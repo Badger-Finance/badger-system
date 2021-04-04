@@ -61,6 +61,10 @@ settsToRun = [
     "native.sushiWbtcEth",
 ]
 
+yearnSettsToRun = [
+    "yearn.bvyWBTC",
+]
+
 diggSettsToRun = [
     "native.digg",
     "native.uniDiggWbtc",
@@ -92,7 +96,8 @@ networkSettsMap = {
 baseSettsToRun = networkSettsMap[network_manager.get_active_network()]
 
 settTestConfig = generate_sett_test_config(baseSettsToRun, runTestSetts)
-diggSettTestConfig = generate_sett_test_config(diggSettsToRun, runTestSetts)
+diggSettTestConfig = generate_sett_test_config(yearnSettsToRun, runTestSetts)
+yearnSettTestConfig = generate_sett_test_config(diggSettsToRun, runTestSetts)
 clawSettTestConfig = generate_sett_test_config(clawSettsToRun, runTestSetts)
 clawSettSyntheticTestConfig = generate_sett_test_config(clawSettsSytheticTestsToRun, runTestSetts)
 
@@ -275,6 +280,16 @@ def badger_single_sett(settConfig, deploy=True):
                 # In this case, both the lp token and pid (pool id) exist so we can pass them in.
                 want=registry.pancake.chefPairs.bnbBtcb,
                 pid=registry.pancake.chefPids.bnbBtcb,
+                strategist=strategist,
+                guardian=guardian,
+                keeper=keeper,
+                governance=governance,
+            ).deploy(deploy=deploy)
+        if settId == "yearn.bvyWBTC":
+            return YearneMiniDeploy(
+                "AffiliateTokenGatedUpgradable",
+                "yvWBTC",
+                deployer,
                 strategist=strategist,
                 guardian=guardian,
                 keeper=keeper,
