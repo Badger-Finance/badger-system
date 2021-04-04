@@ -108,7 +108,6 @@ def isolate(fn_isolation):
     # https://eth-brownie.readthedocs.io/en/v1.10.3/tests-pytest-intro.html#isolation-fixtures
     pass
 
-
 # @pytest.fixture()
 def badger_single_sett(settConfig, deploy=True):
     if deploy:
@@ -125,7 +124,6 @@ def badger_single_sett(settConfig, deploy=True):
             governance = accounts.at(badger_deploy["devMultisig"], force=True)
 
     strategist = accounts[3]
-    print(settConfig)
 
     settId = settConfig['id']
 
@@ -286,6 +284,8 @@ def badger_single_sett(settConfig, deploy=True):
                 governance=governance,
             ).deploy(deploy=deploy)
         if settId == "yearn.bvyWBTC":
+            print("DEBUG")
+            print(strategist, deployer, guardian, keeper, governance)
             return YearneMiniDeploy(
                 "AffiliateTokenGatedUpgradable",
                 "yvWBTC",

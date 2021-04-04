@@ -16,7 +16,7 @@ console = Console()
     "settConfig", yearnSettTestConfig,
 )
 def test_deposit_withdraw_single_user_flow(settConfig):
-    badger = badger_single_sett(settConfig)
+    badger = badger_single_sett(settConfig, False)
 
     sett = badger.getSett(settConfig["id"])
     strategy = badger.getStrategy(settConfig["id"])
@@ -64,7 +64,7 @@ def test_deposit_withdraw_single_user_flow(settConfig):
     "settConfig", yearnSettTestConfig,
 )
 def test_single_user_harvest_flow(settConfig):
-    badger = badger_single_sett(settConfig)
+    badger = badger_single_sett(settConfig, False)
 
     controller = badger.getController(settConfig["id"])
     sett = badger.getSett(settConfig["id"])
@@ -139,7 +139,7 @@ def test_single_user_harvest_flow(settConfig):
 @pytest.mark.parametrize("settConfig", yearnSettTestConfig)
 def test_migrate_single_user(settConfig):
     assert False
-    badger = badger_single_sett(settConfig['id'])
+    badger = badger_single_sett(settConfig['id'], False)
     controller = badger.getController(settConfig['id'])
     sett = badger.getSett(settConfig['id'])
     strategy = badger.getStrategy(settConfig['id'])
@@ -245,7 +245,7 @@ def test_withdraw_other(settConfig):
     - Non-controller shouldn't be able to do either
     """
     assert False
-    badger = badger_single_sett(settConfig)
+    badger = badger_single_sett(settConfig, False)
     controller = badger.getController(settConfig['id'])
     sett = badger.getSett(settConfig['id'])
     strategy = badger.getStrategy(settConfig['id'])
@@ -311,7 +311,7 @@ def test_single_user_harvest_flow_remove_fees(settConfig):
     suiteName = "test_single_user_harvest_flow_remove_fees" + ": " + settConfig
     testRecorder = TestRecorder(suiteName)
 
-    badger = badger_single_sett(settConfig['id'])
+    badger = badger_single_sett(settConfig['id'], False)
     controller = badger.getController(settConfig['id'])
     sett = badger.getSett(settConfig['id'])
     strategy = badger.getStrategy(settConfig['id'])

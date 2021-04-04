@@ -127,8 +127,8 @@ class DiggSystem:
             self.deployer = deployer
         if env_config.debug:
             print("deployer / owner", deployer, owner, self.deployer, self.owner)
-        self.owner=""
-        self.deployer=self.owner
+#        self.owner=""
+#        self.deployer=self.owner
 
         self.connect_proxy_admins(devProxyAdmin, daoProxyAdmin)
         self.connect_dao()
