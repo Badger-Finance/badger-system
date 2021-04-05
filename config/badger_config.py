@@ -174,6 +174,17 @@ sett_config = DotMap(
             ),
         ),
     ),
+    yearn=DotMap(
+        bvyWBTC=DotMap(
+            strategyName="AffiliateTokenGatedUpgradable",
+            params=DotMap(
+                want=registry.eth.eth_registry.token_registry.wbtc,
+                performanceFeeStrategist=0,
+                performanceFeeGovernance=0,
+                withdrawalFee=0,
+            ),
+        ),
+    ),
 )
 
 badger_total_supply = Wei("21000000 ether")

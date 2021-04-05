@@ -29,6 +29,7 @@ from tests.sett.fixtures import (
     UniDiggWbtcLpMiniDeploy,
     SushiClawUSDCMiniDeploy,
     PancakeMiniDeploy,
+    YearnMiniDeploy,
 )
 
 
@@ -96,8 +97,8 @@ networkSettsMap = {
 baseSettsToRun = networkSettsMap[network_manager.get_active_network()]
 
 settTestConfig = generate_sett_test_config(baseSettsToRun, runTestSetts)
-diggSettTestConfig = generate_sett_test_config(yearnSettsToRun, runTestSetts)
-yearnSettTestConfig = generate_sett_test_config(diggSettsToRun, runTestSetts)
+diggSettTestConfig = generate_sett_test_config(diggSettsToRun, runTestSetts)
+yearnSettTestConfig = generate_sett_test_config(yearnSettsToRun, runTestSetts)
 clawSettTestConfig = generate_sett_test_config(clawSettsToRun, runTestSetts)
 clawSettSyntheticTestConfig = generate_sett_test_config(clawSettsSytheticTestsToRun, runTestSetts)
 
@@ -126,6 +127,8 @@ def badger_single_sett(settConfig, deploy=True):
     strategist = accounts[3]
 
     settId = settConfig['id']
+
+    print('settId:', settId)
 
     if settConfig['mode'] == 'test':
         if settId == "native.badger":
@@ -284,11 +287,9 @@ def badger_single_sett(settConfig, deploy=True):
                 governance=governance,
             ).deploy(deploy=deploy)
         if settId == "yearn.bvyWBTC":
-            print("DEBUG")
-            print(strategist, deployer, guardian, keeper, governance)
-            return YearneMiniDeploy(
+            return YearnMiniDeploy(
+                "yearn.bvyWBTC",
                 "AffiliateTokenGatedUpgradable",
-                "yvWBTC",
                 deployer,
                 strategist=strategist,
                 guardian=guardian,

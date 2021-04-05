@@ -23,6 +23,13 @@ def test_deposit_withdraw_single_user_flow(settConfig):
     want = badger.getStrategyWant(settConfig["id"])
     deployer = badger.deployer
 
+    print('Test values:')
+    print(badger)
+    print(sett)
+    print(strategy)
+    print(want)
+    print(deployer)
+
     settKeeper = accounts.at(sett.keeper(), force=True)
 
     snap = SnapshotManager(badger, settConfig["id"])
@@ -60,356 +67,356 @@ def test_deposit_withdraw_single_user_flow(settConfig):
 
 
 # @pytest.mark.skip()
-@pytest.mark.parametrize(
-    "settConfig", yearnSettTestConfig,
-)
-def test_single_user_harvest_flow(settConfig):
-    badger = badger_single_sett(settConfig, False)
+# @pytest.mark.parametrize(
+#     "settConfig", yearnSettTestConfig,
+# )
+# def test_single_user_harvest_flow(settConfig):
+#     badger = badger_single_sett(settConfig, False)
 
-    controller = badger.getController(settConfig["id"])
-    sett = badger.getSett(settConfig["id"])
-    strategy = badger.getStrategy(settConfig["id"])
-    want = badger.getStrategyWant(settConfig["id"])
+#     controller = badger.getController(settConfig["id"])
+#     sett = badger.getSett(settConfig["id"])
+#     strategy = badger.getStrategy(settConfig["id"])
+#     want = badger.getStrategyWant(settConfig["id"])
 
-    settKeeper = accounts.at(sett.keeper(), force=True)
-    strategyKeeper = accounts.at(strategy.keeper(), force=True)
+#     settKeeper = accounts.at(sett.keeper(), force=True)
+#     strategyKeeper = accounts.at(strategy.keeper(), force=True)
 
-    snap = SnapshotManager(badger, settConfig["id"])
+#     snap = SnapshotManager(badger, settConfig["id"])
 
-    deployer = badger.deployer
-    randomUser = accounts[6]
+#     deployer = badger.deployer
+#     randomUser = accounts[6]
 
-    tendable = strategy.isTendable()
+#     tendable = strategy.isTendable()
 
-    startingBalance = want.balanceOf(deployer)
+#     startingBalance = want.balanceOf(deployer)
 
-    depositAmount = startingBalance // 2
-    assert startingBalance >= depositAmount
-    assert startingBalance >= 0
+#     depositAmount = startingBalance // 2
+#     assert startingBalance >= depositAmount
+#     assert startingBalance >= 0
 
-    # Deposit
-    want.approve(sett, MaxUint256, {"from": deployer})
-    snap.settDeposit(depositAmount, {"from": deployer})
+#     # Deposit
+#     want.approve(sett, MaxUint256, {"from": deployer})
+#     snap.settDeposit(depositAmount, {"from": deployer})
 
-    assert want.balanceOf(sett) > 0
-    print("want.balanceOf(sett)", want.balanceOf(sett))
+#     assert want.balanceOf(sett) > 0
+#     print("want.balanceOf(sett)", want.balanceOf(sett))
 
-    # Earn
-    snap.settEarn({"from": settKeeper})
+#     # Earn
+#     snap.settEarn({"from": settKeeper})
 
-    if tendable:
-        with brownie.reverts("onlyAuthorizedActors"):
-            strategy.tend({"from": randomUser})
+#     if tendable:
+#         with brownie.reverts("onlyAuthorizedActors"):
+#             strategy.tend({"from": randomUser})
 
-        snap.settTend({"from": strategyKeeper})
+#         snap.settTend({"from": strategyKeeper})
 
-    chain.sleep(days(0.5))
-    chain.mine()
+#     chain.sleep(days(0.5))
+#     chain.mine()
 
-    if tendable:
-        snap.settTend({"from": strategyKeeper})
+#     if tendable:
+#         snap.settTend({"from": strategyKeeper})
 
-    chain.sleep(days(1))
-    chain.mine()
+#     chain.sleep(days(1))
+#     chain.mine()
 
-    with brownie.reverts("onlyAuthorizedActors"):
-        strategy.harvest({"from": randomUser})
+#     with brownie.reverts("onlyAuthorizedActors"):
+#         strategy.harvest({"from": randomUser})
 
-    snap.settHarvest({"from": strategyKeeper})
+#     snap.settHarvest({"from": strategyKeeper})
 
-    chain.sleep(days(1))
-    chain.mine()
+#     chain.sleep(days(1))
+#     chain.mine()
 
-    if tendable:
-        snap.settTend({"from": strategyKeeper})
+#     if tendable:
+#         snap.settTend({"from": strategyKeeper})
 
-    snap.settWithdraw(depositAmount // 2, {"from": deployer})
+#     snap.settWithdraw(depositAmount // 2, {"from": deployer})
 
 
-    chain.sleep(days(3))
-    chain.mine()
+#     chain.sleep(days(3))
+#     chain.mine()
 
-    snap.settHarvest({"from": strategyKeeper})
-    snap.settWithdraw(depositAmount // 2 - 1, {"from": deployer})
+#     snap.settHarvest({"from": strategyKeeper})
+#     snap.settWithdraw(depositAmount // 2 - 1, {"from": deployer})
 
-    assert False
+#     assert False
 
 
-@pytest.mark.skip()
-@pytest.mark.parametrize("settConfig", yearnSettTestConfig)
-def test_migrate_single_user(settConfig):
-    assert False
-    badger = badger_single_sett(settConfig['id'], False)
-    controller = badger.getController(settConfig['id'])
-    sett = badger.getSett(settConfig['id'])
-    strategy = badger.getStrategy(settConfig['id'])
-    want = badger.getStrategyWant(settConfig['id'])
+# @pytest.mark.skip()
+# @pytest.mark.parametrize("settConfig", yearnSettTestConfig)
+# def test_migrate_single_user(settConfig):
+#     assert False
+#     badger = badger_single_sett(settConfig['id'], False)
+#     controller = badger.getController(settConfig['id'])
+#     sett = badger.getSett(settConfig['id'])
+#     strategy = badger.getStrategy(settConfig['id'])
+#     want = badger.getStrategyWant(settConfig['id'])
 
-    strategist = accounts.at(strategy.strategist(), force=True)
+#     strategist = accounts.at(strategy.strategist(), force=True)
 
-    deployer = badger.deployer
-    randomUser = accounts[6]
+#     deployer = badger.deployer
+#     randomUser = accounts[6]
 
-    snap = SnapshotManager(badger, settConfig['id'])
+#     snap = SnapshotManager(badger, settConfig['id'])
 
-    startingBalance = want.balanceOf(deployer)
-    depositAmount = startingBalance // 2
-    assert startingBalance >= depositAmount
+#     startingBalance = want.balanceOf(deployer)
+#     depositAmount = startingBalance // 2
+#     assert startingBalance >= depositAmount
 
-    # Deposit
-    want.approve(sett, MaxUint256, {"from": deployer})
-    snap.settDeposit(depositAmount, {"from": deployer})
+#     # Deposit
+#     want.approve(sett, MaxUint256, {"from": deployer})
+#     snap.settDeposit(depositAmount, {"from": deployer})
 
-    chain.sleep(15)
-    chain.mine()
+#     chain.sleep(15)
+#     chain.mine()
 
-    sett.earn({"from": strategist})
+#     sett.earn({"from": strategist})
 
-    chain.snapshot()
+#     chain.snapshot()
 
-    # Test no harvests
-    chain.sleep(days(2))
-    chain.mine()
+#     # Test no harvests
+#     chain.sleep(days(2))
+#     chain.mine()
 
-    before = {"settWant": want.balanceOf(sett), "stratWant": strategy.balanceOf()}
+#     before = {"settWant": want.balanceOf(sett), "stratWant": strategy.balanceOf()}
 
-    with brownie.reverts():
-        controller.withdrawAll(strategy.want(), {"from": randomUser})
+#     with brownie.reverts():
+#         controller.withdrawAll(strategy.want(), {"from": randomUser})
 
-    controller.withdrawAll(strategy.want(), {"from": deployer})
+#     controller.withdrawAll(strategy.want(), {"from": deployer})
 
-    after = {"settWant": want.balanceOf(sett), "stratWant": strategy.balanceOf()}
+#     after = {"settWant": want.balanceOf(sett), "stratWant": strategy.balanceOf()}
 
-    assert after["settWant"] > before["settWant"]
-    assert after["stratWant"] < before["stratWant"]
-    assert after["stratWant"] == 0
+#     assert after["settWant"] > before["settWant"]
+#     assert after["stratWant"] < before["stratWant"]
+#     assert after["stratWant"] == 0
 
-    # Test tend only
-    if strategy.isTendable():
-        chain.revert()
+#     # Test tend only
+#     if strategy.isTendable():
+#         chain.revert()
 
-        chain.sleep(days(2))
-        chain.mine()
+#         chain.sleep(days(2))
+#         chain.mine()
 
-        strategy.tend({"from": deployer})
+#         strategy.tend({"from": deployer})
 
-        before = {"settWant": want.balanceOf(sett), "stratWant": strategy.balanceOf()}
+#         before = {"settWant": want.balanceOf(sett), "stratWant": strategy.balanceOf()}
 
-        with brownie.reverts():
-            controller.withdrawAll(strategy.want(), {"from": randomUser})
+#         with brownie.reverts():
+#             controller.withdrawAll(strategy.want(), {"from": randomUser})
 
-        controller.withdrawAll(strategy.want(), {"from": deployer})
+#         controller.withdrawAll(strategy.want(), {"from": deployer})
 
-        after = {"settWant": want.balanceOf(sett), "stratWant": strategy.balanceOf()}
+#         after = {"settWant": want.balanceOf(sett), "stratWant": strategy.balanceOf()}
 
-        assert after["settWant"] > before["settWant"]
-        assert after["stratWant"] < before["stratWant"]
-        assert after["stratWant"] == 0
+#         assert after["settWant"] > before["settWant"]
+#         assert after["stratWant"] < before["stratWant"]
+#         assert after["stratWant"] == 0
 
-    # Test harvest, with tend if tendable
-    chain.revert()
+#     # Test harvest, with tend if tendable
+#     chain.revert()
 
-    chain.sleep(days(1))
-    chain.mine()
+#     chain.sleep(days(1))
+#     chain.mine()
 
-    if strategy.isTendable():
-        strategy.tend({"from": deployer})
+#     if strategy.isTendable():
+#         strategy.tend({"from": deployer})
 
-    chain.sleep(days(1))
-    chain.mine()
+#     chain.sleep(days(1))
+#     chain.mine()
 
-    before = {
-        "settWant": want.balanceOf(sett),
-        "stratWant": strategy.balanceOf(),
-        "rewardsWant": want.balanceOf(controller.rewards()),
-    }
+#     before = {
+#         "settWant": want.balanceOf(sett),
+#         "stratWant": strategy.balanceOf(),
+#         "rewardsWant": want.balanceOf(controller.rewards()),
+#     }
 
-    with brownie.reverts():
-        controller.withdrawAll(strategy.want(), {"from": randomUser})
+#     with brownie.reverts():
+#         controller.withdrawAll(strategy.want(), {"from": randomUser})
 
-    controller.withdrawAll(strategy.want(), {"from": deployer})
+#     controller.withdrawAll(strategy.want(), {"from": deployer})
 
-    after = {"settWant": want.balanceOf(sett), "stratWant": strategy.balanceOf()}
+#     after = {"settWant": want.balanceOf(sett), "stratWant": strategy.balanceOf()}
 
-    assert after["settWant"] > before["settWant"]
-    assert after["stratWant"] < before["stratWant"]
-    assert after["stratWant"] == 0
+#     assert after["settWant"] > before["settWant"]
+#     assert after["stratWant"] < before["stratWant"]
+#     assert after["stratWant"] == 0
 
 
-@pytest.mark.skip()
-@pytest.mark.parametrize("settConfig", yearnSettTestConfig)
-def test_withdraw_other(settConfig):
-    """
-    - Controller should be able to withdraw other tokens
-    - Controller should not be able to withdraw core tokens
-    - Non-controller shouldn't be able to do either
-    """
-    assert False
-    badger = badger_single_sett(settConfig, False)
-    controller = badger.getController(settConfig['id'])
-    sett = badger.getSett(settConfig['id'])
-    strategy = badger.getStrategy(settConfig['id'])
-    want = badger.getStrategyWant(settConfig['id'])
+# @pytest.mark.skip()
+# @pytest.mark.parametrize("settConfig", yearnSettTestConfig)
+# def test_withdraw_other(settConfig):
+#     """
+#     - Controller should be able to withdraw other tokens
+#     - Controller should not be able to withdraw core tokens
+#     - Non-controller shouldn't be able to do either
+#     """
+#     assert False
+#     badger = badger_single_sett(settConfig, False)
+#     controller = badger.getController(settConfig['id'])
+#     sett = badger.getSett(settConfig['id'])
+#     strategy = badger.getStrategy(settConfig['id'])
+#     want = badger.getStrategyWant(settConfig['id'])
 
-    deployer = badger.deployer
-    randomUser = accounts[6]
+#     deployer = badger.deployer
+#     randomUser = accounts[6]
 
-    startingBalance = want.balanceOf(deployer)
+#     startingBalance = want.balanceOf(deployer)
 
-    depositAmount = Wei("1 ether")
-    print(getTokenMetadata(want.address), startingBalance)
-    assert startingBalance >= depositAmount
+#     depositAmount = Wei("1 ether")
+#     print(getTokenMetadata(want.address), startingBalance)
+#     assert startingBalance >= depositAmount
 
-    # Deposit
-    want.approve(sett, MaxUint256, {"from": deployer})
-    sett.deposit(depositAmount, {"from": deployer})
-    after = sett_snapshot(sett, strategy, deployer)
+#     # Deposit
+#     want.approve(sett, MaxUint256, {"from": deployer})
+#     sett.deposit(depositAmount, {"from": deployer})
+#     after = sett_snapshot(sett, strategy, deployer)
 
-    chain.sleep(15)
-    chain.mine()
+#     chain.sleep(15)
+#     chain.mine()
 
-    sett.earn({"from": deployer})
+#     sett.earn({"from": deployer})
 
-    chain.sleep(days(0.5))
-    chain.mine()
+#     chain.sleep(days(0.5))
+#     chain.mine()
 
-    if strategy.isTendable():
-        strategy.tend({"from": deployer})
+#     if strategy.isTendable():
+#         strategy.tend({"from": deployer})
 
-    strategy.harvest({"from": deployer})
+#     strategy.harvest({"from": deployer})
 
-    chain.sleep(days(0.5))
-    chain.mine()
+#     chain.sleep(days(0.5))
+#     chain.mine()
 
-    mockAmount = Wei("1000 ether")
-    mockToken = MockToken.deploy({"from": deployer})
-    mockToken.initialize([strategy], [mockAmount], {"from": deployer})
+#     mockAmount = Wei("1000 ether")
+#     mockToken = MockToken.deploy({"from": deployer})
+#     mockToken.initialize([strategy], [mockAmount], {"from": deployer})
 
-    assert mockToken.balanceOf(strategy) == mockAmount
+#     assert mockToken.balanceOf(strategy) == mockAmount
 
-    # Should not be able to withdraw protected tokens
-    protectedTokens = strategy.getProtectedTokens()
-    for token in protectedTokens:
-        with brownie.reverts():
-            controller.inCaseStrategyTokenGetStuck(strategy, token, {"from": deployer})
+#     # Should not be able to withdraw protected tokens
+#     protectedTokens = strategy.getProtectedTokens()
+#     for token in protectedTokens:
+#         with brownie.reverts():
+#             controller.inCaseStrategyTokenGetStuck(strategy, token, {"from": deployer})
 
-    # Should send balance of non-protected token to sender
-    controller.inCaseStrategyTokenGetStuck(strategy, mockToken, {"from": deployer})
+#     # Should send balance of non-protected token to sender
+#     controller.inCaseStrategyTokenGetStuck(strategy, mockToken, {"from": deployer})
 
-    with brownie.reverts():
-        controller.inCaseStrategyTokenGetStuck(
-            strategy, mockToken, {"from": randomUser}
-        )
+#     with brownie.reverts():
+#         controller.inCaseStrategyTokenGetStuck(
+#             strategy, mockToken, {"from": randomUser}
+#         )
 
-    assert mockToken.balanceOf(controller) == mockAmount
+#     assert mockToken.balanceOf(controller) == mockAmount
 
 
-@pytest.mark.skip()
-@pytest.mark.parametrize("settConfig", yearnSettTestConfig)
-def test_single_user_harvest_flow_remove_fees(settConfig):
-    assert False
-    suiteName = "test_single_user_harvest_flow_remove_fees" + ": " + settConfig
-    testRecorder = TestRecorder(suiteName)
+# @pytest.mark.skip()
+# @pytest.mark.parametrize("settConfig", yearnSettTestConfig)
+# def test_single_user_harvest_flow_remove_fees(settConfig):
+#     assert False
+#     suiteName = "test_single_user_harvest_flow_remove_fees" + ": " + settConfig
+#     testRecorder = TestRecorder(suiteName)
 
-    badger = badger_single_sett(settConfig['id'], False)
-    controller = badger.getController(settConfig['id'])
-    sett = badger.getSett(settConfig['id'])
-    strategy = badger.getStrategy(settConfig['id'])
-    want = badger.getStrategyWant(settConfig['id'])
+#     badger = badger_single_sett(settConfig['id'], False)
+#     controller = badger.getController(settConfig['id'])
+#     sett = badger.getSett(settConfig['id'])
+#     strategy = badger.getStrategy(settConfig['id'])
+#     want = badger.getStrategyWant(settConfig['id'])
 
-    deployer = badger.deployer
-    randomUser = accounts[6]
+#     deployer = badger.deployer
+#     randomUser = accounts[6]
 
-    tendable = strategy.isTendable()
+#     tendable = strategy.isTendable()
 
-    startingBalance = want.balanceOf(deployer)
+#     startingBalance = want.balanceOf(deployer)
 
-    depositAmount = Wei("1 ether")
-    assert startingBalance >= depositAmount
+#     depositAmount = Wei("1 ether")
+#     assert startingBalance >= depositAmount
 
-    # Deposit
-    before = sett_snapshot(sett, strategy, deployer)
-    want.approve(sett, MaxUint256, {"from": deployer})
-    sett.deposit(depositAmount, {"from": deployer})
-    after = sett_snapshot(sett, strategy, deployer)
+#     # Deposit
+#     before = sett_snapshot(sett, strategy, deployer)
+#     want.approve(sett, MaxUint256, {"from": deployer})
+#     sett.deposit(depositAmount, {"from": deployer})
+#     after = sett_snapshot(sett, strategy, deployer)
 
-    confirm_deposit(before, after, deployer, depositAmount)
+#     confirm_deposit(before, after, deployer, depositAmount)
 
-    # Earn
-    before = sett_snapshot(sett, strategy, deployer)
-    sett.earn({"from": deployer})
-    after = sett_snapshot(sett, strategy, deployer)
+#     # Earn
+#     before = sett_snapshot(sett, strategy, deployer)
+#     sett.earn({"from": deployer})
+#     after = sett_snapshot(sett, strategy, deployer)
 
-    confirm_earn(before, after)
+#     confirm_earn(before, after)
 
-    chain.sleep(days(0.5))
-    chain.mine()
+#     chain.sleep(days(0.5))
+#     chain.mine()
 
-    if tendable:
-        before = sett_snapshot(sett, strategy, deployer)
-        tx = strategy.tend({"from": deployer})
-        after = sett_snapshot(sett, strategy, deployer)
-        testRecorder.add_record(EventRecord("Tend", tx.events, tx.timestamp))
+#     if tendable:
+#         before = sett_snapshot(sett, strategy, deployer)
+#         tx = strategy.tend({"from": deployer})
+#         after = sett_snapshot(sett, strategy, deployer)
+#         testRecorder.add_record(EventRecord("Tend", tx.events, tx.timestamp))
 
-        confirm_tend(before, after, deployer)
+#         confirm_tend(before, after, deployer)
 
-    chain.sleep(days(1))
-    chain.mine()
+#     chain.sleep(days(1))
+#     chain.mine()
 
-    with brownie.reverts("onlyAuthorizedActors"):
-        strategy.harvest({"from": randomUser})
+#     with brownie.reverts("onlyAuthorizedActors"):
+#         strategy.harvest({"from": randomUser})
 
-    before = sett_snapshot(sett, strategy, deployer)
-    tx = strategy.harvest({"from": deployer})
-    after = sett_snapshot(sett, strategy, deployer)
-    testRecorder.add_record(EventRecord("Harvest", tx.events, tx.timestamp))
-    testRecorder.print_to_file(suiteName + ".json")
+#     before = sett_snapshot(sett, strategy, deployer)
+#     tx = strategy.harvest({"from": deployer})
+#     after = sett_snapshot(sett, strategy, deployer)
+#     testRecorder.add_record(EventRecord("Harvest", tx.events, tx.timestamp))
+#     testRecorder.print_to_file(suiteName + ".json")
 
-    confirm_harvest(before, after, deployer)
+#     confirm_harvest(before, after, deployer)
 
-    after_harvest = sett_snapshot(sett, strategy, deployer)
+#     after_harvest = sett_snapshot(sett, strategy, deployer)
 
-    # Harvesting on the HarvestMetaFarm does not increase the underlying position, it sends rewards to the rewardsTree
-    # For HarvestMetaFarm, we expect FARM rewards to be distributed to rewardsTree
-    if settConfig == "harvest.renCrv":
-        assert want.balanceOf(controller.rewards() > 0)
+#     # Harvesting on the HarvestMetaFarm does not increase the underlying position, it sends rewards to the rewardsTree
+#     # For HarvestMetaFarm, we expect FARM rewards to be distributed to rewardsTree
+#     if settConfig == "harvest.renCrv":
+#         assert want.balanceOf(controller.rewards() > 0)
 
-    # For most Setts, harvesting should increase the underlying position
-    else:
-        assert want.balanceOf(controller.rewards() > 0)
+#     # For most Setts, harvesting should increase the underlying position
+#     else:
+#         assert want.balanceOf(controller.rewards() > 0)
 
-    chain.sleep(days(1))
-    chain.mine()
+#     chain.sleep(days(1))
+#     chain.mine()
 
-    if tendable:
-        tx = strategy.tend({"from": deployer})
-        testRecorder.add_record(EventRecord("Tend", tx.events, tx.timestamp))
+#     if tendable:
+#         tx = strategy.tend({"from": deployer})
+#         testRecorder.add_record(EventRecord("Tend", tx.events, tx.timestamp))
 
-    chain.sleep(days(3))
-    chain.mine()
+#     chain.sleep(days(3))
+#     chain.mine()
 
-    before_harvest = sett_snapshot(sett, strategy, deployer)
-    tx = strategy.harvest({"from": deployer})
-    after_harvest = sett_snapshot(sett, strategy, deployer)
-    testRecorder.add_record(EventRecord("Harvest", tx.events, tx.timestamp))
+#     before_harvest = sett_snapshot(sett, strategy, deployer)
+#     tx = strategy.harvest({"from": deployer})
+#     after_harvest = sett_snapshot(sett, strategy, deployer)
+#     testRecorder.add_record(EventRecord("Harvest", tx.events, tx.timestamp))
 
-    harvested = tx.events["Harvest"][0]["harvested"]
-    if settConfig != "harvest.renCrv":
-        assert harvested > 0
-        assert (
-            after_harvest.sett.pricePerFullShare > before_harvest.sett.pricePerFullShare
-        )
-        assert after_harvest.strategy.balanceOf > before_harvest.strategy.balanceOf
+#     harvested = tx.events["Harvest"][0]["harvested"]
+#     if settConfig != "harvest.renCrv":
+#         assert harvested > 0
+#         assert (
+#             after_harvest.sett.pricePerFullShare > before_harvest.sett.pricePerFullShare
+#         )
+#         assert after_harvest.strategy.balanceOf > before_harvest.strategy.balanceOf
 
-    sett.withdrawAll({"from": deployer})
+#     sett.withdrawAll({"from": deployer})
 
-    endingBalance = want.balanceOf(deployer)
+#     endingBalance = want.balanceOf(deployer)
 
-    report = {
-        "time": "4 days",
-        "gains": endingBalance - startingBalance,
-        "gainsPercentage": (endingBalance - startingBalance) / startingBalance,
-    }
+#     report = {
+#         "time": "4 days",
+#         "gains": endingBalance - startingBalance,
+#         "gainsPercentage": (endingBalance - startingBalance) / startingBalance,
+#     }
 
-    # testRecorder.add_record(EventRecord("Final Report", report, 0))
-    testRecorder.print_to_file(suiteName + ".json")
+#     # testRecorder.add_record(EventRecord("Final Report", report, 0))
+#     testRecorder.print_to_file(suiteName + ".json")
