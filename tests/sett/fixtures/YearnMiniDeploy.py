@@ -10,3 +10,14 @@ class YearnMiniDeploy(SettMiniDeployBase):
         want = self.badger.token
 
         return (params, want)
+
+
+    
+    def post_deploy_setup(self, deploy=True):
+        """
+        Initialize wrapper
+        """
+        super().post_deploy_setup(deploy=deploy)
+
+        if not deploy:
+            return
