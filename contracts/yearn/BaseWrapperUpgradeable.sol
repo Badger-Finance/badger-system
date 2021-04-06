@@ -9,8 +9,8 @@ import "deps/@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 import "deps/@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 import "deps/@openzeppelin/contracts-upgradeable/proxy/Initializable.sol";
 
-import "interfaces/yearn/VaultAPI.sol";
-import "interfaces/yearn/RegistryAPI.sol";
+import "interfaces/yearn/VaultApi.sol";
+import "interfaces/yearn/RegistryApi.sol";
 
 abstract contract BaseWrapperUpgradeable is Initializable {
     using MathUpgradeable for uint256;
@@ -49,11 +49,11 @@ abstract contract BaseWrapperUpgradeable is Initializable {
         require(msg.sender == registry.governance());
     }
 
-    function bestVault() public view virtual returns (VaultAPI) {
+    function bestVault() public virtual view returns (VaultAPI) {
         return VaultAPI(registry.latestVault(address(token)));
     }
 
-    function allVaults() public view virtual returns (VaultAPI[] memory) {
+    function allVaults() public virtual view returns (VaultAPI[] memory) {
         uint256 cache_length = _cachedVaults.length;
         uint256 num_vaults = registry.numVaults(address(token));
 
