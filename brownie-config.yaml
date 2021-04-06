@@ -7,6 +7,7 @@ networks:
     cmd: ganache-cli
     cmd_settings:
       accounts: 50
+      mnemonic: brownie
       fork: https://eth-mainnet.alchemyapi.io/v2/$ALCHEMYAPI_TOKEN
       default_balance: 500 ether
       chain_id: 1
