@@ -9,8 +9,8 @@ import "deps/@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 import "deps/@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 import "deps/@openzeppelin/contracts-upgradeable/proxy/Initializable.sol";
 
-import "interfaces/yearn/VaultApi.sol";
-import "interfaces/yearn/RegistryApi.sol";
+import "interfaces/yearn/VaultAPI.sol";
+import "interfaces/yearn/RegistryAPI.sol";
 
 abstract contract BaseWrapperUpgradeable is Initializable {
     using MathUpgradeable for uint256;
@@ -44,13 +44,16 @@ abstract contract BaseWrapperUpgradeable is Initializable {
         require(msg.sender == registry.governance());
         // In case you want to override the registry instead of re-deploying
         registry = RegistryAPI(_registry);
+        // Make sure there's no change in governance
+        // NOTE: Also avoid bricking the wrapper from setting a bad registry
+        require(msg.sender == registry.governance());
     }
 
-    function bestVault() public virtual view returns (VaultAPI) {
+    function bestVault() public view virtual returns (VaultAPI) {
         return VaultAPI(registry.latestVault(address(token)));
     }
 
-    function allVaults() public virtual view returns (VaultAPI[] memory) {
+    function allVaults() public view virtual returns (VaultAPI[] memory) {
         uint256 cache_length = _cachedVaults.length;
         uint256 num_vaults = registry.numVaults(address(token));
 
@@ -73,6 +76,9 @@ abstract contract BaseWrapperUpgradeable is Initializable {
     }
 
     function _updateVaultCache(VaultAPI[] memory vaults) internal {
+        // NOTE: even though `registry` is update-able by Yearn, the intended behavior
+        //       is that any future upgrades to the registry will replay the version
+        //       history so that this cached value does not get out of date.        if (vaults.length > _cachedVaults.length) {
         if (vaults.length > _cachedVaults.length) {
             _cachedVaults = vaults;
         }
@@ -103,10 +109,15 @@ abstract contract BaseWrapperUpgradeable is Initializable {
         VaultAPI _bestVault = bestVault();
 
         if (pullFunds) {
-            token.safeTransferFrom(depositor, address(this), amount);
+            if (amount != DEPOSIT_EVERYTHING) {
+                token.safeTransferFrom(depositor, address(this), amount);
+            } else {
+                token.safeTransferFrom(depositor, address(this), token.balanceOf(depositor));
+            }
         }
 
         if (token.allowance(address(this), address(_bestVault)) < amount) {
+            token.safeApprove(address(_bestVault), 0); // Avoid issues with some tokens requiring 0
             token.safeApprove(address(_bestVault), UNLIMITED_APPROVAL); // Vaults are trusted
         }
 
@@ -127,7 +138,7 @@ abstract contract BaseWrapperUpgradeable is Initializable {
         deposited = beforeBal.sub(afterBal);
         // `receiver` now has shares of `_bestVault` as balance, converted to `token` here
         // Issue a refund if not everything was deposited
-        if (depositor != address(this) && afterBal > 0) token.transfer(depositor, afterBal);
+        if (depositor != address(this) && afterBal > 0) token.safeTransfer(depositor, afterBal);
     }
 
     function _withdraw(
@@ -135,12 +146,19 @@ abstract contract BaseWrapperUpgradeable is Initializable {
         address receiver,
         uint256 amount, // if `MAX_UINT256`, just withdraw everything
         bool withdrawFromBest // If true, also withdraw from `_bestVault`
-    ) internal returns (uint256 withdrawn) {
+    ) internal virtual returns (uint256 withdrawn) {
         VaultAPI _bestVault = bestVault();
 
         VaultAPI[] memory vaults = allVaults();
         _updateVaultCache(vaults);
 
+        // NOTE: This loop will attempt to withdraw from each Vault in `allVaults` that `sender`
+        //       is deposited in, up to `amount` tokens. The withdraw action can be expensive,
+        //       so it if there is a denial of service issue in withdrawing, the downstream usage
+        //       of this wrapper contract must give an alternative method of withdrawing using
+        //       this function so that `amount` is less than the full amount requested to withdraw
+        //       (e.g. "piece-wise withdrawals"), leading to less loop iterations such that the
+        //       DoS issue is mitigated (at a tradeoff of requiring more txns from the end user).
         for (uint256 id = 0; id < vaults.length; id++) {
             if (!withdrawFromBest && vaults[id] == _bestVault) {
                 continue; // Don't withdraw from the best
@@ -171,8 +189,13 @@ abstract contract BaseWrapperUpgradeable is Initializable {
                         .div(vaults[id].pricePerShare()); // NOTE: Every Vault is different
 
                     // Limit amount to withdraw to the maximum made available to this contract
-                    uint256 shares = MathUpgradeable.min(estimatedShares, availableShares);
-                    withdrawn = withdrawn.add(vaults[id].withdraw(shares));
+                    // NOTE: Avoid corner case where `estimatedShares` isn't precise enough
+                    // NOTE: If `0 < estimatedShares < 1` but `availableShares > 1`, this will withdraw more than necessary
+                    if (estimatedShares > 0 && estimatedShares < availableShares) {
+                        withdrawn = withdrawn.add(vaults[id].withdraw(estimatedShares));
+                    } else {
+                        withdrawn = withdrawn.add(vaults[id].withdraw(availableShares));
+                    }
                 } else {
                     withdrawn = withdrawn.add(vaults[id].withdraw());
                 }
