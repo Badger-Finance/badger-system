@@ -2,27 +2,25 @@
 
 pragma solidity ^0.6.11;
 
-import "../../deps/@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
-import "../../deps/@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
-import "../../deps/@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
-import "../../deps/@openzeppelin/contracts-upgradeable/token/ERC20/SafeERC20Upgradeable.sol";
-import "../../deps/@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
-import "../../deps/@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import "../../deps/@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
+import "../../../deps/@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
+import "../../../deps/@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
+import "../../../deps/@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
+import "../../../deps/@openzeppelin/contracts-upgradeable/token/ERC20/SafeERC20Upgradeable.sol";
+import "../../../deps/@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
+import "../../../deps/@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "../../../deps/@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 
-import "../../interfaces/badger/IController.sol";
-import "../../interfaces/erc20/IERC20Detailed.sol";
-import "../badger-remote/DefenderStorageless.sol";
-import "../badger-remote/PauseableStorageless.sol";
-import "./SettAccessControlDefended.sol";
-import "./SettVersion.sol";
+import "../../../interfaces/badger/IController.sol";
+import "../../../interfaces/erc20/IERC20Detailed.sol";
+import "../../badger-remote/DefenderStorageless.sol";
+import "../../badger-remote/PauseableStorageless.sol";
+import "../SettAccessControlDefended.sol";
+import "../SettVersion.sol";
 
 /* 
-    All new sett deploys should be based on this contract. There are some maintenance forks under `./sett-forks`.
-
     Source: https://github.com/iearn-finance/yearn-protocol/blob/develop/contracts/vaults/yVault.sol
 */
-contract Sett is SettVersion, ERC20Upgradeable, SettAccessControlDefended, PausableUpgradeable, DefenderStorageless, PauseableStorageless {
+contract Sett_B is SettVersion, ERC20Upgradeable, PausableUpgradeable, SettAccessControlDefended, DefenderStorageless, PauseableStorageless {
     using SafeERC20Upgradeable for IERC20Upgradeable;
     using AddressUpgradeable for address;
     using SafeMathUpgradeable for uint256;
@@ -33,18 +31,19 @@ contract Sett is SettVersion, ERC20Upgradeable, SettAccessControlDefended, Pausa
     uint256 public constant max = 10000;
 
     address public controller;
+    address public guardian;
 
     mapping(address => uint256) public blockLock;
 
     string internal constant _defaultNamePrefix = "Badger Sett ";
     string internal constant _symbolSymbolPrefix = "b";
 
-    address public guardian;
     // Remote defender.
     address public defender;
 
     event FullPricePerShareUpdated(uint256 value, uint256 indexed timestamp, uint256 indexed blockNumber);
 
+    // NB: This is a maintenance fork and initialize is not intended to be used.
     function initialize(
         address _token,
         address _controller,
@@ -82,9 +81,6 @@ contract Sett is SettVersion, ERC20Upgradeable, SettAccessControlDefended, Pausa
         min = 9500;
 
         emit FullPricePerShareUpdated(getPricePerFullShare(), now, block.number);
-
-        // Paused on launch
-        _pause();
     }
 
     /// ===== Modifiers =====
@@ -214,12 +210,12 @@ contract Sett is SettVersion, ERC20Upgradeable, SettAccessControlDefended, Pausa
 
     function pause() external {
         _onlyAuthorizedPausers();
-        _pause();
+        _pause(defender);
     }
 
     function unpause() external {
         _onlyGovernance();
-        _unpause();
+        _unpause(defender);
     }
 
     /// ===== Internal Implementations =====

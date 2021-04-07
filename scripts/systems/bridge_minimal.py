@@ -24,7 +24,7 @@ def deploy_bridge_minimal(deployer, devProxyAdmin, test=False, publish_source=Fa
         bridge.deploy_mocks()
         registry = bridge.mocks.registry
 
-    bridge.deploy_logic("BadgerBridgeAdapter", BadgerBridgeAdapter, test=test)
+    bridge.deploy_logic("BadgerBridgeAdapter", BadgerBridgeAdapter)
     bridge.deploy_adapter(
         registry,
         swap.router,

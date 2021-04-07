@@ -27,7 +27,7 @@ class SushiDiggWbtcLpOptimizerMiniDeploy(DiggSettMiniDeployBase):
         params.token = self.digg.token
         params.badgerTree = self.badger.badgerTree
 
-        self.badger.deploy_logic("DiggRewardsFaucet", DiggRewardsFaucet, test=True)
+        self.badger.deploy_logic("DiggRewardsFaucet", DiggRewardsFaucet)
         self.rewards = self.badger.deploy_digg_rewards_faucet(
             self.key, self.digg.token
         )
