@@ -144,7 +144,8 @@ contract AffiliateTokenGatedUpgradeable is ERC20Upgradeable, BaseWrapperUpgradea
     }
 
     function deposit() external whenNotPaused returns (uint256) {
-        return deposit(uint256(-1)); // Deposit everything
+        uint256 allAssets = token.balanceOf(address(msg.sender));
+        return deposit(allAssets); // Deposit everything
     }
 
     function deposit(uint256 amount) public whenNotPaused returns (uint256 deposited) {
