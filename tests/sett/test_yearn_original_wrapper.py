@@ -113,6 +113,9 @@ def test_deposit_withdraw_flow(setup):
 
         # Test pricePerShare to equal 1
         assert setup.wrapper.pricePerShare() == 1e18
+        print("-- 1st User Deposits 1 --")
+        print("Wrapper's PPS:", setup.wrapper.pricePerShare())
+        print("Vault's PPS:", setup.vault.pricePerShare())
 
         # = User 1: Has 10 Tokens, deposits 10 = #
         # Another random user (from guestlist) deposits all their Tokens (10)
@@ -131,6 +134,9 @@ def test_deposit_withdraw_flow(setup):
         
         # Test pricePerShare to equal 1
         assert setup.wrapper.pricePerShare() == 1e18
+        print("-- 2nd User Deposits 10 --")
+        print("Wrapper's PPS:", setup.wrapper.pricePerShare())
+        print("Vault's PPS:", setup.vault.pricePerShare())
        
 
         chain.sleep(10000)
@@ -142,6 +148,9 @@ def test_deposit_withdraw_flow(setup):
         assert setup.mockToken.balanceOf(randomUser2.address) == 19e18
 
         setup.wrapper.withdraw(0.5e18, {"from": randomUser2})
+        print("-- 1st User withdraws 0.5 --")
+        print("Wrapper's PPS:", setup.wrapper.pricePerShare())
+        print("Vault's PPS:", setup.vault.pricePerShare())
         assert setup.mockToken.balanceOf(randomUser2.address) == 19.5e18
 
         assert setup.wrapper.totalVaultBalance(setup.wrapper.address) == 10.5e18
@@ -158,17 +167,20 @@ def test_deposit_withdraw_flow(setup):
         assert setup.mockToken.balanceOf(randomUser1.address) == 0
 
         setup.wrapper.withdraw({"from": randomUser1})
+        print("-- 2nd User withdraws 10 --")
+        print("Wrapper's PPS:", setup.wrapper.pricePerShare())
+        print("Vault's PPS:", setup.vault.pricePerShare())
         assert setup.mockToken.balanceOf(randomUser1.address) == 10e18
 
-        assert setup.wrapper.totalVaultBalance(setup.wrapper.address) == 10.5e18
+        assert setup.wrapper.totalVaultBalance(setup.wrapper.address) == 0.5e18
 
         # mockToken balance of vault equals to net amount
-        assert setup.vault.totalAssets() == 10.5e18
-        assert setup.wrapper.totalAssets() == 10.5e18
+        assert setup.vault.totalAssets() == 0.5e18
+        assert setup.wrapper.totalAssets() == 0.5e18
 
-        # wrapper shares are burned for withdrawer and vault shares are still 0 for withdrawer
-        assert setup.vault.balanceOf(randomUser2.address) == 0
-        assert setup.wrapper.balanceOf(randomUser2.address) == 0.5e18
+        # wrapper shares are burnt for withdrawer and vault shares are still 0 for withdrawer
+        assert setup.vault.balanceOf(randomUser1.address) == 0
+        assert setup.wrapper.balanceOf(randomUser1.address) == 0
 
         # = User 3: Has 10 Tokens, 0 bvyWBTC token, withdraws 1 = #
         # Random user attempts to withdraw 1 token
@@ -184,10 +196,12 @@ def test_deposit_withdraw_flow(setup):
         # = User 2 sends 0.5 byvWBTC to user 3 for withdrawal = #
         setup.wrapper.transfer(randomUser3.address, 0.5e18, {"from": randomUser2})
 
-        assert setup.wrapper.balanceOf(randomUser2.address) == 0.5e18
+        assert setup.wrapper.balanceOf(randomUser3.address) == 0.5e18
 
+        # User 3 withdraws using the 0.5 shares received from user 2
         setup.wrapper.withdraw(0.5e18, {"from": randomUser3})
-        assert setup.mockToken.balanceOf(randomUser2.address) == 0.5e18
+        # mockToken balance of user 3: 10 + 0.5 = 10.5
+        assert setup.mockToken.balanceOf(randomUser3.address) == 10.5e18
 
         assert setup.wrapper.totalVaultBalance(setup.wrapper.address) == 0
 
