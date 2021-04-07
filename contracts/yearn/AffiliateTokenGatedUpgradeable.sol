@@ -44,6 +44,11 @@ contract AffiliateTokenGatedUpgradeable is ERC20Upgradeable, BaseWrapperUpgradea
 
     uint256 public withdrawalFee;
 
+    /// @dev In experimental mode, the wrapper only deposits and withdraws from a single pre-connected vault (rather than the registry). The vault cache is not set in this mode. Once disabled, cannot be re-enabled.
+    bool public experimentalMode;
+
+    address public experimentalVault;
+
     modifier onlyAffiliate() {
         require(msg.sender == affiliate);
         _;
@@ -53,6 +58,7 @@ contract AffiliateTokenGatedUpgradeable is ERC20Upgradeable, BaseWrapperUpgradea
     event AcceptAffiliate(address affiliate);
     event SetGuardian(address guardian);
     event SetManager(address manager);
+    event SetExperimentalVault(address vault);
     event UpdateGuestList(address guestList);
     event Deposit(address indexed account, uint256 amount);
     event Withdraw(address indexed account, uint256 amount);
@@ -77,6 +83,35 @@ contract AffiliateTokenGatedUpgradeable is ERC20Upgradeable, BaseWrapperUpgradea
 
         emit AcceptAffiliate(affiliate);
         emit SetGuardian(guardian);
+    }
+
+    function bestVault() public view override returns (VaultAPI) {
+        if (experimentalMode) {
+            return VaultAPI(experimentalVault);
+        } else {
+            return super.bestVault();
+        }
+    }
+
+    function allVaults() public view override returns (VaultAPI[] memory) {
+        if (experimentalMode) {
+            VaultAPI[] memory vaults = new VaultAPI[](1);
+            vaults[0] = VaultAPI(experimentalVault);
+        } else {
+            return super.allVaults();
+        }
+    }
+
+    function setExperimentalVault(address _experimentalVault) external onlyAffiliate {
+        require(experimentalVault == address(0)); // Can only be set once
+        experimentalMode = true;
+        experimentalVault = _experimentalVault;
+
+        emit SetExperimentalVault(experimentalVault);
+    }
+
+    function disableExperimentalMode() external onlyAffiliate {
+        experimentalMode = false;
     }
 
     function _getChainId() internal view returns (uint256) {
@@ -118,6 +153,10 @@ contract AffiliateTokenGatedUpgradeable is ERC20Upgradeable, BaseWrapperUpgradea
         emit UpdateGuestList(_guestList);
     }
 
+    function shareValue(uint256 numShares) external view returns (uint256) {
+        return _shareValue(numShares);
+    }
+
     function _shareValue(uint256 numShares) internal view returns (uint256) {
         uint256 totalShares = totalSupply();
 
@@ -130,6 +169,10 @@ contract AffiliateTokenGatedUpgradeable is ERC20Upgradeable, BaseWrapperUpgradea
 
     function pricePerShare() external view returns (uint256) {
         return totalVaultBalance(address(this)).mul(10**uint256(decimals())).div(totalSupply());
+    }
+
+    function totalWrapperBalance(address account) public view returns (uint256 balance) {
+        return balanceOf(account).mul(pricePerShare()).div(10**uint256(decimals()));
     }
 
     function _sharesForValue(uint256 amount) internal view returns (uint256) {
@@ -229,18 +272,28 @@ contract AffiliateTokenGatedUpgradeable is ERC20Upgradeable, BaseWrapperUpgradea
         _unpause();
     }
 
-    // // @dev Withdrawal logic variant that processes withdrawal fees to affiliate
     // function _withdraw(
     //     address sender,
     //     address receiver,
     //     uint256 amount, // if `MAX_UINT256`, just withdraw everything
     //     bool withdrawFromBest // If true, also withdraw from `_bestVault`
-    // ) internal override returns (uint256 withdrawn, uint256 fee, uint256 toReciever) {
+    // ) internal override returns (uint256 withdrawn) {
     //     VaultAPI _bestVault = bestVault();
 
     //     VaultAPI[] memory vaults = allVaults();
-    //     _updateVaultCache(vaults);
 
+    //     // Only update cache once connected to regsitry
+    //     if (!experimentalMode) {
+    //         _updateVaultCache(vaults);
+    //     }
+
+    //     // NOTE: This loop will attempt to withdraw from each Vault in `allVaults` that `sender`
+    //     //       is deposited in, up to `amount` tokens. The withdraw action can be expensive,
+    //     //       so it if there is a denial of service issue in withdrawing, the downstream usage
+    //     //       of this wrapper contract must give an alternative method of withdrawing using
+    //     //       this function so that `amount` is less than the full amount requested to withdraw
+    //     //       (e.g. "piece-wise withdrawals"), leading to less loop iterations such that the
+    //     //       DoS issue is mitigated (at a tradeoff of requiring more txns from the end user).
     //     for (uint256 id = 0; id < vaults.length; id++) {
     //         if (!withdrawFromBest && vaults[id] == _bestVault) {
     //             continue; // Don't withdraw from the best
@@ -272,8 +325,13 @@ contract AffiliateTokenGatedUpgradeable is ERC20Upgradeable, BaseWrapperUpgradea
     //                         .div(vaults[id].pricePerShare()); // NOTE: Every Vault is different
 
     //                 // Limit amount to withdraw to the maximum made available to this contract
-    //                 uint256 shares = MathUpgradeable.min(estimatedShares, availableShares);
-    //                 withdrawn = withdrawn.add(vaults[id].withdraw(shares));
+    //                 // NOTE: Avoid corner case where `estimatedShares` isn't precise enough
+    //                 // NOTE: If `0 < estimatedShares < 1` but `availableShares > 1`, this will withdraw more than necessary
+    //                 if (estimatedShares > 0 && estimatedShares < availableShares) {
+    //                     withdrawn = withdrawn.add(vaults[id].withdraw(estimatedShares));
+    //                 } else {
+    //                     withdrawn = withdrawn.add(vaults[id].withdraw(availableShares));
+    //                 }
     //             } else {
     //                 withdrawn = withdrawn.add(vaults[id].withdraw());
     //             }
@@ -295,13 +353,11 @@ contract AffiliateTokenGatedUpgradeable is ERC20Upgradeable, BaseWrapperUpgradea
     //         _bestVault.deposit(withdrawn.sub(amount), sender);
     //         withdrawn = amount;
     //     }
-
     //     if (withdrawalFee > 0) {
     //         fee = withdrawn.mul(withdrawalFee).div(MAX_BPS);
     //         toReciever = withdrawn.sub(fee);
     //         token.safeTransfer(affiliate, fee);
     //     }
-
     //     // `receiver` now has `withdrawn` tokens as balance
     //     if (receiver != address(this)) token.safeTransfer(receiver, withdrawn);
     // }
