@@ -409,14 +409,12 @@ def test_deposit_limit(setup):
     with brownie.reverts():
         setup.wrapper.deposit(15e18, {"from": randomUser2})
 
-@pytest.mark.skip()
-def test_migration_flow(setup):
+#@pytest.mark.skip()
+def test_migrate_all_flow(setup):
     randomUser1 = setup.namedAccounts['randomUser1']
     randomUser2 = setup.namedAccounts['randomUser2']
     randomUser3 = setup.namedAccounts['randomUser3']
     deployer = setup.namedAccounts['deployer']
-    guardian = setup.namedAccounts['guardian']
-    manager = setup.namedAccounts['manager']
 
     setup.mockToken.approve(setup.wrapper.address, 100e18, {"from": randomUser2})
     setup.mockToken.approve(setup.wrapper.address, 100e18, {"from": randomUser1})
@@ -428,8 +426,11 @@ def test_migration_flow(setup):
     setup.wrapper.deposit(10e18, {"from": randomUser1})
     setup.wrapper.deposit(10e18, {"from": randomUser2})
 
+    # Check that vault is current 'bestVault'
+    assert setup.wrapper.bestVault() == setup.vault.address
+
     # Deploying new version of vault
-    vaultV2 = deployer.deploy(YearnTokenVault)
+    vaultV2 = deployer.deploy(YearnTokenVaultV2)
     vaultV2.initialize(
         setup.mockToken.address, deployer.address, AddressZero, "YearnWBTCV2", "vyWBTCV2"
     )
@@ -439,4 +440,152 @@ def test_migration_flow(setup):
     setup.yearnRegistry.newRelease(vaultV2.address)
     setup.yearnRegistry.endorseVault(vaultV2.address)
 
+    # Check that vaultV2 is current 'bestVault'
+    assert setup.wrapper.bestVault() == vaultV2.address
+
+    # User 2 deposits another 5 tokens into new vault
+    setup.wrapper.deposit(5e18, {"from": randomUser2})
+
+    # Vault should have 20 mockTokens
+    assert setup.vault.totalAssets() == 20e18
+
+    # VaultV2 should have 5 mockTokens
+    assert vaultV2.totalAssets() == 5e18
+
+    # User 2 withdraws all from wrapper (should withdraw from oldest vault first: 15 tokens)
+    assert setup.mockToken.balanceOf(randomUser2.address) == 5e18
+    assert setup.wrapper.balanceOf(randomUser2.address) == 15e18
+
+    setup.wrapper.withdraw({"from": randomUser2})
+
+    assert setup.mockToken.balanceOf(randomUser2.address) == 20e18
+    assert setup.wrapper.balanceOf(randomUser2.address) == 0
+
+    # Vault should have 5 mockTokens (Withdraws from old vault first)
+    assert setup.vault.totalAssets() == 5e18
+
+    # VaultV2 should have 5 mockTokens
+    assert vaultV2.totalAssets() == 5e18
+
+    # Balance of User 1 should be 10 (split among both vaults)
+    assert setup.wrapper.balanceOf(randomUser1.address) == 10e18
+
+    # Migrate: should transfer User 1's 10 token from Vault to VaultV2
+    setup.wrapper.migrate()
+
+    # Vault should have 0 mockTokens
+    assert setup.vault.totalAssets() == 0e18
+
+    # VaultV2 should have 10 mockTokens
+    assert vaultV2.totalAssets() == 10e18
+
+    # User 1 withdraws all from wrapper (should withdraw from VaultV2: 10 tokens)
+    assert setup.mockToken.balanceOf(randomUser1.address) == 0
+    assert setup.wrapper.balanceOf(randomUser1.address) == 10e18
+
+    setup.wrapper.withdraw({"from": randomUser1})
+
+    assert setup.mockToken.balanceOf(randomUser1.address) == 10e18
+    assert setup.wrapper.balanceOf(randomUser1.address) == 0
+
+    # VaultV2 should have 0 mockTokens
+    assert vaultV2.totalAssets() == 0
+
+#@pytest.mark.skip()
+def test_migrate_amount_flow(setup):
+    randomUser1 = setup.namedAccounts['randomUser1']
+    randomUser2 = setup.namedAccounts['randomUser2']
+    randomUser3 = setup.namedAccounts['randomUser3']
+    deployer = setup.namedAccounts['deployer']
+
+    setup.mockToken.approve(setup.wrapper.address, 100e18, {"from": randomUser2})
+    setup.mockToken.approve(setup.wrapper.address, 100e18, {"from": randomUser1})
+
+    # Link guestlist to wrapper
+    setup.wrapper.setGuestList(setup.guestlist.address, {"from": deployer})
+
+    # Deposit tokens from User 1 and 2 to current bestVault
+    setup.wrapper.deposit(10e18, {"from": randomUser1})
+    setup.wrapper.deposit(10e18, {"from": randomUser2})
+
+    # Check that vault is current 'bestVault'
+    assert setup.wrapper.bestVault() == setup.vault.address
+
+    # Deploying new version of vault
+    vaultV2 = deployer.deploy(YearnTokenVaultV2)
+    vaultV2.initialize(
+        setup.mockToken.address, deployer.address, AddressZero, "YearnWBTCV2", "vyWBTCV2"
+    )
+    vaultV2.setDepositLimit(24e18)
+
+    # Add vault to registry
+    setup.yearnRegistry.newRelease(vaultV2.address)
+    setup.yearnRegistry.endorseVault(vaultV2.address)
+
+    # Check that vaultV2 is current 'bestVault'
+    assert setup.wrapper.bestVault() == vaultV2.address
+
+    # Vault should have 20 mockTokens
+    assert setup.vault.totalAssets() == 20e18
+
+    # VaultV2 should have 0 mockTokens
+    assert vaultV2.totalAssets() == 0
+
+    # Migrate: should transfer given amount from Vault to VaultV2
+    setup.wrapper.migrate(5e18)
+
+    # Vault should have 0 mockTokens
+    assert setup.vault.totalAssets() == 15e18
+
+    # VaultV2 should have 10 mockTokens
+    assert vaultV2.totalAssets() == 5e18
+
+#@pytest.mark.skip()
+def test_migrate_amount_margin_flow(setup):
+    randomUser1 = setup.namedAccounts['randomUser1']
+    randomUser2 = setup.namedAccounts['randomUser2']
+    randomUser3 = setup.namedAccounts['randomUser3']
+    deployer = setup.namedAccounts['deployer']
+
+    setup.mockToken.approve(setup.wrapper.address, 100e18, {"from": randomUser2})
+    setup.mockToken.approve(setup.wrapper.address, 100e18, {"from": randomUser1})
+
+    # Link guestlist to wrapper
+    setup.wrapper.setGuestList(setup.guestlist.address, {"from": deployer})
+
+    # Deposit tokens from User 1 and 2 to current bestVault
+    setup.wrapper.deposit(10e18, {"from": randomUser1})
+    setup.wrapper.deposit(10e18, {"from": randomUser2})
+
+    # Check that vault is current 'bestVault'
+    assert setup.wrapper.bestVault() == setup.vault.address
+
+    # Deploying new version of vault
+    vaultV2 = deployer.deploy(YearnTokenVaultV2)
+    vaultV2.initialize(
+        setup.mockToken.address, deployer.address, AddressZero, "YearnWBTCV2", "vyWBTCV2"
+    )
+    vaultV2.setDepositLimit(24e18)
+
+    # Add vault to registry
+    setup.yearnRegistry.newRelease(vaultV2.address)
+    setup.yearnRegistry.endorseVault(vaultV2.address)
+
+    # Check that vaultV2 is current 'bestVault'
+    assert setup.wrapper.bestVault() == vaultV2.address
+
+    # Vault should have 20 mockTokens
+    assert setup.vault.totalAssets() == 20e18
+
+    # VaultV2 should have 0 mockTokens
+    assert vaultV2.totalAssets() == 0
+
+    # Migrate: should transfer given amount from Vault to VaultV2 with loss margin
+    setup.wrapper.migrate(5e18, 1e18)
+
+    # Vault should have 0 mockTokens
+    assert setup.vault.totalAssets() == 15e18
+
+    # VaultV2 should have 10 mockTokens
+    assert vaultV2.totalAssets() == 5e18
 
