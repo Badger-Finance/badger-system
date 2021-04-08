@@ -97,6 +97,7 @@ contract AffiliateTokenGatedUpgradeable is ERC20Upgradeable, BaseWrapperUpgradea
         if (experimentalMode) {
             VaultAPI[] memory vaults = new VaultAPI[](1);
             vaults[0] = VaultAPI(experimentalVault);
+            return vaults;
         } else {
             return super.allVaults();
         }
