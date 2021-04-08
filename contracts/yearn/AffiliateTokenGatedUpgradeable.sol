@@ -85,7 +85,7 @@ contract AffiliateTokenGatedUpgradeable is ERC20Upgradeable, BaseWrapperUpgradea
         emit SetGuardian(guardian);
     }
 
-    function bestVault() public view override returns (VaultAPI) {
+    function bestVault() public override view returns (VaultAPI) {
         if (experimentalMode) {
             return VaultAPI(experimentalVault);
         } else {
@@ -93,7 +93,7 @@ contract AffiliateTokenGatedUpgradeable is ERC20Upgradeable, BaseWrapperUpgradea
         }
     }
 
-    function allVaults() public view override returns (VaultAPI[] memory) {
+    function allVaults() public override view returns (VaultAPI[] memory) {
         if (experimentalMode) {
             VaultAPI[] memory vaults = new VaultAPI[](1);
             vaults[0] = VaultAPI(experimentalVault);
@@ -167,7 +167,7 @@ contract AffiliateTokenGatedUpgradeable is ERC20Upgradeable, BaseWrapperUpgradea
         }
     }
 
-    function pricePerShare() external view returns (uint256) {
+    function pricePerShare() public view returns (uint256) {
         return totalVaultBalance(address(this)).mul(10**uint256(decimals())).div(totalSupply());
     }
 

@@ -63,7 +63,7 @@ interface VaultAPI is IERC20 {
 
     function maxAvailableShares() external view returns (uint256);
 
-    function setGuestList(address guestList) external;
+    function setGuestList(address guestlist) external;
 
     /**
      * View how much the Vault would increase this Strategy's borrow limit,
