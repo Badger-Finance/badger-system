@@ -32,7 +32,20 @@ def test_rewards_flow(setup):
 
     rewardsContract = admin.deploy(BadgerTreeV2)
     rewardsContract.initialize(admin, proposer, validator)
-    rewardsContract.setCycle(1296, {'from': admin})
+
+    console.log('You may need to manually set the cycle in the contract for this test to work. See the comment at line 37')
+    '''
+    1. Add the following function to the BadgerTreeV2 contract:
+
+    /// @dev test function to get cycle to starting point
+    function setCycle(uint256 n) public {
+        _onlyAdmin();
+        currentCycle = n;
+    }
+
+    2. Uncomment the next line to set the cycle in the test contract:
+    '''
+    # rewardsContract.setCycle(1296, {'from': admin})
 
     contentHash1 = "0xe8e31919bd92024a0437852392695f5424932b2d1b041ab45c319de7ce42fda0"
     contentHash2 = "0xe84f535a2581589e2c0b62040926d6599d14c436da24ab8fac5e2c86467721aa"
