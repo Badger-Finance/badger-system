@@ -33,8 +33,10 @@ def test_rewards_flow(setup):
     rewardsContract = admin.deploy(BadgerTreeV2)
     rewardsContract.initialize(admin, proposer, validator)
 
-    console.log('You may need to manually set the cycle in the contract for this test to work. See the comment at line 37')
+    console.print("[yellow]You may need to manually set the cycle in the contract for this test to work. See the comment titled 'SETTING CORRECT CYCLE'[/yellow]")
     '''
+    SETTING CORRECT CYCLE
+    =========================
     1. Add the following function to the BadgerTreeV2 contract:
 
     /// @dev test function to get cycle to starting point
