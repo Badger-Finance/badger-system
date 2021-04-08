@@ -12,12 +12,23 @@ from assistant.subgraph.client import (
 from assistant.rewards.classes.User import User
 from assistant.rewards.classes.RewardsList import RewardsList
 
-cream_addresses = {
-    "native.badger":"0x8b950f43fcac4931d408f1fcda55c6cb6cbf3096"
-}
 
 console = Console()
-badger_api_url = "https://laiv44udi0.execute-api.us-west-1.amazonaws.com/staging/v2"
+
+blacklist = [
+    "0x19D97D8fA813EE2f51aD4B4e04EA08bAf4DFfC28",
+    "0x6dEf55d2e18486B9dDfaA075bc4e4EE0B28c1545",
+    "0xd04c48A53c111300aD41190D63681ed3dAd998eC",
+    "0xb9D076fDe463dbc9f915E5392F807315Bf940334",
+    "0x235c9e24D3FB2FAFd58a2E49D454Fdcd2DBf7FF1",
+    "0xAf5A1DECfa95BAF63E0084a35c62592B774A2A87",
+    "0x1862A18181346EBd9EdAf800804f89190DeF24a5",
+    "0x758a43ee2bff8230eeb784879cdcff4828f2544d",
+    "0xC17078FDd324CC473F8175Dc5290fae5f2E84714",
+    "0x88128580ACdD9c04Ce47AFcE196875747bF2A9f6",
+    "0x7e7E112A68d8D2E221E11047a72fFC1065c38e1a",
+]
+
 
 def keccak(value):
     return web3.toHex(web3.keccak(text=value))
@@ -149,5 +160,8 @@ def calculate_sett_balances(badger, name, sett, currentBlock):
     if name in ["native.badger"]:
         settUnderlyingToken = interface.ERC20(sett.token())
         #creamBalances = fetch_cream_balances("crB{}".format(settUnderlyingToken.symbol()),currentBlock)
-
-    return combine_balances([settBalances, geyserBalances, creamBalances])
+    balances = combine_balances([settBalances, geyserBalances, creamBalances])
+    for addr in balances.keys():
+        if addr in blacklist:
+            del balances[addr]
+    return balances

@@ -10,10 +10,6 @@ from rich.console import Console
 console = Console()
 digg = interface.IDigg(Token.digg.value)
 
-blacklistedAddresses = [
-    "0x0a54d4b378c8dbfc7bc93be50c85debafdb87439",
-    "0xf9440fedc72a0b8030861dcdac39a75b544e7a3c",
-]
 nativeSetts = ["native.uniDiggWbtc", "native.sushiDiggWbtc"]
 nonNativeSetts = [
     "native.renCrv",
@@ -35,11 +31,6 @@ def calc_geyser_snapshot(badger, name, startBlock, endBlock, nextCycle, boosts, 
 
     balances = calculate_sett_balances(badger, name, sett, endBlock)
     # Get rid of blacklisted addresses
-    for addr in blacklistedAddresses:
-        addr = addr.lower()
-        if addr in balances:
-            del balances[addr]
-
     # Only boost non-native setts
     if name in nonNativeSetts:
         for addr, bal in balances.items():
