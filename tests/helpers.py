@@ -44,6 +44,18 @@ def distribute_from_whales(recipient):
                     recipient, token.balanceOf(whale.whale), {"from": whale.whale}
                 )
 
+def distribute_from_whales_to_contract(recipient, account):
+    for key, whale in whale_registry.items():
+        if key != "_pytestfixturefunction":
+            print("transferring from whale", key, whale.toDict())
+            forceEther = ForceEther.deploy({"from": account})
+            account.transfer(forceEther, Wei("1 ether"))
+            forceEther.forceSend(whale.whale, {"from": account})
+            if whale.token:
+                token = interface.IERC20(whale.token)
+                token.transfer(
+                    recipient, token.balanceOf(whale.whale), {"from": whale.whale}
+                )
 
 def distribute_rewards_escrow(badger, token, recipient, amount):
     """
