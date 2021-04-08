@@ -273,93 +273,88 @@ contract AffiliateTokenGatedUpgradeable is ERC20Upgradeable, BaseWrapperUpgradea
         _unpause();
     }
 
-    // function _withdraw(
-    //     address sender,
-    //     address receiver,
-    //     uint256 amount, // if `MAX_UINT256`, just withdraw everything
-    //     bool withdrawFromBest // If true, also withdraw from `_bestVault`
-    // ) internal override returns (uint256 withdrawn) {
-    //     VaultAPI _bestVault = bestVault();
+    function _withdraw(
+        address sender,
+        address receiver,
+        uint256 amount, // if `MAX_UINT256`, just withdraw everything
+        bool withdrawFromBest // If true, also withdraw from `_bestVault`
+    ) internal override returns (uint256 withdrawn) {
+        VaultAPI _bestVault = bestVault();
 
-    //     VaultAPI[] memory vaults = allVaults();
+        VaultAPI[] memory vaults = allVaults();
 
-    //     // Only update cache once connected to regsitry
-    //     if (!experimentalMode) {
-    //         _updateVaultCache(vaults);
-    //     }
+        // Don't update cache in experimental mode, wait until we are referencing the registry data
+        if (!experimentalMode) {
+            _updateVaultCache(vaults);
+        }
 
-    //     // NOTE: This loop will attempt to withdraw from each Vault in `allVaults` that `sender`
-    //     //       is deposited in, up to `amount` tokens. The withdraw action can be expensive,
-    //     //       so it if there is a denial of service issue in withdrawing, the downstream usage
-    //     //       of this wrapper contract must give an alternative method of withdrawing using
-    //     //       this function so that `amount` is less than the full amount requested to withdraw
-    //     //       (e.g. "piece-wise withdrawals"), leading to less loop iterations such that the
-    //     //       DoS issue is mitigated (at a tradeoff of requiring more txns from the end user).
-    //     for (uint256 id = 0; id < vaults.length; id++) {
-    //         if (!withdrawFromBest && vaults[id] == _bestVault) {
-    //             continue; // Don't withdraw from the best
-    //         }
+        // NOTE: This loop will attempt to withdraw from each Vault in `allVaults` that `sender`
+        //       is deposited in, up to `amount` tokens. The withdraw action can be expensive,
+        //       so it if there is a denial of service issue in withdrawing, the downstream usage
+        //       of this wrapper contract must give an alternative method of withdrawing using
+        //       this function so that `amount` is less than the full amount requested to withdraw
+        //       (e.g. "piece-wise withdrawals"), leading to less loop iterations such that the
+        //       DoS issue is mitigated (at a tradeoff of requiring more txns from the end user).
+        for (uint256 id = 0; id < vaults.length; id++) {
+            if (!withdrawFromBest && vaults[id] == _bestVault) {
+                continue; // Don't withdraw from the best
+            }
 
-    //         // Start with the total shares that `sender` has
-    //         uint256 availableShares = vaults[id].balanceOf(sender);
+            // Start with the total shares that `sender` has
+            uint256 availableShares = vaults[id].balanceOf(sender);
 
-    //         // Restrict by the allowance that `sender` has to this contract
-    //         // NOTE: No need for allowance check if `sender` is this contract
-    //         if (sender != address(this)) {
-    //             availableShares = MathUpgradeable.min(availableShares, vaults[id].allowance(sender, address(this)));
-    //         }
+            // Restrict by the allowance that `sender` has to this contract
+            // NOTE: No need for allowance check if `sender` is this contract
+            if (sender != address(this)) {
+                availableShares = MathUpgradeable.min(availableShares, vaults[id].allowance(sender, address(this)));
+            }
 
-    //         // Limit by maximum withdrawal size from each vault
-    //         availableShares = MathUpgradeable.min(availableShares, vaults[id].maxAvailableShares());
+            // Limit by maximum withdrawal size from each vault
+            availableShares = MathUpgradeable.min(availableShares, vaults[id].maxAvailableShares());
 
-    //         if (availableShares > 0) {
-    //             // Intermediate step to move shares to this contract before withdrawing
-    //             // NOTE: No need for share transfer if this contract is `sender`
-    //             if (sender != address(this)) vaults[id].transferFrom(sender, address(this), availableShares);
+            if (availableShares > 0) {
+                // Intermediate step to move shares to this contract before withdrawing
+                // NOTE: No need for share transfer if this contract is `sender`
+                if (sender != address(this)) vaults[id].transferFrom(sender, address(this), availableShares);
 
-    //             if (amount != WITHDRAW_EVERYTHING) {
-    //                 // Compute amount to withdraw fully to satisfy the request
-    //                 uint256 estimatedShares =
-    //                     amount
-    //                         .sub(withdrawn) // NOTE: Changes every iteration
-    //                         .mul(10**uint256(vaults[id].decimals()))
-    //                         .div(vaults[id].pricePerShare()); // NOTE: Every Vault is different
+                if (amount != WITHDRAW_EVERYTHING) {
+                    // Compute amount to withdraw fully to satisfy the request
+                    uint256 estimatedShares = amount
+                        .sub(withdrawn) // NOTE: Changes every iteration
+                        .mul(10**uint256(vaults[id].decimals()))
+                        .div(vaults[id].pricePerShare()); // NOTE: Every Vault is different
 
-    //                 // Limit amount to withdraw to the maximum made available to this contract
-    //                 // NOTE: Avoid corner case where `estimatedShares` isn't precise enough
-    //                 // NOTE: If `0 < estimatedShares < 1` but `availableShares > 1`, this will withdraw more than necessary
-    //                 if (estimatedShares > 0 && estimatedShares < availableShares) {
-    //                     withdrawn = withdrawn.add(vaults[id].withdraw(estimatedShares));
-    //                 } else {
-    //                     withdrawn = withdrawn.add(vaults[id].withdraw(availableShares));
-    //                 }
-    //             } else {
-    //                 withdrawn = withdrawn.add(vaults[id].withdraw());
-    //             }
+                    // Limit amount to withdraw to the maximum made available to this contract
+                    // NOTE: Avoid corner case where `estimatedShares` isn't precise enough
+                    // NOTE: If `0 < estimatedShares < 1` but `availableShares > 1`, this will withdraw more than necessary
+                    if (estimatedShares > 0 && estimatedShares < availableShares) {
+                        withdrawn = withdrawn.add(vaults[id].withdraw(estimatedShares));
+                    } else {
+                        withdrawn = withdrawn.add(vaults[id].withdraw(availableShares));
+                    }
+                } else {
+                    withdrawn = withdrawn.add(vaults[id].withdraw());
+                }
 
-    //             // Check if we have fully satisfied the request
-    //             // NOTE: use `amount = WITHDRAW_EVERYTHING` for withdrawing everything
-    //             if (amount <= withdrawn) break; // withdrawn as much as we needed
-    //         }
-    //     }
+                // Check if we have fully satisfied the request
+                // NOTE: use `amount = WITHDRAW_EVERYTHING` for withdrawing everything
+                if (amount <= withdrawn) break; // withdrawn as much as we needed
+            }
+        }
 
-    //     // If we have extra, deposit back into `_bestVault` for `sender`
-    //     // NOTE: Invariant is `withdrawn <= amount`
-    //     if (withdrawn > amount) {
-    //         // Don't forget to approve the deposit
-    //         if (token.allowance(address(this), address(_bestVault)) < withdrawn.sub(amount)) {
-    //             token.safeApprove(address(_bestVault), UNLIMITED_APPROVAL); // Vaults are trusted
-    //         }
+        // If we have extra, deposit back into `_bestVault` for `sender`
+        // NOTE: Invariant is `withdrawn <= amount`
+        if (withdrawn > amount) {
+            // Don't forget to approve the deposit
+            if (token.allowance(address(this), address(_bestVault)) < withdrawn.sub(amount)) {
+                token.safeApprove(address(_bestVault), UNLIMITED_APPROVAL); // Vaults are trusted
+            }
 
-    //         _bestVault.deposit(withdrawn.sub(amount), sender);
-    //         withdrawn = amount;
-    //     }
-    //     if (withdrawalFee > 0) {
-    //         fee = withdrawn.mul(withdrawalFee).div(MAX_BPS);
-    //         toReciever = withdrawn.sub(fee);
-    //         token.safeTransfer(affiliate, fee);
-    //     }
-    //     // `receiver` now has `withdrawn` tokens as balance
-    //     if (receiver != address(this)) token.safeTransfer(receiver, withdrawn);
-    // }
+            _bestVault.deposit(withdrawn.sub(amount), sender);
+            withdrawn = amount;
+        }
+
+        // `receiver` now has `withdrawn` tokens as balance
+        if (receiver != address(this)) token.safeTransfer(receiver, withdrawn);
+    }
 }
