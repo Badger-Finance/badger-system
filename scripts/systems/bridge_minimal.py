@@ -28,6 +28,7 @@ def deploy_bridge_minimal(deployer, devProxyAdmin, test=False, publish_source=Fa
     bridge.deploy_adapter(
         registry,
         swap.router,
+        deployer,
     )
     bridge.add_existing_swap(swap)
     # Grant strategy swapper role to bridge adapter.

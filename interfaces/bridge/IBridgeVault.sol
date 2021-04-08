@@ -8,4 +8,6 @@ interface IBridgeVault is IERC20 {
     function deposit(uint256 amount) external;
 
     function withdraw(uint256 shares) external;
+
+    function token() external returns (IERC20);
 }

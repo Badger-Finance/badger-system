@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 
 pragma solidity ^0.6.8;
+pragma experimental ABIEncoderV2;
 
 import "deps/@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "deps/@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
@@ -10,7 +11,8 @@ import "deps/@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeabl
 
 import "interfaces/badger/ISwapStrategyRouter.sol";
 import "interfaces/bridge/IGateway.sol";
-import "./IBridgeVault.sol";
+import "interfaces/bridge/IBridgeVault.sol";
+import "interfaces/curve/ICurveFi.sol";
 
 contract BadgerBridgeAdapter is OwnableUpgradeable, ReentrancyGuardUpgradeable {
     using SafeMathUpgradeable for uint256;
@@ -41,6 +43,17 @@ contract BadgerBridgeAdapter is OwnableUpgradeable, ReentrancyGuardUpgradeable {
 
     mapping(address => bool) public approvedVaults;
 
+    // Make struct for mint args, otherwise too many local vars (stack too deep).
+    struct MintArguments {
+        uint256 _mintAmount;
+        uint256 _mintAmountMinusFee;
+        uint256 _fee;
+        uint256 _slippage;
+        address _vault;
+        address _user;
+        address _token;
+    }
+
     function initialize(
         address _governance,
         address _rewards,
@@ -70,6 +83,10 @@ contract BadgerBridgeAdapter is OwnableUpgradeable, ReentrancyGuardUpgradeable {
         burnFeeBps = _feeConfig[1];
         percentageFeeRewardsBps = _feeConfig[2];
         percentageFeeGovernanceBps = _feeConfig[3];
+    }
+
+    function version() external view returns (string memory) {
+        return "1.1";
     }
 
     // NB: This recovery fn only works for the BTC gateway (hardcoded and only one supported in this adapter).
@@ -117,9 +134,8 @@ contract BadgerBridgeAdapter is OwnableUpgradeable, ReentrancyGuardUpgradeable {
         uint256 fee = _processFee(renBTC, mintAmount, mintFeeBps);
         uint256 mintAmountMinusFee = mintAmount.sub(fee);
 
-        (bool success, ) = address(this).call(
-            abi.encodeWithSelector(this.mintAdapter.selector, mintAmount, mintAmountMinusFee, fee, _vault, _user, _token)
-        );
+        MintArguments memory args = MintArguments(mintAmount, mintAmountMinusFee, fee, _slippage, _vault, _user, _token);
+        (bool success, ) = address(this).call(abi.encodeWithSelector(this.mintAdapter.selector, args));
 
         if (!success) {
             renBTC.safeTransfer(_user, mintAmountMinusFee);
@@ -164,42 +180,100 @@ contract BadgerBridgeAdapter is OwnableUpgradeable, ReentrancyGuardUpgradeable {
         uint256 burnAmount = registry.getGatewayBySymbol("BTC").burn(_btcDestination, toBurnAmount.sub(fee));
     }
 
-    function mintAdapter(
-        uint256 _mintAmount,
-        uint256 _mintAmountMinusFee,
-        uint256 _fee,
-        address _vault,
-        address _user,
-        address _token
-    ) external {
+    function mintAdapter(MintArguments memory args) external {
         require(msg.sender == address(this), "Not itself");
-        require(!(_vault != address(0) && !approvedVaults[_vault]), "Vault not approved");
+        require(!(args._vault != address(0) && !approvedVaults[args._vault]), "Vault not approved");
 
         uint256 wbtcExchanged;
-        bool isVault = _vault != address(0);
-        bool isRenBTC = _token == address(renBTC);
+        bool isVault = args._vault != address(0);
+        bool isRenBTC = args._token == address(renBTC);
         IERC20 token = isRenBTC ? renBTC : wBTC;
 
         if (!isRenBTC) {
             // Try and swap and transfer wbtc if token wbtc specified.
             uint256 startBalance = token.balanceOf(address(this));
-            if (_swapRenBTCForWBTC(_mintAmountMinusFee, _slippage)) {
+            if (_swapRenBTCForWBTC(args._mintAmountMinusFee, args._slippage)) {
                 uint256 endBalance = token.balanceOf(address(this));
                 wbtcExchanged = endBalance.sub(startBalance);
             }
         }
 
-        emit Mint(_mintAmount, wbtcExchanged, _fee);
+        emit Mint(args._mintAmount, wbtcExchanged, args._fee);
 
-        uint256 amount = isRenBTC ? _mintAmountMinusFee : wbtcExchanged;
+        uint256 amount = isRenBTC ? args._mintAmountMinusFee : wbtcExchanged;
 
-        if (_vault == address(0)) {
-            token.safeTransfer(_user, amount);
-        } else {
-            token.safeIncreaseAllowance(_vault, amount);
-            IBridgeVault(_vault).deposit(amount);
-            IERC20(_vault).safeTransfer(_user, IERC20(_vault).balanceOf(address(this)));
+        if (args._vault == address(0)) {
+            token.safeTransfer(args._user, amount);
+            return;
         }
+
+        // Maybe deposit into curve lp pool if vault accepts a curve lp token.
+        // We currently only supply liquidity as renBTC (see fn comment).
+        bool depositedToCurve = _maybeDepositCurveLp(args._vault, token, amount);
+        if (!depositedToCurve) {
+            // If we didn't deposit to curve, then we're depositing `token` directly
+            // to the underlying vault (e.g. wbtc vault) so we need to approve token spend.
+            _approveBalance(token, args._vault, token.balanceOf(address(this)));
+        }
+
+        IBridgeVault(args._vault).deposit(amount);
+        IERC20(args._vault).safeTransfer(args._user, IERC20(args._vault).balanceOf(address(this)));
+    }
+
+    // NB: We currently only support curve lp pools that have renBTC as an asset.
+    // We supply liquidity as renBTC to these pools. Some lp pools require two deposits
+    // as they are a pool of other pool tokens (e.g. tbtc).
+    //
+    // We could allow dynamic configuration of curve pools to vaults but this will be a
+    // little more gas intensive to do so the logic is hard coded for now.
+    //
+    // Currently supported lp pools are:
+    // - renbtc
+    // - sbtc
+    // - tbtc (requires deposiitng into sbtc lp pool first)
+    function _maybeDepositCurveLp(
+        address _vault,
+        IERC20 _token,
+        uint256 _amount
+    ) internal returns (bool) {
+        if (_token != renBTC) {
+            return false;
+        }
+
+        IERC20 vaultToken = IBridgeVault(_vault).token();
+        // Define supported tokens here to avoid proxy storage.
+        IERC20 renbtcLpToken = IERC20(0x49849C98ae39Fff122806C06791Fa73784FB3675);
+        IERC20 sbtcLpToken = IERC20(0x075b1bb99792c9E1041bA13afEf80C91a1e70fB3);
+        IERC20 tbtcLpToken = IERC20(0x64eda51d3Ad40D56b9dFc5554E06F94e1Dd786Fd);
+
+        // Pool contracts are not upgradeable so no need to sanity check underlying token addrs.
+        address pool;
+
+        if (vaultToken == renbtcLpToken) {
+            pool = 0x93054188d876f558f4a66B2EF1d97d16eDf0895B;
+            uint256[2] memory amounts = [_amount, 0];
+            _approveBalance(renBTC, pool, _amount);
+            ICurveFi(pool).add_liquidity(amounts, 0);
+        }
+
+        if (vaultToken == sbtcLpToken || vaultToken == tbtcLpToken) {
+            pool = 0x7fC77b5c7614E1533320Ea6DDc2Eb61fa00A9714;
+            uint256[3] memory amounts = [_amount, 0, 0];
+            _approveBalance(renBTC, pool, _amount);
+            ICurveFi(pool).add_liquidity(amounts, 0);
+        }
+
+        if (vaultToken == tbtcLpToken) {
+            pool = 0xC25099792E9349C7DD09759744ea681C7de2cb66;
+            uint256 lpAmount = sbtcLpToken.balanceOf(address(this));
+            uint256[2] memory amounts = [0, lpAmount];
+            _approveBalance(sbtcLpToken, pool, lpAmount);
+            ICurveFi(pool).add_liquidity(amounts, 0);
+        }
+
+        _approveBalance(vaultToken, _vault, vaultToken.balanceOf(address(this)));
+
+        return pool != address(0x0);
     }
 
     function _swapWBTCForRenBTC(uint256 _amount, uint256 _slippage) internal {
@@ -252,6 +326,17 @@ contract BadgerBridgeAdapter is OwnableUpgradeable, ReentrancyGuardUpgradeable {
         IERC20(token).safeTransfer(governance, governanceFee);
         IERC20(token).safeTransfer(rewards, rewardsFee);
         return fee;
+    }
+
+    function _approveBalance(
+        IERC20 _token,
+        address _spender,
+        uint256 _amount
+    ) internal {
+        if (_token.allowance(address(this), _spender) < _amount) {
+            // Approve max spend.
+            _token.approve(_spender, (1 << 64) - 1);
+        }
     }
 
     // Admin methods.

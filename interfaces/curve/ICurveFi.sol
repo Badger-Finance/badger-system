@@ -4,8 +4,11 @@ pragma solidity >=0.5.0 <0.8.0;
 interface ICurveFi {
     function get_virtual_price() external returns (uint256 out);
 
-    function add_liquidity(uint256[2] calldata amounts, uint256 min_mint_amount)
-        external;
+    function add_liquidity(
+        // renbtc/tbtc pool
+        uint256[2] calldata amounts,
+        uint256 min_mint_amount
+    ) external;
 
     function add_liquidity(
         // sBTC pool
@@ -67,26 +70,15 @@ interface ICurveFi {
         uint256[2] calldata min_amounts
     ) external;
 
-    function remove_liquidity_imbalance(
-        uint256[2] calldata amounts,
-        uint256 deadline
-    ) external;
+    function remove_liquidity_imbalance(uint256[2] calldata amounts, uint256 deadline) external;
 
-    function remove_liquidity_imbalance(
-        uint256[3] calldata amounts,
-        uint256 max_burn_amount
-    ) external;
+    function remove_liquidity_imbalance(uint256[3] calldata amounts, uint256 max_burn_amount) external;
 
-    function remove_liquidity(uint256 _amount, uint256[3] calldata amounts)
-        external;
+    function remove_liquidity(uint256 _amount, uint256[3] calldata amounts) external;
 
-    function remove_liquidity_imbalance(
-        uint256[4] calldata amounts,
-        uint256 max_burn_amount
-    ) external;
+    function remove_liquidity_imbalance(uint256[4] calldata amounts, uint256 max_burn_amount) external;
 
-    function remove_liquidity(uint256 _amount, uint256[4] calldata amounts)
-        external;
+    function remove_liquidity(uint256 _amount, uint256[4] calldata amounts) external;
 
     function commit_new_parameters(
         int128 amplification,
