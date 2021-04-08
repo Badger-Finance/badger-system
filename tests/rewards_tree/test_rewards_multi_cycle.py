@@ -12,7 +12,7 @@ from brownie import *
 from helpers.constants import *
 from helpers.registry import registry
 from rich.console import Console
-from tests.helpers import distribute_from_whales_to_contract
+from tests.helpers import distribute_from_whales
 
 console = Console()
 
@@ -94,7 +94,7 @@ def test_rewards_flow(setup):
     Also make sure that users can claim from the previous cycle still with that data
     """
 
-    distribute_from_whales_to_contract(rewardsContract, user)
+    distribute_from_whales(rewardsContract, user)
     with open("build/contracts/ERC20.json") as f:
         ERC20_abi = json.load(f)['abi']
 
