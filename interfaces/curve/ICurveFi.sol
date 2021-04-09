@@ -80,6 +80,12 @@ interface ICurveFi {
 
     function remove_liquidity(uint256 _amount, uint256[4] calldata amounts) external;
 
+    function remove_liquidity_one_coin(
+        uint256 _token_amount,
+        int128 i,
+        uint256 _min_amount
+    ) external;
+
     function commit_new_parameters(
         int128 amplification,
         int128 new_fee,
@@ -123,4 +129,6 @@ interface ICurveFi {
     function future_admin_fee() external returns (int128 out);
 
     function future_owner() external returns (address out);
+
+    function calc_withdraw_one_coin(uint256 _token_amount, int128 _i) external view returns (uint256 out);
 }

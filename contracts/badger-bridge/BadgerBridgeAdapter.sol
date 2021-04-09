@@ -158,12 +158,13 @@ contract BadgerBridgeAdapter is OwnableUpgradeable, ReentrancyGuardUpgradeable {
         IERC20 token = isRenBTC ? renBTC : wBTC;
         uint256 startBalanceRenBTC = renBTC.balanceOf(address(this));
         uint256 startBalanceWBTC = wBTC.balanceOf(address(this));
+        bool withdrawnFromCurve = _maybeWithdrawCurveLp(_vault, token, msg.sender, _amount);
 
-        if (isVault) {
+        if (!isVault) {
+            token.safeTransferFrom(msg.sender, address(this), _amount);
+        } else if (!withdrawnFromCurve) {
             IERC20(_vault).safeTransferFrom(msg.sender, address(this), _amount);
             IBridgeVault(_vault).withdraw(IERC20(_vault).balanceOf(address(this)));
-        } else {
-            token.safeTransferFrom(msg.sender, address(this), _amount);
         }
 
         uint256 wbtcTransferred = wBTC.balanceOf(address(this)).sub(startBalanceWBTC);
@@ -230,7 +231,7 @@ contract BadgerBridgeAdapter is OwnableUpgradeable, ReentrancyGuardUpgradeable {
     // Currently supported lp pools are:
     // - renbtc
     // - sbtc
-    // - tbtc (requires deposiitng into sbtc lp pool first)
+    // - tbtc (requires depositng into sbtc lp pool first)
     function _maybeDepositCurveLp(
         address _vault,
         IERC20 _token,
@@ -241,6 +242,7 @@ contract BadgerBridgeAdapter is OwnableUpgradeable, ReentrancyGuardUpgradeable {
         }
 
         IERC20 vaultToken = IBridgeVault(_vault).token();
+
         // Define supported tokens here to avoid proxy storage.
         IERC20 renbtcLpToken = IERC20(0x49849C98ae39Fff122806C06791Fa73784FB3675);
         IERC20 sbtcLpToken = IERC20(0x075b1bb99792c9E1041bA13afEf80C91a1e70fB3);
@@ -271,9 +273,52 @@ contract BadgerBridgeAdapter is OwnableUpgradeable, ReentrancyGuardUpgradeable {
             ICurveFi(pool).add_liquidity(amounts, 0);
         }
 
-        _approveBalance(vaultToken, _vault, vaultToken.balanceOf(address(this)));
+        return pool != address(0);
+    }
 
-        return pool != address(0x0);
+    function _maybeWithdrawCurveLp(
+        address _vault,
+        address _from,
+        IERC20 _token,
+        uint256 _amount
+    ) internal returns (bool) {
+        if (_token != renBTC) {
+            return false;
+        }
+
+        IERC20 vaultToken = IBridgeVault(_vault).token();
+
+        // Define supported tokens here to avoid proxy storage.
+        IERC20 renbtcLpToken = IERC20(0x49849C98ae39Fff122806C06791Fa73784FB3675);
+        IERC20 sbtcLpToken = IERC20(0x075b1bb99792c9E1041bA13afEf80C91a1e70fB3);
+        IERC20 tbtcLpToken = IERC20(0x64eda51d3Ad40D56b9dFc5554E06F94e1Dd786Fd);
+
+        // Pool contracts are not upgradeable so no need to sanity check underlying token addrs.
+        address pool;
+
+        if (vaultToken == renbtcLpToken) {
+            pool = 0x93054188d876f558f4a66B2EF1d97d16eDf0895B;
+            renbtcLpToken.safeTransferFrom(_from, address(this), _amount);
+            ICurveFi(pool).remove_liquidity_one_coin(0, _amount, 0);
+        }
+
+        if (vaultToken == tbtcLpToken) {
+            pool = 0xC25099792E9349C7DD09759744ea681C7de2cb66;
+            tbtcLpToken.safeTransferFrom(_from, address(this), _amount);
+            ICurveFi(pool).remove_liquidity_one_coin(1, _amount, 0);
+
+            pool = 0x7fC77b5c7614E1533320Ea6DDc2Eb61fa00A9714;
+            uint256 lpAmount = ICurveFi(pool).calc_withdraw_one_coin(sbtcLpToken.balanceOf(address(this)), 0);
+            ICurveFi(pool).remove_liquidity_one_coin(0, lpAmount, 0);
+        }
+
+        if (vaultToken == sbtcLpToken) {
+            pool = 0x7fC77b5c7614E1533320Ea6DDc2Eb61fa00A9714;
+            sbtcLpToken.safeTransferFrom(_from, address(this), _amount);
+            ICurveFi(pool).remove_liquidity_one_coin(0, _amount, 0);
+        }
+
+        return pool != address(0);
     }
 
     function _swapWBTCForRenBTC(uint256 _amount, uint256 _slippage) internal {
@@ -335,7 +380,7 @@ contract BadgerBridgeAdapter is OwnableUpgradeable, ReentrancyGuardUpgradeable {
     ) internal {
         if (_token.allowance(address(this), _spender) < _amount) {
             // Approve max spend.
-            _token.approve(_spender, (1 << 64) - 1);
+            _token.safeApprove(_spender, (1 << 64) - 1);
         }
     }
 
