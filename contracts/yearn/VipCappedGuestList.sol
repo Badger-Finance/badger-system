@@ -5,7 +5,7 @@ pragma experimental ABIEncoderV2;
 import "deps/@openzeppelin/contracts/cryptography/MerkleProof.sol";
 import "deps/@openzeppelin/contracts/math/SafeMath.sol";
 import "interfaces/yearn/GuestlistApi.sol";
-import "interfaces/yearn/VaultAPI.sol";
+import "interfaces/yearn/VaultApi.sol";
 
 /**
  * @notice A basic guest list contract for testing.
