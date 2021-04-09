@@ -1,5 +1,10 @@
-import datetime
+from datetime import datetime, timezone, timedelta
 from enum import Enum
+
+import gql
+from gql.transport.aiohttp import AIOHTTPTransport
+from pycoingecko import CoinGeckoAPI
+
 from helpers.token_utils import distribute_test_ether
 import json
 import os
@@ -26,39 +31,51 @@ from helpers.gnosis_safe import convert_to_test_mode, exec_direct, get_first_own
 from helpers.constants import MaxUint256
 from scripts.systems.sushiswap_system import SushiswapSystem
 from helpers.gas_utils import gas_strategies
+
+SUBGRAPH_URL_UNISWAP = "https://api.thegraph.com/subgraphs/name/uniswap/uniswap-v2"
+SUBGRAPH_URL_SUSHISWAP = "https://api.thegraph.com/subgraphs/name/dmihal/sushiswap"
+
+coingecko = CoinGeckoAPI()
 console = Console()
 
 gas_strategies.set_default(gas_strategies.rapid)
 
+
 def test_main():
     main()
 
-def Average(lst): 
-    return sum(lst) / len(lst) 
 
-def get_average_daily_price(file):
-    with open(file + ".json") as f:
-        data = json.load(f)
+def Average(lst):
+    return sum(lst) / len(lst)
 
-    price_points = []
 
-    for entry in data["data"]["pairHourDatas"]:
-        wbtcBal = float(entry["reserve0"])
-        diggBal = float(entry["reserve1"])
-        wbtcPerDigg = wbtcBal / diggBal
-        locals()
-        console.print({
-            "wbtcBal": wbtcBal,
-            "diggBal": diggBal,
-            "wbtcPerDigg": wbtcPerDigg,
-        })
-        price_points.append(wbtcPerDigg)
-    
-    average_price = Average(price_points)
-    console.print("Average for {} is {}".format(file, average_price)) 
-    return average_price
+def fetch_average_price(oracle_subgraph: gql.Client, pair_address: str, num_hours: int) -> float:
+    start_time = datetime.now(timezone.utc).replace(minute=0, second=0, microsecond=0) - timedelta(hours=num_hours - 1)
+    query = f"""
+    {{
+      pairHourDatas(where: {{pair: "{pair_address.lower()}" hourStartUnix_gte: {int(start_time.timestamp())}}}) {{
+        hourStartUnix
+        reserve0
+        reserve1
+      }}
+    }}"""
+    print(query)
 
-    
+    data = [
+        {
+            "time": datetime.fromtimestamp(price_point['hourStartUnix'], tz=timezone.utc).
+                strftime('%Y-%m-%d %H:%M:%S'),
+            "digg": float(price_point["reserve0"]),
+            'wbtc': float(price_point["reserve1"])
+        }
+        for price_point in oracle_subgraph.execute(gql.gql(query))["pairHourDatas"]
+    ]
+    for price_point in data:
+        price_point["digg/wbtc"] = price_point["digg"] / price_point["wbtc"]
+    console.log(data)
+
+    return sum(price_point["digg/wbtc"] for price_point in data) / len(data)
+
 
 def main():
     """
@@ -68,7 +85,13 @@ def main():
     # Connect badger system from file
     badger = connect_badger()
     digg = badger.digg
-    
+
+    sushi = SushiswapSystem()
+    sushiPair = sushi.getPair(digg.token, registry.tokens.wbtc)
+
+    uni = UniswapSystem()
+    uniPair = uni.getPair(digg.token, registry.tokens.wbtc)
+
     # Sanity check file addresses
     expectedMultisig = "0xB65cef03b9B89f99517643226d76e286ee999e77"
     assert badger.devMultisig == expectedMultisig
@@ -79,19 +102,29 @@ def main():
     # Multisig wrapper
 
     # Get price data from sushiswap, uniswap, and coingecko
-    digg_usd_coingecko = 41531.72
-    btc_usd_coingecko = 32601.13
 
-    digg_per_btc = digg_usd_coingecko / btc_usd_coingecko
+    coingecko_prices = coingecko.get_price(ids=["digg", "bitcoin"], vs_currencies="usd")
+    digg_usd_coingecko = coingecko_prices["digg"]["usd"]
+    btc_usd_coingecko = coingecko_prices["bitcoin"]["usd"]
+    digg_btc_coingecko = digg_usd_coingecko / btc_usd_coingecko
 
-    uniTWAP = get_average_daily_price("scripts/oracle/data/uni_digg_hour")
-    sushiTWAP = get_average_daily_price("scripts/oracle/data/sushi_digg_hour")
-    averageTWAP = Average([uniTWAP, sushiTWAP])
+    oracle_uniswap = gql.Client(
+        transport=AIOHTTPTransport(url=SUBGRAPH_URL_UNISWAP),
+        fetch_schema_from_transport=True
+    )
+    oracle_sushiswap = gql.Client(
+        transport=AIOHTTPTransport(url=SUBGRAPH_URL_SUSHISWAP),
+        fetch_schema_from_transport=True
+    )
+    uniTWAP = fetch_average_price(oracle_uniswap, uniPair.address, 24)
+    sushiTWAP = fetch_average_price(oracle_sushiswap, sushiPair.address, 24)
+    averageTWAP = (uniTWAP + sushiTWAP) / 2
 
     console.print({
         "uniTWAP": uniTWAP,
         "sushiTWAP": sushiTWAP,
-        "averageTWAP": averageTWAP
+        "averageTWAP": averageTWAP,
+        "digg_btc_coingecko": digg_btc_coingecko
     })
 
     supplyBefore = digg.token.totalSupply()
@@ -105,13 +138,13 @@ def main():
 
     print(int(marketValue * 10 ** 18))
 
-    print("digg_per_btc", digg_per_btc, averageTWAP, marketValue)
+    print("digg_btc_coingecko", digg_btc_coingecko, averageTWAP, marketValue)
 
     if rpc.is_active():
         distribute_test_ether(digg.centralizedOracle, Wei("5 ether"))
 
     centralizedMulti = GnosisSafe(digg.centralizedOracle)
-    
+
     print(digg.marketMedianOracle.providerReports(digg.centralizedOracle, 0))
     print(digg.marketMedianOracle.providerReports(digg.centralizedOracle, 1))
 
@@ -120,13 +153,7 @@ def main():
 
     print(digg.cpiMedianOracle.getData.call())
 
-    sushi = SushiswapSystem()
-    pair = sushi.getPair(digg.token, registry.tokens.wbtc)
-
-    uni = UniswapSystem()
-    uniPair = uni.getPair(digg.token, registry.tokens.wbtc)
-
-    print("pair before", pair.getReserves())
+    print("pair before", sushiPair.getReserves())
     print("uniPair before", uniPair.getReserves())
 
     tx = centralizedMulti.execute(
@@ -160,9 +187,9 @@ def main():
     print("spfAfter", digg.token._sharesPerFragment())
     print("supplyAfter", supplyAfter)
     print("supplyChange", supplyAfter / supplyBefore)
-    print("supplyChangeOtherWay", supplyBefore / supplyAfter )
+    print("supplyChangeOtherWay", supplyBefore / supplyAfter)
 
-    print("pair after", pair.getReserves())
+    print("pair after", sushiPair.getReserves())
     print("uniPair after", uniPair.getReserves())
 
     # Make sure sync() was called on the pools from call trace or events

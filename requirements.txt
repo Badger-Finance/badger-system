@@ -11,3 +11,9 @@ multicall==0.1.1
 python-decouple==3.3
 gql==3.0.0a5
 aiohttp==3.7.3
+
+pytest~=6.0.1
+requests~=2.25.1
+hexbytes~=0.2.1
+pycoingecko~=1.4.0
+tqdm~=4.53.0

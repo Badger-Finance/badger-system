@@ -1,4 +1,5 @@
 import json
+from typing import Any
 
 from tqdm import tqdm
 from assistant.rewards.aws_utils import download, download_bucket ,upload
@@ -284,7 +285,7 @@ def calc_meta_farm_rewards(badger,name, startBlock, endBlock):
     return user_state
 
 
-def process_cumulative_rewards(current, new: RewardsList):
+def process_cumulative_rewards(current: dict[str, Any], new: RewardsList) -> RewardsList:
     result = RewardsList(new.cycle, new.badgerTree)
 
     # Add new rewards
@@ -356,7 +357,7 @@ def getNextCycle(badger):
     return badger.badgerTree.currentCycle() + 1
 
 
-def hash(value):
+def hash(value: str) -> str:
     return web3.toHex(web3.keccak(text=value))
 
 
@@ -587,11 +588,11 @@ def run_action(badger, args, test):
     return False
 
 
-def content_hash_to_filename(contentHash):
-    return "rewards-" + str(chain.id) + "-" + str(contentHash) + ".json"
+def content_hash_to_filename(content_hash: str) -> str:
+    return f"rewards-{chain.id}-{content_hash}.json"
 
 
-def load_content_file(contentHash):
-    fileName = content_hash_to_filename(contentHash)
-    f = open(fileName,)
+def load_content_file(content_hash: str) -> dict[str, Any]:
+    file_name = content_hash_to_filename(content_hash)
+    f = open(file_name,)
     return json.load(f)
