@@ -15,7 +15,6 @@ curve = registry.curve
 pickle = registry.pickle
 harvest = registry.harvest
 sushi = registry.sushi
-
 pools = curve.pools
 
 sett_config = DotMap(
@@ -162,6 +161,16 @@ sett_config = DotMap(
                 performanceFeeStrategist=1000,
                 performanceFeeGovernance=1000,
                 withdrawalFee=0,
+            ),
+        ),
+    ),
+    pancake=DotMap(
+        pancakeBnbBtcb=DotMap(
+            strategyName="StrategyPancakeLpOptimizer",
+            params=DotMap(
+                performanceFeeStrategist=1000,
+                performanceFeeGovernance=1000,
+                withdrawalFee=50,
             ),
         ),
     ),

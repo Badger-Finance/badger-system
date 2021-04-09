@@ -1,19 +1,14 @@
-from assistant.rewards.rewards_checker import val
 from brownie import *
-from brownie.network.gas.strategies import GasNowStrategy
+from config.keeper import keeper_config
 from helpers.gas_utils import gas_strategies
 from helpers.registry import registry
 from helpers.sett.SnapshotManager import SnapshotManager
-from helpers.utils import tx_wait
-from rich.console import Console
-from scripts.systems.badger_system import (BadgerSystem, LoadMethod,
-                                           connect_badger)
+from helpers.utils import tx_wait, val
+from helpers.console_utils import console
+from scripts.systems.badger_system import BadgerSystem, connect_badger
 from tabulate import tabulate
 
-gas_strategies.set_default(gas_strategies.exponentialScaling)
-
-console = Console()
-
+gas_strategies.set_default_for_active_chain()
 
 def harvest_all(badger: BadgerSystem, skip):
     for key, vault in badger.sett_system.vaults.items():
@@ -33,20 +28,11 @@ def harvest_all(badger: BadgerSystem, skip):
         before = snap.snap()
         if strategy.keeper() == badger.badgerRewardsManager:
             snap.settHarvestViaManager(
-                strategy,
-                {
-                    "from": keeper,
-                    "gas_price": gas_strategy,
-                },
-                confirm=False,
+                strategy, {"from": keeper, "gas_limit": 1200000}, confirm=False,
             )
         else:
             snap.settHarvest(
-                {
-                    "from": keeper,
-                    "gas_price": gas_strategy,
-                },
-                confirm=False,
+                {"from": keeper, "gas_limit": 1200000}, confirm=False,
             )
 
         tx_wait()
@@ -59,37 +45,15 @@ def harvest_all(badger: BadgerSystem, skip):
 
 
 def main():
-    """
-    Simulate tend operation and evaluate tendable amount
-    """
-
-    # TODO: Output message when failure
-
-    # TODO: Use test mode if RPC active, no otherwise
-
-    fileName = "deploy-" + "final" + ".json"
-    badger = connect_badger(fileName, load_keeper=True, load_method=LoadMethod.SK)
+    badger = connect_badger(load_keeper=True)
 
     if rpc.is_active():
         """
-        Test: Load up sending accounts with ETH and whale tokens
+        Test: Load up testing accounts with ETH
         """
         accounts[0].transfer(badger.deployer, Wei("5 ether"))
         accounts[0].transfer(badger.keeper, Wei("5 ether"))
         accounts[0].transfer(badger.guardian, Wei("5 ether"))
 
-    skip = [
-        "native.uniBadgerWbtc",
-        # "harvest.renCrv",
-        # "native.sbtcCrv",
-        # "native.sBtcCrv",
-        # "native.tbtcCrv",
-        # "native.renCrv",
-        "native.badger",
-        "native.sushiBadgerWbtc",
-        # "native.sushiWbtcEth",
-        "native.digg",
-        "native.uniDiggWbtc",
-        "native.sushiDiggWbtc",
-    ]
+    skip = keeper_config.get_active_chain_skipped_setts("harvest")
     harvest_all(badger, skip)

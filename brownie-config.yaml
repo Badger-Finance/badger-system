@@ -7,6 +7,17 @@ networks:
     cmd_settings:
       accounts: 50
       default_balance: 500 ether
+  bsc:
+    id: bsc
+    explorer: https://www.bscscan.com/
+    cmd: ganache-cli
+    cmd_settings:
+      accounts: 50
+      default_balance: 500 ether
+      fork: https://bsc-dataseed1.binance.org
+      chain_id: 56
+      mnemonic: brownie 
+
 
 project_structure:
   contracts: contracts
@@ -17,6 +28,7 @@ autofetch_sources: True
 
 # require OpenZepplin Contracts
 dependencies:
+  - iearn-finance/yearn-vaults@0.3.3
   - OpenZeppelin/openzeppelin-contracts@3.2.0
 
 reports:

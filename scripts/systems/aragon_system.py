@@ -1,7 +1,7 @@
 from brownie import *
 from helpers.constants import AddressZero
-from helpers.registry import registry
 from dotmap import DotMap
+from helpers.registry import registry, artifacts
 from brownie.utils import color
 import brownie
 
@@ -30,32 +30,31 @@ def namehash(ensDomain):
 #     namehash("token-manager.aragonpm.eth"),
 # )
 
-artifacts = registry.aragon.artifacts
 apps = {}
 apps[namehash("agent.aragonpm.eth")] = {
     "name": "agent",
     "contractName": "Agent",
-    "artifact": artifacts.Agent,
+    "artifact": artifacts.aragon.Agent,
 }
 apps[namehash("vault.aragonpm.eth")] = {
     "name": "vault",
     "contractName": "Vault",
-    "artifact": artifacts.Vault,
+    "artifact": artifacts.aragon.Vault,
 }
 apps[namehash("voting.aragonpm.eth")] = {
     "name": "voting",
     "contractName": "Voting",
-    "artifact": artifacts.Voting,
+    "artifact": artifacts.aragon.Voting,
 }
 apps[namehash("finance.aragonpm.eth")] = {
     "name": "finance",
     "contractName": "Finance",
-    "artifact": artifacts.Finance,
+    "artifact": artifacts.aragon.Finance,
 }
 apps[namehash("token-manager.aragonpm.eth")] = {
     "name": "token-manager",
     "contractName": "TokenManager",
-    "artifact": artifacts.TokenManager,
+    "artifact": artifacts.aragon.TokenManager,
 }
 
 
@@ -72,16 +71,13 @@ class AragonSystem:
         self.companyTemplate = Contract.from_abi(
             "CompanyTemplate",
             web3.toChecksumAddress(registry.aragon.addresses.companyTemplate),
-            registry.aragon.artifacts.CompanyTemplate["abi"],
+            artifacts.aragon.CompanyTemplate["abi"],
         )
 
     def getVotingAt(self, address):
         return Contract.from_abi(
-            "Voting",
-            web3.toChecksumAddress(address),
-            registry.aragon.artifacts.Voting["abi"],
+            "Voting", web3.toChecksumAddress(address), artifacts.aragon.Voting["abi"],
         )
-
 
     def deployCompanyDao(self, params, signer):
         """
@@ -109,11 +105,11 @@ class AragonSystem:
         tokenAddress = tx.events["DeployToken"][0]["token"]
 
         deployed.kernel = Contract.from_abi(
-            "Kernel", daoAddress, artifacts.Kernel["abi"]
+            "Kernel", daoAddress, artifacts.aragon.Kernel["abi"]
         )
 
         deployed.token = Contract.from_abi(
-            "MiniMeToken", tokenAddress, artifacts.MiniMeToken["abi"]
+            "MiniMeToken", tokenAddress, artifacts.aragon.MiniMeToken["abi"]
         )
 
         for appEvent in tx.events["InstalledApp"]:

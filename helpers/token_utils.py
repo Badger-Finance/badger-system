@@ -2,7 +2,7 @@ from brownie import *
 from dotmap import DotMap
 from tabulate import tabulate
 
-from helpers.registry import WhaleRegistryAction, whale_registry, registry
+from helpers.registry import WhaleRegistryAction, registry
 from rich.console import Console
 from scripts.systems.sushiswap_system import SushiswapSystem
 from scripts.systems.uniswap_system import UniswapSystem
@@ -11,13 +11,53 @@ from helpers.utils import val
 console = Console()
 
 
+class BalanceSnapshotter:
+    def __init__(self, tokens, accounts):
+        self.tokens = tokens
+        self.accounts = accounts
+        self.snaps = []
+
+    def add_account(self, account):
+        # Convert raw addresses into account objects
+        if type(account) == str:
+            account = accounts.at(account, force=True)
+        self.accounts.append(account)
+
+    def snap(self, name="", print=False):
+        balances = get_token_balances(self.tokens, self.accounts)
+        self.snaps.append({"name": name, "balances": balances})
+        if print:
+            if name != "":
+                console.print("[green]== Balances: {} ==[/green]".format(name,))
+            balances.print()
+
+    def diff_last_two(self):
+        num_snaps = len(self.snaps)
+        if num_snaps < 2:
+            raise Exception("Insufficient snaps have been taken to compare last two")
+
+        before = self.snaps[num_snaps - 2]
+        after = self.snaps[num_snaps - 1]
+
+        if before["name"] != "" and after["name"] != "":
+            console.print(
+                "[green]== Comparing Balances: {} and {} ==[/green]".format(
+                    before["name"], after["name"]
+                )
+            )
+        else:
+            console.print(
+                "[green]== Comparing Balances: Latest two snapshots ==[/green]"
+            )
+        diff_token_balances(before["balances"], after["balances"])
+
+
 class Balances:
     def __init__(self):
         self.balances = {}
 
     def set(self, token, account, value):
         if token.address not in self.balances:
-            print(set)
             self.balances[token.address] = {}
         self.balances[token.address][account.address] = value
 
@@ -83,6 +123,17 @@ def print_balances(tokens_by_name, account):
     print("\nToken Balances for {}".format(account))
     print(tabulate(table, headers=["asset", "balance"]))
 
+def to_token_scale(asset, unscaled):
+    unscaled = float(unscaled)
+
+    address = asset_to_address(asset)
+    decimals = token_metadata.get_decimals(address)
+    
+    scale_factor = (10**decimals)
+    
+    scaled = unscaled * scale_factor
+    print("unscaled", unscaled, decimals, scale_factor, scaled, int(scaled))
+    return int(scaled)
 
 class TokenMetadataRegistry:
     def __init__(self):
@@ -135,9 +186,11 @@ token_metadata = TokenMetadataRegistry()
 
 def asset_to_address(asset):
     if asset == "badger":
-        return "0x3472A5A71965499acd81997a54BBA8D852C6E53d"
+        return registry.tokens.badger
     if asset == "digg":
-        return "0x798D1bE841a82a273720CE31c822C61a67a601C3"
+        return registry.tokens.digg
+    if asset == "usdc":
+        return registry.tokens.usdc
 
 
 def to_token(address):
@@ -149,12 +202,12 @@ def distribute_from_whales(recipient, percentage=0.8, assets="All"):
 
     console.print(
         "[green] 🐋 Transferring assets from whales for {} assets... 🐋 [/green]".format(
-            len(whale_registry.items())
+            len(registry.whales.items())
         )
     )
 
     # Normal Transfers
-    for key, whale_config in whale_registry.items():
+    for key, whale_config in registry.whales.items():
         if assets != "All" and key not in assets:
             continue
         # Handle special cases after all standard distributions
@@ -165,7 +218,7 @@ def distribute_from_whales(recipient, percentage=0.8, assets="All"):
             distribute_from_whale(whale_config, recipient, percentage=0.8)
 
     # Special Transfers
-    for key, whale_config in whale_registry.items():
+    for key, whale_config in registry.whales.items():
         if not whale_config.special:
             continue
         if whale_config.action == WhaleRegistryAction.POPULATE_NEW_SUSHI_LP:

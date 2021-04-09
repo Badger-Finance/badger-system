@@ -1,6 +1,6 @@
-from assistant.rewards.rewards_checker import val
+from helpers.utils import val
 from brownie import *
-from brownie.network.gas.strategies import GasNowStrategy
+from config.keeper import keeper_config
 from helpers.gas_utils import gas_strategies
 from helpers.registry import registry
 from helpers.sett.SnapshotManager import SnapshotManager
@@ -10,9 +10,9 @@ from tabulate import tabulate
 
 console = Console()
 
-earn_deposit_threshold = 0.05
 
-gas_strategies.set_default(gas_strategies.exponentialScaling)
+gas_strategies.set_default_for_active_chain()
+
 
 def get_expected_strategy_deposit_location(badger: BadgerSystem, id):
     if id == "native.badger":
@@ -40,15 +40,22 @@ def get_expected_strategy_deposit_location(badger: BadgerSystem, id):
         # Sushi Chef
         return registry.sushi.sushiChef
 
-def earn_preconditions(vaultBalance, strategyBalance):
+
+def earn_preconditions(key, vaultBalance, strategyBalance):
     # Always allow earn on first run
     if strategyBalance == 0:
         return True
+    # Earn if deposits have accumulated over a static threshold
+    if keeper_config.has_earn_threshold_override_active_chain(
+        key
+    ) and vaultBalance >= keeper_config.get_active_chain_earn_threshold_override(key):
+        return True
     # Earn if deposits have accumulated over % threshold
-    if vaultBalance / strategyBalance > earn_deposit_threshold:
+    if vaultBalance / strategyBalance > keeper_config.earn_default_percentage_threshold:
         return True
     else:
         return False
+
 
 def earn_all(badger: BadgerSystem, skip):
     keeper = badger.deployer
@@ -71,46 +78,26 @@ def earn_all(badger: BadgerSystem, skip):
         strategyBefore = strategy.balanceOf()
 
         toEarn = False
-        if earn_preconditions(vaultBefore, strategyBefore):
+        if earn_preconditions(key, vaultBefore, strategyBefore):
             print("Earn: " + key, vault, strategy)
             toEarn = True
 
             snap = SnapshotManager(badger, key)
-            strategy = badger.getStrategy(key)
-            keeper = accounts.at(strategy.keeper())
-
             before = snap.snap()
-            snap.printTable(before)
 
             keeper = accounts.at(vault.keeper())
-            snap.settEarn({'from': keeper, "gas_price": gas_strategy, "gas_limit": 2000000, "allow_revert": True}, confirm=False)
+            snap.settEarn(
+                {"from": keeper, "gas_limit": 2000000, "allow_revert": True},
+                confirm=False,
+            )
 
             after = snap.snap()
-            snap.printTable(after)
-
             snap.printCompare(before, after)
-
-            
 
 
 def main():
     # TODO: Output message when failure
 
-    fileName = "deploy-" + "final" + ".json"
-    badger = connect_badger(fileName, load_keeper=True)
-
-    skip = [
-        # "native.uniBadgerWbtc",
-        # "harvest.renCrv",
-        # "native.sbtcCrv",
-        # "native.sBtcCrv",
-        # "native.tbtcCrv",
-        # "native.renCrv",
-        # "native.badger",
-        "native.sushiBadgerWbtc",
-        # "native.sushiWbtcEth",
-        # "native.digg",
-        # "native.uniDiggWbtc", 
-        # "native.sushiDiggWbtc"
-    ]
+    badger = connect_badger(load_keeper=True)
+    skip = keeper_config.get_active_chain_skipped_setts("earn")
     earn_all(badger, skip)

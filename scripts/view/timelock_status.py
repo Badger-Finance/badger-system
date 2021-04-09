@@ -50,11 +50,18 @@ def main():
     badger = connect_badger("deploy-final.json")
     bBadger = badger.getSett("native.badger")
 
+    escrows = [
+        "0x1fc3C85456322C8514c0ff7694Ea4Ef5bC7F9f37",
+        "0xaeDb773C226e6d74f2cd3542372076779Ff6fA6E"
+    ]
+
     timelocks = [
         "0x2Bc1A5E26ad0316375E68942fe0B387adE6b9254",
         "0x7C651D13DfB87748b0F05914dFb40E5B15a78D35",
         "0xB6c9e9Ba41291044Cf5dadFB22D72d3fe9312880",
         "0xdbd185c59f64d2d39c6ababf5d701669417a002d"
+        # "0x1fc3C85456322C8514c0ff7694Ea4Ef5bC7F9f37",
+        # "0xaeDb773C226e6d74f2cd3542372076779Ff6fA6E"
     ]
 
     for address in timelocks:

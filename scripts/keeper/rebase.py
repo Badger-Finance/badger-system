@@ -28,15 +28,10 @@ from tabulate import tabulate
 
 console = Console()
 
-gas_strategies.set_default(gas_strategies.exponentialScaling)
+gas_strategies.set_default_for_active_chain()
 
-def main():
-    console.print("[white]===== Checking Parameters for rebase =====[/white]")
-    # Connect badger system from file
-    account = accounts.load("badger_proxy_deployer")
-    badger = connect_badger("deploy-final.json")
-    digg = connect_digg("deploy-final.json")
-
+def rebase(badger: BadgerSystem, account):
+    digg = badger.digg
     supplyBefore = digg.token.totalSupply()
 
     print("spfBefore", digg.token._sharesPerFragment())
@@ -86,3 +81,11 @@ def main():
         print("uniPair after", uniPair.getReserves())
     else:
         console.print("[white]===== No Rebase =====[/white]")
+
+def main():
+    console.print("[white]===== Checking Parameters for rebase =====[/white]")
+    # Connect badger system from file
+    badger = connect_badger(load_deployer=True)
+    rebase(badger, badger.deployer)
+
+    

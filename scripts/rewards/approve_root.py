@@ -17,6 +17,11 @@ def main():
     # If there is a pending root, approve after independently verifying it
     rootApproved = run_action(
         badger,
-        {"action": "guardian", "startBlock": startBlock, "endBlock": endBlock},
+        {
+            "action": "guardian",
+            "startBlock": startBlock,
+            "endBlock": endBlock,
+            "pastRewards": currentRewards,
+        },
         test=False,
     )

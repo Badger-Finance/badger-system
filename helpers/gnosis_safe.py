@@ -1,8 +1,10 @@
 from enum import Enum
+from helpers.token_utils import distribute_test_ether
 
 from brownie import *
 from rich.console import Console
 from tabulate import tabulate
+from scripts.systems.gnosis_safe_system import connect_gnosis_safe
 from helpers.multicall import func
 console = Console()
 
@@ -46,12 +48,15 @@ class MultisigTx:
 
 class GnosisSafe:
     def __init__(self, contract, testMode=True):
-        self.contract = contract
+        self.contract = connect_gnosis_safe(contract)
+        
+        console.print("contract", contract)
         self.firstOwner = get_first_owner(contract)
         self.transactions = []
         self.testMode = testMode
 
         if testMode and rpc.is_active():
+            distribute_test_ether(self.firstOwner, Wei("2 ether"))
             self.convert_to_test_mode()
 
     # Must be on Ganache instance and Gnosis safe must be --unlocked

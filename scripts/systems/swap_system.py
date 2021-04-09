@@ -10,6 +10,7 @@ from dotmap import DotMap
 from scripts.systems.gnosis_safe_system import connect_gnosis_safe
 from helpers.proxy_utils import deploy_proxy
 from helpers.registry import registry
+from helpers.gnosis_safe import GnosisSafe, MultisigTxMetadata
 from config.badger_config import swap_config
 
 from rich.console import Console
@@ -19,10 +20,7 @@ console = Console()
 
 def print_to_file(swap, path):
     system = {
-        "swap_system": {
-            "strategies": {},
-            "logic": {},
-        },
+        "swap_system": {"strategies": {}, "logic": {},},
     }
 
     for key, value in swap.strategies.items():
@@ -54,6 +52,11 @@ def connect_swap(badger_deploy_file):
     swap = SwapSystem(
         badger_deploy["deployer"],
         Contract.from_abi(
+            "ProxyAdmin", web3.toChecksumAddress(badger_deploy["devProxyAdmin"]), abi,
+        ),
+        swap_config,
+        badger_deploy["deployer"],
+        Contract.from_abi(
             "ProxyAdmin",
             web3.toChecksumAddress(badger_deploy["devProxyAdmin"]),
             abi,
@@ -82,10 +85,11 @@ name_to_artifact = {
 
 
 class SwapSystem:
-    '''
+    """
     The SWAP system consists of swap router/strategies for routing of swaps.
     Currently, curve is the only supported swap strategy.
-    '''
+    """
+
     def __init__(self, deployer, devProxyAdmin, config, publish_source=False):
         self.deployer = deployer
         self.devProxyAdmin = devProxyAdmin
@@ -116,14 +120,12 @@ class SwapSystem:
     def deploy_logic(self):
         deployer = self.deployer
         self.logic = DotMap(
-           CurveSwapStrategy=CurveSwapStrategy.deploy(
-                {"from": deployer},
-                publish_source=self.publish_source,
+            CurveSwapStrategy=CurveSwapStrategy.deploy(
+                {"from": deployer}, publish_source=self.publish_source,
             ),
-           SwapStrategyRouter=SwapStrategyRouter.deploy(
-               {"from": deployer},
-               publish_source=self.publish_source,
-           ),
+            SwapStrategyRouter=SwapStrategyRouter.deploy(
+                {"from": deployer}, publish_source=self.publish_source,
+            ),
         )
 
     def deploy_router(self):
@@ -134,10 +136,8 @@ class SwapSystem:
             SwapStrategyRouter.abi,
             self.logic.SwapStrategyRouter.address,
             web3.toChecksumAddress(devProxyAdmin.address),
-            self.logic.SwapStrategyRouter.initialize.encode_input(
-                admin.address,
-            ),
-            self.deployer
+            self.logic.SwapStrategyRouter.initialize.encode_input(admin.address,),
+            self.deployer,
         )
 
     def deploy_curve_swap_strategy(self):
@@ -150,21 +150,40 @@ class SwapSystem:
             self.logic.CurveSwapStrategy.address,
             web3.toChecksumAddress(devProxyAdmin.address),
             self.logic.CurveSwapStrategy.initialize.encode_input(
-                admin.address,
-                config.strategies.curve.registry,
+                admin.address, config.strategies.curve.registry,
             ),
-            self.deployer
+            self.deployer,
         )
 
     # ===== Configuration =====
 
     def configure_router(self):
         admin = self.admin
+        multi = GnosisSafe(admin)
         for strategy in self.strategies.values():
-            self.router.addSwapStrategy(strategy.address, {"from": admin})
+            multi.execute(
+                MultisigTxMetadata(
+                    description="Add Swap Strategy {}".format(strategy.address)
+                ),
+                {
+                    "to": strategy.address,
+                    "data": self.router.addSwapStrategy.encode_input(strategy.address),
+                },
+            )
 
     # Grant swapper role to all strategies.
     def configure_strategies_grant_swapper_role(self, swapper):
         admin = self.admin
+        multi = GnosisSafe(admin)
         for strategy in self.strategies.values():
-            strategy.grantRole(strategy.SWAPPER_ROLE(), swapper, {"from": admin})
+            multi.execute(
+                MultisigTxMetadata(
+                    description="Add Swapper Role to {}".format(swapper)
+                ),
+                {
+                    "to": swapper,
+                    "data": strategy.grantRole.encode_input(
+                        strategy.SWAPPER_ROLE(), swapper
+                    ),
+                },
+            )
