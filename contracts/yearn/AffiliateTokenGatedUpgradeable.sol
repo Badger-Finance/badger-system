@@ -5,7 +5,7 @@ import "deps/@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.so
 import "deps/@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 import "./BaseWrapperUpgradeable.sol";
 
-import "interfaces/yearn/VaultAPI.sol";
+import "interfaces/yearn/VaultApi.sol";
 import "interfaces/yearn/GuestlistApi.sol";
 
 /**
