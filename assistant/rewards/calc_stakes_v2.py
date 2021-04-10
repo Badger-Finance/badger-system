@@ -23,7 +23,7 @@ nonNativeSetts = [
 
 def calc_geyser_snapshot(badger, name, startBlock, endBlock, nextCycle, boosts, diggAllocation):
 
-    console.log("Processing rewards for {}".format(name))
+    console.log("==== Processing rewards for {} ====".format(name))
     rewards = RewardsList(nextCycle, badger.badgerTree)
     geyser = badger.getGeyser(name)
     startTime = web3.eth.getBlock(startBlock)["timestamp"]
@@ -41,9 +41,7 @@ def calc_geyser_snapshot(badger, name, startBlock, endBlock, nextCycle, boosts, 
     for token in geyser.getDistributionTokens():
         unlockSchedules = parse_schedules(geyser.getUnlockSchedulesFor(token))
         endDist = get_distributed_for_token_at(token, endTime, unlockSchedules, name)
-        console.log("End Dist: {}".format(endDist))
         startDist = get_distributed_for_token_at(token, startTime, unlockSchedules, name)
-        console.log("Start Dist: {}".format(startDist))
         tokenDistribution = int(endDist) - int(startDist)
 
         rewardsLogger.add_total_token_dist(name, token, tokenDistribution)
@@ -70,15 +68,21 @@ def calc_geyser_snapshot(badger, name, startBlock, endBlock, nextCycle, boosts, 
         if tokenDistribution > 0:
             sumBalances = sum([b.balance for b in userBalances])
             rewardsUnit = tokenDistribution/sumBalances
+            totalRewards = 0
             console.log(
                 "Processing rewards for {} addresses".format(len(userBalances)))
             for user in userBalances:
                 addr = web3.toChecksumAddress(user.address)
                 token = web3.toChecksumAddress(token)
                 rewardAmount = user.balance * rewardsUnit
+                totalRewards += rewardAmount
                 rewards.increase_user_rewards(addr, token, int(rewardAmount))
                 rewardsLogger.add_user_token(
                     addr, name, token, int(rewardAmount))
+            console.log("Token Distribution: {}\n Rewards Released: {}".format(
+                tokenDistribution/1e18,totalRewards/1e18
+            ))
+            assert abs(tokenDistribution - totalRewards) < 1e17
 
     return rewards
 
@@ -100,7 +104,6 @@ def get_distributed_for_token_at(token, endTime, schedules, name):
                 ),
             )
             if schedule.startTime <= endTime and schedule.endTime >= endTime:
-                console.log("Distributing {} from {}".format(toDistribute,schedule))
                 console.log("Tokens distributed by schedule {} at {} are {}% of total\n".format(
                     index,
                     to_utc_date(schedule.startTime),

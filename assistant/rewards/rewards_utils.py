@@ -28,6 +28,7 @@ blacklist = [
     "0x88128580ACdD9c04Ce47AFcE196875747bF2A9f6",
     "0x7e7E112A68d8D2E221E11047a72fFC1065c38e1a",
 ]
+blacklist = []
 
 
 def keccak(value):
@@ -160,9 +161,9 @@ def calculate_sett_balances(badger, name, currentBlock):
     balances = {}
     for b in [settBalances,geyserBalances,creamBalances]:
         balances = dict(Counter(balances) + Counter(b))
-    # Get rid of blacklisted ba
-    for addr in balances.keys():
-        if addr in blacklist:
+    # Get rid of blacklisted and negative balances
+    for addr,balance in balances.items():
+        if addr in blacklist or balance < 0:
             del balances[addr]
 
     userBalances = [
