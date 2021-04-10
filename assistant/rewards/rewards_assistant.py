@@ -40,7 +40,7 @@ def calc_geyser_rewards(badger, periodStartBlock, endBlock, cycle):
     ratio = digg_btc_twap(periodStartBlock,endBlock)
     diggAllocation = calculate_digg_allocation(ratio)
     rewardsByGeyser = {}
-    boosts = badger_boost(badger, endBlock -5)
+    boosts = badger_boost(badger, endBlock)
     for key, geyser in badger.geysers.items():
         #if key != "native.badger":
         #    continue

@@ -7,6 +7,7 @@ from gql.transport.aiohttp import AIOHTTPTransport
 from decimal import *
 from assistant.rewards.enums import Token
 import json
+from functools import lru_cache
 getcontext().prec = 20
 console = Console()
 
@@ -14,7 +15,7 @@ subgraph_url = subgraph_config["url"]
 transport = AIOHTTPTransport(url=subgraph_url)
 client = Client(transport=transport, fetch_schema_from_transport=True)
 
-
+@lru_cache(maxsize=None)
 def fetch_sett_balances(settId, startBlock):
     query = gql(
         """
@@ -55,7 +56,7 @@ def fetch_sett_balances(settId, startBlock):
     console.log("Processing {} balances".format(len(balances)))
     return balances
 
-
+@lru_cache(maxsize=None)
 def fetch_geyser_events(geyserId, startBlock):
     console.print(
         "[bold green] Fetching Geyser Events {}[/bold green]".format(geyserId)
@@ -117,6 +118,7 @@ def fetch_geyser_events(geyserId, startBlock):
     return {"stakes": stakes, "unstakes": unstakes, "totalStaked": totalStaked}
 
 
+@lru_cache(maxsize=None)
 def fetch_sett_transfers(settID, startBlock, endBlock):
     console.print(
         "[bold green] Fetching Sett Deposits/Withdrawals {}[/bold green]".format(settID)
@@ -244,63 +246,6 @@ def fetch_sushi_harvest_events():
         "wbtcBadger": wbtcBadgerEvents,
         "wbtcDigg": wbtcDiggEvents,
     }
-
-    cream_transport = AIOHTTPTransport(url=subgraph_config["cream_url"])
-    cream_client = Client(transport=cream_transport, fetch_schema_from_transport=True)
-    console.log("Fetching cream deposits...")
-    increment = 1000
-
-    query = gql(
-        """
-        query fetchCreambDeposits($firstAmount: Int, $lastID: ID,$symbol: String) {
-            accountCTokens(first: $firstAmount,
-                where: {
-                    id_gt: $lastID
-                    symbol: $symbol
-                    enteredMarket: true
-                }
-            ) {
-                id
-                totalUnderlyingBorrowed
-                totalUnderlyingSupplied
-                account {
-                    id
-                }
-            }
-        markets(
-            where:{
-            symbol:$symbol
-        }) {
-            exchangeRate
-        }
-        }
-    """
-    )
-
-    retVal = {}
-    continueFetching = True
-    lastID = "0x0000000000000000000000000000000000000000"
-
-    while continueFetching:
-        variables = {"firstAmount": increment, "lastID": lastID, "symbol": tokenSymbol}
-        nextPage = cream_client.execute(query, variable_values=variables)
-        if len(nextPage["accountCTokens"]) == 0:
-            if len(nextPage["markets"]) == 0:
-                return {}
-            exchangeRate = nextPage["markets"][0]["exchangeRate"]
-            ontinueFetching = False
-        else:
-            exchangeRate = nextPage["markets"][0]["exchangeRate"]
-            lastID = nextPage["accountCTokens"][-1]["id"]
-            for entry in nextPage["accountCTokens"]:
-                retVal[entry["account"]["id"]] = (
-                    float(entry["totalUnderlyingSupplied"])
-                    * 1e18
-                    / (1 + float(exchangeRate))
-                )
-
-    return retVal
-
 
 def fetch_wallet_balances(badger_price, digg_price, digg, blockNumber):
     increment = 1000

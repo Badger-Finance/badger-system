@@ -38,6 +38,7 @@ def download_latest():
     s3_clientobj = s3.get_object(Bucket=merkle_bucket, Key=file_key)
     console.log(s3_clientobj)
     s3_clientdata = s3_clientobj["Body"].read().decode()
+    console.print("Downloaded file from s3: " + file_key)
     return s3_clientdata
 
 

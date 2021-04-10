@@ -9,9 +9,9 @@ from assistant.subgraph.client import (
     fetch_geyser_events,
     fetch_cream_balances
 )
-from assistant.rewards.classes.User import User
 from assistant.rewards.classes.RewardsList import RewardsList
-
+from assistant.rewards.classes.UserBalance import UserBalance,UserBalances
+from functools import lru_cache
 
 console = Console()
 
@@ -104,25 +104,12 @@ def calc_meta_farm_rewards(badger,name, startBlock, endBlock):
     endBlock = int(endBlock)
     startBlockTime = web3.eth.getBlock(startBlock)["timestamp"]
     endBlockTime = web3.eth.getBlock(endBlock)["timestamp"]
-    console.log(startBlockTime)
-    console.log(endBlockTime)
-    settId = badger.getSett(name).address.lower()
-    geyserId = badger.getGeyser(name).address.lower()
+    sett = badger.getSett(name)
 
-    settBalances = fetch_sett_balances(settId, startBlock)
-    if len(settBalances) == 0:
-            return []
-    if len(settBalances) != 0:
-        console.log("Found {} balances".format(len(settBalances)))
-        console.log("Geyser amount in sett Balance: {}".format(settBalances[geyserId]/1e18))
-        settBalances[geyserId] = 0
-
-    geyserEvents = fetch_geyser_events(geyserId, startBlock)
-    geyserBalances = calc_balances_from_geyser_events(geyserEvents)
-    user_state = combine_balances([settBalances,geyserBalances])
-    # TODO: Do we want to use snapshot here or do we use shareSeconds 
-    return user_state
-
+    balances = calculate_sett_balances(badger,name,endBlock)
+    # TODO: Do we want to use  multiple snapshots
+    # here or just the end?
+    return balances
 
 def calc_balances_from_geyser_events(geyserEvents):
     balances = {}
@@ -134,19 +121,32 @@ def calc_balances_from_geyser_events(geyserEvents):
         assert timestamp >= currentTime
         balances[event["user"]] = int(event["total"])
 
-
     console.log("Sum of geyser balances: {}".format(sum(balances.values()) / 10 ** 18))
     console.log("Fetched {} geyser balances".format(len(balances)))
     return balances
 
 def combine_balances(balances):
-    allBalances = {}
-    for b in balances:
-        allBalances = dict(Counter(allBalances) + Counter(b))
+    allBalances = UserBalances()
+    for userBalances in balances:
+        allBalances = allBalances + userBalances
     return allBalances
 
-def calculate_sett_balances(badger, name, sett, currentBlock):
-    settBalances = fetch_sett_balances(sett.address.lower(), currentBlock)
+
+@lru_cache(maxsize=None)
+def calculate_sett_balances(badger, name, currentBlock):
+    sett = badger.getSett(name)
+    underlyingToken = sett.address
+    settType = ["",""]
+    if "uni" in name or "sushi" in name:
+        settType[0] = "halfLP"
+    elif "crv" in name:
+        settType[0] = "fullLP"
+    if "badger" in name.lower() or "digg" in name.lower() or "eth" in name.lower():
+        settType[1] = "nonNative"
+    else:
+        settType[1] = "native"
+     
+    settBalances = fetch_sett_balances(underlyingToken.lower(), currentBlock)
     geyserBalances = {}
     creamBalances = {}
     # Digg doesn't have a geyser so we have to ignore it
@@ -157,11 +157,16 @@ def calculate_sett_balances(badger, name, sett, currentBlock):
         )
         geyserBalances = calc_balances_from_geyser_events(geyserEvents)
         settBalances[geyserAddr] = 0
-    if name in ["native.badger"]:
-        settUnderlyingToken = interface.ERC20(sett.token())
-        #creamBalances = fetch_cream_balances("crB{}".format(settUnderlyingToken.symbol()),currentBlock)
-    balances = combine_balances([settBalances, geyserBalances, creamBalances])
+    balances = {}
+    for b in [settBalances,geyserBalances,creamBalances]:
+        balances = dict(Counter(balances) + Counter(b))
+    # Get rid of blacklisted ba
     for addr in balances.keys():
         if addr in blacklist:
             del balances[addr]
-    return balances
+
+    userBalances = [
+        UserBalance(addr,bal,underlyingToken,settType)
+        for addr,bal in balances.items()
+    ]
+    return UserBalances(userBalances)

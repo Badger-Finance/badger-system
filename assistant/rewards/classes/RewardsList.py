@@ -111,7 +111,6 @@ class RewardsList:
         """
         user_str = str(user).lower()
         if user_str in self.boosts:
-            console.log("Boosted {} by {}".format(user_str,self.boosts[user_str]))
             boost = self.boosts[user_str]
         else:
             boost = 1
