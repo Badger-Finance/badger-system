@@ -40,10 +40,12 @@ def calc_geyser_snapshot(badger, name, startBlock, endBlock, nextCycle, boosts, 
     unlockSchedules = {}
     for token in geyser.getDistributionTokens():
         unlockSchedules = parse_schedules(geyser.getUnlockSchedulesFor(token))
-        tokenDistribution = int(
-            get_distributed_for_token_at(token, endTime, unlockSchedules, name)
-           - get_distributed_for_token_at(token, startTime, unlockSchedules, name)
-        )
+        endDist = get_distributed_for_token_at(token, endTime, unlockSchedules, name)
+        console.log("End Dist: {}".format(endDist))
+        startDist = get_distributed_for_token_at(token, startTime, unlockSchedules, name)
+        console.log("Start Dist: {}".format(startDist))
+        tokenDistribution = int(endDist) - int(startDist)
+
         rewardsLogger.add_total_token_dist(name, token, tokenDistribution)
         # Distribute to users with rewards list
         # Make sure there are tokens to distribute (some geysers only
@@ -67,7 +69,6 @@ def calc_geyser_snapshot(badger, name, startBlock, endBlock, nextCycle, boosts, 
 
         if tokenDistribution > 0:
             sumBalances = sum([b.balance for b in userBalances])
-            console.log(sumBalances)
             rewardsUnit = tokenDistribution/sumBalances
             console.log(
                 "Processing rewards for {} addresses".format(len(userBalances)))
@@ -98,8 +99,8 @@ def get_distributed_for_token_at(token, endTime, schedules, name):
                     // schedule.duration
                 ),
             )
-            console.log("{} from {}".format(toDistribute,schedule))
             if schedule.startTime <= endTime and schedule.endTime >= endTime:
+                console.log("Distributing {} from {}".format(toDistribute,schedule))
                 console.log("Tokens distributed by schedule {} at {} are {}% of total\n".format(
                     index,
                     to_utc_date(schedule.startTime),
@@ -119,4 +120,4 @@ def get_distributed_for_token_at(token, endTime, schedules, name):
 
 
 def parse_schedules(schedules):
-    return map(lambda s: Schedule(s[0], s[1], s[2], s[3]), schedules)
+    return list(map(lambda s: Schedule(s[0], s[1], s[2], s[3]), schedules))
