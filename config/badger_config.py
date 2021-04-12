@@ -5,12 +5,13 @@ from brownie import Wei, web3, chain
 from dotmap import DotMap
 from helpers.proxy_utils import deploy_proxy
 from helpers.constants import AddressZero
-from helpers.registry import registry
+from helpers.registry import registries
 from helpers.time_utils import days, to_timestamp
 
 with open("merkle/airdrop.json") as f:
     Airdrop = json.load(f)
 
+registry = registries.get_registry("eth")
 curve = registry.curve
 pickle = registry.pickle
 harvest = registry.harvest

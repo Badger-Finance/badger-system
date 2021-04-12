@@ -1,22 +1,23 @@
 
+from helpers.registry.ChainRegistry import ChainRegistry
+from helpers.registry.YearnRegistry import YearnRegistry
 from brownie.network import web3
 from dotmap import DotMap
 from helpers.registry.WhaleRegistryAction import WhaleRegistryAction
 
-eth_registry = DotMap(
 aragon_registry = DotMap(
     addresses=DotMap(
         agentImpl="0x3a93c17fc82cc33420d1809dda9fb715cc89dd37",
         companyTemplate="0xd737632caC4d039C9B0EEcc94C12267407a271b5",
     )
-),
+)
 
 gnosis_safe_registry = DotMap(
     addresses=DotMap(
         proxyFactory="0x76E2cFc1F5Fa8F6a5b3fC4c8F4788F0116861F9B",
         masterCopy="0x34CfAC646f301356fAa8B21e94227e3583Fe3F5F",
     )
-),
+)
 
 onesplit_registry = DotMap(contract="0x50FDA034C0Ce7a8f7EFDAebDA7Aa7cA21CC1267e"),
 
@@ -25,13 +26,19 @@ uniswap_registry = DotMap(
     factoryV2="0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f",
     uniToken="0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984",
     uniStakingRewards=DotMap(eth_wbtc="0xa1484C3aa22a66C62b77E0AE78E15258bd0cB711"),
-),
+)
 
 multicall_registry = DotMap(
     multicall="0xeefba1e63905ef1d7acba5a8513c70307c1ce441",
-),
+)
 
-multichain_registry = DotMap(eth_address="0xC564EE9f21Ed8A2d8E7e76c085740d5e4c5FaFbE"),
+compound_registry = DotMap(
+    cTokens = DotMap(
+        usdc="0x39AA39c021dfbaE8faC545936693aC917d5E7563"
+    )
+)
+
+multichain_registry = DotMap(eth_address="0xC564EE9f21Ed8A2d8E7e76c085740d5e4c5FaFbE")
 
 harvest_registry = DotMap(
     badgerTree="0x06466a741094f51b45FB150c6D1e857B3E879967",
@@ -44,7 +51,7 @@ harvest_registry = DotMap(
         fRenCrv2="0x5365A2C47b90EE8C9317faC20edC3ce7037384FB",
         farm="0xae024F29C26D6f71Ec71658B1980189956B0546D",
     ),
-),
+)
 
 pickle_registry = DotMap(
     pickleToken="0x429881672B9AE42b8EbA0E26cD9C73711b891Ca5",
@@ -52,7 +59,7 @@ pickle_registry = DotMap(
     jars=DotMap(renCrv="0x2E35392F4c36EBa7eCAFE4de34199b2373Af22ec"),
     pids=DotMap(uniPickleEth=0, pRenCrv=13),
     farms=DotMap(wethStaking="0xa17a8883dA1aBd57c690DF9Ebf58fC194eDAb66F"),
-),
+)
 
 sushi_registry = DotMap(
     sushiToken="0x6b3595068778dd592e39a122f4f5a5cf09c90fe2",
@@ -65,7 +72,19 @@ sushi_registry = DotMap(
         sushiWbtcWeth="0xCEfF51756c56CeFFCA006cD410B03FFC46dd3a58",
     ),
     pids=DotMap(sushiBadgerWBtc=73, sushiEthWBtc=21),
-),
+)
+
+
+yearn_registry = YearnRegistry(
+    registry="0x50c1a2ea0a861a967d9d0ffe2ae4012c2e053804",
+    experimental_vaults={
+        'wbtc': "0xA696a63cc78DfFa1a63E9E50587C197387FF6C7E"
+    }
+)
+
+aave_registry = DotMap(
+    lendingPoolV2="0x7d2768de32b0b80b7a3454c06bdac94a69ddc7a9"
+)
 
 curve_registry = DotMap(
     minter="0xd061D61a4d941c39E5453435B6345Dc261C2fcE0",
@@ -88,27 +107,43 @@ curve_registry = DotMap(
             gauge="0x6828bcF74279eE32f2723eC536c22c51Eed383C6",
         ),
     ),
-),
-
-badger_registry = DotMap(token="0x3472a5a71965499acd81997a54bba8d852c6e53d"),
 )
 
-eth_registry.token_registry = DotMap(
+badger_registry = DotMap(
+    token="0x3472a5a71965499acd81997a54bba8d852c6e53d"
+)
+
+eth_registry = ChainRegistry(
+    curve=curve_registry,
+    uniswap=uniswap_registry,
+    aragon=aragon_registry,
+    sushiswap=sushi_registry,
+    sushi=sushi_registry,
+    gnosis_safe=gnosis_safe_registry,
+    pickle=pickle_registry,
+    harvest=harvest_registry,
+    multicall=multicall_registry,
+    badger=badger_registry,
+    yearn=yearn_registry,
+    aave=aave_registry
+)
+
+eth_registry.tokens = DotMap(
     weth="0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
     wbtc="0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599",
     crv="0xD533a949740bb3306d119CC777fa900bA034cd52",
     tbtc=web3.toChecksumAddress("0x8daebade922df735c38c80c7ebd708af50815faa"),
     usdt=web3.toChecksumAddress("0xdac17f958d2ee523a2206206994597c13d831ec7"),
-    badger=eth_registry.badger_registry.token,
+    badger=eth_registry.badger.token,
     digg="0x798D1bE841a82a273720CE31c822C61a67a601C3",
-    farm=eth_registry.harvest_registry.farmToken,
-    sushi=eth_registry.sushi_registry.sushiToken,
-    xSushi=eth_registry.sushi_registry.xsushiToken,
+    farm=eth_registry.harvest.farmToken,
+    sushi=eth_registry.sushi.sushiToken,
+    xSushi=eth_registry.sushi.xsushiToken,
     usdc=web3.toChecksumAddress("0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"),
     renbtc=web3.toChecksumAddress("0xeb4c2781e4eba804ce9a9803c67d0893436bb27d"),
 )
 
-eth_registry.whale_registry = DotMap(
+eth_registry.whales = DotMap(
     badger=DotMap(
         whale="0x19d099670a21bC0a8211a89B84cEdF59AbB4377F",
         token="0x3472A5A71965499acd81997a54BBA8D852C6E53d",
@@ -136,17 +171,17 @@ eth_registry.whale_registry = DotMap(
     ),
     sbtcCrv=DotMap(
         whale="0xc25099792e9349c7dd09759744ea681c7de2cb66",
-        token=eth_registry.curve_registry.pools.sbtcCrv.token,
+        token=eth_registry.curve.pools.sbtcCrv.token,
         action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT,
     ),
     renCrv=DotMap(
         whale="0xb1f2cdec61db658f091671f5f199635aef202cac",
-        token=eth_registry.curve_registry.pools.renCrv.token,
+        token=eth_registry.curve.pools.renCrv.token,
         action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT,
     ),
     tbtcCrv=DotMap(
         whale="0xaf379f0228ad0d46bb7b4f38f9dc9bcc1ad0360c",
-        token=eth_registry.curve_registry.pools.tbtcCrv.token,
+        token=eth_registry.curve.pools.tbtcCrv.token,
         action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT,
     ),
     wbtc=DotMap(

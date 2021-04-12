@@ -204,4 +204,4 @@ def main():
     )
     lp_for_strategy(badger, key)
 
-    rapid_harvest()
+    rapid_harvest(badger)

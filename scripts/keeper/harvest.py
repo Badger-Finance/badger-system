@@ -28,11 +28,11 @@ def harvest_all(badger: BadgerSystem, skip):
         before = snap.snap()
         if strategy.keeper() == badger.badgerRewardsManager:
             snap.settHarvestViaManager(
-                strategy, {"from": keeper, "gas_limit": 1200000}, confirm=False,
+                strategy, {"from": keeper, "gas_limit": 2000000, "allow_revert": True}, confirm=False,
             )
         else:
             snap.settHarvest(
-                {"from": keeper, "gas_limit": 1200000}, confirm=False,
+                {"from": keeper, "gas_limit": 2000000, "allow_revert": True}, confirm=False,
             )
 
         tx_wait()

@@ -10,7 +10,7 @@ from helpers.network import network_manager
 from helpers.proxy_utils import deploy_proxy, deploy_proxy_admin
 from helpers.registry import artifacts, registry
 from helpers.sett.strategy_registry import (name_to_artifact,
-                                            strategy_name_to_artifact)
+                                            contract_name_to_artifact)
 from helpers.time_utils import days
 from rich.console import Console
 from scripts.systems.claw_system import ClawSystem
@@ -195,6 +195,9 @@ def connect_badger(
         ops_proxy_admin = badger_deploy["opsProxyAdmin"]
 
     badger.connect_proxy_admins(dev_proxy_admin, dao_proxy_admin, ops_proxy_admin)
+
+    if "testProxyAdmin" in badger_deploy:
+        badger.connect_test_proxy_admin("testProxyAdmin", badger_deploy["testProxyAdmin"])
 
     badger.connect_multisig(badger_deploy["devMultisig"])
     badger.connect_ops_multisig(badger_deploy["opsMultisig"])
@@ -442,7 +445,7 @@ class BadgerSystem:
 
     def deploy_sett_strategy_logic_for(self, name):
         deployer = self.deployer
-        artifact = strategy_name_to_artifact(name)
+        artifact = contract_name_to_artifact(name)
         self.logic[name] = artifact.deploy({"from": deployer})
 
         # TODO: Initialize to remove that function
@@ -661,7 +664,7 @@ class BadgerSystem:
             guardian,
         )
 
-        Artifact = strategy_name_to_artifact(strategyName)
+        Artifact = contract_name_to_artifact(strategyName)
 
         self.sett_system.strategies[id] = strategy
         self.set_strategy_artifact(id, strategyName, Artifact)
@@ -930,7 +933,8 @@ class BadgerSystem:
 
         # Connect Setts
         for key, address in sett_system["vaults"].items():
-            self.connect_sett(key, address)
+            artifactName = sett_system["vault_artifacts"][key]
+            self.connect_sett(key, address, settArtifactName=artifactName)
 
         # Connect Strategies
         for key, address in sett_system["strategies"].items():
@@ -947,14 +951,15 @@ class BadgerSystem:
                 self.connect_geyser(key, address)
 
     def connect_strategy(self, id, address, strategyArtifactName):
-        Artifact = strategy_name_to_artifact(strategyArtifactName)
+        Artifact = contract_name_to_artifact(strategyArtifactName)
         strategy = Artifact.at(address)
         self.sett_system.strategies[id] = strategy
         self.set_strategy_artifact(id, strategyArtifactName, Artifact)
         self.track_contract_upgradeable(id + ".strategy", strategy)
 
-    def connect_sett(self, id, address):
-        sett = Sett.at(address)
+    def connect_sett(self, id, address, settArtifactName="Sett"):
+        Artifact = contract_name_to_artifact(settArtifactName)
+        sett = Artifact.at(address)
         print(f"connecting sett id {id}")
         self.sett_system.vaults[id] = sett
         self.track_contract_upgradeable(id + ".sett", sett)
@@ -991,7 +996,7 @@ class BadgerSystem:
 
     def connect_logic(self, logic):
         for name, address in logic.items():
-            Artifact = strategy_name_to_artifact(name)
+            Artifact = contract_name_to_artifact(name)
             self.logic[name] = Artifact.at(address)
 
     def connect_dao_badger_timelock(self, address):
@@ -1135,3 +1140,9 @@ class BadgerSystem:
         else:
             seeder = accounts.load("badger_proxy_deployer")
         return seeder
+
+    def getLogic(self, logicName):
+        if logicName in self.logic:
+            return self.logic[logicName]
+        else:
+            raise Exception("Logic for {} not found".format(logicName))

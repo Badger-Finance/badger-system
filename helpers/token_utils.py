@@ -49,7 +49,7 @@ class BalanceSnapshotter:
             console.print(
                 "[green]== Comparing Balances: Latest two snapshots ==[/green]"
             )
-        diff_token_balances(before["balances"], after["balances"])
+        diff_token_balances(before["balances"], after["balances"], scale=True)
 
 
 class Balances:
@@ -79,20 +79,24 @@ class Balances:
         print(tabulate(table, headers=["account", "balance", "asset"]))
 
 
-def diff_token_balances(before, after):
+def diff_token_balances(before, after, scale=True):
     before = before.balances
     after = after.balances
     table = []
     for token, accounts in before.items():
         for account, value in accounts.items():
+            if scale:
+                amount = val(
+                        after[token][account] - value,
+                        decimals=token_metadata.get_decimals(token),
+                    ),
+            else:
+                amount = after[token][account] - value
             table.append(
                 [
                     token_metadata.get_symbol(token),
                     account,
-                    val(
-                        after[token][account] - value,
-                        decimals=token_metadata.get_decimals(token),
-                    ),
+                    amount
                 ]
             )
 

@@ -48,7 +48,7 @@ def transfer_for_strategy_internal(badger, key, amount):
     manager.transferWant(want, strategy, amount, {"from": badger.keeper, "gas_limit": 1000000})
 
 
-def rapid_harvest():
+def rapid_harvest(badger):
     """
     Atomically transfer and deposit tokens from rewards manager to associated strategies
     Requires that LP positons are swapped
@@ -56,9 +56,7 @@ def rapid_harvest():
 
     # TODO: Output message when failure
     # TODO: Use test mode if RPC active, no otherwise
-
-    fileName = "deploy-" + "final" + ".json"
-    badger = connect_badger(fileName, load_keeper=True)
+    
     rewards = get_active_rewards_schedule(badger)
     digg = badger.digg
     manager = badger.badgerRewardsManager
@@ -73,7 +71,7 @@ def rapid_harvest():
 
     # TODO: Daily amount = calculate from the LP token scale
 
-    # # # ===== native.uniBadgerWbtc =====
+    # # ===== native.uniBadgerWbtc =====
     key = "native.uniBadgerWbtc"
     want = badger.getStrategyWant(key)
     transfer_for_strategy(badger, key, want.balanceOf(manager))
@@ -111,4 +109,5 @@ def rapid_harvest():
 
 
 def main():
-    rapid_harvest()
+    badger = connect_badger(load_keeper=True)
+    rapid_harvest(badger)
