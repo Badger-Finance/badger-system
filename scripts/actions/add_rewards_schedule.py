@@ -24,7 +24,7 @@ from helpers.gnosis_safe import (
 )
 from helpers.registry import registry
 from helpers.time_utils import days, hours, to_days, to_timestamp, to_utc_date
-from helpers.utils import fragments_to_shares, initial_fragments_to_current_fragments, to_digg_shares, val
+from helpers.utils import fragments_to_shares, initial_fragments_to_current_fragments, shares_to_fragments, to_digg_shares, val
 from rich import pretty
 from rich.console import Console
 from scripts.systems.badger_system import BadgerSystem, connect_badger
@@ -46,15 +46,16 @@ def main():
 
     rest = get_active_rewards_schedule(badger)
 
-    rest.setExpectedTotals(
-        {"badger": Wei("149606.49 ether"), "digg": fragments_to_shares(138.69)}
-    )
-
     rest.printState("Week ?? - who knows anymore")
 
-    rest.transfer(badger.digg.token, Wei("3 gwei"), badger.treasuryMultisig)
+    recipient = accounts.at(expectedMultisig, force=True)
 
-    # rest.testTransactions()
+    # rest.transfer(badger.token, 33038371371007690000000, recipient)
+    # rest.transfer(badger.digg.token, Wei("3 gwei"), badger.treasuryMultisig)
+
+    rest.testTransactions()
+    console.print(rest.totals)
+    console.print(shares_to_fragments(rest.totals["digg"]))
 
     # print("overall total ", total)
     # print("expected total ", expected)

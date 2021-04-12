@@ -1,23 +1,22 @@
-from helpers.snapshot import diff_numbers_by_key, snap_strategy_balance
-from scripts.systems.digg_system import connect_digg
-from scripts.systems.uniswap_system import UniswapSystem
-from scripts.systems.sushiswap_system import SushiswapSystem
-
-from helpers.utils import shares_to_fragments, to_digg_shares, to_tabulate, tx_wait
-from helpers.sett.SnapshotManager import SnapshotManager
+from assistant.rewards.rewards_checker import val
 from brownie import *
 from brownie.network.gas.strategies import GasNowStrategy
+from config.active_emissions import get_active_rewards_schedule
+from helpers.console_utils import console
+from helpers.gas_utils import gas_strategies
+from helpers.registry import registry
+from helpers.sett.SnapshotManager import SnapshotManager
+from helpers.snapshot import diff_numbers_by_key, snap_strategy_balance
+from helpers.utils import (shares_to_fragments, to_digg_shares, to_tabulate,
+                           tx_wait)
 from rich.console import Console
 from scripts.systems.badger_system import BadgerSystem, connect_badger
+from scripts.systems.digg_system import connect_digg
+from scripts.systems.sushiswap_system import SushiswapSystem
+from scripts.systems.uniswap_system import UniswapSystem
 from tabulate import tabulate
-from helpers.registry import registry
-from assistant.rewards.rewards_checker import val
-from helpers.console_utils import console
-from config.active_emissions import (
-    get_active_rewards_schedule,
-)
 
-gas_strategy = GasNowStrategy("fast")
+gas_strategies.set_default_for_active_chain()
 
 uniswap = UniswapSystem()
 sushiswap = SushiswapSystem()
@@ -46,7 +45,7 @@ def transfer_for_strategy_internal(badger, key, amount):
     strategy = badger.getStrategy(key)
     manager = badger.badgerRewardsManager
     want = interface.IERC20(strategy.want())
-    manager.transferWant(want, strategy, amount, {"from": badger.keeper})
+    manager.transferWant(want, strategy, amount, {"from": badger.keeper, "gas_limit": 1000000})
 
 
 def rapid_harvest():

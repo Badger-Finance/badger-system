@@ -4,8 +4,9 @@ from scripts.systems.uniswap_system import UniswapSystem
 from tabulate import tabulate
 
 from helpers.gnosis_safe import exec_direct
-from helpers.registry import whale_registry
+from helpers.registry import registry
 
+whale_registry = registry.whales
 
 def get_token_balances(accounts, tokens):
     balances = DotMap()
@@ -31,8 +32,6 @@ def create_uniswap_pair(token0, token1, signer):
 
 
 def distribute_from_whales(recipient):
-
-    print(len(whale_registry.items()))
     for key, whale in whale_registry.items():
         if key != "_pytestfixturefunction":
             print("transferring from whale", key, whale.toDict())

@@ -6,16 +6,19 @@ from brownie.network.gas.strategies import GasNowScalingStrategy
 from config.badger_config import badger_config, sett_config
 from dotmap import DotMap
 from helpers.gnosis_safe import GnosisSafe, MultisigTxMetadata
+from helpers.network import network_manager
 from helpers.proxy_utils import deploy_proxy, deploy_proxy_admin
-from helpers.registry import registry
-from helpers.sett.strategy_registry import name_to_artifact, strategy_name_to_artifact
+from helpers.registry import artifacts, registry
+from helpers.sett.strategy_registry import (name_to_artifact,
+                                            strategy_name_to_artifact)
 from helpers.time_utils import days
 from rich.console import Console
+from scripts.systems.claw_system import ClawSystem
 from scripts.systems.constants import SettType
 from scripts.systems.digg_system import DiggSystem, connect_digg
-from scripts.systems.claw_system import ClawSystem
 from scripts.systems.gnosis_safe_system import connect_gnosis_safe
 from scripts.systems.sett_system import deploy_controller, deploy_strategy
+from scripts.systems.swap_system import SwapSystem
 from scripts.systems.uniswap_system import UniswapSystem
 
 console = Console()
@@ -131,12 +134,26 @@ def print_to_file(badger, path):
 
 
 def connect_badger(
-    badger_deploy_file,
+    badger_deploy_file=False,
     load_deployer=False,
     load_keeper=False,
     load_guardian=False,
-    load_method=LoadMethod.SK,
+    load_method=LoadMethod.KEYSTORE,
 ):
+    """
+    Connect to an existing badger deploy from file
+    Required Fields:
+    devMultisig
+    opsMultisig
+    deployer
+    keeper
+    guardian
+
+    """
+    # TODO: fix this for networks
+    # if not badger_deploy_file:
+    badger_deploy_file = network_manager.get_active_network_badger_deploy()
+
     badger_deploy = {}
     console.print(
         "[grey]Connecting to Existing Badger 🦡 System at {}...[/grey]".format(
@@ -162,39 +179,70 @@ def connect_badger(
         load_method=load_method,
     )
 
-    badger.globalStartBlock = badger_deploy["globalStartBlock"]
+    # badger.globalStartBlock = badger_deploy["globalStartBlock"]
 
-    badger.connect_proxy_admins(
-        badger_deploy["devProxyAdmin"],
-        badger_deploy["daoProxyAdmin"],
-        badger_deploy["opsProxyAdmin"],
-    )
+    dev_proxy_admin = None
+    dao_proxy_admin = None
+    ops_proxy_admin = None
+
+    if "devProxyAdmin" in badger_deploy:
+        dev_proxy_admin = badger_deploy["devProxyAdmin"]
+
+    if "daoProxyAdmin" in badger_deploy:
+        dao_proxy_admin = badger_deploy["daoProxyAdmin"]
+
+    if "opsProxyAdmin" in badger_deploy:
+        ops_proxy_admin = badger_deploy["opsProxyAdmin"]
+
+    badger.connect_proxy_admins(dev_proxy_admin, dao_proxy_admin, ops_proxy_admin)
 
     badger.connect_multisig(badger_deploy["devMultisig"])
     badger.connect_ops_multisig(badger_deploy["opsMultisig"])
-    badger.connect_treasury_multisig(badger_deploy["treasuryMultisig"])
+
+    if "dao" in badger_deploy:
+        badger.connect_dao()
+
+    if "treasuryMultisig" in badger_deploy:
+        badger.connect_treasury_multisig(badger_deploy["treasuryMultisig"])
 
     badger.connect_logic(badger_deploy["logic"])
 
     # badger.connect_dev_multisig(badger_deploy["devMultisig"])
-    badger.connect_uni_badger_wbtc_lp(badger_deploy["uniBadgerWbtcLp"])
 
     # Connect Vesting / Rewards Infrastructure
-    badger.connect_team_vesting(badger_deploy["teamVesting"])
-    badger.connect_badger_hunt(badger_deploy["badgerHunt"])
-    badger.connect_badger_tree(badger_deploy["badgerTree"])
-    badger.connect_rewards_escrow(badger_deploy["rewardsEscrow"])
-    badger.connect_honeypot_meme(badger_deploy["honeypotMeme"])
-    badger.connect_community_pool(badger_deploy["communityPool"])
-    badger.connect_dao_badger_timelock(badger_deploy["daoBadgerTimelock"])
-    badger.connect_rewards_manager(badger_deploy["badgerRewardsManager"])
-    badger.connect_unlock_scheduler(badger_deploy["unlockScheduler"])
+    if "teamVesting" in badger_deploy:
+        badger.connect_team_vesting(badger_deploy["teamVesting"])
+    if "badgerHunt" in badger_deploy:
+        badger.connect_badger_hunt(badger_deploy["badgerHunt"])
+    if "badgerTree" in badger_deploy:
+        badger.connect_badger_tree(badger_deploy["badgerTree"])
+    if "rewardsEscrow" in badger_deploy:
+        badger.connect_rewards_escrow(badger_deploy["rewardsEscrow"])
+    if "honeypotMeme" in badger_deploy:
+        badger.connect_honeypot_meme(badger_deploy["honeypotMeme"])
+    if "communityPool" in badger_deploy:
+        badger.connect_community_pool(badger_deploy["communityPool"])
+    if "daoBadgerTimelock" in badger_deploy:
+        badger.connect_dao_badger_timelock(badger_deploy["daoBadgerTimelock"])
+    if "badgerRewardsManager" in badger_deploy:
+        badger.connect_rewards_manager(badger_deploy["badgerRewardsManager"])
+    if "unlockScheduler" in badger_deploy:
+        badger.connect_unlock_scheduler(badger_deploy["unlockScheduler"])
 
     # Connect Sett
-    badger.connect_sett_system(badger_deploy["sett_system"], badger_deploy["geysers"])
+    if "geysers" in badger_deploy:
+        badger.connect_sett_system(
+            badger_deploy["sett_system"], geysers=badger_deploy["geysers"]
+        )
+    else:
+        badger.connect_sett_system(badger_deploy["sett_system"], geysers=None)
 
-    digg = connect_digg(badger_deploy_file)
-    badger.add_existing_digg(digg)
+    # Connect DIGG
+    if "digg_system" in badger_deploy:
+        digg = connect_digg(badger_deploy_file)
+        badger.add_existing_digg(digg)
+    else:
+        console.print("[yellow]No Digg found[/yellow]")
 
     return badger
 
@@ -213,7 +261,7 @@ class BadgerSystem:
         load_deployer=False,
         load_keeper=False,
         load_guardian=False,
-        load_method=LoadMethod.SK,
+        load_method=LoadMethod.KEYSTORE,
     ):
         self.config = config
         self.contracts_static = []
@@ -223,6 +271,8 @@ class BadgerSystem:
         self.digg = None
         # Claw system ref, lazily set.
         self.claw = None
+        # Swap system ref, lazily set.
+        self.swap = None
 
         # Unlock accounts in test mode
         if rpc.is_active():
@@ -234,6 +284,14 @@ class BadgerSystem:
         else:
             print("RPC Inactive")
             import decouple
+
+            print(
+                load_deployer,
+                load_keeper,
+                load_guardian,
+                load_method
+            )
+
             if load_deployer and load_method == LoadMethod.SK:
                 deployer_key = decouple.config("DEPLOYER_PRIVATE_KEY")
                 self.deployer = accounts.add(deployer_key)
@@ -244,28 +302,15 @@ class BadgerSystem:
                 guardian_key = decouple.config("GUARDIAN_PRIVATE_KEY")
                 self.guardian = accounts.add(guardian_key)
             if load_deployer and load_method == LoadMethod.KEYSTORE:
-                self.deployer = accounts.load("badger_deployer")
+                self.deployer = accounts.load("badger-deployer")
             if load_keeper and load_method == LoadMethod.KEYSTORE:
-                self.keeper = accounts.load("badger_keeper")
+                self.keeper = accounts.load("badger-keeper")
             if load_guardian and load_method == LoadMethod.KEYSTORE:
-                self.guardian = accounts.load("badger_guardian")
+                self.guardian = accounts.load("badger-guardian")
             self.publish_source = False  # Publish sources for deployed logic on mainnet
         if deploy:
             self.devProxyAdmin = deploy_proxy_admin(deployer)
             self.daoProxyAdmin = deploy_proxy_admin(deployer)
-            self.proxyAdmin = self.devProxyAdmin
-        else:
-            abi = registry.open_zeppelin.artifacts["ProxyAdmin"]["abi"]
-            self.devProxyAdmin = Contract.from_abi(
-                "ProxyAdmin",
-                web3.toChecksumAddress("0x20dce41acca85e8222d6861aa6d23b6c941777bf"),
-                abi,
-            )
-            self.daoProxyAdmin = Contract.from_abi(
-                "ProxyAdmin",
-                web3.toChecksumAddress("0x11a9d034b1bbfbbdcac9cb3b86ca7d5df05140f2"),
-                abi,
-            )
             self.proxyAdmin = self.devProxyAdmin
 
         self.strategy_artifacts = DotMap()
@@ -274,9 +319,6 @@ class BadgerSystem:
             controllers=DotMap(), vaults=DotMap(), strategies=DotMap(), rewards=DotMap()
         )
         self.geysers = DotMap()
-
-        self.connect_dao()
-        self.connect_uniswap()
 
         self.globalStartTime = badger_config.globalStartTime
         self.globalStartBlock = badger_config.globalStartBlock
@@ -287,16 +329,29 @@ class BadgerSystem:
     def track_contract_upgradeable(self, key, contract):
         self.contracts_upgradeable[key] = contract
 
-    # ===== Contract Connectors =====
-    def connect_proxy_admins(self, devProxyAdmin, daoProxyAdmin, opsProxyAdmin=None):
-        abi = registry.open_zeppelin.artifacts["ProxyAdmin"]["abi"]
+    def connect_test_proxy_admin(self, name, address):
+        abi = artifacts.open_zeppelin["ProxyAdmin"]["abi"]
+        self.testProxyAdmin = Contract.from_abi(
+                "ProxyAdmin", web3.toChecksumAddress(address), abi
+            )
+        return self.testProxyAdmin
 
-        self.devProxyAdmin = Contract.from_abi(
-            "ProxyAdmin", web3.toChecksumAddress(devProxyAdmin), abi
-        )
-        self.daoProxyAdmin = Contract.from_abi(
-            "ProxyAdmin", web3.toChecksumAddress(daoProxyAdmin), abi
-        )
+    # ===== Contract Connectors =====
+    def connect_proxy_admins(
+        self, devProxyAdmin=None, daoProxyAdmin=None, opsProxyAdmin=None
+    ):
+        abi = artifacts.open_zeppelin["ProxyAdmin"]["abi"]
+
+        if devProxyAdmin:
+            self.devProxyAdmin = Contract.from_abi(
+                "ProxyAdmin", web3.toChecksumAddress(devProxyAdmin), abi
+            )
+
+        if daoProxyAdmin:
+            self.daoProxyAdmin = Contract.from_abi(
+                "ProxyAdmin", web3.toChecksumAddress(daoProxyAdmin), abi
+            )
+
         if opsProxyAdmin:
             self.opsProxyAdmin = Contract.from_abi(
                 "ProxyAdmin", web3.toChecksumAddress(opsProxyAdmin), abi
@@ -309,15 +364,13 @@ class BadgerSystem:
             token=Contract.from_abi(
                 "MiniMeToken",
                 badger_config.dao.token,
-                registry.aragon.artifacts.MiniMeToken["abi"],
+                artifacts.aragon.MiniMeToken["abi"],
             ),
             kernel=Contract.from_abi(
-                "Agent",
-                badger_config.dao.kernel,
-                registry.aragon.artifacts.Agent["abi"],
+                "Agent", badger_config.dao.kernel, artifacts.aragon.Agent["abi"],
             ),
             agent=Contract.from_abi(
-                "Agent", badger_config.dao.agent, registry.aragon.artifacts.Agent["abi"]
+                "Agent", badger_config.dao.agent, artifacts.aragon.Agent["abi"]
             ),
         )
 
@@ -337,9 +390,23 @@ class BadgerSystem:
 
     # ===== Deployers =====
 
-    def add_controller(self, id):
-        deployer = self.deployer
-        controller = deploy_controller(self, deployer)
+    def add_controller(
+        self,
+        id,
+        governance=None,
+        strategist=None,
+        keeper=None,
+        rewards=None,
+        proxyAdmin=None,
+        deployer=None
+    ):  
+
+        if not deployer:
+            deployer = self.deployer
+
+        controller = deploy_controller(
+            self, deployer, governance, strategist, keeper, rewards, proxyAdmin
+        )
         self.sett_system.controllers[id] = controller
         self.track_contract_upgradeable(id + ".controller", controller)
         return controller
@@ -361,6 +428,8 @@ class BadgerSystem:
         self.logic["Controller"] = Controller.deploy({"from": deployer})
         self.logic["Sett"] = Sett.deploy({"from": deployer})
         self.logic["DiggSett"] = DiggSett.deploy({"from": deployer})
+
+    def deploy_staking_rewards_logic(self):
         self.logic["StakingRewards"] = StakingRewards.deploy({"from": deployer})
         self.logic["StakingRewardsSignalOnly"] = StakingRewardsSignalOnly.deploy(
             {"from": deployer}
@@ -510,10 +579,13 @@ class BadgerSystem:
         keeper=None,
         guardian=None,
         sett_type=SettType.DEFAULT,
-    ):
-        deployer = self.deployer
-        proxyAdmin = self.devProxyAdmin
-
+        deployer=None,
+        proxyAdmin=None
+    ):  
+        if not deployer:
+            deployer = self.deployer
+        if not proxyAdmin:
+            proxyAdmin = self.devProxyAdmin
         if not governance:
             governance = deployer
         if not strategist:
@@ -522,6 +594,7 @@ class BadgerSystem:
             keeper = deployer
         if not guardian:
             guardian = deployer
+
         if sett_type == SettType.DIGG:
             print("Deploying DIGG Sett")
             sett = deploy_proxy(
@@ -661,6 +734,9 @@ class BadgerSystem:
     def add_existing_claw(self, claw_system: ClawSystem):
         self.claw = claw_system
 
+    def add_existing_swap(self, swap_system: SwapSystem):
+        self.swap = swap_system
+
     # ===== Function Call Macros =====
 
     def wire_up_sett(self, vault, strategy, controller):
@@ -674,15 +750,11 @@ class BadgerSystem:
         controller.setVault(want, vault, {"from": deployer})
 
         controller.approveStrategy(
-            want,
-            strategy,
-            {"from": deployer},
+            want, strategy, {"from": deployer},
         )
 
         controller.setStrategy(
-            want,
-            strategy,
-            {"from": deployer},
+            want, strategy, {"from": deployer},
         )
 
     def wire_up_sett_multisig(self, vault, strategy, controller):
@@ -735,9 +807,7 @@ class BadgerSystem:
         assert rewardsToken.balanceOf(deployer) >= amount
 
         rewardsToken.transfer(
-            rewards,
-            amount,
-            {"from": deployer},
+            rewards, amount, {"from": deployer},
         )
 
         ## uint256 startTimestamp, uint256 _rewardsDuration, uint256 reward
@@ -754,11 +824,7 @@ class BadgerSystem:
         self.rewardsEscrow.approveRecipient(geyser, {"from": deployer})
 
         self.rewardsEscrow.signalTokenLock(
-            self.token,
-            params.amount,
-            params.duration,
-            startTime,
-            {"from": deployer},
+            self.token, params.amount, params.duration, startTime, {"from": deployer},
         )
 
     # ===== Strategy Macros =====
@@ -857,7 +923,7 @@ class BadgerSystem:
         tx = multi.executeTx(id)
 
     # ===== Connectors =====
-    def connect_sett_system(self, sett_system, geysers):
+    def connect_sett_system(self, sett_system, geysers=None):
         # Connect Controllers
         for key, address in sett_system["controllers"].items():
             self.connect_controller(key, address)
@@ -876,8 +942,9 @@ class BadgerSystem:
             self.connect_rewards(key, address)
 
         # Connect Geysers
-        for key, address in geysers.items():
-            self.connect_geyser(key, address)
+        if geysers:
+            for key, address in geysers.items():
+                self.connect_geyser(key, address)
 
     def connect_strategy(self, id, address, strategyArtifactName):
         Artifact = strategy_name_to_artifact(strategyArtifactName)
@@ -976,7 +1043,7 @@ class BadgerSystem:
 
     def connect_uni_badger_wbtc_lp(self, address):
         self.pair = Contract.from_abi(
-            "UniswapV2Pair", address, registry.uniswap.artifacts.UniswapV2Pair["abi"]
+            "UniswapV2Pair", address, artifacts.uniswap.UniswapV2Pair["abi"]
         )
         self.uniBadgerWbtcLp = self.pair
 
@@ -1012,6 +1079,9 @@ class BadgerSystem:
                 else accounts.load(input("guardian account: "))
             )
 
+    def setStrategy(self, id, strategy):
+        self.sett_system.strategies[id] = strategy
+
     # ===== Getters =====
 
     def getGeyser(self, id):
@@ -1023,6 +1093,12 @@ class BadgerSystem:
     def getControllerFor(self, id):
         controllerId = id.split(".", 1)[0]
         return self.sett_system.controllers[id]
+
+    def getAllSettIds(self):
+        ids = []
+        for id in self.sett_system.vaults.keys():
+            ids.append(id)
+        return ids
 
     def getSett(self, id):
         if not id in self.sett_system.vaults.keys():
@@ -1049,3 +1125,13 @@ class BadgerSystem:
 
     def getStrategyArtifactName(self, id):
         return self.strategy_artifacts[id]["artifactName"]
+    
+    def getSeeder(self):
+        """
+        Return seeder account
+        """
+        if rpc.is_active():
+            seeder = accounts.at("0x3131B6964d96DE3Ad36C7Fe82e9bA9CcdBaf6baa", force=True)
+        else:
+            seeder = accounts.load("badger_proxy_deployer")
+        return seeder

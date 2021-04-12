@@ -9,3 +9,5 @@ boto3==1.16.28
 python-dotenv==0.15.0
 multicall==0.1.1
 python-decouple==3.3
+gql==3.0.0a5
+aiohttp==3.7.3

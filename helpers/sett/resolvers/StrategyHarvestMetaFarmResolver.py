@@ -66,7 +66,7 @@ class StrategyHarvestMetaFarmResolver(StrategyCoreResolver):
         calls = self.add_entity_balances_for_tokens(calls, "farm", farm, entities)
         return calls
 
-    def add_strategy_snap(self, calls):
+    def add_strategy_snap(self, calls, entities=None):
         super().add_strategy_snap(calls)
 
         strategy = self.manager.strategy

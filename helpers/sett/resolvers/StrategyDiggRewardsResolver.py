@@ -104,7 +104,7 @@ class StrategyDiggRewardsResolver(StrategyCoreResolver):
             "diggFaucet": strategy.diggFaucet(),
         }
 
-    def add_strategy_snap(self, calls):
+    def add_strategy_snap(self, calls, entities=None):
         super().add_strategy_snap(calls)
 
         sett = self.manager.sett

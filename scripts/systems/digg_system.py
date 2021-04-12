@@ -6,7 +6,7 @@ from dotmap import DotMap
 from scripts.systems.gnosis_safe_system import connect_gnosis_safe
 from scripts.systems.uniswap_system import UniswapSystem
 from helpers.proxy_utils import deploy_proxy, deploy_proxy_uninitialized
-from helpers.registry import GnosisSafe, registry
+from helpers.registry import registry
 from config.env_config import env_config
 from config.badger_config import (
     badger_config,
@@ -132,7 +132,6 @@ class DiggSystem:
 
         self.connect_proxy_admins(devProxyAdmin, daoProxyAdmin)
         self.connect_dao()
-        self.connect_uniswap_system()
         self.connect_multisig()
 
     def track_contract_static(self, contract):

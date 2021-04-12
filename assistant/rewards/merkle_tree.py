@@ -1,3 +1,4 @@
+from assistant.rewards.RewardsList import RewardsList
 from itertools import zip_longest
 
 from brownie import *
@@ -58,7 +59,7 @@ class MerkleTree:
         return web3.keccak(b"".join(sorted([a, b])))
 
 
-def rewards_to_merkle_tree(rewards, startBlock, endBlock, geyserRewards):
+def rewards_to_merkle_tree(rewards: RewardsList, startBlock, endBlock, geyserRewards):
     (nodes, encodedNodes, entries) = rewards.to_merkle_format()
 
     # For each user, encode their data into a node
@@ -97,9 +98,9 @@ def rewards_to_merkle_tree(rewards, startBlock, endBlock, geyserRewards):
             "proof": tree.get_proof(encodedNodes[node["index"]]),
             "node": encoded,
         }
-
-    for user, data in geyserRewards.metadata.items():
-        distribution["metadata"][user] = data.toDict()
+    if len(geyserRewards) > 0:
+        for user, data in geyserRewards.metadata.items():
+            distribution["metadata"][user] = data.toDict()
 
     print(f"merkle root: {encode_hex(tree.root)}")
 
