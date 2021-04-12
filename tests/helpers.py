@@ -30,20 +30,24 @@ def create_uniswap_pair(token0, token1, signer):
 
     return uniswap.getPair(token0, token1)
 
-
-def distribute_from_whales(recipient):
+"""
+If the recipient is a contract the ForceEther transfer might throw an error. Passing a 
+user account as an intermediary can fix this
+"""
+def distribute_from_whales(recipient, intermediary=None):
+    if intermediary == None:
+        intermediary = recipient
     for key, whale in whale_registry.items():
         if key != "_pytestfixturefunction":
             print("transferring from whale", key, whale.toDict())
-            forceEther = ForceEther.deploy({"from": recipient})
-            recipient.transfer(forceEther, Wei("1 ether"))
-            forceEther.forceSend(whale.whale, {"from": recipient})
+            forceEther = ForceEther.deploy({"from": intermediary})
+            intermediary.transfer(forceEther, Wei("1 ether"))
+            forceEther.forceSend(whale.whale, {"from": intermediary})
             if whale.token:
                 token = interface.IERC20(whale.token)
                 token.transfer(
                     recipient, token.balanceOf(whale.whale), {"from": whale.whale}
                 )
-
 
 def distribute_rewards_escrow(badger, token, recipient, amount):
     """

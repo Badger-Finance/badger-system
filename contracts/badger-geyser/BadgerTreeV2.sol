@@ -51,7 +51,7 @@ contract BadgerTreeV2 is Initializable, AccessControlUpgradeable, ICumulativeMul
     uint256 public lastProposeStartBlock;
     uint256 public lastProposeEndBlock;
 
-    mapping (uint256 => bytes32) merkleRoots; // Mapping of historical merkle roots. Other information about each cycle such as content hash and start/end blocks are not used on-chain and can be found in historical events
+    mapping(uint256 => bytes32) merkleRoots; // Mapping of historical merkle roots. Other information about each cycle such as content hash and start/end blocks are not used on-chain and can be found in historical events
 
     function initialize(
         address admin,
@@ -115,9 +115,12 @@ contract BadgerTreeV2 is Initializable, AccessControlUpgradeable, ICumulativeMul
         return pendingCycle == currentCycle.add(1);
     }
 
-
     /// @dev Return true if account has outstanding claims in any token from the given input data
-    function isClaimAvailableFor(address user, address[] memory tokens, uint256[] memory cumulativeAmounts) public view returns (bool) {
+    function isClaimAvailableFor(
+        address user,
+        address[] memory tokens,
+        uint256[] memory cumulativeAmounts
+    ) public view returns (bool) {
         for (uint256 i = 0; i < tokens.length; i++) {
             uint256 userClaimable = cumulativeAmounts[i].sub(claimed[user][tokens[i]]);
             if (userClaimable > 0) {
@@ -128,7 +131,11 @@ contract BadgerTreeV2 is Initializable, AccessControlUpgradeable, ICumulativeMul
     }
 
     /// @dev Get the number of tokens claimable for an account, given a list of tokens and latest cumulativeAmounts data
-    function getClaimableFor(address user, address[] memory tokens, uint256[] memory cumulativeAmounts) public view returns (address[] memory, uint256[] memory) {
+    function getClaimableFor(
+        address user,
+        address[] memory tokens,
+        uint256[] memory cumulativeAmounts
+    ) public view returns (address[] memory, uint256[] memory) {
         uint256[] memory userClaimable = new uint256[](tokens.length);
         for (uint256 i = 0; i < tokens.length; i++) {
             userClaimable[i] = cumulativeAmounts[i].sub(_getClaimed(user, tokens[i]));
@@ -174,15 +181,8 @@ contract BadgerTreeV2 is Initializable, AccessControlUpgradeable, ICumulativeMul
 
         // Claim each token
         for (uint256 i = 0; i < tokens.length; i++) {
-            
             // Run claim and register claimedAny if a claim occurs
-            if (_tryClaim(
-                msg.sender,
-                cycle,
-                tokens[i], 
-                cumulativeAmounts[i], 
-                amountsToClaim[i]
-            )) {
+            if (_tryClaim(msg.sender, cycle, tokens[i], cumulativeAmounts[i], amountsToClaim[i])) {
                 claimedAny = true;
             }
         }
@@ -297,29 +297,29 @@ contract BadgerTreeV2 is Initializable, AccessControlUpgradeable, ICumulativeMul
         uint256 cumulativeClaimable,
         uint256 toClaim
     ) internal returns (bool claimAttempted) {
-            // If none claimable for token or none specifed to claim, skip this token
-            if (cumulativeClaimable == 0 || toClaim == 0) {
-                return false;
-            }
+        // If none claimable for token or none specifed to claim, skip this token
+        if (cumulativeClaimable == 0 || toClaim == 0) {
+            return false;
+        }
 
-            uint256 claimedBefore = _getClaimed(account, token);
-            uint256 claimable = cumulativeClaimable.sub(claimedBefore);
-            
-            // If none claimable, don't attempt to claim
-            if (claimable == 0) {
-                return false;
-            }
+        uint256 claimedBefore = _getClaimed(account, token);
+        uint256 claimable = cumulativeClaimable.sub(claimedBefore);
 
-            require(claimable > 0, "None available to claim"); // This is reduntant, it is kept to ward off evil claimers.
-            require(toClaim <= claimable, "Excessive claim");
+        // If none claimable, don't attempt to claim
+        if (claimable == 0) {
+            return false;
+        }
 
-            uint256 claimedAfter = claimedBefore.add(toClaim);
-            _setClaimed(account, token, claimedAfter);
+        require(claimable > 0, "None available to claim"); // This is reduntant, it is kept to ward off evil claimers.
+        require(toClaim <= claimable, "Excessive claim");
 
-            require(IERC20Upgradeable(token).transfer(account, _parseValue(token, toClaim)), "Transfer failed");
+        uint256 claimedAfter = claimedBefore.add(toClaim);
+        _setClaimed(account, token, claimedAfter);
 
-            emit Claimed(account, token, toClaim, cycle, now, block.number);
-            return true;
+        require(IERC20Upgradeable(token).transfer(account, _parseValue(token, toClaim)), "Transfer failed");
+
+        emit Claimed(account, token, toClaim, cycle, now, block.number);
+        return true;
     }
 
     /// @dev Determine how many tokens to distribute based on cumulativeAmount
