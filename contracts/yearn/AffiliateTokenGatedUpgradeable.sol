@@ -6,7 +6,7 @@ import "deps/@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 import "./BaseWrapperUpgradeable.sol";
 
 import "interfaces/yearn/VaultApi.sol";
-import "interfaces/yearn/BadgerGuestListApi.sol";
+import "interfaces/yearn/BadgerGuestlistApi.sol";
 
 /**
     == Access Control ==
@@ -380,16 +380,14 @@ contract AffiliateTokenGatedUpgradeable is ERC20Upgradeable, BaseWrapperUpgradea
             withdrawn = amount;
         }
 
-
         // Process withdrawal fee
         if (withdrawalFee > 0) {
             uint256 withdrawalToAffiliate = withdrawn.mul(withdrawalFee).div(MAX_BPS);
             withdrawn = withdrawn.sub(withdrawalToAffiliate);
-            
+
             token.safeTransfer(affiliate, withdrawalToAffiliate);
             emit WithdrawalFee(affiliate, withdrawalToAffiliate);
         }
-    
 
         // `receiver` now has `withdrawn` tokens as balance
         if (receiver != address(this)) token.safeTransfer(receiver, withdrawn);
@@ -397,9 +395,8 @@ contract AffiliateTokenGatedUpgradeable is ERC20Upgradeable, BaseWrapperUpgradea
 
     // Require that difference between expected and actual values is less than the deviation threshold percentage
     function _verifyWithinMaxDeviationThreshold(uint256 actual, uint256 expected) internal view {
-            uint256 diff = _diff(expected, actual);
-            require(diff <= expected.mul(withdrawalMaxDeviationThreshold).div(MAX_BPS), "wrapper/withdraw-exceed-max-deviation-threshold");
-
+        uint256 diff = _diff(expected, actual);
+        require(diff <= expected.mul(withdrawalMaxDeviationThreshold).div(MAX_BPS), "wrapper/withdraw-exceed-max-deviation-threshold");
     }
 
     /// @notice Utility function to diff two numbers, expects higher value in first position

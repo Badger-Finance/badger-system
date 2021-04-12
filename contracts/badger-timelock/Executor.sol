@@ -1,3 +1,4 @@
+//SPDX-License-Identifier: MIT
 pragma solidity >=0.5.0 <0.7.0;
 
 /*
@@ -28,15 +29,7 @@ contract Executor {
     ) internal returns (bool success) {
         // solium-disable-next-line security/no-inline-assembly
         assembly {
-            success := call(
-                txGas,
-                to,
-                value,
-                add(data, 0x20),
-                mload(data),
-                0,
-                0
-            )
+            success := call(txGas, to, value, add(data, 0x20), mload(data), 0, 0)
         }
     }
 }
