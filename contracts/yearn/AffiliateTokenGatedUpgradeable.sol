@@ -5,7 +5,7 @@ import "deps/@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.so
 import "deps/@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 import "./BaseWrapperUpgradeable.sol";
 
-import "interfaces/yearn/VaultAPI.sol";
+import "interfaces/yearn/VaultApi.sol";
 import "interfaces/yearn/GuestlistApi.sol";
 
 /**
@@ -151,9 +151,9 @@ contract AffiliateTokenGatedUpgradeable is ERC20Upgradeable, BaseWrapperUpgradea
         if (address(guestList) != address(0)) {
             require(guestList.authorized(msg.sender, amount), "guest-list-authorization");
         }
-        
+
         deposited = _deposit(msg.sender, address(this), amount, true); // `true` = pull from `msg.sender`
-        uint256 shares = _sharesForValue(deposited);  // NOTE: Must be calculated after deposit is handled
+        uint256 shares = _sharesForValue(deposited); // NOTE: Must be calculated after deposit is handled
         _mint(msg.sender, shares);
 
         emit Deposit(msg.sender, deposited);
@@ -184,7 +184,7 @@ contract AffiliateTokenGatedUpgradeable is ERC20Upgradeable, BaseWrapperUpgradea
     function migrate(uint256 amount, uint256 maxMigrationLoss) external onlyAffiliate whenNotPaused returns (uint256) {
         return _migrate(address(this), amount, maxMigrationLoss);
     }
-    
+
     /**
      * @notice Triggers an approval from owner to spends
      * @param owner The address to approve from
@@ -221,7 +221,6 @@ contract AffiliateTokenGatedUpgradeable is ERC20Upgradeable, BaseWrapperUpgradea
         require(msg.sender == guardian || msg.sender == manager || msg.sender == affiliate, "only-authorized-pausers");
         _pause();
     }
-
 
     // @dev Unpausing requires a higher permission level than pausing, which is optimized for speed of action. The manager or affiliate can unpause
     function unpause() external {
@@ -305,5 +304,4 @@ contract AffiliateTokenGatedUpgradeable is ERC20Upgradeable, BaseWrapperUpgradea
     //     // `receiver` now has `withdrawn` tokens as balance
     //     if (receiver != address(this)) token.safeTransfer(receiver, withdrawn);
     // }
-
 }
