@@ -186,7 +186,11 @@ contract AffiliateTokenGatedUpgradeable is ERC20Upgradeable, BaseWrapperUpgradea
     }
 
     function pricePerShare() public view returns (uint256) {
-        return totalVaultBalance(address(this)).mul(10**uint256(decimals())).div(totalSupply());
+        if (totalSupply() == 0) {
+            return 0;
+        } else {
+            return totalVaultBalance(address(this)).mul(10**uint256(decimals())).div(totalSupply());
+        }
     }
 
     function totalWrapperBalance(address account) public view returns (uint256 balance) {
