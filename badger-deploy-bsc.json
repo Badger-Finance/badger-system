@@ -18,7 +18,7 @@
         "StrategyPancakeLpOptimizer": "0x07c0e4f4c977a29c46fb26597ea8c9105ca50b42",
         "Sett": "0x6daCCed8D6d80b0e93a51A4303961678e8A46Fa5",
         "Controller": "0x38b9344fFB931ABA6476198095e088024CdAC527",
-        "AffiliateTokenGatedUpgradeable": "0x827b7b306d0ce13b6e0dcf8e7dac08f185c7d281"
+        "AffiliateTokenGatedUpgradeable": "0x6009880afEEcf14EaF6368EE98BbD7936c52FBeb"
     },
     "sett_system": {
         "controllers": {
@@ -28,7 +28,7 @@
             "native.pancakeBnbBtcb": "0xaf4B9C4b545D5324904bAa15e29796D2E2f90813",
             "native.bBadgerBtcb": "0x857F91f735f4B03b19D2b5c6E476C73DB8241F55",
             "native.bDiggBtcb": "0xa861Ba302674b08f7F2F24381b705870521DDfed",
-            "native.test": "0x64f9dcdf4accc3365725f1eccba2f9427e108a73"
+            "native.test": "0xB6bd5ae3d5F78A6Bb04bBb031E24fA9C2BbD090d"
         },
         "vault_artifacts": {
             "native.pancakeBnbBtcb": "Sett",
