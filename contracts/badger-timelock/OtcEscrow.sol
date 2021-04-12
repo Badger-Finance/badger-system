@@ -48,16 +48,12 @@ contract OtcEscrow {
         IERC20(usdc).safeTransferFrom(beneficiary, address(this), usdcAmount);
 
         // Create Vesting contract
-        TokenTimelock vesting = new TokenTimelock(
-            IERC20(bBadger),
-            beneficiary,
-            now + duration
-        );
+        TokenTimelock vesting = new TokenTimelock(IERC20(bBadger), beneficiary, now + duration);
 
         // Transfer bBadger to vesting contract
         IERC20(bBadger).safeTransfer(address(vesting), bBadgerAmount);
 
-        // Transfer USDC to badger governance 
+        // Transfer USDC to badger governance
         IERC20(usdc).safeTransfer(badgerGovernance, usdcAmount);
 
         emit VestingDeployed(address(vesting));

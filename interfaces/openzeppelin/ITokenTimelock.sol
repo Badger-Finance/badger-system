@@ -19,6 +19,7 @@ interface ITokenTimelock {
      * @return the beneficiary of the tokens.
      */
     function beneficiary() external view returns (address);
+
     /**
      * @return the time when the tokens are released.
      */
