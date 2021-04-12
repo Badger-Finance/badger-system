@@ -6,7 +6,7 @@ import "deps/@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 import "./BaseWrapperUpgradeable.sol";
 
 import "interfaces/yearn/VaultApi.sol";
-import "interfaces/yearn/GuestlistApi.sol";
+import "interfaces/yearn/BadgerGuestListApi.sol";
 
 /**
     == Access Control ==
@@ -36,13 +36,15 @@ contract AffiliateTokenGatedUpgradeable is ERC20Upgradeable, BaseWrapperUpgradea
 
     // ===== GatedUpgradeable additional parameters =====
 
-    GuestListAPI public guestList;
+    BadgerGuestListAPI public guestList;
 
     address public manager;
 
     address public guardian;
 
     uint256 public withdrawalFee;
+
+    uint256 public withdrawalMaxDeviationThreshold;
 
     /// @dev In experimental mode, the wrapper only deposits and withdraws from a single pre-connected vault (rather than the registry). The vault cache is not set in this mode. Once disabled, cannot be re-enabled.
     bool public experimentalMode;
@@ -65,13 +67,17 @@ contract AffiliateTokenGatedUpgradeable is ERC20Upgradeable, BaseWrapperUpgradea
     event WithdrawalFee(address indexed recipient, uint256 amount);
     event Mint(address indexed account, uint256 shares);
     event Burn(address indexed account, uint256 shares);
+    event SetWithdrawalFee(uint256 withdrawalFee);
+    event SetWithdrawalMaxDeviationThreshold(uint256 withdrawalMaxDeviationThreshold);
 
     function initialize(
         address _token,
         address _registry,
         string memory name,
         string memory symbol,
-        address _guardian
+        address _guardian,
+        bool _useExperimentalMode,
+        address _experimentalVault
     ) external initializer {
         _BaseWrapperUpgradeable_init(_token, _registry);
         __ERC20_init(name, symbol);
@@ -81,8 +87,27 @@ contract AffiliateTokenGatedUpgradeable is ERC20Upgradeable, BaseWrapperUpgradea
         guardian = _guardian;
         _setupDecimals(uint8(ERC20Upgradeable(address(token)).decimals()));
 
+        if (_useExperimentalMode) {
+            experimentalMode = true;
+            experimentalVault = _experimentalVault;
+
+            emit SetExperimentalVault(experimentalVault);
+        }
+
         emit AcceptAffiliate(affiliate);
         emit SetGuardian(guardian);
+    }
+
+    function setWithdrawalFee(uint256 _fee) external onlyAffiliate {
+        require(_fee <= MAX_BPS, "excessive-withdrawal-fee");
+        withdrawalFee = _fee;
+        emit SetWithdrawalFee(withdrawalFee);
+    }
+
+    function setWithdrawalMaxDeviationThreshold(uint256 _maxDeviationThreshold) external onlyAffiliate {
+        require(_maxDeviationThreshold <= MAX_BPS, "excessive-max-deviation-threshold");
+        withdrawalMaxDeviationThreshold = _maxDeviationThreshold;
+        emit SetWithdrawalMaxDeviationThreshold(withdrawalMaxDeviationThreshold);
     }
 
     function bestVault() public override view returns (VaultAPI) {
@@ -101,14 +126,6 @@ contract AffiliateTokenGatedUpgradeable is ERC20Upgradeable, BaseWrapperUpgradea
         } else {
             return super.allVaults();
         }
-    }
-
-    function setExperimentalVault(address _experimentalVault) external onlyAffiliate {
-        require(experimentalVault == address(0)); // Can only be set once
-        experimentalMode = true;
-        experimentalVault = _experimentalVault;
-
-        emit SetExperimentalVault(experimentalVault);
     }
 
     function disableExperimentalMode() external onlyAffiliate {
@@ -150,7 +167,7 @@ contract AffiliateTokenGatedUpgradeable is ERC20Upgradeable, BaseWrapperUpgradea
     }
 
     function setGuestList(address _guestList) external onlyAffiliate {
-        guestList = GuestListAPI(_guestList);
+        guestList = BadgerGuestListAPI(_guestList);
         emit UpdateGuestList(_guestList);
     }
 
@@ -187,14 +204,18 @@ contract AffiliateTokenGatedUpgradeable is ERC20Upgradeable, BaseWrapperUpgradea
         }
     }
 
-    function deposit() external whenNotPaused returns (uint256) {
+    /// @dev Deposit entire balance of token in wrapper
+    /// @dev A merkle proof can be supplied to verify inclusion in merkle guest list if this functionality is active
+    function deposit(bytes32[] calldata merkleProof) external whenNotPaused returns (uint256) {
         uint256 allAssets = token.balanceOf(address(msg.sender));
-        return deposit(allAssets); // Deposit everything
+        return deposit(allAssets, merkleProof); // Deposit everything
     }
 
-    function deposit(uint256 amount) public whenNotPaused returns (uint256 deposited) {
+    /// @dev Deposit specified amount of token in wrapper
+    /// @dev A merkle proof can be supplied to verify inclusion in merkle guest list if this functionality is active
+    function deposit(uint256 amount, bytes32[] calldata merkleProof) public whenNotPaused returns (uint256 deposited) {
         if (address(guestList) != address(0)) {
-            require(guestList.authorized(msg.sender, amount), "guest-list-authorization");
+            require(guestList.authorized(msg.sender, amount, merkleProof), "guest-list-authorization");
         }
 
         deposited = _deposit(msg.sender, address(this), amount, true); // `true` = pull from `msg.sender`
@@ -342,6 +363,11 @@ contract AffiliateTokenGatedUpgradeable is ERC20Upgradeable, BaseWrapperUpgradea
             }
         }
 
+        // Invariant: withdrawn should not be signifcantly less than expected amount, defined by threshold
+        if (amount > withdrawn) {
+            _verifyWithinMaxDeviationThreshold(withdrawn, amount);
+        }
+
         // If we have extra, deposit back into `_bestVault` for `sender`
         // NOTE: Invariant is `withdrawn <= amount`
         if (withdrawn > amount) {
@@ -354,7 +380,31 @@ contract AffiliateTokenGatedUpgradeable is ERC20Upgradeable, BaseWrapperUpgradea
             withdrawn = amount;
         }
 
+
+        // Process withdrawal fee
+        if (withdrawalFee > 0) {
+            uint256 withdrawalToAffiliate = withdrawn.mul(withdrawalFee).div(MAX_BPS);
+            withdrawn = withdrawn.sub(withdrawalToAffiliate);
+            
+            token.safeTransfer(affiliate, withdrawalToAffiliate);
+            emit WithdrawalFee(affiliate, withdrawalToAffiliate);
+        }
+    
+
         // `receiver` now has `withdrawn` tokens as balance
         if (receiver != address(this)) token.safeTransfer(receiver, withdrawn);
+    }
+
+    // Require that difference between expected and actual values is less than the deviation threshold percentage
+    function _verifyWithinMaxDeviationThreshold(uint256 actual, uint256 expected) internal view {
+            uint256 diff = _diff(expected, actual);
+            require(diff <= expected.mul(withdrawalMaxDeviationThreshold).div(MAX_BPS), "wrapper/withdraw-exceed-max-deviation-threshold");
+
+    }
+
+    /// @notice Utility function to diff two numbers, expects higher value in first position
+    function _diff(uint256 a, uint256 b) internal pure returns (uint256) {
+        require(a >= b, "diff/expected-higher-number-in-first-position");
+        return a.sub(b);
     }
 }
