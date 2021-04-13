@@ -140,6 +140,7 @@ contract StrategyMStableVaultBase is BaseStrategy {
     }
 
     /// @notice Harvest from strategy mechanics, realizing increase in underlying position
+    // TODO - add overload for harvest with first and last tranche numbers
     function harvest() external whenNotPaused returns (HarvestData memory) {
         _onlyAuthorizedActors();
 
@@ -182,6 +183,7 @@ contract StrategyMStableVaultBase is BaseStrategy {
         IERC20Upgradeable(mta).safeTransfer(voterProxy, harvestData.govMta);
 
         // Take performance fees from remainder
+        // TODO - remove strategistFee completely here to reduce gas costs
         (harvestData.toGovernance, harvestData.toStrategist) = _processPerformanceFees(_mta.sub(harvestData.govMta));
 
         // Transfer remainder to Tree

@@ -17,8 +17,12 @@ interface IMStableVoterProxy {
     // Upgrades the lock address
     function changeLockAddress(address _newLock, uint256 _endTime) external;
 
+    // LOANS
+
     // Repays the initially loaned MTA amount
-    function repayLoan() external;
+    function repayLoan(address _creditor) external;
+
+    function loan(uint256 _amt) external;
 
     // STRATEGIES
 
@@ -27,14 +31,14 @@ interface IMStableVoterProxy {
 
     // POOL
 
-    // Transfers _amt from sender and deposits to pool
-    function deposit(address _token, uint256 _amt) external;
+    // Simply stakes in pool
+    function deposit(uint256 _amt) external;
 
     // Withdraws balance from vault, returning to strategy
-    function withdrawAll() external;
+    function withdrawAll(address _want) external;
 
     // Withdraws _amt from vault, returning to strategy
-    function withdrawSome(uint256 _amt) external;
+    function withdrawSome(address _want, uint256 _amt) external;
 
     // fetch immediate unlock and then claim all & xfer
     // return subtracted amt
