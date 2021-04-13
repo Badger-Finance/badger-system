@@ -1,10 +1,16 @@
 from helpers.time_utils import days
+import json
 import brownie
 import pytest
 from brownie import *
 from helpers.constants import *
 from helpers.registry import registry
 from collections import namedtuple
+
+with open("merkle/yearn-distribution.json") as f:
+    yearnDistribution = json.load(f)
+
+merkleRoot = yearnDistribution["merkleRoot"]
 
 WITHDRAWAL_FEE = 50
 
@@ -18,6 +24,7 @@ def setup(MockToken, AffiliateTokenGatedUpgradeable, YearnTokenVault, YearnRegis
     randomUser1 = accounts[4]
     randomUser2 = accounts[5]
     randomUser3 = accounts[7]
+    distributor = accounts[8]
     yearnGovernance = accounts[6]
 
     namedAccounts = {
@@ -28,14 +35,15 @@ def setup(MockToken, AffiliateTokenGatedUpgradeable, YearnTokenVault, YearnRegis
         "randomUser1": randomUser1,
         "randomUser2": randomUser2,
         "randomUser3": randomUser3,
+        "distributor": distributor,
         "yearnGovernance": yearnGovernance,
     }
 
     # WBTC (mainnet)
     mockToken = deployer.deploy(MockToken)
     mockToken.initialize(
-        [randomUser1.address, randomUser2.address, randomUser3.address],
-        [10e18, 20e18, 10e18],
+        [randomUser1.address, randomUser2.address, randomUser3.address, distributor.address],
+        [10e18, 20e18, 10e18, 10000e18],
     )
 
     assert mockToken.balanceOf(randomUser1.address) == 10e18
@@ -861,3 +869,88 @@ def test_experimental_mode(setup):
     assert setup.wrapper.totalWrapperBalance(randomUser2.address) == 5e18
     assert setup.vault.totalAssets() == 5e18
     assert setup.vaultExp.totalAssets() == 2.5e18
+
+#@pytest.mark.skip()
+def test_gustlist_authentication(setup):
+    randomUser1 = setup.namedAccounts['randomUser1']
+    randomUser2 = setup.namedAccounts['randomUser2']
+    randomUser3 = setup.namedAccounts['randomUser3']
+    distributor = setup.namedAccounts['distributor']
+    deployer = setup.namedAccounts['deployer']
+
+    setup.mockToken.approve(setup.wrapper.address, 100e18, {"from": randomUser2})
+    setup.mockToken.approve(setup.wrapper.address, 100e18, {"from": randomUser1})
+
+    # Disable experimental mode
+    setup.wrapper.disableExperimentalMode({"from": deployer})
+
+    # Remove merkle proof verification from Gueslist
+    print('Merkleroot:', merkleRoot)
+    setup.guestlist.setGuestRoot(merkleRoot)
+
+    # Link guestlist to wrapper
+    setup.wrapper.setGuestList(setup.guestlist.address, {"from": deployer})
+    
+    users = [
+        web3.toChecksumAddress("0x8107b00171a02f83D7a17f62941841C29c3ae60F"),
+        web3.toChecksumAddress("0x716722C80757FFF31DA3F3C392A1736b7cfa3A3e"),
+        web3.toChecksumAddress("0xCf7760E00327f608543c88526427b35049b58984"),
+    ]
+
+    totalDeposits = 0
+
+    # Test depositing without being on the predefined gueslist with a few users
+    for user in users:
+        accounts.at(user, force=True)
+
+        claim = yearnDistribution["claims"][user]
+        proof = claim["proof"]
+
+        # Transfers 1 token to current user
+        setup.mockToken.transfer(user, 1e18, {'from': distributor})
+
+        # Approve wrapper to transfer user's token
+        setup.mockToken.approve(setup.wrapper.address, 100e18, {"from": user})
+
+        # User deposits 1 token through wrapper
+        assert setup.wrapper.totalWrapperBalance(user) == 0
+        setup.wrapper.deposit(1e18, proof, {'from': user})
+
+        assert setup.wrapper.totalWrapperBalance(user) == 1e18
+
+        totalDeposits = totalDeposits + 1e18
+
+        assert setup.wrapper.totalAssets() == totalDeposits
+
+
+    users = [
+        web3.toChecksumAddress("0xb43b8B43dE2e59A2B44caa2910E31a4E835d4068"),
+        web3.toChecksumAddress("0x70eF271e741AA071018A57B6E121fe981409a16D"),
+        web3.toChecksumAddress("0x71535AAe1B6C0c51Db317B54d5eEe72d1ab843c1"),
+    ]
+
+    # Test depositing after provingInvitation of a few users
+    for user in users:
+        accounts.at(user, force=True)
+
+        claim = yearnDistribution["claims"][user]
+        proof = claim["proof"]
+
+        # Transfers 1 token to current user
+        setup.mockToken.transfer(user, 1e18, {'from': distributor})
+
+        # Approve wrapper to transfer user's token
+        setup.mockToken.approve(setup.wrapper.address, 100e18, {"from": user})
+
+        tx = setup.guestlist.proveInvitation(user, proof)
+        assert tx.events[0]['guestRoot'] == merkleRoot
+        assert tx.events[0]['account'] == user
+
+        # User deposits 1 token through wrapper (without proof)
+        assert setup.wrapper.totalWrapperBalance(user) == 0
+        setup.wrapper.deposit(1e18, [], {'from': user})
+
+        assert setup.wrapper.totalWrapperBalance(user) == 1e18
+
+
+
