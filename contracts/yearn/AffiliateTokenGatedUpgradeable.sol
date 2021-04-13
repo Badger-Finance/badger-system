@@ -216,8 +216,15 @@ contract AffiliateTokenGatedUpgradeable is ERC20Upgradeable, BaseWrapperUpgradea
     }
 
     /// @dev Deposit specified amount of token in wrapper for specified recipient
+    /// @dev Variant without merkleProof
+    function depositFor(address recipient, uint256 amount) public whenNotPaused returns (uint256 deposited) {
+        bytes32[] memory emptyProof = new bytes32[](0);
+        deposited = depositFor(recipient, amount, emptyProof);
+    }
+
+    /// @dev Deposit specified amount of token in wrapper for specified recipient
     /// @dev A merkle proof can be supplied to verify inclusion in merkle guest list if this functionality is active
-    function depositFor(address recipient, uint256 amount, bytes32[] calldata merkleProof) public whenNotPaused returns (uint256 deposited) {
+    function depositFor(address recipient, uint256 amount, bytes32[] memory merkleProof) public whenNotPaused returns (uint256 deposited) {
         if (address(guestList) != address(0)) {
             require(guestList.authorized(msg.sender, amount, merkleProof), "guest-list-authorization");
         }
