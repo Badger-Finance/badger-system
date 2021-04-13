@@ -123,7 +123,7 @@ contract VipCappedGuestListWrapperUpgradeable is OwnableUpgradeable {
         // If the user is not already invited and there is an active guestList, require verification of merkle proof to grant temporary invitation (does not set storage variable)
         if (!invited && guestRoot != bytes32(0)) {
             // Will revert on invalid proof
-            invited = _verifyInvitationProof(msg.sender, _merkleProof);
+            invited = _verifyInvitationProof(_guest, _merkleProof);
         }
 
         // If the user was previously invited, or proved invitiation via list, verify if the amount to deposit keeps them under the cap
@@ -145,7 +145,7 @@ contract VipCappedGuestListWrapperUpgradeable is OwnableUpgradeable {
     }
 
     function _verifyInvitationProof(address account, bytes32[] calldata merkleProof) internal view returns (bool) {
-        bytes32 node = keccak256(abi.encode(account));
+        bytes32 node = keccak256(abi.encodePacked(account));
         return MerkleProofUpgradeable.verify(merkleProof, guestRoot, node);
     }
 }
