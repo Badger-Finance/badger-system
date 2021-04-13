@@ -215,6 +215,21 @@ contract AffiliateTokenGatedUpgradeable is ERC20Upgradeable, BaseWrapperUpgradea
         return deposit(allAssets, merkleProof); // Deposit everything
     }
 
+    /// @dev Deposit specified amount of token in wrapper for specified recipient
+    /// @dev A merkle proof can be supplied to verify inclusion in merkle guest list if this functionality is active
+    function depositFor(address recipient, uint256 amount, bytes32[] calldata merkleProof) public whenNotPaused returns (uint256 deposited) {
+        if (address(guestList) != address(0)) {
+            require(guestList.authorized(msg.sender, amount, merkleProof), "guest-list-authorization");
+        }
+
+        deposited = _deposit(msg.sender, address(this), amount, true); // `true` = pull from `msg.sender`
+        uint256 shares = _sharesForValue(deposited); // NOTE: Must be calculated after deposit is handled
+        _mint(recipient, shares);
+
+        emit Deposit(recipient, deposited);
+        emit Mint(recipient, shares);
+    }
+
     /// @dev Deposit specified amount of token in wrapper
     /// @dev A merkle proof can be supplied to verify inclusion in merkle guest list if this functionality is active
     function deposit(uint256 amount, bytes32[] calldata merkleProof) public whenNotPaused returns (uint256 deposited) {
