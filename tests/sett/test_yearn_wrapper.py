@@ -109,7 +109,7 @@ def setup(MockToken, AffiliateTokenGatedUpgradeable, YearnTokenVault, YearnRegis
 def isolation(fn_isolation):
     pass
 
-@pytest.mark.skip()
+#@pytest.mark.skip()
 def test_permissions(setup):
     randomUser1 = setup.namedAccounts['randomUser1']
     randomUser2 = setup.namedAccounts['randomUser2']
@@ -279,7 +279,7 @@ def test_permissions(setup):
     with brownie.reverts():
         setup.wrapper.unpause({"from": randomUser2})
 
-@pytest.mark.skip()
+#@pytest.mark.skip()
 def test_deposit_withdraw_flow(setup):
     randomUser1 = setup.namedAccounts['randomUser1']
     randomUser2 = setup.namedAccounts['randomUser2']
@@ -396,6 +396,9 @@ def test_deposit_withdraw_flow(setup):
         print("Wrapper's PPS:", setup.wrapper.pricePerShare())
         print("Vault's PPS:", setup.vault.pricePerShare())
 
+        # Test shareVaule
+        assert setup.wrapper.shareValue(1e18) == 1e18
+
         chain.sleep(10000)
         chain.mine(1)
 
@@ -470,7 +473,86 @@ def test_deposit_withdraw_flow(setup):
     else:
         pytest.fail("Vault not added to registry")
 
-@pytest.mark.skip()
+#@pytest.mark.skip()
+def test_depositFor_withdraw_flow(setup):
+    randomUser1 = setup.namedAccounts['randomUser1']
+    randomUser2 = setup.namedAccounts['randomUser2']
+    randomUser3 = setup.namedAccounts['randomUser3']
+    deployer = setup.namedAccounts['deployer']
+
+    # Remove merkle proof verification from Gueslist
+    setup.guestlist.setGuestRoot('0x0')
+
+    # Link guestlist to wrapper
+    setup.wrapper.setGuestList(setup.guestlist.address, {"from": deployer})
+
+    # Disable experimental mode
+    setup.wrapper.disableExperimentalMode({"from": deployer})
+
+    # Approve wrapper as spender of mockToken for user
+    setup.mockToken.approve(setup.wrapper.address, 100e18, {"from": randomUser2})
+
+    # total amount of tokens deposited through wrapper = 0
+    assert setup.wrapper.totalVaultBalance(setup.wrapper.address) == 0
+    # total supply of wrapper shares = 0
+    assert setup.wrapper.totalSupply() == 0
+
+    # total wrapper balance of User 1, 2, 3  = 0
+    assert setup.wrapper.totalWrapperBalance(randomUser1.address) == 0
+    assert setup.wrapper.totalWrapperBalance(randomUser2.address) == 0
+    assert setup.wrapper.totalWrapperBalance(randomUser3.address) == 0
+
+    # === Deposit flow === #
+
+    # User 2 (on guestlist) deposits on behalf of User 1 (on guestlist)
+    setup.wrapper.depositFor(randomUser1.address, 1e18, [], {'from': randomUser2})
+
+    # total wrapper balance of User 1 = 1 and User 2 = 2
+    assert setup.wrapper.totalWrapperBalance(randomUser1.address) == 1e18
+    assert setup.wrapper.totalWrapperBalance(randomUser2.address) == 0
+
+    # Wrapper shares are created only for receipient (User 1)
+    assert setup.wrapper.balanceOf(randomUser1.address) == 1e18
+    assert setup.wrapper.balanceOf(randomUser2.address) == 0
+
+    # User 2 (on guestlist) deposits on behalf of User 3 (not on guestlist)
+    setup.wrapper.depositFor(randomUser3.address, 1e18, [], {'from': randomUser2})
+
+    # total wrapper balance of User 1 = 0 and User 2 = 1
+    assert setup.wrapper.totalWrapperBalance(randomUser3.address) == 1e18
+    assert setup.wrapper.totalWrapperBalance(randomUser2.address) == 0
+
+    # Wrapper shares are created only for receipient (User 1)
+    assert setup.wrapper.balanceOf(randomUser3.address) == 1e18
+    assert setup.wrapper.balanceOf(randomUser2.address) == 0
+
+    # === Withdraw flow === #
+
+    # Reverts when User 2 tries to withdraw
+    with brownie.reverts():
+        setup.wrapper.withdraw(1e18, {"from": randomUser2})
+
+    # User 1 withdraws using their received shares
+    setup.wrapper.withdraw({'from': randomUser1})
+    # User 1 gets 1 mocktoken in return (10 + 1 = 11)
+    assert setup.wrapper.balanceOf(randomUser1.address) == 0
+    assert setup.mockToken.balanceOf(randomUser1.address) == 11e18
+
+    # User 3 withdraws using their received shares
+    setup.wrapper.withdraw({'from': randomUser3})
+    # User 3 gets 1 mocktoken in return (10 + 1 = 11)
+    assert setup.wrapper.balanceOf(randomUser3.address) == 0
+    assert setup.mockToken.balanceOf(randomUser3.address) == 11e18
+
+    # Wrapper balance of all users is zero
+    assert setup.wrapper.totalWrapperBalance(randomUser1.address) == 0
+    assert setup.wrapper.totalWrapperBalance(randomUser2.address) == 0
+    assert setup.wrapper.totalWrapperBalance(randomUser3.address) == 0
+
+    # mockToken balance of User 2 is 18 (20 - 2 = 18)
+    assert setup.mockToken.balanceOf(randomUser2.address) == 18e18
+
+#@pytest.mark.skip()
 def test_deposit_withdraw_fees_flow(setup):
     randomUser1 = setup.namedAccounts['randomUser1']
     randomUser2 = setup.namedAccounts['randomUser2']
@@ -529,7 +611,7 @@ def test_deposit_withdraw_fees_flow(setup):
         # Random user's wrapper balance is 5
         assert setup.wrapper.totalWrapperBalance(randomUser2.address) == 5e18
 
-@pytest.mark.skip()
+#@pytest.mark.skip()
 def test_deposit_limit(setup):
     randomUser1 = setup.namedAccounts['randomUser1']
     randomUser2 = setup.namedAccounts['randomUser2']
@@ -553,7 +635,7 @@ def test_deposit_limit(setup):
     with brownie.reverts():
         setup.wrapper.deposit(15e18, [], {"from": randomUser2})
 
-@pytest.mark.skip()
+#@pytest.mark.skip()
 def test_migrate_all_flow(setup):
     randomUser1 = setup.namedAccounts['randomUser1']
     randomUser2 = setup.namedAccounts['randomUser2']
@@ -647,7 +729,7 @@ def test_migrate_all_flow(setup):
     # VaultV2 should have 0 mockTokens
     assert vaultV2.totalAssets() == 0
 
-@pytest.mark.skip()
+#@pytest.mark.skip()
 def test_migrate_amount_flow(setup):
     randomUser1 = setup.namedAccounts['randomUser1']
     randomUser2 = setup.namedAccounts['randomUser2']
@@ -705,7 +787,7 @@ def test_migrate_amount_flow(setup):
     # VaultV2 should have 10 mockTokens
     assert vaultV2.totalAssets() == 5e18
 
-@pytest.mark.skip()
+#@pytest.mark.skip()
 def test_migrate_amount_margin_flow(setup):
     randomUser1 = setup.namedAccounts['randomUser1']
     randomUser2 = setup.namedAccounts['randomUser2']
@@ -763,7 +845,7 @@ def test_migrate_amount_margin_flow(setup):
     # VaultV2 should have 10 mockTokens
     assert vaultV2.totalAssets() == 5e18
 
-@pytest.mark.skip()
+#@pytest.mark.skip()
 def test_experimental_mode(setup):
     randomUser1 = setup.namedAccounts['randomUser1']
     randomUser2 = setup.namedAccounts['randomUser2']
@@ -870,7 +952,7 @@ def test_experimental_mode(setup):
     assert setup.vault.totalAssets() == 5e18
     assert setup.vaultExp.totalAssets() == 2.5e18
 
-# @pytest.mark.skip()
+#@pytest.mark.skip()
 def test_gustlist_authentication(setup):
     randomUser1 = setup.namedAccounts['randomUser1']
     randomUser2 = setup.namedAccounts['randomUser2']
