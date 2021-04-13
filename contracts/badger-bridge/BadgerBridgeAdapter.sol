@@ -12,6 +12,7 @@ import "deps/@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeabl
 import "interfaces/badger/ISwapStrategyRouter.sol";
 import "interfaces/bridge/IGateway.sol";
 import "interfaces/bridge/IBridgeVault.sol";
+import "interfaces/bridge/ICurveTokenWrapper.sol";
 import "interfaces/curve/ICurveFi.sol";
 
 contract BadgerBridgeAdapter is OwnableUpgradeable, ReentrancyGuardUpgradeable {
@@ -42,6 +43,9 @@ contract BadgerBridgeAdapter is OwnableUpgradeable, ReentrancyGuardUpgradeable {
     uint256 public constant MAX_BPS = 10000;
 
     mapping(address => bool) public approvedVaults;
+
+    // Configurable permissionless curve lp token wrapper.
+    address curveTokenWrapper;
 
     // Make struct for mint args, otherwise too many local vars (stack too deep).
     struct MintArguments {
@@ -158,13 +162,25 @@ contract BadgerBridgeAdapter is OwnableUpgradeable, ReentrancyGuardUpgradeable {
         IERC20 token = isRenBTC ? renBTC : wBTC;
         uint256 startBalanceRenBTC = renBTC.balanceOf(address(this));
         uint256 startBalanceWBTC = wBTC.balanceOf(address(this));
-        bool withdrawnFromCurve = _maybeWithdrawCurveLp(_vault, token, msg.sender, _amount);
 
-        if (!isVault) {
-            token.safeTransferFrom(msg.sender, address(this), _amount);
-        } else if (!withdrawnFromCurve) {
+        // Vaults can require up to two levels of unwrapping.
+        if (isVault) {
+            // First level of unwrapping for sett tokens.
             IERC20(_vault).safeTransferFrom(msg.sender, address(this), _amount);
+            IERC20 vaultToken = IBridgeVault(_vault).token();
+
+            uint256 beforeBalance = vaultToken.balanceOf(address(this));
             IBridgeVault(_vault).withdraw(IERC20(_vault).balanceOf(address(this)));
+            uint256 balance = vaultToken.balanceOf(address(this)).sub(beforeBalance);
+
+            // If the vault token does not match requested burn token, then we need to further unwrap
+            // vault token (e.g. withdrawing from crv sett gets us crv lp tokens which need to be unwrapped to renbtc).
+            if (address(vaultToken) != _token) {
+                vaultToken.safeTransfer(curveTokenWrapper, balance);
+                ICurveTokenWrapper(curveTokenWrapper).unwrap(_vault);
+            }
+        } else {
+            token.safeTransferFrom(msg.sender, address(this), _amount);
         }
 
         uint256 wbtcTransferred = wBTC.balanceOf(address(this)).sub(startBalanceWBTC);
@@ -208,117 +224,21 @@ contract BadgerBridgeAdapter is OwnableUpgradeable, ReentrancyGuardUpgradeable {
             return;
         }
 
-        // Maybe deposit into curve lp pool if vault accepts a curve lp token.
-        // We currently only supply liquidity as renBTC (see fn comment).
-        bool depositedToCurve = _maybeDepositCurveLp(args._vault, token, amount);
-        if (!depositedToCurve) {
-            // If we didn't deposit to curve, then we're depositing `token` directly
-            // to the underlying vault (e.g. wbtc vault) so we need to approve token spend.
+        // If the token is wBTC then we just approve spend and deposit directly into the wbtc vault.
+        if (args._token == address(wBTC)) {
             _approveBalance(token, args._vault, token.balanceOf(address(this)));
+        } else {
+            // Otherwise, we need to wrap the token before depositing into vault.
+            // We currently only support wrapping renbtc into curve lp tokens.
+            // NB: The curve token wrapper contract is permissionless, we must transfer renbtc over
+            // and it will transfer back wrapped lp tokens.
+            token.safeTransfer(curveTokenWrapper, amount);
+            uint256 wrappedAmount = ICurveTokenWrapper(curveTokenWrapper).wrap(args._vault);
+            _approveBalance(IBridgeVault(args._vault).token(), args._vault, wrappedAmount);
         }
 
         IBridgeVault(args._vault).deposit(amount);
         IERC20(args._vault).safeTransfer(args._user, IERC20(args._vault).balanceOf(address(this)));
-    }
-
-    // NB: We currently only support curve lp pools that have renBTC as an asset.
-    // We supply liquidity as renBTC to these pools. Some lp pools require two deposits
-    // as they are a pool of other pool tokens (e.g. tbtc).
-    //
-    // We could allow dynamic configuration of curve pools to vaults but this will be a
-    // little more gas intensive to do so the logic is hard coded for now.
-    //
-    // Currently supported lp pools are:
-    // - renbtc
-    // - sbtc
-    // - tbtc (requires depositng into sbtc lp pool first)
-    function _maybeDepositCurveLp(
-        address _vault,
-        IERC20 _token,
-        uint256 _amount
-    ) internal returns (bool) {
-        if (_token != renBTC) {
-            return false;
-        }
-
-        IERC20 vaultToken = IBridgeVault(_vault).token();
-
-        // Define supported tokens here to avoid proxy storage.
-        IERC20 renbtcLpToken = IERC20(0x49849C98ae39Fff122806C06791Fa73784FB3675);
-        IERC20 sbtcLpToken = IERC20(0x075b1bb99792c9E1041bA13afEf80C91a1e70fB3);
-        IERC20 tbtcLpToken = IERC20(0x64eda51d3Ad40D56b9dFc5554E06F94e1Dd786Fd);
-
-        // Pool contracts are not upgradeable so no need to sanity check underlying token addrs.
-        address pool;
-
-        if (vaultToken == renbtcLpToken) {
-            pool = 0x93054188d876f558f4a66B2EF1d97d16eDf0895B;
-            uint256[2] memory amounts = [_amount, 0];
-            _approveBalance(renBTC, pool, _amount);
-            ICurveFi(pool).add_liquidity(amounts, 0);
-        }
-
-        if (vaultToken == sbtcLpToken || vaultToken == tbtcLpToken) {
-            pool = 0x7fC77b5c7614E1533320Ea6DDc2Eb61fa00A9714;
-            uint256[3] memory amounts = [_amount, 0, 0];
-            _approveBalance(renBTC, pool, _amount);
-            ICurveFi(pool).add_liquidity(amounts, 0);
-        }
-
-        if (vaultToken == tbtcLpToken) {
-            pool = 0xC25099792E9349C7DD09759744ea681C7de2cb66;
-            uint256 lpAmount = sbtcLpToken.balanceOf(address(this));
-            uint256[2] memory amounts = [0, lpAmount];
-            _approveBalance(sbtcLpToken, pool, lpAmount);
-            ICurveFi(pool).add_liquidity(amounts, 0);
-        }
-
-        return pool != address(0);
-    }
-
-    function _maybeWithdrawCurveLp(
-        address _vault,
-        address _from,
-        IERC20 _token,
-        uint256 _amount
-    ) internal returns (bool) {
-        if (_token != renBTC) {
-            return false;
-        }
-
-        IERC20 vaultToken = IBridgeVault(_vault).token();
-
-        // Define supported tokens here to avoid proxy storage.
-        IERC20 renbtcLpToken = IERC20(0x49849C98ae39Fff122806C06791Fa73784FB3675);
-        IERC20 sbtcLpToken = IERC20(0x075b1bb99792c9E1041bA13afEf80C91a1e70fB3);
-        IERC20 tbtcLpToken = IERC20(0x64eda51d3Ad40D56b9dFc5554E06F94e1Dd786Fd);
-
-        // Pool contracts are not upgradeable so no need to sanity check underlying token addrs.
-        address pool;
-
-        if (vaultToken == renbtcLpToken) {
-            pool = 0x93054188d876f558f4a66B2EF1d97d16eDf0895B;
-            renbtcLpToken.safeTransferFrom(_from, address(this), _amount);
-            ICurveFi(pool).remove_liquidity_one_coin(0, _amount, 0);
-        }
-
-        if (vaultToken == tbtcLpToken) {
-            pool = 0xC25099792E9349C7DD09759744ea681C7de2cb66;
-            tbtcLpToken.safeTransferFrom(_from, address(this), _amount);
-            ICurveFi(pool).remove_liquidity_one_coin(1, _amount, 0);
-
-            pool = 0x7fC77b5c7614E1533320Ea6DDc2Eb61fa00A9714;
-            uint256 lpAmount = ICurveFi(pool).calc_withdraw_one_coin(sbtcLpToken.balanceOf(address(this)), 0);
-            ICurveFi(pool).remove_liquidity_one_coin(0, lpAmount, 0);
-        }
-
-        if (vaultToken == sbtcLpToken) {
-            pool = 0x7fC77b5c7614E1533320Ea6DDc2Eb61fa00A9714;
-            sbtcLpToken.safeTransferFrom(_from, address(this), _amount);
-            ICurveFi(pool).remove_liquidity_one_coin(0, _amount, 0);
-        }
-
-        return pool != address(0);
     }
 
     function _swapWBTCForRenBTC(uint256 _amount, uint256 _slippage) internal {
@@ -420,5 +340,9 @@ contract BadgerBridgeAdapter is OwnableUpgradeable, ReentrancyGuardUpgradeable {
 
     function setVaultApproval(address _vault, bool _status) external onlyOwner {
         approvedVaults[_vault] = _status;
+    }
+
+    function setCurveTokenWrapper(address _wrapper) external onlyOwner {
+        curveTokenWrapper = _wrapper;
     }
 }

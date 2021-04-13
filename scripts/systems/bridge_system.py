@@ -2,6 +2,7 @@ import json
 from brownie import (
     web3,
     BadgerBridgeAdapter,
+    CurveTokenWrapper,
     MockGatewayRegistry,
     MockGateway,
     ERC20,
@@ -133,6 +134,9 @@ class BridgeSystem:
             ),
             deployer,
         )
+
+    def deploy_curve_token_wrapper(self):
+        self.curveTokenWrapper = CurveTokenWrapper.deploy({"from": self.deployer})
 
     def deploy_logic(self, name, BrownieArtifact, test=False):
         deployer = self.deployer

@@ -30,6 +30,8 @@ def deploy_bridge_minimal(deployer, devProxyAdmin, test=False, publish_source=Fa
         swap.router,
         deployer,
     )
+    bridge.deploy_curve_token_wrapper()
+    bridge.adapter.setCurveTokenWrapper(bridge.curveTokenWrapper, {"from": deployer})
     bridge.add_existing_swap(swap)
     # Grant strategy swapper role to bridge adapter.
     swap.configure_strategies_grant_swapper_role(bridge.adapter.address)
