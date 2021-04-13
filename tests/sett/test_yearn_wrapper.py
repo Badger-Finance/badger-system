@@ -7,7 +7,7 @@ from helpers.constants import *
 from helpers.registry import registry
 from collections import namedtuple
 
-with open("merkle/yearn-distribution.json") as f:
+with open("merkle/badger-bouncer.json") as f:
     yearnDistribution = json.load(f)
 
 merkleRoot = yearnDistribution["merkleRoot"]
@@ -109,7 +109,7 @@ def setup(MockToken, AffiliateTokenGatedUpgradeable, YearnTokenVault, YearnRegis
 def isolation(fn_isolation):
     pass
 
-#@pytest.mark.skip()
+@pytest.mark.skip()
 def test_permissions(setup):
     randomUser1 = setup.namedAccounts['randomUser1']
     randomUser2 = setup.namedAccounts['randomUser2']
@@ -279,7 +279,7 @@ def test_permissions(setup):
     with brownie.reverts():
         setup.wrapper.unpause({"from": randomUser2})
 
-#@pytest.mark.skip()
+@pytest.mark.skip()
 def test_deposit_withdraw_flow(setup):
     randomUser1 = setup.namedAccounts['randomUser1']
     randomUser2 = setup.namedAccounts['randomUser2']
@@ -470,7 +470,7 @@ def test_deposit_withdraw_flow(setup):
     else:
         pytest.fail("Vault not added to registry")
 
-#@pytest.mark.skip()
+@pytest.mark.skip()
 def test_deposit_withdraw_fees_flow(setup):
     randomUser1 = setup.namedAccounts['randomUser1']
     randomUser2 = setup.namedAccounts['randomUser2']
@@ -529,7 +529,7 @@ def test_deposit_withdraw_fees_flow(setup):
         # Random user's wrapper balance is 5
         assert setup.wrapper.totalWrapperBalance(randomUser2.address) == 5e18
 
-#@pytest.mark.skip()
+@pytest.mark.skip()
 def test_deposit_limit(setup):
     randomUser1 = setup.namedAccounts['randomUser1']
     randomUser2 = setup.namedAccounts['randomUser2']
@@ -647,7 +647,7 @@ def test_migrate_all_flow(setup):
     # VaultV2 should have 0 mockTokens
     assert vaultV2.totalAssets() == 0
 
-#@pytest.mark.skip()
+@pytest.mark.skip()
 def test_migrate_amount_flow(setup):
     randomUser1 = setup.namedAccounts['randomUser1']
     randomUser2 = setup.namedAccounts['randomUser2']
@@ -705,7 +705,7 @@ def test_migrate_amount_flow(setup):
     # VaultV2 should have 10 mockTokens
     assert vaultV2.totalAssets() == 5e18
 
-#@pytest.mark.skip()
+@pytest.mark.skip()
 def test_migrate_amount_margin_flow(setup):
     randomUser1 = setup.namedAccounts['randomUser1']
     randomUser2 = setup.namedAccounts['randomUser2']
@@ -763,7 +763,7 @@ def test_migrate_amount_margin_flow(setup):
     # VaultV2 should have 10 mockTokens
     assert vaultV2.totalAssets() == 5e18
 
-#@pytest.mark.skip()
+@pytest.mark.skip()
 def test_experimental_mode(setup):
     randomUser1 = setup.namedAccounts['randomUser1']
     randomUser2 = setup.namedAccounts['randomUser2']
@@ -870,7 +870,7 @@ def test_experimental_mode(setup):
     assert setup.vault.totalAssets() == 5e18
     assert setup.vaultExp.totalAssets() == 2.5e18
 
-#@pytest.mark.skip()
+# @pytest.mark.skip()
 def test_gustlist_authentication(setup):
     randomUser1 = setup.namedAccounts['randomUser1']
     randomUser2 = setup.namedAccounts['randomUser2']
