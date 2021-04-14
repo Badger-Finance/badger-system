@@ -120,6 +120,11 @@ contract VipCappedGuestListWrapperUpgradeable is OwnableUpgradeable {
         // No: If the user is not on the list, does not supply a valid proof, or is over the cap
         bool invited = guests[_guest];
 
+        // If there is no guest root, all users are invited
+        if (!invited && guestRoot == bytes32(0)) {
+            invited = true;
+        }
+
         // If the user is not already invited and there is an active guestList, require verification of merkle proof to grant temporary invitation (does not set storage variable)
         if (!invited && guestRoot != bytes32(0)) {
             // Will revert on invalid proof
