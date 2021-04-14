@@ -6,23 +6,26 @@ interface IMStableVoterProxy {
     // VOTING LOCKUP
 
     // Init lock in VotingLock
-    function createLock() external;
+    function createLock(uint256 _endTime) external;
 
     // Claims MTA rewards from Staking and reinvests
     function reinvestMta() external;
+
+    // Extends lockup period
+    function extendLock() external;
 
     // Exits the lock and keeps MTA in contract
     function exitLock() external returns (uint256 mtaBalance);
 
     // Upgrades the lock address
-    function changeLockAddress(address _newLock, uint256 _endTime) external;
+    function changeLockAddress(address _newLock) external;
 
     // LOANS
 
+    function loan(uint256 _amt) external;
+
     // Repays the initially loaned MTA amount
     function repayLoan(address _creditor) external;
-
-    function loan(uint256 _amt) external;
 
     // STRATEGIES
 

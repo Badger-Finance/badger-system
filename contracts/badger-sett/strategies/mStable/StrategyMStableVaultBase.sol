@@ -25,7 +25,6 @@ contract StrategyMStableVaultBase is BaseStrategy {
     // TODO - remove config if unused
     address public vault; // i.e. imBTC BoostedSavingsVault
     address public voterProxy; // MStableVoterProxy
-    address public mAsset; // i.e. imBTC, fPmBTC/HBTC
     address public lpComponent; // i.e. wBTC, sBTC, renBTC, HBTC
 
     address public constant mta = 0xa3BeD4E1c75D00fa6f4E5E6922DB7261B5E9AcD2; // MTA token
@@ -68,17 +67,18 @@ contract StrategyMStableVaultBase is BaseStrategy {
 
         // TODO - clean import lists based on strategy chosen
         // TODO - remove config if unused
-        want = _wantConfig[0];
+        want = _wantConfig[0]; // mAsset
         vault = _wantConfig[1];
-        mAsset = _wantConfig[2];
+        voterProxy = _wantConfig[2];
         lpComponent = _wantConfig[3];
+        badgerTree = _wantConfig[4];
 
         performanceFeeGovernance = _feeConfig[0];
         performanceFeeStrategist = _feeConfig[1];
         withdrawalFee = _feeConfig[2];
         govMta = _feeConfig[3]; // 1000
 
-        IERC20Upgradeable(want).safeApprove(gauge, type(uint256).max);
+        _safeApproveHelper(lpComponent, want, type(uint256).max);
     }
 
     /// ===== View Functions =====
@@ -92,12 +92,9 @@ contract StrategyMStableVaultBase is BaseStrategy {
     }
 
     function balanceOfPool() public override view returns (uint256) {
-        // return ICurveGauge(gauge).balanceOf(address(this));
-        // TODO - read directly, or call the voterProxy?
         return IMStableBoostedVault(vault).rawBalanceOf(voterProxy);
     }
 
-    // TODO - verify purpose of this fn
     function getProtectedTokens() external override view returns (address[] memory) {
         address[] memory protectedTokens = new address[](3);
         protectedTokens[0] = want;
@@ -122,93 +119,98 @@ contract StrategyMStableVaultBase is BaseStrategy {
     }
 
     function _deposit(uint256 _want) internal override {
-        // ICurveGauge(gauge).deposit(_want);
-        // TODO - verify deposit via voterProxy
         IERC20Upgradeable(want).transfer(voterProxy, _want);
         IMStableVoterProxy(voterProxy).deposit(_want);
     }
 
     function _withdrawAll() internal override {
-        // ICurveGauge(gauge).withdraw(ICurveGauge(gauge).balanceOf(address(this)));
         IMStableVoterProxy(voterProxy).withdrawAll();
     }
 
     function _withdrawSome(uint256 _amount) internal override returns (uint256) {
-        // ICurveGauge(gauge).withdraw(_amount);
         IMStableVoterProxy(voterProxy).withdrawSome(_amount);
         return _amount;
     }
 
     /// @notice Harvest from strategy mechanics, realizing increase in underlying position
-    // TODO - add overload for harvest with first and last tranche numbers
     function harvest() external whenNotPaused returns (HarvestData memory) {
         _onlyAuthorizedActors();
 
         HarvestData memory harvestData;
 
-        uint256 _beforeMta = IERC20Upgradeable(mta).balanceOf(address(this));
+        uint256 _wantBefore = IERC20Upgradeable(want).balanceOf(address(this));
 
-        // Harvest from Gauge
-        uint256 _vestedMta = IMStableVoterProxy(voterProxy).claim();
-        uint256 _afterMta = IERC20Upgradeable(mta).balanceOf(address(this));
+        // Harvest from Vault
+        uint256 _mtaVested = IMStableVoterProxy(voterProxy).claim();
+        harvestData.mtaTotal = IERC20Upgradeable(mta).balanceOf(address(this));
 
-        uint256 _immediateUnlock = _afterMta.sub(_vestedMta).sub(_beforeMta);
+        // Step 1: Send a percentage of MTA back to voterProxy for reinvestment
+        harvestData.mtaSentToVoterProxy = harvestData.mtaTotal.mul(govMta).div(MAX_FEE);
+        IERC20Upgradeable(mta).safeTransfer(voterProxy, harvestData.mtaSentToVoterProxy);
 
-        // mStable: At this point, we have access to both immediately unlocked MTA, and those
-        // that have undergone vesting. We should find distribution methods for them that:
-        //   a) produce good incentives
-        //   b) do not increase gas usage too much
-        //   c) does not add insane amounts of complexity
-        // 1) Ideal:
-        //  Immediate - Sell for lpComponent and mint mBTC (vault compounding)
-        //  Post-vesting - MTA distributed through BadgerTree
-        // 2) Both options same:
-        //  Immediate - Sell for lpComponent and mint mBTC
-        //  Post-vesting - Sell for lpComponent and distribute through BadgerTree (these can't be reinvested because they are earned 6m later)
-        // 3) Lowest gas cost/complexity:
-        //  Immediate - Distribute through BadgerTree
-        //  Post-vesting - Distribute through BadgerTree
-        // I believe option 2 makes the most sense - the additional complexity adds up v quickly (
-        // i.e. ) and
-        // calling harvest daily at an extra 1-200k gas eats away at the rationale for doing so.
+        // Step 2: send Post-vesting rewards to BadgerTree
+        harvestData.mtaPostVesting = _mtaVested.mul(MAX_FEE.sub(govMTA)).div(MAX_FEE);
+        (harvestData.mtaFees[0], harvestData.mtaFees[1]) = _processPerformanceFees(mta, harvestData.mtaPostVesting);
+        harvestData.mtaPostVestingSentToBadgerTree = harvestData.mtaPostVesting.sub(harvestData.mtaFees[0]).sub(harvestData.mtaFees[1]);
+        IERC20Upgradeable(mta).safeTransfer(badgerTree, harvestData.mtaPostVestingSentToBadgerTree);
 
-        // TODO - recycle into geyser?
+        // Step 3: convert remainder to LP and reinvest
+        uint256 _mta = IERC20Upgradeable(mta).balanceOf(address(this));
+        harvestData.mtaRecycledToWant = _mta;
+        if (harvestData.mtaRecycledToWant > 0) {
+            address[] memory path = new address[](3);
+            path[0] = mta;
+            path[1] = weth;
+            path[2] = lpComponent;
+            _swap(mta, harvestData.mtaRecycledToWant, path);
+        }
+        harvestData.lpComponentDeposited = IERC20Upgradeable(lpComponent).balanceOf(address(this));
+        if (harvestData.lpComponentDeposited > 0) {
+            _mintWant(lpComponent, harvestData.lpComponentDeposited);
+        }
+        // Take fees from LP increase, and deposit remaining into Vault
+        harvestData.wantProcessed = IERC20Upgradeable(want).balanceOf(address(this));
+        if (harvestData.wantProcessed > 0) {
+            (harvestData.wantFees[0], harvestData.wantFees[1]) = _processPerformanceFees(want, harvestData.wantProcessed);
 
-        harvestData.mtaHarvested = _immediateUnlock;
-        harvestData.mtaVested = _vestedMta;
-        uint256 _mta = _afterMta;
+            // Deposit remaining want into Vault
+            harvestData.wantDeposited = IERC20Upgradeable(want).balanceOf(address(this));
 
-        // Send MTA back to voterProxy for reinvestment
-        harvestData.govMta = _mta.mul(govMta).div(MAX_FEE);
-        IERC20Upgradeable(mta).safeTransfer(voterProxy, harvestData.govMta);
+            if (harvestData.wantDeposited > 0) {
+                _deposit(harvestData.wantDeposited);
+            }
+        }
 
-        // Take performance fees from remainder
-        // TODO - remove strategistFee completely here to reduce gas costs
-        (harvestData.toGovernance, harvestData.toStrategist) = _processPerformanceFees(_mta.sub(harvestData.govMta));
-
-        // Transfer remainder to Tree
-        harvestData.toBadgerTree = IERC20Upgradeable(mta).balanceOf(address(this));
-        IERC20Upgradeable(mta).safeTransfer(badgerTree, harvestData.toBadgerTree);
-
-        emit CurveHarvest(
-            harvestData.mtaHarvested,
-            harvestData.mtaVested,
-            harvestData.govMta,
-            harvestData.toGovernance,
-            harvestData.toStrategist,
-            harvestData.toBadgerTree
+        // TODO - ensure all these are set accurately
+        emit MStableHarvest(
+            harvestData.mtaTotal, // Total units farmed from vault (immediate + vested), before fees
+            harvestData.mtaSentToVoterProxy, // % sent back to VoterProxy to be reinvested
+            harvestData.mtaRecycledToWant, // mta recycled back to want for compounding
+            harvestData.lpComponentDeposited,
+            harvestData.wantProcessed,
+            harvestData.wantFees,
+            harvestData.wantDeposited,
+            harvestData.mtaPostVesting, // mta earned post vesting, after deducting voterProxy fee
+            harvestData.mtaFees,
+            harvestData.mtaPostVestingSentToBadgerTree
         );
-        // No increase in underlying position
-        emit Harvest(0, block.number);
+        emit Harvest(harvestData.wantProcessed.sub(_wantBefore), block.number);
 
         return harvestData;
     }
 
     /// ===== Internal Helper Functions =====
 
-    function _processPerformanceFees(uint256 _amount) internal returns (uint256 governancePerformanceFee, uint256 strategistPerformanceFee) {
-        governancePerformanceFee = _processFee(mta, _amount, performanceFeeGovernance, IController(controller).rewards());
+    function _mintWant(address _input, uint256 _amount) internal virtual {
+        IMStableAsset(want).mint(_input, _amount, _amount.mul(80).div(100), address(this));
+    }
 
-        strategistPerformanceFee = _processFee(mta, _amount, performanceFeeStrategist, strategist);
+    function _processPerformanceFees(address _token, uint256 _amount)
+        internal
+        returns (uint256 governancePerformanceFee, uint256 strategistPerformanceFee)
+    {
+        governancePerformanceFee = _processFee(_token, _amount, performanceFeeGovernance, IController(controller).rewards());
+
+        strategistPerformanceFee = _processFee(_token, _amount, performanceFeeStrategist, strategist);
     }
 }

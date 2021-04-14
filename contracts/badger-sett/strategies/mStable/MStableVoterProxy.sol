@@ -11,6 +11,7 @@ import "deps/@openzeppelin/contracts-upgradeable/token/ERC20/SafeERC20Upgradeabl
 import "deps/@openzeppelin/contracts-upgradeable/proxy/Initializable.sol";
 
 import "interfaces/mStable/IMStableAsset.sol";
+import "interfaces/mStable/IMStableNexus.sol";
 import "interfaces/mStable/IMStableBoostedVault.sol";
 import "interfaces/mStable/IMStableVotingLockup.sol";
 import "interfaces/uniswap/IUniswapRouterV2.sol";
@@ -36,32 +37,26 @@ contract MStableVoterProxy is IMStableVoterProxy, PausableUpgradeable, SettAcces
 
     mapping(address => IMStableBoostedVault) public strategyToVault; // strategy => vault
     mapping(address => address) public vaultToStrategy; // used to ensure vault is singleton
-    mapping(address => uint256) public loans;
 
+    IMStableNexus public nexus;
     IMStableVotingLockup public votingLockup;
-    uint256 public endTime; // Maximum lock length
 
+    mapping(address => uint256) public loans;
     IERC20Upgradeable public constant mta = IERC20Upgradeable(0xa3BeD4E1c75D00fa6f4E5E6922DB7261B5E9AcD2);
 
     function initialize(
         address _governance,
         address _strategist,
-        address _controller,
         address _keeper,
-        address _guardian,
-        address[3] memory _config,
-        uint256[2] memory _vaultConfig
+        address[2] memory _config
     ) public initializer {
         __Pausable_init();
         governance = _governance;
         strategist = _strategist;
         keeper = _keeper;
-        controller = _controller;
-        guardian = _guardian;
 
-        // TODO - cleanout unused config from init fn
-        // add end
         votingLockup = IMStableVotingLockup(_config[0]);
+        nexus = IMStableNexus(_config[1]);
 
         IERC20Upgradeable(mta).safeApprove(votingLockup, type(uint256).max);
     }
@@ -71,58 +66,56 @@ contract MStableVoterProxy is IMStableVoterProxy, PausableUpgradeable, SettAcces
         require(address(vault) != address(0), "onlyStrategy");
     }
 
+    // both badgerDAO multisig and mStableDAO multisig
+    function _onlyGovernors() internal view {
+        require(msg.sender == governance || msg.sender == nexus.governor(), "onlyGovernors");
+    }
+
     // VOTING LOCKUP
 
     // Init lock in VotingLock
-    function createLock() external override {
-        // TODO - only pausers?
-        _onlyAuthorizedPausers();
-        // TODO - pass amt as arg?
+    function createLock(uint256 _unlockTime) external override {
+        _onlyGovernors();
+
         uint256 bal = mta.balanceOf(address(this));
-        votingLockup.createLock(bal, endTime);
+        votingLockup.createLock(bal, _unlockTime);
     }
 
     // Claims MTA rewards from Staking and reinvests
     function reinvestMta() external override {
-        _onlyAuthorizedPausers();
+        _onlyGovernors();
 
         votingLockup.claimReward();
         uint256 bal = mta.balanceOf(address(this));
         votingLockup.increaseLockAmount(bal);
     }
 
+    function extendLock(uint256 _unlockTime) external override {
+        _onlyGovernors();
+
+        votingLockup.increaseLockLength(_unlockTime);
+    }
+
     // Exits the lock and keeps MTA in contract
     function exitLock() external override returns (uint256 mtaBalance) {
-        _onlyAuthorizedPausers();
+        _onlyGovernors();
 
         votingLockup.exit();
     }
 
     // Upgrades the lock address
-    function changeLockAddress(address _newLock, uint256 _endTime) external override {
-        _onlyAuthorizedPausers();
+    // IMPORTANT - approves _newLock to spend MTA. This could be dangerous
+    function changeLockAddress(address _newLock) external override {
+        _onlyGovernors();
 
         require(votingLockup.balanceOf(address(this)) == 0, "Active lockup");
-        require(_endTime > block.timestamp, "Invalid time");
 
         votingLockup = IMStableVotingLockup(_newLock);
-        endTime = _endTime;
 
         IERC20Upgradeable(mta).safeApprove(_newLock, type(uint256).max);
     }
 
     // LOANS
-
-    // Repays the initially loaned MTA amount
-    function repayLoan(address _creditor) external override {
-        _onlyAuthorizedPausers();
-
-        uint256 loanAmt = loans[_creditor];
-        require(loanAmt != 0, "Non-existing loan");
-
-        loans[_creditor] = 0;
-        mta.safeTransfer(_creditor, loanAmt);
-    }
 
     // Loans the voter proxy a given amt
     function loan(uint256 _amt) external override {
@@ -132,11 +125,22 @@ contract MStableVoterProxy is IMStableVoterProxy, PausableUpgradeable, SettAcces
         loans[msg.sender] = _amt;
     }
 
+    // Repays the initially loaned MTA amount
+    function repayLoan(address _creditor) external override {
+        _onlyGovernors();
+
+        uint256 loanAmt = loans[_creditor];
+        require(loanAmt != 0, "Non-existing loan");
+
+        loans[_creditor] = 0;
+        mta.safeTransfer(_creditor, loanAmt);
+    }
+
     // STRATEGIES
 
     // Adds a new supported strategy, looking up want and approving to vault
     function supportStrategy(address _strategy, address _vault) external override {
-        _onlyAuthorizedPausers();
+        _onlyGovernors();
 
         require(vaultToStrategy[_vault] == address(0), "Vault already supported");
 
