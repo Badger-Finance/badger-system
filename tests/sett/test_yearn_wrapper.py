@@ -13,6 +13,7 @@ with open("merkle/badger-bouncer.json") as f:
 merkleRoot = yearnDistribution["merkleRoot"]
 
 WITHDRAWAL_FEE = 50
+DEVIATION_MAX = 50
 
 @pytest.fixture(scope="module", autouse=True)
 def setup(MockToken, AffiliateTokenGatedUpgradeable, YearnTokenVault, YearnRegistry, VipCappedGuestListWrapperUpgradeable):
@@ -313,6 +314,9 @@ def test_deposit_withdraw_flow(setup):
         # = User 2: Has 20 Tokens, deposits 1, on Guestlist = #
         # Random user (from guestlist) deposits 1 Token
         setup.wrapper.deposit(1e18, [], {"from": randomUser2})
+        print("-- 1st User Deposits 1 --")
+        print("Wrapper's PPS:", setup.wrapper.pricePerShare())
+        print("Vault's PPS:", setup.vault.pricePerShare())
         assert setup.mockToken.balanceOf(randomUser2.address) == 19e18
 
         assert setup.wrapper.totalVaultBalance(setup.wrapper.address) == 1e18
@@ -334,13 +338,13 @@ def test_deposit_withdraw_flow(setup):
 
         # Test pricePerShare to equal 1
         assert setup.wrapper.pricePerShare() == 1e18
-        print("-- 1st User Deposits 1 --")
-        print("Wrapper's PPS:", setup.wrapper.pricePerShare())
-        print("Vault's PPS:", setup.vault.pricePerShare())
 
         # = User 1: Has 10 Tokens, deposits 10, on Guestlist = #
         # Another random user (from guestlist) deposits all their Tokens (10)
         setup.wrapper.deposit([], {"from": randomUser1})
+        print("-- 2nd User Deposits 10 --")
+        print("Wrapper's PPS:", setup.wrapper.pricePerShare())
+        print("Vault's PPS:", setup.vault.pricePerShare())
         assert setup.mockToken.balanceOf(randomUser1.address) == 0
 
         assert setup.wrapper.totalVaultBalance(setup.wrapper.address) == 11e18
@@ -373,9 +377,11 @@ def test_deposit_withdraw_flow(setup):
 
         # = User 3: Has 10 Tokens, deposits 1, not on Guestlist = #
         # Random user (not from guestlist) attempts to deposit 1 token
-        # Should not revert since root is zet to 0x0
+        # Should not revert since root is set to 0x0
         setup.wrapper.deposit(1e18, [], {"from": randomUser3})
-        # User's token balance remains the same 
+        print("-- 3rd User Deposits 1 --")
+        print("Wrapper's PPS:", setup.wrapper.pricePerShare())
+        print("Vault's PPS:", setup.vault.pricePerShare())
         assert setup.mockToken.balanceOf(randomUser3.address) == 9e18
 
         # = User 1: Has 0 Tokens, deposits 1 and then all, on Guestlist = #
@@ -391,9 +397,6 @@ def test_deposit_withdraw_flow(setup):
 
         # Test pricePerShare to equal 1
         assert setup.wrapper.pricePerShare() == 1e18
-        print("-- 2nd User Deposits 10 --")
-        print("Wrapper's PPS:", setup.wrapper.pricePerShare())
-        print("Vault's PPS:", setup.vault.pricePerShare())
 
         # Test shareVaule
         assert setup.wrapper.shareValue(1e18) == 1e18
@@ -684,7 +687,7 @@ def test_migrate_all_flow(setup):
     setup.wrapper.disableExperimentalMode({"from": deployer})
 
     # Set max deviation threshold
-    setup.wrapper.setWithdrawalMaxDeviationThreshold(50)
+    setup.wrapper.setWithdrawalMaxDeviationThreshold(DEVIATION_MAX)
 
     # Deposit tokens from User 1 and 2 to current bestVault
     setup.wrapper.deposit(10e18, [], {"from": randomUser1})
@@ -734,11 +737,12 @@ def test_migrate_all_flow(setup):
     # Balance of User 1 should be 10 (split among both vaults)
     assert setup.wrapper.balanceOf(randomUser1.address) == 10e18
 
-    # Migrate: should transfer User 1's 10 token from Vault to VaultV2
-    print("Limit:", setup.vault.depositLimit())
-    print("Assets:", setup.vault.totalAssets())
-    print("Wrapper shares on vault:", setup.vault.balanceOf(setup.wrapper.address))
+    affiliateBalanceBefore = setup.mockToken.balanceOf(setup.wrapper.affiliate())
+
+    # Migrate: should transfer User 1's 5 tokens from Vault to VaultV2
     setup.wrapper.migrate()
+
+    affiliateBalanceAfter = setup.mockToken.balanceOf(setup.wrapper.affiliate())
 
     # Vault should have 0 mockTokens
     assert setup.vault.totalAssets() == 0e18
@@ -757,6 +761,9 @@ def test_migrate_all_flow(setup):
 
     # VaultV2 should have 0 mockTokens
     assert vaultV2.totalAssets() == 0
+
+    # Affiliate token balance should not change
+    assert affiliateBalanceAfter == affiliateBalanceBefore
 
 #@pytest.mark.skip()
 def test_migrate_amount_flow(setup):
@@ -778,7 +785,7 @@ def test_migrate_amount_flow(setup):
     setup.wrapper.disableExperimentalMode({"from": deployer})
 
     # Set max deviation threshold
-    setup.wrapper.setWithdrawalMaxDeviationThreshold(50)
+    setup.wrapper.setWithdrawalMaxDeviationThreshold(DEVIATION_MAX)
 
     # Deposit tokens from User 1 and 2 to current bestVault
     setup.wrapper.deposit(10e18, [], {"from": randomUser1})
@@ -807,14 +814,21 @@ def test_migrate_amount_flow(setup):
     # VaultV2 should have 0 mockTokens
     assert vaultV2.totalAssets() == 0
 
+    affiliateBalanceBefore = setup.mockToken.balanceOf(setup.wrapper.affiliate())
+
     # Migrate: should transfer given amount from Vault to VaultV2
     setup.wrapper.migrate(5e18)
 
+    affiliateBalanceAfter = setup.mockToken.balanceOf(setup.wrapper.affiliate())
+    
     # Vault should have 0 mockTokens
     assert setup.vault.totalAssets() == 15e18
 
     # VaultV2 should have 10 mockTokens
     assert vaultV2.totalAssets() == 5e18
+
+    # Affiliate token balance should not change
+    assert affiliateBalanceAfter == affiliateBalanceBefore
 
 #@pytest.mark.skip()
 def test_migrate_amount_margin_flow(setup):
@@ -836,7 +850,7 @@ def test_migrate_amount_margin_flow(setup):
     setup.wrapper.disableExperimentalMode({"from": deployer})
 
     # Set max deviation threshold
-    setup.wrapper.setWithdrawalMaxDeviationThreshold(50)
+    setup.wrapper.setWithdrawalMaxDeviationThreshold(DEVIATION_MAX)
 
     # Deposit tokens from User 1 and 2 to current bestVault
     setup.wrapper.deposit(10e18, [], {"from": randomUser1})
@@ -872,10 +886,10 @@ def test_migrate_amount_margin_flow(setup):
 
     affiliateBalanceAfter = setup.mockToken.balanceOf(setup.wrapper.affiliate())
 
-    # Vault should have 0 mockTokens
+    # Vault should have 15 mockTokens
     assert setup.vault.totalAssets() == 15e18
 
-    # VaultV2 should have 10 mockTokens
+    # VaultV2 should have 5 mockTokens
     assert vaultV2.totalAssets() == 5e18
 
     # Affiliate token balance should not change
@@ -897,6 +911,7 @@ def test_experimental_mode(setup):
     # Link guestlist to wrapper
     setup.wrapper.setGuestList(setup.guestlist.address, {"from": deployer})
 
+    # Experimental mode is set at the wrapper's initialization
     # bestVault should be the experimental vault
     assert setup.wrapper.bestVault() == setup.vaultExp.address
     assert setup.wrapper.allVaults() == [setup.vaultExp.address]
@@ -1070,5 +1085,21 @@ def test_gustlist_authentication(setup):
 
         assert setup.wrapper.totalWrapperBalance(user) == 1e18
 
+    # Test depositing with user on Gueslist but with no merkle proof
+
+    # Approve wrapper to transfer user's token
+    setup.mockToken.approve(setup.wrapper.address, 100e18, {"from": randomUser1})
+
+    setup.wrapper.deposit(1e18, [], {'from': randomUser1})
+    assert setup.wrapper.totalWrapperBalance(randomUser1.address) == 1e18
+
+    # Test depositing with user not on Gueslist and with no merkle proof
+        
+    # Approve wrapper to transfer user's token
+    setup.mockToken.approve(setup.wrapper.address, 100e18, {"from": randomUser3})
+
+    with brownie.reverts('guest-list-authorization'):
+        setup.wrapper.deposit(1e18, [], {'from': randomUser3})
+    assert setup.wrapper.totalWrapperBalance(randomUser3.address) == 0
 
 
