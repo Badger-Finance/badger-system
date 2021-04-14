@@ -373,11 +373,10 @@ def test_deposit_withdraw_flow(setup):
 
         # = User 3: Has 10 Tokens, deposits 1, not on Guestlist = #
         # Random user (not from guestlist) attempts to deposit 1 token
-        # Should revert since user is not on the guestlist
-        with brownie.reverts("guest-list-authorization"):
-            setup.wrapper.deposit(1e18, [], {"from": randomUser3})
+        # Should not revert since root is zet to 0x0
+        setup.wrapper.deposit(1e18, [], {"from": randomUser3})
         # User's token balance remains the same 
-        assert setup.mockToken.balanceOf(randomUser3.address) == 10e18
+        assert setup.mockToken.balanceOf(randomUser3.address) == 9e18
 
         # = User 1: Has 0 Tokens, deposits 1 and then all, on Guestlist = #
         # Random user (from guestlist) attempts to deposit 1 and then all tokens
@@ -416,11 +415,11 @@ def test_deposit_withdraw_flow(setup):
         # Check balance of user within wrapper
         assert setup.wrapper.totalWrapperBalance(randomUser2.address) == 0.5e18
 
-        assert setup.wrapper.totalVaultBalance(setup.wrapper.address) == 10.5e18
+        assert setup.wrapper.totalVaultBalance(setup.wrapper.address) == 11.5e18
 
         # mockToken balance of vault equals to net amount
-        assert setup.vault.totalAssets() == 10.5e18
-        assert setup.wrapper.totalAssets() == 10.5e18
+        assert setup.vault.totalAssets() == 11.5e18
+        assert setup.wrapper.totalAssets() == 11.5e18
 
         # wrapper shares are burned for withdrawer and vault shares are still 0 for withdrawer
         assert setup.vault.balanceOf(randomUser2.address) == 0
@@ -438,15 +437,21 @@ def test_deposit_withdraw_flow(setup):
         # Check balance of user within wrapper
         assert setup.wrapper.totalWrapperBalance(randomUser1.address) == 0
 
-        assert setup.wrapper.totalVaultBalance(setup.wrapper.address) == 0.5e18
+        assert setup.wrapper.totalVaultBalance(setup.wrapper.address) == 1.5e18
 
         # mockToken balance of vault equals to net amount
-        assert setup.vault.totalAssets() == 0.5e18
-        assert setup.wrapper.totalAssets() == 0.5e18
+        assert setup.vault.totalAssets() == 1.5e18
+        assert setup.wrapper.totalAssets() == 1.5e18
 
         # wrapper shares are burnt for withdrawer and vault shares are still 0 for withdrawer
         assert setup.vault.balanceOf(randomUser1.address) == 0
         assert setup.wrapper.balanceOf(randomUser1.address) == 0
+
+        setup.wrapper.withdraw({"from": randomUser3})
+        print("-- 3rd User withdraws 1 --")
+        print("Wrapper's PPS:", setup.wrapper.pricePerShare())
+        print("Vault's PPS:", setup.vault.pricePerShare())
+        assert setup.mockToken.balanceOf(randomUser3.address) == 10e18
 
         # = User 3: Has 10 Tokens, 0 bvyWBTC token, withdraws 1 = #
         # Random user attempts to withdraw 1 token
@@ -489,8 +494,9 @@ def test_depositFor_withdraw_flow(setup):
     # Disable experimental mode
     setup.wrapper.disableExperimentalMode({"from": deployer})
 
-    # Approve wrapper as spender of mockToken for user
+    # Approve wrapper as spender of mockToken for users
     setup.mockToken.approve(setup.wrapper.address, 100e18, {"from": randomUser2})
+    setup.mockToken.approve(setup.wrapper.address, 100e18, {"from": randomUser3})
 
     # total amount of tokens deposited through wrapper = 0
     assert setup.wrapper.totalVaultBalance(setup.wrapper.address) == 0
@@ -551,6 +557,29 @@ def test_depositFor_withdraw_flow(setup):
 
     # mockToken balance of User 2 is 18 (20 - 2 = 18)
     assert setup.mockToken.balanceOf(randomUser2.address) == 18e18
+
+    # === depositFor wihout merkle verification === #
+
+    # Add merkleRoot to Guestlist for verification
+    setup.guestlist.setGuestRoot(merkleRoot)
+
+    # User 3 (not guestlist) deposits on behalf of User 2 without proof and reverts
+    with brownie.reverts():
+        setup.wrapper.depositFor(randomUser2.address, 1e18, {'from': randomUser3})
+
+    # Remove merkle proof verification from Gueslist
+    setup.guestlist.setGuestRoot('0x0')
+
+    # User 3 (not on guestlist) deposits on behalf of User 2 without proof 
+    setup.wrapper.depositFor(randomUser2.address, 1e18, {'from': randomUser3})
+
+    # total wrapper balance of User 1 = 0 and User 2 = 1
+    assert setup.wrapper.totalWrapperBalance(randomUser2.address) == 1e18
+    assert setup.wrapper.totalWrapperBalance(randomUser3.address) == 0
+
+    # Wrapper shares are created only for receipient (User 1)
+    assert setup.wrapper.balanceOf(randomUser2.address) == 1e18
+    assert setup.wrapper.balanceOf(randomUser3.address) == 0
 
 #@pytest.mark.skip()
 def test_deposit_withdraw_fees_flow(setup):
