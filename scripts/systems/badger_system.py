@@ -1,4 +1,7 @@
 import json
+import os
+from eth_abi import encode_abi
+from web3 import Web3
 from enum import Enum
 
 from brownie import *
@@ -14,7 +17,7 @@ from helpers.sett.strategy_registry import (name_to_artifact,
 from helpers.time_utils import days
 from rich.console import Console
 from scripts.systems.claw_system import ClawSystem
-from scripts.systems.constants import SettType
+from scripts.systems.constants import SettType, TIMELOCK_DIR
 from scripts.systems.digg_system import DiggSystem, connect_digg
 from scripts.systems.gnosis_safe_system import connect_gnosis_safe
 from scripts.systems.sett_system import deploy_controller, deploy_strategy
@@ -227,6 +230,8 @@ def connect_badger(
         badger.connect_community_pool(badger_deploy["communityPool"])
     if "daoBadgerTimelock" in badger_deploy:
         badger.connect_dao_badger_timelock(badger_deploy["daoBadgerTimelock"])
+    if "timelock" in badger_deploy:
+        badger.connect_governance_timelock(badger_deploy["timelock"])
     if "badgerRewardsManager" in badger_deploy:
         badger.connect_rewards_manager(badger_deploy["badgerRewardsManager"])
     if "unlockScheduler" in badger_deploy:
@@ -402,7 +407,7 @@ class BadgerSystem:
         rewards=None,
         proxyAdmin=None,
         deployer=None
-    ):  
+    ):
 
         if not deployer:
             deployer = self.deployer
@@ -584,7 +589,7 @@ class BadgerSystem:
         sett_type=SettType.DEFAULT,
         deployer=None,
         proxyAdmin=None
-    ):  
+    ):
         if not deployer:
             deployer = self.deployer
         if not proxyAdmin:
@@ -913,17 +918,81 @@ class BadgerSystem:
             {"from": self.deployer},
         )
 
-    def upgrade_sett(self, id, newLogic):
+    # NB: Min gov timelock delay is 2 days.
+    def queue_upgrade_sett(self, id, newLogic, delay=2*days(2)) -> str:
         sett = self.getSett(id)
+
+        target = self.devProxyAdmin.address
+        signature = "upgrade(address,address)"
+        #data = self.devProxyAdmin.upgrade.encode_input(sett, newLogic)
+        data = encode_abi(["address", "address"], [sett.address, newLogic.address])
+        eta = web3.eth.getBlock('latest')['timestamp'] + delay
+
+        return self.governance_queue_transaction(target, signature, data, eta)
+
+    def governance_queue_transaction(self, target, signature, data, eta, eth=0) -> str:
         multi = GnosisSafe(self.devMultisig)
         id = multi.addTx(
-            MultisigTxMetadata(description="Upgrade timelock"),
+            MultisigTxMetadata(description="Queue timelock transaction"),
             {
-                "to": self.proxyAdmin.address,
-                "data": self.proxyAdmin.upgrade.encode_input(sett, newLogic),
+                "to": self.governanceTimelock.address,
+                "data": self.governanceTimelock.queueTransaction.encode_input(
+                    target,
+                    eth,
+                    signature,
+                    data,
+                    eta,
+                ),
             },
         )
-        tx = multi.executeTx(id)
+        multi.executeTx(id)
+
+        txHash = Web3.solidityKeccak([
+            "address",
+            "uint256",
+            "string",
+            "bytes",
+            "uint256",
+        ], [
+            target,
+            eth,
+            signature,
+            data,
+            eta,
+        ]).hex()
+
+        txFilename = "{}.json".format(txHash)
+        with open(os.path.join(TIMELOCK_DIR, txFilename), "w") as f:
+            # Dump tx data to timelock pending tx dir.
+            txData = {
+                "target": target,
+                "eth": eth,
+                "signature": signature,
+                "data": data.hex(),
+                "eta": eta,
+            }
+            f.write(json.dumps(txData, indent=4, sort_keys=True))
+        return txFilename
+
+    def governance_execute_transaction(self, txFilename):
+        multi = GnosisSafe(self.devMultisig)
+
+        with open(os.path.join(TIMELOCK_DIR, txFilename), "r") as f:
+            txData = json.load(f)
+            id = multi.addTx(
+                MultisigTxMetadata(description="Execute timelock transaction"),
+                {
+                    "to": self.governanceTimelock.address,
+                    "data": self.governanceTimelock.executeTransaction.encode_input(
+                        txData["target"],
+                        txData["eth"],
+                        txData["signature"],
+                        txData["data"],
+                        txData["eta"],
+                    ),
+                },
+            )
+            multi.executeTx(id)
 
     # ===== Connectors =====
     def connect_sett_system(self, sett_system, geysers=None):
@@ -933,7 +1002,9 @@ class BadgerSystem:
 
         # Connect Setts
         for key, address in sett_system["vaults"].items():
-            artifactName = sett_system["vault_artifacts"][key]
+            artifactName = "Sett"
+            if "vault_artifacts" in sett_system:
+                artifactName = sett_system["vault_artifacts"][key]
             self.connect_sett(key, address, settArtifactName=artifactName)
 
         # Connect Strategies
@@ -1002,6 +1073,9 @@ class BadgerSystem:
     def connect_dao_badger_timelock(self, address):
         self.daoBadgerTimelock = SimpleTimelock.at(address)
         self.track_contract_upgradeable("daoBadgerTimelock", self.daoBadgerTimelock)
+
+    def connect_governance_timelock(self, address):
+        self.governanceTimelock = GovernanceTimelock.at(address)
 
     def connect_rewards_manager(self, address):
         self.badgerRewardsManager = BadgerRewardsManager.at(address)
@@ -1130,7 +1204,7 @@ class BadgerSystem:
 
     def getStrategyArtifactName(self, id):
         return self.strategy_artifacts[id]["artifactName"]
-    
+
     def getSeeder(self):
         """
         Return seeder account
