@@ -127,11 +127,7 @@ contract SettV1 is ERC20Upgradeable, SettAccessControlDefended {
 
         // Lock for recipient so receiver cannot perform any other actions within the block.
         _lockForBlock(recipient);
-        uint256 before = super.totalSupply();
-        _deposit(_amount);
-        uint256 amount = super.totalSupply().sub(before);
-        // Transfer minted amount to recipient.
-        require(super.transfer(recipient, amount), "failed to transfer");
+        _depositFor(recipient, _amount);
     }
 
     /// @notice Convenience function: Deposit entire balance of asset into the Sett, and return corresponding shares to the user
@@ -210,9 +206,14 @@ contract SettV1 is ERC20Upgradeable, SettAccessControlDefended {
 
     /// ===== Internal Implementations =====
 
+    // @dev deposit for msg.sender
+    function _deposit(uint256 _amount) internal {
+        _depositFor(msg.sender, _amount);
+    }
+
     /// @dev Calculate the number of shares to issue for a given deposit
     /// @dev This is based on the realized value of underlying assets between Sett & associated Strategy
-    function _deposit(uint256 _amount) internal {
+    function _depositFor(address recipient, uint256 _amount) internal {
         uint256 _pool = balance();
         uint256 _before = token.balanceOf(address(this));
         token.safeTransferFrom(msg.sender, address(this), _amount);
@@ -224,7 +225,7 @@ contract SettV1 is ERC20Upgradeable, SettAccessControlDefended {
         } else {
             shares = (_amount.mul(totalSupply())).div(_pool);
         }
-        _mint(msg.sender, shares);
+        _mint(recipient, shares);
     }
 
     // No rebalance implementation for lower fees and faster swaps

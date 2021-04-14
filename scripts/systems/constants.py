@@ -5,3 +5,5 @@ from enum import Enum
 class SettType(Enum):
     DEFAULT = 1
     DIGG = 2
+
+TIMELOCK_DIR = "timelock"
