@@ -865,14 +865,21 @@ def test_migrate_amount_margin_flow(setup):
     # VaultV2 should have 0 mockTokens
     assert vaultV2.totalAssets() == 0
 
+    affiliateBalanceBefore = setup.mockToken.balanceOf(setup.wrapper.affiliate())
+
     # Migrate: should transfer given amount from Vault to VaultV2 with loss margin
     setup.wrapper.migrate(5e18, 1e18)
+
+    affiliateBalanceAfter = setup.mockToken.balanceOf(setup.wrapper.affiliate())
 
     # Vault should have 0 mockTokens
     assert setup.vault.totalAssets() == 15e18
 
     # VaultV2 should have 10 mockTokens
     assert vaultV2.totalAssets() == 5e18
+
+    # Affiliate token balance should not change
+    assert affiliateBalanceAfter == affiliateBalanceBefore
 
 #@pytest.mark.skip()
 def test_experimental_mode(setup):

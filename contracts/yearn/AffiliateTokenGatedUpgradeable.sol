@@ -424,8 +424,6 @@ contract AffiliateTokenGatedUpgradeable is ERC20Upgradeable, BaseWrapperUpgradea
         if (receiver != address(this)) token.safeTransfer(receiver, withdrawn);
     }
 
-    
-
     // Require that difference between expected and actual values is less than the deviation threshold percentage
     function _verifyWithinMaxDeviationThreshold(uint256 actual, uint256 expected) internal view {
         uint256 diff = _diff(expected, actual);
