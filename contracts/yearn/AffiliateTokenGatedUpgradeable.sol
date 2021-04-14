@@ -257,7 +257,7 @@ contract AffiliateTokenGatedUpgradeable is ERC20Upgradeable, BaseWrapperUpgradea
     }
 
     function withdraw(uint256 shares) public whenNotPaused returns (uint256 withdrawn) {
-        withdrawn = _withdraw(address(this), msg.sender, _shareValue(shares), true); // `true` = withdraw from `bestVault`
+        withdrawn = _withdraw(address(this), msg.sender, _shareValue(shares), true, true, true); // `true` = withdraw from `bestVault`
         _burn(msg.sender, shares);
 
         // emit Withdraw(msg.sender, toReceiver);
@@ -320,12 +320,17 @@ contract AffiliateTokenGatedUpgradeable is ERC20Upgradeable, BaseWrapperUpgradea
         _unpause();
     }
 
+    
+    /// @dev Variant with withdrawal fee and verification of max loss. Used in withdraw functions. 
+    /// @dev Migrate functions use the variant from BaseWrapper without these features.
     function _withdraw(
         address sender,
         address receiver,
         uint256 amount, // if `MAX_UINT256`, just withdraw everything
-        bool withdrawFromBest // If true, also withdraw from `_bestVault`
-    ) internal override returns (uint256 withdrawn) {
+        bool withdrawFromBest, // If true, also withdraw from `_bestVault`
+        bool processWithdrawalFee, // If true, process withdrawal fee to affiliate
+        bool verifyMaxLoss // If true, ensure that the amount is within an expected range based on withdrawalMaxDeviationThreshold 
+    ) internal virtual returns (uint256 withdrawn) {
         VaultAPI _bestVault = bestVault();
 
         VaultAPI[] memory vaults = allVaults();
@@ -407,7 +412,7 @@ contract AffiliateTokenGatedUpgradeable is ERC20Upgradeable, BaseWrapperUpgradea
         }
 
         // Process withdrawal fee
-        if (withdrawalFee > 0) {
+        if (withdrawalFee > 0 && processWithdrawalFee) {
             uint256 withdrawalToAffiliate = withdrawn.mul(withdrawalFee).div(MAX_BPS);
             withdrawn = withdrawn.sub(withdrawalToAffiliate);
 
@@ -418,6 +423,8 @@ contract AffiliateTokenGatedUpgradeable is ERC20Upgradeable, BaseWrapperUpgradea
         // `receiver` now has `withdrawn` tokens as balance
         if (receiver != address(this)) token.safeTransfer(receiver, withdrawn);
     }
+
+    
 
     // Require that difference between expected and actual values is less than the deviation threshold percentage
     function _verifyWithinMaxDeviationThreshold(uint256 actual, uint256 expected) internal view {
