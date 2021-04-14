@@ -100,12 +100,13 @@ abstract contract BaseWrapperUpgradeable is Initializable {
         }
     }
 
+    //note. sometimes when we deposit we "lose" money. Therefore our amount needs to be adjusted to reflect the true pricePerShare we received
     function _deposit(
         address depositor,
         address receiver,
         uint256 amount, // if `MAX_UINT256`, just deposit everything
         bool pullFunds // If true, funds need to be pulled from `depositor` via `transferFrom`
-    ) internal returns (uint256 deposited) {
+    ) internal returns (uint256 virtualDeposited, uint256 deposited) {
         VaultAPI _bestVault = bestVault();
 
         if (pullFunds) {
@@ -126,13 +127,16 @@ abstract contract BaseWrapperUpgradeable is Initializable {
         //       number of shares credited, which helps avoid an occasional multiplication
         //       overflow if trying to adjust the number of shares by the share price.
         uint256 beforeBal = token.balanceOf(address(this));
+        uint256 received;
         if (receiver != address(this)) {
-            _bestVault.deposit(amount, receiver);
+            received = _bestVault.deposit(amount, receiver);
         } else if (amount != DEPOSIT_EVERYTHING) {
-            _bestVault.deposit(amount);
+            received = _bestVault.deposit(amount);
         } else {
-            _bestVault.deposit();
+            received = _bestVault.deposit();
         }
+
+        virtualDeposited = received.mul(_bestVault.pricePerShare()).div(10 ** _bestVault.decimals());
 
         uint256 afterBal = token.balanceOf(address(this));
         deposited = beforeBal.sub(afterBal);
@@ -256,7 +260,7 @@ abstract contract BaseWrapperUpgradeable is Initializable {
             if (withdrawn == 0) return 0; // Nothing to migrate (not a failure)
 
             // NOTE: `false` = don't do `transferFrom` because it's already local
-            migrated = _deposit(address(this), account, withdrawn, false);
+            (,migrated) = _deposit(address(this), account, withdrawn, false);
             // NOTE: Due to the precision loss of certain calculations, there is a small inefficency
             //       on how migrations are calculated, and this could lead to a DoS issue. Hence, this
             //       value is made to be configurable to allow the user to specify how much is acceptable
