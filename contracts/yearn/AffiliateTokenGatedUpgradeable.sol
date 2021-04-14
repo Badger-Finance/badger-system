@@ -260,8 +260,7 @@ contract AffiliateTokenGatedUpgradeable is ERC20Upgradeable, BaseWrapperUpgradea
         withdrawn = _withdraw(address(this), msg.sender, _shareValue(shares), true, true, true); // `true` = withdraw from `bestVault`
         _burn(msg.sender, shares);
 
-        // emit Withdraw(msg.sender, toReceiver);
-        // emit WithdrawalFee(affiliate, fee);
+        emit Withdraw(msg.sender, withdrawn);
         emit Burn(msg.sender, shares);
     }
 
