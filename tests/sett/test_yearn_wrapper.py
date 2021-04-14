@@ -1102,4 +1102,46 @@ def test_gustlist_authentication(setup):
         setup.wrapper.deposit(1e18, [], {'from': randomUser3})
     assert setup.wrapper.totalWrapperBalance(randomUser3.address) == 0
 
+#@pytest.mark.skip()
+def test_initial_deposit_conditions(setup):
+    randomUser1 = setup.namedAccounts['randomUser1']
+    randomUser2 = setup.namedAccounts['randomUser2']
+    randomUser3 = setup.namedAccounts['randomUser3']
+    deployer = setup.namedAccounts['deployer']
 
+    setup.mockToken.approve(setup.wrapper.address, 100e18, {"from": randomUser2})
+    setup.mockToken.approve(setup.wrapper.address, 100e18, {"from": randomUser1})
+
+    # Remove merkle proof verification from Gueslist
+    setup.guestlist.setGuestRoot('0x0')
+
+    # Link guestlist to wrapper
+    setup.wrapper.setGuestList(setup.guestlist.address, {"from": deployer})
+
+    # Disable experimental mode
+    setup.wrapper.disableExperimentalMode({"from": deployer})
+
+    # Set max deviation threshold
+    setup.wrapper.setWithdrawalMaxDeviationThreshold(DEVIATION_MAX)
+
+    # Deploying new version of vault
+    vaultPPS = deployer.deploy(YearnTokenVault_PPS)
+    vaultPPS.initialize(
+        setup.mockToken.address, deployer.address, AddressZero, "YearnWBTCV2", "vyWBTCV2"
+    )
+    vaultPPS.setDepositLimit(24e18)
+    # Set a PPS > 1 for the underlying vault
+    vaultPPS.setPricePerShare(1.1e18)
+
+    assert vaultPPS.pricePerShare() == 1.1e18
+
+    # Add vault to registry
+    setup.yearnRegistry.newRelease(vaultPPS.address)
+    setup.yearnRegistry.endorseVault(vaultPPS.address)
+
+    # Check that vaultPPS is current 'bestVault'
+    assert setup.wrapper.bestVault() == vaultPPS.address
+
+    # User 2 deposits another 5 tokens into new vault should revert because PPS > 1
+    with brownie.reverts():
+        setup.wrapper.deposit(5e18, [], {"from": randomUser2})
