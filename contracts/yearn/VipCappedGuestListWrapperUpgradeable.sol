@@ -30,12 +30,14 @@ contract VipCappedGuestListWrapperUpgradeable is OwnableUpgradeable {
 
     bytes32 public guestRoot;
     uint256 public userDepositCap;
+    uint256 public totalDepositCap;
 
     mapping(address => bool) public guests;
 
     event ProveInvitation(address indexed account, bytes32 indexed guestRoot);
     event SetGuestRoot(bytes32 indexed guestRoot);
     event SetUserDepositCap(uint256 cap);
+    event SetTotalDepositCap(uint256 cap);
 
     /**
      * @notice Create the test guest list, setting the message sender as
@@ -58,11 +60,19 @@ contract VipCappedGuestListWrapperUpgradeable is OwnableUpgradeable {
         _setGuests(_guests, _invited);
     }
 
+    function vaultBalance(address account) public view returns (uint256) {
+        return BadgerWrapperAPI(wrapper).totalVaultBalance(account);
+    }
+
     function wrapperBalance(address user) public view returns (uint256) {
         return BadgerWrapperAPI(wrapper).totalWrapperBalance(user);
     }
 
-    function remainingDepositAllowed(address user) public view returns (uint256) {
+    function remainingTotalDepositAllowed() public view returns (uint256) {
+        return totalDepositCap.sub(vaultBalance(wrapper));
+    }
+
+    function remainingUserDepositAllowed(address user) public view returns (uint256) {
         return userDepositCap.sub(wrapperBalance(user));
     }
 
@@ -97,14 +107,16 @@ contract VipCappedGuestListWrapperUpgradeable is OwnableUpgradeable {
         emit SetGuestRoot(guestRoot);
     }
 
-    /**
-     * @notice Set the merkle root to verify invitation proofs against.
-     * @notice Note that accounts not included in the root will still be invited if their inviation was previously approved.
-     */
     function setUserDepositCap(uint256 cap_) external onlyOwner {
         userDepositCap = cap_;
 
         emit SetUserDepositCap(userDepositCap);
+    }
+
+    function setTotalDepositCap(uint256 cap_) external onlyOwner {
+        totalDepositCap = cap_;
+
+        emit SetTotalDepositCap(totalDepositCap);
     }
 
     /**
@@ -132,7 +144,7 @@ contract VipCappedGuestListWrapperUpgradeable is OwnableUpgradeable {
         }
 
         // If the user was previously invited, or proved invitiation via list, verify if the amount to deposit keeps them under the cap
-        if (invited && remainingDepositAllowed(_guest) >= _amount) {
+        if (invited && remainingUserDepositAllowed(_guest) >= _amount && remainingTotalDepositAllowed() >= _amount) {
             return true;
         } else {
             return false;
