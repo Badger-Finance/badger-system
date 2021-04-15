@@ -1,4 +1,5 @@
 from brownie.network import web3
+from brownie.network.account import Account
 from scripts.systems.badger_system import connect_badger
 from time import time 
 from datetime import datetime
@@ -28,7 +29,7 @@ def __get_data__(logger_address: str, start: int, end: int):
   return result
 
 
-def fetch_salaries(manager: str, logger_address: str, test=False):
+def fetch_salaries(manager: Account, logger_address: str, test=False):
   with open('build/contracts/ContributorLogger.json') as f:
     logger_abi = json.load(f)['abi']
 

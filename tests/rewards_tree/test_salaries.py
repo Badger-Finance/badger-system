@@ -37,7 +37,7 @@ def test_salaries(setup):
     loggerContract.initialize(admin, admin, manager)
 
     # salary period ends in the future
-    console.print('Testing a salary period that ends after the check is made')
+    console.print('\n[yellow]Testing a salary period that ends after the check is made[/yellow]')
     now = int(time()) + 1
     first_entry = {
       'recipient': accounts[2].address,
@@ -77,7 +77,7 @@ def test_salaries(setup):
     sleep(wait_time + 1)
 
     # checking after salary time ended
-    console.print('Testing that salary is correct after full period has elapsed')
+    console.print('[yellow]Testing that salary is correct after full period has elapsed[/yellow]')
     salary_json_filename = fetch_salaries(manager, loggerContract.address, True)
 
     with open(salary_json_filename) as f:
@@ -94,7 +94,7 @@ def test_salaries(setup):
     assert expected_value1 + expected_value2 == first_entry['amount']
 
     # multiple salaries in the same time period
-    console.print('Testing two salaries overlapping each other')
+    console.print('[yellow]Testing two salaries overlapping each other[/yellow]')
     now1 = int(time()) + 1
     first_entry = {
       'recipient': accounts[2].address,
@@ -153,7 +153,7 @@ def test_salaries(setup):
     assert (expected_value1 == payouts[0] or expected_value1 == payouts[1] or expected_value1 == payouts[2])
 
     # after 5 more seconds there should only be one salary entry
-    console.print('Testing after the first period has ended')
+    console.print('[yellow]Testing after the first period has ended[/yellow]')
     last_paid_timestamp = loggerContract.lastPaidTimestamp()
     wait_time = 5
     sleep(wait_time)
@@ -171,7 +171,7 @@ def test_salaries(setup):
     assert expected_value1 + expected_value2 == second_entry['amount']
 
     # should be no more entries when called again
-    console.print('Testing with no more salaries to be paid out')
+    console.print('[yellow]Testing with no more salaries to be paid out[/yellow]')
     wait_time = 1
     sleep(wait_time)
 
@@ -182,7 +182,7 @@ def test_salaries(setup):
     assert salary_json == {}
 
     # unlimited length salary period
-    console.print('Testing a salary period that lasts forever')
+    console.print('[yellow]Testing a salary period that lasts forever[/yellow]')
     now = int(time()) + 1
     infinite_entry = {
       'recipient': accounts[3].address,
@@ -222,7 +222,7 @@ def test_salaries(setup):
     assert (expected_value1 == payouts[0] or expected_value1 == payouts[1] or expected_value1 == payouts[2])
 
     # update entry
-    console.print('Testing updating salary period')
+    console.print('[yellow]Testing updating salary period[/yellow]')
     infinite_entry_updated = {
       'recipient': infinite_entry['recipient'],
       'token': infinite_entry['token'],
@@ -258,7 +258,7 @@ def test_salaries(setup):
     assert (expected_value1 == payouts[0] or expected_value1 == payouts[1] or expected_value1 == payouts[2])
 
     # delete an entry
-    console.print('Testing deletion')
+    console.print('[yellow]Testing deletion[/yellow]')
 
     loggerContract.deleteEntry(id, { 'from': manager })
 
