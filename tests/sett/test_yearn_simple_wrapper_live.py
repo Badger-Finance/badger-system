@@ -17,7 +17,6 @@ WITHDRAWAL_FEE = 50
 DEVIATION_MAX = 50
 
 TOLERANCE = 11
-WITHDRAWN_TOLERANCE = 1e5
 
 @pytest.fixture(scope="module", autouse=True)
 def setup(SimpleWrapperGatedUpgradeable, YearnRegistry, VipCappedGuestListWrapperUpgradeable):
@@ -442,7 +441,8 @@ def test_deposit_withdraw_flow(setup):
     with brownie.reverts():
         setup.wrapper.withdraw(1e8, {"from": randomUser3})
     # User's token balance remains the same 
-    assert abs(setup.wbtc.balanceOf(randomUser3.address) - 10e8) <= WITHDRAWN_TOLERANCE
+    assert abs(setup.wbtc.balanceOf(randomUser3.address) - 10e8) <= TOLERANCE
+    assert setup.wbtc.balanceOf(randomUser3.address) <= 10e8
 
     chain.sleep(86400)
     chain.mine(1)
