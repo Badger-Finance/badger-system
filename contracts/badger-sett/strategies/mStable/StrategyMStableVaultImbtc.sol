@@ -4,4 +4,9 @@ pragma experimental ABIEncoderV2;
 
 import "./StrategyMStableVaultBase.sol";
 
-contract StrategyMStableVaultImbtc is StrategyMStableVaultBase {}
+/// @title  StrategyMStableVaultImbtc
+/// @author mStable
+/// @notice Strategy utilising mStable interest bearing BTC
+contract StrategyMStableVaultImbtc is StrategyMStableVaultBase {
+
+}

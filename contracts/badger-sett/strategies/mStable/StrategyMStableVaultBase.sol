@@ -4,54 +4,71 @@ pragma experimental ABIEncoderV2;
 
 import "deps/@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import "deps/@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
-import "deps/@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "deps/@openzeppelin/contracts-upgradeable/token/ERC20/SafeERC20Upgradeable.sol";
 
 import "interfaces/mStable/IMStableAsset.sol";
 import "interfaces/mStable/IMStableBoostedVault.sol";
-import "interfaces/uniswap/IUniswapRouterV2.sol";
-import "./IMStableVoterProxy.sol";
+import "interfaces/mStable/IMStableVoterProxy.sol";
 
 import "interfaces/badger/IController.sol";
-import "interfaces/badger/IMintr.sol";
-import "interfaces/badger/IStrategy.sol";
 import "../BaseStrategy.sol";
 
+/// @title  StrategyMStableVaultBase
+/// @author mStable
+/// @notice Base Strategy for all mStable Vaults.
+/// @dev    mStable has yield bearing LP tokens and gives MTA rewards via mStable Vaults. 33% of
+///         rewards are unlocked immediately and 67% are vested over 6 months (on chain). These MTA rewards
+///         can be boosted up to 3x by staking in mStable MTA Staking contract (this boost applies to all vaults).
+///         This MTA staking contract also gives out MTA.
+///         mStable strategies follow the same flow in which the 33% immediate unlock is converted back into the LP
+///         token, and re-deposited into the Vault, making it a compounding interest. The 67% unlock is distributed
+///         in MTA terms via the BadgerTree (awarding to users active 6 months ago). Before these distributions, %
+///         of all MTA earned is taken and staked to boost the rewards and earn more MTA yield.
+///         Deposits to the mStable vaults go via the VoterProxy. This proxy:
+///          - manages the lock in the MTA staking contract
+///          - earns APY on staked MTA
+///          - boost rewards in vault deposits
+///          - vote on proposals on the mStableDAO (after the next version of staking comes that allows vote delegation)
 contract StrategyMStableVaultBase is BaseStrategy {
     using SafeERC20Upgradeable for IERC20Upgradeable;
-    using AddressUpgradeable for address;
     using SafeMathUpgradeable for uint256;
 
-    // TODO - remove config if unused
     address public vault; // i.e. imBTC BoostedSavingsVault
     address public voterProxy; // MStableVoterProxy
     address public lpComponent; // i.e. wBTC, sBTC, renBTC, HBTC
+    address public badgerTree; // redistributor address
 
     address public constant mta = 0xa3BeD4E1c75D00fa6f4E5E6922DB7261B5E9AcD2; // MTA token
     address public constant weth = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2; // Weth Token, used for mta -> weth -> lpComponent route
-    address public constant wbtc = 0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599; // Wbtc Token
 
-    uint256 public govMta;
-    address public badgerTree;
+    uint256 public govMta; // % of MTA returned to VoterProxy
 
-    // TODO - change output
+    event GovMtaSet(uint256 govMta);
+
     event MStableHarvest(
-        uint256 mtaHarvested,
-        uint256 mtaVested,
-        uint256 govMta,
-        uint256 toGovernance,
-        uint256 toStrategist,
-        uint256 toBadgerTree
+        uint256 mtaTotal,
+        uint256 mtaSentToVoterProxy,
+        uint256 mtaRecycledToWant,
+        uint256 lpComponentPurchased,
+        uint256 wantProcessed,
+        uint256[2] wantFees,
+        uint256 wantDeposited,
+        uint256 mtaPostVesting,
+        uint256[2] mtaFees,
+        uint256 mtaPostVestingSentToBadgerTree
     );
 
-    // TODO - change output
     struct HarvestData {
-        uint256 mtaHarvested;
-        uint256 mtaVested;
-        uint256 govMta;
-        uint256 toGovernance;
-        uint256 toStrategist;
-        uint256 toBadgerTree;
+        uint256 mtaTotal; // Total units farmed from vault (immediate + vested), before fees
+        // mtaTotal == mtaSentToVoterProxy + mtaRecycledToWant + mtaPostVesting
+        uint256 mtaSentToVoterProxy; // Units sent back to VoterProxy to be reinvested
+        uint256 mtaRecycledToWant; // MTA recycled back to want for compounding, after deducting voterProxy
+        uint256 lpComponentPurchased; // LP components purchased from MTA
+        uint256 wantProcessed; // Output from mint
+        uint256[2] wantFees; // Units deposited back into vault
+        uint256 mtaPostVesting; // MTA earned post vesting, after deducting voterProxy
+        uint256[2] mtaFees; // Fees taken from the post-vesting MTA
+        uint256 mtaPostVestingSentToBadgerTree; // Post-vesting MTA units sent to BadgerTree for distribution
     }
 
     function initialize(
@@ -65,9 +82,7 @@ contract StrategyMStableVaultBase is BaseStrategy {
     ) public initializer {
         __BaseStrategy_init(_governance, _strategist, _controller, _keeper, _guardian);
 
-        // TODO - clean import lists based on strategy chosen
-        // TODO - remove config if unused
-        want = _wantConfig[0]; // mAsset
+        want = _wantConfig[0];
         vault = _wantConfig[1];
         voterProxy = _wantConfig[2];
         lpComponent = _wantConfig[3];
@@ -76,7 +91,7 @@ contract StrategyMStableVaultBase is BaseStrategy {
         performanceFeeGovernance = _feeConfig[0];
         performanceFeeStrategist = _feeConfig[1];
         withdrawalFee = _feeConfig[2];
-        govMta = _feeConfig[3]; // 1000
+        govMta = _feeConfig[3];
 
         _safeApproveHelper(lpComponent, want, type(uint256).max);
     }
@@ -91,7 +106,9 @@ contract StrategyMStableVaultBase is BaseStrategy {
         return "1.0";
     }
 
+    /// @dev Reads the balance of VoterProxy directly from the vault rather than calling the VoterProxy
     function balanceOfPool() public override view returns (uint256) {
+        // rawBalanceOf returns units of want owned by voterProxy in vault
         return IMStableBoostedVault(vault).rawBalanceOf(voterProxy);
     }
 
@@ -105,9 +122,15 @@ contract StrategyMStableVaultBase is BaseStrategy {
 
     /// ===== Permissioned Actions: Governance =====
 
-    function setgovMta(uint256 _govMta) external {
+    /// @notice Sets the % of accrued MTA rewards that are reinvested to VoterProxy
+    /// @param _govMta  % of MTA to return, where 1% == 100 and 100% == 10000
+    function setGovMta(uint256 _govMta) external {
         _onlyGovernance();
+        require(_govMta < MAX_FEE, "Invalid rate");
+
         govMta = _govMta;
+
+        emit GovMtaSet(_govMta);
     }
 
     /// ===== Internal Core Implementations =====
@@ -118,15 +141,20 @@ contract StrategyMStableVaultBase is BaseStrategy {
         require(mta != _asset, "mta");
     }
 
+    /// @dev Deposits an amount of want to the mStable vault via the VoterProxy
+    /// @param _want Units of want to transfer to VoterProxy and deposit to the vault
     function _deposit(uint256 _want) internal override {
         IERC20Upgradeable(want).transfer(voterProxy, _want);
         IMStableVoterProxy(voterProxy).deposit(_want);
     }
 
+    /// @dev Withdraws all units of want from the vault via the VoterProxy
     function _withdrawAll() internal override {
         IMStableVoterProxy(voterProxy).withdrawAll();
     }
 
+    /// @dev Withdraws a certain number of want units from the vault via the VoterProxy
+    /// @param _amount Units of want to withdraw
     function _withdrawSome(uint256 _amount) internal override returns (uint256) {
         IMStableVoterProxy(voterProxy).withdrawSome(_amount);
         return _amount;
@@ -138,25 +166,33 @@ contract StrategyMStableVaultBase is BaseStrategy {
 
         HarvestData memory harvestData;
 
+        // Step 1: Claim new rewards from the vault via VoterProxy
         uint256 _wantBefore = IERC20Upgradeable(want).balanceOf(address(this));
-
-        // Harvest from Vault
-        uint256 _mtaVested = IMStableVoterProxy(voterProxy).claim();
+        // _mtaVested shows the units of MTA that have been claimed, after passing their 6 month vesting period
+        (, uint256 _mtaVested) = IMStableVoterProxy(voterProxy).claim();
+        // Any MTA in this contract is assumed to be freshly claimed
         harvestData.mtaTotal = IERC20Upgradeable(mta).balanceOf(address(this));
 
-        // Step 1: Send a percentage of MTA back to voterProxy for reinvestment
+        // Step 2: Send a percentage of all MTA back to voterProxy for reinvestment
+        // e.g. 9e18 * 1000 / 10000 = 9e17
         harvestData.mtaSentToVoterProxy = harvestData.mtaTotal.mul(govMta).div(MAX_FEE);
         IERC20Upgradeable(mta).safeTransfer(voterProxy, harvestData.mtaSentToVoterProxy);
 
-        // Step 2: send Post-vesting rewards to BadgerTree
+        // Step 3: Send Post-vesting rewards to BadgerTree
+        // mtaPostVesting = vestedMTA - govFee = vestedMTA * (1-govFee) / maxFee
+        // e.g. 6e18 * 9000 / 10000 = 54e16
         harvestData.mtaPostVesting = _mtaVested.mul(MAX_FEE.sub(govMTA)).div(MAX_FEE);
-        (harvestData.mtaFees[0], harvestData.mtaFees[1]) = _processPerformanceFees(mta, harvestData.mtaPostVesting);
-        harvestData.mtaPostVestingSentToBadgerTree = harvestData.mtaPostVesting.sub(harvestData.mtaFees[0]).sub(harvestData.mtaFees[1]);
-        IERC20Upgradeable(mta).safeTransfer(badgerTree, harvestData.mtaPostVestingSentToBadgerTree);
+        if (harvestData.mtaPostVesting > 0) {
+            (harvestData.mtaFees[0], harvestData.mtaFees[1]) = _processPerformanceFees(mta, harvestData.mtaPostVesting);
+            harvestData.mtaPostVestingSentToBadgerTree = harvestData.mtaPostVesting.sub(harvestData.mtaFees[0]).sub(harvestData.mtaFees[1]);
+            IERC20Upgradeable(mta).safeTransfer(badgerTree, harvestData.mtaPostVestingSentToBadgerTree);
+        }
 
-        // Step 3: convert remainder to LP and reinvest
+        // Step 4: convert remainder to LP and reinvest
+        // Immediately unlocked rewards = mtaTotal - govFee - mtaPostVesting
         uint256 _mta = IERC20Upgradeable(mta).balanceOf(address(this));
         harvestData.mtaRecycledToWant = _mta;
+        //      4.1: Convert MTA to LPComponent via Uniswap MTA -> WETH -> LPComponent
         if (harvestData.mtaRecycledToWant > 0) {
             address[] memory path = new address[](3);
             path[0] = mta;
@@ -164,11 +200,12 @@ contract StrategyMStableVaultBase is BaseStrategy {
             path[2] = lpComponent;
             _swap(mta, harvestData.mtaRecycledToWant, path);
         }
-        harvestData.lpComponentDeposited = IERC20Upgradeable(lpComponent).balanceOf(address(this));
-        if (harvestData.lpComponentDeposited > 0) {
-            _mintWant(lpComponent, harvestData.lpComponentDeposited);
+        //      4.2: Mint mStable Asset (want) from the lpComponent
+        harvestData.lpComponentPurchased = IERC20Upgradeable(lpComponent).balanceOf(address(this));
+        if (harvestData.lpComponentPurchased > 0) {
+            _mintWant(lpComponent, harvestData.lpComponentPurchased);
         }
-        // Take fees from LP increase, and deposit remaining into Vault
+        //      4.3: Take fees from LP increase, and deposit remaining into Vault via VoterProxy
         harvestData.wantProcessed = IERC20Upgradeable(want).balanceOf(address(this));
         if (harvestData.wantProcessed > 0) {
             (harvestData.wantFees[0], harvestData.wantFees[1]) = _processPerformanceFees(want, harvestData.wantProcessed);
@@ -181,18 +218,18 @@ contract StrategyMStableVaultBase is BaseStrategy {
             }
         }
 
-        // TODO - ensure all these are set accurately
         emit MStableHarvest(
             harvestData.mtaTotal, // Total units farmed from vault (immediate + vested), before fees
-            harvestData.mtaSentToVoterProxy, // % sent back to VoterProxy to be reinvested
-            harvestData.mtaRecycledToWant, // mta recycled back to want for compounding
-            harvestData.lpComponentDeposited,
-            harvestData.wantProcessed,
-            harvestData.wantFees,
-            harvestData.wantDeposited,
-            harvestData.mtaPostVesting, // mta earned post vesting, after deducting voterProxy fee
-            harvestData.mtaFees,
-            harvestData.mtaPostVestingSentToBadgerTree
+            // mtaTotal == mtaSentToVoterProxy + mtaRecycledToWant + mtaPostVesting
+            harvestData.mtaSentToVoterProxy, // Units sent back to VoterProxy to be reinvested
+            harvestData.mtaRecycledToWant, // MTA recycled back to want for compounding, after deducting voterProxy
+            harvestData.lpComponentPurchased, // LP components purchased from MTA
+            harvestData.wantProcessed, // Output from mint
+            harvestData.wantFees, // Fees taken from wantProcessed
+            harvestData.wantDeposited, // Units deposited back into vault
+            harvestData.mtaPostVesting, // MTA earned post vesting, after deducting voterProxy
+            harvestData.mtaFees, // Fees taken from the post-vesting MTA
+            harvestData.mtaPostVestingSentToBadgerTree // Post-vesting MTA units sent to BadgerTree for distribution
         );
         emit Harvest(harvestData.wantProcessed.sub(_wantBefore), block.number);
 
@@ -201,10 +238,17 @@ contract StrategyMStableVaultBase is BaseStrategy {
 
     /// ===== Internal Helper Functions =====
 
+    /// @dev Mints mStable Asset using a specified input and amount
+    /// @param _input Address of asset to be used in the mint
+    /// @param _amount Units of _input to mint with
     function _mintWant(address _input, uint256 _amount) internal virtual {
+        // minOut = amountIn * 0.8
         IMStableAsset(want).mint(_input, _amount, _amount.mul(80).div(100), address(this));
     }
 
+    /// @dev Processes performance fees for a particular token
+    /// @param _token Address of the token to process
+    /// @param _amount Total units of the asset that should be extracted from
     function _processPerformanceFees(address _token, uint256 _amount)
         internal
         returns (uint256 governancePerformanceFee, uint256 strategistPerformanceFee)
