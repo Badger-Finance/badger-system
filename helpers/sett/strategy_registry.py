@@ -40,6 +40,7 @@ name_to_artifact = {
     "BadgerRewardsManager": BadgerRewardsManager,
     "UnlockScheduler": UnlockScheduler,
     "AffiliateTokenGatedUpgradeable": AffiliateTokenGatedUpgradeable,
+    "VipCappedGuestListWrapperUpgradeable": VipCappedGuestListWrapperUpgradeable,
 }
 
 

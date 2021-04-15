@@ -27,8 +27,8 @@ setts_to_skip = {
     },
     "bsc": {
         "harvest": [
-            "native.pancakeBnbBtcB",
-            "native.pancakeBnbBtcb"
+            # "native.pancakeBnbBtcB",
+            # "native.pancakeBnbBtcb"
         ],
         "tend": [],
         "earn": [],

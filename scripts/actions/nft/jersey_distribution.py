@@ -210,6 +210,18 @@ recipients = [
     "0xEc4FcD1aCA723f8456999c5f5d7479Dbe9528c11",
 ]
 
+second_set = [
+    "0x42558c9b380962b6c152ec31dcf921b153c81d1a",
+    "0x70134D406cB230a5e8Aa7c2Dfa929097C6e237d3",
+    "0x06e0Fe46a6590d32377EB0D9A8AD6f9D9adFd74C",
+    "0x20943A7fBDcB4B84Ea553C13D765cD4AdAee709b",
+    "0x6E3185aD3A3cc9259C0A789a6762e551829f0843"
+]
+
+third_set = [
+    "0xA9275b17e17bfc9e11423ee19b20Ac47aD99b41B"
+]
+
 nft_id = 1
 
 def main():
@@ -220,12 +232,11 @@ def main():
     nft = safe.contract_from_abi(
         badger_nft_address, "IBadgerERC1155", interface.IBadgerERC1155.abi
     )
-    assert nft.balanceOf(badger.opsMultisig, nft_id) == 210
     assert nft.totalSupply(nft_id) == 210
 
-    print(len(recipients))
+    print(len(third_set))
 
-    for recipient in recipients:
+    for recipient in third_set:
         nft.safeTransferFrom(badger.opsMultisig.address, recipient, nft_id, 1, "0x")
         console.print(recipient, nft.balanceOf(recipient, nft_id))
         assert nft.balanceOf(recipient, nft_id) == 1
@@ -236,6 +247,4 @@ def main():
     safe.preview(safe_tx)
     data = safe.print_transaction(safe_tx)
 
-    signer = accounts.load("badger_multisig_signer")
-    print(signer.address)
     safe.post_transaction(safe_tx)
