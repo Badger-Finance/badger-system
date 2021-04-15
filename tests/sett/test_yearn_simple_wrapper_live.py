@@ -16,6 +16,9 @@ merkleRoot = yearnDistribution["merkleRoot"]
 WITHDRAWAL_FEE = 50
 DEVIATION_MAX = 50
 
+TOLERANCE = 11
+WITHDRAWN_TOLERANCE = 1e5
+
 @pytest.fixture(scope="module", autouse=True)
 def setup(SimpleWrapperGatedUpgradeable, YearnRegistry, VipCappedGuestListWrapperUpgradeable):
     # Assign accounts
@@ -273,6 +276,9 @@ def test_deposit_withdraw_flow(setup):
 
     # Link guestlist to wrapper
     setup.wrapper.setGuestList(setup.guestlist.address, {"from": deployer})
+
+    # Set total deposit cap
+    setup.guestlist.setTotalDepositCap(50e8)
         
     # === Deposit flow === #
     
@@ -281,67 +287,56 @@ def test_deposit_withdraw_flow(setup):
     setup.wbtc.approve(setup.wrapper.address, 100e8, {"from": randomUser2})
     setup.wbtc.approve(setup.wrapper.address, 100e8, {"from": randomUser1})
 
-    # total amount of tokens deposited through wrapper = 0
+    # total amount of wbtc deposited through wrapper = 0
     assert setup.wrapper.totalVaultBalance(setup.wrapper.address) == 0
     # total supply of wrapper shares = 0
     assert setup.wrapper.totalSupply() == 0
 
-    # = User 2: Has 20 Tokens, deposits 1, on Guestlist = #
+    # = User 2: Has 20 wbtc, deposits 1, on Guestlist = #
     # Random user (from guestlist) deposits 1 Token
     setup.wrapper.deposit(1e8, [], {"from": randomUser2})
     print("-- 1st User Deposits 1 --")
-    print("Wrapper's PPS:", setup.wrapper.pricePerShare())
-    print("yvwbtc's PPS:", setup.yvwbtc.pricePerShare())
     assert setup.wbtc.balanceOf(randomUser2.address) == 19e8
 
-    # Check balance of user within wrapper
-    assert setup.wrapper.totalWrapperBalance(randomUser2.address) == 1e8
+    # Check balance of user within wrapper is within tolerance
+    assert abs(setup.wrapper.totalWrapperBalance(randomUser2.address) - 1e8) < TOLERANCE
 
-    # wbtc balance wrapper to deposited amount
-    assert setup.wrapper.totalAssets() == 1e8
+    # total amount of wbtc deposited through wrapper = ~1
+    assert abs(setup.wrapper.totalVaultBalance(setup.wrapper.address) - 1e8) < TOLERANCE
 
-    # wrapper shares are minted for depositor and vault shares are 0 for depositor
+    # deposit/pps of wrapper shares are minted for depositor and vault shares are 0 for depositor
     assert setup.yvwbtc.balanceOf(randomUser2.address) == 0
-    assert setup.wrapper.balanceOf(randomUser2.address) == 1e8
+    assert abs(setup.wrapper.balanceOf(randomUser2.address) - (1e8/setup.wrapper.pricePerShare())*1e8) < TOLERANCE
 
-    # Check balance of user within wrapper
-    assert setup.wrapper.totalWrapperBalance(randomUser2.address) == 1e8
+    # Remaining deposit allowed for User 2: 15 - 1 = 14 wbtcs
+    assert abs(setup.guestlist.remainingUserDepositAllowed(randomUser2.address) - 14e8) < TOLERANCE
 
-    # Remaining deposit allowed for User 2: 15 - 1 = 14 wbtcs\
-    # Gueslist not adapted to read wrapper usage data
-    assert setup.guestlist.remainingUserDepositAllowed(randomUser2.address) == 14e8
+    chain.sleep(86400)
+    chain.mine(1)
 
-    # Test pricePerShare to equal 1
-    assert setup.wrapper.pricePerShare() == 1e8
-
-    # = User 1: Has 10 Tokens, deposits 10, on Guestlist = #
+    # = User 1: Has 10 wbtc, deposits 10, on Guestlist = #
     # Another random user (from guestlist) deposits all their Tokens (10)
     setup.wrapper.deposit([], {"from": randomUser1})
     print("-- 2nd User Deposits 10 --")
-    print("Wrapper's PPS:", setup.wrapper.pricePerShare())
-    print("yvwbtc's PPS:", setup.yvwbtc.pricePerShare())
     assert setup.wbtc.balanceOf(randomUser1.address) == 0
 
-    assert setup.wrapper.totalVaultBalance(setup.wrapper.address) == 11e8
+    # Check balance of user within wrapper is within tolerance
+    assert abs(setup.wrapper.totalWrapperBalance(randomUser1.address) - 10e8) <= TOLERANCE
 
-    # wbtc balance of wrapper equals to net amount
-    assert setup.wrapper.totalAssets() == 11e8
+    # total amount of wbtc deposited through wrapper = ~11
+    assert abs(setup.wrapper.totalVaultBalance(setup.wrapper.address) - 11e8) <= TOLERANCE
 
-    # wrapper shares are minted for depositor and yvwbtc shares are 0 for depositor
+    # deposit/pps of wrapper shares are minted for depositor and vault shares are 0 for depositor
     assert setup.yvwbtc.balanceOf(randomUser1.address) == 0
-    assert setup.wrapper.balanceOf(randomUser1.address) == 10e8
+    assert abs(setup.wrapper.balanceOf(randomUser1.address) - (10e8/setup.wrapper.pricePerShare())*1e8) <= TOLERANCE
 
-    # Check balance of user within wrapper
-    assert setup.wrapper.totalWrapperBalance(randomUser1.address) == 10e8
+    # Remaining deposit allowed for User 2: 15 - 10 = 5 wbtcs
+    assert abs(setup.guestlist.remainingUserDepositAllowed(randomUser1.address) - 5e8) <= TOLERANCE
 
-    # Remaining deposit allowed for User 1: 15 - 10 = 5 wbtcs
-    # Gueslist not adapted to read wrapper usage data
-    assert setup.guestlist.remainingUserDepositAllowed(randomUser1.address) == 5e8
-    
-    # Test pricePerShare to equal 1
-    assert setup.wrapper.pricePerShare() == 1e8
+    chain.sleep(86400)
+    chain.mine(1)
 
-    # = User 2: Has 19 Tokens, deposits 15, on Guestlist = #
+    # = User 2: Has 19 wbtc, deposits 15, on Guestlist = #
     # Random user (from guestlist) attempts to deposit 15 tokens with 1 already deposited
     # Should revert since the deposit cap is set to 15 tokens per user
     with brownie.reverts("guest-list-authorization"):
@@ -349,16 +344,27 @@ def test_deposit_withdraw_flow(setup):
     # User's token balance remains the same 
     assert setup.wbtc.balanceOf(randomUser2.address) == 19e8
 
-    # = User 3: Has 10 Tokens, deposits 1, not on Guestlist = #
+    # = User 3: Has 10 wbtc, deposits 1, not on Guestlist = #
     # Random user (not from guestlist) attempts to deposit 1 token
     # Should not revert since root is set to 0x0
     setup.wrapper.deposit(1e8, [], {"from": randomUser3})
     print("-- 3rd User Deposits 1 --")
-    print("Wrapper's PPS:", setup.wrapper.pricePerShare())
-    print("yvwbtc's PPS:", setup.yvwbtc.pricePerShare())
     assert setup.wbtc.balanceOf(randomUser3.address) == 9e8
 
-    # = User 1: Has 0 Tokens, deposits 1 and then all, on Guestlist = #
+    # Check balance of user within wrapper is within tolerance
+    assert abs(setup.wrapper.totalWrapperBalance(randomUser3.address) - 1e8) <= TOLERANCE
+
+    # total amount of wbtc deposited through wrapper = ~11
+    assert abs(setup.wrapper.totalVaultBalance(setup.wrapper.address) - 12e8) <= TOLERANCE
+
+    # deposit/pps of wrapper shares are minted for depositor and vault shares are 0 for depositor
+    assert setup.yvwbtc.balanceOf(randomUser3.address) == 0
+    assert abs(setup.wrapper.balanceOf(randomUser3.address) - (1e8/setup.wrapper.pricePerShare())*1e8) <= TOLERANCE
+
+    # Remaining deposit allowed for User 2: 15 - 10 = 5 wbtcs
+    assert abs(setup.guestlist.remainingUserDepositAllowed(randomUser3.address) - 14e8) <= TOLERANCE
+
+    # = User 1: Has 0 wbtc, deposits 1 and then all, on Guestlist = #
     # Random user (from guestlist) attempts to deposit 1 and then all tokens
     # Should revert since user has no tokens
     assert setup.wbtc.balanceOf(randomUser1.address) == 0
@@ -367,89 +373,92 @@ def test_deposit_withdraw_flow(setup):
     with brownie.reverts():
         setup.wrapper.deposit([], {"from": randomUser1})
     # User's bvyWBTC balance remains the same 
-    assert setup.wrapper.balanceOf(randomUser1.address) == 10e8 
+    assert abs(setup.wrapper.balanceOf(randomUser1.address) - (10e8/setup.wrapper.pricePerShare())*1e8) <= TOLERANCE
 
-    # Test pricePerShare to equal 1
-    assert setup.wrapper.pricePerShare() == 1e8
-
-    # Test shareVaule
-    assert setup.wrapper.shareValue(1e8) == 1e8
-
-    chain.sleep(10000)
+    chain.sleep(86400)
     chain.mine(1)
 
     # === Withdraw flow === #
 
-    # = User 2: Has 19 Tokens, 1 bvyWBTC token, withdraws 0.5 = #
+    # = User 2: Has 19 wbtc, withdraws half their shares = #
     assert setup.wbtc.balanceOf(randomUser2.address) == 19e8
+    shares = setup.wrapper.balanceOf(randomUser2.address)/2
 
-    setup.wrapper.withdraw(0.5e8, {"from": randomUser2})
-    print("-- 1st User withdraws 0.5 --")
-    print("Wrapper's PPS:", setup.wrapper.pricePerShare())
-    print("yvwbtc's PPS:", setup.yvwbtc.pricePerShare())
-    assert setup.wbtc.balanceOf(randomUser2.address) == 19.5e8
+    setup.wrapper.withdraw(shares, {"from": randomUser2})
+    print('-- 1st User withdraws ' + str(shares) + ' shares --')
+    print('Withdrew ' + str(abs(19e8 - setup.wbtc.balanceOf(randomUser2.address))) + ' wbtc')
+    assert setup.wbtc.balanceOf(randomUser2.address) - 19.5e8 <= WITHDRAWN_TOLERANCE
 
     # Check balance of user within wrapper
-    assert setup.wrapper.totalWrapperBalance(randomUser2.address) == 0.5e8
+    assert abs(setup.wrapper.totalWrapperBalance(randomUser2.address) - 0.5e8) <= TOLERANCE
 
-    assert setup.wrapper.totalVaultBalance(setup.wrapper.address) == 11.5e8
-
-    # wbtc balance of wrapper equals to net amount
-    assert setup.wrapper.totalAssets() == 11.5e8
+    # total amount of wbtc deposited through wrapper = ~11.5
+    assert abs(setup.wrapper.totalVaultBalance(setup.wrapper.address) - 11.5e8) <= TOLERANCE
 
     # wrapper shares are burned for withdrawer and yvwbtc shares are still 0 for withdrawer
     assert setup.yvwbtc.balanceOf(randomUser2.address) == 0
-    assert setup.wrapper.balanceOf(randomUser2.address) == 0.5e8
+    assert abs(setup.wrapper.balanceOf(randomUser2.address) - (0.5e8/setup.wrapper.pricePerShare())*1e8) <= TOLERANCE
 
-    # = User 1: Has 0 Tokens, 10 bvyWBTC token, withdraws all = #
+    chain.sleep(86400)
+    chain.mine(1)
+
+    # = User 1: Has 0 Tokens, withdraws all = #
     assert setup.wbtc.balanceOf(randomUser1.address) == 0
+    shares = setup.wrapper.balanceOf(randomUser1.address) 
 
     setup.wrapper.withdraw({"from": randomUser1})
-    print("-- 2nd User withdraws 10 --")
-    print("Wrapper's PPS:", setup.wrapper.pricePerShare())
-    print("yvwbtc's PPS:", setup.yvwbtc.pricePerShare())
-    assert setup.wbtc.balanceOf(randomUser1.address) == 10e8
+    print('-- 2nd User withdraws ' + str(shares) + ' shares --')
+    print('Withdrew ' + str(setup.wbtc.balanceOf(randomUser1.address)) + ' for 10e8')
+    assert setup.wbtc.balanceOf(randomUser1.address) - 10e8 <= WITHDRAWN_TOLERANCE
 
     # Check balance of user within wrapper
     assert setup.wrapper.totalWrapperBalance(randomUser1.address) == 0
 
-    assert setup.wrapper.totalVaultBalance(setup.wrapper.address) == 1.5e8
+    # total amount of wbtc deposited through wrapper left = ~1.5
+    assert abs(setup.wrapper.totalVaultBalance(setup.wrapper.address) - 1.5e8) <= TOLERANCE
 
-    # wbtc balance of wrapper equals to net amount
-    assert setup.wrapper.totalAssets() == 1.5e8
-
-    # wrapper shares are burnt for withdrawer and yvwbtc shares are still 0 for withdrawer
+    # wrapper shares are burned for withdrawer and yvwbtc shares are still 0 for withdrawer
     assert setup.yvwbtc.balanceOf(randomUser1.address) == 0
     assert setup.wrapper.balanceOf(randomUser1.address) == 0
 
-    setup.wrapper.withdraw({"from": randomUser3})
-    print("-- 3rd User withdraws 1 --")
-    print("Wrapper's PPS:", setup.wrapper.pricePerShare())
-    print("yvwbtc's PPS:", setup.yvwbtc.pricePerShare())
-    assert setup.wbtc.balanceOf(randomUser3.address) == 10e8
+    chain.sleep(86400)
+    chain.mine(1)
 
-    # = User 3: Has 10 Tokens, 0 bvyWBTC token, withdraws 1 = #
-    # Random user attempts to withdraw 1 token
+    # = User 3: Has 9 wbtc, withdraws all = #
+    assert setup.wbtc.balanceOf(randomUser3.address) == 9e8
+    shares = setup.wrapper.balanceOf(randomUser3.address) 
+
+    setup.wrapper.withdraw({"from": randomUser3})
+    print('-- 3rd User withdraws ' + str(shares) + ' shares --')    
+    print('Withdrew ' + str(abs(9e8 - setup.wbtc.balanceOf(randomUser2.address))) + ' for 1e8')
+    assert setup.wbtc.balanceOf(randomUser3.address) - 10e8 <= WITHDRAWN_TOLERANCE
+
+    # = User 3: Has 10 wbtc, withdraws 1 share= #
+    # Random user attempts to withdraw 1 share
     # Should revert since user has no tokens on yvwbtc
     with brownie.reverts():
         setup.wrapper.withdraw(1e8, {"from": randomUser3})
     # User's token balance remains the same 
-    assert setup.wbtc.balanceOf(randomUser3.address) == 10e8
+    assert abs(setup.wbtc.balanceOf(randomUser3.address) - 10e8) <= WITHDRAWN_TOLERANCE
 
-    # Test pricePerShare to equal 1
-    assert setup.wrapper.pricePerShare() == 1e8
+    # = User 2 sends remaining half of shares to user 3 for withdrawal = #
+    shares = setup.wrapper.balanceOf(randomUser2.address)
+    setup.wrapper.transfer(randomUser3.address, shares, {"from": randomUser2})
 
-    # = User 2 sends 0.5 byvWBTC to user 3 for withdrawal = #
-    setup.wrapper.transfer(randomUser3.address, 0.5e8, {"from": randomUser2})
+    assert setup.wrapper.balanceOf(randomUser3.address) == shares
 
-    assert setup.wrapper.balanceOf(randomUser3.address) == 0.5e8
-
-    # User 3 withdraws using the 0.5 shares received from user 2
-    setup.wrapper.withdraw(0.5e8, {"from": randomUser3})
-    # wbtc balance of user 3: 10 + 0.5 = 10.5
-    assert setup.wbtc.balanceOf(randomUser3.address) == 10.5e8
+    # User 3 withdraws using the shares received from user 2, equivalent to 0.5
+    setup.wrapper.withdraw(shares, {"from": randomUser3})
+    print('-- 3rd User withdraws ' + str(shares) + ' shares --')
+    print('Withdrew ' + str(abs(10e8 - setup.wbtc.balanceOf(randomUser3.address))) + ' for 0.5e8')
+    # wbtc balance of user 3: 10 + 0.5 = ~10.5
+    assert setup.wbtc.balanceOf(randomUser3.address) - 10.5e8 <= 1e5
 
     assert setup.wrapper.totalVaultBalance(setup.wrapper.address) == 0
+
+    assert setup.wrapper.balanceOf(randomUser1.address) == 0
+    assert setup.wrapper.balanceOf(randomUser2.address) == 0 
+    assert setup.wrapper.balanceOf(randomUser3.address) == 0
  
 #@pytest.mark.skip()
 def test_depositFor_withdraw_flow(setup):
@@ -463,6 +472,9 @@ def test_depositFor_withdraw_flow(setup):
 
     # Link guestlist to wrapper
     setup.wrapper.setGuestList(setup.guestlist.address, {"from": deployer})
+
+    # Set total deposit cap
+    setup.guestlist.setTotalDepositCap(50e8)
 
     # Approve wrapper as spender of wbtc for users
     setup.wbtc.approve(setup.wrapper.address, 100e8, {"from": randomUser2})
@@ -484,41 +496,41 @@ def test_depositFor_withdraw_flow(setup):
     setup.wrapper.depositFor(randomUser1.address, 1e8, [], {'from': randomUser2})
 
     # total wrapper balance of User 1 = 1 and User 2 = 2
-    assert setup.wrapper.totalWrapperBalance(randomUser1.address) == 1e8
+    assert abs(setup.wrapper.totalWrapperBalance(randomUser1.address) - 1e8) <= TOLERANCE
     assert setup.wrapper.totalWrapperBalance(randomUser2.address) == 0
 
     # Wrapper shares are created only for receipient (User 1)
-    assert setup.wrapper.balanceOf(randomUser1.address) == 1e8
+    assert abs(setup.wrapper.balanceOf(randomUser1.address) - (1e8/setup.wrapper.pricePerShare())*1e8) <= TOLERANCE
     assert setup.wrapper.balanceOf(randomUser2.address) == 0
 
     # User 2 (on guestlist) deposits on behalf of User 3 (not on guestlist)
     setup.wrapper.depositFor(randomUser3.address, 1e8, [], {'from': randomUser2})
 
     # total wrapper balance of User 1 = 0 and User 2 = 1
-    assert setup.wrapper.totalWrapperBalance(randomUser3.address) == 1e8
+    assert abs(setup.wrapper.totalWrapperBalance(randomUser3.address) - 1e8) <= TOLERANCE
     assert setup.wrapper.totalWrapperBalance(randomUser2.address) == 0
 
     # Wrapper shares are created only for receipient (User 1)
-    assert setup.wrapper.balanceOf(randomUser3.address) == 1e8
+    assert abs(setup.wrapper.balanceOf(randomUser3.address) - (1e8/setup.wrapper.pricePerShare())*1e8) <= TOLERANCE
     assert setup.wrapper.balanceOf(randomUser2.address) == 0
 
     # === Withdraw flow === #
 
     # Reverts when User 2 tries to withdraw
     with brownie.reverts():
-        setup.wrapper.withdraw(1e8, {"from": randomUser2})
+        setup.wrapper.withdraw(0.1e8, {"from": randomUser2})
 
     # User 1 withdraws using their received shares
     setup.wrapper.withdraw({'from': randomUser1})
     # User 1 gets 1 wbtc in return (10 + 1 = 11)
     assert setup.wrapper.balanceOf(randomUser1.address) == 0
-    assert setup.wbtc.balanceOf(randomUser1.address) == 11e8
+    assert setup.wbtc.balanceOf(randomUser1.address) - 11e8 <= WITHDRAWN_TOLERANCE
 
     # User 3 withdraws using their received shares
     setup.wrapper.withdraw({'from': randomUser3})
     # User 3 gets 1 wbtc in return (10 + 1 = 11)
     assert setup.wrapper.balanceOf(randomUser3.address) == 0
-    assert setup.wbtc.balanceOf(randomUser3.address) == 11e8
+    assert setup.wbtc.balanceOf(randomUser3.address) - 11e8 <= WITHDRAWN_TOLERANCE
 
     # Wrapper balance of all users is zero
     assert setup.wrapper.totalWrapperBalance(randomUser1.address) == 0
@@ -544,11 +556,11 @@ def test_depositFor_withdraw_flow(setup):
     setup.wrapper.depositFor(randomUser2.address, 1e8, {'from': randomUser3})
 
     # total wrapper balance of User 1 = 0 and User 2 = 1
-    assert setup.wrapper.totalWrapperBalance(randomUser2.address) == 1e8
+    assert abs(setup.wrapper.totalWrapperBalance(randomUser2.address) - 1e8) <= TOLERANCE
     assert setup.wrapper.totalWrapperBalance(randomUser3.address) == 0
 
     # Wrapper shares are created only for receipient (User 1)
-    assert setup.wrapper.balanceOf(randomUser2.address) == 1e8
+    assert abs(setup.wrapper.balanceOf(randomUser2.address) - (1e8/setup.wrapper.pricePerShare())*1e8) <= TOLERANCE
     assert setup.wrapper.balanceOf(randomUser3.address) == 0
 
 #@pytest.mark.skip()
@@ -564,6 +576,9 @@ def test_deposit_withdraw_fees_flow(setup):
     # Link guestlist to wrapper
     setup.wrapper.setGuestList(setup.guestlist.address, {"from": deployer})
 
+    # Set total deposit cap
+    setup.guestlist.setTotalDepositCap(50e8)
+
     # Set withdrawal fee
     tx = setup.wrapper.setWithdrawalFee(50, {"from": deployer})
     assert len(tx.events) == 1
@@ -576,14 +591,14 @@ def test_deposit_withdraw_fees_flow(setup):
     setup.wbtc.approve(setup.wrapper.address, 100e8, {"from": randomUser2})
     setup.wbtc.approve(setup.wrapper.address, 100e8, {"from": randomUser1})
 
-    # total amount of tokens deposited through wrapper = 0
+    # total amount of wbtc deposited through wrapper = 0
     assert setup.wrapper.totalVaultBalance(setup.wrapper.address) == 0
     # total supply of wrapper shares = 0
     assert setup.wrapper.totalSupply() == 0
 
-    # Random user deposits 15 Token
+    # Random user deposits 15 wbtc
     setup.wrapper.deposit(15e8, [], {"from": randomUser2})
-    assert setup.wrapper.totalWrapperBalance(randomUser2.address) == 15e8
+    assert abs(setup.wrapper.totalWrapperBalance(randomUser2.address) - 15e8) <= TOLERANCE
     assert setup.wbtc.balanceOf(randomUser2.address) == 5e8
 
     # === Withdraw flow === #
@@ -591,19 +606,23 @@ def test_deposit_withdraw_fees_flow(setup):
     # Affiliate account wbtc balance is zero
     assert setup.wbtc.balanceOf(deployer.address) == 0
 
-    # Random user withdraws 10 tokens
-    tx = setup.wrapper.withdraw(10e8, {"from": randomUser2})
-    assert tx.events['WithdrawalFee']['recipient'] == deployer.address
-    assert tx.events['WithdrawalFee']['amount'] == 0.05e8
+    # Random user withdraws 2/3 of their shares (eq. to a 10wbtc deposit)
+    shares = (2*setup.wrapper.balanceOf(randomUser2.address))/3
 
-    # Affiliate account wbtc balance is 0.5% of 10 wbtcs = 0.05 wbtcs
-    assert setup.wbtc.balanceOf(deployer.address) == 0.05e8
+    tx = setup.wrapper.withdraw(shares, {"from": randomUser2})
+    assert tx.events['WithdrawalFee']['recipient'] == deployer.address
+    assert tx.events['WithdrawalFee']['amount'] - 0.05e8 <= TOLERANCE
+
+    # Affiliate account wbtc balance is 0.5% of 10 wbtcs = ~0.05 wbtc
+    assert setup.wbtc.balanceOf(deployer.address) - 0.05e8 <= WITHDRAWN_TOLERANCE
 
     # Random user's wbtc balance is 5 + (10-0.05) = 14.95 wbtcs
     assert setup.wbtc.balanceOf(randomUser2.address) == 14.95e8
+    assert setup.wbtc.balanceOf(randomUser2.address) - 14.95e8 <= WITHDRAWN_TOLERANCE
+    
 
     # Random user's wrapper balance is 5
-    assert setup.wrapper.totalWrapperBalance(randomUser2.address) == 5e8
+    assert abs(setup.wrapper.totalWrapperBalance(randomUser2.address) - 5e8) <= TOLERANCE
 
 #@pytest.mark.skip()
 def test_gustlist_authentication(setup):
@@ -615,6 +634,9 @@ def test_gustlist_authentication(setup):
 
     setup.wbtc.approve(setup.wrapper.address, 100e8, {"from": randomUser2})
     setup.wbtc.approve(setup.wrapper.address, 100e8, {"from": randomUser1})
+
+    # Set total deposit cap
+    setup.guestlist.setTotalDepositCap(20e8)
 
     # Set merkle proof verification from Gueslist
     print('Merkleroot:', merkleRoot)
@@ -648,11 +670,7 @@ def test_gustlist_authentication(setup):
         assert setup.wrapper.totalWrapperBalance(user) == 0
         setup.wrapper.deposit(1e8, proof, {'from': user})
 
-        assert setup.wrapper.totalWrapperBalance(user) == 1e8
-
-        totalDeposits = totalDeposits + 1e8
-
-        assert setup.wrapper.totalAssets() == totalDeposits
+        assert abs(setup.wrapper.totalWrapperBalance(user) - 1e8) <= TOLERANCE
 
 
     users = [
@@ -682,7 +700,7 @@ def test_gustlist_authentication(setup):
         assert setup.wrapper.totalWrapperBalance(user) == 0
         setup.wrapper.deposit(1e8, [], {'from': user})
 
-        assert setup.wrapper.totalWrapperBalance(user) == 1e8
+        assert abs(setup.wrapper.totalWrapperBalance(user) - 1e8) <= TOLERANCE
 
     # Test depositing with user on Gueslist but with no merkle proof
 
@@ -690,7 +708,7 @@ def test_gustlist_authentication(setup):
     setup.wbtc.approve(setup.wrapper.address, 100e8, {"from": randomUser1})
 
     setup.wrapper.deposit(1e8, [], {'from': randomUser1})
-    assert setup.wrapper.totalWrapperBalance(randomUser1.address) == 1e8
+    assert abs(setup.wrapper.totalWrapperBalance(randomUser1.address) - 1e8) <= TOLERANCE
 
     # Test depositing with user not on Gueslist and with no merkle proof
         
@@ -700,3 +718,24 @@ def test_gustlist_authentication(setup):
     with brownie.reverts('guest-list-authorization'):
         setup.wrapper.deposit(1e8, [], {'from': randomUser3})
     assert setup.wrapper.totalWrapperBalance(randomUser3.address) == 0
+
+    # At this stage there are 7 wbtc deposited and the Wrapper's cap is 20
+
+    # Total wrapper limit remaining
+    assert abs(setup.guestlist.remainingTotalDepositAllowed() - 13e8) <= TOLERANCE
+    # Individual limit for randomUser2 remaining
+    assert setup.guestlist.remainingUserDepositAllowed(randomUser2.address) == 15e8
+
+    # User attempts to deposit 14 wbtc for a total of 21 wbtc and it reverts
+    with brownie.reverts('guest-list-authorization'):
+        setup.wrapper.deposit(14e8, [], {'from': randomUser2})
+
+    # User attempts to deposit the remaining total deposit allowed + 1 and it reverts
+    with brownie.reverts('guest-list-authorization'):
+        setup.wrapper.deposit(setup.guestlist.remainingTotalDepositAllowed()+1, [], {'from': randomUser2})
+
+    # User deposits the remaining total deposit allowed and it goes through
+    setup.wrapper.deposit(setup.guestlist.remainingTotalDepositAllowed(), [], {'from': randomUser2})
+
+
+
