@@ -8,7 +8,7 @@ from brownie import *
 from brownie.network.gas.strategies import GasNowScalingStrategy
 from config.badger_config import badger_config, sett_config
 from dotmap import DotMap
-from helpers.gnosis_safe import GnosisSafe, MultisigTxMetadata
+from helpers.gnosis_safe import GnosisSafe, MultisigTxMetadata, multisig_success
 from helpers.network import network_manager
 from helpers.proxy_utils import deploy_proxy, deploy_proxy_admin
 from helpers.registry import artifacts, registry
@@ -921,13 +921,13 @@ class BadgerSystem:
     # NB: Min gov timelock delay is 2 days.
     def queue_upgrade_sett(self, id, newLogic, delay=2*days(2)) -> str:
         sett = self.getSett(id)
+        return self.queue_upgrade(sett.address, newLogic.address)
 
+    def queue_upgrade(self, proxyAddress, newLogicAddress, delay=2*days(2)) -> str:
         target = self.devProxyAdmin.address
         signature = "upgrade(address,address)"
-        #data = self.devProxyAdmin.upgrade.encode_input(sett, newLogic)
-        data = encode_abi(["address", "address"], [sett.address, newLogic.address])
+        data = encode_abi(["address", "address"], [proxyAddress, newLogicAddress])
         eta = web3.eth.getBlock('latest')['timestamp'] + delay
-
         return self.governance_queue_transaction(target, signature, data, eta)
 
     def governance_queue_transaction(self, target, signature, data, eta, eth=0) -> str:
@@ -992,7 +992,8 @@ class BadgerSystem:
                     ),
                 },
             )
-            multi.executeTx(id)
+            if multisig_success(multi.executeTx(id)):
+                os.remove(os.path.join(TIMELOCK_DIR, txFilename))
 
     # ===== Connectors =====
     def connect_sett_system(self, sett_system, geysers=None):

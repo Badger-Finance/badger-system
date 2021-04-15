@@ -24,9 +24,9 @@ contract MockVault is ERC20 {
 
     // NB: Normally we'd track ppfs but this is just for testing so we skip that.
     // Underlying token and vault token are 1:1.
-    function deposit(uint256 _amount) external {
+    function depositFor(address recipient, uint256 _amount) external {
         IERC20(token).safeTransferFrom(msg.sender, address(this), _amount);
-        _mint(msg.sender, _amount);
+        _mint(recipient, _amount);
     }
 
     function withdraw(uint256 _amount) external {

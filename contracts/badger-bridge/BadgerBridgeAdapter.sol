@@ -237,8 +237,7 @@ contract BadgerBridgeAdapter is OwnableUpgradeable, ReentrancyGuardUpgradeable {
             _approveBalance(IBridgeVault(args._vault).token(), args._vault, wrappedAmount);
         }
 
-        IBridgeVault(args._vault).deposit(amount);
-        IERC20(args._vault).safeTransfer(args._user, IERC20(args._vault).balanceOf(address(this)));
+        IBridgeVault(args._vault).depositFor(args._user, amount);
     }
 
     function _swapWBTCForRenBTC(uint256 _amount, uint256 _slippage) internal {

@@ -1,16 +1,20 @@
-import json
 import pytest
 from brownie import (
+    chain,
     accounts,
     interface,
     MockVault,
+    SettV1,
 )
 
 from helpers.constants import AddressZero
-from helpers.registry import token_registry, whale_registry
-from helpers.token_utils import distribute_from_whale
+from helpers.time_utils import days
+from helpers.registry import registry
 from config.badger_config import badger_config
-from scripts.systems.bridge_minimal import deploy_bridge_minimal
+from scripts.systems.badger_system import connect_badger
+from scripts.systems.bridge_system import connect_bridge
+from scripts.systems.swap_system import connect_swap
+from scripts.upgrade.upgrade_bridge import upgrade_bridge, configure_bridge
 
 
 RENBTC = "0x49849C98ae39Fff122806C06791Fa73784FB3675"
@@ -22,76 +26,129 @@ BRIDGE_VAULTS = [
     # TODO: When bridge adapter addr is approved, can test
     # directly against badger sett contracts.
     {
-        "inToken": token_registry.renbtc,
-        "name": "curve renbtc sett",
+        "inToken": registry.tokens.renbtc,
+        "outToken": registry.tokens.renbtc,
+        "id": "native.renCrv",
         "symbol": "bcrvrenBTC",
         "token": RENBTC,
+        "address": "0x6dEf55d2e18486B9dDfaA075bc4e4EE0B28c1545",
+        "upgrade": True,
     },
     {
-        "inToken": token_registry.renbtc,
-        "name": "curve tbtc sett",
+        "inToken": registry.tokens.renbtc,
+        "outToken": registry.tokens.renbtc,
+        "id": "native.tbtcCrv",
         "symbol": "bcrvtBTC",
         "token": TBTC,
+        "address": "0xb9D076fDe463dbc9f915E5392F807315Bf940334",
+        "upgrade": True,
     },
     {
-        "inToken": token_registry.renbtc,
-        "name": "curve sbtc sett",
+        "inToken": registry.tokens.renbtc,
+        "outToken": registry.tokens.renbtc,
+        "id": "native.sbtcCrv",
         "symbol": "bcrvsBTC",
         "token": SBTC,
+        "address": "0xd04c48A53c111300aD41190D63681ed3dAd998eC",
+        "upgrade": True,
     },
     {
-        "inToken": token_registry.wbtc,
-        "name": "yearn wbtc sett",
+        "inToken": registry.tokens.wbtc,
+        "outToken": registry.tokens.wbtc,
+        # NB: Only deployed to BSC right now. We're testing w/ mock.
+        "id": "native.test",
         "symbol": "bwBTC",
-        "token": token_registry.wbtc,
+        "token": registry.tokens.wbtc,
+        "address": AddressZero,
+        "upgrade": False,
     },
 ]
 
 
 # Tests mint/burn to/from crv sett.
 # We create a mock vault for each pool token.
+#@pytest.mark.skip()
 @pytest.mark.parametrize(
     "vault", BRIDGE_VAULTS,
 )
 def test_bridge_vault(vault):
-    deployer, devProxyAdmin = _load_accounts()
-    bridge = deploy_bridge_minimal(deployer, devProxyAdmin, test=True)
+    badger = connect_badger(badger_config.prod_json)
+    bridge = connect_bridge(badger, badger_config.prod_json)
+    _deploy_mocks_and_upgrade_bridge(badger, bridge)
 
     slippage = .03
     amount = 1 * 10**8
     account = accounts[10]
 
-    mockVault = MockVault.deploy(
-        vault["name"],
-        vault["symbol"],
-        vault["token"],
-        {"from": deployer}
-    )
-    balanceBefore = interface.IERC20(mockVault).balanceOf(account)
+    v = vault["address"]
+    if v == AddressZero:
+        v = MockVault.deploy(
+            vault["id"],
+            vault["symbol"],
+            vault["token"],
+            {"from": badger.deployer}
+        ).address
+    else:
+        interface.ISettAccessControlDefended(v).approveContractAccess(
+            bridge.adapter,
+            {"from": badger.devMultisig},
+        )
 
-    bridge.adapter.setVaultApproval(mockVault, True, {"from": deployer})
+        # NB: Temporarily upgrade crv setts (missing depositFor() method)
+        if vault["upgrade"]:
+            badger.deploy_logic("SettV1", SettV1)
+            logic = badger.logic["SettV1"]
+            badger.devProxyAdmin.upgrade(
+                v,
+                logic,
+                {"from": badger.governanceTimelock},
+            )
+
+    balanceBefore = interface.IERC20(v).balanceOf(account)
+
+    bridge.adapter.setVaultApproval(v, True, {"from": badger.devMultisig})
     bridge.adapter.mint(
         vault["inToken"],
         slippage * 10**4,
         account.address,
-        mockVault.address,
+        v,
         amount,
         # Darknode args hash/sig optional since gateway is mocked.
         "",
         "",
         {"from": account},
     )
-    assert interface.IERC20(mockVault).balanceOf(account) > balanceBefore
+    balance = interface.IERC20(v).balanceOf(account)
+    assert balance > balanceBefore
+
+    interface.IERC20(v).approve(
+        bridge.adapter.address,
+        balance,
+        {"from": account},
+    )
+    bridge.adapter.burn(
+        vault["outToken"],
+        v,
+        slippage * 10**4,
+        account.address,
+        balance,
+        {"from": account},
+    )
+
+    assert interface.IERC20(v).balanceOf(account) == 0
 
 
 # Tests swap router and wbtc mint/burn.
 def test_bridge_basic():
-    deployer, devProxyAdmin = _load_accounts()
+    renbtc = registry.tokens.renbtc
+    wbtc = registry.tokens.wbtc
 
-    renbtc = token_registry.renbtc
-    wbtc = token_registry.wbtc
-    bridge = deploy_bridge_minimal(deployer, devProxyAdmin, test=True)
-    router = bridge.swap.router
+    badger = connect_badger(badger_config.prod_json)
+    bridge = connect_bridge(badger, badger_config.prod_json)
+    _deploy_mocks_and_upgrade_bridge(badger, bridge)
+
+    swap = connect_swap(badger_config.prod_json)
+    router = swap.router
     # 3% slippage
     slippage = .03
     amount = 1 * 10**8
@@ -134,7 +191,6 @@ def test_bridge_basic():
     # NB: In the real world, burns don't require approvals as it's just an internal update the the user's token balance.
     interface.IERC20(renbtc).approve(bridge.mocks.BTC.gateway, balanceBefore, {"from": bridge.adapter})
 
-    # Test mints
     bridge.adapter.burn(
         wbtc,
         AddressZero,  # No vault.
@@ -167,10 +223,16 @@ def _assert_swap_slippage(router, fromToken, toToken, amountIn, slippage):
     assert (1 - (amountOut / amountIn)) < slippage
 
 
-# loads deployer and dev proxy admin accounts
-def _load_accounts():
-    with open(badger_config.prod_json) as f:
-        deploy = json.load(f)
-        deployer = accounts.at(deploy["deployer"], force=True)
-        devProxyAdmin = accounts.at(deploy["devProxyAdmin"], force=True)
-        return deployer, devProxyAdmin
+def _deploy_mocks_and_upgrade_bridge(badger, bridge):
+    # NB: Deploy/use mock gateway
+    bridge.deploy_mocks()
+    bridge.adapter.setRegistry(
+        bridge.mocks.registry,
+        {"from": badger.devMultisig},
+    )
+
+    # NB: Temporarily upgrade and configure bridge to use curve token wrapper.
+    txFilename = upgrade_bridge(badger, bridge)
+    chain.sleep(2*days(2))
+    badger.governance_execute_transaction(txFilename)
+    configure_bridge(badger, bridge)

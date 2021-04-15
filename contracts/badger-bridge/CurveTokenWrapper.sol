@@ -36,86 +36,101 @@ contract CurveTokenWrapper {
     IERC20 tbtcLpToken = IERC20(0x64eda51d3Ad40D56b9dFc5554E06F94e1Dd786Fd);
 
     // Supported pools.
-    address renbtcPool = 0x93054188d876f558f4a66B2EF1d97d16eDf0895B;
-    address sbtcPool = 0x7fC77b5c7614E1533320Ea6DDc2Eb61fa00A9714;
-    address tbtcPool = 0xC25099792E9349C7DD09759744ea681C7de2cb66;
+    ICurveFi renbtcPool = ICurveFi(0x93054188d876f558f4a66B2EF1d97d16eDf0895B);
+    ICurveFi sbtcPool = ICurveFi(0x7fC77b5c7614E1533320Ea6DDc2Eb61fa00A9714);
+    ICurveFi tbtcPool = ICurveFi(0xC25099792E9349C7DD09759744ea681C7de2cb66);
 
     constructor() public {}
 
     function wrap(address _vault) external returns (uint256) {
-        uint256 amount = renbtc.balanceOf(address(this));
-        if (amount == 0) {
-            return 0;
-        }
-
         IERC20 vaultToken = IBridgeVault(_vault).token();
 
+        uint256 toTransfer;
+
         if (vaultToken == renbtcLpToken) {
-            _approveBalance(renbtc, renbtcPool, amount);
-            uint256[2] memory amounts = [amount, 0];
-            ICurveFi(renbtcPool).add_liquidity(amounts, 0);
-            uint256 toTransfer = renbtcLpToken.balanceOf(address(this));
-            renbtcLpToken.safeTransfer(msg.sender, toTransfer);
-            return toTransfer;
+            toTransfer = _addLiquidity(renbtc, renbtcLpToken, renbtcPool, 0, 2);
         }
 
         if (vaultToken == sbtcLpToken) {
-            _approveBalance(renbtc, sbtcPool, amount);
-            uint256[3] memory amounts = [amount, 0, 0];
-            ICurveFi(sbtcPool).add_liquidity(amounts, 0);
-            uint256 toTransfer = sbtcLpToken.balanceOf(address(this));
-            sbtcLpToken.safeTransfer(msg.sender, toTransfer);
-            return toTransfer;
+            toTransfer = _addLiquidity(renbtc, sbtcLpToken, sbtcPool, 0, 3);
         }
 
         // tbtcLpToken is doubly wrapped.
         if (vaultToken == tbtcLpToken) {
-            _approveBalance(renbtc, sbtcPool, amount);
-            uint256[3] memory amounts = [amount, 0, 0];
-            ICurveFi(sbtcPool).add_liquidity(amounts, 0);
-
-            uint256 sbtcAmount = sbtcLpToken.balanceOf(address(this));
-            _approveBalance(sbtcLpToken, tbtcPool, sbtcAmount);
-            uint256[2] memory tbtcPoolAmounts = [0, sbtcAmount];
-            ICurveFi(tbtcPool).add_liquidity(tbtcPoolAmounts, 0);
-            uint256 toTransfer = tbtcLpToken.balanceOf(address(this));
-            tbtcLpToken.safeTransfer(msg.sender, toTransfer);
-            return toTransfer;
+            _addLiquidity(renbtc, sbtcLpToken, sbtcPool, 0, 3);
+            toTransfer = _addLiquidity(sbtcLpToken, tbtcLpToken, tbtcPool, 1, 2);
         }
+
+        vaultToken.safeTransfer(msg.sender, toTransfer);
+        return toTransfer;
     }
 
     function unwrap(address _vault) external {
         IERC20 vaultToken = IBridgeVault(_vault).token();
 
-        uint256 amount = vaultToken.balanceOf(address(this));
-        if (amount == 0) {
-            return;
-        }
+        uint256 toTransfer;
 
         if (vaultToken == renbtcLpToken) {
-            ICurveFi(renbtcPool).remove_liquidity_one_coin(amount, 0, 0);
-            uint256 toTransfer = renbtcLpToken.balanceOf(address(this));
-            renbtcLpToken.safeTransfer(msg.sender, toTransfer);
-            return;
+            toTransfer = _removeLiquidity(renbtcLpToken, renbtc, renbtcPool, 0);
         }
 
         if (vaultToken == sbtcLpToken) {
-            ICurveFi(sbtcPool).remove_liquidity_one_coin(amount, 0, 0);
-            uint256 toTransfer = sbtcLpToken.balanceOf(address(this));
-            sbtcLpToken.safeTransfer(msg.sender, toTransfer);
-            return;
+            toTransfer = _removeLiquidity(sbtcLpToken, renbtc, sbtcPool, 0);
         }
 
         // tbtcLpToken is doubly wrapped.
         if (vaultToken == tbtcLpToken) {
-            ICurveFi(sbtcPool).remove_liquidity_one_coin(amount, 0, 0);
-
-            amount = sbtcLpToken.balanceOf(address(this));
-            ICurveFi(tbtcPool).remove_liquidity_one_coin(amount, 1, 0);
-            uint256 toTransfer = tbtcLpToken.balanceOf(address(this));
-            tbtcLpToken.safeTransfer(msg.sender, toTransfer);
-            return;
+            _removeLiquidity(tbtcLpToken, sbtcLpToken, tbtcPool, 1);
+            toTransfer = _removeLiquidity(sbtcLpToken, renbtc, sbtcPool, 0);
         }
+
+        renbtc.safeTransfer(msg.sender, toTransfer);
+        return;
+    }
+
+    // NB: Only supports 2/3 token pools.
+    function _addLiquidity(
+        IERC20 _token, // in token
+        IERC20 _lpToken, // out token
+        ICurveFi _pool,
+        uint256 _i, // coins idx
+        uint256 _numTokens // num of coins
+    ) internal returns (uint256) {
+        uint256 beforeBalance = _lpToken.balanceOf(address(this));
+        uint256 amount = _token.balanceOf(address(this));
+
+        _approveBalance(_token, address(_pool), amount);
+
+        if (_numTokens == 2) {
+            uint256[2] memory amounts;
+            amounts[_i] = amount;
+            _pool.add_liquidity(amounts, 0);
+        }
+
+        if (_numTokens == 3) {
+            uint256[3] memory amounts;
+            amounts[_i] = amount;
+            _pool.add_liquidity(amounts, 0);
+        }
+
+        return _lpToken.balanceOf(address(this)).sub(beforeBalance);
+    }
+
+    function _removeLiquidity(
+        IERC20 _lpToken, // in token
+        IERC20 _token, // out token
+        ICurveFi _pool,
+        int128 _i // coins idx
+    ) internal returns (uint256) {
+        uint256 beforeBalance = _token.balanceOf(address(this));
+        uint256 amount = _lpToken.balanceOf(address(this));
+        amount = _pool.calc_withdraw_one_coin(amount, _i);
+
+        _approveBalance(_lpToken, address(_pool), amount);
+
+        _pool.remove_liquidity_one_coin(amount, _i, 0);
+
+        return _token.balanceOf(address(this)).sub(beforeBalance);
     }
 
     function _approveBalance(

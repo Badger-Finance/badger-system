@@ -37,7 +37,7 @@ def whitelist_adapter_crv_sett(
             "data": sett.approveContractAccess.encode_input(bridge.adapter.address),
         },
     )
-    multi.execute(id)
+    multi.executeTx(id)
 
 
 def main():

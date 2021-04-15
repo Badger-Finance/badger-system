@@ -11,7 +11,7 @@ from brownie import (
 from dotmap import DotMap
 
 from scripts.systems.swap_system import SwapSystem
-from helpers.registry import registry
+from helpers.registry import registry, artifacts
 from helpers.token_utils import distribute_from_whale
 from helpers.proxy_utils import deploy_proxy
 from config.badger_config import bridge_config
@@ -35,7 +35,7 @@ def print_to_file(bridge, path):
         f.write(json.dumps(system, indent=4, sort_keys=True))
 
 
-def connect_bridge(badger_deploy_file):
+def connect_bridge(badger, badger_deploy_file):
     bridge_deploy = {}
     console.print(
         "[grey]Connecting to Existing 🦡 Bridge System at {}...[/grey]".format(
@@ -50,9 +50,9 @@ def connect_bridge(badger_deploy_file):
 
     bridge_deploy = badger_deploy["bridge_system"]
 
-    abi = registry.open_zeppelin.artifacts["ProxyAdmin"]["abi"]
+    abi = artifacts.open_zeppelin["ProxyAdmin"]["abi"]
     bridge = BridgeSystem(
-        badger_deploy["deployer"],
+        badger.deployer,
         Contract.from_abi(
             "ProxyAdmin",
             web3.toChecksumAddress(badger_deploy["devProxyAdmin"]),
@@ -149,7 +149,7 @@ class BridgeSystem:
 
     def deploy_mocks(self):
         deployer = self.deployer
-        registry = MockGatewayRegistry.deploy({"from": deployer})
+        r = MockGatewayRegistry.deploy({"from": deployer})
         for (tokenName, whaleConfig) in [("BTC", registry.whales.renbtc)]:
             token = ERC20.at(whaleConfig.token)
             gateway = MockGateway.deploy(token.address, {"from": deployer})
@@ -160,6 +160,6 @@ class BridgeSystem:
                 token=token,
                 gateway=gateway,
             )
-            registry.addGateway(tokenName, gateway.address)
-            registry.addToken(tokenName, token.address)
-        self.mocks.registry = registry
+            r.addGateway(tokenName, gateway.address)
+            r.addToken(tokenName, token.address)
+        self.mocks.registry = r
