@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: LGPL-3.0-only
-pragma solidity ^0.6.0;
+pragma solidity 0.6.12;
 
 import "deps/@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "deps/@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
