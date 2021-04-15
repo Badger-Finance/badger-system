@@ -85,6 +85,7 @@ def setup(MockToken, SimpleWrapperGatedUpgradeable, YearnTokenVault, YearnRegist
     guestlist.setGuests([randomUser1.address, randomUser2.address], [True, True])
     # Set deposit cap to 15 tokens
     guestlist.setUserDepositCap(15e18)
+    guestlist.setTotalDepositCap(50e18)
 
     yield namedtuple(
         'setup', 
@@ -302,7 +303,7 @@ def test_deposit_withdraw_flow(setup):
 
         # Remaining deposit allowed for User 2: 15 - 1 = 14 mockTokens\
         # Gueslist not adapted to read wrapper usage data
-        assert setup.guestlist.remainingDepositAllowed(randomUser2.address) == 14e18
+        assert setup.guestlist.remainingUserDepositAllowed(randomUser2.address) == 14e18
 
         # Test pricePerShare to equal 1
         assert setup.wrapper.pricePerShare() == 1e18
@@ -330,7 +331,7 @@ def test_deposit_withdraw_flow(setup):
 
         # Remaining deposit allowed for User 1: 15 - 10 = 5 mockTokens
         # Gueslist not adapted to read wrapper usage data
-        assert setup.guestlist.remainingDepositAllowed(randomUser1.address) == 5e18
+        assert setup.guestlist.remainingUserDepositAllowed(randomUser1.address) == 5e18
         
         # Test pricePerShare to equal 1
         assert setup.wrapper.pricePerShare() == 1e18

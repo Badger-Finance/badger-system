@@ -309,7 +309,7 @@ def test_deposit_withdraw_flow(setup):
 
     # Remaining deposit allowed for User 2: 15 - 1 = 14 wbtcs\
     # Gueslist not adapted to read wrapper usage data
-    assert setup.guestlist.remainingDepositAllowed(randomUser2.address) == 14e8
+    assert setup.guestlist.remainingUserDepositAllowed(randomUser2.address) == 14e8
 
     # Test pricePerShare to equal 1
     assert setup.wrapper.pricePerShare() == 1e8
@@ -336,7 +336,7 @@ def test_deposit_withdraw_flow(setup):
 
     # Remaining deposit allowed for User 1: 15 - 10 = 5 wbtcs
     # Gueslist not adapted to read wrapper usage data
-    assert setup.guestlist.remainingDepositAllowed(randomUser1.address) == 5e8
+    assert setup.guestlist.remainingUserDepositAllowed(randomUser1.address) == 5e8
     
     # Test pricePerShare to equal 1
     assert setup.wrapper.pricePerShare() == 1e8

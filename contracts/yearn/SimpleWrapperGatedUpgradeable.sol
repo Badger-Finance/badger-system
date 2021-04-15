@@ -326,7 +326,7 @@ contract SimpleWrapperGatedUpgradeable is ERC20Upgradeable, BaseSimpleWrapperUpg
         // Start with the total shares that the wrapper has
         uint256 availableShares = experimentalVault.balanceOf(address(this));
 
-        uint256 expected = 0;
+        uint256 expected = _shareValue(shares);
         withdrawn = experimentalVault.withdraw(shares);
 
         // Invariant: withdrawn should not be signifcantly less than expected amount, defined by threshold
