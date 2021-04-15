@@ -6,6 +6,7 @@
     "devProxyAdmin": "0x20Dce41Acca85E8222D6861Aa6D23B6C941777bF",
     "opsProxyAdmin": "0x4599f2913a3db4e73aa77a304ccc21516dd7270d",
     "daoProxyAdmin": "0x11A9D034B1bbfbbDCaC9cB3b86ca7D5Df05140F2",
+    "testProxyAdmin": "0xB10b3Af646Afadd9C62D663dd5d226B15C25CdFA",
     "devMultisig": "0xB65cef03b9B89f99517643226d76e286ee999e77",
     "opsMultisig": "0x576cD258835C529B54722F84Bb7d4170aA932C64",
     "treasuryMultisig": "0xD4868d98849a58F743787c77738D808376210292",
@@ -49,7 +50,8 @@
         "BadgerRewardsManager": "0xE8D0A73ED68231F209bdDB1b0AAcc37C38C16E45",
         "UnlockScheduler": "0xC63d8A22D18dd42a9De8343Fd7C888bdA3E7516d",
         "AffiliateTokenGatedUpgradeable": "0x9313cB1AAaD4E600DBd7Ed70f76fB8288EA84138",
-        "VipCappedGuestListWrapperUpgradeable": "0x660fd841a5db4f54e2c7d266e28e0ca8bd44ae99"
+        "VipCappedGuestListWrapperUpgradeable": "0x660fd841a5db4f54e2c7d266e28e0ca8bd44ae99",
+        "SimpleWrapperGatedUpgradeable": "0xc0a972a3cf8e52167589694d135abb66409f9b30"
     },
     "dao": {
         "token": "0x3472A5A71965499acd81997a54BBA8D852C6E53d",
@@ -73,7 +75,7 @@
             "native.digg": "0x7e7E112A68d8D2E221E11047a72fFC1065c38e1a",
             "native.uniDiggWbtc": "0xC17078FDd324CC473F8175Dc5290fae5f2E84714",
             "native.sushiDiggWbtc": "0x88128580ACdD9c04Ce47AFcE196875747bF2A9f6",
-            "yearn.wbtc": "0x4Ea2684B087e0B8cb0BFa5d4792b266b17b43F9c"
+            "yearn.wbtc": "0x4b92d19c11435614cd49af1b589001b7c08cd4d5"
         },
         "vault_artifacts": {
             "native.badger": "Sett",
