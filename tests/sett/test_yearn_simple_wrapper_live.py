@@ -386,8 +386,9 @@ def test_deposit_withdraw_flow(setup):
 
     setup.wrapper.withdraw(shares, {"from": randomUser2})
     print('-- 1st User withdraws ' + str(shares) + ' shares --')
-    print('Withdrew ' + str(abs(19e8 - setup.wbtc.balanceOf(randomUser2.address))) + ' wbtc')
-    assert setup.wbtc.balanceOf(randomUser2.address) - 19.5e8 <= WITHDRAWN_TOLERANCE
+    print('Withdrew ' + str(abs(19e8 - setup.wbtc.balanceOf(randomUser2.address))/1e8) + ' wbtc')
+    assert setup.wbtc.balanceOf(randomUser2.address) - 19.5e8 <= TOLERANCE
+    assert setup.wbtc.balanceOf(randomUser2.address) <= 19.5e8
 
     # Check balance of user within wrapper
     assert abs(setup.wrapper.totalWrapperBalance(randomUser2.address) - 0.5e8) <= TOLERANCE
@@ -408,8 +409,9 @@ def test_deposit_withdraw_flow(setup):
 
     setup.wrapper.withdraw({"from": randomUser1})
     print('-- 2nd User withdraws ' + str(shares) + ' shares --')
-    print('Withdrew ' + str(setup.wbtc.balanceOf(randomUser1.address)) + ' for 10e8')
-    assert setup.wbtc.balanceOf(randomUser1.address) - 10e8 <= WITHDRAWN_TOLERANCE
+    print('Withdrew ' + str(setup.wbtc.balanceOf(randomUser1.address)/1e8) + ' wbtc')
+    assert setup.wbtc.balanceOf(randomUser1.address) - 10e8 <= TOLERANCE
+    assert setup.wbtc.balanceOf(randomUser1.address) <= 10e8
 
     # Check balance of user within wrapper
     assert setup.wrapper.totalWrapperBalance(randomUser1.address) == 0
@@ -430,8 +432,9 @@ def test_deposit_withdraw_flow(setup):
 
     setup.wrapper.withdraw({"from": randomUser3})
     print('-- 3rd User withdraws ' + str(shares) + ' shares --')    
-    print('Withdrew ' + str(abs(9e8 - setup.wbtc.balanceOf(randomUser2.address))) + ' for 1e8')
-    assert setup.wbtc.balanceOf(randomUser3.address) - 10e8 <= WITHDRAWN_TOLERANCE
+    print('Withdrew ' + str(abs(9e8 - setup.wbtc.balanceOf(randomUser3.address))/1e8) + ' wbtc')
+    assert setup.wbtc.balanceOf(randomUser3.address) - 10e8 <= TOLERANCE
+    assert setup.wbtc.balanceOf(randomUser3.address) <= 10e8
 
     # = User 3: Has 10 wbtc, withdraws 1 share= #
     # Random user attempts to withdraw 1 share
@@ -440,6 +443,9 @@ def test_deposit_withdraw_flow(setup):
         setup.wrapper.withdraw(1e8, {"from": randomUser3})
     # User's token balance remains the same 
     assert abs(setup.wbtc.balanceOf(randomUser3.address) - 10e8) <= WITHDRAWN_TOLERANCE
+
+    chain.sleep(86400)
+    chain.mine(1)
 
     # = User 2 sends remaining half of shares to user 3 for withdrawal = #
     shares = setup.wrapper.balanceOf(randomUser2.address)
@@ -450,9 +456,10 @@ def test_deposit_withdraw_flow(setup):
     # User 3 withdraws using the shares received from user 2, equivalent to 0.5
     setup.wrapper.withdraw(shares, {"from": randomUser3})
     print('-- 3rd User withdraws ' + str(shares) + ' shares --')
-    print('Withdrew ' + str(abs(10e8 - setup.wbtc.balanceOf(randomUser3.address))) + ' for 0.5e8')
+    print('Withdrew ' + str(abs(10e8 - setup.wbtc.balanceOf(randomUser3.address))/1e8) + ' wbtc')
     # wbtc balance of user 3: 10 + 0.5 = ~10.5
-    assert setup.wbtc.balanceOf(randomUser3.address) - 10.5e8 <= 1e5
+    assert setup.wbtc.balanceOf(randomUser3.address) - 10.5e8 <= TOLERANCE
+    assert setup.wbtc.balanceOf(randomUser3.address) <= 10.5e8
 
     assert setup.wrapper.totalVaultBalance(setup.wrapper.address) == 0
 
@@ -524,13 +531,15 @@ def test_depositFor_withdraw_flow(setup):
     setup.wrapper.withdraw({'from': randomUser1})
     # User 1 gets 1 wbtc in return (10 + 1 = 11)
     assert setup.wrapper.balanceOf(randomUser1.address) == 0
-    assert setup.wbtc.balanceOf(randomUser1.address) - 11e8 <= WITHDRAWN_TOLERANCE
+    assert setup.wbtc.balanceOf(randomUser1.address) - 11e8 <= TOLERANCE
+    assert setup.wbtc.balanceOf(randomUser1.address) <= 11e8
 
     # User 3 withdraws using their received shares
     setup.wrapper.withdraw({'from': randomUser3})
     # User 3 gets 1 wbtc in return (10 + 1 = 11)
     assert setup.wrapper.balanceOf(randomUser3.address) == 0
-    assert setup.wbtc.balanceOf(randomUser3.address) - 11e8 <= WITHDRAWN_TOLERANCE
+    assert setup.wbtc.balanceOf(randomUser3.address) - 11e8 <= TOLERANCE
+    assert setup.wbtc.balanceOf(randomUser3.address) <= 11e8
 
     # Wrapper balance of all users is zero
     assert setup.wrapper.totalWrapperBalance(randomUser1.address) == 0
@@ -614,12 +623,11 @@ def test_deposit_withdraw_fees_flow(setup):
     assert tx.events['WithdrawalFee']['amount'] - 0.05e8 <= TOLERANCE
 
     # Affiliate account wbtc balance is 0.5% of 10 wbtcs = ~0.05 wbtc
-    assert setup.wbtc.balanceOf(deployer.address) - 0.05e8 <= WITHDRAWN_TOLERANCE
+    assert setup.wbtc.balanceOf(deployer.address) - 0.05e8 <= TOLERANCE
+    assert setup.wbtc.balanceOf(deployer.address) <= 0.05e8
 
     # Random user's wbtc balance is 5 + (10-0.05) = 14.95 wbtcs
     assert setup.wbtc.balanceOf(randomUser2.address) == 14.95e8
-    assert setup.wbtc.balanceOf(randomUser2.address) - 14.95e8 <= WITHDRAWN_TOLERANCE
-    
 
     # Random user's wrapper balance is 5
     assert abs(setup.wrapper.totalWrapperBalance(randomUser2.address) - 5e8) <= TOLERANCE
