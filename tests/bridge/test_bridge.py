@@ -130,7 +130,7 @@ def test_bridge_vault(vault):
     # NB: In the real world, burns don't require approvals as it's just an internal update the the user's token balance.
     interface.IERC20(registry.tokens.renbtc).approve(
         bridge.mocks.BTC.gateway,
-        balanceBefore,
+        balance,
         {"from": bridge.adapter}
     )
     bridge.adapter.burn(
@@ -192,13 +192,13 @@ def test_bridge_basic():
     assert interface.IERC20(wbtc).balanceOf(account) > balanceBefore
 
     # Test burns
-    balanceBefore = interface.IERC20(wbtc).balanceOf(account)
-    interface.IERC20(wbtc).approve(bridge.adapter, balanceBefore, {"from": account})
+    balance = interface.IERC20(wbtc).balanceOf(account)
+    interface.IERC20(wbtc).approve(bridge.adapter, balance, {"from": account})
     # Approve the mock gateway for transfer of underlying token for "mock" burns.
     # NB: In the real world, burns don't require approvals as it's just an internal update the the user's token balance.
     interface.IERC20(renbtc).approve(
         bridge.mocks.BTC.gateway,
-        balanceBefore,
+        balance,
         {"from": bridge.adapter},
     )
 
@@ -207,7 +207,7 @@ def test_bridge_basic():
         AddressZero,  # No vault.
         slippage * 10**4,
         account.address,
-        balanceBefore,
+        balance,
         {"from": account},
     )
     assert interface.IERC20(wbtc).balanceOf(account) == 0
