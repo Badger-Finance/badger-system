@@ -124,7 +124,6 @@ contract CurveTokenWrapper {
     ) internal returns (uint256) {
         uint256 beforeBalance = _token.balanceOf(address(this));
         uint256 amount = _lpToken.balanceOf(address(this));
-        amount = _pool.calc_withdraw_one_coin(amount, _i);
 
         _approveBalance(_lpToken, address(_pool), amount);
 

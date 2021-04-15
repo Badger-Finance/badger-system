@@ -17,6 +17,7 @@ from scripts.systems.swap_system import connect_swap
 from scripts.upgrade.upgrade_bridge import upgrade_bridge, configure_bridge
 
 
+# Curve lp tokens
 RENBTC = "0x49849C98ae39Fff122806C06791Fa73784FB3675"
 TBTC = "0x64eda51d3Ad40D56b9dFc5554E06F94e1Dd786Fd"
 SBTC = "0x075b1bb99792c9E1041bA13afEf80C91a1e70fB3"
@@ -67,7 +68,6 @@ BRIDGE_VAULTS = [
 
 # Tests mint/burn to/from crv sett.
 # We create a mock vault for each pool token.
-#@pytest.mark.skip()
 @pytest.mark.parametrize(
     "vault", BRIDGE_VAULTS,
 )
@@ -125,6 +125,13 @@ def test_bridge_vault(vault):
         bridge.adapter.address,
         balance,
         {"from": account},
+    )
+    # Approve the mock gateway for transfer of underlying token for "mock" burns.
+    # NB: In the real world, burns don't require approvals as it's just an internal update the the user's token balance.
+    interface.IERC20(registry.tokens.renbtc).approve(
+        bridge.mocks.BTC.gateway,
+        balanceBefore,
+        {"from": bridge.adapter}
     )
     bridge.adapter.burn(
         vault["outToken"],
@@ -189,7 +196,11 @@ def test_bridge_basic():
     interface.IERC20(wbtc).approve(bridge.adapter, balanceBefore, {"from": account})
     # Approve the mock gateway for transfer of underlying token for "mock" burns.
     # NB: In the real world, burns don't require approvals as it's just an internal update the the user's token balance.
-    interface.IERC20(renbtc).approve(bridge.mocks.BTC.gateway, balanceBefore, {"from": bridge.adapter})
+    interface.IERC20(renbtc).approve(
+        bridge.mocks.BTC.gateway,
+        balanceBefore,
+        {"from": bridge.adapter},
+    )
 
     bridge.adapter.burn(
         wbtc,
