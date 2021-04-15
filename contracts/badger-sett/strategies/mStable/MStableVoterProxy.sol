@@ -74,7 +74,7 @@ contract MStableVoterProxy is IMStableVoterProxy, PausableUpgradeable, SettAcces
 
         redistributionRate = _rates[0];
 
-        IERC20Upgradeable(mta).safeApprove(votingLockup, type(uint256).max);
+        mta.safeApprove(address(votingLockup), type(uint256).max);
     }
 
     /// @dev Verifies that the caller is an active strategy and returns the address of the vault
@@ -191,7 +191,7 @@ contract MStableVoterProxy is IMStableVoterProxy, PausableUpgradeable, SettAcces
     function loan(uint256 _amt) external override {
         require(loans[msg.sender] == 0, "Existing loan");
 
-        mta.safeTransferFrom(msg.sender, address(this), value);
+        mta.safeTransferFrom(msg.sender, address(this), _amt);
         loans[msg.sender] = _amt;
 
         emit Loaned(msg.sender, _amt);
@@ -221,11 +221,11 @@ contract MStableVoterProxy is IMStableVoterProxy, PausableUpgradeable, SettAcces
     function supportStrategy(address _strategy, address _vault) external override {
         _onlyGovernance();
 
-        require(strategyToVault[_strategy] == address(0), "Strategy already supported");
+        require(address(strategyToVault[_strategy]) == address(0), "Strategy already supported");
 
         uint256 len = strategies.length;
         for (uint256 i = 0; i < len; i++) {
-            address vaulti = strategyToVault[strategies[i]];
+            address vaulti = address(strategyToVault[strategies[i]]);
             require(vaulti != _vault, "Vault already supported");
         }
 
@@ -248,7 +248,7 @@ contract MStableVoterProxy is IMStableVoterProxy, PausableUpgradeable, SettAcces
     /// NOTE - Assumes that the want has already been transferred here
     /// @param _amt Amt of want that should be staked in the vault
     function deposit(uint256 _amt) external override {
-        address vault = _onlyActiveStrategy();
+        IMStableBoostedVault vault = _onlyActiveStrategy();
 
         vault.stake(_amt);
     }
@@ -257,7 +257,7 @@ contract MStableVoterProxy is IMStableVoterProxy, PausableUpgradeable, SettAcces
     /// Passes _want to avoid having to read _want again via ext call
     /// @param _want Address of the LP token to return back to sender
     function withdrawAll(address _want) external override {
-        address vault = _onlyActiveStrategy();
+        IMStableBoostedVault vault = _onlyActiveStrategy();
 
         uint256 rawBal = vault.rawBalanceOf(address(this));
         vault.withdraw(rawBal);
@@ -269,7 +269,7 @@ contract MStableVoterProxy is IMStableVoterProxy, PausableUpgradeable, SettAcces
     /// @param _want Address of the LP token to return back to sender
     /// @param _amt Amount of want to withdraw and return
     function withdrawSome(address _want, uint256 _amt) external override {
-        address vault = _onlyActiveStrategy();
+        IMStableBoostedVault vault = _onlyActiveStrategy();
 
         vault.withdraw(_amt);
         IERC20Upgradeable(_want).safeTransfer(msg.sender, _amt);
@@ -279,7 +279,7 @@ contract MStableVoterProxy is IMStableVoterProxy, PausableUpgradeable, SettAcces
     /// @return immediateUnlock Amount of tokens that were earned without need for vesting
     /// @return vested Amount of tokens that were earned post-vesting
     function claim() external override returns (uint256 immediateUnlock, uint256 vested) {
-        address vault = _onlyActiveStrategy();
+        IMStableBoostedVault vault = _onlyActiveStrategy();
 
         // Get balance of MTA before (there could be residual MTA here waiting to be reinvested in vMTA)
         uint256 balBefore = mta.balanceOf(address(this));

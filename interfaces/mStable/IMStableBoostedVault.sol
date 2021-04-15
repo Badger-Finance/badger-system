@@ -1,7 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.5.0 <0.9.0;
 
-interface IBoostedVaultWithLockup {
+interface IMStableBoostedVault {
+    /**
+     * @dev Get the RAW balance of a given account
+     * @param _account User for which to retrieve balance
+     */
+    function rawBalanceOf(address _account) external view returns (uint256);
+
     /**
      * @dev Stakes a given amount of the StakingToken for the sender
      * @param _amount Units of StakingToken

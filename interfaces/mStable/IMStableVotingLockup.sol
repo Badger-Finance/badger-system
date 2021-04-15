@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.5.0 <0.9.0;
 
-abstract contract IIncentivisedVotingLockup {
+abstract contract IMStableVotingLockup {
     function createLock(uint256 _value, uint256 _unlockTime) external virtual;
 
     function withdraw() external virtual;

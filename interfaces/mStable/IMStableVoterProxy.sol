@@ -16,7 +16,7 @@ interface IMStableVoterProxy {
 
     function harvestMta() external;
 
-    function extendLock() external;
+    function extendLock(uint256 _unlockTime) external;
 
     function exitLock() external returns (uint256 mtaBalance);
 

@@ -65,7 +65,8 @@ contract StrategyMStableVaultBase is BaseStrategy {
         uint256 mtaRecycledToWant; // MTA recycled back to want for compounding, after deducting voterProxy
         uint256 lpComponentPurchased; // LP components purchased from MTA
         uint256 wantProcessed; // Output from mint
-        uint256[2] wantFees; // Units deposited back into vault
+        uint256[2] wantFees; // Fees taken from wantProcessed
+        uint256 wantDeposited; // Units deposited back into vault
         uint256 mtaPostVesting; // MTA earned post vesting, after deducting voterProxy
         uint256[2] mtaFees; // Fees taken from the post-vesting MTA
         uint256 mtaPostVestingSentToBadgerTree; // Post-vesting MTA units sent to BadgerTree for distribution
@@ -150,13 +151,13 @@ contract StrategyMStableVaultBase is BaseStrategy {
 
     /// @dev Withdraws all units of want from the vault via the VoterProxy
     function _withdrawAll() internal override {
-        IMStableVoterProxy(voterProxy).withdrawAll();
+        IMStableVoterProxy(voterProxy).withdrawAll(want);
     }
 
     /// @dev Withdraws a certain number of want units from the vault via the VoterProxy
     /// @param _amount Units of want to withdraw
     function _withdrawSome(uint256 _amount) internal override returns (uint256) {
-        IMStableVoterProxy(voterProxy).withdrawSome(_amount);
+        IMStableVoterProxy(voterProxy).withdrawSome(want, _amount);
         return _amount;
     }
 
@@ -181,7 +182,7 @@ contract StrategyMStableVaultBase is BaseStrategy {
         // Step 3: Send Post-vesting rewards to BadgerTree
         // mtaPostVesting = vestedMTA - govFee = vestedMTA * (1-govFee) / maxFee
         // e.g. 6e18 * 9000 / 10000 = 54e16
-        harvestData.mtaPostVesting = _mtaVested.mul(MAX_FEE.sub(govMTA)).div(MAX_FEE);
+        harvestData.mtaPostVesting = _mtaVested.mul(MAX_FEE.sub(govMta)).div(MAX_FEE);
         if (harvestData.mtaPostVesting > 0) {
             (harvestData.mtaFees[0], harvestData.mtaFees[1]) = _processPerformanceFees(mta, harvestData.mtaPostVesting);
             harvestData.mtaPostVestingSentToBadgerTree = harvestData.mtaPostVesting.sub(harvestData.mtaFees[0]).sub(harvestData.mtaFees[1]);
