@@ -12,7 +12,7 @@ import brownie
 import os
 
 def __get_data__(logger_address: str, start: int, end: int):
-  calls = [Call(logger_address, ['getEntry(uint256)(address,address,uint256,uint256,uint256)', i], [['recipient_'+str(i), None], ['token_'+str(i), None], ['amount_'+str(i), None], ['startTime_'+str(i), None], ['endTime_'+str(i), None]]) for i in range(start, end)]
+  calls = [Call(logger_address, ['getEntry(uint256)(address,address,uint256,uint256,uint256,uint256)', i], [['recipient_'+str(i), None], ['token_'+str(i), None], ['amount_'+str(i), None], ['amountDuration_'+str(i), None], ['startTime_'+str(i), None], ['endTime_'+str(i), None]]) for i in range(start, end)]
   multi = Multicall(calls)()
 
   result = []
@@ -21,6 +21,7 @@ def __get_data__(logger_address: str, start: int, end: int):
       web3.toChecksumAddress(multi['recipient_'+str(i)]),
       web3.toChecksumAddress(multi['token_'+str(i)]),
       multi['amount_'+str(i)],
+      multi['amountDuration_'+str(i)],
       multi['startTime_'+str(i)],
       multi['endTime_'+str(i)]
     ))
@@ -44,11 +45,9 @@ def fetch_salaries(manager: str, logger_address: str, test=False):
   now = int(time())
 
   for entry in entries:
-    (recipient, token, amount, startTime, endTime) = entry
-    
+    (recipient, token, amount, amountDuration, startTime, endTime) = entry
     if startTime <= now <= endTime or last_paid_timestamp <= endTime <= now:
-      amount_duration = endTime - startTime
-      amount_per_second = amount // amount_duration
+      amount_per_second = amount // amountDuration
       current_period = min(now, endTime) - max(last_paid_timestamp, startTime)
       new_pay = amount_per_second * current_period
 

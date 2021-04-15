@@ -16,6 +16,7 @@ contract ContributorLogger is AccessControlUpgradeable {
         address recipient;
         address token;
         uint256 amount;
+        uint256 amountDuration;
         uint256 startTime;
         uint256 endTime;
     }
@@ -74,11 +75,12 @@ contract ContributorLogger is AccessControlUpgradeable {
             address,
             uint256,
             uint256,
+            uint256,
             uint256
         )
     {
         Entry storage entry = paymentEntries[id];
-        return (entry.recipient, entry.token, entry.amount, entry.startTime, entry.endTime);
+        return (entry.recipient, entry.token, entry.amount, entry.amountDuration, entry.startTime, entry.endTime);
     }
 
     // ===== Permissioned Functions: Manager =====
@@ -92,14 +94,14 @@ contract ContributorLogger is AccessControlUpgradeable {
         address recipient,
         address token,
         uint256 amount,
+        uint256 amountDuration,
         uint256 startTime,
         uint256 endTime
     ) external onlyManager {
         uint256 id = nextId;
         require(startTime >= block.timestamp, "start time cannot be in past");
-        uint256 amountDuration = endTime.sub(startTime);
         nextId = nextId.add(1);
-        paymentEntries[id] = Entry(recipient, token, amount, startTime, endTime);
+        paymentEntries[id] = Entry(recipient, token, amount, amountDuration, startTime, endTime);
         emit CreateEntry(id, recipient, token, amount, amountDuration, startTime, endTime, block.timestamp, block.number);
     }
 
@@ -108,12 +110,13 @@ contract ContributorLogger is AccessControlUpgradeable {
     function updateEntry(
         uint256 id,
         uint256 amount,
+        uint256 amountDuration,
         uint256 startTime,
         uint256 endTime
     ) external onlyManager {
         require(id < nextId, "ID does not exist");
-        uint256 amountDuration = endTime.sub(startTime);
         paymentEntries[id].amount = amount;
+        paymentEntries[id].amountDuration = amountDuration;
         paymentEntries[id].startTime = startTime;
         paymentEntries[id].endTime = endTime;
         emit UpdateEntry(id, amount, amountDuration, startTime, endTime, block.timestamp, block.number);
