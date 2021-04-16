@@ -3,7 +3,7 @@ pragma solidity ^0.6.12;
 
 import "deps/@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import "deps/@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
-import "./BaseWrapperUpgradeable.sol";
+import "./BaseSimpleWrapperUpgradeable.sol";
 
 import "interfaces/yearn/VaultApi.sol";
 import "interfaces/yearn/BadgerGuestlistApi.sol";
@@ -17,7 +17,7 @@ import "interfaces/yearn/BadgerGuestlistApi.sol";
     More Events
     Each action emits events to faciliate easier logging and monitoring
  */
-contract AffiliateTokenGatedUpgradeable is ERC20Upgradeable, BaseWrapperUpgradeable, PausableUpgradeable {
+contract SimpleWrapperGatedUpgradeable is ERC20Upgradeable, BaseSimpleWrapperUpgradeable, PausableUpgradeable {
     /// @notice The EIP-712 typehash for the contract's domain
     bytes32 public constant DOMAIN_TYPEHASH = keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)");
     bytes32 public DOMAIN_SEPARATOR;
@@ -49,7 +49,7 @@ contract AffiliateTokenGatedUpgradeable is ERC20Upgradeable, BaseWrapperUpgradea
     /// @dev In experimental mode, the wrapper only deposits and withdraws from a single pre-connected vault (rather than the registry). The vault cache is not set in this mode. Once disabled, cannot be re-enabled.
     bool public experimentalMode;
 
-    address public experimentalVault;
+    VaultAPI public experimentalVault;
 
     modifier onlyAffiliate() {
         require(msg.sender == affiliate);
@@ -79,7 +79,7 @@ contract AffiliateTokenGatedUpgradeable is ERC20Upgradeable, BaseWrapperUpgradea
         bool _useExperimentalMode,
         address _experimentalVault
     ) external initializer {
-        _BaseWrapperUpgradeable_init(_token, _registry);
+        _BaseSimpleWrapperUpgradeable_init(_token, _registry);
         __ERC20_init(name, symbol);
 
         DOMAIN_SEPARATOR = keccak256(abi.encode(DOMAIN_TYPEHASH, keccak256(bytes(name)), keccak256(bytes("1")), _getChainId(), address(this)));
@@ -89,9 +89,9 @@ contract AffiliateTokenGatedUpgradeable is ERC20Upgradeable, BaseWrapperUpgradea
 
         if (_useExperimentalMode) {
             experimentalMode = true;
-            experimentalVault = _experimentalVault;
+            experimentalVault = VaultAPI(_experimentalVault);
 
-            emit SetExperimentalVault(experimentalVault);
+            emit SetExperimentalVault(address(experimentalVault));
         }
 
         emit AcceptAffiliate(affiliate);
@@ -110,26 +110,18 @@ contract AffiliateTokenGatedUpgradeable is ERC20Upgradeable, BaseWrapperUpgradea
         emit SetWithdrawalMaxDeviationThreshold(withdrawalMaxDeviationThreshold);
     }
 
-    function bestVault() public override view returns (VaultAPI) {
-        if (experimentalMode) {
-            return VaultAPI(experimentalVault);
-        } else {
-            return super.bestVault();
-        }
+    function bestVault() public view returns (VaultAPI) {
+        return experimentalVault;
     }
 
-    function allVaults() public override view returns (VaultAPI[] memory) {
-        if (experimentalMode) {
-            VaultAPI[] memory vaults = new VaultAPI[](1);
-            vaults[0] = VaultAPI(experimentalVault);
-            return vaults;
-        } else {
-            return super.allVaults();
-        }
+    /// @dev Get estimated value of vault position for an account
+    function totalVaultBalance(address account) public view returns (uint256 balance) {
+        return experimentalVault.balanceOf(account).mul(experimentalVault.pricePerShare()).div(10**uint256(experimentalVault.decimals()));
     }
 
-    function disableExperimentalMode() external onlyAffiliate {
-        experimentalMode = false;
+    /// @dev Forward totalAssets from underlying vault
+    function totalAssets() public view returns (uint256 assets) {
+        return experimentalVault.totalAssets();
     }
 
     function _getChainId() internal view returns (uint256) {
@@ -185,12 +177,9 @@ contract AffiliateTokenGatedUpgradeable is ERC20Upgradeable, BaseWrapperUpgradea
         }
     }
 
+    /// @dev Forward pricePerShare of underlying vault
     function pricePerShare() public view returns (uint256) {
-        if (totalSupply() == 0) {
-            return 0;
-        } else {
-            return totalVaultBalance(address(this)).mul(10**uint256(decimals())).div(totalSupply());
-        }
+        return VaultAPI(experimentalVault).pricePerShare();
     }
 
     function totalWrapperBalance(address account) public view returns (uint256 balance) {
@@ -208,13 +197,6 @@ contract AffiliateTokenGatedUpgradeable is ERC20Upgradeable, BaseWrapperUpgradea
         }
     }
 
-    /// @dev Deposit entire balance of token in wrapper
-    /// @dev A merkle proof can be supplied to verify inclusion in merkle guest list if this functionality is active
-    function deposit(bytes32[] calldata merkleProof) external whenNotPaused returns (uint256) {
-        uint256 allAssets = token.balanceOf(address(msg.sender));
-        return deposit(allAssets, merkleProof); // Deposit everything
-    }
-
     /// @dev Deposit specified amount of token in wrapper for specified recipient
     /// @dev Variant without merkleProof
     function depositFor(address recipient, uint256 amount) public whenNotPaused returns (uint256 deposited) {
@@ -229,13 +211,19 @@ contract AffiliateTokenGatedUpgradeable is ERC20Upgradeable, BaseWrapperUpgradea
             require(guestList.authorized(msg.sender, amount, merkleProof), "guest-list-authorization");
         }
 
-        (uint256 virtualDeposited, uint256 deposited) = _deposit(msg.sender, address(this), amount, true); // `true` = pull from `msg.sender`
-        uint256 shares = _sharesForValue(virtualDeposited); // NOTE: Must be calculated after deposit is handled
+        uint256 shares = _deposit(msg.sender, amount);
         _mint(recipient, shares);
 
-        emit Deposit(recipient, deposited);
+        emit Deposit(recipient, amount);
         emit Mint(recipient, shares);
-        return deposited;
+        return amount;
+    }
+
+    /// @dev Deposit entire balance of token in wrapper
+    /// @dev A merkle proof can be supplied to verify inclusion in merkle guest list if this functionality is active
+    function deposit(bytes32[] calldata merkleProof) external whenNotPaused returns (uint256) {
+        uint256 allAssets = token.balanceOf(address(msg.sender));
+        return deposit(allAssets, merkleProof); // Deposit everything
     }
 
     /// @dev Deposit specified amount of token in wrapper
@@ -245,37 +233,25 @@ contract AffiliateTokenGatedUpgradeable is ERC20Upgradeable, BaseWrapperUpgradea
             require(guestList.authorized(msg.sender, amount, merkleProof), "guest-list-authorization");
         }
 
-        (uint256 virtualDeposited, uint256 deposited) = _deposit(msg.sender, address(this), amount, true); // `true` = pull from `msg.sender`
-        uint256 shares = _sharesForValue(virtualDeposited); // NOTE: Must be calculated after deposit is handled
+        uint256 shares = _deposit(msg.sender, amount);
         _mint(msg.sender, shares);
 
-        emit Deposit(msg.sender, deposited);
+        emit Deposit(msg.sender, amount);
         emit Mint(msg.sender, shares);
-        return deposited;
+        return amount;
     }
 
+    /// @dev Withdraw all shares for the sender
     function withdraw() external whenNotPaused returns (uint256) {
         return withdraw(balanceOf(msg.sender));
     }
 
     function withdraw(uint256 shares) public whenNotPaused returns (uint256 withdrawn) {
-        withdrawn = _withdraw(address(this), msg.sender, _shareValue(shares), true, true, true); // `true` = withdraw from `bestVault`
+        withdrawn = _withdraw(msg.sender, shares, true, true); // `true` = withdraw from `bestVault`
         _burn(msg.sender, shares);
 
         emit Withdraw(msg.sender, withdrawn);
         emit Burn(msg.sender, shares);
-    }
-
-    function migrate() external onlyAffiliate whenNotPaused returns (uint256) {
-        return _migrate(address(this));
-    }
-
-    function migrate(uint256 amount) external onlyAffiliate whenNotPaused returns (uint256) {
-        return _migrate(address(this), amount);
-    }
-
-    function migrate(uint256 amount, uint256 maxMigrationLoss) external onlyAffiliate whenNotPaused returns (uint256) {
-        return _migrate(address(this), amount, maxMigrationLoss);
     }
 
     /**
@@ -321,95 +297,41 @@ contract AffiliateTokenGatedUpgradeable is ERC20Upgradeable, BaseWrapperUpgradea
         _unpause();
     }
 
+    //note. sometimes when we deposit we "lose" money. Therefore our amount needs to be adjusted to reflect the true pricePerShare we received
+    function _deposit(
+        address depositor,
+        uint256 amount
+    ) internal returns (uint256 shares) {
+        VaultAPI _bestVault = bestVault();
+        token.safeTransferFrom(depositor, address(this), amount);
+
+        if (token.allowance(address(this), address(_bestVault)) < amount) {
+            token.safeApprove(address(_bestVault), 0); // Avoid issues with some tokens requiring 0
+            token.safeApprove(address(_bestVault), UNLIMITED_APPROVAL); // Vaults are trusted
+        }
+
+        shares = _bestVault.deposit(amount);
+    }
     
     /// @dev Variant with withdrawal fee and verification of max loss. Used in withdraw functions. 
     /// @dev Migrate functions use the variant from BaseWrapper without these features.
     function _withdraw(
-        address sender,
         address receiver,
-        uint256 amount, // if `MAX_UINT256`, just withdraw everything
-        bool withdrawFromBest, // If true, also withdraw from `_bestVault`
+        uint256 shares, // if `MAX_UINT256`, just withdraw everything
         bool processWithdrawalFee, // If true, process withdrawal fee to affiliate
         bool verifyMaxLoss // If true, ensure that the amount is within an expected range based on withdrawalMaxDeviationThreshold 
     ) internal virtual returns (uint256 withdrawn) {
         VaultAPI _bestVault = bestVault();
 
-        VaultAPI[] memory vaults = allVaults();
+        // Start with the total shares that the wrapper has
+        uint256 availableShares = experimentalVault.balanceOf(address(this));
 
-        // Don't update cache in experimental mode, wait until we are referencing the registry data
-        if (!experimentalMode) {
-            _updateVaultCache(vaults);
-        }
-
-        // NOTE: This loop will attempt to withdraw from each Vault in `allVaults` that `sender`
-        //       is deposited in, up to `amount` tokens. The withdraw action can be expensive,
-        //       so it if there is a denial of service issue in withdrawing, the downstream usage
-        //       of this wrapper contract must give an alternative method of withdrawing using
-        //       this function so that `amount` is less than the full amount requested to withdraw
-        //       (e.g. "piece-wise withdrawals"), leading to less loop iterations such that the
-        //       DoS issue is mitigated (at a tradeoff of requiring more txns from the end user).
-        for (uint256 id = 0; id < vaults.length; id++) {
-            if (!withdrawFromBest && vaults[id] == _bestVault) {
-                continue; // Don't withdraw from the best
-            }
-
-            // Start with the total shares that `sender` has
-            uint256 availableShares = vaults[id].balanceOf(sender);
-
-            // Restrict by the allowance that `sender` has to this contract
-            // NOTE: No need for allowance check if `sender` is this contract
-            if (sender != address(this)) {
-                availableShares = MathUpgradeable.min(availableShares, vaults[id].allowance(sender, address(this)));
-            }
-
-            // Limit by maximum withdrawal size from each vault
-            availableShares = MathUpgradeable.min(availableShares, vaults[id].maxAvailableShares());
-
-            if (availableShares > 0) {
-                // Intermediate step to move shares to this contract before withdrawing
-                // NOTE: No need for share transfer if this contract is `sender`
-                if (sender != address(this)) vaults[id].transferFrom(sender, address(this), availableShares);
-
-                if (amount != WITHDRAW_EVERYTHING) {
-                    // Compute amount to withdraw fully to satisfy the request
-                    uint256 estimatedShares = amount
-                        .sub(withdrawn) // NOTE: Changes every iteration
-                        .mul(10**uint256(vaults[id].decimals()))
-                        .div(vaults[id].pricePerShare()); // NOTE: Every Vault is different
-
-                    // Limit amount to withdraw to the maximum made available to this contract
-                    // NOTE: Avoid corner case where `estimatedShares` isn't precise enough
-                    // NOTE: If `0 < estimatedShares < 1` but `availableShares > 1`, this will withdraw more than necessary
-                    if (estimatedShares > 0 && estimatedShares < availableShares) {
-                        withdrawn = withdrawn.add(vaults[id].withdraw(estimatedShares));
-                    } else {
-                        withdrawn = withdrawn.add(vaults[id].withdraw(availableShares));
-                    }
-                } else {
-                    withdrawn = withdrawn.add(vaults[id].withdraw());
-                }
-
-                // Check if we have fully satisfied the request
-                // NOTE: use `amount = WITHDRAW_EVERYTHING` for withdrawing everything
-                if (amount <= withdrawn) break; // withdrawn as much as we needed
-            }
-        }
+        uint256 expected = _shareValue(shares);
+        withdrawn = experimentalVault.withdraw(shares);
 
         // Invariant: withdrawn should not be signifcantly less than expected amount, defined by threshold
-        if (amount > withdrawn) {
-            _verifyWithinMaxDeviationThreshold(withdrawn, amount);
-        }
-
-        // If we have extra, deposit back into `_bestVault` for `sender`
-        // NOTE: Invariant is `withdrawn <= amount`
-        if (withdrawn > amount) {
-            // Don't forget to approve the deposit
-            if (token.allowance(address(this), address(_bestVault)) < withdrawn.sub(amount)) {
-                token.safeApprove(address(_bestVault), UNLIMITED_APPROVAL); // Vaults are trusted
-            }
-
-            _bestVault.deposit(withdrawn.sub(amount), sender);
-            withdrawn = amount;
+        if (expected > withdrawn) {
+            _verifyWithinMaxDeviationThreshold(withdrawn, expected);
         }
 
         // Process withdrawal fee
