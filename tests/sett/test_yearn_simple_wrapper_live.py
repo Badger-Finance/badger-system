@@ -712,12 +712,17 @@ def test_gustlist_authentication(setup):
 
     # Test depositing with user on Gueslist but with no merkle proof
 
-    # Approve wrapper to transfer user's token
-    setup.wbtc.approve(setup.wrapper.address, 100e8, {"from": randomUser1})
-
     setup.wrapper.deposit(1e8, [], {'from': randomUser1})
     assert abs(setup.wrapper.totalWrapperBalance(randomUser1.address) - 1e8) <= TOLERANCE
 
+    # Test manually removing guest (with no proof) from guestlist and attempting to deposit
+
+    # Remove user from guestlist
+    setup.guestlist.setGuests([randomUser1.address], [False])
+
+    with brownie.reverts('guest-list-authorization'):
+        setup.wrapper.deposit(1e8, [], {'from': randomUser1})
+    
     # Test depositing with user not on Gueslist and with no merkle proof
         
     # Approve wrapper to transfer user's token
@@ -745,5 +750,56 @@ def test_gustlist_authentication(setup):
     # User deposits the remaining total deposit allowed and it goes through
     setup.wrapper.deposit(setup.guestlist.remainingTotalDepositAllowed(), [], {'from': randomUser2})
 
+#@pytest.mark.skip()
+def test_deviation_threshold(setup):
+    distributor = setup.namedAccounts['distributor']
+    deployer = setup.namedAccounts['deployer']
+
+    setup.wbtc.approve(setup.wrapper.address, 100e8, {"from": distributor})
+
+    # Remove merkle proof verification from Gueslist
+    setup.guestlist.setGuestRoot('0x0')
+
+    # Link guestlist to wrapper
+    setup.wrapper.setGuestList(setup.guestlist.address, {"from": deployer})
+
+    # Set total deposit cap to 100 wbtc
+    setup.guestlist.setTotalDepositCap(100e8)
+
+    # Add distributor to guestlist
+    setup.guestlist.setGuests([distributor.address], [True])
+    # Set deposit cap to 51 wbtc
+    setup.guestlist.setUserDepositCap(51e8)
+
+    # Set max deviation threshold
+    setup.wrapper.setWithdrawalMaxDeviationThreshold(50)
+
+    # -- Desposit flow -- #
+
+    assert setup.wbtc.balanceOf(distributor.address) == 1000e8
+    setup.wrapper.deposit(50e8, [], {"from": distributor})
+    print("-- Distributor Deposits 50 --")
+    assert setup.wbtc.balanceOf(distributor.address) == 950e8
+
+    # Check balance of user within wrapper is within tolerance (increased tolerance for bigger amounts - mismatch: ~34 sats)
+    assert abs(setup.wrapper.totalWrapperBalance(distributor.address) - 50e8) < TOLERANCE*4
+
+    # total amount of wbtc deposited through wrapper = ~1
+    assert abs(setup.wrapper.totalVaultBalance(setup.wrapper.address) - 50e8) < TOLERANCE*4
+
+    # deposit/pps of wrapper shares are minted for depositor and vault shares are 0 for depositor
+    assert setup.yvwbtc.balanceOf(distributor.address) == 0
+    assert abs(setup.wrapper.balanceOf(distributor.address) - (50e8/setup.wrapper.pricePerShare())*1e8) < TOLERANCE*4
+
+    # Remaining deposit allowed = 0
+    assert abs(setup.guestlist.remainingUserDepositAllowed(distributor.address) - 1e8) < TOLERANCE*4
+
+    # === Withdraw flow === #
+
+    setup.wrapper.withdraw({"from": distributor})
+    print('-- Distributor withdraws ' + str(setup.wrapper.balanceOf(distributor.address)) + ' shares --')
+    print('Withdrew ' + str(abs(950e8 - setup.wbtc.balanceOf(distributor.address))/1e8) + ' wbtc')
+    assert setup.wbtc.balanceOf(distributor.address) - 1000e8 <= TOLERANCE
+    assert setup.wbtc.balanceOf(distributor.address) <= 1000e8
 
 
