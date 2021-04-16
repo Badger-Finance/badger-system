@@ -41,6 +41,7 @@ name_to_artifact = {
     "UnlockScheduler": UnlockScheduler,
     "AffiliateTokenGatedUpgradeable": AffiliateTokenGatedUpgradeable,
     "VipCappedGuestListWrapperUpgradeable": VipCappedGuestListWrapperUpgradeable,
+    "SimpleWrapperGatedUpgradeable": SimpleWrapperGatedUpgradeable
 }
 
 
