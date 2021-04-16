@@ -50,7 +50,7 @@
         "BadgerRewardsManager": "0xE8D0A73ED68231F209bdDB1b0AAcc37C38C16E45",
         "UnlockScheduler": "0xC63d8A22D18dd42a9De8343Fd7C888bdA3E7516d",
         "AffiliateTokenGatedUpgradeable": "0x9313cB1AAaD4E600DBd7Ed70f76fB8288EA84138",
-        "VipCappedGuestListWrapperUpgradeable": "0x660fd841a5db4f54e2c7d266e28e0ca8bd44ae99",
+        "VipCappedGuestListWrapperUpgradeable": "0xAB6F4d5C89f19F367188cfC4d59d4Dba6bdB2dea",
         "SimpleWrapperGatedUpgradeable": "0xc0a972a3cf8e52167589694d135abb66409f9b30"
     },
     "dao": {
