@@ -226,7 +226,7 @@ contract BadgerBridgeAdapter is OwnableUpgradeable, ReentrancyGuardUpgradeable {
 
         // If the token is wBTC then we just approve spend and deposit directly into the wbtc vault.
         if (args._token == address(wBTC)) {
-            _approveBalance(token, args._vault, token.balanceOf(address(this)));
+            token.safeApprove(args._vault, token.balanceOf(address(this)));
         } else {
             // Otherwise, we need to wrap the token before depositing into vault.
             // We currently only support wrapping renbtc into curve lp tokens.
@@ -234,7 +234,7 @@ contract BadgerBridgeAdapter is OwnableUpgradeable, ReentrancyGuardUpgradeable {
             // and it will transfer back wrapped lp tokens.
             token.safeTransfer(curveTokenWrapper, amount);
             uint256 wrappedAmount = ICurveTokenWrapper(curveTokenWrapper).wrap(args._vault);
-            _approveBalance(IBridgeVault(args._vault).token(), args._vault, wrappedAmount);
+            IBridgeVault(args._vault).token().safeApprove(args._vault, wrappedAmount);
         }
 
         IBridgeVault(args._vault).depositFor(args._user, amount);
@@ -290,17 +290,6 @@ contract BadgerBridgeAdapter is OwnableUpgradeable, ReentrancyGuardUpgradeable {
         IERC20(token).safeTransfer(governance, governanceFee);
         IERC20(token).safeTransfer(rewards, rewardsFee);
         return fee;
-    }
-
-    function _approveBalance(
-        IERC20 _token,
-        address _spender,
-        uint256 _amount
-    ) internal {
-        if (_token.allowance(address(this), _spender) < _amount) {
-            // Approve max spend.
-            _token.safeApprove(_spender, (1 << 64) - 1);
-        }
     }
 
     // Admin methods.

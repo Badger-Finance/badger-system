@@ -99,7 +99,7 @@ contract CurveTokenWrapper {
         uint256 beforeBalance = _lpToken.balanceOf(address(this));
         uint256 amount = _token.balanceOf(address(this));
 
-        _approveBalance(_token, address(_pool), amount);
+        _token.safeApprove(address(_pool), amount);
 
         if (_numTokens == 2) {
             uint256[2] memory amounts;
@@ -125,21 +125,10 @@ contract CurveTokenWrapper {
         uint256 beforeBalance = _token.balanceOf(address(this));
         uint256 amount = _lpToken.balanceOf(address(this));
 
-        _approveBalance(_lpToken, address(_pool), amount);
+        _lpToken.safeApprove(address(_pool), amount);
 
         _pool.remove_liquidity_one_coin(amount, _i, 0);
 
         return _token.balanceOf(address(this)).sub(beforeBalance);
-    }
-
-    function _approveBalance(
-        IERC20 _token,
-        address _spender,
-        uint256 _amount
-    ) internal {
-        if (_token.allowance(address(this), _spender) < _amount) {
-            // Approve max spend.
-            _token.safeApprove(_spender, (1 << 64) - 1);
-        }
     }
 }
