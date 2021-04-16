@@ -3,7 +3,6 @@ from brownie.network.account import Account
 from scripts.systems.badger_system import connect_badger
 from time import time 
 from datetime import datetime
-from dotmap import DotMap
 
 from helpers.multicall.call import Call
 from helpers.multicall.multicall import Multicall
@@ -49,18 +48,35 @@ def fetch_salaries(manager: Account, logger_address: str, test=False):
     (recipient, token, amount, amountDuration, startTime, endTime) = entry
     if startTime <= now <= endTime or last_paid_timestamp <= endTime <= now:
       amount_per_second = amount // amountDuration
-      current_period = min(now, endTime) - max(last_paid_timestamp, startTime)
-      new_pay = amount_per_second * current_period
+
+      datapoint = {
+        "amount_per_second": amount_per_second,
+        "from_time": max(last_paid_timestamp, startTime),
+        "to_time": min(now, endTime)
+      }
 
       if not salaries.get(recipient):
           salaries[recipient] = {}
       if salaries[recipient].get(token):
-        salaries[recipient][token] += new_pay
+        # handle updates and deletions
+        if datapoint['from_time'] < salaries[recipient][token][-1]['to_time']:
+          salaries[recipient][token][-1]['to_time'] = datapoint['from_time']
+        salaries[recipient][token].append(datapoint)
+        
       else:
-        salaries[recipient][token] = new_pay
+        salaries[recipient][token] = [datapoint]
         
     else:
       updated_first_paid_index += 1
+
+  results = dict()
+  for recipient in salaries.keys():
+    results[recipient] = {}
+    for token in salaries[recipient].keys():
+      total = 0
+      for entry in salaries[recipient][token]:
+        total += entry['amount_per_second'] * (entry['to_time'] - entry['from_time'])
+      results[recipient][token] = total
 
   # Write salary data to json file
   if not os.path.exists('salaries'):
@@ -72,7 +88,7 @@ def fetch_salaries(manager: Account, logger_address: str, test=False):
   salary_json_filename = 'salaries/' + salary_json_filename
 
   with open(salary_json_filename, 'w') as salaries_dumped :
-    json.dump(salaries, salaries_dumped, indent=4)
+    json.dump(results, salaries_dumped, indent=4)
 
   # Set last paid timestamp on chain
   logger_contract.setCheckpoint(now, updated_first_paid_index, { 'from': manager })

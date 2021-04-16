@@ -1,13 +1,6 @@
 import json
 from os import wait
-import secrets
-
-import brownie
-from dotmap import DotMap
 import pytest
-from decimal import Decimal
-
-import pprint
 
 from brownie import *
 from helpers.constants import *
@@ -65,7 +58,7 @@ def test_salaries(setup):
     with open(salary_json_filename) as f:
       salary_json = json.load(f)
 
-    # depending on when the block gets mined it could be plus or minus one second
+    # depending on when the block gets mined it could be one second off
     payouts = [
       int((wait_time) * (first_entry['amount'] // (first_entry['endTime'] - first_entry['startTime']))),
       int((wait_time + 1) * (first_entry['amount'] // (first_entry['endTime'] - first_entry['startTime']))),
@@ -212,7 +205,7 @@ def test_salaries(setup):
     with open(salary_json_filename) as f:
       salary_json = json.load(f)
 
-    # depending on when the block gets mined it could be plus or minus one second
+    # depending on when the block gets mined it could be one second off
     payouts = [
       int((wait_time) * (infinite_entry['amount'] // (infinite_entry['amountDuration']))),
       int((wait_time + 1) * (infinite_entry['amount'] // (infinite_entry['amountDuration']))),
@@ -248,11 +241,11 @@ def test_salaries(setup):
     with open(salary_json_filename) as f:
       salary_json = json.load(f)
 
-    # depending on when the block gets mined it could be plus or minus one second
+    # depending on when the block gets mined it could be one second off
     payouts = [
-      int((wait_time) * (infinite_entry_updated['amount'] // (infinite_entry_updated['amountDuration']))),
       int((wait_time + 1) * (infinite_entry_updated['amount'] // (infinite_entry_updated['amountDuration']))),
-      int((wait_time - 1) * (infinite_entry_updated['amount'] // (infinite_entry_updated['amountDuration'])))
+      int((wait_time + 2) * (infinite_entry_updated['amount'] // (infinite_entry_updated['amountDuration']))),
+      int((wait_time) * (infinite_entry_updated['amount'] // (infinite_entry_updated['amountDuration'])))
     ]
     expected_value1 = salary_json[infinite_entry_updated['recipient']][infinite_entry_updated['token']]
     assert (expected_value1 == payouts[0] or expected_value1 == payouts[1] or expected_value1 == payouts[2])
@@ -260,11 +253,88 @@ def test_salaries(setup):
     # delete an entry
     console.print('[yellow]Testing deletion[/yellow]')
 
-    loggerContract.deleteEntry(id, { 'from': manager })
+    loggerContract.deleteEntryNow(id, { 'from': manager })
 
     salary_json_filename = fetch_salaries(manager, loggerContract.address, True)
 
     with open(salary_json_filename) as f:
       salary_json = json.load(f)
 
-    assert salary_json == {}
+    # might be 1 second worth of payouts depending on chain time
+    payouts = [
+      0,
+      int((infinite_entry_updated['amount'] // (infinite_entry_updated['amountDuration'])))
+    ]
+    expected_value = salary_json[infinite_entry_updated['recipient']][infinite_entry_updated['token']]
+    assert (expected_value == payouts[0] or expected_value == payouts[1])
+
+    # update in the middle of a period
+    console.print('[yellow]Testing update in the middle of a period[/yellow]')
+    now1 = int(time()) + 1
+    wait_time = 5
+    infinite_entry = {
+      'recipient': accounts[4].address,
+      'token': badger_token,
+      'amount': 100000,
+      'amountDuration': 10,
+      'startTime': now1,
+      'endTime': 2**256-1,
+    }
+    tx = loggerContract.createEntry(
+      infinite_entry['recipient'],
+      infinite_entry['token'],
+      infinite_entry['amount'],
+      infinite_entry['amountDuration'],
+      infinite_entry['startTime'],
+      infinite_entry['endTime'],
+      { 'from': manager }
+    )
+    id = tx.events['CreateEntry']['id']
+    sleep(wait_time)
+
+    now2 = int(time()) + 1
+    infinite_entry_updated = {
+      'recipient': infinite_entry['recipient'],
+      'token': infinite_entry['token'],
+      'amount': 200000,
+      'amountDuration': 10,
+      'startTime': now2,
+      'endTime': 2**256-1,
+    }
+    tx = loggerContract.updateEntry(
+      id,
+      infinite_entry_updated['amount'],
+      infinite_entry_updated['amountDuration'],
+      infinite_entry_updated['startTime'],
+      infinite_entry_updated['endTime'],
+      { 'from': manager }
+    )
+
+    sleep(wait_time)
+
+    salary_json_filename = fetch_salaries(manager, loggerContract.address, True)
+
+    with open(salary_json_filename) as f:
+      salary_json = json.load(f)
+
+    payout = int((wait_time) * (infinite_entry['amount'] // (infinite_entry['amountDuration']))) + int((wait_time) * (infinite_entry_updated['amount'] // (infinite_entry_updated['amountDuration'])))
+    expected_value = salary_json[infinite_entry_updated['recipient']][infinite_entry_updated['token']]
+    assert payout <= expected_value <= 1.2 * payout
+
+    # delete in middle of cycle
+    console.print('[yellow]Testing deletion in middle of cycle[/yellow]')
+    now = int(time()) + 1
+    wait_time = 5
+    id = tx.events['UpdateEntry']['updatedId']
+    loggerContract.deleteEntryAt(id, now + wait_time, { 'from': manager })
+    sleep(wait_time * 2)
+
+    salary_json_filename = fetch_salaries(manager, loggerContract.address, True)
+
+    with open(salary_json_filename) as f:
+      salary_json = json.load(f)
+
+    expected_value = salary_json[infinite_entry_updated['recipient']][infinite_entry_updated['token']]
+    payout = int((wait_time) * (infinite_entry_updated['amount'] // (infinite_entry_updated['amountDuration'])))
+    assert payout <= expected_value <= 1.2 * payout
+    

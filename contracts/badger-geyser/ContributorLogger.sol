@@ -19,6 +19,7 @@ contract ContributorLogger is AccessControlUpgradeable {
         uint256 amountDuration;
         uint256 startTime;
         uint256 endTime;
+        uint256 timestamp;
     }
 
     mapping(uint256 => Entry) public paymentEntries;
@@ -38,6 +39,7 @@ contract ContributorLogger is AccessControlUpgradeable {
 
     event UpdateEntry(
         uint256 indexed id,
+        uint256 indexed updatedId,
         uint256 amount,
         uint256 amountDuration,
         uint256 startTime,
@@ -76,11 +78,12 @@ contract ContributorLogger is AccessControlUpgradeable {
             uint256,
             uint256,
             uint256,
+            uint256,
             uint256
         )
     {
         Entry storage entry = paymentEntries[id];
-        return (entry.recipient, entry.token, entry.amount, entry.amountDuration, entry.startTime, entry.endTime);
+        return (entry.recipient, entry.token, entry.amount, entry.amountDuration, entry.startTime, entry.endTime, entry.timestamp);
     }
 
     // ===== Permissioned Functions: Manager =====
@@ -98,11 +101,9 @@ contract ContributorLogger is AccessControlUpgradeable {
         uint256 startTime,
         uint256 endTime
     ) external onlyManager {
-        uint256 id = nextId;
         require(startTime >= block.timestamp, "start time cannot be in past");
-        nextId = nextId.add(1);
-        paymentEntries[id] = Entry(recipient, token, amount, amountDuration, startTime, endTime);
-        emit CreateEntry(id, recipient, token, amount, amountDuration, startTime, endTime, block.timestamp, block.number);
+        _createEntry(recipient, token, amount, amountDuration, startTime, endTime);
+        emit CreateEntry(nextId - 1, recipient, token, amount, amountDuration, startTime, endTime, block.timestamp, block.number);
     }
 
     /// @dev Update a stream by changing the rate or time parameters.
@@ -115,19 +116,20 @@ contract ContributorLogger is AccessControlUpgradeable {
         uint256 endTime
     ) external onlyManager {
         require(id < nextId, "ID does not exist");
-        paymentEntries[id].amount = amount;
-        paymentEntries[id].amountDuration = amountDuration;
-        paymentEntries[id].startTime = startTime;
-        paymentEntries[id].endTime = endTime;
-        emit UpdateEntry(id, amount, amountDuration, startTime, endTime, block.timestamp, block.number);
+        Entry memory entry = paymentEntries[id];
+        _createEntry(entry.recipient, entry.token, amount, amountDuration, startTime, endTime);
+        emit UpdateEntry(id, nextId - 1, amount, amountDuration, startTime, endTime, block.timestamp, block.number);
     }
 
     /// @dev Delete a stream.
+    function deleteEntryNow(uint256 id) external onlyManager {
+        _deleteEntry(id, block.timestamp);
+    }
+
+    /// @dev Delete a stream at a point in the future.
     /// @dev Entries can technically be deleted multiple times without issue, the script will handle this case.
-    function deleteEntry(uint256 id) external onlyManager {
-        require(id < nextId, "ID does not exist");
-        delete paymentEntries[id];
-        emit DeleteEntry(id, block.timestamp, block.number);
+    function deleteEntryAt(uint256 id, uint256 timestamp) external onlyManager {
+        _deleteEntry(id, timestamp);
     }
 
     /// @dev After pulling payment data for the current period mark where you left off
@@ -135,5 +137,27 @@ contract ContributorLogger is AccessControlUpgradeable {
         lastPaidTimestamp = timestamp;
         firstPaidIndex = index;
         emit Checkpoint(timestamp, index);
+    }
+
+    // ===== Internal Functions =====
+    function _deleteEntry(uint256 id, uint256 timestamp) internal {
+        require(id < nextId, "ID does not exist");
+        require(timestamp >= block.timestamp, "Deletion time can't be in the past");
+        Entry memory entry = paymentEntries[id];
+        _createEntry(entry.recipient, entry.token, 0, entry.amountDuration, timestamp, entry.endTime);
+        emit DeleteEntry(id, block.timestamp, block.number);
+    }
+
+    function _createEntry(
+        address recipient,
+        address token,
+        uint256 amount,
+        uint256 amountDuration,
+        uint256 startTime,
+        uint256 endTime
+    ) internal {
+        uint256 id = nextId;
+        nextId = nextId.add(1);
+        paymentEntries[id] = Entry(recipient, token, amount, amountDuration, startTime, endTime, block.timestamp);
     }
 }
