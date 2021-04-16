@@ -9,8 +9,6 @@ contract ContributorLogger is AccessControlUpgradeable {
     bytes32 public constant MANAGER_ROLE = keccak256("MANAGER_ROLE");
 
     uint256 public nextId;
-    uint256 public lastPaidTimestamp;
-    uint256 public firstPaidIndex;
 
     struct Entry {
         address recipient;
@@ -20,6 +18,7 @@ contract ContributorLogger is AccessControlUpgradeable {
         uint256 startTime;
         uint256 endTime;
         uint256 timestamp;
+        uint256 blockNumber;
     }
 
     mapping(uint256 => Entry) public paymentEntries;
@@ -79,11 +78,21 @@ contract ContributorLogger is AccessControlUpgradeable {
             uint256,
             uint256,
             uint256,
+            uint256,
             uint256
         )
     {
         Entry storage entry = paymentEntries[id];
-        return (entry.recipient, entry.token, entry.amount, entry.amountDuration, entry.startTime, entry.endTime, entry.timestamp);
+        return (
+            entry.recipient,
+            entry.token,
+            entry.amount,
+            entry.amountDuration,
+            entry.startTime,
+            entry.endTime,
+            entry.timestamp,
+            entry.blockNumber
+        );
     }
 
     // ===== Permissioned Functions: Manager =====
@@ -122,32 +131,14 @@ contract ContributorLogger is AccessControlUpgradeable {
     }
 
     /// @dev Delete a stream.
-    function deleteEntryNow(uint256 id) external onlyManager {
-        _deleteEntry(id, block.timestamp);
-    }
-
-    /// @dev Delete a stream at a point in the future.
-    /// @dev Entries can technically be deleted multiple times without issue, the script will handle this case.
-    function deleteEntryAt(uint256 id, uint256 timestamp) external onlyManager {
-        _deleteEntry(id, timestamp);
-    }
-
-    /// @dev After pulling payment data for the current period mark where you left off
-    function setCheckpoint(uint256 timestamp, uint256 index) external onlyManager {
-        lastPaidTimestamp = timestamp;
-        firstPaidIndex = index;
-        emit Checkpoint(timestamp, index);
-    }
-
-    // ===== Internal Functions =====
-    function _deleteEntry(uint256 id, uint256 timestamp) internal {
+    function deleteEntry(uint256 id) external onlyManager {
         require(id < nextId, "ID does not exist");
-        require(timestamp >= block.timestamp, "Deletion time can't be in the past");
         Entry memory entry = paymentEntries[id];
-        _createEntry(entry.recipient, entry.token, 0, entry.amountDuration, timestamp, entry.endTime);
+        _createEntry(entry.recipient, entry.token, 0, entry.amountDuration, block.timestamp, entry.endTime);
         emit DeleteEntry(id, block.timestamp, block.number);
     }
 
+    // ===== Internal Functions =====
     function _createEntry(
         address recipient,
         address token,
@@ -158,6 +149,6 @@ contract ContributorLogger is AccessControlUpgradeable {
     ) internal {
         uint256 id = nextId;
         nextId = nextId.add(1);
-        paymentEntries[id] = Entry(recipient, token, amount, amountDuration, startTime, endTime, block.timestamp);
+        paymentEntries[id] = Entry(recipient, token, amount, amountDuration, startTime, endTime, block.timestamp, block.number);
     }
 }

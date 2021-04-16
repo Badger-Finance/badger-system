@@ -11,48 +11,49 @@ import json
 import brownie
 import os
 
-def __get_data__(logger_address: str, start: int, end: int):
-  calls = [Call(logger_address, ['getEntry(uint256)(address,address,uint256,uint256,uint256,uint256)', i], [['recipient_'+str(i), None], ['token_'+str(i), None], ['amount_'+str(i), None], ['amountDuration_'+str(i), None], ['startTime_'+str(i), None], ['endTime_'+str(i), None]]) for i in range(start, end)]
+def __get_data__(logger_address: str, start: int, end: int) -> list:
+  calls = [Call(logger_address, ['getEntry(uint256)(address,address,uint256,uint256,uint256,uint256,uint256,uint256)', i], [['recipient_'+str(i), None], ['token_'+str(i), None], ['amount_'+str(i), None], ['amountDuration_'+str(i), None], ['startTime_'+str(i), None], ['endTime_'+str(i), None], ['timestamp_'+str(i), None], ['blockNumber_'+str(i), None]]) for i in range(start, end)]
   multi = Multicall(calls)()
 
-  result = []
-  for i in range(start, end):
-    result.append((
+  return [
+    (
       web3.toChecksumAddress(multi['recipient_'+str(i)]),
       web3.toChecksumAddress(multi['token_'+str(i)]),
       multi['amount_'+str(i)],
       multi['amountDuration_'+str(i)],
       multi['startTime_'+str(i)],
-      multi['endTime_'+str(i)]
-    ))
-  return result
+      multi['endTime_'+str(i)],
+      multi['timestamp_'+str(i)],
+      multi['blockNumber_'+str(i)]
+    ) for i in range(start, end)
+  ]
 
 
-def fetch_salaries(manager: Account, logger_address: str, test=False):
+def fetch_salaries(logger_address: str, start_block: int, end_block: int, test=False) -> str:
   with open('build/contracts/ContributorLogger.json') as f:
     logger_abi = json.load(f)['abi']
 
   logger_contract = brownie.Contract.from_abi('ContributorLogger', logger_address, logger_abi)
 
   next_id = logger_contract.nextId()
-  last_paid_timestamp = logger_contract.lastPaidTimestamp()
-  first_paid_index = logger_contract.firstPaidIndex()
 
-  entries = __get_data__(logger_address, first_paid_index, next_id)
+  start_block_time = web3.eth.getBlock(start_block)['timestamp']
+  end_block_time = web3.eth.getBlock(end_block)['timestamp']
 
-  updated_first_paid_index = first_paid_index
+  entries = __get_data__(logger_address, 0, next_id)
+
   salaries = dict()
-  now = int(time())
 
   for entry in entries:
-    (recipient, token, amount, amountDuration, startTime, endTime) = entry
-    if startTime <= now <= endTime or last_paid_timestamp <= endTime <= now:
+    (recipient, token, amount, amountDuration, startTime, endTime, timestamp, blockNumber) = entry
+    
+    if startTime <= end_block_time <= endTime or start_block_time <= endTime <= end_block_time:
       amount_per_second = amount // amountDuration
 
       datapoint = {
         "amount_per_second": amount_per_second,
-        "from_time": max(last_paid_timestamp, startTime),
-        "to_time": min(now, endTime)
+        "from_time": max(start_block_time, startTime),
+        "to_time": min(end_block_time, endTime)
       }
 
       if not salaries.get(recipient):
@@ -65,9 +66,6 @@ def fetch_salaries(manager: Account, logger_address: str, test=False):
         
       else:
         salaries[recipient][token] = [datapoint]
-        
-    else:
-      updated_first_paid_index += 1
 
   results = dict()
   for recipient in salaries.keys():
@@ -81,16 +79,13 @@ def fetch_salaries(manager: Account, logger_address: str, test=False):
   # Write salary data to json file
   if not os.path.exists('salaries'):
     os.makedirs('salaries')
-  date_now = datetime.utcfromtimestamp(now).strftime('%Y-%m-%d %H:%M:%S')
-  salary_json_filename = 'salaries-' + date_now + '.json'
+  date_end_block_time = datetime.utcfromtimestamp(end_block_time).strftime('%Y-%m-%d %H:%M:%S')
+  salary_json_filename = 'salaries-' + date_end_block_time + '.json'
   if test:
     salary_json_filename = 'test-' + salary_json_filename
   salary_json_filename = 'salaries/' + salary_json_filename
 
   with open(salary_json_filename, 'w') as salaries_dumped :
     json.dump(results, salaries_dumped, indent=4)
-
-  # Set last paid timestamp on chain
-  logger_contract.setCheckpoint(now, updated_first_paid_index, { 'from': manager })
 
   return salary_json_filename

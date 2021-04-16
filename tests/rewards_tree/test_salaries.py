@@ -13,6 +13,7 @@ from scripts.actions.salary.salaries import fetch_salaries
 console = Console()
 
 badger_token = '0x3472A5A71965499acd81997a54BBA8D852C6E53d'
+usdc_token = '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48'
 
 @pytest.fixture(scope='function', autouse='True')
 def setup():
@@ -32,6 +33,7 @@ def test_salaries(setup):
     # salary period ends in the future
     console.print('\n[yellow]Testing a salary period that ends after the check is made[/yellow]')
     now = int(time()) + 1
+    start_block = web3.eth.blockNumber
     first_entry = {
       'recipient': accounts[2].address,
       'token': badger_token,
@@ -52,8 +54,9 @@ def test_salaries(setup):
 
     wait_time = 5
     sleep(wait_time)
-
-    salary_json_filename = fetch_salaries(manager, loggerContract.address, True)
+    chain.mine()
+    end_block = web3.eth.blockNumber
+    salary_json_filename = fetch_salaries(loggerContract.address, start_block, end_block, True)
 
     with open(salary_json_filename) as f:
       salary_json = json.load(f)
@@ -67,11 +70,14 @@ def test_salaries(setup):
     expected_value1 = salary_json[first_entry['recipient']][first_entry['token']]
     assert (expected_value1 == payouts[0] or expected_value1 == payouts[1] or expected_value1 == payouts[2])
 
+    start_block = web3.eth.blockNumber
     sleep(wait_time + 1)
 
     # checking after salary time ended
     console.print('[yellow]Testing that salary is correct after full period has elapsed[/yellow]')
-    salary_json_filename = fetch_salaries(manager, loggerContract.address, True)
+    chain.mine()
+    end_block = web3.eth.blockNumber
+    salary_json_filename = fetch_salaries(loggerContract.address, start_block, end_block, True)
 
     with open(salary_json_filename) as f:
       salary_json = json.load(f)
@@ -89,6 +95,7 @@ def test_salaries(setup):
     # multiple salaries in the same time period
     console.print('[yellow]Testing two salaries overlapping each other[/yellow]')
     now1 = int(time()) + 1
+    start_block = web3.eth.blockNumber
     first_entry = {
       'recipient': accounts[2].address,
       'token': badger_token,
@@ -127,8 +134,9 @@ def test_salaries(setup):
 
     wait_time = 8
     sleep(wait_time)
-
-    salary_json_filename = fetch_salaries(manager, loggerContract.address, True)
+    chain.mine()
+    end_block = web3.eth.blockNumber
+    salary_json_filename = fetch_salaries(loggerContract.address, start_block, end_block, True)
 
     with open(salary_json_filename) as f:
       salary_json = json.load(f)
@@ -147,13 +155,16 @@ def test_salaries(setup):
 
     # after 5 more seconds there should only be one salary entry
     console.print('[yellow]Testing after the first period has ended[/yellow]')
-    last_paid_timestamp = loggerContract.lastPaidTimestamp()
+    start_block = web3.eth.blockNumber
+
     wait_time = 5
     sleep(wait_time)
+    chain.mine()
+    end_block2 = web3.eth.blockNumber
 
-    salary_json_filename = fetch_salaries(manager, loggerContract.address, True)
+    salary_json_filename = fetch_salaries(loggerContract.address, start_block, end_block2, True)
 
-    duration = second_entry['endTime'] - last_paid_timestamp
+    duration = second_entry['endTime'] - web3.eth.getBlock(end_block)['timestamp']
     with open(salary_json_filename) as f:
       salary_json = json.load(f)
 
@@ -165,10 +176,13 @@ def test_salaries(setup):
 
     # should be no more entries when called again
     console.print('[yellow]Testing with no more salaries to be paid out[/yellow]')
+    start_block = web3.eth.blockNumber
     wait_time = 1
     sleep(wait_time)
 
-    salary_json_filename = fetch_salaries(manager, loggerContract.address, True)
+    chain.mine()
+    end_block = web3.eth.blockNumber
+    salary_json_filename = fetch_salaries(loggerContract.address, start_block, end_block, True)
     with open(salary_json_filename) as f:
       salary_json = json.load(f)
     
@@ -177,6 +191,7 @@ def test_salaries(setup):
     # unlimited length salary period
     console.print('[yellow]Testing a salary period that lasts forever[/yellow]')
     now = int(time()) + 1
+    start_block = web3.eth.blockNumber
     infinite_entry = {
       'recipient': accounts[3].address,
       'token': badger_token,
@@ -199,8 +214,10 @@ def test_salaries(setup):
 
     wait_time = 5
     sleep(wait_time)
+    chain.mine()
+    end_block = web3.eth.blockNumber
 
-    salary_json_filename = fetch_salaries(manager, loggerContract.address, True)
+    salary_json_filename = fetch_salaries(loggerContract.address, start_block, end_block, True)
 
     with open(salary_json_filename) as f:
       salary_json = json.load(f)
@@ -232,11 +249,13 @@ def test_salaries(setup):
       infinite_entry_updated['endTime'],
       { 'from': manager }
     )
-
+    start_block = web3.eth.blockNumber
     wait_time = 5
     sleep(wait_time)
+    chain.mine()
+    end_block = web3.eth.blockNumber
 
-    salary_json_filename = fetch_salaries(manager, loggerContract.address, True)
+    salary_json_filename = fetch_salaries(loggerContract.address, start_block, end_block, True)
 
     with open(salary_json_filename) as f:
       salary_json = json.load(f)
@@ -253,9 +272,12 @@ def test_salaries(setup):
     # delete an entry
     console.print('[yellow]Testing deletion[/yellow]')
 
-    loggerContract.deleteEntryNow(id, { 'from': manager })
+    loggerContract.deleteEntry(id, { 'from': manager })
+    start_block = web3.eth.blockNumber
 
-    salary_json_filename = fetch_salaries(manager, loggerContract.address, True)
+    chain.mine()
+    end_block = web3.eth.blockNumber
+    salary_json_filename = fetch_salaries(loggerContract.address, start_block, end_block, True)
 
     with open(salary_json_filename) as f:
       salary_json = json.load(f)
@@ -271,6 +293,7 @@ def test_salaries(setup):
     # update in the middle of a period
     console.print('[yellow]Testing update in the middle of a period[/yellow]')
     now1 = int(time()) + 1
+    start_block = web3.eth.blockNumber
     wait_time = 5
     infinite_entry = {
       'recipient': accounts[4].address,
@@ -311,8 +334,10 @@ def test_salaries(setup):
     )
 
     sleep(wait_time)
+    chain.mine()
+    end_block = web3.eth.blockNumber
 
-    salary_json_filename = fetch_salaries(manager, loggerContract.address, True)
+    salary_json_filename = fetch_salaries(loggerContract.address, start_block, end_block, True)
 
     with open(salary_json_filename) as f:
       salary_json = json.load(f)
@@ -326,10 +351,15 @@ def test_salaries(setup):
     now = int(time()) + 1
     wait_time = 5
     id = tx.events['UpdateEntry']['updatedId']
-    loggerContract.deleteEntryAt(id, now + wait_time, { 'from': manager })
-    sleep(wait_time * 2)
+    start_block = web3.eth.blockNumber
+    sleep(wait_time)
+    loggerContract.deleteEntry(id, { 'from': manager })
 
-    salary_json_filename = fetch_salaries(manager, loggerContract.address, True)
+    sleep(wait_time)
+    chain.mine()
+    end_block = web3.eth.blockNumber
+
+    salary_json_filename = fetch_salaries(loggerContract.address, start_block, end_block, True)
 
     with open(salary_json_filename) as f:
       salary_json = json.load(f)
@@ -338,3 +368,67 @@ def test_salaries(setup):
     payout = int((wait_time) * (infinite_entry_updated['amount'] // (infinite_entry_updated['amountDuration'])))
     assert payout <= expected_value <= 1.2 * payout
     
+    # get paid in more than one token
+    console.print('[yellow]Testing getting paid in more than one token[/yellow]')
+    now = int(time()) + 1
+    start_block = web3.eth.blockNumber
+    first_entry = {
+      'recipient': accounts[5].address,
+      'token': badger_token,
+      'amount': 100000,
+      'amountDuration': 10,
+      'startTime': now,
+      'endTime': now + 10,
+    }
+    second_entry = {
+      'recipient': accounts[5].address,
+      'token': usdc_token,
+      'amount': 100000,
+      'amountDuration': 10,
+      'startTime': now,
+      'endTime': now + 10,
+    }
+    loggerContract.createEntry(
+      first_entry['recipient'],
+      first_entry['token'],
+      first_entry['amount'],
+      first_entry['amountDuration'],
+      first_entry['startTime'],
+      first_entry['endTime'],
+      { 'from': manager }
+    )
+    loggerContract.createEntry(
+      second_entry['recipient'],
+      second_entry['token'],
+      second_entry['amount'],
+      second_entry['amountDuration'],
+      second_entry['startTime'],
+      second_entry['endTime'],
+      { 'from': manager }
+    )
+
+    wait_time = 5
+    sleep(wait_time)
+    chain.mine()
+    end_block = web3.eth.blockNumber
+    salary_json_filename = fetch_salaries(loggerContract.address, start_block, end_block, True)
+
+    with open(salary_json_filename) as f:
+      salary_json = json.load(f)
+
+    # depending on when the block gets mined it could be one second off
+    payouts1 = [
+      int((wait_time) * (first_entry['amount'] // (first_entry['endTime'] - first_entry['startTime']))),
+      int((wait_time + 1) * (first_entry['amount'] // (first_entry['endTime'] - first_entry['startTime']))),
+      int((wait_time - 1) * (first_entry['amount'] // (first_entry['endTime'] - first_entry['startTime'])))
+    ]
+    expected_value1 = salary_json[first_entry['recipient']][first_entry['token']]
+    assert (expected_value1 == payouts1[0] or expected_value1 == payouts1[1] or expected_value1 == payouts1[2])
+
+    payouts2 = [
+      int((wait_time) * (second_entry['amount'] // (second_entry['endTime'] - second_entry['startTime']))),
+      int((wait_time + 1) * (second_entry['amount'] // (second_entry['endTime'] - second_entry['startTime']))),
+      int((wait_time - 1) * (second_entry['amount'] // (second_entry['endTime'] - second_entry['startTime'])))
+    ]
+    expected_value2 = salary_json[second_entry['recipient']][second_entry['token']]
+    assert (expected_value2 == payouts2[0] or expected_value2 == payouts2[1] or expected_value2 == payouts2[2])
