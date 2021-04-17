@@ -49,8 +49,6 @@ contract ContributorLogger is AccessControlUpgradeable {
 
     event DeleteEntry(uint256 indexed id, uint256 indexed timestamp, uint256 blockNumber);
 
-    event Checkpoint(uint256 lastPaidTimestamp, uint256 firstPaidIndex);
-
     function initialize(
         address multisendLib_,
         address initialAdmin_,
@@ -111,8 +109,8 @@ contract ContributorLogger is AccessControlUpgradeable {
         uint256 endTime
     ) external onlyManager {
         require(startTime >= block.timestamp, "start time cannot be in past");
-        _createEntry(recipient, token, amount, amountDuration, startTime, endTime);
-        emit CreateEntry(nextId - 1, recipient, token, amount, amountDuration, startTime, endTime, block.timestamp, block.number);
+        uint256 newId = _createEntry(recipient, token, amount, amountDuration, startTime, endTime);
+        emit CreateEntry(newId, recipient, token, amount, amountDuration, startTime, endTime, block.timestamp, block.number);
     }
 
     /// @dev Update a stream by changing the rate or time parameters.
@@ -126,8 +124,8 @@ contract ContributorLogger is AccessControlUpgradeable {
     ) external onlyManager {
         require(id < nextId, "ID does not exist");
         Entry memory entry = paymentEntries[id];
-        _createEntry(entry.recipient, entry.token, amount, amountDuration, startTime, endTime);
-        emit UpdateEntry(id, nextId - 1, amount, amountDuration, startTime, endTime, block.timestamp, block.number);
+        uint256 newId = _createEntry(entry.recipient, entry.token, amount, amountDuration, startTime, endTime);
+        emit UpdateEntry(newId, id, amount, amountDuration, startTime, endTime, block.timestamp, block.number);
     }
 
     /// @dev Delete a stream.
@@ -146,9 +144,10 @@ contract ContributorLogger is AccessControlUpgradeable {
         uint256 amountDuration,
         uint256 startTime,
         uint256 endTime
-    ) internal {
+    ) internal returns (uint256) {
         uint256 id = nextId;
         nextId = nextId.add(1);
         paymentEntries[id] = Entry(recipient, token, amount, amountDuration, startTime, endTime, block.timestamp, block.number);
+        return id;
     }
 }
