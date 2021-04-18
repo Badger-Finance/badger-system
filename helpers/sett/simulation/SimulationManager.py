@@ -96,7 +96,7 @@ class SimulationManager:
             idx = int(random.random()*len(self.accounts))
             if idx in accountsUsed:
                 continue
-            if web3.eth.getCode(accounts[idx].address) != HexBytes("0x"):
+            if web3.eth.getCode(self.accounts[idx].address) != HexBytes("0x"):
                 continue
 
             self.users.append(self.accounts[idx])
