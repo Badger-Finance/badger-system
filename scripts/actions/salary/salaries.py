@@ -16,15 +16,14 @@ CHECKPOINT_FOLDER = CHECKPOINT_PATH.split('/')[0]
 
 
 def __get_data__(logger_address: str, start: int, end: int) -> list:
-  calls = [Call(logger_address, ['getEntry(uint256)(address,address,uint128,uint32,uint40,uint40)', i], [['recipient_'+str(i), None], ['token_'+str(i), None], ['amount_'+str(i), None], ['amountDuration_'+str(i), None], ['startTime_'+str(i), None], ['endTime_'+str(i), None]]) for i in range(start, end)]
+  calls = [Call(logger_address, ['getEntry(uint256)(address,address,uint128,uint40,uint40)', i], [['recipient_'+str(i), None], ['token_'+str(i), None], ['amountPerSecond_'+str(i), None], ['startTime_'+str(i), None], ['endTime_'+str(i), None]]) for i in range(start, end)]
   multi = Multicall(calls)()
 
   return [
     (
       web3.toChecksumAddress(multi['recipient_'+str(i)]),
       web3.toChecksumAddress(multi['token_'+str(i)]),
-      multi['amount_'+str(i)],
-      multi['amountDuration_'+str(i)],
+      multi['amountPerSecond_'+str(i)],
       multi['startTime_'+str(i)],
       multi['endTime_'+str(i)]
     ) for i in range(start, end)
@@ -63,12 +62,12 @@ def fetch_salaries(logger_address: str, start_block: int, end_block: int, test=F
   salaries = dict()
 
   for entry in entries:
-    (recipient, token, amount, amountDuration, startTime, endTime) = entry
+    (recipient, token, amountPerSecond, startTime, endTime) = entry
 
     if startTime <= end_block_time and endTime > start_block_time:
 
       datapoint = {
-        "amount_per_second": amount // amountDuration,
+        "amount_per_second": amountPerSecond,
         "from_time": max(start_block_time, startTime),
         "to_time": min(end_block_time, endTime)
       }

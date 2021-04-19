@@ -13,8 +13,7 @@ contract ContributorLogger is AccessControlUpgradeable {
     struct Entry {
         address recipient;
         address token;
-        uint128 amount;
-        uint32 amountDuration;
+        uint128 amountPerSecond;
         uint40 startTime;
         uint40 endTime;
     }
@@ -26,8 +25,7 @@ contract ContributorLogger is AccessControlUpgradeable {
         uint256 indexed id,
         address indexed recipient,
         address token,
-        uint128 amount,
-        uint32 amountDuration,
+        uint128 amountPerSecond,
         uint40 startTime,
         uint40 endTime,
         uint256 indexed timestamp,
@@ -37,8 +35,7 @@ contract ContributorLogger is AccessControlUpgradeable {
     event UpdateEntry(
         uint256 indexed id,
         uint256 indexed updatedId,
-        uint128 amount,
-        uint32 amountDuration,
+        uint128 amountPerSecond,
         uint40 startTime,
         uint40 endTime,
         uint256 indexed timestamp,
@@ -71,56 +68,53 @@ contract ContributorLogger is AccessControlUpgradeable {
             address,
             address,
             uint128,
-            uint32,
             uint40,
             uint40
         )
     {
         Entry storage entry = paymentEntries[id];
-        return (entry.recipient, entry.token, entry.amount, entry.amountDuration, entry.startTime, entry.endTime);
+        return (entry.recipient, entry.token, entry.amountPerSecond, entry.startTime, entry.endTime);
     }
 
     // ===== Permissioned Functions: Manager =====
 
     /// @dev Stream a token to a recipient over time.
-    /// @dev Amount / amountDuration defines the rate per second.
+    /// @dev amountPerSecond defines the rate per second.
     /// @dev This rate will persist from the start time until the end time.
     /// @dev The start time should not be in the past.
     /// @dev To create an eternal entry, use maxuint256 as end time. The stream will then persist until deleted or updated.
     function createEntry(
         address recipient,
         address token,
-        uint128 amount,
-        uint32 amountDuration,
+        uint128 amountPerSecond,
         uint40 startTime,
         uint40 endTime
     ) external onlyManager {
         require(startTime >= block.timestamp, "start time cannot be in past");
-        uint256 newId = _createEntry(recipient, token, amount, amountDuration, startTime, endTime);
-        emit CreateEntry(newId, recipient, token, amount, amountDuration, startTime, endTime, block.timestamp, block.number);
+        uint256 newId = _createEntry(recipient, token, amountPerSecond, startTime, endTime);
+        emit CreateEntry(newId, recipient, token, amountPerSecond, startTime, endTime, block.timestamp, block.number);
     }
 
     /// @dev Update a stream by changing the rate or time parameters.
     /// @dev The recipient and amount cannot be updated on an entry.
     function updateEntry(
         uint256 id,
-        uint128 amount,
-        uint32 amountDuration,
+        uint128 amountPerSecond,
         uint40 startTime,
         uint40 endTime
     ) external onlyManager {
         require(id < nextId, "ID does not exist");
         require(startTime >= block.timestamp, "start time cannot be in past");
         Entry memory entry = paymentEntries[id];
-        uint256 newId = _createEntry(entry.recipient, entry.token, amount, amountDuration, startTime, endTime);
-        emit UpdateEntry(newId, id, amount, amountDuration, startTime, endTime, block.timestamp, block.number);
+        uint256 newId = _createEntry(entry.recipient, entry.token, amountPerSecond, startTime, endTime);
+        emit UpdateEntry(newId, id, amountPerSecond, startTime, endTime, block.timestamp, block.number);
     }
 
     /// @dev Delete a stream.
     function deleteEntry(uint256 id) external onlyManager {
         require(id < nextId, "ID does not exist");
         Entry memory entry = paymentEntries[id];
-        _createEntry(entry.recipient, entry.token, 0, entry.amountDuration, uint40(block.timestamp), entry.endTime);
+        _createEntry(entry.recipient, entry.token, 0, uint40(block.timestamp), entry.endTime);
         emit DeleteEntry(id, block.timestamp, block.number);
     }
 
@@ -128,14 +122,13 @@ contract ContributorLogger is AccessControlUpgradeable {
     function _createEntry(
         address recipient,
         address token,
-        uint128 amount,
-        uint32 amountDuration,
+        uint128 amountPerSecond,
         uint40 startTime,
         uint40 endTime
     ) internal returns (uint256) {
         uint256 id = nextId;
         nextId = nextId.add(1);
-        paymentEntries[id] = Entry(recipient, token, amount, amountDuration, startTime, endTime);
+        paymentEntries[id] = Entry(recipient, token, amountPerSecond, startTime, endTime);
         return id;
     }
 }

@@ -61,21 +61,19 @@ def test_salaries(setup):
 
     # test claiming a salary from the tree
     now = int(time()) + 1
-    start_block = web3.eth.blockNumber
+    start_block = web3.eth.getBlock('latest')
     wait_time = 5
     first_entry = {
       'recipient': user.address,
       'token': badger_token,
-      'amount': 100000,
-      'amountDuration': 10,
+      'amountPerSecond': 10000,
       'startTime': now,
       'endTime': 2**40-1,
     }
     loggerContract.createEntry(
       first_entry['recipient'],
       first_entry['token'],
-      first_entry['amount'],
-      first_entry['amountDuration'],
+      first_entry['amountPerSecond'],
       first_entry['startTime'],
       first_entry['endTime'],
       { 'from': manager }
@@ -83,10 +81,10 @@ def test_salaries(setup):
 
     sleep(wait_time)
     chain.mine()
-    end_block = web3.eth.blockNumber
-    expected_total = first_entry['amount'] / first_entry['amountDuration'] * wait_time
+    end_block = web3.eth.getBlock('latest')
+    expected_total = first_entry['amountPerSecond'] * (end_block['timestamp'] - start_block['timestamp'] - 2)
 
-    salary_json_filename = fetch_salaries(loggerContract.address, start_block, end_block, True)
+    salary_json_filename = fetch_salaries(loggerContract.address, start_block['number'], end_block['number'], True)
     with open(salary_json_filename) as f:
       salary_json = json.load(f)
 
