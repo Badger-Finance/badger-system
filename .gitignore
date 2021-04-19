@@ -33,6 +33,7 @@ rewards-*.json
 deploy-1337final.json
 
 salaries/test-*
+checkpoint
 
 # vim swap files
 *.swp

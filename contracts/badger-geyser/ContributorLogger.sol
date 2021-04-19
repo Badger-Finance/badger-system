@@ -13,12 +13,10 @@ contract ContributorLogger is AccessControlUpgradeable {
     struct Entry {
         address recipient;
         address token;
-        uint256 amount;
-        uint256 amountDuration;
-        uint256 startTime;
-        uint256 endTime;
-        uint256 timestamp;
-        uint256 blockNumber;
+        uint128 amount;
+        uint32 amountDuration;
+        uint40 startTime;
+        uint40 endTime;
     }
 
     mapping(uint256 => Entry) public paymentEntries;
@@ -28,10 +26,10 @@ contract ContributorLogger is AccessControlUpgradeable {
         uint256 indexed id,
         address indexed recipient,
         address token,
-        uint256 amount,
-        uint256 amountDuration,
-        uint256 startTime,
-        uint256 endTime,
+        uint128 amount,
+        uint32 amountDuration,
+        uint40 startTime,
+        uint40 endTime,
         uint256 indexed timestamp,
         uint256 blockNumber
     );
@@ -39,10 +37,10 @@ contract ContributorLogger is AccessControlUpgradeable {
     event UpdateEntry(
         uint256 indexed id,
         uint256 indexed updatedId,
-        uint256 amount,
-        uint256 amountDuration,
-        uint256 startTime,
-        uint256 endTime,
+        uint128 amount,
+        uint32 amountDuration,
+        uint40 startTime,
+        uint40 endTime,
         uint256 indexed timestamp,
         uint256 blockNumber
     );
@@ -72,25 +70,14 @@ contract ContributorLogger is AccessControlUpgradeable {
         returns (
             address,
             address,
-            uint256,
-            uint256,
-            uint256,
-            uint256,
-            uint256,
-            uint256
+            uint128,
+            uint32,
+            uint40,
+            uint40
         )
     {
         Entry storage entry = paymentEntries[id];
-        return (
-            entry.recipient,
-            entry.token,
-            entry.amount,
-            entry.amountDuration,
-            entry.startTime,
-            entry.endTime,
-            entry.timestamp,
-            entry.blockNumber
-        );
+        return (entry.recipient, entry.token, entry.amount, entry.amountDuration, entry.startTime, entry.endTime);
     }
 
     // ===== Permissioned Functions: Manager =====
@@ -103,10 +90,10 @@ contract ContributorLogger is AccessControlUpgradeable {
     function createEntry(
         address recipient,
         address token,
-        uint256 amount,
-        uint256 amountDuration,
-        uint256 startTime,
-        uint256 endTime
+        uint128 amount,
+        uint32 amountDuration,
+        uint40 startTime,
+        uint40 endTime
     ) external onlyManager {
         require(startTime >= block.timestamp, "start time cannot be in past");
         uint256 newId = _createEntry(recipient, token, amount, amountDuration, startTime, endTime);
@@ -117,12 +104,13 @@ contract ContributorLogger is AccessControlUpgradeable {
     /// @dev The recipient and amount cannot be updated on an entry.
     function updateEntry(
         uint256 id,
-        uint256 amount,
-        uint256 amountDuration,
-        uint256 startTime,
-        uint256 endTime
+        uint128 amount,
+        uint32 amountDuration,
+        uint40 startTime,
+        uint40 endTime
     ) external onlyManager {
         require(id < nextId, "ID does not exist");
+        require(startTime >= block.timestamp, "start time cannot be in past");
         Entry memory entry = paymentEntries[id];
         uint256 newId = _createEntry(entry.recipient, entry.token, amount, amountDuration, startTime, endTime);
         emit UpdateEntry(newId, id, amount, amountDuration, startTime, endTime, block.timestamp, block.number);
@@ -132,7 +120,7 @@ contract ContributorLogger is AccessControlUpgradeable {
     function deleteEntry(uint256 id) external onlyManager {
         require(id < nextId, "ID does not exist");
         Entry memory entry = paymentEntries[id];
-        _createEntry(entry.recipient, entry.token, 0, entry.amountDuration, block.timestamp, entry.endTime);
+        _createEntry(entry.recipient, entry.token, 0, entry.amountDuration, uint40(block.timestamp), entry.endTime);
         emit DeleteEntry(id, block.timestamp, block.number);
     }
 
@@ -140,14 +128,14 @@ contract ContributorLogger is AccessControlUpgradeable {
     function _createEntry(
         address recipient,
         address token,
-        uint256 amount,
-        uint256 amountDuration,
-        uint256 startTime,
-        uint256 endTime
+        uint128 amount,
+        uint32 amountDuration,
+        uint40 startTime,
+        uint40 endTime
     ) internal returns (uint256) {
         uint256 id = nextId;
         nextId = nextId.add(1);
-        paymentEntries[id] = Entry(recipient, token, amount, amountDuration, startTime, endTime, block.timestamp, block.number);
+        paymentEntries[id] = Entry(recipient, token, amount, amountDuration, startTime, endTime);
         return id;
     }
 }

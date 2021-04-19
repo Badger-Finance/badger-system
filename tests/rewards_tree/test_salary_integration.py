@@ -65,7 +65,7 @@ def test_salaries(setup):
       'amount': 100000,
       'amountDuration': 10,
       'startTime': now,
-      'endTime': 2**256-1,
+      'endTime': 2**40-1,
     }
     loggerContract.createEntry(
       first_entry['recipient'],

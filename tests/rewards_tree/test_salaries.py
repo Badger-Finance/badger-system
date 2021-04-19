@@ -61,7 +61,7 @@ def test_salaries(setup):
     with open(salary_json_filename) as f:
       salary_json = json.load(f)
 
-    # depending on when the block gets mined it could be one second off
+    # depending on when the block gets mined it could be +/- one second
     payouts = [
       int((wait_time) * (first_entry['amount'] // (first_entry['endTime'] - first_entry['startTime']))),
       int((wait_time + 1) * (first_entry['amount'] // (first_entry['endTime'] - first_entry['startTime']))),
@@ -82,7 +82,7 @@ def test_salaries(setup):
     with open(salary_json_filename) as f:
       salary_json = json.load(f)
 
-    # depending on when the block gets mined it could be one second off
+    # depending on when the block gets mined it could be +/- one second
     payouts = [
       int((wait_time) * (first_entry['amount'] // (first_entry['endTime'] - first_entry['startTime']))),
       int((wait_time + 1) * (first_entry['amount'] // (first_entry['endTime'] - first_entry['startTime']))),
@@ -198,7 +198,7 @@ def test_salaries(setup):
       'amount': 200000,
       'amountDuration': 10,
       'startTime': now,
-      'endTime': 2**256-1,
+      'endTime': 2**40-1,
     }
     tx = loggerContract.createEntry(
       infinite_entry['recipient'],
@@ -222,7 +222,7 @@ def test_salaries(setup):
     with open(salary_json_filename) as f:
       salary_json = json.load(f)
 
-    # depending on when the block gets mined it could be one second off
+    # depending on when the block gets mined it could be +/- one second
     payouts = [
       int((wait_time) * (infinite_entry['amount'] // (infinite_entry['amountDuration']))),
       int((wait_time + 1) * (infinite_entry['amount'] // (infinite_entry['amountDuration']))),
@@ -233,13 +233,15 @@ def test_salaries(setup):
 
     # update entry
     console.print('[yellow]Testing updating salary period[/yellow]')
+    now = int(time()) + 1
+    wait_time = 5
     infinite_entry_updated = {
       'recipient': infinite_entry['recipient'],
       'token': infinite_entry['token'],
       'amount': 5555555,
       'amountDuration': 5,
       'startTime': now,
-      'endTime': 2**256-1,
+      'endTime': 2**40-1,
     }
     loggerContract.updateEntry(
       id,
@@ -250,7 +252,6 @@ def test_salaries(setup):
       { 'from': manager }
     )
     start_block = web3.eth.blockNumber
-    wait_time = 5
     sleep(wait_time)
     chain.mine()
     end_block = web3.eth.blockNumber
@@ -260,11 +261,11 @@ def test_salaries(setup):
     with open(salary_json_filename) as f:
       salary_json = json.load(f)
 
-    # depending on when the block gets mined it could be one second off
+    # depending on when the block gets mined it could be +/- one second
     payouts = [
-      int((wait_time + 1) * (infinite_entry_updated['amount'] // (infinite_entry_updated['amountDuration']))),
-      int((wait_time + 2) * (infinite_entry_updated['amount'] // (infinite_entry_updated['amountDuration']))),
-      int((wait_time) * (infinite_entry_updated['amount'] // (infinite_entry_updated['amountDuration'])))
+      int((infinite_entry['amount'] // (infinite_entry['amountDuration']))) + int((wait_time + 1) * (infinite_entry_updated['amount'] // (infinite_entry_updated['amountDuration']))),
+      int((infinite_entry['amount'] // (infinite_entry['amountDuration']))) + int((wait_time - 1) * (infinite_entry_updated['amount'] // (infinite_entry_updated['amountDuration']))),
+      int((infinite_entry['amount'] // (infinite_entry['amountDuration']))) + int((wait_time) * (infinite_entry_updated['amount'] // (infinite_entry_updated['amountDuration'])))
     ]
     expected_value1 = salary_json[infinite_entry_updated['recipient']][infinite_entry_updated['token']]
     assert (expected_value1 == payouts[0] or expected_value1 == payouts[1] or expected_value1 == payouts[2])
@@ -301,7 +302,7 @@ def test_salaries(setup):
       'amount': 100000,
       'amountDuration': 10,
       'startTime': now1,
-      'endTime': 2**256-1,
+      'endTime': 2**40-1,
     }
     tx = loggerContract.createEntry(
       infinite_entry['recipient'],
@@ -322,7 +323,7 @@ def test_salaries(setup):
       'amount': 200000,
       'amountDuration': 10,
       'startTime': now2,
-      'endTime': 2**256-1,
+      'endTime': 2**40-1,
     }
     tx = loggerContract.updateEntry(
       id,
@@ -333,7 +334,7 @@ def test_salaries(setup):
       { 'from': manager }
     )
 
-    sleep(wait_time)
+    sleep(wait_time+1)
     chain.mine()
     end_block = web3.eth.blockNumber
 
@@ -416,7 +417,7 @@ def test_salaries(setup):
     with open(salary_json_filename) as f:
       salary_json = json.load(f)
 
-    # depending on when the block gets mined it could be one second off
+    # depending on when the block gets mined it could be +/- one second
     payouts1 = [
       int((wait_time) * (first_entry['amount'] // (first_entry['endTime'] - first_entry['startTime']))),
       int((wait_time + 1) * (first_entry['amount'] // (first_entry['endTime'] - first_entry['startTime']))),
