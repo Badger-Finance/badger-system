@@ -12,6 +12,7 @@ import brownie
 import os
 
 CHECKPOINT_PATH = 'checkpoint/salary.json'
+CHECKPOINT_FOLDER = CHECKPOINT_PATH.split('/')[0]
 
 
 def __get_data__(logger_address: str, start: int, end: int) -> list:
@@ -38,8 +39,8 @@ def __get_checkpoint__():
 
 
 def __write_checkpoint__(start_index: int):
-  if not os.path.exists('checkpoint'):
-    os.makedirs('checkpoint')
+  if not os.path.exists(CHECKPOINT_FOLDER):
+    os.makedirs(CHECKPOINT_FOLDER)
   with open(CHECKPOINT_PATH, 'w') as f :
     json.dump({ 'start_index': start_index }, f, indent=4)
 

@@ -1,6 +1,6 @@
 import json
-from os import wait
 import pytest
+import os
 
 from brownie import *
 from helpers.constants import *
@@ -8,7 +8,7 @@ from helpers.registry import registry
 from rich.console import Console
 from time import time, sleep
 
-from scripts.actions.salary.salaries import fetch_salaries
+from scripts.actions.salary.salaries import fetch_salaries, CHECKPOINT_PATH
 
 console = Console()
 
@@ -29,6 +29,10 @@ def test_salaries(setup):
 
     loggerContract = admin.deploy(ContributorLogger)
     loggerContract.initialize(admin, admin, manager)
+
+    # remove any existing checkpoints
+    if os.path.exists(CHECKPOINT_PATH):
+      os.remove(CHECKPOINT_PATH)
 
     # salary period ends in the future
     console.print('\n[yellow]Testing a salary period that ends after the check is made[/yellow]')

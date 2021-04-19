@@ -1,6 +1,6 @@
 import json
-from os import wait
 import pytest
+import os
 
 from brownie import *
 from helpers.constants import *
@@ -9,7 +9,7 @@ from rich.console import Console
 from time import time, sleep
 from dotmap import DotMap
 
-from scripts.actions.salary.salaries import fetch_salaries
+from scripts.actions.salary.salaries import fetch_salaries, CHECKPOINT_PATH
 from tests.helpers import distribute_from_whales
 
 console = Console()
@@ -51,6 +51,10 @@ def test_salaries(setup):
 
     rewardsContract = admin.deploy(BadgerTreeV2)
     rewardsContract.initialize(admin, proposer, validator)
+
+    # remove any existing checkpoints
+    if os.path.exists(CHECKPOINT_PATH):
+      os.remove(CHECKPOINT_PATH)
 
     # distribute tokens to rewards contract
     distribute_from_whales(rewardsContract, accounts[4])
