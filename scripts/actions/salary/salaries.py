@@ -16,11 +16,12 @@ CHECKPOINT_FOLDER = CHECKPOINT_PATH.split('/')[0]
 
 
 def __get_data__(logger_address: str, start: int, end: int) -> list:
-  calls = [Call(logger_address, ['getEntry(uint256)(address,address,uint128,uint40,uint40)', i], [['recipient_'+str(i), None], ['token_'+str(i), None], ['amountPerSecond_'+str(i), None], ['startTime_'+str(i), None], ['endTime_'+str(i), None]]) for i in range(start, end)]
+  calls = [Call(logger_address, ['getEntry(uint256)(uint256,address,address,uint128,uint40,uint40)', i], [['id_'+str(i), None], ['recipient_'+str(i), None], ['token_'+str(i), None], ['amountPerSecond_'+str(i), None], ['startTime_'+str(i), None], ['endTime_'+str(i), None]]) for i in range(start, end)]
   multi = Multicall(calls)()
 
   return [
     (
+      multi['id_'+str(i)],
       web3.toChecksumAddress(multi['recipient_'+str(i)]),
       web3.toChecksumAddress(multi['token_'+str(i)]),
       multi['amountPerSecond_'+str(i)],
@@ -49,6 +50,7 @@ def fetch_salaries(logger_address: str, start_block: int, end_block: int, test=F
     logger_abi = json.load(f)['abi']
   
   start_index = __get_checkpoint__()
+  updating_checkpoint = True # increment the checkpointed start_index until an entry is found in range
 
   logger_contract = brownie.Contract.from_abi('ContributorLogger', logger_address, logger_abi)
 
@@ -58,32 +60,39 @@ def fetch_salaries(logger_address: str, start_block: int, end_block: int, test=F
   end_block_time = web3.eth.getBlock(end_block)['timestamp']
 
   entries = __get_data__(logger_address, start_index, next_id)
+  entries.sort(key=lambda e: e[3]) # sort by startTime
 
   salaries = dict()
 
   for entry in entries:
-    (recipient, token, amountPerSecond, startTime, endTime) = entry
+    (id, recipient, token, amountPerSecond, startTime, endTime) = entry
 
     if startTime <= end_block_time and endTime > start_block_time:
+      updating_checkpoint = False
 
       datapoint = {
+        "id": id,
         "amount_per_second": amountPerSecond,
         "from_time": max(start_block_time, startTime),
         "to_time": min(end_block_time, endTime)
       }
-      # TODO: add sorting for entries
+
       if not salaries.get(recipient):
           salaries[recipient] = dict()
       if salaries[recipient].get(token):
         # handle updates and deletions
         if datapoint['from_time'] < salaries[recipient][token][-1]['to_time']:
-          salaries[recipient][token][-1]['to_time'] = datapoint['from_time']
+          # more recently added entries take precedent when there's an overlap
+          if datapoint['id'] > salaries[recipient][token][-1]['id']:
+            salaries[recipient][token][-1]['to_time'] = datapoint['from_time']
+          else:
+            datapoint['from_time'] = salaries[recipient][token][-1]['to_time']
         salaries[recipient][token].append(datapoint)
         
       else:
         salaries[recipient][token] = [datapoint]
 
-    else:
+    elif updating_checkpoint:
       start_index += 1
 
   results = dict()

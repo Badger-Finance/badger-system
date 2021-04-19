@@ -65,6 +65,7 @@ contract ContributorLogger is AccessControlUpgradeable {
         public
         view
         returns (
+            uint256,
             address,
             address,
             uint128,
@@ -73,7 +74,7 @@ contract ContributorLogger is AccessControlUpgradeable {
         )
     {
         Entry storage entry = paymentEntries[id];
-        return (entry.recipient, entry.token, entry.amountPerSecond, entry.startTime, entry.endTime);
+        return (id, entry.recipient, entry.token, entry.amountPerSecond, entry.startTime, entry.endTime);
     }
 
     // ===== Permissioned Functions: Manager =====

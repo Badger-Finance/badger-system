@@ -422,3 +422,56 @@ def test_salaries(setup):
     ]
     expected_value2 = salary_json[second_entry['recipient']][second_entry['token']]
     assert expected_value2 in payouts2
+
+    # add some out of order entries
+    console.print('[yellow]Testing out of order entries getting sorted correctly[/yellow]')
+    now = int(time()) + 1
+    start_block = web3.eth.getBlock('latest')
+    first_entry = {
+      'recipient': accounts[6].address,
+      'token': badger_token,
+      'amountPerSecond': 10000,
+      'startTime': now + 5,
+      'endTime': now + 10,
+    }
+    second_entry = {
+      'recipient': accounts[6].address,
+      'token': badger_token,
+      'amountPerSecond': 200,
+      'startTime': now,
+      'endTime': now + 7,
+    }
+    loggerContract.createEntry(
+      first_entry['recipient'],
+      first_entry['token'],
+      first_entry['amountPerSecond'],
+      first_entry['startTime'],
+      first_entry['endTime'],
+      { 'from': manager }
+    )
+    loggerContract.createEntry(
+      second_entry['recipient'],
+      second_entry['token'],
+      second_entry['amountPerSecond'],
+      second_entry['startTime'],
+      second_entry['endTime'],
+      { 'from': manager }
+    )
+
+    wait_time = 10
+    sleep(wait_time)
+    chain.mine()
+    end_block = web3.eth.getBlock('latest')
+    salary_json_filename = fetch_salaries(loggerContract.address, start_block['number'], end_block['number'], True)
+
+    with open(salary_json_filename) as f:
+      salary_json = json.load(f)
+
+    # depending on when the block gets mined it could be +/- one second
+    payouts = [
+      int(2 * first_entry['amountPerSecond']) + int(7 * second_entry['amountPerSecond']),
+      int(3 * first_entry['amountPerSecond']) + int(7 * second_entry['amountPerSecond'])
+    ]
+    expected_value = salary_json[first_entry['recipient']][first_entry['token']]
+
+    assert expected_value in payouts
