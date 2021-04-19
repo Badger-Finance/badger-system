@@ -23,8 +23,7 @@
         "SimpleTimelock": "0x4e3f56bb996ed91ba8d97ea773d3f818730d1a6f",
         "Controller": "0x6354E79F21B56C11f48bcD7c451BE456D7102A36",
         "Sett": "0x175586ac3f8A7463499D1019A30120aa6fC67C5f",
-        "SettV1": "0xE4Ae305b08434bF3D74e0086592627F913a258A9",
-        "SettV1.1": "0x175586ac3f8A7463499D1019A30120aa6fC67C5f",
+        "SettV1": "0x5c7AdB3Fd0DF2D1822a36922dd941e16D2bF4E51",
         "StakingRewards": "0x6daCCed8D6d80b0e93a51A4303961678e8A46Fa5",
         "StakingRewardsSignalOnly": "0x752F5C9e91721dc7a7513106fbf249C46439A5EE",
         "StrategyBadgerRewards": "0x38b9344fFB931ABA6476198095e088024CdAC527",
@@ -50,7 +49,7 @@
         "BadgerRewardsManager": "0xE8D0A73ED68231F209bdDB1b0AAcc37C38C16E45",
         "UnlockScheduler": "0xC63d8A22D18dd42a9De8343Fd7C888bdA3E7516d",
         "AffiliateTokenGatedUpgradeable": "0x9313cB1AAaD4E600DBd7Ed70f76fB8288EA84138",
-        "VipCappedGuestListWrapperUpgradeable": "0xAB6F4d5C89f19F367188cfC4d59d4Dba6bdB2dea",
+        "VipCappedGuestListWrapperUpgradeable": "0xa6aB825f86D9fDaFe9528f34f089A8473A3D85d3",
         "SimpleWrapperGatedUpgradeable": "0xc0a972a3cf8e52167589694d135abb66409f9b30"
     },
     "dao": {
