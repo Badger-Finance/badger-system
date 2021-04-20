@@ -25,12 +25,7 @@ from helpers.token_utils import (
     distribute_test_ether,
 )
 from rich.console import Console
-from scripts.deploy.deploy_digg import (
-    deploy_digg_with_existing_badger,
-    digg_deploy_flow,
-)
 from scripts.systems.badger_system import connect_badger
-from helpers.registry import token_registry
 console = Console()
 
 params = {
@@ -48,71 +43,8 @@ def main():
 
     # The address to test with
     user = accounts.at(decouple.config("TEST_ACCOUNT"), force=True)
-
-    badger = connect_badger("deploy-final.json", load_deployer=False, load_keeper=False, load_guardian=False)
-
-    # TODO: After prod deployment, just connect instead.
-    # claw = deploy_claw_minimal(badger.deployer, printToFile=True)
-    # # Deploy claw setts
-    # sushiswap = SushiswapSystem()
-    # for (settId, empName) in [("native.sushiBClawUSDC",  "bClaw"), ("native.sushiSClawUSDC", "sClaw")]:
-    #     params = sett_config.sushi.sushiClawUSDC.params
-    #     token = claw.emps[empName].tokenCurrency()
-    #     if sushiswap.hasPair(token, token_registry.wbtc):
-    #         params.want = sushiswap.getPair(token, token_registry.wbtc)
-    #     else:
-    #         params.want = sushiswap.createPair(
-    #             token,
-    #             token_registry.wbtc,
-    #             badger.deployer,
-    #         )
-    #     want = params.want
-    #     params.badgerTree = badger.badgerTree
-    #     params.pid = sushiswap.add_chef_rewards(want)
-
-    #     strategist = badger.daoProxyAdmin
-    #     controller = badger.add_controller(settId)
-    #     badger.deploy_sett(
-    #         settId,
-    #         want,
-    #         controller,
-    #         governance=badger.daoProxyAdmin,
-    #         strategist=strategist,
-    #         keeper=badger.keeper,
-    #         guardian=badger.guardian,
-    #     )
-    #     badger.deploy_strategy(
-    #         settId,
-    #         "StrategySushiLpOptimizer",
-    #         controller,
-    #         params,
-    #         governance=badger.daoProxyAdmin,
-    #         strategist=strategist,
-    #         keeper=badger.keeper,
-    #         guardian=badger.guardian,
-    #     )
-
-    # print_to_file(badger, "deploy-test.json")
-
-    console.print("[blue]=== 🦡 Test ENV for account {} 🦡 ===[/blue]".format(user))
-
-    tree = badger.badgerTree
-    newLogic = BadgerTree.deploy({"from": badger.deployer})
-
-    multi = GnosisSafe(badger.opsMultisig)
-
-    # Upgrade Tree
-    multi.execute(
-        MultisigTxMetadata(description="Upgrade Tree"),
-        {
-            "to": badger.opsProxyAdmin.address,
-            "data": badger.opsProxyAdmin.upgrade.encode_input(tree, newLogic),
-        },
-    )
-
-    # Publish test root
-    publish_new_root(badger, params["root"], params["contentHash"])
-
+    badger = connect_badger()
+    distribute_from_whales(user)
 
     console.print("[green]=== ✅ Test ENV Setup Complete ✅ ===[/green]")
     # Keep ganache open until closed
