@@ -16,6 +16,7 @@ console = Console()
 class StrategyCoreResolver:
     def __init__(self, manager):
         self.manager = manager
+        
 
     # ===== Read strategy data =====
 
@@ -73,7 +74,7 @@ class StrategyCoreResolver:
 
         return calls
 
-    def add_strategy_snap(self, calls):
+    def add_strategy_snap(self, calls, entities=None):
         strategy = self.manager.strategy
 
         calls.append(

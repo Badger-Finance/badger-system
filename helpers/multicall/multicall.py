@@ -5,11 +5,18 @@ from brownie import web3
 
 from helpers.multicall import Call
 from helpers.multicall.constants import MULTICALL_ADDRESSES
+from helpers.console_utils import console
 
 
 class Multicall:
     def __init__(self, calls: List[Call]):
         self.calls = calls
+
+    def printCalls(self):
+        for call in self.calls:
+            console.print(
+                {"target": call.target, "function": call.function, "args": call.args}
+            )
 
     def __call__(self):
         aggregate = Call(

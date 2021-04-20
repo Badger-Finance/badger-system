@@ -11,9 +11,10 @@ cache
 local.json
 .pytest_cache
 docs
+# gov timelock transaction files
+timelock/
 
 contracts-temporary
-contracts-reference
 
 flatten
 
@@ -38,3 +39,5 @@ deploy-1337final.json
 
 venv
 .vscode
+
+.idea

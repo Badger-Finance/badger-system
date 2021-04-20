@@ -20,7 +20,7 @@ class StrategyBadgerRewardsResolver(StrategyCoreResolver):
             "stakingRewards": strategy.geyser(),
         }
 
-    def add_strategy_snap(self, calls):
+    def add_strategy_snap(self, calls, entities=None):
         strategy = self.manager.strategy
         staking_rewards_address = strategy.geyser()
 

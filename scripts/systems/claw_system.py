@@ -6,7 +6,7 @@ from dotmap import DotMap
 
 from helpers.time_utils import ONE_HOUR, ONE_DAY
 from helpers.token_utils import distribute_from_whale
-from helpers.registry import whale_registry
+from helpers.registry import registry
 from config.badger_config import claw_config
 
 from rich.console import Console
@@ -137,7 +137,7 @@ class ClawSystem:
 
         found = False
         whale = None
-        for whale in whale_registry.values():
+        for whale in registry.whales.values():
             if whale.token == collateralAddress:
                 found = True
 

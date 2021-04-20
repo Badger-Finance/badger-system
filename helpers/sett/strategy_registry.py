@@ -26,6 +26,7 @@ name_to_artifact = {
     "StrategyDiggRewards": StrategyDiggRewards,
     "StrategyDiggLpMetaFarm": StrategyDiggLpMetaFarm,
     "StrategySushiDiggWbtcLpOptimizer": StrategySushiDiggWbtcLpOptimizer,
+    "StrategyPancakeLpOptimizer": StrategyPancakeLpOptimizer,
     "DiggRewardsFaucet": DiggRewardsFaucet,
     "DiggSett": DiggSett,
     "HoneypotMeme": HoneypotMeme,
@@ -38,8 +39,11 @@ name_to_artifact = {
     "DiggSeeder": DiggSeeder,
     "BadgerRewardsManager": BadgerRewardsManager,
     "UnlockScheduler": UnlockScheduler,
+    "AffiliateTokenGatedUpgradeable": AffiliateTokenGatedUpgradeable,
+    "VipCappedGuestListWrapperUpgradeable": VipCappedGuestListWrapperUpgradeable,
+    "SimpleWrapperGatedUpgradeable": SimpleWrapperGatedUpgradeable
 }
 
 
-def strategy_name_to_artifact(name):
+def contract_name_to_artifact(name):
     return name_to_artifact[name]

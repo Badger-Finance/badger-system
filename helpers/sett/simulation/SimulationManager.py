@@ -20,6 +20,7 @@ from .provisioners import (
     BadgerLpMetaFarmProvisioner,
     CurveGaugeProvisioner,
     SushiClawUSDCProvisioner,
+    PancakeBnbBtcbProvisioner,
     SushiWbtcIbBtcLpOptimizerProvisioner,
 )
 from .actors import (
@@ -153,6 +154,8 @@ class SimulationManager:
             return CurveGaugeProvisioner(self)
         if settId in ["native.sushiSClawUSDC", "native.sushiBClawUSDC"]:
             return SushiClawUSDCProvisioner(self)
+        if settId == "native.pancakeBnbBtcb":
+            return PancakeBnbBtcbProvisioner(self)
         if settId == "native.sushiWbtcIbBtc":
             return SushiWbtcIbBtcLpOptimizerProvisioner(self)
         raise Exception(f"invalid strategy settID (no provisioner): {settId}")
