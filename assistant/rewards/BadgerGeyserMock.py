@@ -116,7 +116,7 @@ class BadgerGeyserMock:
         #     "add_unlock_schedule for", str(token), parsedSchedule.toDict(),
         # )
 
-    def get_distributed_for_token_at(self, token, endTime, read=False):
+    def get_distributed_for_token_at(self, token, endTime, read=True):
         """
         Get total distribution for token within range, across unlock schedules
         """
@@ -372,7 +372,7 @@ class BadgerGeyserMock:
         """
         Get "weightedShareSeconds" in range
         """
-        # table = []
+        table = []
 
         start = 0
         previous = lastUpdate - stake["stakedAt"]

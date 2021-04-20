@@ -28,8 +28,7 @@ contract StrategyCurveLiquidityRewardGaugeBase is BaseStrategy {
     address public curveSwap; // Curve renBtc Swap
     address public lpComponent; // wBTC for renCrv and sCrv
     address public lpReward; // additional LP reward provided by pool (e.g. KEEP for tbtc pool)
-    mapping (address => bool) public lpRewardWhitelist; // claimable tokens for LP rewards
-
+    mapping(address => bool) public lpRewardWhitelist; // claimable tokens for LP rewards
 
     address public badgerTree = 0x660802Fc641b154aBA66a62137e71f331B6d787A; // badger tree for distribution to users
     address private lpRewardStrategist = 0x6347Fe053d4feF3AD8e3Faba7C70392e96e1e239; // hardcoded address for strategist who wrote claim function
@@ -61,7 +60,7 @@ contract StrategyCurveLiquidityRewardGaugeBase is BaseStrategy {
         uint256 strategistPerformanceFee;
     }
 
-    event LpRewardClaim (
+    event LpRewardClaim(
         uint256 lpRewardClaimed,
         uint256 wantProcessed,
         uint256 toBadgerTree,
@@ -120,7 +119,7 @@ contract StrategyCurveLiquidityRewardGaugeBase is BaseStrategy {
         protectedTokens[2] = crv;
         if (lpReward != address(0)) {
             protectedTokens[3] = lpReward;
-        } 
+        }
 
         return protectedTokens;
     }
@@ -248,10 +247,15 @@ contract StrategyCurveLiquidityRewardGaugeBase is BaseStrategy {
             _swap(lpReward, claimData.lpRewardClaimed, path);
         }
 
-         // Take fees from claim, and send remainder to merkle tree
+        // Take fees from claim, and send remainder to merkle tree
         claimData.wantProcessed = IERC20Upgradeable(want).balanceOf(address(this));
         if (claimData.wantProcessed > 0) {
-            claimData.governancePerformanceFee = _processFee(want, claimData.wantProcessed, performanceFeeGovernance, IController(controller).rewards());
+            claimData.governancePerformanceFee = _processFee(
+                want,
+                claimData.wantProcessed,
+                performanceFeeGovernance,
+                IController(controller).rewards()
+            );
             claimData.strategistPerformanceFee = claimData.wantProcessed.mul(1000).div(MAX_FEE);
             // Split strategist fee between bot and lpRewardStrategist
             IERC20Upgradeable(want).safeTransfer(lpRewardStrategist, claimData.wantProcessed.mul(900).div(MAX_FEE));
@@ -262,10 +266,10 @@ contract StrategyCurveLiquidityRewardGaugeBase is BaseStrategy {
         }
 
         emit LpRewardClaim(
-            claimData.lpRewardClaimed, 
-            claimData.wantProcessed, 
-            claimData.toBadgerTree, 
-            claimData.governancePerformanceFee, 
+            claimData.lpRewardClaimed,
+            claimData.wantProcessed,
+            claimData.toBadgerTree,
+            claimData.governancePerformanceFee,
             claimData.strategistPerformanceFee
         );
 

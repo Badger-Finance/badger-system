@@ -6,6 +6,8 @@ interface ISett {
 
     function deposit(uint256) external;
 
+    function depositFor(address, uint256) external;
+
     function depositAll() external;
 
     function withdraw(uint256) external;

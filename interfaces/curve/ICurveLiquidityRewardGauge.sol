@@ -7,5 +7,4 @@ interface ICurveLiquidityRewardGauge {
     function rewarded_token() external view returns (address);
 
     function rewards_for(address arg0) external view returns (uint256);
-
 }

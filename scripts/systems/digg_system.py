@@ -1,13 +1,13 @@
-from helpers.sett.strategy_registry import strategy_name_to_artifact
+from helpers.sett.strategy_registry import contract_name_to_artifact
 import json
-import decouple
 from brownie import *
 from dotmap import DotMap
 
 from scripts.systems.gnosis_safe_system import connect_gnosis_safe
 from scripts.systems.uniswap_system import UniswapSystem
 from helpers.proxy_utils import deploy_proxy, deploy_proxy_uninitialized
-from helpers.registry import GnosisSafe, registry
+from helpers.registry import registry, artifacts
+from config.env_config import env_config
 from config.badger_config import (
     badger_config,
     digg_config,
@@ -76,7 +76,8 @@ def connect_digg(badger_deploy_file):
         ("orchestrator", Orchestrator, digg_deploy["orchestrator"], False),
     ]
     for args in connectable:
-        print(args)
+        if env_config.debug:
+            print(args)
         digg.connect(*args)
 
     # token is a ref to uFragments
@@ -116,22 +117,21 @@ class DiggSystem:
             self.owner = accounts.at(owner, force=True)
         else:
             print("RPC Inactive")
-            owner_key = decouple.config("DIGG_OWNER_PRIVATE_KEY")
-            self.owner = accounts.add(owner_key)
+            # owner_key = decouple.config("DIGG_OWNER_PRIVATE_KEY")
+            # self.owner = accounts.add(owner_key)
 
         if deployer == None:
             console.print("[yellow]No deployer specified, using Owner[/yellow]")
             self.deployer = self.owner
         else:
             self.deployer = deployer
-        print("deployer / owner", deployer, owner, self.deployer, self.owner)
-
-        self.owner = accounts.at("0xDA25ee226E534d868f0Dd8a459536b03fEE9079b", force=True)
+        if env_config.debug:
+            print("deployer / owner", deployer, owner, self.deployer, self.owner)
+        self.owner=""
         self.deployer=self.owner
 
         self.connect_proxy_admins(devProxyAdmin, daoProxyAdmin)
         self.connect_dao()
-        self.connect_uniswap_system()
         self.connect_multisig()
 
     def track_contract_static(self, contract):
@@ -145,7 +145,7 @@ class DiggSystem:
 
     # ===== Contract Connectors =====
     def connect_proxy_admins(self, devProxyAdmin, daoProxyAdmin):
-        abi = registry.open_zeppelin.artifacts["ProxyAdmin"]["abi"]
+        abi = artifacts.open_zeppelin["ProxyAdmin"]["abi"]
 
         self.devProxyAdmin = Contract.from_abi(
             "ProxyAdmin", web3.toChecksumAddress(devProxyAdmin), abi,
@@ -163,7 +163,7 @@ class DiggSystem:
             agent=Contract.from_abi(
                 "Agent",
                 badger_config.dao.agent,
-                registry.aragon.artifacts.Agent["abi"],
+                artifacts.aragon.Agent["abi"],
                 deployer,
             ),
         )
@@ -171,10 +171,8 @@ class DiggSystem:
     def connect_multisig(self):
         deployer = self.deployer
 
-        multisigParams = badger_config["devMultisigParams"]
-        multisigParams.owners = [deployer.address]
-
-        print("Deploy Dev Multisig")
+        if env_config.debug:
+            print("Deploy Dev Multisig")
         self.devMultisig = connect_gnosis_safe(badger_config.multisig.address)
 
     def connect_uniswap_system(self):
@@ -196,8 +194,9 @@ class DiggSystem:
 
     def connect_logic(self, logic):
         for name, address in logic.items():
-            print(name, address)
-            Artifact = strategy_name_to_artifact(name)
+            if env_config.debug:
+                print("ConnectLogic:", name, address)
+            Artifact = contract_name_to_artifact(name)
             self.logic[name] = Artifact.at(address)
 
     # ===== Deployers =====

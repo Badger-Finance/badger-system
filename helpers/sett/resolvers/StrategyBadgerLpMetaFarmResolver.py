@@ -24,8 +24,8 @@ class StrategyBadgerLpMetaFarmResolver(StrategyCoreResolver):
 
         calls = self.add_entity_balances_for_tokens(calls, "badger", badger, entities)
         return calls
-
-    def add_strategy_snap(self, calls):
+        
+    def add_strategy_snap(self, calls, entities=None):
         strategy = self.manager.strategy
         staking_rewards_address = strategy.geyser()
 

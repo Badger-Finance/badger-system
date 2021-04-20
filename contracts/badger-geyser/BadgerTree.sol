@@ -109,6 +109,34 @@ contract BadgerTree is Initializable, AccessControlUpgradeable, ICumulativeMulti
         return pendingCycle == currentCycle.add(1);
     }
 
+    /// @dev Return true if account has outstanding claims in any token from the given input data
+    function isClaimAvailableFor(
+        address user,
+        address[] memory tokens,
+        uint256[] memory cumulativeAmounts
+    ) public view returns (bool) {
+        for (uint256 i = 0; i < tokens.length; i++) {
+            uint256 userClaimable = cumulativeAmounts[i].sub(claimed[user][tokens[i]]);
+            if (userClaimable > 0) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /// @dev Get the number of tokens claimable for an account, given a list of tokens and latest cumulativeAmounts data
+    function getClaimableFor(
+        address user,
+        address[] memory tokens,
+        uint256[] memory cumulativeAmounts
+    ) public view returns (address[] memory, uint256[] memory) {
+        uint256[] memory userClaimable = new uint256[](tokens.length);
+        for (uint256 i = 0; i < tokens.length; i++) {
+            userClaimable[i] = cumulativeAmounts[i].sub(claimed[user][tokens[i]]);
+        }
+        return (tokens, userClaimable);
+    }
+
     function getClaimedFor(address user, address[] memory tokens) public view returns (address[] memory, uint256[] memory) {
         uint256[] memory userClaimed = new uint256[](tokens.length);
         for (uint256 i = 0; i < tokens.length; i++) {
@@ -146,7 +174,6 @@ contract BadgerTree is Initializable, AccessControlUpgradeable, ICumulativeMulti
 
         // Claim each token
         for (uint256 i = 0; i < tokens.length; i++) {
-
             // If none claimable for token, skip
             if (cumulativeAmounts[i] == 0) {
                 continue;
@@ -196,7 +223,7 @@ contract BadgerTree is Initializable, AccessControlUpgradeable, ICumulativeMulti
         lastProposeTimestamp = now;
         lastProposeBlockNumber = block.number;
 
-        emit RootProposed(cycle, pendingMerkleRoot, pendingMerkleContentHash, now, block.number);
+        emit RootProposed(cycle, pendingMerkleRoot, pendingMerkleContentHash, startBlock, endBlock, now, block.number);
     }
 
     /// ===== Guardian Restricted =====
@@ -208,7 +235,7 @@ contract BadgerTree is Initializable, AccessControlUpgradeable, ICumulativeMulti
         uint256 cycle,
         uint256 startBlock,
         uint256 endBlock
-    ) external {
+    ) external whenNotPaused {
         _onlyRootValidator();
         require(root == pendingMerkleRoot, "Incorrect root");
         require(contentHash == pendingMerkleContentHash, "Incorrect content hash");
@@ -226,7 +253,7 @@ contract BadgerTree is Initializable, AccessControlUpgradeable, ICumulativeMulti
         lastPublishTimestamp = now;
         lastPublishBlockNumber = block.number;
 
-        emit RootUpdated(currentCycle, root, contentHash, now, block.number);
+        emit RootUpdated(currentCycle, root, contentHash, startBlock, endBlock, now, block.number);
     }
 
     /// @notice Pause publishing of new roots

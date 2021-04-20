@@ -1,68 +1,59 @@
-from helpers.sett.SnapshotManager import SnapshotManager
 from brownie import *
-from brownie.network.gas.strategies import GasNowStrategy
-from rich.console import Console
+from config.keeper import keeper_config
+from helpers.gas_utils import gas_strategies
+from helpers.registry import registry
+from helpers.sett.SnapshotManager import SnapshotManager
+from helpers.utils import tx_wait, val
+from helpers.console_utils import console
 from scripts.systems.badger_system import BadgerSystem, connect_badger
 from tabulate import tabulate
-from helpers.registry import registry
-from assistant.rewards.rewards_checker import val
-gas_strategy = GasNowStrategy("fast")
 
-console = Console()
+gas_strategies.set_default_for_active_chain()
+
 def harvest_all(badger: BadgerSystem, skip):
     for key, vault in badger.sett_system.vaults.items():
         if key in skip:
             continue
 
-        console.print("\n[bold yellow]===== Harvest: " + str(key) + " =====[/bold yellow]\n")
+        console.print(
+            "\n[bold yellow]===== Harvest: " + str(key) + " =====[/bold yellow]\n"
+        )
 
         print("Harvest: " + key)
 
         snap = SnapshotManager(badger, key)
         strategy = badger.getStrategy(key)
-        keeper = accounts.at(strategy.keeper())
+        keeper = accounts.at(badger.keeper)
 
         before = snap.snap()
-        snap.printTable(before)
-        snap.settHarvest({'from': keeper, "gas_price": gas_strategy, "gas_limit": 2000000, "allow_revert": True}, confirm=False)
+        if strategy.keeper() == badger.badgerRewardsManager:
+            snap.settHarvestViaManager(
+                strategy, {"from": keeper, "gas_limit": 2000000, "allow_revert": True}, confirm=False,
+            )
+        else:
+            snap.settHarvest(
+                {"from": keeper, "gas_limit": 2000000, "allow_revert": True}, confirm=False,
+            )
+
+        tx_wait()
+
+        if rpc.is_active():
+            chain.mine()
         after = snap.snap()
-        snap.printTable(after)
 
         snap.printCompare(before, after)
 
+
 def main():
-    """
-    Simulate tend operation and evaluate tendable amount
-    """
-
-    # TODO: Output message when failure
-
-    # TODO: Use test mode if RPC active, no otherwise
-
-
-    fileName = "deploy-" + "final" + ".json"
-    badger = connect_badger(fileName, load_keeper=True)
+    badger = connect_badger(load_keeper=True)
 
     if rpc.is_active():
         """
-        Test: Load up sending accounts with ETH and whale tokens
+        Test: Load up testing accounts with ETH
         """
         accounts[0].transfer(badger.deployer, Wei("5 ether"))
         accounts[0].transfer(badger.keeper, Wei("5 ether"))
         accounts[0].transfer(badger.guardian, Wei("5 ether"))
 
-    skip = [
-        # "native.uniBadgerWbtc",
-        # "harvest.renCrv",
-        # "native.sbtcCrv",
-        # "native.sBtcCrv",
-        # "native.tbtcCrv",
-        # "native.renCrv",
-        # "native.badger",
-        # "native.sushiBadgerWbtc",
-        # "native.sushiWbtcEth",
-        # "native.digg",
-        # "native.uniDiggWbtc",
-        # "native.sushiDiggWbtc"
-    ]
+    skip = keeper_config.get_active_chain_skipped_setts("harvest")
     harvest_all(badger, skip)

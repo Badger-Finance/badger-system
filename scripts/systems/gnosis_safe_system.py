@@ -1,12 +1,12 @@
 from brownie import *
 from helpers.constants import AddressZero
-from helpers.registry import registry
+from helpers.registry import registry, artifacts
 from dotmap import DotMap
 
 
 def connect_gnosis_safe(address):
     return Contract.from_abi(
-        "GnosisSafe", address, registry.gnosis_safe.artifacts.GnosisSafe["abi"],
+        "GnosisSafe", address, artifacts.gnosis_safe.GnosisSafe["abi"],
     )
 
 
@@ -21,7 +21,7 @@ class GnosisSafeSystem:
         self.proxyFactory = Contract.from_abi(
             "ProxyFactory",
             web3.toChecksumAddress(registry.gnosis_safe.addresses.proxyFactory),
-            registry.gnosis_safe.artifacts.ProxyFactory["abi"],
+            artifacts.gnosis_safe.ProxyFactory["abi"],
         )
 
     def deployGnosisSafe(self, params, signer):
