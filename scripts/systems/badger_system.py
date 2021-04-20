@@ -476,7 +476,6 @@ class BadgerSystem:
         print(
             self.logic.BadgerTree.address,
             self.devProxyAdmin.address,
-            self.devMultisig,
             self.keeper,
             self.guardian,
         )

@@ -29,6 +29,7 @@ from tests.sett.fixtures import (
     UniDiggWbtcLpMiniDeploy,
     SushiClawUSDCMiniDeploy,
     PancakeMiniDeploy,
+    SushiWbtcIbBtcLpOptimizerMiniDeploy,
 )
 
 
@@ -55,10 +56,11 @@ settsToRun = [
     "native.renCrv",
     "native.sbtcCrv",
     "native.tbtcCrv",
-    # # "harvest.renCrv",
+    # "harvest.renCrv",
     "native.uniBadgerWbtc",
     "native.sushiBadgerWbtc",
     "native.sushiWbtcEth",
+    "native.sushiWbtcIbBtc",
 ]
 
 diggSettsToRun = [
@@ -275,6 +277,11 @@ def badger_single_sett(settConfig, deploy=True):
                 # In this case, both the lp token and pid (pool id) exist so we can pass them in.
                 want=registry.pancake.chefPairs.bnbBtcb,
                 pid=registry.pancake.chefPids.bnbBtcb,
+        if settId == "native.sushiWbtcIbBtc":
+            return SushiWbtcIbBtcLpOptimizerMiniDeploy(
+                "native.sushiWbtcIbBtc",
+                "StrategySushiLpOptimizer",
+                deployer,
                 strategist=strategist,
                 guardian=guardian,
                 keeper=keeper,

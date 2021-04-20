@@ -5,6 +5,9 @@ from brownie.network import web3
 from dotmap import DotMap
 from helpers.registry.WhaleRegistryAction import WhaleRegistryAction
 
+with open("dependency-artifacts/defidollar/BadgerSettPeak.json") as f:
+    BadgerSettPeak = json.load(f)
+
 aragon_registry = DotMap(
     addresses=DotMap(
         agentImpl="0x3a93c17fc82cc33420d1809dda9fb715cc89dd37",
@@ -174,15 +177,30 @@ eth_registry.whales = DotMap(
         token=eth_registry.curve.pools.sbtcCrv.token,
         action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT,
     ),
+    bSbtcCrv=DotMap(
+        whale="0x7af23cc86f3d96f079d5a56d0a89ebcb281060d5",
+        token="0xd04c48A53c111300aD41190D63681ed3dAd998eC",
+        action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT
+    ),
     renCrv=DotMap(
         whale="0xb1f2cdec61db658f091671f5f199635aef202cac",
         token=eth_registry.curve.pools.renCrv.token,
         action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT,
     ),
+    bRenCrv=DotMap(
+        whale="0xedff3e9b6d596501c7fe806ef26bff395c01bdbe",
+        token="0x6dEf55d2e18486B9dDfaA075bc4e4EE0B28c1545",
+        action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT
+    ),
     tbtcCrv=DotMap(
         whale="0xaf379f0228ad0d46bb7b4f38f9dc9bcc1ad0360c",
         token=eth_registry.curve.pools.tbtcCrv.token,
         action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT,
+    ),
+    bTbtcCrv=DotMap(
+        whale="0xadc68fb9809206c88e4f871c14b904b25ae5e301",
+        token="0xb9D076fDe463dbc9f915E5392F807315Bf940334",
+        action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT
     ),
     wbtc=DotMap(
         whale="0xc11b1268c1a384e55c48c2391d8d480264a3a7f4",

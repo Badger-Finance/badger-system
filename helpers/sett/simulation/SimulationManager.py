@@ -21,6 +21,7 @@ from .provisioners import (
     CurveGaugeProvisioner,
     SushiClawUSDCProvisioner,
     PancakeBnbBtcbProvisioner,
+    SushiWbtcIbBtcLpOptimizerProvisioner,
 )
 from .actors import (
     UserActor,
@@ -155,6 +156,8 @@ class SimulationManager:
             return SushiClawUSDCProvisioner(self)
         if settId == "native.pancakeBnbBtcb":
             return PancakeBnbBtcbProvisioner(self)
+        if settId == "native.sushiWbtcIbBtc":
+            return SushiWbtcIbBtcLpOptimizerProvisioner(self)
         raise Exception(f"invalid strategy settID (no provisioner): {settId}")
 
     def _provisionUserActors(self) -> None:
