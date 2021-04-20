@@ -242,9 +242,12 @@ def distribute_from_whale(whale_config, recipient, percentage=0.2):
         if recipient.balance() < 2 * 10 ** 18:
             distribute_test_ether(recipient, Wei("2 ether"))
         recipient.transfer(forceEther, Wei("2 ether"))
+        console.print("Force send Ether to whale..")
         forceEther.forceSend(whale_config.whale, {"from": recipient})
 
     token = interface.IERC20(whale_config.token)
+
+    console.print("Transfer token {token.address} to recipient")
     token.transfer(
         recipient,
         token.balanceOf(whale_config.whale) * percentage,

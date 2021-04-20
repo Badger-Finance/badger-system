@@ -10,13 +10,19 @@ networks:
   bsc:
     id: bsc
     explorer: https://www.bscscan.com/
+    host: https://bsc-dataseed1.binance.org
+  bsc-fork:
+    id: bsc-fork
     cmd: ganache-cli
+    host: http://127.0.0.1
     cmd_settings:
-      accounts: 50
-      default_balance: 500 ether
-      fork: https://bsc-dataseed1.binance.org
-      chain_id: 56
-      mnemonic: brownie 
+      timeout: 120
+      accounts: 10
+      evm_version: istanbul
+      fork: bsc
+      gas_limit: 12000000
+      mnemonic: brownie
+      port: 8545
 
 
 project_structure:
