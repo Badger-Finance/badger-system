@@ -28,6 +28,12 @@ def main():
     # The address to test with
     user = accounts.at(decouple.config("TEST_ACCOUNT"), force=True)
     badger = connect_badger()
+
+    tree = badger.badgerTree
+    newLogic = BadgerTreeV2.at("0x603ad0e0e0fc873371bd1d98f06e567a8c752ac8")
+    ops = accounts.at(badger.opsMultisig, force=True)
+    badger.opsProxyAdmin.upgrade(tree, newLogic, {'from': ops})
+
     distribute_from_whales(user)
 
     console.print("[green]=== ✅ Test ENV Setup Complete ✅ ===[/green]")
