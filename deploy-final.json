@@ -137,6 +137,7 @@
     "claimEncoder": "0xf3ff1a5856b1726a8fef921ea57eab2c51466a93",
     "badgerRewardsManager": "0x5B60952481Eb42B66bdfFC3E049025AC5b91c127",
     "unlockScheduler": "0x1AADc00011939499a4d263d657Dd74b0E1176cF9",
+    "badgerNfts": "0xe1e546e25A5eD890DFf8b8D005537c0d373497F8",
     "geysers": {
         "native.badger": "0xa9429271a28F8543eFFfa136994c0839E7d7bF77",
         "native.renCrv": "0x2296f174374508278DC12b806A7f27c87D53Ca15",
