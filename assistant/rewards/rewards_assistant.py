@@ -28,7 +28,6 @@ from scripts.systems.badger_system import BadgerSystem
 
 gas_strategy = GasNowStrategy("fast")
 console = Console()
-diggBTCFeed = "0xe49ca29a3ad94713fc14f065125e74906a6503bb"
 
 
 def calc_geyser_rewards(badger, periodStartBlock, endBlock, cycle):
@@ -163,6 +162,7 @@ def fetch_current_rewards_tree(badger, print_output=False):
 
 
 def generate_rewards_in_range(badger, startBlock, endBlock, pastRewards):
+    endBlock = endBlock - 10
     blockDuration = endBlock - startBlock
 
     nextCycle = getNextCycle(badger)
@@ -170,7 +170,6 @@ def generate_rewards_in_range(badger, startBlock, endBlock, pastRewards):
     currentMerkleData = fetchCurrentMerkleData(badger)
     #sushiRewards = calc_sushi_rewards(badger,startBlock,endBlock,nextCycle,retroactive=False)
     #farmRewards = fetch_current_harvest_rewards(badger,startBlock, endBlock,nextCycle)
-
     geyserRewards = calc_geyser_rewards(
         badger, startBlock, endBlock, nextCycle)
 

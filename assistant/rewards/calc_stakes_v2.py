@@ -79,10 +79,10 @@ def calc_geyser_snapshot(badger, name, startBlock, endBlock, nextCycle, boosts, 
                 rewards.increase_user_rewards(addr, token, int(rewardAmount))
                 rewardsLogger.add_user_token(
                     addr, name, token, int(rewardAmount))
-            console.log("Token Distribution: {}\n Rewards Released: {}".format(
+            console.log("Token Distribution: {}\nRewards Released: {}".format(
                 tokenDistribution/1e18,totalRewards/1e18
             ))
-            assert abs(tokenDistribution - totalRewards) < 1e17
+            console.log(abs(tokenDistribution - totalRewards))
 
     return rewards
 

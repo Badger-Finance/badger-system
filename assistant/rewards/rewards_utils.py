@@ -28,7 +28,10 @@ blacklist = [
     "0x88128580ACdD9c04Ce47AFcE196875747bF2A9f6",
     "0x7e7E112A68d8D2E221E11047a72fFC1065c38e1a",
 ]
-blacklist = []
+
+cream_addresses = {
+    "native.badger": "0x8b950f43fcac4931d408f1fcda55c6cb6cbf3096"
+}
 
 
 def keccak(value):
@@ -134,7 +137,7 @@ def combine_balances(balances):
 
 
 @lru_cache(maxsize=None)
-def calculate_sett_balances(badger, name, currentBlock):
+def calculate_sett_balances(badger, name, currentBlock,collateral=False):
     sett = badger.getSett(name)
     underlyingToken = sett.address
     settType = ["",""]
@@ -158,6 +161,12 @@ def calculate_sett_balances(badger, name, currentBlock):
         )
         geyserBalances = calc_balances_from_geyser_events(geyserEvents)
         settBalances[geyserAddr] = 0
+
+    if name in ["native.badger"] and collateral:
+        settUnderlyingToken = interface.ERC20(sett.token())
+        creamBalances = fetch_cream_balances("crB{}".format(settUnderlyingToken.symbol()),currentBlock)
+        settBalances[cream_addresses[name]] = 0
+
     balances = {}
     for b in [settBalances,geyserBalances,creamBalances]:
         balances = dict(Counter(balances) + Counter(b))
