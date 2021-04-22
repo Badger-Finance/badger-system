@@ -24,6 +24,8 @@ console = Console()
 def print_to_file(bridge, path):
     system = {
         "bridge_system": {
+            "adapter": bridge.adapter.address,
+            "curveTokenWrapper": bridge.curveTokenWrapper.address,
             "logic": {},
         },
     }
@@ -62,6 +64,7 @@ def connect_bridge(badger, badger_deploy_file):
     )
     bridge.connect_logic(bridge_deploy["logic"])
     bridge.connect_adapter(bridge_deploy["adapter"])
+    bridge.connect_curve_token_wrapper(bridge_deploy["curveTokenWrapper"])
 
     return bridge
 
@@ -73,7 +76,8 @@ name_to_artifact = {
 
 class BridgeSystem:
     '''
-    The BRIDGE system consists of a renVM mint/burn bridge and some mocking utilities for testing.
+    The BRIDGE system consists of a renVM mint/burn bridge and mocking
+    utilities for testing.
     Bridge zap contracts will be added at a later date.
     '''
     def __init__(self, deployer, devProxyAdmin, config, publish_source=False):
@@ -93,6 +97,9 @@ class BridgeSystem:
 
     def connect_adapter(self, address) -> None:
         self.adapter = BadgerBridgeAdapter.at(address)
+
+    def connect_curve_token_wrapper(self, address):
+        self.curveTokenWrapper = CurveTokenWrapper.at(address)
 
     def connect_logic(self, logic):
         for name, address in logic.items():
@@ -136,7 +143,9 @@ class BridgeSystem:
         )
 
     def deploy_curve_token_wrapper(self):
-        self.curveTokenWrapper = CurveTokenWrapper.deploy({"from": self.deployer})
+        self.curveTokenWrapper = CurveTokenWrapper.deploy(
+            {"from": self.deployer},
+            publish_source=self.publish_source)
 
     def deploy_logic(self, name, BrownieArtifact, test=False):
         deployer = self.deployer
@@ -155,7 +164,11 @@ class BridgeSystem:
             gateway = MockGateway.deploy(token.address, {"from": deployer})
             # Distribute token from whale -> deployer -> mock gateway.
             distribute_from_whale(whaleConfig, deployer, percentage=1.0)
-            token.transfer(gateway, token.balanceOf(deployer), {"from": deployer})
+            token.transfer(
+                gateway,
+                token.balanceOf(deployer),
+                {"from": deployer},
+            )
             self.mocks[tokenName] = DotMap(
                 token=token,
                 gateway=gateway,
