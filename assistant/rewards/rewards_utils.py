@@ -1,19 +1,6 @@
-from assistant.rewards.rewards_assistant import fetch_current_rewards_tree
-import json
-import secrets
-import random
-from tabulate import tabulate
-import brownie
-import pytest
 from brownie import *
 from helpers.constants import *
-from helpers.registry import registry
-from helpers.gnosis_safe import GnosisSafe, MultisigTxMetadata
 from rich.console import Console
-from config.badger_config import badger_config
-from scripts.systems.badger_system import connect_badger
-from helpers.utils import val
-from helpers.token_utils import token_metadata, get_token_balances
 
 console = Console()
 

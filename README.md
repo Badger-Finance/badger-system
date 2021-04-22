@@ -62,6 +62,22 @@ export WEB3_INFURA_PROJECT_ID=<enter infura key here>
 brownie run scripts/local_instance.py
 ```
 
+### Running Scripts on non-Ethereum chains
+The included brownie-config.yaml has configurations for running forked environments on non-ethereum chains where Badger contracts are deployed. To run scripts against another chain, append the appropriate `--network` parameter to any `brownie run` or `brownie test` command.
+
+The appropriate live Badger deploy for that chain will automatically be read.
+
+As an example, `bsc-fork` is the networkID for a Binance Smart Chain forked environment.
+
+```bash
+brownie run scripts/local_instance.py --network bsc-fork
+```
+
+### Badger Deploy Files
+These files maintain a registry of all live Badger contracts on a given chain.
+* Ethereum Mainnet: [deploy-final.json](https://github.com/Badger-Finance/badger-system/blob/develop/deploy-final.json)
+* Binance Smart Chain: [badger-deploy-bsc.json](https://github.com/Badger-Finance/badger-system/blob/develop/badger-deploy-bsc.json)
+
 ### Documentation
 
 You can read more about Badger at our [GitBook](https://app.gitbook.com/@badger-finance/s/badger-finance/).

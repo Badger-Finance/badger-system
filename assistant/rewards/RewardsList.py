@@ -3,8 +3,7 @@ from brownie import *
 from dotmap import DotMap
 from rich.console import Console
 from eth_utils.hexadecimal import encode_hex
-from eth_abi import decode_single, encode_single, encode_abi
-from eth_abi.packed import encode_abi_packed
+from eth_abi import encode_abi
 from tabulate import tabulate
 
 console = Console()

@@ -19,7 +19,7 @@
         "RewardsEscrow": "0xC2Bc5fD13Ce64efD249234C870D64569155609cd",
         "BadgerGeyser": "0x51B44fFD22ddEaDdb46E28867aA9988DF919F381",
         "BadgerTree": "0x48eb9b000f8c0a60784d0f96092e08efdc1e4876",
-        "BadgerTreeV2": "0x603ad0e0e0fc873371bd1d98f06e567a8c752ac8",
+        "BadgerTreeV2": "0xbe82A3259ce427B8bCb54b938b486dC2aF509Cc3",
         "BadgerHunt": "0xC5C8933073B1c682aE07b4bc22d2249c220884bE",
         "SimpleTimelock": "0x4e3f56bb996ed91ba8d97ea773d3f818730d1a6f",
         "Controller": "0x6354E79F21B56C11f48bcD7c451BE456D7102A36",
@@ -137,6 +137,7 @@
     "claimEncoder": "0xf3ff1a5856b1726a8fef921ea57eab2c51466a93",
     "badgerRewardsManager": "0x5B60952481Eb42B66bdfFC3E049025AC5b91c127",
     "unlockScheduler": "0x1AADc00011939499a4d263d657Dd74b0E1176cF9",
+    "badgerNfts": "0xe1e546e25A5eD890DFf8b8D005537c0d373497F8",
     "geysers": {
         "native.badger": "0xa9429271a28F8543eFFfa136994c0839E7d7bF77",
         "native.renCrv": "0x2296f174374508278DC12b806A7f27c87D53Ca15",
