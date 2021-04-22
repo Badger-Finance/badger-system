@@ -3,7 +3,6 @@ from brownie import (
     accounts,
     interface,
     MockVault,
-    SettV1,
 )
 
 from helpers.constants import AddressZero
@@ -71,9 +70,6 @@ BRIDGE_VAULTS = [
 def test_bridge_vault(vault):
     badger = connect_badger(badger_config.prod_json)
     bridge = connect_bridge(badger, badger_config.prod_json)
-    swap = connect_swap(badger_config.prod_json)
-    # TODO: Remove swapper role grant once this has been configured.
-    swap.configure_strategies_grant_swapper_role(bridge.adapter.address)
     _deploy_mocks(badger, bridge)
 
     slippage = .03
@@ -94,21 +90,6 @@ def test_bridge_vault(vault):
             True,
             {"from": badger.devMultisig},
         )
-    else:
-        interface.ISettAccessControlDefended(v).approveContractAccess(
-            bridge.adapter,
-            {"from": badger.devMultisig},
-        )
-
-        # NB: Temporarily upgrade crv setts (missing depositFor() method)
-        if vault["upgrade"]:
-            badger.deploy_logic("SettV1", SettV1)
-            logic = badger.logic["SettV1"]
-            badger.devProxyAdmin.upgrade(
-                v,
-                logic,
-                {"from": badger.governanceTimelock},
-            )
 
     balanceBefore = interface.IERC20(v).balanceOf(account)
 
@@ -159,8 +140,6 @@ def test_bridge_basic():
     badger = connect_badger(badger_config.prod_json)
     bridge = connect_bridge(badger, badger_config.prod_json)
     swap = connect_swap(badger_config.prod_json)
-    # TODO: Remove swapper role grant once this has been configured.
-    swap.configure_strategies_grant_swapper_role(bridge.adapter.address)
     _deploy_mocks(badger, bridge)
 
     swap = connect_swap(badger_config.prod_json)
