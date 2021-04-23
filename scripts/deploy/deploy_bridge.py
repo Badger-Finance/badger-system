@@ -1,5 +1,5 @@
 from rich.console import Console
-from brownie import Contract, interface, accounts, BadgerBridgeAdapter
+from brownie import interface
 
 # from scripts.systems.badger_system import connect_badger
 from scripts.systems import (

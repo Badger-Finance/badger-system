@@ -233,8 +233,8 @@ contract BadgerBridgeAdapter is OwnableUpgradeable, ReentrancyGuardUpgradeable {
             // NB: The curve token wrapper contract is permissionless, we must transfer renbtc over
             // and it will transfer back wrapped lp tokens.
             token.safeTransfer(curveTokenWrapper, amount);
-            uint256 wrappedAmount = ICurveTokenWrapper(curveTokenWrapper).wrap(args._vault);
-            IBridgeVault(args._vault).token().safeApprove(args._vault, wrappedAmount);
+            amount = ICurveTokenWrapper(curveTokenWrapper).wrap(args._vault);
+            IBridgeVault(args._vault).token().safeApprove(args._vault, amount);
         }
 
         IBridgeVault(args._vault).depositFor(args._user, amount);
