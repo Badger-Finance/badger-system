@@ -69,7 +69,8 @@
             "native.sushiBadgerWbtc": "0x1862A18181346EBd9EdAf800804f89190DeF24a5",
             "native.digg": "0x7e7E112A68d8D2E221E11047a72fFC1065c38e1a",
             "native.uniDiggWbtc": "0xC17078FDd324CC473F8175Dc5290fae5f2E84714",
-            "native.sushiDiggWbtc": "0x88128580ACdD9c04Ce47AFcE196875747bF2A9f6"
+            "native.sushiDiggWbtc": "0x88128580ACdD9c04Ce47AFcE196875747bF2A9f6",
+            "yearn.wbtc": "0x4b92d19c11435614cd49af1b589001b7c08cd4d5"
         },
         "strategies": {
             "native.badger": "0x75b8E21BD623012Efb3b69E1B562465A68944eE6",
@@ -127,7 +128,8 @@
         "native.sushiWbtcEth": "0x612f681BCd12A0b284518D42D2DBcC73B146eb65",
         "native.sushiBadgerWbtc": "0xB5b654efBA23596Ed49FAdE44F7e67E23D6712e7",
         "native.uniDiggWbtc": "0x0194B5fe9aB7e0C43a08aCbb771516fc057402e7",
-        "native.sushiDiggWbtc": "0x7f6fe274e172ac7d096a7b214c78584d99ca988b"
+        "native.sushiDiggWbtc": "0x7f6fe274e172ac7d096a7b214c78584d99ca988b",
+        "yearn.wbtc": "0x155482D1e2cB0909333326504f0eA4350760c927"
     },
     "digg_system": {
         "owner": "0xDA25ee226E534d868f0Dd8a459536b03fEE9079b",

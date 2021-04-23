@@ -16,8 +16,9 @@ nonNativeSetts = [
     "native.renCrv",
     "native.sbtcCrv",
     "native.tbtcCrv",
-    "native,sushiWbtcEth"
-    "harvest.renCrv"
+    "native.sushiWbtcEth"
+    "harvest.renCrv",
+    "yearn.wbtc" 
 ]
 
 

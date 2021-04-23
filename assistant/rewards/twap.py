@@ -23,11 +23,7 @@ def digg_btc_twap(start,end):
         ratios.append(roundData[1]/1e8)
         currentTimestamp = roundData[3]
         latestRound = latestRound - 1
-    #console.log(ratios)
-    #console.log(mean(ratios))
     return mean(ratios)
-
-
 
 def calculate_digg_allocation(ratio):
     if ratio >= 1.0:
