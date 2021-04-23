@@ -175,10 +175,10 @@
         "sushiDiggWbtc": "0x9a13867048e01c663ce8ce2fe0cdae69ff9f35e3"
     },
     "bridge_system": {
-        "adapter": "0xcB5c2B0FE765069708f17376981C9aFE56Fed339",
-        "curveTokenWrapper": "0x590B58100097D582FD929811176804618B3dd364",
+        "adapter": "0xb6ea1d3fb9100a2Cf166FEBe11f24367b5FCD24A",
+        "curveTokenWrapper": "0x70579665c61CD49501d40C941C6E428d466ADD55",
         "logic": {
-            "BadgerBridgeAdapter": "0x19f9Fcc017a85d0cab7A45C64606d25e93F3F2D7"
+            "BadgerBridgeAdapter": "0x8e38bbc7ff0D5253f7379290ACD88154257591Ff"
         }
     },
     "swap_system": {
