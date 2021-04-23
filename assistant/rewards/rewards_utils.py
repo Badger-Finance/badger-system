@@ -137,7 +137,7 @@ def combine_balances(balances):
 
 
 @lru_cache(maxsize=None)
-def calculate_sett_balances(badger, name, currentBlock,collateral=False):
+def calculate_sett_balances(badger, name, currentBlock):
     sett = badger.getSett(name)
     underlyingToken = sett.address
     settType = ["",""]
@@ -161,11 +161,6 @@ def calculate_sett_balances(badger, name, currentBlock,collateral=False):
         )
         geyserBalances = calc_balances_from_geyser_events(geyserEvents)
         settBalances[geyserAddr] = 0
-
-    if name in ["native.badger"] and collateral:
-        settUnderlyingToken = interface.ERC20(sett.token())
-        creamBalances = fetch_cream_balances("crB{}".format(settUnderlyingToken.symbol()),currentBlock)
-        settBalances[cream_addresses[name]] = 0
 
     balances = {}
     for b in [settBalances,geyserBalances,creamBalances]:

@@ -88,7 +88,7 @@ def badger_boost(badger, currentBlock):
     prices = fetch_token_prices()
     ppfs = fetch_sett_ppfs()
     for name, sett in allSetts.items():
-        balances = calculate_sett_balances(badger, name, currentBlock,collateral=True)
+        balances = calculate_sett_balances(badger, name, currentBlock)
         balances = convert_balances_to_usd(
                 sett, balances, prices, ppfs
             )
