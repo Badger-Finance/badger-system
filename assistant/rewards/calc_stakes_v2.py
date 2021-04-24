@@ -31,12 +31,10 @@ def calc_geyser_snapshot(badger, name, startBlock, endBlock, nextCycle, boosts, 
     endTime = web3.eth.getBlock(endBlock)["timestamp"]
 
     userBalances = calculate_sett_balances(badger, name, endBlock)
-    # Get rid of blacklisted addresses
-    # Only boost non-native setts
-    if name in nonNativeSetts:
-        for user in userBalances:
-            boostAmount = boosts.get(user.address, 1)
-            user.boost_balance(boostAmount)
+    # Boost all setts with snapshot
+    for user in userBalances:
+        boostAmount = boosts.get(user.address, 1)
+        user.boost_balance(boostAmount)
 
     unlockSchedules = {}
     for token in geyser.getDistributionTokens():
@@ -50,10 +48,11 @@ def calc_geyser_snapshot(badger, name, startBlock, endBlock, nextCycle, boosts, 
         # Make sure there are tokens to distribute (some geysers only
         # distribute one token)
         if token == Token.digg.value:
-            if name in nativeSetts:
-                tokenDistribution = tokenDistribution * diggAllocation
-            else:
-                tokenDistribution = tokenDistribution * (1 - diggAllocation)
+
+            #if name in nativeSetts:
+            #    tokenDistribution = tokenDistribution * diggAllocation
+            #else:
+            #    tokenDistribution = tokenDistribution * (1 - diggAllocation)
 
             console.log(
                 "{} DIGG tokens distributed".format(

@@ -36,15 +36,19 @@ def calc_geyser_rewards(badger, periodStartBlock, endBlock, cycle):
     userRewards = (userShareSeconds / totalShareSeconds) / tokensReleased
     (For each token, for the time period)
     """
-    ratio = digg_btc_twap(periodStartBlock,endBlock)
-    diggAllocation = calculate_digg_allocation(ratio)
+    #ratio = digg_btc_twap(periodStartBlock,endBlock)
+    #diggAllocation = calculate_digg_allocation(ratio)
     rewardsByGeyser = {}
-    boosts = badger_boost(badger, endBlock)
+    boosts = json.load(open("logs/boosts.json"))
     for key, geyser in badger.geysers.items():
-        #if key != "native.badger":
-        #    continue
+
+        if key == "yearn.wbtc":
+            boost = {}
+        else:
+            boost = boosts[key]
+
         geyserRewards = calc_geyser_snapshot(
-            badger, key, periodStartBlock, endBlock, cycle, boosts,diggAllocation)
+            badger, key, periodStartBlock, endBlock, cycle, boost,0)
         rewardsByGeyser[key] = geyserRewards
     #return sum_rewards(rewardsByGeyser, cycle, badger.badgerTree)
     rewards = combine_rewards(
@@ -52,8 +56,6 @@ def calc_geyser_rewards(badger, periodStartBlock, endBlock, cycle):
     for addr,boost in boosts.items():
         rewards.add_user_boost(addr,boost)
 
-    rewardsLogger.set_start_block(periodStartBlock)
-    rewardsLogger.set_digg_allocation(diggAllocation)
     return rewards
 
 
