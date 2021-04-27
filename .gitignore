@@ -36,6 +36,7 @@ deploy-1337final.json
 
 salaries/test-*
 checkpoint
+credentials.json
 
 # vim swap files
 *.swp
