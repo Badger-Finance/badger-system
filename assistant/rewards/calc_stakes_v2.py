@@ -82,7 +82,7 @@ def calc_geyser_snapshot(badger, name, startBlock, endBlock, nextCycle, boosts, 
             console.log("Token Distribution: {}\nRewards Released: {}".format(
                 tokenDistribution/1e18,totalRewards/1e18
             ))
-            console.log(abs(tokenDistribution - totalRewards))
+            console.log("Diff {}".format((abs(tokenDistribution - totalRewards))))
 
     return rewards
 

@@ -13,6 +13,7 @@ console = Console()
 rewardsInfo = {}
 tokens = {
     "Badger":"0x3472A5A71965499acd81997a54BBA8D852C6E53d",
+    "Digg":"0x798D1bE841a82a273720CE31c822C61a67a601C3",
     "XSushi":"0x8798249c2E607446EfB7Ad49eC89dD1865Ff4272",
     "Farm":"0xa0246c9032bC3A600820415aE600c6388619A14D",
 }
@@ -39,15 +40,12 @@ def main():
         test=True,
     )["merkleTree"]
     compare_trees(newTree, lastTree)
-    
     x = ["{} Diff".format((t)) for t in tokens.keys() ]
     x_pos = [i for i, _ in enumerate(x)]
     diffs = []
     for addr,amount in rewardsInfo["old"]["tokenTotals"].items():
-        if addr == "0x798D1bE841a82a273720CE31c822C61a67a601C3":
-            continue
         diffs.append(
-           (int(amount)/1e18) - (int(rewardsInfo["new"]["tokenTotals"][addr])/1e18)
+           (int(amount)) - (int(rewardsInfo["new"]["tokenTotals"][addr]))
         )
     plt.bar(x_pos, diffs, color='green')
     plt.xlabel("Token diffs")
