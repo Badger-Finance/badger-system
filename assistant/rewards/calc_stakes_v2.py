@@ -33,7 +33,8 @@ def calc_geyser_snapshot(badger, name, startBlock, endBlock, nextCycle, boosts, 
     userBalances = calculate_sett_balances(badger, name, endBlock)
     # Boost all setts with snapshot
     for user in userBalances:
-        boostAmount = boosts.get(user.address, 1)
+        addr = web3.toChecksumAddress(user.address)
+        boostAmount = boosts.get(addr,1)
         user.boost_balance(boostAmount)
 
     unlockSchedules = {}
