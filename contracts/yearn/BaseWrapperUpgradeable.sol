@@ -136,7 +136,7 @@ abstract contract BaseWrapperUpgradeable is Initializable {
             received = _bestVault.deposit();
         }
 
-        virtualDeposited = received.mul(_bestVault.pricePerShare()).div(10 ** _bestVault.decimals());
+        virtualDeposited = received.mul(_bestVault.pricePerShare()).div(10**_bestVault.decimals());
 
         uint256 afterBal = token.balanceOf(address(this));
         deposited = beforeBal.sub(afterBal);
@@ -260,7 +260,7 @@ abstract contract BaseWrapperUpgradeable is Initializable {
             if (withdrawn == 0) return 0; // Nothing to migrate (not a failure)
 
             // NOTE: `false` = don't do `transferFrom` because it's already local
-            (,migrated) = _deposit(address(this), account, withdrawn, false);
+            (, migrated) = _deposit(address(this), account, withdrawn, false);
             // NOTE: Due to the precision loss of certain calculations, there is a small inefficency
             //       on how migrations are calculated, and this could lead to a DoS issue. Hence, this
             //       value is made to be configurable to allow the user to specify how much is acceptable

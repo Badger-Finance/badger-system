@@ -206,7 +206,11 @@ contract SimpleWrapperGatedUpgradeable is ERC20Upgradeable, BaseSimpleWrapperUpg
 
     /// @dev Deposit specified amount of token in wrapper for specified recipient
     /// @dev A merkle proof can be supplied to verify inclusion in merkle guest list if this functionality is active
-    function depositFor(address recipient, uint256 amount, bytes32[] memory merkleProof) public whenNotPaused returns (uint256) {
+    function depositFor(
+        address recipient,
+        uint256 amount,
+        bytes32[] memory merkleProof
+    ) public whenNotPaused returns (uint256) {
         if (address(guestList) != address(0)) {
             require(guestList.authorized(msg.sender, amount, merkleProof), "guest-list-authorization");
         }
@@ -298,10 +302,7 @@ contract SimpleWrapperGatedUpgradeable is ERC20Upgradeable, BaseSimpleWrapperUpg
     }
 
     //note. sometimes when we deposit we "lose" money. Therefore our amount needs to be adjusted to reflect the true pricePerShare we received
-    function _deposit(
-        address depositor,
-        uint256 amount
-    ) internal returns (uint256 shares) {
+    function _deposit(address depositor, uint256 amount) internal returns (uint256 shares) {
         VaultAPI _bestVault = bestVault();
         token.safeTransferFrom(depositor, address(this), amount);
 
@@ -312,14 +313,14 @@ contract SimpleWrapperGatedUpgradeable is ERC20Upgradeable, BaseSimpleWrapperUpg
 
         shares = _bestVault.deposit(amount);
     }
-    
-    /// @dev Variant with withdrawal fee and verification of max loss. Used in withdraw functions. 
+
+    /// @dev Variant with withdrawal fee and verification of max loss. Used in withdraw functions.
     /// @dev Migrate functions use the variant from BaseWrapper without these features.
     function _withdraw(
         address receiver,
         uint256 shares, // if `MAX_UINT256`, just withdraw everything
         bool processWithdrawalFee, // If true, process withdrawal fee to affiliate
-        bool verifyMaxLoss // If true, ensure that the amount is within an expected range based on withdrawalMaxDeviationThreshold 
+        bool verifyMaxLoss // If true, ensure that the amount is within an expected range based on withdrawalMaxDeviationThreshold
     ) internal virtual returns (uint256 withdrawn) {
         VaultAPI _bestVault = bestVault();
 

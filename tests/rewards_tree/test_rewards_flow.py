@@ -42,30 +42,10 @@ def internal_generate_rewards_in_range(
         pastRewards
 ):
     cumulativeRewards = rewards_assistant.process_cumulative_rewards(pastRewards, newRewards)
-
-    # Take metadata from geyserRewards
-    console.print("Processing to merkle tree")
-    merkleTree = rewards_assistant.rewards_to_merkle_tree(
-        cumulativeRewards, startBlock, endBlock, newRewards
-    )
-
-    # Publish data
+    merkleTree = rewards_assistant.rewards_to_merkle_tree(cumulativeRewards, startBlock, endBlock, newRewards)
     rootHash = rewards_assistant.hash(merkleTree["merkleRoot"])
-    contentFileName = rewards_assistant.content_hash_to_filename(rootHash)
-
-    console.log(
-        {
-            "merkleRoot": merkleTree["merkleRoot"],
-            "rootHash": str(rootHash),
-            "contentFile": contentFileName,
-            "startBlock": startBlock,
-            "endBlock": endBlock,
-            "currentContentHash": currentMerkleData["contentHash"],
-        }
-    )
 
     return {
-        "contentFileName": contentFileName,
         "merkleTree": merkleTree,
         "rootHash": rootHash,
     }

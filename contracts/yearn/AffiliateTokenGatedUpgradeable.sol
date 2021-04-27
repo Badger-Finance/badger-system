@@ -224,7 +224,11 @@ contract AffiliateTokenGatedUpgradeable is ERC20Upgradeable, BaseWrapperUpgradea
 
     /// @dev Deposit specified amount of token in wrapper for specified recipient
     /// @dev A merkle proof can be supplied to verify inclusion in merkle guest list if this functionality is active
-    function depositFor(address recipient, uint256 amount, bytes32[] memory merkleProof) public whenNotPaused returns (uint256) {
+    function depositFor(
+        address recipient,
+        uint256 amount,
+        bytes32[] memory merkleProof
+    ) public whenNotPaused returns (uint256) {
         if (address(guestList) != address(0)) {
             require(guestList.authorized(msg.sender, amount, merkleProof), "guest-list-authorization");
         }
@@ -321,8 +325,7 @@ contract AffiliateTokenGatedUpgradeable is ERC20Upgradeable, BaseWrapperUpgradea
         _unpause();
     }
 
-    
-    /// @dev Variant with withdrawal fee and verification of max loss. Used in withdraw functions. 
+    /// @dev Variant with withdrawal fee and verification of max loss. Used in withdraw functions.
     /// @dev Migrate functions use the variant from BaseWrapper without these features.
     function _withdraw(
         address sender,
@@ -330,7 +333,7 @@ contract AffiliateTokenGatedUpgradeable is ERC20Upgradeable, BaseWrapperUpgradea
         uint256 amount, // if `MAX_UINT256`, just withdraw everything
         bool withdrawFromBest, // If true, also withdraw from `_bestVault`
         bool processWithdrawalFee, // If true, process withdrawal fee to affiliate
-        bool verifyMaxLoss // If true, ensure that the amount is within an expected range based on withdrawalMaxDeviationThreshold 
+        bool verifyMaxLoss // If true, ensure that the amount is within an expected range based on withdrawalMaxDeviationThreshold
     ) internal virtual returns (uint256 withdrawn) {
         VaultAPI _bestVault = bestVault();
 

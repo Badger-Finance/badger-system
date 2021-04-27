@@ -10,33 +10,39 @@ contract ContributorLogger is AccessControlUpgradeable {
 
     uint256 public nextId;
 
+    struct Entry {
+        address recipient;
+        address token;
+        uint128 amountPerSecond;
+        uint40 startTime;
+        uint40 endTime;
+    }
+
+    mapping(uint256 => Entry) public paymentEntries;
+
+    // ===== Events =====
     event CreateEntry(
         uint256 indexed id,
         address indexed recipient,
         address token,
-        uint256 amount,
-        uint256 amountDuration,
-        uint256 startTime,
-        uint256 endTime,
+        uint128 amountPerSecond,
+        uint40 startTime,
+        uint40 endTime,
         uint256 indexed timestamp,
         uint256 blockNumber
     );
 
     event UpdateEntry(
         uint256 indexed id,
-        uint256 amount,
-        uint256 amountDuration,
-        uint256 startTime,
-        uint256 endTime,
+        uint256 indexed updatedId,
+        uint128 amountPerSecond,
+        uint40 startTime,
+        uint40 endTime,
         uint256 indexed timestamp,
         uint256 blockNumber
     );
 
-    event DeleteEntry(
-        uint256 indexed id,
-        uint256 indexed timestamp,
-        uint256 blockNumber
-    );
+    event DeleteEntry(uint256 indexed id, uint256 indexed timestamp, uint256 blockNumber);
 
     function initialize(
         address multisendLib_,
@@ -54,68 +60,76 @@ contract ContributorLogger is AccessControlUpgradeable {
         _;
     }
 
+    // ===== View Functions =====
+    function getEntry(uint256 id)
+        public
+        view
+        returns (
+            uint256,
+            address,
+            address,
+            uint128,
+            uint40,
+            uint40
+        )
+    {
+        Entry storage entry = paymentEntries[id];
+        return (id, entry.recipient, entry.token, entry.amountPerSecond, entry.startTime, entry.endTime);
+    }
+
     // ===== Permissioned Functions: Manager =====
 
     /// @dev Stream a token to a recipient over time.
-    /// @dev Amount / amountDuration defines the rate per second. 
+    /// @dev amountPerSecond defines the rate per second.
     /// @dev This rate will persist from the start time until the end time.
     /// @dev The start time should not be in the past.
     /// @dev To create an eternal entry, use maxuint256 as end time. The stream will then persist until deleted or updated.
     function createEntry(
         address recipient,
         address token,
-        uint256 amount,
-        uint256 amountDuration,
-        uint256 startTime,
-        uint256 endTime
+        uint128 amountPerSecond,
+        uint40 startTime,
+        uint40 endTime
     ) external onlyManager {
-        uint256 id = nextId;
         require(startTime >= block.timestamp, "start time cannot be in past");
-        nextId = nextId.add(1);
-        emit CreateEntry(
-            id,
-            recipient,
-            token,
-            amount,
-            amountDuration,
-            startTime,
-            endTime,
-            block.timestamp,
-            block.number
-        );
+        uint256 newId = _createEntry(recipient, token, amountPerSecond, startTime, endTime);
+        emit CreateEntry(newId, recipient, token, amountPerSecond, startTime, endTime, block.timestamp, block.number);
     }
-
 
     /// @dev Update a stream by changing the rate or time parameters.
     /// @dev The recipient and amount cannot be updated on an entry.
     function updateEntry(
         uint256 id,
-        uint256 amount,
-        uint256 amountDuration,
-        uint256 startTime,
-        uint256 endTime
+        uint128 amountPerSecond,
+        uint40 startTime,
+        uint40 endTime
     ) external onlyManager {
         require(id < nextId, "ID does not exist");
-        emit UpdateEntry(
-            id,
-            amount,
-            amountDuration,
-            startTime,
-            endTime,
-            block.timestamp,
-            block.number
-        );
+        require(startTime >= block.timestamp, "start time cannot be in past");
+        Entry memory entry = paymentEntries[id];
+        uint256 newId = _createEntry(entry.recipient, entry.token, amountPerSecond, startTime, endTime);
+        emit UpdateEntry(newId, id, amountPerSecond, startTime, endTime, block.timestamp, block.number);
     }
-    
 
     /// @dev Delete a stream.
-    /// @dev Entries can technically be deleted multiple times without issue, the script will handle this case.
     function deleteEntry(uint256 id) external onlyManager {
         require(id < nextId, "ID does not exist");
-        emit DeleteEntry(
-            id,
-            block.timestamp,
-            block.number
-        );
+        Entry memory entry = paymentEntries[id];
+        _createEntry(entry.recipient, entry.token, 0, uint40(block.timestamp), entry.endTime);
+        emit DeleteEntry(id, block.timestamp, block.number);
+    }
+
+    // ===== Internal Functions =====
+    function _createEntry(
+        address recipient,
+        address token,
+        uint128 amountPerSecond,
+        uint40 startTime,
+        uint40 endTime
+    ) internal returns (uint256) {
+        uint256 id = nextId;
+        nextId = nextId.add(1);
+        paymentEntries[id] = Entry(recipient, token, amountPerSecond, startTime, endTime);
+        return id;
     }
 }
