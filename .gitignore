@@ -11,6 +11,8 @@ cache
 local.json
 .pytest_cache
 docs
+# gov timelock transaction files
+timelock/
 
 contracts-temporary
 
@@ -40,3 +42,5 @@ checkpoint
 
 venv
 .vscode
+
+.idea

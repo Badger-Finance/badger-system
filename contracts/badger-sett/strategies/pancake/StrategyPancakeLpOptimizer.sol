@@ -44,7 +44,7 @@ contract StrategyPancakeLpOptimizer is PancakeSwapper {
     IERC20Upgradeable public token0;
     IERC20Upgradeable public token1;
 
-    mapping (address => mapping (address => address[])) public tokenSwapPaths;
+    mapping(address => mapping(address => address[])) public tokenSwapPaths;
 
     event HarvestState(
         uint256 cakeHarvested,
@@ -78,13 +78,7 @@ contract StrategyPancakeLpOptimizer is PancakeSwapper {
 
     event WithdrawState(uint256 toWithdraw, uint256 preWant, uint256 postWant, uint256 withdrawn);
     event TokenSwapPathSet(address tokenIn, address tokenOut, address[] path);
-    event TokenSwap(
-        address tokenIn,
-        uint256 totalSold,
-        uint256 convertedToToken0,
-        uint256 convertedToToken1,
-        uint256 lpGained
-    );
+    event TokenSwap(address tokenIn, uint256 totalSold, uint256 convertedToToken0, uint256 convertedToToken1, uint256 lpGained);
 
     function initialize(
         address _governance,
@@ -141,12 +135,16 @@ contract StrategyPancakeLpOptimizer is PancakeSwapper {
         return true;
     }
 
-    function getTokenSwapPath(address tokenIn, address tokenOut) public view returns(address[] memory) {
+    function getTokenSwapPath(address tokenIn, address tokenOut) public view returns (address[] memory) {
         return tokenSwapPaths[tokenIn][tokenOut];
     }
 
     /// ===== Permissioned Functions: Governance / Strategist =====
-    function setTokenSwapPath(address tokenIn, address tokenOut, address[] calldata path) external {
+    function setTokenSwapPath(
+        address tokenIn,
+        address tokenOut,
+        address[] calldata path
+    ) external {
         _onlyGovernanceOrStrategist();
         tokenSwapPaths[tokenIn][tokenOut] = path;
         emit TokenSwapPathSet(tokenIn, tokenOut, path);
@@ -314,7 +312,7 @@ contract StrategyPancakeLpOptimizer is PancakeSwapper {
         if (swapData.convertedToToken1 > 0) {
             _swap_pancakeswap(tokenIn, swapData.convertedToToken1, getTokenSwapPath(tokenIn, address(token1)));
         }
-        
+
         // Add maximum liquidity for tokens
         _add_max_liquidity_pancakeswap(address(token0), address(token1));
 
@@ -322,12 +320,6 @@ contract StrategyPancakeLpOptimizer is PancakeSwapper {
 
         swapData.lpGained = lpAfter.sub(lpBefore);
 
-        emit TokenSwap(
-            swapData.tokenIn,
-            swapData.totalSold,
-            swapData.convertedToToken0,
-            swapData.convertedToToken1,
-            swapData.lpGained
-        );
+        emit TokenSwap(swapData.tokenIn, swapData.totalSold, swapData.convertedToToken0, swapData.convertedToToken1, swapData.lpGained);
     }
 }

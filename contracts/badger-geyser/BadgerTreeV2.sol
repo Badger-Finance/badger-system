@@ -5,6 +5,7 @@ pragma experimental ABIEncoderV2;
 
 import "deps/@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 import "deps/@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
+import "deps/@openzeppelin/contracts-upgradeable/token/ERC20/SafeERC20Upgradeable.sol";
 import "deps/@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "deps/@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 import "deps/@openzeppelin/contracts-upgradeable/cryptography/MerkleProofUpgradeable.sol";
@@ -13,6 +14,8 @@ import "interfaces/digg/IDigg.sol";
 
 contract BadgerTreeV2 is Initializable, AccessControlUpgradeable, ICumulativeMultiTokenMerkleDistributor, PausableUpgradeable {
     using SafeMathUpgradeable for uint256;
+    using SafeERC20Upgradeable for IERC20Upgradeable;
+    using AddressUpgradeable for address;
 
     struct MerkleData {
         bytes32 root;
@@ -143,7 +146,7 @@ contract BadgerTreeV2 is Initializable, AccessControlUpgradeable, ICumulativeMul
         return (tokens, userClaimable);
     }
 
-    /// @dev Get the cumulative number of tokens claimable for an account, given a list of tokens
+    /// @dev Get the cumulative number of tokens claimed for an account, given a list of tokens
     function getClaimedFor(address user, address[] memory tokens) public view returns (address[] memory, uint256[] memory) {
         uint256[] memory userClaimed = new uint256[](tokens.length);
         for (uint256 i = 0; i < tokens.length; i++) {
@@ -174,7 +177,8 @@ contract BadgerTreeV2 is Initializable, AccessControlUpgradeable, ICumulativeMul
         bytes32[] calldata merkleProof,
         uint256[] calldata amountsToClaim
     ) external whenNotPaused {
-        require(cycle <= currentCycle, "Invalid cycle");
+        // require(cycle <= currentCycle, "Invalid cycle");
+        require(cycle == currentCycle, "Invalid cycle");
         _verifyClaimProof(tokens, cumulativeAmounts, index, cycle, merkleProof);
 
         bool claimedAny = false; // User must claim at least 1 token by the end of the function
@@ -205,7 +209,7 @@ contract BadgerTreeV2 is Initializable, AccessControlUpgradeable, ICumulativeMul
     ) external whenNotPaused {
         _onlyRootProposer();
         require(cycle == currentCycle.add(1), "Incorrect cycle");
-        require(startBlock == lastPublishStartBlock.add(1), "Incorrect start block");
+        // require(startBlock == lastPublishEndBlock.add(1), "Incorrect start block");
 
         pendingCycle = cycle;
         pendingMerkleRoot = root;
@@ -275,7 +279,8 @@ contract BadgerTreeV2 is Initializable, AccessControlUpgradeable, ICumulativeMul
     ) internal view {
         // Verify the merkle proof.
         bytes32 node = keccak256(abi.encode(index, msg.sender, cycle, tokens, cumulativeAmounts));
-        require(MerkleProofUpgradeable.verify(merkleProof, getMerkleRootFor(cycle), node), "Invalid proof");
+        // require(MerkleProofUpgradeable.verify(merkleProof, getMerkleRootFor(cycle), node), "Invalid proof");
+        require(MerkleProofUpgradeable.verify(merkleProof, merkleRoot, node), "Invalid proof");
     }
 
     function _getClaimed(address account, address token) internal view returns (uint256) {
@@ -316,7 +321,8 @@ contract BadgerTreeV2 is Initializable, AccessControlUpgradeable, ICumulativeMul
         uint256 claimedAfter = claimedBefore.add(toClaim);
         _setClaimed(account, token, claimedAfter);
 
-        require(IERC20Upgradeable(token).transfer(account, _parseValue(token, toClaim)), "Transfer failed");
+        require(claimedAfter <= cumulativeClaimable, "Invariant: cumulative claimed > cumulative claimable");
+        IERC20Upgradeable(token).safeTransfer(account, _parseValue(token, toClaim));
 
         emit Claimed(account, token, toClaim, cycle, now, block.number);
         return true;

@@ -18,7 +18,7 @@ from scripts.rewards.rewards_utils import (
     get_last_proposed_cycle,
     get_last_published_cycle,
 )
-from scripts.systems.badger_system import BadgerSystem, connect_badger
+from scripts.systems.badger_system import BadgerSystem, LoadMethod, connect_badger
 
 console = Console()
 
@@ -34,6 +34,9 @@ def approve_root(badger: BadgerSystem):
     if not badgerTree.hasPendingRoot():
         console.print("No pending root")
         return False
+
+    if rpc.is_active():
+        badger.guardian = accounts.at("0x626F69162Ea1556A75Dd4443D87D2fe38dd25901" ,force=True)
 
     current = fetchCurrentMerkleData(badger)
     pending = fetchPendingMerkleData(badger)
@@ -65,16 +68,16 @@ def approve_root(badger: BadgerSystem):
 
     verify_rewards(badger, startBlock, endBlock, publishedRewards, proposedRewards)
 
-    upload(contentFileName)
-
     badgerTree.approveRoot(
         proposedRewards["merkleRoot"],
         pending["contentHash"],
         proposedRewards["cycle"],
         startBlock,
         endBlock,
-        {"from": badger.guardian},
+        {"from": badger.guardian, "gas_limit": 3000000, "allow_revert": True},
     )
+
+    upload(contentFileName)
 
     # (currentRewards, startBlock, endBlock) = get_last_proposed_cycle(badger)
     # rootApproved = run_action(
@@ -90,7 +93,7 @@ def approve_root(badger: BadgerSystem):
 
 
 def main():
-    badger = connect_badger(load_guardian=True)
+    badger = connect_badger(load_guardian=True, load_method=LoadMethod.SK)
 
     # If there is a pending root, approve after independently verifying it
     while True:
