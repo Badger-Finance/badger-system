@@ -9,7 +9,7 @@ from dotmap import DotMap
 
 from scripts.systems.gnosis_safe_system import connect_gnosis_safe
 from helpers.proxy_utils import deploy_proxy
-from helpers.registry import registry
+from helpers.registry import registry, artifacts
 from helpers.gnosis_safe import GnosisSafe, MultisigTxMetadata
 from config.badger_config import swap_config
 
@@ -48,18 +48,11 @@ def connect_swap(badger_deploy_file):
 
     swap_deploy = badger_deploy["swap_system"]
 
-    abi = registry.open_zeppelin.artifacts["ProxyAdmin"]["abi"]
+    abi = artifacts.open_zeppelin["ProxyAdmin"]["abi"]
     swap = SwapSystem(
         badger_deploy["deployer"],
         Contract.from_abi(
             "ProxyAdmin", web3.toChecksumAddress(badger_deploy["devProxyAdmin"]), abi,
-        ),
-        swap_config,
-        badger_deploy["deployer"],
-        Contract.from_abi(
-            "ProxyAdmin",
-            web3.toChecksumAddress(badger_deploy["devProxyAdmin"]),
-            abi,
         ),
         swap_config,
     )
@@ -181,7 +174,7 @@ class SwapSystem:
                     description="Add Swapper Role to {}".format(swapper)
                 ),
                 {
-                    "to": swapper,
+                    "to": strategy,
                     "data": strategy.grantRole.encode_input(
                         strategy.SWAPPER_ROLE(), swapper
                     ),

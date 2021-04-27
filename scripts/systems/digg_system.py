@@ -1,4 +1,4 @@
-from helpers.sett.strategy_registry import strategy_name_to_artifact
+from helpers.sett.strategy_registry import contract_name_to_artifact
 import json
 from brownie import *
 from dotmap import DotMap
@@ -6,7 +6,7 @@ from dotmap import DotMap
 from scripts.systems.gnosis_safe_system import connect_gnosis_safe
 from scripts.systems.uniswap_system import UniswapSystem
 from helpers.proxy_utils import deploy_proxy, deploy_proxy_uninitialized
-from helpers.registry import registry
+from helpers.registry import registry, artifacts
 from config.env_config import env_config
 from config.badger_config import (
     badger_config,
@@ -145,7 +145,7 @@ class DiggSystem:
 
     # ===== Contract Connectors =====
     def connect_proxy_admins(self, devProxyAdmin, daoProxyAdmin):
-        abi = registry.open_zeppelin.artifacts["ProxyAdmin"]["abi"]
+        abi = artifacts.open_zeppelin["ProxyAdmin"]["abi"]
 
         self.devProxyAdmin = Contract.from_abi(
             "ProxyAdmin", web3.toChecksumAddress(devProxyAdmin), abi,
@@ -163,7 +163,7 @@ class DiggSystem:
             agent=Contract.from_abi(
                 "Agent",
                 badger_config.dao.agent,
-                registry.aragon.artifacts.Agent["abi"],
+                artifacts.aragon.Agent["abi"],
                 deployer,
             ),
         )
@@ -196,7 +196,7 @@ class DiggSystem:
         for name, address in logic.items():
             if env_config.debug:
                 print("ConnectLogic:", name, address)
-            Artifact = strategy_name_to_artifact(name)
+            Artifact = contract_name_to_artifact(name)
             self.logic[name] = Artifact.at(address)
 
     # ===== Deployers =====

@@ -6,6 +6,7 @@ name_to_artifact = {
     "RewardsEscrow": RewardsEscrow,
     "BadgerGeyser": BadgerGeyser,
     "BadgerTree": BadgerTree,
+    "BadgerTreeV2": BadgerTreeV2,
     "BadgerHunt": BadgerHunt,
     "SimpleTimelock": SimpleTimelock,
     "Controller": Controller,
@@ -40,8 +41,11 @@ name_to_artifact = {
     "BadgerRewardsManager": BadgerRewardsManager,
     "UnlockScheduler": UnlockScheduler,
     "AffiliateTokenGatedUpgradeable": AffiliateTokenGatedUpgradeable,
+    "VipCappedGuestListWrapperUpgradeable": VipCappedGuestListWrapperUpgradeable,
+    "SimpleWrapperGatedUpgradeable": SimpleWrapperGatedUpgradeable,
+    "BadgerTreeV2": BadgerTreeV2,
 }
 
 
-def strategy_name_to_artifact(name):
+def contract_name_to_artifact(name):
     return name_to_artifact[name]

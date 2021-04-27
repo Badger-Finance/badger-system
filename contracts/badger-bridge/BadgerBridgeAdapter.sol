@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 
 pragma solidity ^0.6.8;
+pragma experimental ABIEncoderV2;
 
 import "deps/@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "deps/@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
@@ -10,6 +11,9 @@ import "deps/@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeabl
 
 import "interfaces/badger/ISwapStrategyRouter.sol";
 import "interfaces/bridge/IGateway.sol";
+import "interfaces/bridge/IBridgeVault.sol";
+import "interfaces/bridge/ICurveTokenWrapper.sol";
+import "interfaces/curve/ICurveFi.sol";
 
 contract BadgerBridgeAdapter is OwnableUpgradeable, ReentrancyGuardUpgradeable {
     using SafeMathUpgradeable for uint256;
@@ -37,6 +41,22 @@ contract BadgerBridgeAdapter is OwnableUpgradeable, ReentrancyGuardUpgradeable {
     uint256 private percentageFeeGovernanceBps;
 
     uint256 public constant MAX_BPS = 10000;
+
+    mapping(address => bool) public approvedVaults;
+
+    // Configurable permissionless curve lp token wrapper.
+    address curveTokenWrapper;
+
+    // Make struct for mint args, otherwise too many local vars (stack too deep).
+    struct MintArguments {
+        uint256 _mintAmount;
+        uint256 _mintAmountMinusFee;
+        uint256 _fee;
+        uint256 _slippage;
+        address _vault;
+        address _user;
+        address _token;
+    }
 
     function initialize(
         address _governance,
@@ -69,6 +89,10 @@ contract BadgerBridgeAdapter is OwnableUpgradeable, ReentrancyGuardUpgradeable {
         percentageFeeGovernanceBps = _feeConfig[3];
     }
 
+    function version() external pure returns (string memory) {
+        return "1.1";
+    }
+
     // NB: This recovery fn only works for the BTC gateway (hardcoded and only one supported in this adapter).
     function recoverStuck(
         // encoded user args
@@ -96,7 +120,8 @@ contract BadgerBridgeAdapter is OwnableUpgradeable, ReentrancyGuardUpgradeable {
         // user args
         address _token, // either renBTC or wBTC
         uint256 _slippage,
-        address payable _destination,
+        address _user,
+        address _vault,
         // darknode args
         uint256 _amount,
         bytes32 _nHash,
@@ -105,59 +130,114 @@ contract BadgerBridgeAdapter is OwnableUpgradeable, ReentrancyGuardUpgradeable {
         require(_token == address(renBTC) || _token == address(wBTC), "invalid token address");
 
         // Mint renBTC tokens
-        bytes32 pHash = keccak256(abi.encode(_token, _slippage, _destination));
+        bytes32 pHash = keccak256(abi.encode(_token, _slippage, _user, _vault));
         uint256 mintAmount = registry.getGatewayBySymbol("BTC").mint(pHash, _amount, _nHash, _sig);
+
         require(mintAmount > 0, "zero mint amount");
+
         uint256 fee = _processFee(renBTC, mintAmount, mintFeeBps);
         uint256 mintAmountMinusFee = mintAmount.sub(fee);
 
-        uint256 wbtcExchanged;
-        if (_token == address(wBTC)) {
-            // Try and swap and transfer wbtc if token wbtc specified.
-            uint256 startBalance = wBTC.balanceOf(address(this));
-            if (_swapRenBTCForWBTC(mintAmountMinusFee, _slippage)) {
-                uint256 endBalance = wBTC.balanceOf(address(this));
-                wbtcExchanged = endBalance.sub(startBalance);
-                wBTC.safeTransfer(_destination, wbtcExchanged);
-                emit Mint(mintAmount, wbtcExchanged, fee);
-                return;
-            }
+        MintArguments memory args = MintArguments(mintAmount, mintAmountMinusFee, fee, _slippage, _vault, _user, _token);
+        (bool success, ) = address(this).call(abi.encodeWithSelector(this.mintAdapter.selector, args));
+
+        if (!success) {
+            renBTC.safeTransfer(_user, mintAmountMinusFee);
         }
-
-        emit Mint(mintAmount, wbtcExchanged, fee);
-
-        renBTC.safeTransfer(_destination, mintAmountMinusFee);
     }
 
     function burn(
         // user args
         address _token, // either renBTC or wBTC
+        address _vault,
         uint256 _slippage,
         bytes calldata _btcDestination,
         uint256 _amount
     ) external nonReentrant {
         require(_token == address(renBTC) || _token == address(wBTC), "invalid token address");
+        require(!(_vault != address(0) && !approvedVaults[_vault]), "Vault not approved");
 
-        uint256 wbtcTransferred;
-        uint256 startBalance = renBTC.balanceOf(address(this));
+        bool isVault = _vault != address(0);
+        bool isRenBTC = _token == address(renBTC);
+        IERC20 token = isRenBTC ? renBTC : wBTC;
+        uint256 startBalanceRenBTC = renBTC.balanceOf(address(this));
+        uint256 startBalanceWBTC = wBTC.balanceOf(address(this));
 
-        if (_token == address(renBTC)) {
-            renBTC.safeTransferFrom(msg.sender, address(this), _amount);
+        // Vaults can require up to two levels of unwrapping.
+        if (isVault) {
+            // First level of unwrapping for sett tokens.
+            IERC20(_vault).safeTransferFrom(msg.sender, address(this), _amount);
+            IERC20 vaultToken = IBridgeVault(_vault).token();
+
+            uint256 beforeBalance = vaultToken.balanceOf(address(this));
+            IBridgeVault(_vault).withdraw(IERC20(_vault).balanceOf(address(this)));
+            uint256 balance = vaultToken.balanceOf(address(this)).sub(beforeBalance);
+
+            // If the vault token does not match requested burn token, then we need to further unwrap
+            // vault token (e.g. withdrawing from crv sett gets us crv lp tokens which need to be unwrapped to renbtc).
+            if (address(vaultToken) != _token) {
+                vaultToken.safeTransfer(curveTokenWrapper, balance);
+                ICurveTokenWrapper(curveTokenWrapper).unwrap(_vault);
+            }
+        } else {
+            token.safeTransferFrom(msg.sender, address(this), _amount);
         }
 
-        if (_token == address(wBTC)) {
-            wBTC.safeTransferFrom(msg.sender, address(this), _amount);
-            wbtcTransferred = _amount;
-            _swapWBTCForRenBTC(_amount, _slippage);
+        uint256 wbtcTransferred = wBTC.balanceOf(address(this)).sub(startBalanceWBTC);
+
+        if (!isRenBTC) {
+            _swapWBTCForRenBTC(wbtcTransferred, _slippage);
         }
 
-        uint256 endBalance = renBTC.balanceOf(address(this));
-        uint256 toBurnAmount = endBalance.sub(startBalance);
+        uint256 toBurnAmount = renBTC.balanceOf(address(this)).sub(startBalanceRenBTC);
         uint256 fee = _processFee(renBTC, toBurnAmount, burnFeeBps);
 
-        emit Burn(toBurnAmount, wbtcTransferred, fee);
-
         uint256 burnAmount = registry.getGatewayBySymbol("BTC").burn(_btcDestination, toBurnAmount.sub(fee));
+
+        emit Burn(burnAmount, wbtcTransferred, fee);
+    }
+
+    function mintAdapter(MintArguments memory args) external {
+        require(msg.sender == address(this), "Not itself");
+        require(!(args._vault != address(0) && !approvedVaults[args._vault]), "Vault not approved");
+
+        uint256 wbtcExchanged;
+        bool isVault = args._vault != address(0);
+        bool isRenBTC = args._token == address(renBTC);
+        IERC20 token = isRenBTC ? renBTC : wBTC;
+
+        if (!isRenBTC) {
+            // Try and swap and transfer wbtc if token wbtc specified.
+            uint256 startBalance = token.balanceOf(address(this));
+            if (_swapRenBTCForWBTC(args._mintAmountMinusFee, args._slippage)) {
+                uint256 endBalance = token.balanceOf(address(this));
+                wbtcExchanged = endBalance.sub(startBalance);
+            }
+        }
+
+        emit Mint(args._mintAmount, wbtcExchanged, args._fee);
+
+        uint256 amount = isRenBTC ? args._mintAmountMinusFee : wbtcExchanged;
+
+        if (!isVault) {
+            token.safeTransfer(args._user, amount);
+            return;
+        }
+
+        // If the token is wBTC then we just approve spend and deposit directly into the wbtc vault.
+        if (args._token == address(wBTC)) {
+            token.safeApprove(args._vault, token.balanceOf(address(this)));
+        } else {
+            // Otherwise, we need to wrap the token before depositing into vault.
+            // We currently only support wrapping renbtc into curve lp tokens.
+            // NB: The curve token wrapper contract is permissionless, we must transfer renbtc over
+            // and it will transfer back wrapped lp tokens.
+            token.safeTransfer(curveTokenWrapper, amount);
+            amount = ICurveTokenWrapper(curveTokenWrapper).wrap(args._vault);
+            IBridgeVault(args._vault).token().safeApprove(args._vault, amount);
+        }
+
+        IBridgeVault(args._vault).depositFor(args._user, amount);
     }
 
     function _swapWBTCForRenBTC(uint256 _amount, uint256 _slippage) internal {
@@ -191,7 +271,7 @@ contract BadgerBridgeAdapter is OwnableUpgradeable, ReentrancyGuardUpgradeable {
     }
 
     // Minimum amount w/ slippage applied.
-    function _minAmount(uint256 _slippage, uint256 _amount) internal returns (uint256) {
+    function _minAmount(uint256 _slippage, uint256 _amount) internal pure returns (uint256) {
         _slippage = uint256(1e4).sub(_slippage);
         return _amount.mul(_slippage).div(1e4);
     }
@@ -244,5 +324,13 @@ contract BadgerBridgeAdapter is OwnableUpgradeable, ReentrancyGuardUpgradeable {
     function setRegistry(address _registry) external onlyOwner {
         registry = IGatewayRegistry(_registry);
         renBTC = registry.getTokenBySymbol("BTC");
+    }
+
+    function setVaultApproval(address _vault, bool _status) external onlyOwner {
+        approvedVaults[_vault] = _status;
+    }
+
+    function setCurveTokenWrapper(address _wrapper) external onlyOwner {
+        curveTokenWrapper = _wrapper;
     }
 }

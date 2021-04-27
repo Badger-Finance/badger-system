@@ -1,8 +1,9 @@
+from helpers.registry.ChainRegistry import ChainRegistry
 from re import error
 from dotmap import DotMap
 from enum import Enum
-from helpers.registry.eth import eth_registry
-from helpers.registry.bsc import bsc_registry
+from helpers.registry.eth_registry import eth_registry
+from helpers.registry.bsc_registry import bsc_registry
 from helpers.registry.artifacts import artifacts
 
 from helpers.network import network_manager
@@ -27,28 +28,8 @@ class ContractRegistries:
 
     def __init__(self):
         self.registries = {}
-        self.registries["eth"] = DotMap(
-            curve= eth_registry.curve_registry,
-            uniswap= eth_registry.uniswap_registry,
-            open_zeppelin= eth_registry.open_zeppelin_registry,
-            aragon= eth_registry.aragon_registry,
-            sushiswap= eth_registry.sushi_registry,
-            sushi= eth_registry.sushi_registry,
-            gnosis_safe= eth_registry.gnosis_safe_registry,
-            onesplit= eth_registry.gnosis_safe_registry,
-            pickle= eth_registry.pickle_registry,
-            harvest= eth_registry.harvest_registry,
-            tokens= eth_registry.token_registry,
-            whales= eth_registry.whale_registry,
-            multicall= eth_registry.multicall_registry,
-        )
-        self.registries["bsc"] = DotMap(
-            pancake= bsc_registry.pancake,
-            gnosis_safe= bsc_registry.gnosis_safe_registry,
-            tokens= bsc_registry.token_registry,
-            multicall= bsc_registry.multicall_registry,
-            whales= bsc_registry.whale_registry,
-        )
+        self.registries["eth"] = eth_registry
+        self.registries["bsc"] = bsc_registry
 
     def has_registry(self, chain: str):
         return chain in self.registries.keys()
@@ -57,7 +38,7 @@ class ContractRegistries:
         console.print("get_registry", chain)
         return self.registries[chain]
 
-    def get_active_chain_registry(self) -> DotMap:
+    def get_active_chain_registry(self) -> ChainRegistry:
         network_id = network_manager.get_active_network()
         print(network_id)
         if not self.has_registry(network_id):

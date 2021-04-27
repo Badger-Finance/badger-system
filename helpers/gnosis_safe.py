@@ -1,4 +1,6 @@
 from enum import Enum
+
+from ape_safe import ApeSafe
 from helpers.token_utils import distribute_test_ether
 
 from brownie import *
@@ -6,6 +8,7 @@ from rich.console import Console
 from tabulate import tabulate
 from scripts.systems.gnosis_safe_system import connect_gnosis_safe
 from helpers.multicall import func
+
 console = Console()
 
 """
@@ -17,10 +20,65 @@ On test networks leveraging Ganache --unlock, take control of a Gnosis safe with
     - Leveraging approved hash voting
 """
 
+class ApeSafeHelper:
+    def __init__(self, badger, safe: ApeSafe):
+        self.badger = badger
+        self.safe = safe
+    
+    def getSett(self, key):
+        abi = Sett.abi
+        return self.safe.contract_from_abi(self.badger.getSett(key).address, "Sett", abi)
+
+    def getStrategy(self, key):
+        # Get strategy name
+        # abi = contract_name_to_artifact()
+        # return self.safe.contract_from_abi(self.badger.getSett(key).address, "Strategy", abi)
+        return True
+    
+    def publish(self):
+        safe_tx = self.safe.multisend_from_receipts()
+        self.safe.preview(safe_tx)
+        data = self.safe.print_transaction(safe_tx)
+        self.safe.post_transaction(safe_tx)
+
 class OPERATION(Enum):
     CREATE = 0
     CALL = 2
 
+class MultiSend:
+    def __init__(self, address):
+        self.multisend = interface.IMultisend(address)
+
+class MultisendTx:
+    def __init__(self, call_type=0, to="", value=0, data=""):
+        self.call_type=call_type
+        self.to=to
+        self.value=value
+        self.data=data
+
+        self.encoded = ""
+        if self.call_type == 0:
+            self.encoded += "00000000"
+        elif self.call_type == 1:
+            self.encoded += "00000001"
+        """
+        How to encode multisend TX:
+        [call type] - 8 bits
+        [to] - 256 bits address
+        [value] - 256 bits hex number
+        [data length] - 256 bits hex number
+        [data] - arbitrary hex data [signature][params]
+        """
+
+class MultisendBuilder:
+    def __init__(self):
+        self.txs = []
+
+    def add(self, tx: MultisendTx): 
+        self.txs.append(tx)
+        """
+        """
+    
 class MultisigTxMetadata:
     def __init__(self, description, operation=None, callInfo=None):
         self.description = description

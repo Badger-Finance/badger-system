@@ -2,6 +2,7 @@ import json
 from brownie import (
     web3,
     BadgerBridgeAdapter,
+    CurveTokenWrapper,
     MockGatewayRegistry,
     MockGateway,
     ERC20,
@@ -10,7 +11,7 @@ from brownie import (
 from dotmap import DotMap
 
 from scripts.systems.swap_system import SwapSystem
-from helpers.registry import registry
+from helpers.registry import registry, artifacts
 from helpers.token_utils import distribute_from_whale
 from helpers.proxy_utils import deploy_proxy
 from config.badger_config import bridge_config
@@ -23,6 +24,8 @@ console = Console()
 def print_to_file(bridge, path):
     system = {
         "bridge_system": {
+            "adapter": bridge.adapter.address,
+            "curveTokenWrapper": bridge.curveTokenWrapper.address,
             "logic": {},
         },
     }
@@ -34,7 +37,7 @@ def print_to_file(bridge, path):
         f.write(json.dumps(system, indent=4, sort_keys=True))
 
 
-def connect_bridge(badger_deploy_file):
+def connect_bridge(badger, badger_deploy_file):
     bridge_deploy = {}
     console.print(
         "[grey]Connecting to Existing 🦡 Bridge System at {}...[/grey]".format(
@@ -49,9 +52,9 @@ def connect_bridge(badger_deploy_file):
 
     bridge_deploy = badger_deploy["bridge_system"]
 
-    abi = registry.open_zeppelin.artifacts["ProxyAdmin"]["abi"]
+    abi = artifacts.open_zeppelin["ProxyAdmin"]["abi"]
     bridge = BridgeSystem(
-        badger_deploy["deployer"],
+        badger.deployer,
         Contract.from_abi(
             "ProxyAdmin",
             web3.toChecksumAddress(badger_deploy["devProxyAdmin"]),
@@ -61,6 +64,7 @@ def connect_bridge(badger_deploy_file):
     )
     bridge.connect_logic(bridge_deploy["logic"])
     bridge.connect_adapter(bridge_deploy["adapter"])
+    bridge.connect_curve_token_wrapper(bridge_deploy["curveTokenWrapper"])
 
     return bridge
 
@@ -72,7 +76,8 @@ name_to_artifact = {
 
 class BridgeSystem:
     '''
-    The BRIDGE system consists of a renVM mint/burn bridge and some mocking utilities for testing.
+    The BRIDGE system consists of a renVM mint/burn bridge and mocking
+    utilities for testing.
     Bridge zap contracts will be added at a later date.
     '''
     def __init__(self, deployer, devProxyAdmin, config, publish_source=False):
@@ -92,6 +97,9 @@ class BridgeSystem:
 
     def connect_adapter(self, address) -> None:
         self.adapter = BadgerBridgeAdapter.at(address)
+
+    def connect_curve_token_wrapper(self, address):
+        self.curveTokenWrapper = CurveTokenWrapper.at(address)
 
     def connect_logic(self, logic):
         for name, address in logic.items():
@@ -134,6 +142,11 @@ class BridgeSystem:
             deployer,
         )
 
+    def deploy_curve_token_wrapper(self):
+        self.curveTokenWrapper = CurveTokenWrapper.deploy(
+            {"from": self.deployer},
+            publish_source=self.publish_source)
+
     def deploy_logic(self, name, BrownieArtifact, test=False):
         deployer = self.deployer
         self.logic[name] = BrownieArtifact.deploy(
@@ -145,17 +158,21 @@ class BridgeSystem:
 
     def deploy_mocks(self):
         deployer = self.deployer
-        registry = MockGatewayRegistry.deploy({"from": deployer})
+        r = MockGatewayRegistry.deploy({"from": deployer})
         for (tokenName, whaleConfig) in [("BTC", registry.whales.renbtc)]:
             token = ERC20.at(whaleConfig.token)
             gateway = MockGateway.deploy(token.address, {"from": deployer})
             # Distribute token from whale -> deployer -> mock gateway.
             distribute_from_whale(whaleConfig, deployer, percentage=1.0)
-            token.transfer(gateway, token.balanceOf(deployer), {"from": deployer})
+            token.transfer(
+                gateway,
+                token.balanceOf(deployer),
+                {"from": deployer},
+            )
             self.mocks[tokenName] = DotMap(
                 token=token,
                 gateway=gateway,
             )
-            registry.addGateway(tokenName, gateway.address)
-            registry.addToken(tokenName, token.address)
-        self.mocks.registry = registry
+            r.addGateway(tokenName, gateway.address)
+            r.addToken(tokenName, token.address)
+        self.mocks.registry = r
