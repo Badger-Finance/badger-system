@@ -53,12 +53,12 @@ brownie test --coverage --gas
 
 ### Local Instance
 
-Run a local ganache instance connected to badger contracts, with all Sett-related assets distributed to a test account specified in the TEST_ACCOUNT env variable. Assumes the default network is mainnet-fork in the brownie config and uses infura as a web3 provider through the WEB3_INFURA_PROJECT_ID env variable. Ganache will continue to run until the process is closed.
+Run a local ganache instance connected to badger contracts, with all Sett-related assets distributed to a test account specified in the TEST_ACCOUNT env variable. Assumes the default network is mainnet-fork in the brownie config and uses Alchemy as a web3 provider through the ALCHEMYAPI_TOKEN env variable. Ganache will continue to run until the process is closed.
 
 ```bash
 source venv/bin/activate
 export TEST_ACCOUNT=<enter your account here>
-export WEB3_INFURA_PROJECT_ID=<enter infura key here>
+export ALCHEMYAPI_TOKEN=<enter infura key here>
 brownie run scripts/local_instance.py
 ```
 
