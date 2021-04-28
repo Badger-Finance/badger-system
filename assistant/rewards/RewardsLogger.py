@@ -57,9 +57,6 @@ class RewardsLogger:
     def add_distribution_info(self,geyserName,distribution):
         self._distributionInfo[geyserName] = distribution
 
-
-
-
     def save(self,fileName):
 
         data = {

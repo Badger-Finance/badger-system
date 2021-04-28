@@ -44,6 +44,9 @@ name_to_artifact = {
     "VipCappedGuestListWrapperUpgradeable": VipCappedGuestListWrapperUpgradeable,
     "SimpleWrapperGatedUpgradeable": SimpleWrapperGatedUpgradeable,
     "BadgerTreeV2": BadgerTreeV2,
+    "PancakeLpSettV2": PancakeLpSettV2,
+    "GatedProxy": GatedProxy,
+    "RewardsLogger": RewardsLogger
 }
 
 
