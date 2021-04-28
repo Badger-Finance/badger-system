@@ -4,7 +4,7 @@ from assistant.rewards.aws_utils import upload_analytics
 import json
 
 console = Console()
-class RewardsLogger:
+class RewardsLog:
     def __init__(self):
         self._unlockSchedules = {}
         self._userData = {}
@@ -71,9 +71,9 @@ class RewardsLogger:
             "startBlock":self._startBlock,
             "diggAllocation":self._diggAllocation
         }
-        upload_analytics(fileName,data)
+        #upload_analytics(fileName,data)
         with open("logs/{}.json".format(fileName),"w") as f:
             json.dump(data,f,indent=4)
 
 
-rewardsLogger = RewardsLogger()
+rewardsLog = RewardsLog()

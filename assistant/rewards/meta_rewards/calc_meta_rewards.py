@@ -1,7 +1,7 @@
 from tqdm import tqdm
 from brownie import *
 from assistant.rewards.classes.RewardsList import RewardsList
-from assistant.rewards.classes.RewardsLogger import rewardsLogger
+from assistant.rewards.classes.RewardsLog import rewardsLog
 from assistant.rewards.rewards_utils import get_latest_event_block,calc_meta_farm_rewards
 from rich.console import Console
 console = Console()
@@ -59,7 +59,7 @@ def process_rewards(badger,startBlock,endBlock,events,name,nextCycle,token):
 
     distr = {}
     distr[token] = totalFromRewards
-    rewardsLogger.add_distribution_info(name,distr)
+    rewardsLog.add_distribution_info(name,distr)
     return rewards
 
     

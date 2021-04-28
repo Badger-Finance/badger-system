@@ -2,7 +2,6 @@ from tests.conftest import badger
 from time import time
 from helpers.utils import sec, val
 from helpers.time_utils import days, to_days, to_hours, to_utc_date
-from assistant.rewards.classes.RewardsLogger import rewardsLogger
 from dotmap import DotMap
 from rich.console import Console
 from tabulate import tabulate

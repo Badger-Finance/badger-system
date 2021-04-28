@@ -9,7 +9,7 @@ from assistant.rewards.boost import badger_boost
 from assistant.rewards.twap import digg_btc_twap,calculate_digg_allocation
 from assistant.rewards.aws_utils import download_tree, download_latest, upload
 from assistant.rewards.calc_stakes import calc_geyser_stakes
-from assistant.rewards.calc_stakes_v2 import calc_geyser_snapshot
+from assistant.rewards.calc_snapshot import calc_snapshot
 from assistant.rewards.meta_rewards.harvest import calc_farm_rewards
 from assistant.rewards.meta_rewards.sushi import calc_all_sushi_rewards
 from assistant.rewards.rewards_utils import (
@@ -21,7 +21,7 @@ from assistant.rewards.rewards_utils import (
 from assistant.rewards.classes.User import User
 from assistant.rewards.classes.MerkleTree import rewards_to_merkle_tree
 from assistant.rewards.classes.RewardsList import RewardsList
-from assistant.rewards.classes.RewardsLogger import rewardsLogger
+from assistant.rewards.classes.RewardsLog import rewardsLog
 
 from assistant.rewards.rewards_checker import compare_rewards, verify_rewards
 from scripts.systems.badger_system import BadgerSystem
@@ -47,7 +47,7 @@ def calc_geyser_rewards(badger, periodStartBlock, endBlock, cycle):
         else:
             boost = boosts[key]
 
-        geyserRewards = calc_geyser_snapshot(
+        geyserRewards = calc_snapshot(
             badger, key, periodStartBlock, endBlock, cycle, boost,0)
         rewardsByGeyser[key] = geyserRewards
     #return sum_rewards(rewardsByGeyser, cycle, badger.badgerTree)
@@ -194,7 +194,7 @@ def generate_rewards_in_range(badger, startBlock, endBlock, pastRewards):
 
     # Publish data
     rootHash = keccak(merkleTree["merkleRoot"])
-    rewardsLogger.set_merkle_root(rootHash)
+    rewardsLog.set_merkle_root(rootHash)
 
     contentFileName = content_hash_to_filename(rootHash)
 
@@ -210,7 +210,7 @@ def generate_rewards_in_range(badger, startBlock, endBlock, pastRewards):
     )
     print("Uploading to file " + contentFileName)
 
-    rewardsLogger.save("rewards-log-{}".format(nextCycle))
+    rewardsLog.save("rewards-log-{}".format(nextCycle))
    # TODO: Upload file to AWS & serve from server
     with open(contentFileName, "w") as outfile:
         json.dump(merkleTree, outfile, indent=4)

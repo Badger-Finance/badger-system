@@ -2,7 +2,7 @@ from collections import OrderedDict
 
 from config.rewards_config import rewards_config
 from assistant.rewards.classes.BadgerGeyserMock import BadgerGeyserMock
-from assistant.rewards.classes.RewardsLogger import rewardsLogger
+from assistant.rewards.classes.RewardsLog import rewardsLog
 from brownie import *
 from dotmap import DotMap
 from helpers.constants import AddressZero
@@ -59,7 +59,7 @@ def calculate_token_distributions(
         for schedule in unlockSchedules:
             if rewards_config.debug:
                 console.log(schedule)
-            rewardsLogger.add_unlock_schedule(token,schedule)
+            rewardsLog.add_unlock_schedule(token,schedule)
             modified=schedule
             if token == digg_token:
                 # TEST: Convert to shares 
@@ -81,13 +81,13 @@ def calculate_token_distributions(
 
     for user,tokens in userDistributions["claims"].items():
         for token, tokenValue in tokens.items():
-            rewardsLogger.add_user_token(user,geyserMock.key,token,tokenValue)
+            rewardsLog.add_user_token(user,geyserMock.key,token,tokenValue)
     for user,userMetadata in userDistributions["metadata"].items():
-        rewardsLogger.add_user_share_seconds(
+        rewardsLog.add_user_share_seconds(
             user,geyserMock.key,userMetadata["shareSecondsInRange"]
         )
     
-    rewardsLogger.add_distribution_info(geyserMock.key,mockData)
+    rewardsLog.add_distribution_info(geyserMock.key,mockData)
     return userDistributions
 
 
@@ -237,7 +237,7 @@ def process_actions(
         userData = geyserMock.users[user]
         #table = []
         #table.append([user.shareSecondsInRange, user.shareSeconds, user.total])
-        rewardsLogger.add_multiplier(user,geyserMock.key,userData.stakeMultiplier)
+        rewardsLog.add_multiplier(user,geyserMock.key,userData.stakeMultiplier)
         # print(tabulate(table, headers=["shareSecondsInRange", "shareSeconds", "total"]))
 
     return geyserMock

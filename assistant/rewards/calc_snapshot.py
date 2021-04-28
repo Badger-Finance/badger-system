@@ -1,6 +1,6 @@
 from assistant.rewards.rewards_utils import calculate_sett_balances
 from assistant.rewards.classes.RewardsList import RewardsList
-from assistant.rewards.classes.RewardsLogger import rewardsLogger
+from assistant.rewards.classes.RewardsLog import rewardsLog
 from assistant.rewards.classes.Schedule import Schedule
 from assistant.rewards.enums import Token
 from helpers.time_utils import days, to_days, to_hours, to_utc_date
@@ -22,7 +22,7 @@ nonNativeSetts = [
 ]
 
 
-def calc_geyser_snapshot(badger, name, startBlock, endBlock, nextCycle, boosts, diggAllocation):
+def calc_snapshot(badger, name, startBlock, endBlock, nextCycle, boosts, diggAllocation):
 
     console.log("==== Processing rewards for {} ====".format(name))
     rewards = RewardsList(nextCycle, badger.badgerTree)
@@ -38,13 +38,14 @@ def calc_geyser_snapshot(badger, name, startBlock, endBlock, nextCycle, boosts, 
         user.boost_balance(boostAmount)
 
     unlockSchedules = {}
+    # badger.rewardsLogger.getAllUnlockSchedulesFor(badger.getSett(name))
     for token in geyser.getDistributionTokens():
         unlockSchedules = parse_schedules(geyser.getUnlockSchedulesFor(token))
         endDist = get_distributed_for_token_at(token, endTime, unlockSchedules, name)
         startDist = get_distributed_for_token_at(token, startTime, unlockSchedules, name)
         tokenDistribution = int(endDist) - int(startDist)
 
-        rewardsLogger.add_total_token_dist(name, token, tokenDistribution)
+        rewardsLog.add_total_token_dist(name, token, tokenDistribution)
         # Distribute to users with rewards list
         # Make sure there are tokens to distribute (some geysers only
         # distribute one token)
@@ -78,7 +79,7 @@ def calc_geyser_snapshot(badger, name, startBlock, endBlock, nextCycle, boosts, 
                 rewardAmount = user.balance * rewardsUnit
                 totalRewards += rewardAmount
                 rewards.increase_user_rewards(addr, token, int(rewardAmount))
-                rewardsLogger.add_user_token(
+                rewardsLog.add_user_token(
                     addr, name, token, int(rewardAmount))
             console.log("Token Distribution: {}\nRewards Released: {}".format(
                 tokenDistribution/1e18,totalRewards/1e18
