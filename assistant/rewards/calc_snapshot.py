@@ -26,7 +26,7 @@ def calc_snapshot(badger, name, startBlock, endBlock, nextCycle, boosts, diggAll
 
     console.log("==== Processing rewards for {} ====".format(name))
     rewards = RewardsList(nextCycle, badger.badgerTree)
-    geyser = badger.getGeyser(name)
+    sett = badger.getSett(name)
     startTime = web3.eth.getBlock(startBlock)["timestamp"]
     endTime = web3.eth.getBlock(endBlock)["timestamp"]
 
@@ -37,14 +37,14 @@ def calc_snapshot(badger, name, startBlock, endBlock, nextCycle, boosts, diggAll
         boostAmount = boosts.get(addr,1)
         user.boost_balance(boostAmount)
 
-    unlockSchedules = {}
-    # badger.rewardsLogger.getAllUnlockSchedulesFor(badger.getSett(name))
-    for token in geyser.getDistributionTokens():
-        unlockSchedules = parse_schedules(geyser.getUnlockSchedulesFor(token))
-        endDist = get_distributed_for_token_at(token, endTime, unlockSchedules, name)
-        startDist = get_distributed_for_token_at(token, startTime, unlockSchedules, name)
+    schedulesByToken = parse_schedules(badger.rewardsLogger.getAllUnlockSchedulesFor(sett))
+    console.log(schedulesByToken)
+    for token,schedules in schedulesByToken.items():
+        console.log(token)
+        console.log(schedules)
+        endDist = get_distributed_for_token_at(token, endTime, schedules, name)
+        startDist = get_distributed_for_token_at(token, startTime, schedules, name)
         tokenDistribution = int(endDist) - int(startDist)
-
         rewardsLog.add_total_token_dist(name, token, tokenDistribution)
         # Distribute to users with rewards list
         # Make sure there are tokens to distribute (some geysers only
@@ -125,4 +125,10 @@ def get_distributed_for_token_at(token, endTime, schedules, name):
 
 
 def parse_schedules(schedules):
-    return list(map(lambda s: Schedule(s[0], s[1], s[2], s[3]), schedules))
+    schedulesByToken = {}
+    for s in schedules:
+        schedule = Schedule(s[0],s[1],s[2],s[3],s[4],s[5])
+        if schedule.token not in schedulesByToken:
+            schedulesByToken[schedule.token] = []
+        schedulesByToken[schedule.token].append(schedule)
+    return schedulesByToken
