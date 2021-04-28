@@ -28,7 +28,11 @@ tokens_to_check = [
 ]
 
 gas_strategy = GasNowStrategy("rapid")
-digg_contract = interface.IDigg(digg_token)
+digg_contract = None
+def get_digg_contract():
+    if not digg_contract:
+        digg_contract = interface.IDigg(digg_token)
+    return digg_contract
 
 def sec(amount):
     return "{:,.1f}".format(amount / 1e12)
@@ -148,6 +152,7 @@ def verify_rewards(badger: BadgerSystem, startBlock, endBlock, before_data, afte
     periodStartTime = web3.eth.getBlock(int(startBlock))["timestamp"]
     periodEndTime = web3.eth.getBlock(int(endBlock))["timestamp"]
 
+    digg_contract = get_digg_contract()
     spf = digg_contract._initialSharesPerFragment()
 
     expected_totals = get_expected_total_rewards(periodEndTime)

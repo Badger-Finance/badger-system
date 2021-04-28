@@ -1,4 +1,4 @@
-// SP-License-upgradeable-Identifier: UNLICENSED
+// SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.6.11;
 
 import "deps/@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";

@@ -14,7 +14,8 @@ console = Console()
 digg_token = "0x798D1bE841a82a273720CE31c822C61a67a601C3"
 badger_token = "0x3472A5A71965499acd81997a54BBA8D852C6E53d"
 badger_tree = "0x660802Fc641b154aBA66a62137e71f331B6d787A"
-digg = interface.IDigg(digg_token)
+def get_digg():
+  interface.IDigg(digg_token)
 
 class Point:
     def __init__(self, x, y):
@@ -147,6 +148,7 @@ class BadgerGeyserMock:
 
 
                 # Output if in rewards range, or read flag is on
+                digg = get_digg()
                 if read and (schedule.startTime <= endTime and schedule.endTime >= endTime):
                     console.print(
                         "\n[blue] == Schedule {} for {} == [/blue]".format(index, self.key)
@@ -182,6 +184,7 @@ class BadgerGeyserMock:
     def calc_token_distributions_in_range(self, startTime, endTime):
         tokenDistributions = DotMap()
         print("calc_token_distributions_in_range", self.distributionTokens)
+        digg = get_digg()
         for token in self.distributionTokens:
             tokenDistributions[token] = int(
                 (

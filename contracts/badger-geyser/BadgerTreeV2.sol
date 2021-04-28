@@ -339,6 +339,7 @@ contract BadgerTreeV2 is Initializable, AccessControlUpgradeable, ICumulativeMul
             return amount;
         }
     }
+
     /// @dev test function to get cycle to starting point
     function setCycle(uint256 x) public {
         _onlyAdmin();

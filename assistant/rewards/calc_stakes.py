@@ -1,3 +1,4 @@
+from brownie import *
 from collections import OrderedDict
 
 from config.rewards_config import rewards_config

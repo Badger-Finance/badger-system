@@ -202,6 +202,7 @@ def to_token(address):
 
 
 def distribute_from_whales(recipient, percentage=0.8, assets="All"):
+    
     accounts[0].transfer(recipient, Wei("50 ether"))
 
     console.print(
@@ -264,7 +265,8 @@ def distribute_test_ether(recipient, amount):
         if accounts[idx].balance() >= amount:
             break
         idx += 1
-    accounts[idx].transfer(recipient, amount)
+    if idx != len(accounts):
+        accounts[idx].transfer(recipient, amount)
 
 
 def getTokenMetadata(address):

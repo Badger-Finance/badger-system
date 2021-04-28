@@ -89,6 +89,10 @@ aave_registry = DotMap(
     lendingPoolV2="0x7d2768de32b0b80b7a3454c06bdac94a69ddc7a9"
 )
 
+yearn_registry = DotMap(
+    yvWBTC="0xcB550A6D4C8e3517A939BC79d0c7093eb7cF56B5",
+),
+
 curve_registry = DotMap(
     minter="0xd061D61a4d941c39E5453435B6345Dc261C2fcE0",
     crvToken="0xD533a949740bb3306d119CC777fa900bA034cd52",

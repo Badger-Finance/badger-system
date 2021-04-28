@@ -28,15 +28,7 @@ contract ExecutorOnlyCall {
     ) internal returns (bool success) {
         // solium-disable-next-line security/no-inline-assembly
         assembly {
-            success := call(
-                txGas,
-                to,
-                value,
-                add(data, 0x20),
-                mload(data),
-                0,
-                0
-            )
+            success := call(txGas, to, value, add(data, 0x20), mload(data), 0, 0)
         }
     }
 }

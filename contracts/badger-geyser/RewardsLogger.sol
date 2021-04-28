@@ -39,10 +39,7 @@ contract RewardsLogger is AccessControlUpgradeable {
     );
     event DiggPegRewards(address indexed beneficiary, uint256 response, uint256 rate, uint256 indexed timestamp, uint256 indexed blockNumber);
 
-    function initialize(
-        address initialAdmin_,
-        address initialManager_
-    ) external initializer {
+    function initialize(address initialAdmin_, address initialManager_) external initializer {
         __AccessControl_init();
 
         _setupRole(DEFAULT_ADMIN_ROLE, initialAdmin_);
@@ -55,7 +52,7 @@ contract RewardsLogger is AccessControlUpgradeable {
     }
 
     // ===== Permissioned Functions: Manager =====
-    
+
     function setUnlockSchedule(
         address beneficiary,
         address token,
@@ -64,14 +61,7 @@ contract RewardsLogger is AccessControlUpgradeable {
         uint256 end,
         uint256 duration
     ) external onlyManager {
-        unlockSchedules[beneficiary].push(UnlockSchedule(
-            beneficiary,
-            token,
-            totalAmount,
-            start,
-            end,
-            duration
-        ));
+        unlockSchedules[beneficiary].push(UnlockSchedule(beneficiary, token, totalAmount, start, end, duration));
         emit UnlockScheduleSet(beneficiary, token, totalAmount, start, end, duration, block.number, block.timestamp);
     }
 
@@ -88,7 +78,6 @@ contract RewardsLogger is AccessControlUpgradeable {
         return unlockSchedules[beneficiary];
     }
 
-
     /// @dev Return all unlock schedules for a given beneficiary + token
     function getUnlockSchedulesFor(address beneficiary, address token) external view returns (UnlockSchedule[] memory) {
         UnlockSchedule[] memory schedules = unlockSchedules[beneficiary];
@@ -104,7 +93,7 @@ contract RewardsLogger is AccessControlUpgradeable {
 
         UnlockSchedule[] memory result = new UnlockSchedule[](numMatchingEntries);
         uint256 resultIndex = 0;
-        
+
         // Load matching entries into array
         for (uint256 i = 0; i < schedules.length; i++) {
             UnlockSchedule memory schedule = schedules[i];
@@ -113,7 +102,7 @@ contract RewardsLogger is AccessControlUpgradeable {
                 resultIndex += 1;
             }
         }
-        
+
         return result;
     }
 }

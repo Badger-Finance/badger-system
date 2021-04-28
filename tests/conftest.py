@@ -64,6 +64,10 @@ settsToRun = [
     "native.sushiWbtcIbBtc",
 ]
 
+yearnSettsToRun = [
+    "yearn.bvyWBTC",
+]
+
 diggSettsToRun = [
     "native.digg",
     "native.uniDiggWbtc",
@@ -96,6 +100,7 @@ baseSettsToRun = networkSettsMap[network_manager.get_active_network()]
 
 settTestConfig = generate_sett_test_config(baseSettsToRun, runTestSetts)
 diggSettTestConfig = generate_sett_test_config(diggSettsToRun, runTestSetts)
+yearnSettTestConfig = generate_sett_test_config(yearnSettsToRun, runTestSetts)
 clawSettTestConfig = generate_sett_test_config(clawSettsToRun, runTestSetts)
 clawSettSyntheticTestConfig = generate_sett_test_config(clawSettsSytheticTestsToRun, runTestSetts)
 
@@ -105,7 +110,6 @@ def isolate(fn_isolation):
     # perform a chain rewind after completing each test, to ensure proper isolation
     # https://eth-brownie.readthedocs.io/en/v1.10.3/tests-pytest-intro.html#isolation-fixtures
     pass
-
 
 # @pytest.fixture()
 def badger_single_sett(settConfig, deploy=True):
@@ -123,9 +127,10 @@ def badger_single_sett(settConfig, deploy=True):
             governance = accounts.at(badger_deploy["devMultisig"], force=True)
 
     strategist = accounts[3]
-    print(settConfig)
 
     settId = settConfig['id']
+
+    print('settId:', settId)
 
     if settConfig['mode'] == 'test':
         if settId == "native.badger":
@@ -288,6 +293,16 @@ def badger_single_sett(settConfig, deploy=True):
             return SushiWbtcIbBtcLpOptimizerMiniDeploy(
                 "native.sushiWbtcIbBtc",
                 "StrategySushiLpOptimizer",
+                deployer,
+                strategist=strategist,
+                guardian=guardian,
+                keeper=keeper,
+                governance=governance,
+            ).deploy(deploy=deploy)
+        if settId == "yearn.bvyWBTC":
+            return YearnMiniDeploy(
+                "yearn.bvyWBTC",
+                "AffiliateTokenGatedUpgradable",
                 deployer,
                 strategist=strategist,
                 guardian=guardian,

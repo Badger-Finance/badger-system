@@ -67,10 +67,7 @@ contract SmartTimelock is TokenTimelockUpgradeable, ExecutorOnlyCall, Reentrancy
 
         if (!_transferAllowed[to]) {
             uint256 postAmount = token().balanceOf(address(this));
-            require(
-                postAmount >= preAmount,
-                "smart-timelock/locked-balance-check"
-            );
+            require(postAmount >= preAmount, "smart-timelock/locked-balance-check");
         }
 
         emit Call(to, value, data, _transferAllowed[to]);
@@ -90,22 +87,12 @@ contract SmartTimelock is TokenTimelockUpgradeable, ExecutorOnlyCall, Reentrancy
      * @notice Claim ERC20-compliant tokens other than locked token.
      * @param tokenToClaim Token to claim balance of.
      */
-    function claimToken(IERC20Upgradeable tokenToClaim)
-        external
-        onlyBeneficiary()
-        nonReentrant()
-    {
-        require(
-            address(tokenToClaim) != address(token()),
-            "smart-timelock/no-locked-token-claim"
-        );
+    function claimToken(IERC20Upgradeable tokenToClaim) external onlyBeneficiary() nonReentrant() {
+        require(address(tokenToClaim) != address(token()), "smart-timelock/no-locked-token-claim");
         uint256 preAmount = token().balanceOf(address(this));
 
         uint256 claimableTokenAmount = tokenToClaim.balanceOf(address(this));
-        require(
-            claimableTokenAmount > 0,
-            "smart-timelock/no-token-balance-to-claim"
-        );
+        require(claimableTokenAmount > 0, "smart-timelock/no-token-balance-to-claim");
 
         tokenToClaim.transfer(beneficiary(), claimableTokenAmount);
 
@@ -122,10 +109,7 @@ contract SmartTimelock is TokenTimelockUpgradeable, ExecutorOnlyCall, Reentrancy
         uint256 preAmount = token().balanceOf(address(this));
 
         uint256 etherToTransfer = address(this).balance;
-        require(
-            etherToTransfer > 0,
-            "smart-timelock/no-ether-balance-to-claim"
-        );
+        require(etherToTransfer > 0, "smart-timelock/no-ether-balance-to-claim");
 
         payable(beneficiary()).transfer(etherToTransfer);
 
