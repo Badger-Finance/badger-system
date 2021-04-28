@@ -5,7 +5,7 @@ import "../../deps/@openzeppelin/contracts-upgradeable/token/ERC20/TokenTimelock
 import "../../deps/@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import "../../deps/@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 
-import "./Executor.sol";
+import "./ExecutorOnlyCall.sol";
 
 /* 
   A token timelock that is capable of interacting with other smart contracts.
@@ -17,7 +17,7 @@ import "./Executor.sol";
   This is intended to allow the token holder to stake their tokens in approved mechanisms.
 */
 
-contract SmartTimelock is TokenTimelockUpgradeable, Executor, ReentrancyGuardUpgradeable {
+contract SmartTimelock is TokenTimelockUpgradeable, ExecutorOnlyCall, ReentrancyGuardUpgradeable {
     address internal _governor;
     mapping(address => bool) internal _transferAllowed;
 
