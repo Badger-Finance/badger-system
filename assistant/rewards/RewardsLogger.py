@@ -2,7 +2,7 @@ from tabulate import tabulate
 from rich.console import Console
 import json
 console = Console()
-class RewardsLogger:
+class RewardsLog:
     def __init__(self):
         self._distributionInfo = {}
         self._unlockSchedules = {}
@@ -70,4 +70,4 @@ class RewardsLogger:
     
 
 
-rewardsLogger = RewardsLogger()
+rewardsLog = RewardsLog()

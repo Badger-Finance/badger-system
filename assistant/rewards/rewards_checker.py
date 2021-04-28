@@ -3,7 +3,7 @@ from brownie.network.gas.strategies import GasNowStrategy
 from scripts.systems.digg_system import connect_digg
 from helpers.time_utils import days, hours
 from tabulate import tabulate
-from assistant.rewards.BadgerGeyserMock import BadgerGeyserMock
+from assistant.rewards.classes.BadgerGeyserMock import BadgerGeyserMock
 from scripts.systems.badger_system import BadgerSystem
 from brownie import *
 from rich.console import Console
@@ -39,8 +39,8 @@ def get_distributed_in_range(key, geyser, startBlock, endBlock):
     periodStartTime = web3.eth.getBlock(startBlock)["timestamp"]
 
     geyserMock = BadgerGeyserMock(key)
-    distributionTokens = geyser.getDistributionTokens()
-    for token in distributionTokens:
+    distributionTokenss = geyser.getDistributionTokenss()
+    for token in distributionTokenss:
         geyserMock.add_distribution_token(token)
         unlockSchedules = geyser.getUnlockSchedulesFor(token)
         for schedule in unlockSchedules:
@@ -65,12 +65,12 @@ def getExpectedDistributionInRange(badger: BadgerSystem, startBlock, endBlock):
 
     # TODO: Only Badger for now
     totals = {}
-    totals[digg_token] = 0
-    totals[badger_token] = 0
+    totals[Token.digg.value] = 0
+    totals[Token.badger.value] = 0
 
     for key, gains in distributions.items():
-        totals[badger_token] += gains[badger_token]
-        totals[digg_token] += gains[digg_token]
+        totals[Token.badger.value] += gains[Token.badger.value]
+        totals[Token.digg.value] += gains[Token.digg.value]
 
     return totals
 
@@ -231,7 +231,7 @@ def compare_rewards(
     sanitySum = Wei("5000000 ether")
 
     sum_digg_after = sum_digg_claims(after)
-    digg_contract = interface.IDigg(digg_token)
+    digg_contract = interface.IDigg(Token.digg.value)
 
     table = []
     table.append(["block range", startBlock, endBlock])
@@ -250,7 +250,7 @@ def compare_rewards(
 
     assert sum_after >= sum_before
     assert sum_after <= sanitySum
-    # assert sum_after - (sum_before + expectedGains[badger_token]) < 10000
+    # assert sum_after - (sum_before + expectedGains[Token.badger]) < 10000
     table = []
     # Each users' cumulative claims must only increase
     for user, claim in after.items():

@@ -1,5 +1,4 @@
 {
-<<<<<<< Updated upstream
     "data": {
         "pairHourDatas": [
             {
@@ -138,6 +137,7 @@
         ]
     }
 }
+<<<<<<< HEAD
 =======
   "data": {
     "pairHourDatas": [
@@ -236,3 +236,5 @@
   }
 }
 >>>>>>> Stashed changes
+=======
+>>>>>>> geyser-removal-only

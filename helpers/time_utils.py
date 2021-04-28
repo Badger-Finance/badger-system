@@ -17,7 +17,7 @@ def minutes(minutes):
     return int(minutes * 60.0)
 
 def to_utc_date(timestamp):
-    return datetime.datetime.utcfromtimestamp(timestamp).strftime("%Y-%m-%dT%H:%M:%SZ")
+    return datetime.datetime.utcfromtimestamp(timestamp).strftime("%Y-%m-%d %H:%M:%S")
 
 
 def to_timestamp(date):
