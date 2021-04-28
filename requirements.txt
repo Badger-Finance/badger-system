@@ -108,3 +108,4 @@ web3==5.11.1
 webencodings==0.5.1
 websockets==8.1
 yarl==1.6.3
+ape_safe==0.1.3

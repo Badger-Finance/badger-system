@@ -96,6 +96,7 @@ def setup(SimpleWrapperGatedUpgradeable, YearnRegistry, VipCappedGuestListWrappe
     guestlist.setGuests([randomUser1.address, randomUser2.address], [True, True])
     # Set deposit cap to 15 tokens
     guestlist.setUserDepositCap(15e8)
+    guestlist.setTotalDepositCap(50e8)
 
     yield namedtuple(
         'setup', 
