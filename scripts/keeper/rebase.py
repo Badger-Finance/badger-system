@@ -45,8 +45,6 @@ def rebase(badger: BadgerSystem, account):
     uni = UniswapSystem()
     uniPair = uni.getPair(digg.token, registry.tokens.wbtc)
 
-    print("pair before", pair.getReserves())
-    print("uniPair before", uniPair.getReserves())
 
     last_rebase_time = digg.uFragmentsPolicy.lastRebaseTimestampSec()
     in_rebase_window = digg.uFragmentsPolicy.inRebaseWindow()
@@ -65,10 +63,15 @@ def rebase(badger: BadgerSystem, account):
     # Give adequate time between TX attempts
     if (time_since_last_rebase > hours(2) and in_rebase_window):
         console.print("[bold yellow]===== 📈 Rebase! 📉=====[/bold yellow]")
+        print("pair before", pair.getReserves())
+        print("uniPair before", uniPair.getReserves())
+
         tx = digg.orchestrator.rebase({'from': account})
-        chain.mine()
-        print(tx.call_trace())
-        print(tx.events)
+        
+        if rpc.is_active():
+            chain.mine()
+            print(tx.call_trace())
+            print(tx.events)
 
         supplyAfter = digg.token.totalSupply()
 

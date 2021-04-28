@@ -1,10 +1,20 @@
 import boto3
-from brownie import *
+import json
 import requests
+from brownie import *
 from rich.console import Console
+from config.env_config import env_config
 
 console = Console()
 
+s3 = boto3.client(
+    "s3",
+    aws_access_key_id=env_config.aws_access_key_id,
+    aws_secret_access_key=env_config.aws_secret_access_key,
+)
+merkle_bucket = "badger-merkle-proofs"
+rewards_bucket = "badger-json"
+analytics_bucket = "badger-analytics"
 
 def download_latest_tree():
     from config.env_config import env_config
@@ -16,7 +26,7 @@ def download_latest_tree():
     )
 
     target = {
-        "bucket": "badger-merkle-proofs",
+        "bucket": merkle_bucket,
         "key": "badger-tree.json",
     }  # badger-api production
 
@@ -26,14 +36,7 @@ def download_latest_tree():
     return s3_clientdata
 
 
-def download(fileName):
-    url = "https://m2066zr7zl.execute-api.us-east-1.amazonaws.com/rewards/{}".format(
-        fileName
-    )
-    return requests.get(url=url).json()
-
-
-def download_bucket(fileName):
+def download_tree(fileName):
     from config.env_config import env_config
 
     s3 = boto3.client(
@@ -52,6 +55,20 @@ def download_bucket(fileName):
     s3_clientdata = s3_clientobj["Body"].read().decode("utf-8")
 
     return s3_clientdata
+
+def download_past_trees(number):
+    trees = []
+    key = "badger-tree.json"
+    response = s3.list_object_versions(Prefix=key, Bucket=merkle_bucket)
+    versions = response["Versions"][:number]
+    for version in versions:
+        console.log(version["Key"], version["VersionId"])
+        ## yield version
+        s3_client_obj = s3.get_object(
+            Bucket=merkle_bucket, Key=version["Key"], VersionId=version["VersionId"]
+        )
+        trees.append(s3_client_obj["Body"].read())
+    return trees
 
 
 def upload(fileName, bucket="badger-json", publish=True):
@@ -81,11 +98,6 @@ def upload(fileName, bucket="badger-json", publish=True):
             }  # badger-api production
         )
 
-    s3 = boto3.client(
-        "s3",
-        aws_access_key_id=env_config.aws_access_key_id,
-        aws_secret_access_key=env_config.aws_secret_access_key,
-    )
     for target in upload_targets:
         console.print(
             "Uploading file to s3://" + target["bucket"] + "/" + target["key"]

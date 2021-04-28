@@ -32,9 +32,8 @@ uniswap_registry = DotMap(
     uniStakingRewards=DotMap(eth_wbtc="0xa1484C3aa22a66C62b77E0AE78E15258bd0cB711"),
 )
 
-multicall_registry = DotMap(
-    multicall="0xeefba1e63905ef1d7acba5a8513c70307c1ce441",
-)
+multicall="0xeefba1e63905ef1d7acba5a8513c70307c1ce441"
+multisend="0x8D29bE29923b68abfDD21e541b9374737B49cdAD"
 
 compound_registry = DotMap(
     cTokens = DotMap(
@@ -130,7 +129,8 @@ eth_registry = ChainRegistry(
     gnosis_safe=gnosis_safe_registry,
     pickle=pickle_registry,
     harvest=harvest_registry,
-    multicall=multicall_registry,
+    multicall=multicall,
+    multisend=multisend,
     badger=badger_registry,
     yearn=yearn_registry,
     aave=aave_registry

@@ -1,0 +1,365 @@
+{
+    "userData": {
+        "native.sushiWbtcEth": {
+            "0x2070c6d43518c01d238f01db44239b84abbb8452": {
+                "shareSeconds": 668174874137136,
+                "totals": {
+                    "0x8798249c2e607446efb7ad49ec89dd1865ff4272": 3816368278454202.0
+                }
+            },
+            "0x4fd0e381c994b4262e4b452843b7b28c6a38acf6": {
+                "shareSeconds": 3357338171645580,
+                "totals": {
+                    "0x8798249c2e607446efb7ad49ec89dd1865ff4272": 2.8968429866921516e16
+                }
+            },
+            "0x5df444f57c397e4f44f91984af45c77dafc23557": {
+                "shareSeconds": 4711939076830206,
+                "totals": {
+                    "0x8798249c2e607446efb7ad49ec89dd1865ff4272": 3.790827522498432e16
+                }
+            },
+            "0x851a5b5855efcca35b3ffc20514415c49abbb2a0": {
+                "shareSeconds": 963268320282600,
+                "totals": {
+                    "0x8798249c2e607446efb7ad49ec89dd1865ff4272": 7243346565167864.0
+                }
+            },
+            "0xae9db1ff69cfca2720ff2e5d81807d7383138a39": {
+                "shareSeconds": 121252868185098958,
+                "totals": {
+                    "0x8798249c2e607446efb7ad49ec89dd1865ff4272": 8.967261258715836e17
+                }
+            },
+            "0x9c0b5010bc72abadbe976f21c84cb0e094db7b2f": {
+                "shareSeconds": 54439517475450,
+                "totals": {
+                    "0x8798249c2e607446efb7ad49ec89dd1865ff4272": 415471636731868.8
+                }
+            },
+            "0xa5c84525194276c430ab157e341a0dcbb61167eb": {
+                "shareSeconds": 324839464875792,
+                "totals": {
+                    "0x8798249c2e607446efb7ad49ec89dd1865ff4272": 2579563634899193.5
+                }
+            },
+            "0xe993fb4df8a4737f48992334f549bb92b2ff7048": {
+                "shareSeconds": 2740662119846787,
+                "totals": {
+                    "0x8798249c2e607446efb7ad49ec89dd1865ff4272": 1.7671538978982508e16
+                }
+            },
+            "0x4929f4d38f2955649b5aa34343da04cf790b9d92": {
+                "shareSeconds": 4045351917397509,
+                "totals": {
+                    "0x8798249c2e607446efb7ad49ec89dd1865ff4272": 2.56943014847967e16
+                }
+            },
+            "0x172ec6da25d0b72e3fafdecefb3adc9ad8544ae6": {
+                "shareSeconds": 943114943336000,
+                "totals": {
+                    "0x8798249c2e607446efb7ad49ec89dd1865ff4272": 6077024296097555.0
+                }
+            },
+            "0x86ed49e37355d5d0c7c2babddbdc9099a1c8cf94": {
+                "shareSeconds": 6743525907090250,
+                "totals": {
+                    "0x8798249c2e607446efb7ad49ec89dd1865ff4272": 4.470102203897792e16
+                }
+            },
+            "0x58074fa1257c2c031614c3bb7aee452b90be9a9d": {
+                "shareSeconds": 8142304752728230,
+                "totals": {
+                    "0x8798249c2e607446efb7ad49ec89dd1865ff4272": 4.257781411999484e16
+                }
+            },
+            "0xf9cc756f3692685189930d9d698df401432be2d6": {
+                "shareSeconds": 100264420546472,
+                "totals": {
+                    "0x8798249c2e607446efb7ad49ec89dd1865ff4272": 794512565773182.8
+                }
+            },
+            "0x56d51d26e9c0c264ba803b087f222cccb0dc765a": {
+                "shareSeconds": 22195558621014720,
+                "totals": {
+                    "0x8798249c2e607446efb7ad49ec89dd1865ff4272": 1.9314878907505062e17
+                }
+            },
+            "0xd761b97d8dbaaf908fdf6004b088d16e63aa9222": {
+                "shareSeconds": 64514967295691549,
+                "totals": {
+                    "0x8798249c2e607446efb7ad49ec89dd1865ff4272": 5.6842763938554214e17
+                }
+            },
+            "0x05220a15ce8702197e7f7f79c631194eb63f8872": {
+                "shareSeconds": 231086443663283,
+                "totals": {
+                    "0x8798249c2e607446efb7ad49ec89dd1865ff4272": 2054883688293490.2
+                }
+            },
+            "0x93de3fb17d5d58212cfea830bc1d4d3413e52a21": {
+                "shareSeconds": 157731861819648,
+                "totals": {
+                    "0x8798249c2e607446efb7ad49ec89dd1865ff4272": 1313613277850803.8
+                }
+            },
+            "0xf1c6a281452fedeada164731895b1a38b5476516": {
+                "shareSeconds": 7585735667377108,
+                "totals": {
+                    "0x8798249c2e607446efb7ad49ec89dd1865ff4272": 6.7470718868580376e16
+                }
+            },
+            "0x177ca251c1ffc18462a552711fdff08555b1d342": {
+                "shareSeconds": 199963630968360,
+                "totals": {
+                    "0x8798249c2e607446efb7ad49ec89dd1865ff4272": 1755465424047768.8
+                }
+            },
+            "0x9d541226b9f98d344a8b3f7a635c96a9577e6779": {
+                "shareSeconds": 45751847710080,
+                "totals": {
+                    "0x8798249c2e607446efb7ad49ec89dd1865ff4272": 397483486328413.5
+                }
+            },
+            "0xdc248474911c3ef3a870ba6f70559f7b66c0e84c": {
+                "shareSeconds": 156491274469560212,
+                "totals": {
+                    "0x8798249c2e607446efb7ad49ec89dd1865ff4272": 1.226001517113954e18
+                }
+            },
+            "0x89cd98a69ac5dcff78c5f436a5a34e90bb257b84": {
+                "shareSeconds": 101683766813132600,
+                "totals": {
+                    "0x8798249c2e607446efb7ad49ec89dd1865ff4272": 6.20864374421345e17
+                }
+            },
+            "0xc43abac0fc7e97f10ae8b3f2453c20c4d3ee9efd": {
+                "shareSeconds": 17553800999422006,
+                "totals": {
+                    "0x8798249c2e607446efb7ad49ec89dd1865ff4272": 1.0512806356000712e17
+                }
+            },
+            "0xb5063164bdf78cd5765dd09a0cc3cb0782dfd131": {
+                "shareSeconds": 51115538117387425,
+                "totals": {
+                    "0x8798249c2e607446efb7ad49ec89dd1865ff4272": 2.682988811128842e17
+                }
+            },
+            "0x2afbeec53030c45cc36c4acfc4ce2b5ebe2d36ed": {
+                "shareSeconds": 96526218312900,
+                "totals": {
+                    "0x8798249c2e607446efb7ad49ec89dd1865ff4272": 529532168547534.44
+                }
+            },
+            "0xb676d03c31653d86fd463059783e119df88e69de": {
+                "shareSeconds": 1805612662091875,
+                "totals": {
+                    "0x8798249c2e607446efb7ad49ec89dd1865ff4272": 9675853894857502.0
+                }
+            },
+            "0x985116f8c174fe13325d36685424d1796cc11f51": {
+                "shareSeconds": 66459086901900,
+                "totals": {
+                    "0x8798249c2e607446efb7ad49ec89dd1865ff4272": 360120215681441.25
+                }
+            },
+            "0xc0aa65dfc4df91a25c244012ed3daa144ccc3afc": {
+                "shareSeconds": 100466536779781506,
+                "totals": {
+                    "0x8798249c2e607446efb7ad49ec89dd1865ff4272": 5.568522849942212e17
+                }
+            },
+            "0x23a7b021f1ab6745635a2c4c6f0614031de5bf3a": {
+                "shareSeconds": 47096355589645824,
+                "totals": {
+                    "0x8798249c2e607446efb7ad49ec89dd1865ff4272": 2.974399055811732e17
+                }
+            },
+            "0x0d085e5db58fd2f0e4446ab282c171813a4223ff": {
+                "shareSeconds": 4681731298257476,
+                "totals": {
+                    "0x8798249c2e607446efb7ad49ec89dd1865ff4272": 3.2149150384699308e16
+                }
+            },
+            "0xc446277b1d68d1be119f0c84a0c554e7fdc508e3": {
+                "shareSeconds": 3548915552634660,
+                "totals": {
+                    "0x8798249c2e607446efb7ad49ec89dd1865ff4272": 2.164438550151534e16
+                }
+            }
+        },
+        "native.sushiBadgerWbtc": {
+            "0x0b13f13c0e99f24b96a835b787d1347b33d87776": {
+                "shareSeconds": 91114379866662666,
+                "totals": {
+                    "0x8798249c2e607446efb7ad49ec89dd1865ff4272": 2862031953337458.5
+                }
+            },
+            "0xbe46f47a1d472393cf6a64b2b67e42cd070bcaa2": {
+                "shareSeconds": 48896756497593500,
+                "totals": {
+                    "0x8798249c2e607446efb7ad49ec89dd1865ff4272": 1350337329129178.5
+                }
+            },
+            "0x41ca37052d6f6c5ff804cc037551f1533a6fdc52": {
+                "shareSeconds": 70491150963388170,
+                "totals": {
+                    "0x8798249c2e607446efb7ad49ec89dd1865ff4272": 1439721091402184.8
+                }
+            },
+            "0x167539702b5501aadd9b0b85e53532fd57cc71a9": {
+                "shareSeconds": 1329952135100680648,
+                "totals": {
+                    "0x8798249c2e607446efb7ad49ec89dd1865ff4272": 2.236316785425284e16
+                }
+            },
+            "0xda24033f25a96e495631176385416d6bebf42c0a": {
+                "shareSeconds": 220637798414993470,
+                "totals": {
+                    "0x8798249c2e607446efb7ad49ec89dd1865ff4272": 3415684253991365.0
+                }
+            },
+            "0x7cd88048c3d65c573b148590cb6c868ec15380a4": {
+                "shareSeconds": 74521535935764692,
+                "totals": {
+                    "0x8798249c2e607446efb7ad49ec89dd1865ff4272": 1111630236088989.1
+                }
+            },
+            "0x2613f39f3ef1ba839bdf112355511b9639dbcce4": {
+                "shareSeconds": 43979149880882853,
+                "totals": {
+                    "0x8798249c2e607446efb7ad49ec89dd1865ff4272": 611771142695409.2
+                }
+            },
+            "0x8b5ad97e542be6a430a9d38003cda8f6aad615d1": {
+                "shareSeconds": 4110868804822604073,
+                "totals": {
+                    "0x8798249c2e607446efb7ad49ec89dd1865ff4272": 5.569192135014676e16
+                }
+            },
+            "0xc98158374eca1102b51ccc5ced6ce7fa23e28403": {
+                "shareSeconds": 66164126759552548,
+                "totals": {
+                    "0x8798249c2e607446efb7ad49ec89dd1865ff4272": 837241768761516.4
+                }
+            },
+            "0xe87a10d5b212d169ccbc9a50cf5e23dd3da27cb6": {
+                "shareSeconds": 7633702478506720,
+                "totals": {
+                    "0x8798249c2e607446efb7ad49ec89dd1865ff4272": 94932514353599.52
+                }
+            },
+            "0x1edde2c776e471f02e956dc84382b5d4a1f42c74": {
+                "shareSeconds": 16884227877841020,
+                "totals": {
+                    "0x8798249c2e607446efb7ad49ec89dd1865ff4272": 179736975630231.1
+                }
+            },
+            "0xf347e10cbb654525b7d7931102f0ef9543b7fab5": {
+                "shareSeconds": 47969925917124315,
+                "totals": {
+                    "0x8798249c2e607446efb7ad49ec89dd1865ff4272": 391166251429488.25
+                }
+            },
+            "0x07268d7b3e591d2ed547840aeba16d4b70e77777": {
+                "shareSeconds": 406634861372040829,
+                "totals": {
+                    "0x8798249c2e607446efb7ad49ec89dd1865ff4272": 3758729176967942.5
+                }
+            },
+            "0x5fe6315bd5d44e1f25bcc075534de87cfba17d2a": {
+                "shareSeconds": 2093554354376903,
+                "totals": {
+                    "0x8798249c2e607446efb7ad49ec89dd1865ff4272": 74446642992382.0
+                }
+            },
+            "0x9aafecb177479be4dbca61cf2d4d0dfe41aaa7b8": {
+                "shareSeconds": 0,
+                "totals": {
+                    "0x8798249c2e607446efb7ad49ec89dd1865ff4272": 0.0
+                }
+            }
+        },
+        "native.sushiDiggWbtc": {
+            "0xaf7c4ad5a9a09274a19a2799ed3f1a9c5abffef7": {
+                "shareSeconds": 8674803384,
+                "totals": {
+                    "0x8798249c2e607446efb7ad49ec89dd1865ff4272": 0.0
+                }
+            },
+            "0xdb9c4dd4eb14669ce8321f0013bcfa318bd4477a": {
+                "shareSeconds": 1533707712,
+                "totals": {
+                    "0x8798249c2e607446efb7ad49ec89dd1865ff4272": 42340109336276.68
+                }
+            },
+            "0x23a3a1cbf6ef35713a978aada4617f728156ebbe": {
+                "shareSeconds": 1634987525,
+                "totals": {
+                    "0x8798249c2e607446efb7ad49ec89dd1865ff4272": 28942583235815.805
+                }
+            },
+            "0x52ab58c10e9187a79da50f892ea4801aad58cb00": {
+                "shareSeconds": 2635526341,
+                "totals": {
+                    "0x8798249c2e607446efb7ad49ec89dd1865ff4272": 54558588192675.92
+                }
+            },
+            "0x04c18cbf703c72591f1800b52d801a948f55e00c": {
+                "shareSeconds": 0,
+                "totals": {
+                    "0x8798249c2e607446efb7ad49ec89dd1865ff4272": 0.0
+                }
+            },
+            "0xab1580ee6c593d1ae69c8e80592160bcdb9f6c97": {
+                "shareSeconds": 306633089850,
+                "totals": {
+                    "0x8798249c2e607446efb7ad49ec89dd1865ff4272": 5114775631068048.0
+                }
+            },
+            "0x091ddfce101becd8556e863ca08c331ba190c733": {
+                "shareSeconds": 790206958,
+                "totals": {
+                    "0x8798249c2e607446efb7ad49ec89dd1865ff4272": 14501385035344.277
+                }
+            },
+            "0x29d0a6391fd911ac9cb7f68e8de48da5aa161890": {
+                "shareSeconds": 8289484550,
+                "totals": {
+                    "0x8798249c2e607446efb7ad49ec89dd1865ff4272": 159559340686109.25
+                }
+            },
+            "0x06d6061243f2039407ac0f2b1ea4038da34db949": {
+                "shareSeconds": 6883559208,
+                "totals": {
+                    "0x8798249c2e607446efb7ad49ec89dd1865ff4272": 137663931744687.27
+                }
+            },
+            "0xa4829e52be9d089048034468c4436c321ddbfe53": {
+                "shareSeconds": 5931093364,
+                "totals": {
+                    "0x8798249c2e607446efb7ad49ec89dd1865ff4272": 114797329784898.3
+                }
+            },
+            "0x92f72e352a4d47e5cda604f9e1f00c876254df14": {
+                "shareSeconds": 395592097135,
+                "totals": {
+                    "0x8798249c2e607446efb7ad49ec89dd1865ff4272": 5639915256967687.0
+                }
+            }
+        }
+    },
+    "distributionInfo": {
+        "native.sushiWbtcEth": {
+            "0x8798249c2e607446efb7ad49ec89dd1865ff4272": 276492.40065241826
+        },
+        "native.sushiBadgerWbtc": {
+            "0x8798249c2e607446efb7ad49ec89dd1865ff4272": 10741.264483034382
+        },
+        "native.sushiDiggWbtc": {
+            "0x8798249c2e607446efb7ad49ec89dd1865ff4272": 1858.6431898032095
+        }
+    },
+    "unlockSchedules": {},
+    "retroactiveData": {}
+}
