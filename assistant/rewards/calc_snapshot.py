@@ -18,7 +18,7 @@ nonNativeSetts = [
     "native.tbtcCrv",
     "native.sushiWbtcEth"
     "harvest.renCrv",
-    "yearn.wbtc" 
+    "yearn.wbtc"
 ]
 
 
@@ -34,38 +34,42 @@ def calc_snapshot(badger, name, startBlock, endBlock, nextCycle, boosts, diggAll
     # Boost all setts with snapshot
     for user in userBalances:
         addr = web3.toChecksumAddress(user.address)
-        boostAmount = boosts.get(addr,1)
+        boostAmount = boosts.get(addr, 1)
         user.boost_balance(boostAmount)
 
-    schedulesByToken = parse_schedules(badger.rewardsLogger.getAllUnlockSchedulesFor(sett))
-    console.log(schedulesByToken)
-    for token,schedules in schedulesByToken.items():
-        console.log(token)
-        console.log(schedules)
+    schedulesByToken = parse_schedules(
+        badger.rewardsLogger.getAllUnlockSchedulesFor(sett))
+
+    for token, schedules in schedulesByToken.items():
+        for s in schedules:
+            console.log(s)
         endDist = get_distributed_for_token_at(token, endTime, schedules, name)
-        startDist = get_distributed_for_token_at(token, startTime, schedules, name)
+        startDist = get_distributed_for_token_at(
+            token, startTime, schedules, name)
         tokenDistribution = int(endDist) - int(startDist)
-        rewardsLog.add_total_token_dist(name, token, tokenDistribution)
         # Distribute to users with rewards list
         # Make sure there are tokens to distribute (some geysers only
         # distribute one token)
         if token == Token.digg.value:
 
-            #if name in nativeSetts:
+            # if name in nativeSetts:
             #    tokenDistribution = tokenDistribution * diggAllocation
-            #else:
+            # else:
             #    tokenDistribution = tokenDistribution * (1 - diggAllocation)
-
+            diggFragments = digg.sharesToFragments(tokenDistribution)/1e18
+            rewardsLog.add_total_token_dist(name,token,diggFragments)
             console.log(
                 "{} DIGG tokens distributed".format(
-                    digg.sharesToFragments(tokenDistribution)/1e18)
-            )
+                    diggFragments
+                ))
 
         else:
+            badgerAmount = tokenDistribution/1e18
+            rewardsLog.add_total_token_dist(name,token,badgerAmount)
             console.log(
                 "{} Badger tokens distributed".format(
-                    tokenDistribution/1e18)
-            )
+                    badgerAmount
+            ))
 
         if tokenDistribution > 0:
             sumBalances = sum([b.balance for b in userBalances])
@@ -82,9 +86,10 @@ def calc_snapshot(badger, name, startBlock, endBlock, nextCycle, boosts, diggAll
                 rewardsLog.add_user_token(
                     addr, name, token, int(rewardAmount))
             console.log("Token Distribution: {}\nRewards Released: {}".format(
-                tokenDistribution/1e18,totalRewards/1e18
+                tokenDistribution/1e18, totalRewards/1e18
             ))
-            console.log("Diff {}".format((abs(tokenDistribution - totalRewards))))
+            console.log("Diff {}".format(
+                (abs(tokenDistribution - totalRewards))))
 
     return rewards
 
@@ -127,7 +132,7 @@ def get_distributed_for_token_at(token, endTime, schedules, name):
 def parse_schedules(schedules):
     schedulesByToken = {}
     for s in schedules:
-        schedule = Schedule(s[0],s[1],s[2],s[3],s[4],s[5])
+        schedule = Schedule(s[0], s[1], s[2], s[3], s[4], s[5])
         if schedule.token not in schedulesByToken:
             schedulesByToken[schedule.token] = []
         schedulesByToken[schedule.token].append(schedule)
