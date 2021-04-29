@@ -20,6 +20,7 @@ TOLERANCE = 71
 
 @pytest.fixture(scope="module", autouse=True)
 def setup(SimpleWrapperGatedUpgradeable, YearnRegistry, VipCappedGuestListWrapperUpgradeable):
+
     # Assign accounts
     manager = accounts[2]
     guardian = accounts[3]
@@ -115,8 +116,8 @@ def test_open_deposit_withdraw_flow(setup):
     setup.guestlist.setGuestRoot('0x00')
     assert setup.guestlist.guestRoot() == '0x00'
 
-    # Get current withdrawalFee
-    fee = setup.wrapper.withdrawalFee()/100
+    # Get current withdrawalFee i.e. 50 -> 0.5% -> 0.005
+    fee = setup.wrapper.withdrawalFee()/10000
         
     # === Deposit flow === #
     
@@ -276,6 +277,7 @@ def test_open_deposit_withdraw_flow(setup):
 
     # = User 2 sends remaining half of shares to user 3 for withdrawal = #
     shares = setup.wrapper.balanceOf(randomUser2.address)
+    print('-- 2nd User transfers ' + str(shares) + ' shares to 3rd User --')
     setup.wrapper.transfer(randomUser3.address, shares, {"from": randomUser2})
 
     assert setup.wrapper.balanceOf(randomUser3.address) == shares
@@ -284,8 +286,8 @@ def test_open_deposit_withdraw_flow(setup):
     setup.wrapper.withdraw(shares, {"from": randomUser3})
     print('-- 3rd User withdraws ' + str(shares) + ' shares --')
     print('Withdrew ' + str(abs(10e8 - setup.wbtc.balanceOf(randomUser3.address))) + ' wbtc')
-    # wbtc balance of user 3: 10 + 0.5 = ~10.5
-    assert abs(setup.wbtc.balanceOf(randomUser3.address) - 10.5e8)-0.5e8*fee <= TOLERANCE
+    # wbtc balance of user 3: 10 + 0.5 = ~10.5 (fees on total withdrew -> 1.5 wBTC)
+    assert abs(setup.wbtc.balanceOf(randomUser3.address) - 10.5e8)-1.5e8*fee <= TOLERANCE
     assert setup.wbtc.balanceOf(randomUser3.address) <= 10.5e8
 
     # = Whale: Has 0 Tokens, withdraws all = #
@@ -352,8 +354,8 @@ def test_depositFor_withdraw_flow(setup):
     setup.guestlist.setGuestRoot('0x00')
     assert setup.guestlist.guestRoot() == '0x00'
 
-    # Get current withdrawalFee
-    fee = setup.wrapper.withdrawalFee()/100
+    # Get current withdrawalFee i.e. 50 -> 0.5% -> 0.005
+    fee = setup.wrapper.withdrawalFee()/10000
 
 
 
