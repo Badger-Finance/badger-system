@@ -2,7 +2,6 @@ import pytest
 from brownie import (
     accounts,
     interface,
-    MockVault,
 )
 
 from helpers.constants import AddressZero
@@ -17,6 +16,8 @@ from scripts.systems.swap_system import connect_swap
 RENBTC = "0x49849C98ae39Fff122806C06791Fa73784FB3675"
 TBTC = "0x64eda51d3Ad40D56b9dFc5554E06F94e1Dd786Fd"
 SBTC = "0x075b1bb99792c9E1041bA13afEf80C91a1e70fB3"
+# byvwbtc vault
+BYVWBTC_VAULT = "0x4b92d19c11435614cd49af1b589001b7c08cd4d5"
 # Bridge mock vaults for testing.
 # Schema is (in token addr, vault name, vault symbol, vault token addr)
 BRIDGE_VAULTS = [
@@ -29,7 +30,6 @@ BRIDGE_VAULTS = [
         "symbol": "bcrvrenBTC",
         "token": RENBTC,
         "address": "0x6dEf55d2e18486B9dDfaA075bc4e4EE0B28c1545",
-        "upgrade": True,
     },
     {
         "inToken": registry.tokens.renbtc,
@@ -38,7 +38,6 @@ BRIDGE_VAULTS = [
         "symbol": "bcrvtBTC",
         "token": TBTC,
         "address": "0xb9D076fDe463dbc9f915E5392F807315Bf940334",
-        "upgrade": True,
     },
     {
         "inToken": registry.tokens.renbtc,
@@ -47,17 +46,15 @@ BRIDGE_VAULTS = [
         "symbol": "bcrvsBTC",
         "token": SBTC,
         "address": "0xd04c48A53c111300aD41190D63681ed3dAd998eC",
-        "upgrade": True,
     },
     {
         "inToken": registry.tokens.wbtc,
         "outToken": registry.tokens.wbtc,
         # NB: Only deployed to BSC right now. We're testing w/ mock.
-        "id": "native.test",
+        "id": "yearn.wbtc",
         "symbol": "bwBTC",
         "token": registry.tokens.wbtc,
-        "address": AddressZero,
-        "upgrade": False,
+        "address": BYVWBTC_VAULT,
     },
 ]
 
@@ -78,14 +75,11 @@ def test_bridge_vault(vault):
     amount = 1 * 10**8
 
     v = vault["address"]
-    if v == AddressZero:
-        v = MockVault.deploy(
-            vault["id"],
-            vault["symbol"],
-            vault["token"],
-            {"from": badger.deployer}
-        ).address
-        # Must approve mock vaults to mint/burn to/from.
+    if v == BYVWBTC_VAULT:
+        v = interface.VaultAPI(v)
+        # TODO: Can remove after guestlist is removed.
+        v.setGuestList(AddressZero, {"from": badger.devMultisig})
+        # TODO: Can remove after vault approval
         bridge.adapter.setVaultApproval(
             v,
             True,
