@@ -57,6 +57,12 @@ with open("dependency-artifacts/uniswap/UniswapV2Router02.json") as f:
 with open("dependency-artifacts/wbtc/wbtc.json") as f:
     wbtc = json.load(f)
 
+with open("dependency-artifacts/byvwbtc/byvwbtc.json") as f:
+    byvwbtc = json.load(f)
+
+with open("dependency-artifacts/guestlist/guestlist.json") as f:
+    guestlist = json.load(f)
+
 artifacts = DotMap(
     aragon=DotMap(
         Agent=Agent,
@@ -82,5 +88,7 @@ artifacts = DotMap(
     ),
     multicall=DotMap(multicall={"abi": Multicall}),
     wbtc=DotMap(wbtc={"abi": wbtc}),
+    byvwbtc=DotMap(byvwbtc={"abi": byvwbtc}),
+    guestlist=DotMap(guestlist={"abi": guestlist}),
 )
 
