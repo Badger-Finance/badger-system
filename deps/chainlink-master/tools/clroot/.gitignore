@@ -1,0 +1,6 @@
+db.sqlite3
+log.jsonl
+cookie
+secret
+chainlink.lock
+tempkeys

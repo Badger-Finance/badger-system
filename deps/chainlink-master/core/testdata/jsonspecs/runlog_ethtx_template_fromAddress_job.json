@@ -1,0 +1,11 @@
+{
+  "initiators": [{"type": "runLog"}],
+  "tasks": [
+    {
+      "type": "ethtx",
+      "params": {
+        "fromAddress": "%s"
+      }
+    }
+  ]
+}

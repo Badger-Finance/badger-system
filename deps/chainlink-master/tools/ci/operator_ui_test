@@ -1,0 +1,7 @@
+#!/bin/bash
+
+set -e
+
+cd operator_ui
+yarn run setup
+yarn run test:ci
