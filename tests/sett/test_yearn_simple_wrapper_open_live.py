@@ -112,9 +112,9 @@ def test_open_deposit_withdraw_flow(setup):
     setup.guestlist.setTotalDepositCap(21e14)
     assert setup.guestlist.totalDepositCap() == 21e14
 
-    # Remove merkleRoot for guestlist - Guestlist removed
-    setup.guestlist.setGuestRoot('0x00')
-    assert setup.guestlist.guestRoot() == '0x00'
+    # Remove Guestlist
+    setup.wrapper.setGuestList('0x0000000000000000000000000000000000000000')
+    assert setup.wrapper.guestList() == '0x0000000000000000000000000000000000000000'
 
     # Get current withdrawalFee i.e. 50 -> 0.5% -> 0.005
     fee = setup.wrapper.withdrawalFee()/10000
@@ -350,9 +350,9 @@ def test_depositFor_withdraw_flow(setup):
     setup.guestlist.setTotalDepositCap(21e14)
     assert setup.guestlist.totalDepositCap() == 21e14
 
-    # Remove merkleRoot for guestlist - Guestlist removed
-    setup.guestlist.setGuestRoot('0x00')
-    assert setup.guestlist.guestRoot() == '0x00'
+    # Remove Guestlist
+    setup.wrapper.setGuestList('0x0000000000000000000000000000000000000000')
+    assert setup.wrapper.guestList() == '0x0000000000000000000000000000000000000000'
 
     # Get current withdrawalFee i.e. 50 -> 0.5% -> 0.005
     fee = setup.wrapper.withdrawalFee()/10000
