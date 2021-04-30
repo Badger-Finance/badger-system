@@ -3,6 +3,7 @@ from brownie.network.gas.strategies import GasNowStrategy, ExponentialScalingStr
 from brownie.network import gas_price
 from brownie import Wei
 from helpers.network import network_manager
+from scripts.view.gas_intelligence import analyze_gas
 
 exponential_scaling_config = {
     "initial_gas_price": "100 gwei",
@@ -25,6 +26,7 @@ class GasStrategies:
         self.fast = GasNowStrategy("fast")
         self.rapid = GasNowStrategy("rapid")
         self.bsc_static = StaticGasStrategy(bsc_static_price)
+        self.analyzed = analyze_gas({ 'timeframe': 'minutes', 'periods': 15 })
 
         print(self.fast.get_gas_price())
 
@@ -43,6 +45,13 @@ class GasStrategies:
             self.set_default(self.exponentialScaling)
         elif chain == "bsc":
             self.set_default(self.bsc_static)
+
+    def optimal_price(self):
+        fast = self.fast.get_gas_price()
+        if fast < self.analyzed['mode']:
+            return fast
+        else:
+            return self.analyzed['mode']
 
 gas_strategies = GasStrategies()
 gas_strategies.set_default(gas_strategies.fast)

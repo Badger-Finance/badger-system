@@ -3,6 +3,7 @@ from elasticsearch import Elasticsearch
 import numpy as np
 import json
 import os
+from time import time
 
 '''
 Find the cheapest gas price that could be expected to get mined in a reasonable amount of time.
@@ -32,7 +33,6 @@ test()
 '''
 
 HISTORICAL_URL = 'https://api.anyblock.tools/ethereum/ethereum/mainnet/es/'
-HISTORICAL_TIMEFRAME = 'minutes' # 'minutes' or 'hours'
 BINS = 60 # number of bins for histogram
 
 # Api access credentials from https://www.anyblockanalytics.com/
@@ -48,9 +48,11 @@ def initialize_elastic(network: str) -> any:
     return Elasticsearch(hosts=[network], http_auth=(AUTH['email'], AUTH['key']), timeout=180)
 
 
-# fetch average hourly gas prices over the last specified days
-def fetch_gas_hour(network: str, days=7) -> list[float]:
+# fetch average hourly gas prices over the last specified hours
+def fetch_gas_hour(network: str, hours=24) -> list[float]:
     es = initialize_elastic(network)
+    now = int(time())
+    seconds = hours * 3600
     data = es.search(index='tx', doc_type='tx', body = {
         "_source":["timestamp","gasPrice.num"],
         "query": {
@@ -58,7 +60,8 @@ def fetch_gas_hour(network: str, days=7) -> list[float]:
             "must": [{ 
                 "range":{
                     "timestamp": {
-                        "gte": "now-"+ str(days) +"d"
+                        "gte": now - seconds,
+                        "lte": now
                     }
                 }}
                 
@@ -85,18 +88,20 @@ def fetch_gas_hour(network: str, days=7) -> list[float]:
     return [ x['avgGasHour']['value'] for x in data['aggregations']['hour_bucket']['buckets'] if x['avgGasHour']['value']]
 
 
-# fetch average gas prices per minute over the last specified days
-def fetch_gas_min(network: str, days=1) -> list[float]:
+# fetch average gas prices per minute over the last specified minutes
+def fetch_gas_min(network: str, minutes=60) -> list[float]:
     es = initialize_elastic(network)
+    now = int(time())
+    seconds = minutes * 60
     data = es.search(index='tx', doc_type='tx', body = {
         "_source":["timestamp","gasPrice.num"],
         "query": {
         "bool": {
             "must": [{
-                    
                 "range":{
                     "timestamp": {
-                        "gte": "now-"+ str(days) +"d"
+                        "gte": now - seconds,
+                        "lte": now
                     }
                 }}
                 
@@ -156,14 +161,14 @@ def is_outlier(points: list[float], thresh=3.5) -> list[bool]:
 
 
 # main entry point
-def analyze_gas() -> tuple[float, float, float]:
+def analyze_gas(options={ 'timeframe': 'minutes', 'periods': 60 }) -> tuple[int, int, int]:
     gas_data = []
 
     # fetch data
-    if HISTORICAL_TIMEFRAME == 'minutes':
-        gas_data = fetch_gas_min(HISTORICAL_URL)
+    if options['timeframe'] == 'minutes':
+        gas_data = fetch_gas_min(HISTORICAL_URL, options['periods'])
     else:
-        gas_data = fetch_gas_hour(HISTORICAL_URL)
+        gas_data = fetch_gas_hour(HISTORICAL_URL, options['periods'])
     gas_data = np.array(gas_data)
 
     # remove outliers
@@ -187,14 +192,18 @@ def analyze_gas() -> tuple[float, float, float]:
     # average
     median = np.median(filtered_gas_data, axis=0)
 
-    return (midpoint, standard_dev, median)
+    return {
+        'mode': int(midpoint),
+        'median': int(median),
+        'std': int(standard_dev)
+    }
 
 
 # run this to test analyze_gas and print values
-def test() -> tuple[float, float, float]:
+def main() -> tuple[int, int, int]:
     results = analyze_gas()
-    print('timeframe:', HISTORICAL_TIMEFRAME or 'hours')
-    print('approximate most common gas price:', to_gwei(results[0]))
-    print('standard deviation:', to_gwei(results[1]))
-    print('average gas price:', to_gwei(results[2]))
+    print('timeframe:', 'minutes')
+    print('approximate most common gas price:', to_gwei(results['mode']))
+    print('average gas price:', to_gwei(results['median']))
+    print('standard deviation:', to_gwei(results['std']))
     return results
