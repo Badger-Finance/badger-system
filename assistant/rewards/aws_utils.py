@@ -106,3 +106,12 @@ def upload(fileName, bucket="badger-json", publish=True):
         console.print(
             "✅ Uploaded file to s3://" + target["bucket"] + "/" + target["key"]
         )
+
+def upload_boosts(test):
+    fileName = "badger-boosts.json"
+    console.log("Uploading boosts")
+    if test:
+        bucket = "badger-staging-merkle-proofs"
+    else:
+        bucket = "badger-merkle-proofs"
+    s3.upload_file(fileName,bucket,fileName)

@@ -21,7 +21,6 @@ nonNativeSetts = [
     "yearn.wbtc"
 ]
 
-
 def calc_snapshot(badger, name, startBlock, endBlock, nextCycle, boosts, diggAllocation):
 
     console.log("==== Processing rewards for {} ====".format(name))
@@ -41,8 +40,6 @@ def calc_snapshot(badger, name, startBlock, endBlock, nextCycle, boosts, diggAll
         badger.rewardsLogger.getAllUnlockSchedulesFor(sett))
 
     for token, schedules in schedulesByToken.items():
-        for s in schedules:
-            console.log(s)
         endDist = get_distributed_for_token_at(token, endTime, schedules, name)
         startDist = get_distributed_for_token_at(
             token, startTime, schedules, name)
@@ -85,6 +82,7 @@ def calc_snapshot(badger, name, startBlock, endBlock, nextCycle, boosts, diggAll
                 rewards.increase_user_rewards(addr, token, int(rewardAmount))
                 rewardsLog.add_user_token(
                     addr, name, token, int(rewardAmount))
+
             console.log("Token Distribution: {}\nRewards Released: {}".format(
                 tokenDistribution/1e18, totalRewards/1e18
             ))

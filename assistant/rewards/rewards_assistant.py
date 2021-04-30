@@ -7,7 +7,7 @@ from rich.console import Console
 from tqdm import tqdm
 from assistant.rewards.boost import badger_boost
 from assistant.rewards.twap import digg_btc_twap,calculate_digg_allocation
-from assistant.rewards.aws_utils import download_tree, download_latest_tree, upload
+from assistant.rewards.aws_utils import download_tree, download_latest_tree, upload,upload_boosts
 from assistant.rewards.calc_stakes import calc_geyser_stakes
 from assistant.rewards.calc_snapshot import calc_snapshot
 from assistant.rewards.meta_rewards.harvest import calc_farm_rewards
@@ -39,16 +39,11 @@ def calc_geyser_rewards(badger, periodStartBlock, endBlock, cycle):
     #ratio = digg_btc_twap(periodStartBlock,endBlock)
     #diggAllocation = calculate_digg_allocation(ratio)
     rewardsByGeyser = {}
-    boosts = json.load(open("logs/boosts.json"))
+    boosts = badger_boost(badger, endBlock)
     for key, geyser in badger.geysers.items():
 
-        if key == "yearn.wbtc":
-            boost = {}
-        else:
-            boost = boosts[key]
-
         geyserRewards = calc_snapshot(
-            badger, key, periodStartBlock, endBlock, cycle, boost,0)
+            badger, key, periodStartBlock, endBlock, cycle, boosts,0)
         rewardsByGeyser[key] = geyserRewards
     #return sum_rewards(rewardsByGeyser, cycle, badger.badgerTree)
     rewards = combine_rewards(
@@ -290,6 +285,7 @@ def rootUpdater(badger, startBlock, endBlock, pastRewards, test=False):
             {"from": badger.keeper, "gas_price": gas_strategy},
         )
         upload(rewards_data["contentFileName"], publish=False)
+
 
     return rewards_data
 

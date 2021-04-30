@@ -2,6 +2,7 @@ from brownie import *
 import math
 import json
 from rich.console import Console
+from assistant.rewards.aws_utils import upload_boosts
 from assistant.subgraph.client import (
     fetch_wallet_balances,
 )
@@ -25,7 +26,6 @@ MAX_MULTIPLIER = 3
 def convert_balances_to_usd(sett, userBalances, prices, settData):
     token = sett.token()
     price = prices[token]
-    
     settInfo = [s for s in settData if s["underlyingToken"] == token]
     ppfs = settInfo[0]["ppfs"]
 
@@ -109,6 +109,11 @@ def badger_boost(badger, currentBlock):
         badger.digg,
         currentBlock
     )
+
+    console.log("{} Badger balances fetched, {} Digg balances fetched".format(
+        len(badger_wallet_balances),
+        len(digg_wallet_balances)
+    ))
     badger_wallet_balances = UserBalances([
         UserBalance(addr,bal,Token.badger.value)
         for addr,bal in badger_wallet_balances.items()
@@ -121,7 +126,8 @@ def badger_boost(badger, currentBlock):
     badgerSetts = combine_balances([badgerSetts, badger_wallet_balances])
     diggSetts = combine_balances([diggSetts, digg_wallet_balances])
 
-    allAddresses = calc_union_addresses(diggSetts,badgerSetts,nonNativeSetts) 
+    allAddresses = calc_union_addresses(diggSetts,badgerSetts,nonNativeSetts)
+    console.log("{} addresses collected for boost calculation".format(len(allAddresses)))
     stakeRatiosList = [
         calc_stake_ratio(addr, diggSetts, badgerSetts, nonNativeSetts)
         for addr in allAddresses
@@ -137,7 +143,6 @@ def badger_boost(badger, currentBlock):
     for user in sortedNonNative:
         percentage = user.balance / nonNativeTotal
         percentageNonNative[user.address] = percentage
-
     cumulativePercentages = dict(
         zip(percentageNonNative.keys(), calc_cumulative(percentageNonNative.values()))
     )
@@ -147,7 +152,9 @@ def badger_boost(badger, currentBlock):
             calc_boost(cumulativePercentages.values())
         )
     )
-    with open('logs/badger-boost.json', 'w') as fp:
+    with open('badger-boosts.json', 'w') as fp:
         json.dump(badgerBoost, fp)
+
+    upload_boosts(test=True)
 
     return badgerBoost

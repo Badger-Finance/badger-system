@@ -30,9 +30,7 @@ tokens_to_check = [
 gas_strategy = GasNowStrategy("rapid")
 digg_contract = None
 def get_digg_contract():
-    if not digg_contract:
-        digg_contract = interface.IDigg(digg_token)
-    return digg_contract
+    return interface.IDigg(digg_token)
 
 def sec(amount):
     return "{:,.1f}".format(amount / 1e12)
