@@ -14,7 +14,6 @@ class RewardsList:
         self.claims = DotMap()
         self.tokens = DotMap()
         self.totals = DotMap()
-        self.boosts = {}
         self.cycle = cycle
         self.badgerTree = badgerTree
         self.metadata = DotMap()
@@ -30,9 +29,6 @@ class RewardsList:
         if not self.sourceMetadata[source][user][metadata]:
             self.sourceMetadata[source][user][metadata] = DotMap()
         self.sourceMetadata[source][user][metadata] = metadata
-
-    def add_user_boost(self,user,boostAmount):
-        self.boosts[user] = boostAmount
 
     def increase_user_rewards(self, user, token, toAdd):
         if toAdd < 0:
@@ -110,17 +106,12 @@ class RewardsList:
         This is the value that will be hashed to form the rest of the tree
         """
         user_str = str(user).lower()
-        if user_str in self.boosts:
-            boost = self.boosts[user_str]
-        else:
-            boost = 1
         nodeEntry = {
             "user": user,
             "tokens": [],
             "cumulativeAmounts": [],
             "cycle": cycle,
-            "index": index,
-            "boost": boost * 1e18
+            "index": index
         }
         intAmounts = []
         for tokenAddress, cumulativeAmount in userData.items():
@@ -143,12 +134,11 @@ class RewardsList:
 
         encoded_local = encode_hex(
             encode_abi(
-                ["uint", "address", "uint","uint", "address[]", "uint[]"],
+                ["uint", "address","uint", "address[]", "uint[]"],
                 (
                     int(nodeEntry["index"]),
                     nodeEntry["user"],
                     int(nodeEntry["cycle"]),
-                    int(nodeEntry["boost"]),
                     nodeEntry["tokens"],
                     intAmounts,
                 ),
