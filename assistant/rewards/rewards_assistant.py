@@ -18,7 +18,6 @@ from assistant.rewards.rewards_utils import (
     process_cumulative_rewards,
     combine_rewards,
 )
-from assistant.rewards.classes.User import User
 from assistant.rewards.classes.MerkleTree import rewards_to_merkle_tree
 from assistant.rewards.classes.RewardsList import RewardsList
 from assistant.rewards.classes.RewardsLog import rewardsLog

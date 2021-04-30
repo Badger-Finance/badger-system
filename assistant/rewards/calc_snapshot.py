@@ -4,6 +4,7 @@ from assistant.rewards.classes.RewardsLog import rewardsLog
 from assistant.rewards.classes.Schedule import Schedule
 from assistant.rewards.enums import Token
 from helpers.time_utils import days, to_days, to_hours, to_utc_date
+from helpers.constants import NON_NATIVE_SETTS,NATIVE_DIGG_SETTS
 from dotmap import DotMap
 from brownie import *
 from rich.console import Console
@@ -11,15 +12,6 @@ from rich.console import Console
 console = Console()
 digg = interface.IDigg(Token.digg.value)
 
-nativeSetts = ["native.uniDiggWbtc", "native.sushiDiggWbtc"]
-nonNativeSetts = [
-    "native.renCrv",
-    "native.sbtcCrv",
-    "native.tbtcCrv",
-    "native.sushiWbtcEth"
-    "harvest.renCrv",
-    "yearn.wbtc"
-]
 
 def calc_snapshot(badger, name, startBlock, endBlock, nextCycle, boosts, diggAllocation):
 
@@ -30,11 +22,11 @@ def calc_snapshot(badger, name, startBlock, endBlock, nextCycle, boosts, diggAll
     endTime = web3.eth.getBlock(endBlock)["timestamp"]
 
     userBalances = calculate_sett_balances(badger, name, endBlock)
-    # Boost all setts with snapshot
-    for user in userBalances:
-        addr = web3.toChecksumAddress(user.address)
-        boostAmount = boosts.get(addr, 1)
-        user.boost_balance(boostAmount)
+    if name in NON_NATIVE_SETTS:
+        for user in userBalances:
+            addr = web3.toChecksumAddress(user.address)
+            boostAmount = boosts.get(addr, 1)
+            user.boost_balance(boostAmount)
 
     schedulesByToken = parse_schedules(
         badger.rewardsLogger.getAllUnlockSchedulesFor(sett))
@@ -49,7 +41,7 @@ def calc_snapshot(badger, name, startBlock, endBlock, nextCycle, boosts, diggAll
         # distribute one token)
         if token == Token.digg.value:
 
-            # if name in nativeSetts:
+            # if name in NATIVE_DIGG_SETTS:
             #    tokenDistribution = tokenDistribution * diggAllocation
             # else:
             #    tokenDistribution = tokenDistribution * (1 - diggAllocation)

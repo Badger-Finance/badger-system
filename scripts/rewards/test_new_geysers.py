@@ -8,14 +8,14 @@ from rich.console import Console
 from scripts.systems.badger_system import connect_badger
 from assistant.rewards.aws_utils import download_past_trees
 from assistant.rewards.rewards_assistant import run_action
-
+from helpers.utils import BADGER,DIGG,FARM,XSUSHI
 console = Console()
 rewardsInfo = {}
 tokens = {
-    "Badger":"0x3472A5A71965499acd81997a54BBA8D852C6E53d",
-    "Digg":"0x798D1bE841a82a273720CE31c822C61a67a601C3",
-    "XSushi":"0x8798249c2E607446EfB7Ad49eC89dD1865Ff4272",
-    "Farm":"0xa0246c9032bC3A600820415aE600c6388619A14D",
+    "Badger":BADGER,
+    "Digg":DIGG,
+    "XSushi":XSUSHI,
+    "Farm":FARM,
 }
 
 def main():

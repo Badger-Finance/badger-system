@@ -19,6 +19,7 @@ from helpers.time_utils import days, hours, to_days, to_timestamp, to_utc_date
 from helpers.utils import (fragments_to_shares,
                            initial_fragments_to_current_fragments,
                            shares_to_fragments, to_digg_shares, val)
+from helpers.constants import BADGER,DIGG
 
 console = Console()
 pretty.install()
@@ -26,9 +27,9 @@ pretty.install()
 
 def asset_to_address(asset):
     if asset == "badger":
-        return "0x3472A5A71965499acd81997a54BBA8D852C6E53d"
+        return BADGER
     if asset == "digg":
-        return "0x798D1bE841a82a273720CE31c822C61a67a601C3"
+        return DIGG
 
 
 class RewardsDist:

@@ -2,6 +2,7 @@ from tabulate import tabulate
 from rich.console import Console
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
+from helpers.utils import BADGER,DIGG
 import numpy as np
 import json
 
@@ -56,8 +57,6 @@ class RewardsLog:
             "unlockSchedules":self._unlockSchedules,
             "totalTokenDist":self._totalTokenDist,
         }
-        badger = "0x3472A5A71965499acd81997a54BBA8D852C6E53d"
-        digg = "0x798D1bE841a82a273720CE31c822C61a67a601C3"
         width = 0.4
         x_axis = []
         for name in self._totalTokenDist.keys():
@@ -71,11 +70,11 @@ class RewardsLog:
         digg_emissions = []
         for sett, emissions in self._totalTokenDist.items():
             if badger in emissions:
-                badger_emissions.append(emissions[badger])
+                badger_emissions.append(emissions[BADGER])
             else:
                 badger_emissions.append(0)
             if digg in emissions:
-                digg_emissions.append(emissions[digg])
+                digg_emissions.append(emissions[DIGG])
             else:
                 digg_emissions.append(0)
 

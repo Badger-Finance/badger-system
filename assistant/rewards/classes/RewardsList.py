@@ -3,6 +3,7 @@ from brownie import *
 from dotmap import DotMap
 from rich.console import Console
 from eth_utils.hexadecimal import encode_hex
+from helpers.constants import BADGER
 from eth_abi import encode_abi
 from tabulate import tabulate
 
@@ -76,7 +77,7 @@ class RewardsList:
             table.append(
                 [
                     user,
-                    data["0x3472A5A71965499acd81997a54BBA8D852C6E53d"],
+                    data[BADGER]],
                     shareSeconds,
                     shareSecondsInRange,
                 ]

@@ -12,25 +12,21 @@ import json
 import brownie
 from config.badger_config import badger_config, globalStartTime
 from helpers.utils import val
-
+from helpers.constants import BADGER,DIGG,FARM,XSUSHI
 console = Console()
 
-badger_token = "0x3472A5A71965499acd81997a54BBA8D852C6E53d"
-digg_token = "0x798D1bE841a82a273720CE31c822C61a67a601C3"
-farm_token = "0xa0246c9032bC3A600820415aE600c6388619A14D"
-xSushi_token = "0x8798249c2E607446EfB7Ad49eC89dD1865Ff4272"
 
 tokens_to_check = [
-    badger_token,
-    digg_token,
-    farm_token,
-    xSushi_token
+    BADGER,
+    DIGG,
+    FARM,
+    XSUSHI
 ]
 
 gas_strategy = GasNowStrategy("rapid")
 digg_contract = None
 def get_digg_contract():
-    return interface.IDigg(digg_token)
+    return interface.IDigg(DIGG)
 
 def sec(amount):
     return "{:,.1f}".format(amount / 1e12)
@@ -158,17 +154,17 @@ def verify_rewards(badger: BadgerSystem, startBlock, endBlock, before_data, afte
     sanity_badger = expected_totals["badger"]
     sanity_digg = expected_totals["digg"] * digg_contract._initialSharesPerFragment()
 
-    total_before_badger = before_data["tokenTotals"][badger_token]
-    total_before_digg = before_data["tokenTotals"][digg_token]
+    total_before_badger = before_data["tokenTotals"][BADGER]
+    total_before_digg = before_data["tokenTotals"][DIGG]
     
-    total_before_farm = int(before_data["tokenTotals"][farm_token])
-    total_before_xsushi = int(before_data["tokenTotals"][xSushi_token])
+    total_before_farm = int(before_data["tokenTotals"][FARM])
+    total_before_xsushi = int(before_data["tokenTotals"][XSUSHI])
 
-    total_after_badger = after_data["tokenTotals"][badger_token]
-    total_after_digg = after_data["tokenTotals"][digg_token]
+    total_after_badger = after_data["tokenTotals"][BADGER]
+    total_after_digg = after_data["tokenTotals"][DIGG]
 
-    total_after_farm = int(after_data["tokenTotals"][farm_token])
-    total_after_xsushi = int(after_data["tokenTotals"][xSushi_token])
+    total_after_farm = int(after_data["tokenTotals"][FARM])
+    total_after_xsushi = int(after_data["tokenTotals"][XSUSHI])
 
     digg_badger = total_after_badger - total_before_badger
     diff_digg = total_after_digg - total_before_digg
