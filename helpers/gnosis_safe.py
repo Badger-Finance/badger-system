@@ -1,6 +1,6 @@
 from enum import Enum
 
-from ape_safe import ApeSafe
+# from ape_safe import ApeSafe
 from helpers.token_utils import distribute_test_ether
 
 from brownie import *
@@ -20,26 +20,26 @@ On test networks leveraging Ganache --unlock, take control of a Gnosis safe with
     - Leveraging approved hash voting
 """
 
-class ApeSafeHelper:
-    def __init__(self, badger, safe: ApeSafe):
-        self.badger = badger
-        self.safe = safe
+# class ApeSafeHelper:
+#     def __init__(self, badger, safe: ApeSafe):
+#         self.badger = badger
+#         self.safe = safe
     
-    def getSett(self, key):
-        abi = Sett.abi
-        return self.safe.contract_from_abi(self.badger.getSett(key).address, "Sett", abi)
+#     def getSett(self, key):
+#         abi = Sett.abi
+#         return self.safe.contract_from_abi(self.badger.getSett(key).address, "Sett", abi)
 
-    def getStrategy(self, key):
-        # Get strategy name
-        # abi = contract_name_to_artifact()
-        # return self.safe.contract_from_abi(self.badger.getSett(key).address, "Strategy", abi)
-        return True
+#     def getStrategy(self, key):
+#         # Get strategy name
+#         # abi = contract_name_to_artifact()
+#         # return self.safe.contract_from_abi(self.badger.getSett(key).address, "Strategy", abi)
+#         return True
     
-    def publish(self):
-        safe_tx = self.safe.multisend_from_receipts()
-        self.safe.preview(safe_tx)
-        data = self.safe.print_transaction(safe_tx)
-        self.safe.post_transaction(safe_tx)
+#     def publish(self):
+#         safe_tx = self.safe.multisend_from_receipts()
+#         self.safe.preview(safe_tx)
+#         data = self.safe.print_transaction(safe_tx)
+#         self.safe.post_transaction(safe_tx)
 
 class OPERATION(Enum):
     CREATE = 0
