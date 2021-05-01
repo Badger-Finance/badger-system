@@ -5,6 +5,7 @@ from helpers.registry.YearnRegistry import YearnRegistry
 from brownie.network import web3
 from dotmap import DotMap
 from helpers.registry.WhaleRegistryAction import WhaleRegistryAction
+import json
 
 aragon_registry = DotMap(
     addresses=DotMap(
