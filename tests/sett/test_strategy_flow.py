@@ -125,7 +125,6 @@ def test_single_user_harvest_flow(settConfig):
 
     snap.settWithdraw(depositAmount // 2, {"from": deployer})
 
-
     chain.sleep(days(3))
     chain.mine()
 

@@ -8,12 +8,14 @@ from decimal import *
 from assistant.rewards.enums import Token
 import json
 from functools import lru_cache
+
 getcontext().prec = 20
 console = Console()
 
 subgraph_url = subgraph_config["url"]
 transport = AIOHTTPTransport(url=subgraph_url)
 client = Client(transport=transport, fetch_schema_from_transport=True)
+
 
 @lru_cache(maxsize=None)
 def fetch_sett_balances(settId, startBlock):
@@ -55,6 +57,7 @@ def fetch_sett_balances(settId, startBlock):
         balances = {**newBalances, **balances}
     console.log("Processing {} balances".format(len(balances)))
     return balances
+
 
 @lru_cache(maxsize=None)
 def fetch_geyser_events(geyserId, startBlock):
@@ -173,8 +176,7 @@ def fetch_sett_transfers(settID, startBlock, endBlock):
 
     deposits = map(convert_amount, results["vaults"][0]["deposits"])
     withdrawals = map(
-        negate_withdrawals,
-        map(convert_amount, results["vaults"][0]["withdrawals"]),
+        negate_withdrawals, map(convert_amount, results["vaults"][0]["withdrawals"]),
     )
 
     deposits = list(filter(filter_by_startBlock, list(deposits)))
@@ -183,8 +185,7 @@ def fetch_sett_transfers(settID, startBlock, endBlock):
     console.log("Processing {} withdrawals".format(len((withdrawals))))
 
     return sorted(
-        [*deposits, *withdrawals],
-        key=lambda t: t["transaction"]["timestamp"],
+        [*deposits, *withdrawals], key=lambda t: t["transaction"]["timestamp"],
     )
 
 
@@ -246,6 +247,7 @@ def fetch_sushi_harvest_events():
         "wbtcBadger": wbtcBadgerEvents,
         "wbtcDigg": wbtcDiggEvents,
     }
+
 
 def fetch_wallet_balances(badger_price, digg_price, digg, blockNumber):
     increment = 1000

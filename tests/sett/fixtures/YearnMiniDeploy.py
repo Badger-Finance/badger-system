@@ -11,8 +11,6 @@ class YearnMiniDeploy(SettMiniDeployBase):
 
         return (params, want)
 
-
-    
     def post_deploy_setup(self, deploy=True):
         """
         Initialize wrapper

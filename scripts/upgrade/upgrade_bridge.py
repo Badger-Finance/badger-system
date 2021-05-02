@@ -9,38 +9,29 @@ from config.badger_config import badger_config
 console = Console()
 
 
-def upgrade_bridge(
-        badger: BadgerSystem,
-        bridge: BridgeSystem) -> str:
-    '''
+def upgrade_bridge(badger: BadgerSystem, bridge: BridgeSystem) -> str:
+    """
     Upgrades bridge.
-    '''
+    """
     adapterLogic = BadgerBridgeAdapter.deploy({"from": badger.deployer})
     bridge.deploy_curve_token_wrapper()
 
-    return badger.queue_upgrade(
-        bridge.adapter.address,
-        adapterLogic.address,
-    )
+    return badger.queue_upgrade(bridge.adapter.address, adapterLogic.address,)
 
 
-def configure_bridge(
-        badger: BadgerSystem,
-        bridge: BridgeSystem):
-    '''
+def configure_bridge(badger: BadgerSystem, bridge: BridgeSystem):
+    """
     Configures bridge to use curve token wrapper.
-    '''
+    """
 
     multi = GnosisSafe(badger.devMultisig)
     id = multi.addTx(
-        MultisigTxMetadata(
-            description="Set curve token wrapper on adapter",
-        ),
+        MultisigTxMetadata(description="Set curve token wrapper on adapter",),
         {
             "to": bridge.adapter.address,
-            "data":
-                bridge.adapter.setCurveTokenWrapper.
-                encode_input(bridge.curveTokenWrapper.address),
+            "data": bridge.adapter.setCurveTokenWrapper.encode_input(
+                bridge.curveTokenWrapper.address
+            ),
         },
     )
     multi.executeTx(id)

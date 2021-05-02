@@ -41,4 +41,3 @@ class BadgerLpMetaFarmMiniDeploy(SettMiniDeployBase):
         self.rewards = self.badger.deploy_sett_staking_rewards(
             self.key, want, self.badger.token
         )
-

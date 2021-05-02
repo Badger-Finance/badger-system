@@ -26,7 +26,9 @@ class StrategyBasePancakeResolver(StrategyCoreResolver):
         assert after.get("strategy.balanceOf") >= before.get("strategy.balanceOf")
 
         # PPFS should not decrease
-        assert after.get("sett.pricePerFullShare") >= before.get("sett.pricePerFullShare")
+        assert after.get("sett.pricePerFullShare") >= before.get(
+            "sett.pricePerFullShare"
+        )
 
     def printHarvestState(self, event, keys):
         table = []
@@ -37,16 +39,16 @@ class StrategyBasePancakeResolver(StrategyCoreResolver):
         print(tabulate(table, headers=["account", "value"]))
 
     def confirm_harvest_events(self, before, after, tx):
-        key = 'HarvestState'
+        key = "HarvestState"
         assert key in tx.events
         assert len(tx.events[key]) == 1
         event = tx.events[key][0]
         keys = [
-            'cakeHarvested',
-            'cakeSold',
-            'toStrategist',
-            'toGovernance',
-            'wantCompounded',
+            "cakeHarvested",
+            "cakeSold",
+            "toStrategist",
+            "toGovernance",
+            "wantCompounded",
         ]
         for key in keys:
             assert key in event
@@ -60,7 +62,7 @@ class StrategyBasePancakeResolver(StrategyCoreResolver):
         event = tx.events["Tend"][0]
         if event["tended"] > 0:
             console.print("Tend Event", event)
-            # TODO: Ensure cake balance staked in chef increases 
+            # TODO: Ensure cake balance staked in chef increases
             # console.print('Tend Results', {
             #     'before': before.get("pancakeInfo.userInfo"),
             #     'after': after.get("pancakeInfo.userInfo"),
@@ -93,7 +95,7 @@ class StrategyBasePancakeResolver(StrategyCoreResolver):
                     Call(
                         pancake_chef_address,
                         [func.pancakeChef.userInfo, self.wantPid, entity],
-                        [["pancakeChef.userInfo.want." + entityKey , as_wei]],
+                        [["pancakeChef.userInfo.want." + entityKey, as_wei]],
                     )
                 )
                 calls.append(

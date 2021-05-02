@@ -54,11 +54,10 @@ def main():
     bDigg = safe.contract_from_abi(badger.getSett("native.digg").address, "Sett", abi)
     rewardsEscrow = safe.contract(badger.rewardsEscrow.address)
 
-
     badger_usd = fetch_usd_price(badger.token.address)
     eth_usd = fetch_usd_price_eth()
 
-    # USD Denominated 
+    # USD Denominated
     # badger_to_send = Wei(str(total_usd / badger_usd) + " ether")
 
     # Badger denominated
@@ -71,7 +70,7 @@ def main():
 
     snap = BalanceSnapshotter(
         [badgerToken, bBadger],
-        [badger.devMultisig, badger.deployer, badger.rewardsEscrow]
+        [badger.devMultisig, badger.deployer, badger.rewardsEscrow],
     )
 
     snap.snap(name="Before Transfers")
@@ -87,7 +86,11 @@ def main():
     bBadgerBefore = bBadger.balanceOf(badger.devMultisig)
     tx = bBadger.deposit(badger_to_send)
     bBadgerAfter = bBadger.balanceOf(badger.devMultisig)
-    print("bBadger to transfer", bBadgerAfter - bBadgerBefore, val(bBadgerAfter - bBadgerBefore))
+    print(
+        "bBadger to transfer",
+        bBadgerAfter - bBadgerBefore,
+        val(bBadgerAfter - bBadgerBefore),
+    )
     # bBadger.transfer(badger.treasuryMultisig, bBadgerAfter - bBadgerBefore)
     print(tx.events)
 
@@ -98,5 +101,3 @@ def main():
     safe.preview(safe_tx)
     data = safe.print_transaction(safe_tx)
     safe.post_transaction(safe_tx)
-
-

@@ -8,7 +8,6 @@ from .StrategyBaseSushiResolver import StrategyBaseSushiResolver
 
 
 class StrategySushiBadgerWbtcResolver(StrategyBaseSushiResolver, StrategyCoreResolver):
-
     def add_balances_snap(self, calls, entities):
         super().add_balances_snap(calls, entities)
         strategy = self.manager.strategy
@@ -59,16 +58,16 @@ class StrategySushiBadgerWbtcResolver(StrategyBaseSushiResolver, StrategyCoreRes
         print(tabulate(table, headers=["account", "value"]))
 
     def confirm_harvest_events(self, before, after, tx):
-        key = 'HarvestBadgerState'
+        key = "HarvestBadgerState"
         assert key in tx.events
         assert len(tx.events[key]) == 1
         event = tx.events[key][0]
         keys = [
-            'badgerHarvested',
-            'badgerConvertedToWbtc',
-            'wbtcFromConversion',
-            'toGovernance',
-            'toBadgerTree',
+            "badgerHarvested",
+            "badgerConvertedToWbtc",
+            "wbtcFromConversion",
+            "toGovernance",
+            "toBadgerTree",
         ]
         for key in keys:
             assert key in event

@@ -23,7 +23,7 @@ gnosis_safe_registry = DotMap(
     )
 )
 
-onesplit_registry = DotMap(contract="0x50FDA034C0Ce7a8f7EFDAebDA7Aa7cA21CC1267e"),
+onesplit_registry = (DotMap(contract="0x50FDA034C0Ce7a8f7EFDAebDA7Aa7cA21CC1267e"),)
 
 uniswap_registry = DotMap(
     routerV2="0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D",
@@ -32,13 +32,11 @@ uniswap_registry = DotMap(
     uniStakingRewards=DotMap(eth_wbtc="0xa1484C3aa22a66C62b77E0AE78E15258bd0cB711"),
 )
 
-multicall="0xeefba1e63905ef1d7acba5a8513c70307c1ce441"
-multisend="0x8D29bE29923b68abfDD21e541b9374737B49cdAD"
+multicall = "0xeefba1e63905ef1d7acba5a8513c70307c1ce441"
+multisend = "0x8D29bE29923b68abfDD21e541b9374737B49cdAD"
 
 compound_registry = DotMap(
-    cTokens = DotMap(
-        usdc="0x39AA39c021dfbaE8faC545936693aC917d5E7563"
-    )
+    cTokens=DotMap(usdc="0x39AA39c021dfbaE8faC545936693aC917d5E7563")
 )
 
 multichain_registry = DotMap(eth_address="0xC564EE9f21Ed8A2d8E7e76c085740d5e4c5FaFbE")
@@ -80,18 +78,12 @@ sushi_registry = DotMap(
 
 yearn_registry = YearnRegistry(
     registry="0x50c1a2ea0a861a967d9d0ffe2ae4012c2e053804",
-    experimental_vaults={
-        'wbtc': "0xA696a63cc78DfFa1a63E9E50587C197387FF6C7E"
-    }
+    experimental_vaults={"wbtc": "0xA696a63cc78DfFa1a63E9E50587C197387FF6C7E"},
 )
 
-aave_registry = DotMap(
-    lendingPoolV2="0x7d2768de32b0b80b7a3454c06bdac94a69ddc7a9"
-)
+aave_registry = DotMap(lendingPoolV2="0x7d2768de32b0b80b7a3454c06bdac94a69ddc7a9")
 
-yearn_registry = DotMap(
-    yvWBTC="0xcB550A6D4C8e3517A939BC79d0c7093eb7cF56B5",
-),
+yearn_registry = (DotMap(yvWBTC="0xcB550A6D4C8e3517A939BC79d0c7093eb7cF56B5",),)
 
 curve_registry = DotMap(
     minter="0xd061D61a4d941c39E5453435B6345Dc261C2fcE0",
@@ -116,9 +108,7 @@ curve_registry = DotMap(
     ),
 )
 
-badger_registry = DotMap(
-    token="0x3472a5a71965499acd81997a54bba8d852c6e53d"
-)
+badger_registry = DotMap(token="0x3472a5a71965499acd81997a54bba8d852c6e53d")
 
 eth_registry = ChainRegistry(
     curve=curve_registry,
@@ -133,7 +123,7 @@ eth_registry = ChainRegistry(
     multisend=multisend,
     badger=badger_registry,
     yearn=yearn_registry,
-    aave=aave_registry
+    aave=aave_registry,
 )
 
 eth_registry.tokens = DotMap(
@@ -185,7 +175,7 @@ eth_registry.whales = DotMap(
     bSbtcCrv=DotMap(
         whale="0x7af23cc86f3d96f079d5a56d0a89ebcb281060d5",
         token="0xd04c48A53c111300aD41190D63681ed3dAd998eC",
-        action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT
+        action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT,
     ),
     renCrv=DotMap(
         whale="0xb1f2cdec61db658f091671f5f199635aef202cac",
@@ -195,7 +185,7 @@ eth_registry.whales = DotMap(
     bRenCrv=DotMap(
         whale="0xedff3e9b6d596501c7fe806ef26bff395c01bdbe",
         token="0x6dEf55d2e18486B9dDfaA075bc4e4EE0B28c1545",
-        action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT
+        action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT,
     ),
     tbtcCrv=DotMap(
         whale="0xaf379f0228ad0d46bb7b4f38f9dc9bcc1ad0360c",
@@ -205,7 +195,7 @@ eth_registry.whales = DotMap(
     bTbtcCrv=DotMap(
         whale="0xadc68fb9809206c88e4f871c14b904b25ae5e301",
         token="0xb9D076fDe463dbc9f915E5392F807315Bf940334",
-        action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT
+        action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT,
     ),
     wbtc=DotMap(
         whale="0xc11b1268c1a384e55c48c2391d8d480264a3a7f4",
@@ -246,5 +236,5 @@ eth_registry.whales = DotMap(
         whale="0x35ffd6e268610e764ff6944d07760d0efe5e40e5",
         token="0xeb4c2781e4eba804ce9a9803c67d0893436bb27d",
         action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT,
-    )
+    ),
 )

@@ -1,8 +1,4 @@
-from brownie import (
-    web3,
-    interface,
-    Contract
-)
+from brownie import web3, interface, Contract
 
 from scripts.systems.sushiswap_system import SushiswapSystem
 from helpers.registry import registry
@@ -21,9 +17,7 @@ class SushiWbtcIbBtcLpOptimizerProvisioner(BaseProvisioner):
         ]
         abi = registry.defidollar.artifacts["BadgerSettPeak"]
         self.badgerSettPeak = Contract.from_abi(
-            "BadgerSettPeak",
-            registry.defidollar.addresses.badgerSettPeak,
-            abi,
+            "BadgerSettPeak", registry.defidollar.addresses.badgerSettPeak, abi,
         )
 
     def _distributeWant(self, users) -> None:
@@ -34,9 +28,7 @@ class SushiWbtcIbBtcLpOptimizerProvisioner(BaseProvisioner):
             sushiswap = SushiswapSystem()
             # Generate lp tokens.
             sushiswap.addMaxLiquidity(
-                registry.tokens.ibbtc,
-                registry.tokens.wbtc,
-                user,
+                registry.tokens.ibbtc, registry.tokens.wbtc, user,
             )
 
     def _mintIbBtc(self, user) -> None:

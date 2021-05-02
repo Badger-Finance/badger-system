@@ -64,7 +64,7 @@ def setup_badger(badger: BadgerSystem):
             "data": strategy.setTokenSwapPath.encode_input(
                 registry.pancake.cake,
                 strategy.token0(),
-                [registry.pancake.cake, registry.tokens.btcb, strategy.token0()]
+                [registry.pancake.cake, registry.tokens.btcb, strategy.token0()],
             ),
         },
     )
@@ -76,7 +76,7 @@ def setup_badger(badger: BadgerSystem):
             "data": strategy.setTokenSwapPath.encode_input(
                 registry.pancake.cake,
                 strategy.token1(),
-                [registry.pancake.cake, registry.tokens.btcb, strategy.token1()]
+                [registry.pancake.cake, registry.tokens.btcb, strategy.token1()],
             ),
         },
     )
@@ -135,7 +135,7 @@ def single_user_harvest_flow(badger: BadgerSystem, sett_id, user):
     snap = SnapshotManager(badger, sett_id)
     sett = badger.getSett(sett_id)
     strategist = badger.deployer
-    
+
     settKeeper = accounts.at(sett.keeper(), force=True)
     strategyKeeper = accounts.at(strategy.keeper(), force=True)
     randomUser = accounts[6]
@@ -199,8 +199,9 @@ def test_main():
     distribute_from_whales(user)
 
     setts_to_run = [
-        #"native.pancakeBnbBtcb", 
-        "native.bDiggBtcb"]
+        # "native.pancakeBnbBtcb",
+        "native.bDiggBtcb"
+    ]
     setup_badger(badger)
 
     for sett_id in setts_to_run:

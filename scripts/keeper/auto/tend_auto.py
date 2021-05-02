@@ -13,6 +13,7 @@ gas_strategies.set_default_for_active_chain()
 
 console = Console()
 
+
 def main():
     badger = connect_badger(load_keeper=True)
     skip = keeper_config.get_active_chain_skipped_setts("tend")

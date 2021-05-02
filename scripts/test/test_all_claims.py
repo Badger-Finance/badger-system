@@ -18,6 +18,7 @@ from helpers.token_utils import token_metadata, get_token_balances
 console = Console()
 debug = False
 
+
 def get_cumulative_claimable_for_token(claim, token):
     tokens = claim["tokens"]
     amounts = claim["cumulativeAmounts"]
@@ -26,9 +27,10 @@ def get_cumulative_claimable_for_token(claim, token):
         address = tokens[i]
         if token == address:
             return int(amounts[i])
-    
+
     # If address was not found
     return 0
+
 
 def get_claimed_for_token(data, token):
     tokens = data[0]
@@ -76,7 +78,7 @@ def test_claim(badger, user, claim, tokens_to_check):
             claim["cycle"],
             claim["proof"],
             {"from": userAccount},
-        )    
+        )
         # with brownie.reverts("excessive claim"):
         try:
             console.print("[red]===== 🐻 Trying to claim twice=====[/red]")
@@ -92,7 +94,7 @@ def test_claim(badger, user, claim, tokens_to_check):
             console.print("Double Claim Attempt", e)
 
     # Ensure fail if no claim
-    else: 
+    else:
         console.print("[yellow]===== 🍄 Trying to claim when no claim=====[/yellow]")
         try:
             tree.claim(
@@ -105,7 +107,7 @@ def test_claim(badger, user, claim, tokens_to_check):
             )
         except Exception as e:
             console.print("No tokens claim", e)
-    
+
     # Test double claim on same data set
 
     post = get_token_balances(tokens_to_check, [userAccount])
@@ -127,7 +129,7 @@ def test_claim(badger, user, claim, tokens_to_check):
                     "claimed_for_token_before": claimed_for_token_before,
                 }
             )
-        
+
         expected_claim = cumulative_claimed - claimed_for_token_before
         pre_amount = pre.get(token, user)
         post_amount = post.get(token, user)
@@ -139,11 +141,11 @@ def test_claim(badger, user, claim, tokens_to_check):
                 # val(pre_amount, decimals=token_metadata.get_decimals(token)),
                 # val(post_amount, decimals=token_metadata.get_decimals(token)),
                 val(diff, decimals=token_metadata.get_decimals(token)),
-                val(expected_claim,token_metadata.get_decimals(token)),
-                val(cumulative_claimed,token_metadata.get_decimals(token)),
+                val(expected_claim, token_metadata.get_decimals(token)),
+                val(cumulative_claimed, token_metadata.get_decimals(token)),
             ]
         )
-        
+
     print(
         tabulate(
             table,
@@ -168,7 +170,7 @@ def test_rewards_flow():
     badger = connect_badger(badger_config.prod_json)
     tree = badger.badgerTree
     pct_claims_to_verify = 0.001
-    
+
     tokens_to_check = [
         badger.token,
         badger.digg.token,
@@ -197,7 +199,9 @@ def test_rewards_flow():
             users_to_verify.append(user)
             test_claim(badger, user, claim, tokens_to_check)
 
-    retroactive_content_hash = "0x346ec98585b52d981d43584477e1b831ce32165cb8e0a06d14d236241b36328e"
+    retroactive_content_hash = (
+        "0x346ec98585b52d981d43584477e1b831ce32165cb8e0a06d14d236241b36328e"
+    )
     retroactive_file_name = "rewards-1-" + retroactive_content_hash + ".json"
 
     with open(retroactive_file_name) as f:
@@ -221,7 +225,7 @@ def test_rewards_flow():
         currentCycle + 1,
         lastProposeEndBlock + 1,
         endBlock,
-        {"from": rootProposer}
+        {"from": rootProposer},
     )
 
     tree.approveRoot(
@@ -230,7 +234,7 @@ def test_rewards_flow():
         currentCycle + 1,
         lastProposeEndBlock + 1,
         endBlock,
-        {"from": rootValidator}
+        {"from": rootValidator},
     )
 
     assert tree.merkleRoot() == root
@@ -246,6 +250,7 @@ def test_rewards_flow():
         if user in users_to_verify:
             test_claim(badger, user, claim, tokens_to_check)
 
+
 def publish_new_root(badger, root, contentHash):
     """
     Publish new root from local file
@@ -256,6 +261,7 @@ def publish_new_root(badger, root, contentHash):
     local_file_path = "rewards-1-" + contentHash + "json"
     with open(local_file_path) as f:
         rewards = json.load(f)
+
 
 def main():
     test_rewards_flow()

@@ -7,6 +7,7 @@ from eth_utils.hexadecimal import encode_hex
 from helpers.constants import *
 from helpers.console_utils import console
 
+
 class MerkleTree:
     def __init__(self, elements):
         for el in elements:

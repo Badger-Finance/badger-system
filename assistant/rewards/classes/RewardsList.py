@@ -75,12 +75,7 @@ class RewardsList:
                 shareSeconds = self.metadata[user].shareSeconds
                 shareSecondsInRange = self.metadata[user].shareSecondsInRange
             table.append(
-                [
-                    user,
-                    data[BADGER]],
-                    shareSeconds,
-                    shareSecondsInRange,
-                ]
+                [user, data[BADGER], shareSeconds, shareSecondsInRange,]
             )
         print("REWARDS LIST")
         print(
@@ -112,14 +107,13 @@ class RewardsList:
             "tokens": [],
             "cumulativeAmounts": [],
             "cycle": cycle,
-            "index": index
+            "index": index,
         }
         intAmounts = []
         for tokenAddress, cumulativeAmount in userData.items():
             nodeEntry["tokens"].append(tokenAddress)
             nodeEntry["cumulativeAmounts"].append(str(int(cumulativeAmount)))
             intAmounts.append(int(cumulativeAmount))
-
 
         # console.print(
         #     "Encoding Node entry...",
@@ -135,7 +129,7 @@ class RewardsList:
 
         encoded_local = encode_hex(
             encode_abi(
-                ["uint", "address","uint", "address[]", "uint[]"],
+                ["uint", "address", "uint", "address[]", "uint[]"],
                 (
                     int(nodeEntry["index"]),
                     nodeEntry["user"],
@@ -146,7 +140,9 @@ class RewardsList:
             )
         )
 
-        encoder = BadgerTree.at(web3.toChecksumAddress("0x660802Fc641b154aBA66a62137e71f331B6d787A"))
+        encoder = BadgerTree.at(
+            web3.toChecksumAddress("0x660802Fc641b154aBA66a62137e71f331B6d787A")
+        )
 
         # console.print("nodeEntry", nodeEntry)
         # console.print("encoded_local", encoded_local)

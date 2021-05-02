@@ -9,11 +9,11 @@ console = Console()
 
 class StrategySushiDiggWbtcLpOptimizerResolver(StrategyBaseSushiResolver):
     def confirm_rebase(self, before, after, value):
-        '''
+        """
         Lp token balance should stay the same.
         Sushi balances stay the same.
         xSushi balances stay the same.
-        '''
+        """
         super().confirm_rebase(before, after, value)
         assert snapBalancesMatchForToken(before, after, "want")
         assert snapBalancesMatchForToken(before, after, "sushi")

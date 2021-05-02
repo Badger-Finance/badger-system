@@ -1,5 +1,6 @@
-from dataclasses import dataclass,field
-from typing import List,Dict
+from dataclasses import dataclass, field
+from typing import List, Dict
+
 
 @dataclass
 class UserBalance:
@@ -8,16 +9,17 @@ class UserBalance:
     token: str
     type: List[str] = field(default_factory=lambda: [])
 
-    def boost_balance(self,boost):
+    def boost_balance(self, boost):
         self.balance = self.balance * boost
+
 
 @dataclass
 class UserBalances:
-    userBalances: Dict[str,UserBalance] = field(default_factory=lambda:[])
+    userBalances: Dict[str, UserBalance] = field(default_factory=lambda: [])
 
     def __post_init__(self):
         if len(self.userBalances) > 0:
-            self.userBalances = {u.address:u for u in self.userBalances}
+            self.userBalances = {u.address: u for u in self.userBalances}
         else:
             self.userBalances = {}
 
@@ -25,15 +27,15 @@ class UserBalances:
         return sum([u.balance for u in self.userBalances.values()])
 
     def __getitem__(self, key):
-        return self.userBalances.get(key,None)
-    
-    def __setitem__(self,key,value):
+        return self.userBalances.get(key, None)
+
+    def __setitem__(self, key, value):
         self.userBalances[key] = value
 
-    def __contains__(self,key):
+    def __contains__(self, key):
         return key in self.userBalances
 
-    def __add__(self,other):
+    def __add__(self, other):
         newUserBalances = self.userBalances
         for user in other.userBalances.values():
             if user.address in newUserBalances:

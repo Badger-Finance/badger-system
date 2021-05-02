@@ -9,20 +9,30 @@ from hexbytes import HexBytes
 from rich.console import Console
 from scripts.systems.badger_system import BadgerSystem
 
-from .actors import (ChainActor, DiggActor, SettKeeperActor,
-                     StrategyKeeperActor, UserActor)
-from .provisioners import (BadgerLpMetaFarmProvisioner,
-                           BadgerRewardsProvisioner, BaseProvisioner,
-                           CurveGaugeProvisioner, DiggLpMetaFarmProvisioner,
-                           DiggRewardsProvisioner, HarvestMetaFarmProvisioner,
-                           PancakeBBadgerBtcbProvisioner,
-                           PancakeBDiggBtcbProvisioner,
-                           PancakeBnbBtcbProvisioner,
-                           SushiBadgerWbtcProvisioner,
-                           SushiClawUSDCProvisioner,
-                           SushiDiggWbtcLpOptimizerProvisioner,
-                           SushiLpOptimizerProvisioner,
-                           SushiWbtcIbBtcLpOptimizerProvisioner)
+from .actors import (
+    ChainActor,
+    DiggActor,
+    SettKeeperActor,
+    StrategyKeeperActor,
+    UserActor,
+)
+from .provisioners import (
+    BadgerLpMetaFarmProvisioner,
+    BadgerRewardsProvisioner,
+    BaseProvisioner,
+    CurveGaugeProvisioner,
+    DiggLpMetaFarmProvisioner,
+    DiggRewardsProvisioner,
+    HarvestMetaFarmProvisioner,
+    PancakeBBadgerBtcbProvisioner,
+    PancakeBDiggBtcbProvisioner,
+    PancakeBnbBtcbProvisioner,
+    SushiBadgerWbtcProvisioner,
+    SushiClawUSDCProvisioner,
+    SushiDiggWbtcLpOptimizerProvisioner,
+    SushiLpOptimizerProvisioner,
+    SushiWbtcIbBtcLpOptimizerProvisioner,
+)
 
 console = Console()
 
@@ -49,7 +59,7 @@ class SimulationManager:
         self.accounts = accounts[9:]  # Use the 10th account onwards.
         # User accounts (need to be provisioned before running sim).
         self.users = []
-         
+
         self.debug = True
 
         self.badger = badger
@@ -98,7 +108,7 @@ class SimulationManager:
         while len(self.users) < NUM_USERS:
             # if self.debug:
             #     console.print("processing user")
-            idx = int(random.random()*len(self.accounts))
+            idx = int(random.random() * len(self.accounts))
             if idx in accountsUsed:
                 continue
             if web3.eth.getCode(self.accounts[idx].address) != HexBytes("0x"):

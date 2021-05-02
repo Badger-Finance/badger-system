@@ -16,4 +16,3 @@ def main():
         state = snap.snap()
         snap.printPermissions()
         snap.printTable(state)
-

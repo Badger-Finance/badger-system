@@ -30,10 +30,12 @@ from helpers.token_utils import asset_to_address
 console = Console()
 pretty.install()
 
+
 class GeyserDistributor:
     """
     Generate geyser distribution transactions given a set of emissions
     """
+
     def generate(self, badger, multi, key, distributions, start=0, duration=0, end=0):
         dists = []
         for asset, dist in distributions.items():
@@ -56,9 +58,7 @@ class GeyserDistributor:
 
             if rewardsEscrow.isApproved(geyser) == False:
                 multi.execute(
-                    MultisigTxMetadata(
-                        description="Approve Recipient"
-                    ),
+                    MultisigTxMetadata(description="Approve Recipient"),
                     {
                         "to": rewardsEscrow.address,
                         "data": rewardsEscrow.approveRecipient.encode_input(geyser),
@@ -82,8 +82,8 @@ class GeyserDistributor:
             console.print(
                 "Geyser Distribution for {}: {}".format(key, val(dist)), style="yellow",
             )
-            
+
             dists.append((geyser, asset_to_address(asset), dist, duration, start))
-            
+
         console.log(key, dists)
         return dists

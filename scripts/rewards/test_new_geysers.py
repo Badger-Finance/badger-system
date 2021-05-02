@@ -8,15 +8,17 @@ from rich.console import Console
 from scripts.systems.badger_system import connect_badger
 from assistant.rewards.aws_utils import download_past_trees
 from assistant.rewards.rewards_assistant import run_action
-from helpers.utils import BADGER,DIGG,FARM,XSUSHI
+from helpers.utils import BADGER, DIGG, FARM, XSUSHI
+
 console = Console()
 rewardsInfo = {}
 tokens = {
-    "Badger":BADGER,
-    "Digg":DIGG,
-    "XSushi":XSUSHI,
-    "Farm":FARM,
+    "Badger": BADGER,
+    "Digg": DIGG,
+    "XSushi": XSUSHI,
+    "Farm": FARM,
 }
+
 
 def main():
     trees = download_past_trees(2)
@@ -40,14 +42,12 @@ def main():
         test=True,
     )["merkleTree"]
     compare_trees(newTree, lastTree)
-    x = ["{} Diff".format((t)) for t in tokens.keys() ]
+    x = ["{} Diff".format((t)) for t in tokens.keys()]
     x_pos = [i for i, _ in enumerate(x)]
     diffs = []
-    for addr,amount in rewardsInfo["old"]["tokenTotals"].items():
-        diffs.append(
-           (int(amount)) - (int(rewardsInfo["new"]["tokenTotals"][addr]))
-        )
-    plt.bar(x_pos, diffs, color='green')
+    for addr, amount in rewardsInfo["old"]["tokenTotals"].items():
+        diffs.append((int(amount)) - (int(rewardsInfo["new"]["tokenTotals"][addr])))
+    plt.bar(x_pos, diffs, color="green")
     plt.xlabel("Token diffs")
     plt.ylabel("Diff amount")
     plt.title("Token diff vs last cycle")
@@ -56,44 +56,32 @@ def main():
 
     plt.savefig("logs/geyser_data.png")
 
-    with open('logs/rewards-data.json', 'w') as fp:
+    with open("logs/rewards-data.json", "w") as fp:
         json.dump(rewardsInfo, fp, indent=4)
 
 
 def compare_trees(current, previous):
-    rewardsInfo["old"] = {
-        "tokenTotals": previous["tokenTotals"]
-    }
-    rewardsInfo["new"] = {
-        "tokenTotals": current["tokenTotals"]
-    }
+    rewardsInfo["old"] = {"tokenTotals": previous["tokenTotals"]}
+    rewardsInfo["new"] = {"tokenTotals": current["tokenTotals"]}
     rewardsInfo["diffs"] = {}
     console.log(len(previous["claims"]))
     console.log(len(current["claims"]))
-    rewardsInfo["addressDiff"] = list(set(current["claims"].keys()) ^ set(previous["claims"].keys()))
+    rewardsInfo["addressDiff"] = list(
+        set(current["claims"].keys()) ^ set(previous["claims"].keys())
+    )
 
-    for addr,data in previous["claims"].items():
+    for addr, data in previous["claims"].items():
         if addr not in rewardsInfo["diffs"]:
-            rewardsInfo["diffs"][addr] = {
-                    "old":{},
-                    "new":{}
-                }
+            rewardsInfo["diffs"][addr] = {"old": {}, "new": {}}
         for i in range(len(data["tokens"])):
             token = data["tokens"][i]
             amount = data["cumulativeAmounts"][i]
             rewardsInfo["diffs"][addr]["old"][token] = amount
 
-
-    for addr,data in current["claims"].items():
+    for addr, data in current["claims"].items():
         if addr not in rewardsInfo["diffs"]:
-            rewardsInfo["diffs"][addr] = {
-                "old":{},
-                "new":{}
-            }
-        for i in range(len(data["tokens"])): 
+            rewardsInfo["diffs"][addr] = {"old": {}, "new": {}}
+        for i in range(len(data["tokens"])):
             token = data["tokens"][i]
             amount = data["cumulativeAmounts"][i]
             rewardsInfo["diffs"][addr]["new"][token] = amount
-
-
-    

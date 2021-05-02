@@ -28,4 +28,11 @@ MAX_BOOST = 3
 DIGG_SETTS = ["native.uniDiggWbtc", "native.sushiDiggWbtc", "native.digg"]
 BADGER_SETTS = ["native.badger", "native.uniBadgerWbtc", "native.sushiBadgerWbtc"]
 NATIVE_DIGG_SETTS = ["native.uniDiggWbtc", "native.sushiDiggWbtc"]
-NON_NATIVE_SETTS = ["native.renCrv","native.sbtcCrv","native.tbtcCrv","native.sushiWbtcEth","harvest.renCrv","yearn.wbtc"]
+NON_NATIVE_SETTS = [
+    "native.renCrv",
+    "native.sbtcCrv",
+    "native.tbtcCrv",
+    "native.sushiWbtcEth",
+    "harvest.renCrv",
+    "yearn.wbtc",
+]

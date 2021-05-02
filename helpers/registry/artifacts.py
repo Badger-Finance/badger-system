@@ -83,4 +83,3 @@ artifacts = DotMap(
     multicall=DotMap(multicall={"abi": Multicall}),
     wbtc=DotMap(wbtc={"abi": wbtc}),
 )
-

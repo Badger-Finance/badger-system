@@ -14,6 +14,7 @@ merkle_bucket = "badger-merkle-proofs"
 rewards_bucket = "badger-json"
 analytics_bucket = "badger-analytics"
 
+
 def download_latest_tree():
 
     s3 = boto3.client(
@@ -51,6 +52,7 @@ def download_tree(fileName):
     s3_clientdata = s3_clientobj["Body"].read().decode("utf-8")
 
     return s3_clientdata
+
 
 def download_past_trees(number):
     trees = []
@@ -102,6 +104,7 @@ def upload(fileName, bucket="badger-json", publish=True):
             "✅ Uploaded file to s3://" + target["bucket"] + "/" + target["key"]
         )
 
+
 def upload_boosts(test):
     fileName = "badger-boosts.json"
     console.log("Uploading boosts")
@@ -109,4 +112,4 @@ def upload_boosts(test):
         bucket = "badger-staging-merkle-proofs"
     else:
         bucket = "badger-merkle-proofs"
-    s3.upload_file(fileName,bucket,fileName)
+    s3.upload_file(fileName, bucket, fileName)

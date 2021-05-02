@@ -13,6 +13,7 @@ console = Console()
 
 gas_strategies.set_default(gas_strategies.exponentialScaling)
 
+
 def approve_root():
     badger = connect_badger(badger_config.prod_json, load_guardian=True)
     (currentRewards, startBlock, endBlock) = get_last_proposed_cycle(badger)
@@ -40,4 +41,3 @@ def main():
             console.print("[red]Error[/red]", e)
         finally:
             time.sleep(10 * 60)
-

@@ -7,9 +7,7 @@ from .BaseAction import BaseAction
 
 class RebaseAction(BaseAction):
     def __init__(
-        self,
-        snap: SnapshotManager,
-        user: Any,
+        self, snap: SnapshotManager, user: Any,
     ):
         self.snap = snap
         self.user = user
@@ -17,7 +15,7 @@ class RebaseAction(BaseAction):
     def run(self):
         rebaseValue = random.random() * random.randint(1, 10)
         # Rebase values are expected to have 18 decimals of precision.
-        self.snap.rebase(rebaseValue * 10**18, {"from": self.user})
+        self.snap.rebase(rebaseValue * 10 ** 18, {"from": self.user})
 
 
 class DiggActor:
@@ -26,7 +24,7 @@ class DiggActor:
         self.user = user
 
     def generateAction(self) -> BaseAction:
-        '''
+        """
         Only produces rebase action.
-        '''
+        """
         return RebaseAction(self.snap, self.user)

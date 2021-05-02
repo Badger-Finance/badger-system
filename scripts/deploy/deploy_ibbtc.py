@@ -7,6 +7,7 @@ from helpers.registry import registry
 
 sleep_between_tx = 1
 
+
 def main():
 
     badger = connect_badger("deploy-final.json")
@@ -27,34 +28,32 @@ def main():
         params.want = sushiswap.getPair(registry.tokens.ibbtc, registry.tokens.wbtc)
     else:
         params.want = sushiswap.createPair(
-            registry.tokens.ibbtc,
-            registry.tokens.wbtc,
-            deployer,
+            registry.tokens.ibbtc, registry.tokens.wbtc, deployer,
         )
 
     # Setup sushi reward allocations (ONLY DO THIS ONCE).
     params.pid = sushiswap.add_chef_rewards(params.want)
 
     vault = badger.deploy_sett(
-	key,
-	params.want,
-	controller,
-	governance=governance,
-	strategist=strategist,
-	keeper=keeper,
-	guardian=guardian,
+        key,
+        params.want,
+        controller,
+        governance=governance,
+        strategist=strategist,
+        keeper=keeper,
+        guardian=guardian,
     )
     time.sleep(sleep_between_tx)
 
     strategy = badger.deploy_strategy(
-	key,
-	strategyName,
-	controller,
-	params,
-	governance=governance,
-	strategist=strategist,
-	keeper=keeper,
-	guardian=guardian,
+        key,
+        strategyName,
+        controller,
+        params,
+        governance=governance,
+        strategist=strategist,
+        keeper=keeper,
+        guardian=guardian,
     )
     time.sleep(sleep_between_tx)
 

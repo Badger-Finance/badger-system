@@ -8,10 +8,16 @@ from config.badger_config import (
 )
 
 
-def deploy_bridge_minimal(deployer, devProxyAdmin, test=False, publish_source=False) -> BridgeSystem:
-    bridge = BridgeSystem(deployer, devProxyAdmin, bridge_config, publish_source=publish_source)
+def deploy_bridge_minimal(
+    deployer, devProxyAdmin, test=False, publish_source=False
+) -> BridgeSystem:
+    bridge = BridgeSystem(
+        deployer, devProxyAdmin, bridge_config, publish_source=publish_source
+    )
 
-    swap = SwapSystem(deployer, devProxyAdmin, swap_config, publish_source=publish_source)
+    swap = SwapSystem(
+        deployer, devProxyAdmin, swap_config, publish_source=publish_source
+    )
     swap.deploy_logic()
     swap.deploy_router()
     swap.deploy_curve_swap_strategy()
@@ -26,9 +32,7 @@ def deploy_bridge_minimal(deployer, devProxyAdmin, test=False, publish_source=Fa
 
     bridge.deploy_logic("BadgerBridgeAdapter", BadgerBridgeAdapter, test=test)
     bridge.deploy_adapter(
-        registry,
-        swap.router,
-        deployer,
+        registry, swap.router, deployer,
     )
     bridge.deploy_curve_token_wrapper()
     bridge.adapter.setCurveTokenWrapper(bridge.curveTokenWrapper, {"from": deployer})

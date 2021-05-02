@@ -9,7 +9,7 @@ from helpers.multicall import Multicall
 from helpers.registry import registry
 from helpers.sett.resolvers import (
     SettCoreResolver,
-    StrategyBadgerLpMetaFarmResolver, 
+    StrategyBadgerLpMetaFarmResolver,
     StrategyBasePancakeResolver,
     StrategyHarvestMetaFarmResolver,
     StrategySushiBadgerWbtcResolver,
@@ -131,11 +131,7 @@ class SnapshotManager:
         # multi.printCalls()
 
         data = multi()
-        self.snaps[snapBlock] = Snap(
-            data,
-            snapBlock,
-            [x[0] for x in entities.items()],
-        )
+        self.snaps[snapBlock] = Snap(data, snapBlock, [x[0] for x in entities.items()],)
 
         return self.snaps[snapBlock]
 

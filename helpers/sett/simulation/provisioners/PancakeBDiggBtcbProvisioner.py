@@ -2,6 +2,7 @@ from scripts.systems.pancakeswap_system import PancakeswapSystem
 from helpers.registry import registry
 from .BaseProvisioner import BaseProvisioner
 
+
 class PancakeBDiggBtcbProvisioner(BaseProvisioner):
     def __init__(self, manager):
         super().__init__(manager)
@@ -18,7 +19,5 @@ class PancakeBDiggBtcbProvisioner(BaseProvisioner):
             pancakeswap = PancakeswapSystem(version=2)
             # Generate lp tokens.
             pancakeswap.addMaxLiquidity(
-                registry.tokens.bDigg,
-                registry.tokens.btcb,
-                user,
+                registry.tokens.bDigg, registry.tokens.btcb, user,
             )
