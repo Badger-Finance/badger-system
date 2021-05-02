@@ -1,6 +1,4 @@
 import boto3
-import json
-import requests
 from brownie import *
 from rich.console import Console
 from config.env_config import env_config
@@ -17,7 +15,6 @@ rewards_bucket = "badger-json"
 analytics_bucket = "badger-analytics"
 
 def download_latest_tree():
-    from config.env_config import env_config
 
     s3 = boto3.client(
         "s3",
@@ -37,7 +34,6 @@ def download_latest_tree():
 
 
 def download_tree(fileName):
-    from config.env_config import env_config
 
     s3 = boto3.client(
         "s3",
@@ -63,7 +59,7 @@ def download_past_trees(number):
     versions = response["Versions"][:number]
     for version in versions:
         console.log(version["Key"], version["VersionId"])
-        ## yield version
+        # yield version
         s3_client_obj = s3.get_object(
             Bucket=merkle_bucket, Key=version["Key"], VersionId=version["VersionId"]
         )
@@ -72,7 +68,6 @@ def download_past_trees(number):
 
 
 def upload(fileName, bucket="badger-json", publish=True):
-    from config.env_config import env_config
     if not publish:
         upload_targets = [
             {

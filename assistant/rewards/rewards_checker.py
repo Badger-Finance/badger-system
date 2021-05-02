@@ -9,10 +9,8 @@ from brownie import *
 from rich.console import Console
 from assistant.rewards.aws_utils import upload
 import json
-import brownie
-from config.badger_config import badger_config, globalStartTime
 from helpers.utils import val
-from helpers.constants import BADGER,DIGG,FARM,XSUSHI
+from helpers.constants import BADGER, DIGG, FARM , XSUSHI
 console = Console()
 
 

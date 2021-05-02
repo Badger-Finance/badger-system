@@ -7,7 +7,7 @@ from rich.console import Console
 from tqdm import tqdm
 from assistant.rewards.boost import badger_boost
 from assistant.rewards.twap import digg_btc_twap,calculate_digg_allocation
-from assistant.rewards.aws_utils import download_tree, download_latest_tree, upload,upload_boosts
+from assistant.rewards.aws_utils import download_latest_tree, upload
 from assistant.rewards.calc_stakes import calc_geyser_stakes
 from assistant.rewards.calc_snapshot import calc_snapshot
 from assistant.rewards.meta_rewards.harvest import calc_farm_rewards

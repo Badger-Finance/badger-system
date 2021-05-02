@@ -1,8 +1,7 @@
-from tabulate import tabulate
 from rich.console import Console
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
-from helpers.utils import BADGER,DIGG
+from helpers.utils import BADGER, DIGG
 import numpy as np
 import json
 

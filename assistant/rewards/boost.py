@@ -1,12 +1,11 @@
 from brownie import *
-import math
 import json
 from rich.console import Console
 from assistant.rewards.aws_utils import upload_boosts
 from assistant.subgraph.client import (
     fetch_wallet_balances,
 )
-from collections import Counter, OrderedDict
+from collections import OrderedDict
 from assistant.rewards.rewards_utils import (
     combine_balances,
     calculate_sett_balances
