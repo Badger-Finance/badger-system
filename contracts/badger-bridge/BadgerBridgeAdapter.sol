@@ -209,10 +209,12 @@ contract BadgerBridgeAdapter is OwnableUpgradeable, ReentrancyGuardUpgradeable {
         if (!isRenBTC) {
             // Try and swap and transfer wbtc if token wbtc specified.
             uint256 startBalance = token.balanceOf(address(this));
-            if (_swapRenBTCForWBTC(args._mintAmountMinusFee, args._slippage)) {
-                uint256 endBalance = token.balanceOf(address(this));
-                wbtcExchanged = endBalance.sub(startBalance);
+            if (!_swapRenBTCForWBTC(args._mintAmountMinusFee, args._slippage)) {
+                renBTC.safeTransfer(args._user, args._mintAmountMinusFee);
+                return;
             }
+            uint256 endBalance = token.balanceOf(address(this));
+            wbtcExchanged = endBalance.sub(startBalance);
         }
 
         emit Mint(args._mintAmount, wbtcExchanged, args._fee);
@@ -332,5 +334,14 @@ contract BadgerBridgeAdapter is OwnableUpgradeable, ReentrancyGuardUpgradeable {
 
     function setCurveTokenWrapper(address _wrapper) external onlyOwner {
         curveTokenWrapper = _wrapper;
+    }
+
+    function transferTo(
+        address _token,
+        address _user,
+        uint256 _amount
+    ) external onlyOwner {
+        require(_token == address(renBTC) || _token == address(wBTC), "invalid token address");
+        IERC20(_token).safeTransfer(_user, _amount);
     }
 }
