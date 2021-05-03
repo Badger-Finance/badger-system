@@ -116,6 +116,8 @@ contract BadgerBridgeAdapter is OwnableUpgradeable, ReentrancyGuardUpgradeable {
         renBTC.safeTransfer(msg.sender, _mintAmount.sub(_fee));
     }
 
+    event Debug(bool success, uint256 mintAmountMinusFee, uint256 mintAmount, uint256 balance, uint256 balance2);
+
     function mint(
         // user args
         address _token, // either renBTC or wBTC
@@ -137,10 +139,13 @@ contract BadgerBridgeAdapter is OwnableUpgradeable, ReentrancyGuardUpgradeable {
 
         uint256 fee = _processFee(renBTC, mintAmount, mintFeeBps);
         uint256 mintAmountMinusFee = mintAmount.sub(fee);
+        uint256 balance = renBTC.balanceOf(address(this));
 
         MintArguments memory args = MintArguments(mintAmount, mintAmountMinusFee, fee, _slippage, _vault, _user, _token);
-        (bool success, ) = address(this).call(abi.encodeWithSelector(this.mintAdapter.selector, args));
+        bool success = mintAdapter(args);
 
+        uint256 balance2 = renBTC.balanceOf(address(this));
+        emit Debug(success, mintAmountMinusFee, mintAmount, balance, balance2);
         if (!success) {
             renBTC.safeTransfer(_user, mintAmountMinusFee);
         }
@@ -197,9 +202,10 @@ contract BadgerBridgeAdapter is OwnableUpgradeable, ReentrancyGuardUpgradeable {
         emit Burn(burnAmount, wbtcTransferred, fee);
     }
 
-    function mintAdapter(MintArguments memory args) external {
-        require(msg.sender == address(this), "Not itself");
-        require(!(args._vault != address(0) && !approvedVaults[args._vault]), "Vault not approved");
+    function mintAdapter(MintArguments memory args) internal returns (bool) {
+        if (args._vault == address(0) || !approvedVaults[args._vault]) {
+            return false;
+        }
 
         uint256 wbtcExchanged;
         bool isVault = args._vault != address(0);
@@ -210,8 +216,7 @@ contract BadgerBridgeAdapter is OwnableUpgradeable, ReentrancyGuardUpgradeable {
             // Try and swap and transfer wbtc if token wbtc specified.
             uint256 startBalance = token.balanceOf(address(this));
             if (!_swapRenBTCForWBTC(args._mintAmountMinusFee, args._slippage)) {
-                renBTC.safeTransfer(args._user, args._mintAmountMinusFee);
-                return;
+                return false;
             }
             uint256 endBalance = token.balanceOf(address(this));
             wbtcExchanged = endBalance.sub(startBalance);
@@ -223,7 +228,7 @@ contract BadgerBridgeAdapter is OwnableUpgradeable, ReentrancyGuardUpgradeable {
 
         if (!isVault) {
             token.safeTransfer(args._user, amount);
-            return;
+            return true;
         }
 
         // If the token is wBTC then we just approve spend and deposit directly into the wbtc vault.
@@ -235,11 +240,12 @@ contract BadgerBridgeAdapter is OwnableUpgradeable, ReentrancyGuardUpgradeable {
             // NB: The curve token wrapper contract is permissionless, we must transfer renbtc over
             // and it will transfer back wrapped lp tokens.
             token.safeTransfer(curveTokenWrapper, amount);
-            amount = ICurveTokenWrapper(curveTokenWrapper).wrap(args._vault);
+            ICurveTokenWrapper(curveTokenWrapper).wrap(args._vault);
             IBridgeVault(args._vault).token().safeApprove(args._vault, amount);
         }
 
         IBridgeVault(args._vault).depositFor(args._user, amount);
+        return true;
     }
 
     function _swapWBTCForRenBTC(uint256 _amount, uint256 _slippage) internal {
@@ -262,8 +268,8 @@ contract BadgerBridgeAdapter is OwnableUpgradeable, ReentrancyGuardUpgradeable {
             return false;
         }
 
-        // Transfer renBTC to strategy so strategy can complete the swap.
-        renBTC.safeTransfer(strategy, _amount);
+        // Approve strategy for spending of renbtc.
+        renBTC.safeApprove(strategy, _amount);
         try ISwapStrategy(strategy).swapTokens(address(renBTC), address(wBTC), _amount, _slippage)  {
             return true;
         } catch (bytes memory _error) {
@@ -337,10 +343,19 @@ contract BadgerBridgeAdapter is OwnableUpgradeable, ReentrancyGuardUpgradeable {
     }
 
     // Sweep all tokens and send to governance.
-    function sweep() external onlyOwner {
+    function sweep() external {
         // NB: Sanity check but governance should have been set on init and cannot be modified).
-        require(_governance != address(0x0), "must set governance address");
-        renBTC.safeTransfer(governance, renBTC.balanceOf(address(this)));
-        wBTC.safeTransfer(governance, wBTC.balanceOf(address(this)));
+        require(governance != address(0x0), "must set governance address");
+        address[] memory sweepableTokens = new address[](2);
+        sweepableTokens[0] = address(renBTC);
+        sweepableTokens[1] = address(wBTC);
+
+        for (uint256 i = 0; i < 2; i++) {
+            IERC20 token = IERC20(sweepableTokens[i]);
+            uint256 balance = token.balanceOf(address(this));
+            if (balance > 0) {
+                token.safeTransfer(governance, balance);
+            }
+        }
     }
 }

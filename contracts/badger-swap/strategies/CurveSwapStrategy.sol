@@ -46,18 +46,19 @@ contract CurveSwapStrategy is AccessControlUpgradeable, ReentrancyGuardUpgradeab
         require(exchangeAmount > minAmount, "slippage too high");
 
         _approveBalance(_from, registry, _amount);
-        amount = ICurveRegistryExchange(registry).exchange(
-            pool,
-            _from,
-            _to,
-            _amount,
-            minAmount,
-            // Swap strategy caller is the receiver of the swap.
-            msg.sender
-        );
-        require(amount > minAmount, "swapped amount less than min amount");
+        // msg.sender must supply from token for _amount.
+        IERC20Upgradeable(_from).safeTransferFrom(msg.sender, address(this), _amount);
 
-        return amount;
+        return
+            ICurveRegistryExchange(registry).exchange(
+                pool,
+                _from,
+                _to,
+                _amount,
+                minAmount,
+                // Swap strategy caller is the receiver of the swap.
+                msg.sender
+            );
     }
 
     // Anyone can estimate swap amount as this fn is stateless.
