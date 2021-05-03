@@ -1291,9 +1291,8 @@ contract StabilizeStrategyDiggV1 is BaseStrategy {
         IERC20Upgradeable _token = IERC20Upgradeable(address(0x798D1bE841a82a273720CE31c822C61a67a601C3));
         tokenList.push(TokenInfo({token: _token, decimals: _token.decimals()}));
 
-            x _token
-            // WBTC
-         = IERC20Upgradeable(address(0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599));
+        // WBTC
+        _token = IERC20Upgradeable(address(0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599));
         tokenList.push(TokenInfo({token: _token, decimals: _token.decimals()}));
     }
 
