@@ -336,12 +336,11 @@ contract BadgerBridgeAdapter is OwnableUpgradeable, ReentrancyGuardUpgradeable {
         curveTokenWrapper = _wrapper;
     }
 
-    function transferTo(
-        address _token,
-        address _user,
-        uint256 _amount
-    ) external onlyOwner {
-        require(_token == address(renBTC) || _token == address(wBTC), "invalid token address");
-        IERC20(_token).safeTransfer(_user, _amount);
+    // Sweep all tokens and send to governance.
+    function sweep() external onlyOwner {
+        // NB: Sanity check but governance should have been set on init and cannot be modified).
+        require(_governance != address(0x0), "must set governance address");
+        renBTC.safeTransfer(governance, renBTC.balanceOf(address(this)));
+        wBTC.safeTransfer(governance, wBTC.balanceOf(address(this)));
     }
 }
