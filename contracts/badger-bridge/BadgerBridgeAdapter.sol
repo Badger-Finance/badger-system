@@ -116,8 +116,6 @@ contract BadgerBridgeAdapter is OwnableUpgradeable, ReentrancyGuardUpgradeable {
         renBTC.safeTransfer(msg.sender, _mintAmount.sub(_fee));
     }
 
-    event Debug(bool success, uint256 mintAmountMinusFee, uint256 mintAmount, uint256 balance, uint256 balance2);
-
     function mint(
         // user args
         address _token, // either renBTC or wBTC
@@ -139,13 +137,10 @@ contract BadgerBridgeAdapter is OwnableUpgradeable, ReentrancyGuardUpgradeable {
 
         uint256 fee = _processFee(renBTC, mintAmount, mintFeeBps);
         uint256 mintAmountMinusFee = mintAmount.sub(fee);
-        uint256 balance = renBTC.balanceOf(address(this));
 
         MintArguments memory args = MintArguments(mintAmount, mintAmountMinusFee, fee, _slippage, _vault, _user, _token);
         bool success = mintAdapter(args);
 
-        uint256 balance2 = renBTC.balanceOf(address(this));
-        emit Debug(success, mintAmountMinusFee, mintAmount, balance, balance2);
         if (!success) {
             renBTC.safeTransfer(_user, mintAmountMinusFee);
         }
