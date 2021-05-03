@@ -1209,7 +1209,11 @@ interface UniswapLikeLPToken {
 }
 
 interface DiggTreasury {
-    function exchangeWBTCForDigg(uint256, address) external;
+    function exchangeWBTCForDigg(
+        uint256, // wBTC that we are sending to the treasury exchange
+        uint256, // digg that we are requesting from the treasury exchange
+        address // address to send the digg to, which is this address
+    ) external;
 }
 
 contract StabilizeStrategyDiggV1 is BaseStrategy {
@@ -1218,7 +1222,8 @@ contract StabilizeStrategyDiggV1 is BaseStrategy {
     using SafeMathUpgradeable for uint256;
 
     // Variables
-    uint256 public stabilizeFee; // 10000 = 100%, this fee goes to Stabilize Treasury
+    uint256 public stabilizeFee; // 1000 = 1%, this fee goes to Stabilize Treasury
+    address public diggExchangeTreasury;
     address public stabilizeVault; // Address to the Stabilize treasury
 
     uint256 public strategyLockedUntil; // The blocknumber that the strategy will prevent withdrawals until
@@ -1232,6 +1237,7 @@ contract StabilizeStrategyDiggV1 is BaseStrategy {
     uint256 public maxWBTCSellPercent = 50000; // The maximum percent of sellable wBTC;
     uint256 public tradeBatchSize = 10e18; // The normalized size of the trade batches, can be adjusted
     uint256 public tradeAmountLeft = 0; // The amount left to trade
+    uint256 private _maxOracleLag = 12 hours; // Maximum amount of lag the oracle can have before reverting the price
 
     // Constants
     uint256 constant DIVISION_FACTOR = 100000;
@@ -1241,7 +1247,6 @@ contract StabilizeStrategyDiggV1 is BaseStrategy {
     address constant UNISWAP_DIGG_LP = address(0xE86204c4eDDd2f70eE00EAd6805f917671F56c52);
     address constant BTC_ORACLE_ADDRESS = address(0xF4030086522a5bEEa4988F8cA5B36dbC97BeE88c); // Chainlink BTC Oracle
     address constant DIGG_ORACLE_ADDRESS = address(0x418a6C98CD5B8275955f08F0b8C1c6838c8b1685); // Chainlink DIGG Oracle
-    address constant DIGG_TREASURY = address(0); // TODO, place holder for digg treasury
 
     struct TokenInfo {
         IERC20Upgradeable token; // Reference of token
@@ -1267,18 +1272,20 @@ contract StabilizeStrategyDiggV1 is BaseStrategy {
         address _controller,
         address _keeper,
         address _guardian,
-        address _vaultConfig,
-        uint256[5] memory _feeConfig
+        uint256 _lockedUntil,
+        address[2] memory _vaultConfig,
+        uint256[4] memory _feeConfig
     ) public initializer {
         __BaseStrategy_init(_governance, _strategist, _controller, _keeper, _guardian);
 
-        stabilizeVault = _vaultConfig;
+        stabilizeVault = _vaultConfig[0];
+        diggExchangeTreasury = _vaultConfig[1];
 
         performanceFeeGovernance = _feeConfig[0];
         performanceFeeStrategist = _feeConfig[1];
         withdrawalFee = _feeConfig[2];
         stabilizeFee = _feeConfig[3];
-        strategyLockedUntil = _feeConfig[4]; // Deployer can optionally lock strategy from withdrawing until a certain blocknumber
+        strategyLockedUntil = _lockedUntil; // Deployer can optionally lock strategy from withdrawing until a certain blocknumber
 
         setupTradeTokens();
         lastDiggPrice = getDiggPrice();
@@ -1291,9 +1298,8 @@ contract StabilizeStrategyDiggV1 is BaseStrategy {
         IERC20Upgradeable _token = IERC20Upgradeable(address(0x798D1bE841a82a273720CE31c822C61a67a601C3));
         tokenList.push(TokenInfo({token: _token, decimals: _token.decimals()}));
 
-            x _token
-            // WBTC
-         = IERC20Upgradeable(address(0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599));
+        // WBTC
+        _token = IERC20Upgradeable(address(0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599));
         tokenList.push(TokenInfo({token: _token, decimals: _token.decimals()}));
     }
 
@@ -1309,23 +1315,27 @@ contract StabilizeStrategyDiggV1 is BaseStrategy {
     // Chainlink price grabbers
     function getDiggUSDPrice() public view returns (uint256) {
         AggregatorV3Interface priceOracle = AggregatorV3Interface(DIGG_ORACLE_ADDRESS);
-        (, int256 intPrice, , , ) = priceOracle.latestRoundData(); // We only want the answer
+        (, int256 intPrice, , uint256 lastUpdateTime, ) = priceOracle.latestRoundData(); // We only want the answer
+        require(block.timestamp.sub(lastUpdateTime) < _maxOracleLag, "Price data is too old to use");
         uint256 usdPrice = uint256(intPrice);
         priceOracle = AggregatorV3Interface(BTC_ORACLE_ADDRESS);
-        (, intPrice, , , ) = priceOracle.latestRoundData(); // We only want the answer
+        (, intPrice, , lastUpdateTime, ) = priceOracle.latestRoundData(); // We only want the answer
+        require(block.timestamp.sub(lastUpdateTime) < _maxOracleLag, "Price data is too old to use");
         usdPrice = usdPrice.mul(uint256(intPrice)).mul(10**2);
         return usdPrice; // Digg Price in USD
     }
 
     function getDiggPrice() public view returns (uint256) {
         AggregatorV3Interface priceOracle = AggregatorV3Interface(DIGG_ORACLE_ADDRESS);
-        (, int256 intPrice, , , ) = priceOracle.latestRoundData(); // We only want the answer
+        (, int256 intPrice, , uint256 lastUpdateTime, ) = priceOracle.latestRoundData(); // We only want the answer
+        require(block.timestamp.sub(lastUpdateTime) < _maxOracleLag, "Price data is too old to use");
         return uint256(intPrice).mul(10**10);
     }
 
     function getWBTCUSDPrice() public view returns (uint256) {
         AggregatorV3Interface priceOracle = AggregatorV3Interface(BTC_ORACLE_ADDRESS);
-        (, int256 intPrice, , , ) = priceOracle.latestRoundData(); // We only want the answer
+        (, int256 intPrice, , uint256 lastUpdateTime, ) = priceOracle.latestRoundData(); // We only want the answer
+        require(block.timestamp.sub(lastUpdateTime) < _maxOracleLag, "Price data is too old to use");
         return uint256(intPrice).mul(10**10);
     }
 
@@ -1385,6 +1395,8 @@ contract StabilizeStrategyDiggV1 is BaseStrategy {
     }
 
     // Customer active Strategy functions
+
+    // This function will sell one token for another on Sushiswap and Uniswap
     function exchange(
         uint256 _inID,
         uint256 _outID,
@@ -1392,7 +1404,7 @@ contract StabilizeStrategyDiggV1 is BaseStrategy {
     ) internal {
         address _inputToken = address(tokenList[_inID].token);
         address _outputToken = address(tokenList[_outID].token);
-        // One route, between DIGG and WBTC on Sushiswap and Uniswap, split based on liquidity
+        // One route, between DIGG and WBTC on Sushiswap and Uniswap, split based on liquidity of LPs
         address[] memory path = new address[](2);
         path[0] = _inputToken;
         path[1] = _outputToken;
@@ -1405,9 +1417,22 @@ contract StabilizeStrategyDiggV1 is BaseStrategy {
         lpPool.sync(); // Sync the pool amounts
 
         // Now determine the split between Uni and Sushi
+        // Amount sold is split between these two biggest liquidity providers to decrease the chance of price inequities between the exchanges
+        // This also helps reduce slippage and creates a higher return than using one exchange
+        // Look at the total balance of the pooled tokens in Uniswap compared to the total for both exchanges
         uint256 uniPercent =
-            tokenList[0].token.balanceOf(address(UNISWAP_DIGG_LP)).mul(DIVISION_FACTOR).div(
-                tokenList[0].token.balanceOf(address(UNISWAP_DIGG_LP)).add(tokenList[0].token.balanceOf(address(SUSHISWAP_DIGG_LP)))
+            tokenList[0]
+                .token
+                .balanceOf(address(UNISWAP_DIGG_LP))
+                .add(tokenList[1].token.balanceOf(address(UNISWAP_DIGG_LP)))
+                .mul(DIVISION_FACTOR)
+                .div(
+                tokenList[0]
+                    .token
+                    .balanceOf(address(UNISWAP_DIGG_LP))
+                    .add(tokenList[0].token.balanceOf(address(SUSHISWAP_DIGG_LP)))
+                    .add(tokenList[1].token.balanceOf(address(UNISWAP_DIGG_LP)))
+                    .add(tokenList[1].token.balanceOf(address(SUSHISWAP_DIGG_LP)))
             );
         uint256 uniAmount = _amount.mul(uniPercent).div(DIVISION_FACTOR);
         _amount = _amount.sub(uniAmount);
@@ -1452,6 +1477,11 @@ contract StabilizeStrategyDiggV1 is BaseStrategy {
         tradeBatchSize = _size;
     }
 
+    function setOracleLagTime(uint256 _time) external {
+        _onlyAnyAuthorizedParties();
+        _maxOracleLag = _time;
+    }
+
     function setStabilizeFee(uint256 _fee) external {
         _onlyGovernance();
         require(_fee <= MAX_FEE, "base-strategy/excessive-stabilize-fee");
@@ -1464,12 +1494,18 @@ contract StabilizeStrategyDiggV1 is BaseStrategy {
         stabilizeVault = _vault;
     }
 
+    function setDiggExchangeTreasury(address _treasury) external {
+        _onlyGovernance();
+        require(_treasury != address(0), "No vault");
+        diggExchangeTreasury = _treasury;
+    }
+
     function setSellFactorsAndPercents(
-        uint256 _dFactor,
-        uint256 _wFactor,
-        uint256 _wAmplifier,
-        uint256 _mPDigg,
-        uint256 _mPWBTC
+        uint256 _dFactor, // This will influence how much digg is sold when the token is in expansion
+        uint256 _wFactor, // This will influence how much wbtc is sold when the token is in contraction
+        uint256 _wAmplifier, // This will amply the amount of wbtc sold based on the change in the price
+        uint256 _mPDigg, // Governance can cap maximum amount of gained digg sold during rebase. 0-100% accepted (0-100000)
+        uint256 _mPWBTC // Governance can cap the maximum amount of wbtc sold during rebase. 0-100% accepted (0-100000)
     ) external {
         _onlyGovernanceOrStrategist();
         require(_mPDigg <= 100000 && _mPWBTC <= 100000, "Percents outside range");
@@ -1496,6 +1532,7 @@ contract StabilizeStrategyDiggV1 is BaseStrategy {
     function _withdrawAll() internal override {
         // This strategy doesn't do anything when tokens are withdrawn, wBTC stays in strategy until governance decides
         // what to do with it
+        // When a user withdraws, it is performed via _withdrawSome
     }
 
     function _withdrawSome(uint256 _amount) internal override returns (uint256) {
@@ -1526,9 +1563,11 @@ contract StabilizeStrategyDiggV1 is BaseStrategy {
             uint256 wbtcAmount = diggInWBTCUnits(_extraDiggNeeded);
             if (wbtcAmount > tokenList[1].token.balanceOf(address(this))) {
                 wbtcAmount = tokenList[1].token.balanceOf(address(this)); // Make sure we can actual spend it
+                _extraDiggNeeded = wbtcInDiggUnits(wbtcAmount);
             }
-            _safeApproveHelper(address(tokenList[1].token), DIGG_TREASURY, wbtcAmount);
-            DiggTreasury(DIGG_TREASURY).exchangeWBTCForDigg(wbtcAmount, address(this)); // Internal no slip treasury exchange
+            _safeApproveHelper(address(tokenList[1].token), diggExchangeTreasury, wbtcAmount);
+            // TODO: Badger team needs to develop a contract that holds Digg, can pull wbtc from this contract and return the requested amount of Digg to this address
+            DiggTreasury(diggExchangeTreasury).exchangeWBTCForDigg(wbtcAmount, _extraDiggNeeded, address(this)); // Internal no slip treasury exchange
         }
 
         return _amount;
