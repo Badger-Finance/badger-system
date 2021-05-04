@@ -1,5 +1,6 @@
 import time
 from brownie import *
+from decimal import Decimal
 from dotenv import load_dotenv
 from rich.console import Console
 from tabulate import tabulate
@@ -138,11 +139,11 @@ def snapSharesMatchForToken(snap, otherSnap, tokenKey):
     return True
 
 def send_transaction_to_discord(
-    tx, 
-    strategy_name,
-    amount=None, 
-    success=True
-    ):
+    tx: Transaction, 
+    strategy_name: str,
+    amount: Decimal = None, 
+    success: bool = True
+):
     webhook = Webhook.from_url(os.getenv("DISCORD_WEBHOOK_URL"), adapter=RequestsWebhookAdapter())
     etherscan_url = f"https://etherscan.io/tx/{tx.txid}"
     if success:

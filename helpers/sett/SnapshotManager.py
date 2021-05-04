@@ -2,6 +2,8 @@ from brownie import (
     Controller,
     interface,
     chain,
+    Transaction,
+    Contract
 )
 from tabulate import tabulate
 from rich.console import Console
@@ -28,6 +30,7 @@ from helpers.utils import (
 from scripts.systems.badger_system import BadgerSystem
 from datetime import datetime
 import time
+from decimal import Decimal
 
 console = Console()
 
@@ -178,7 +181,7 @@ class SnapshotManager:
         if name == "StrategyPancakeLpOptimizer":
             return StrategyBasePancakeResolver(self)
 
-    def settTend(self, overrides, confirm=True):
+    def settTend(self, overrides: dict, confirm: bool = True) -> Transaction:
         user = overrides["from"].address
         trackedUsers = {"user": user}
         before = self.snap(trackedUsers)
@@ -188,7 +191,12 @@ class SnapshotManager:
             self.resolver.confirm_tend(before, after, tx)
         return tx
 
-    def settTendViaManager(self, strategy, overrides, confirm=True):
+    def settTendViaManager(
+        self, 
+        strategy: Contract, 
+        overrides: dict, 
+        confirm: bool = True
+    ) -> Transaction:
         user = overrides["from"].address
         trackedUsers = {"user": user}
         before = self.snap(trackedUsers)
@@ -198,15 +206,31 @@ class SnapshotManager:
             self.resolver.confirm_tend(before, after, tx)
         return tx
         
-    def settTendAndProcessTx(self, overrides, confirm=True, tended=None):
+    def settTendAndProcessTx(
+        self, 
+        overrides: dict, 
+        confirm: bool = True, 
+        tended: Decimal = None
+    ):
         tx = self.settTend(overrides, confirm)
         self.confirmTransaction(tx, tended)
     
-    def settTendViaManagerAndProcessTx(self, strategy, overrides, confirm=True, tended=None):
+    def settTendViaManagerAndProcessTx(
+        self, 
+        strategy: Contract, 
+        overrides: dict, 
+        confirm: bool = True, 
+        tended: Decimal = None
+    ):
         tx = self.settTendViaManager(strategy, overrides, confirm)
         self.confirmTransaction(tx, tended)
 
-    def settHarvestViaManager(self, strategy, overrides, confirm=True):
+    def settHarvestViaManager(
+        self, 
+        strategy: Contract, 
+        overrides: dict, 
+        confirm: bool = True
+    ) -> Transaction:
         user = overrides["from"].address
         trackedUsers = {"user": user}
         before = self.snap(trackedUsers)
@@ -216,7 +240,7 @@ class SnapshotManager:
             self.resolver.confirm_harvest(before, after, tx)
         return tx
 
-    def settHarvest(self, overrides, confirm=True):
+    def settHarvest(self, overrides: dict, confirm: bool = True) -> Transaction:
         user = overrides["from"].address
         trackedUsers = {"user": user}
         before = self.snap(trackedUsers)
@@ -226,15 +250,26 @@ class SnapshotManager:
             self.resolver.confirm_harvest(before, after, tx)
         return tx
     
-    def settHarvestViaManagerAndProcessTx(self, strategy, overrides, confirm=True, harvested=None):
+    def settHarvestViaManagerAndProcessTx(
+        self, 
+        strategy: Contract, 
+        overrides: dict, 
+        confirm: bool = True, 
+        harvested: Decimal = None
+    ):
         tx = self.settHarvestViaManager(strategy, overrides, confirm)
         self.confirmTransaction(tx, harvested)
     
-    def settHarvestAndProcessTx(self, overrides, confirm=True, harvested=None):
+    def settHarvestAndProcessTx(
+        self, 
+        overrides: dict, 
+        confirm: bool = True, 
+        harvested: Decimal = None
+    ):
         tx = self.settHarvest(overrides, confirm)
         self.confirmTransaction(tx, harvested)
     
-    def confirmTransaction(self, tx, amount):
+    def confirmTransaction(self, tx: Transaction, amount: Decimal):
         success = True
         if tx.error() == None and tx.revert_msg == None:
             console.print(f"Transaction succeded!")
