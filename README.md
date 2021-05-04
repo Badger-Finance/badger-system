@@ -37,7 +37,7 @@ To install NodeJS and yarn on UNIX based systems, it is recommended to use the f
 
 ```
 curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.38.0/install.sh | bash
-nvm install v14.16.3
+nvm install v14.16.1
 npm install -g yarn
 ```
 
