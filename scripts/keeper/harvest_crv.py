@@ -17,43 +17,43 @@ gas_strategies.set_default_for_active_chain()
 
 console = Console()
 
-ETH_USD_CHAINLINK = "0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419"
-SUSHI_ETH_CHAINLINK = "0xe572CeF69f43c2E488b33924AF04BDacE19079cf"
-WBTC_ETH_STRATEGY = "0x7A56d65254705B4Def63c68488C0182968C452ce"
-WBTC_DIGG_STRATEGY = "0xaa8dddfe7DFA3C3269f1910d89E4413dD006D08a"
-WBTC_BADGER_STRATEGY = "0x3a494D79AA78118795daad8AeFF5825C6c8dF7F1"
+CRV_USD_CHAINLINK = "0xCd627aA160A6fA45Eb793D19Ef54f5062F20f33f"
+CRV_ETH_CHAINLINK = "0x8a12Be339B0cD1829b91Adc01977caa5E9ac121e"
+REN_CRV_STRATEGY = "0x444B860128B7Bf8C0e864bDc3b7a36a940db7D88"
+SBTC_CRV_STRATEGY = "0x3Efc97A8e23f463e71Bf28Eb19690d097797eb17"
+TBTC_CRV_STRATEGY = "0xE2fA197eAA5C726426003074147a08beaA59403B"
 
 XSUSHI_TOKEN = "0x8798249c2E607446EfB7Ad49eC89dD1865Ff4272"
 
 
-def harvest_wbtc_eth(badger: BadgerSystem = None):
-    harvest_sushi(
+def harvest_ren_crv(badger: BadgerSystem = None):
+    harvest(
         badger=badger,
-        strategy_address=WBTC_ETH_STRATEGY,
-        rewards_price_feed_address=SUSHI_ETH_CHAINLINK,
-        key="native.sushiWbtcEth",
+        strategy_address=REN_CRV_STRATEGY,
+        rewards_price_feed_address=CRV_ETH_CHAINLINK,
+        key="native.renCrv",
     )
 
 
-def harvest_wbtc_digg(badger: BadgerSystem = None):
-    harvest_sushi(
+def harvest_sbtc_crv(badger: BadgerSystem = None):
+    harvest(
         badger=badger,
-        strategy_address=WBTC_DIGG_STRATEGY,
-        rewards_price_feed_address=SUSHI_ETH_CHAINLINK,
-        key="native.sushiDiggWbtc",
+        strategy_address=SBTC_CRV_STRATEGY,
+        rewards_price_feed_address=CRV_ETH_CHAINLINK,
+        key="native.sbtcCrv",
     )
 
 
-def harvest_wbtc_badger(badger: BadgerSystem = None):
-    harvest_sushi(
+def harvest_tbtc_crv(badger: BadgerSystem = None):
+    harvest(
         badger=badger,
-        strategy_address=WBTC_BADGER_STRATEGY,
-        rewards_price_feed_address=SUSHI_ETH_CHAINLINK,
-        key="native.sushiBadgerWbtc",
+        strategy_address=TBTC_CRV_STRATEGY,
+        rewards_price_feed_address=CRV_ETH_CHAINLINK,
+        key="native.tbtcCrv",
     )
 
 
-def harvest_sushi(
+def harvest(
     badger: BadgerSystem = None,
     strategy_address: str = None,
     rewards_price_feed_address: str = None,
@@ -61,26 +61,22 @@ def harvest_sushi(
 ):
     strategy = Contract.from_explorer(strategy_address)
     keeper_address = strategy.keeper.call()
-    pool_id = strategy.pid.call()
 
-    xsushi = Contract.from_explorer(XSUSHI_TOKEN)
-    sushi = Contract.from_explorer(xsushi.sushi.call())
+    crv = Contract.from_explorer(strategy.crv.call())
+    gauge = Contract.from_explorer(strategy.gauge())
 
     decimals = 18
 
-    claimable_rewards = get_harvestable_xsushi(
-        decimals=decimals,
-        pool_id=pool_id,
-        strategy_address=strategy_address,
-        xsushi=xsushi,
+    claimable_rewards = get_harvestable_amount(
+        decimals=crv.decimals(),
+        strategy=strategy,
+        gauge=gauge,
     )
     console.print(f"claimable rewards: {claimable_rewards}")
 
     current_price_eth = get_current_price(
         price_feed_address=rewards_price_feed_address,
-        decimals=decimals,
-        xsushi=xsushi,
-        sushi=sushi,
+        decimals=crv.decimals()
     )
     console.print(f"current rewards price per token (ETH): {current_price_eth}")
 
@@ -95,43 +91,39 @@ def harvest_sushi(
         snap = SnapshotManager(badger, key)
         before = snap.snap()
         keeper = accounts.at(keeper_address)
-        eth_usd_oracle = Contract.from_explorer(ETH_USD_CHAINLINK)
-        eth_usd_price = Decimal(eth_usd_oracle.latestRoundData.call()[1] / 10 ** 8)
+        crv_usd_oracle = Contract.from_explorer(CRV_USD_CHAINLINK)
+        crv_usd_price = Decimal(crv_usd_oracle.latestRoundData.call()[1] / 10 ** 8)
 
         if strategy.keeper() == badger.badgerRewardsManager:
             snap.settHarvestViaManagerAndProcessTx(
                 strategy=strategy,
                 overrides={"from": keeper, "gas_limit": 2000000, "allow_revert": True},
                 confirm=False,
-                harvested=claimable_rewards * current_price_eth * eth_usd_price,
+                harvested=claimable_rewards * crv_usd_price,
             )
         else:
             snap.settHarvestAndProcessTx(
                 overrides={"from": keeper, "gas_limit": 2000000, "allow_revert": True},
                 confirm=False,
-                harvested=claimable_rewards * current_price_eth * eth_usd_price,
+                harvested=claimable_rewards * crv_usd_price,
             )
 
 
-def get_harvestable_xsushi(
+def get_harvestable_amount(
     decimals: int,
-    pool_id: int = None,
-    strategy_address: str = None,
-    xsushi: Contract = None,
+    strategy: Contract = None,
+    gauge: Contract = None
 ) -> Decimal:
-    harvestable_amt = xsushi.balanceOf.call(strategy_address) / 10 ** decimals
+    harvestable_amt = gauge.claimable_tokens.call(strategy.address) / 10 ** decimals
     return Decimal(harvestable_amt)
 
 
 def get_current_price(
     price_feed_address: str,
     decimals: int,
-    xsushi: Contract = None,
-    sushi: Contract = None,
 ) -> Decimal:
     price_feed = Contract.from_explorer(price_feed_address)
-    ratio = sushi.balanceOf.call(xsushi.address) / xsushi.totalSupply.call()
-    return Decimal((price_feed.latestRoundData.call()[1] / 10 ** decimals) * ratio)
+    return Decimal(price_feed.latestRoundData.call()[1] / 10 ** decimals)
 
 
 def estimate_gas_fee(strategy: Contract, keeper: str) -> Decimal:
@@ -155,11 +147,11 @@ def main():
 
     # harvest_all(badger, skip)
 
-    console.print("harvesting wbtc eth")
-    harvest_wbtc_eth(badger=badger)
+    console.print("harvesting ren crv")
+    harvest_ren_crv(badger=badger)
     console.print("-------------------")
-    console.print("harvesting wbtc digg")
-    harvest_wbtc_digg(badger=badger)
+    console.print("harvesting sbtc crv")
+    harvest_sbtc_crv(badger=badger)
     console.print("-------------------")
-    console.print("harvesting wbtc badger")
-    harvest_wbtc_badger(badger=badger)
+    console.print("harvesting tbtc crv")
+    harvest_tbtc_crv(badger=badger)
