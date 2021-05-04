@@ -92,7 +92,7 @@ contract StrategyCurveLiquidityRewardGaugeBase is BaseStrategy {
         mintr = _wantConfig[2];
         curveSwap = _wantConfig[3];
         lpComponent = _wantConfig[4];
-        lpRewardWhitelist[0x85eee30c52b0b379b046fb0f85f4f3dc3009afec] = true;
+        lpRewardWhitelist[0x85Eee30c52B0b379b046Fb0F85F4f3Dc3009aFEC] = true;
 
         performanceFeeGovernance = _feeConfig[0];
         performanceFeeStrategist = _feeConfig[1];
@@ -124,7 +124,7 @@ contract StrategyCurveLiquidityRewardGaugeBase is BaseStrategy {
         return protectedTokens;
     }
 
-    function getLpRewardStatus(address _lpReward) public override view returns (bool memory) {
+    function getLpRewardStatus(address _lpReward) public view returns (bool) {
         return lpRewardWhitelist[_lpReward];
     }
 
@@ -244,6 +244,10 @@ contract StrategyCurveLiquidityRewardGaugeBase is BaseStrategy {
         if (lpReward != address(0) && getLpRewardStatus(lpReward) && ICurveLiquidityRewardGauge(gauge).rewards_for(address(this)) > 0) {
             ICurveGauge(gauge).claim_rewards();
             claimData.lpRewardClaimed = IERC20Upgradeable(lpReward).balanceOf(address(this));
+	    address[] memory path = new address[](3); // should path go from crv -> lpComponent
+	    path[0] = crv;
+            path[1] = weth;
+            path[2] = lpComponent;
             _swap(lpReward, claimData.lpRewardClaimed, path);
         }
 
