@@ -1,8 +1,14 @@
 import time
 from brownie import *
+from decimal import Decimal
+from dotenv import load_dotenv
 from rich.console import Console
 from tabulate import tabulate
+import requests
+from discord import Webhook, RequestsWebhookAdapter, Embed
+import os
 console = Console()
+load_dotenv()
 
 # Assert approximate integer
 def approx(actual, expected, percentage_threshold):
@@ -131,3 +137,36 @@ def snapSharesMatchForToken(snap, otherSnap, tokenKey):
         if shares != otherShares:
             return False
     return True
+
+def send_transaction_to_discord(
+    tx: Transaction, 
+    strategy_name: str,
+    amount: Decimal = None, 
+    success: bool = True
+):
+    webhook = Webhook.from_url(os.getenv("DISCORD_WEBHOOK_URL"), adapter=RequestsWebhookAdapter())
+    etherscan_url = f"https://etherscan.io/tx/{tx.txid}"
+    if success:
+        embed = Embed(
+            title="**Keeper transaction SUCCESS**"
+        )
+    else:
+        embed = Embed(
+            title="**Keeper transaction FAILED**"
+        )
+    if "harvest" in tx.fn_name:
+        embed.add_field(
+            name="Keeper Action", value=f"Harvest ${str(round(amount))} for {strategy_name}.", inline=False
+        )
+        embed.add_field(
+            name="Etherscan Transaction", value=f"{etherscan_url}", inline=False
+        )
+        webhook.send(embed=embed, username="Sushi Harvester")
+    elif "tend" in tx.fn_name:
+        embed.add_field(
+            name="Keeper Action", value=f"Tend ${str(round(amount))} for {strategy_name}.", inline=False
+        )
+        embed.add_field(
+            name="Etherscan Transaction", value=f"{etherscan_url}", inline=False
+        )
+        webhook.send(embed=embed, username="Sushi Tender")

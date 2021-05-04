@@ -2,6 +2,8 @@ from brownie import (
     Controller,
     interface,
     chain,
+    Transaction,
+    Contract
 )
 from tabulate import tabulate
 from rich.console import Console
@@ -20,8 +22,15 @@ from helpers.sett.resolvers import (
     StrategySushiDiggWbtcLpOptimizerResolver,
     StrategyDiggLpMetaFarmResolver,
 )
-from helpers.utils import digg_shares_to_initial_fragments, val
+from helpers.utils import (
+    digg_shares_to_initial_fragments, 
+    val, 
+    send_transaction_to_discord,
+)
 from scripts.systems.badger_system import BadgerSystem
+from datetime import datetime
+import time
+from decimal import Decimal
 
 console = Console()
 
@@ -172,7 +181,7 @@ class SnapshotManager:
         if name == "StrategyPancakeLpOptimizer":
             return StrategyBasePancakeResolver(self)
 
-    def settTend(self, overrides, confirm=True):
+    def settTend(self, overrides: dict, confirm: bool = True) -> Transaction:
         user = overrides["from"].address
         trackedUsers = {"user": user}
         before = self.snap(trackedUsers)
@@ -180,8 +189,14 @@ class SnapshotManager:
         after = self.snap(trackedUsers)
         if confirm:
             self.resolver.confirm_tend(before, after, tx)
+        return tx
 
-    def settTendViaManager(self, strategy, overrides, confirm=True):
+    def settTendViaManager(
+        self, 
+        strategy: Contract, 
+        overrides: dict, 
+        confirm: bool = True
+    ) -> Transaction:
         user = overrides["from"].address
         trackedUsers = {"user": user}
         before = self.snap(trackedUsers)
@@ -189,8 +204,33 @@ class SnapshotManager:
         after = self.snap(trackedUsers)
         if confirm:
             self.resolver.confirm_tend(before, after, tx)
+        return tx
+        
+    def settTendAndProcessTx(
+        self, 
+        overrides: dict, 
+        confirm: bool = True, 
+        tended: Decimal = None
+    ):
+        tx = self.settTend(overrides, confirm)
+        self.confirmTransaction(tx, tended)
+    
+    def settTendViaManagerAndProcessTx(
+        self, 
+        strategy: Contract, 
+        overrides: dict, 
+        confirm: bool = True, 
+        tended: Decimal = None
+    ):
+        tx = self.settTendViaManager(strategy, overrides, confirm)
+        self.confirmTransaction(tx, tended)
 
-    def settHarvestViaManager(self, strategy, overrides, confirm=True):
+    def settHarvestViaManager(
+        self, 
+        strategy: Contract, 
+        overrides: dict, 
+        confirm: bool = True
+    ) -> Transaction:
         user = overrides["from"].address
         trackedUsers = {"user": user}
         before = self.snap(trackedUsers)
@@ -198,8 +238,9 @@ class SnapshotManager:
         after = self.snap(trackedUsers)
         if confirm:
             self.resolver.confirm_harvest(before, after, tx)
+        return tx
 
-    def settHarvest(self, overrides, confirm=True):
+    def settHarvest(self, overrides: dict, confirm: bool = True) -> Transaction:
         user = overrides["from"].address
         trackedUsers = {"user": user}
         before = self.snap(trackedUsers)
@@ -207,6 +248,39 @@ class SnapshotManager:
         after = self.snap(trackedUsers)
         if confirm:
             self.resolver.confirm_harvest(before, after, tx)
+        return tx
+    
+    def settHarvestViaManagerAndProcessTx(
+        self, 
+        strategy: Contract, 
+        overrides: dict, 
+        confirm: bool = True, 
+        harvested: Decimal = None
+    ):
+        tx = self.settHarvestViaManager(strategy, overrides, confirm)
+        self.confirmTransaction(tx, harvested)
+    
+    def settHarvestAndProcessTx(
+        self, 
+        overrides: dict, 
+        confirm: bool = True, 
+        harvested: Decimal = None
+    ):
+        tx = self.settHarvest(overrides, confirm)
+        self.confirmTransaction(tx, harvested)
+    
+    def confirmTransaction(self, tx: Transaction, amount: Decimal):
+        success = True
+        if tx.error() == None and tx.revert_msg == None:
+            console.print(f"Transaction succeded!")
+        else:
+            # something went wrong
+            console.print(f"ERROR: harvest errored or reverted.")
+            console.print(f"Error: {tx.error()}")
+            console.print(f"Revert: {tx.revert_msg}")
+            success = False
+        
+        send_transaction_to_discord(tx, self.strategy.getName(), amount=amount, success=success)
 
     def settDeposit(self, amount, overrides, confirm=True):
         user = overrides["from"].address
