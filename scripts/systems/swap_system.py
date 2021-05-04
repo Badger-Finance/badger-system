@@ -174,7 +174,7 @@ class SwapSystem:
                     description="Add Swapper Role to {}".format(swapper)
                 ),
                 {
-                    "to": swapper,
+                    "to": strategy,
                     "data": strategy.grantRole.encode_input(
                         strategy.SWAPPER_ROLE(), swapper
                     ),

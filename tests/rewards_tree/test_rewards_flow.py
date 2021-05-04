@@ -19,6 +19,7 @@ SECS_PER_DAY = 86400
 
 console = Console()
 
+
 @pytest.fixture(scope="function", autouse="True")
 def setup():
     from assistant.rewards import rewards_assistant

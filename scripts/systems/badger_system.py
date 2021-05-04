@@ -1,6 +1,10 @@
+from helpers.rewards.LoggerUnlockSchedule import LoggerUnlockSchedule
+from helpers.utils import digg_shares_to_initial_fragments, shares_to_fragments, val
+from helpers.rewards.UnlockSchedule import UnlockSchedule
 import json
 import os
 from eth_abi import encode_abi
+from tabulate import tabulate
 from web3 import Web3
 from enum import Enum
 
@@ -14,7 +18,7 @@ from helpers.proxy_utils import deploy_proxy, deploy_proxy_admin
 from helpers.registry import artifacts, registry
 from helpers.sett.strategy_registry import (name_to_artifact,
                                             contract_name_to_artifact)
-from helpers.time_utils import days
+from helpers.time_utils import days, to_days, to_utc_date
 from rich.console import Console
 from scripts.systems.claw_system import ClawSystem
 from scripts.systems.constants import SettType, TIMELOCK_DIR
@@ -236,6 +240,14 @@ def connect_badger(
         badger.connect_rewards_manager(badger_deploy["badgerRewardsManager"])
     if "unlockScheduler" in badger_deploy:
         badger.connect_unlock_scheduler(badger_deploy["unlockScheduler"])
+    if "rewardsLogger" in badger_deploy:
+        badger.connect_rewards_logger(badger_deploy["rewardsLogger"])
+    if "unifiedLogger" in badger_deploy:
+        badger.connect_unified_logger(badger_deploy["unifiedLogger"])
+    if "testGatedProxy" in badger_deploy:
+        badger.connect_test_gated_proxy(badger_deploy["testGatedProxy"])
+    if "opsGatedProxy" in badger_deploy:
+        badger.connect_ops_gated_proxy(badger_deploy["opsGatedProxy"])
 
     # Connect Sett
     if "geysers" in badger_deploy:
@@ -344,6 +356,14 @@ class BadgerSystem:
             )
         return self.testProxyAdmin
 
+    def connect_test_gated_proxy(self, address):
+        self.testGatedProxy = GatedProxy.at(address)
+        self.track_contract_upgradeable("testGatedProxy", self.testGatedProxy)
+    
+    def connect_ops_gated_proxy(self, address):
+        self.opsGatedProxy = GatedProxy.at(address)
+        self.track_contract_upgradeable("opsGatedProxy", self.opsGatedProxy)
+
     # ===== Contract Connectors =====
     def connect_proxy_admins(
         self, devProxyAdmin=None, daoProxyAdmin=None, opsProxyAdmin=None
@@ -354,16 +374,23 @@ class BadgerSystem:
             self.devProxyAdmin = Contract.from_abi(
                 "ProxyAdmin", web3.toChecksumAddress(devProxyAdmin), abi
             )
-
+        else: 
+            self.devProxyAdmin = None
         if daoProxyAdmin:
             self.daoProxyAdmin = Contract.from_abi(
                 "ProxyAdmin", web3.toChecksumAddress(daoProxyAdmin), abi
             )
+        else:
+            self.daoProxyAdmin = None
 
         if opsProxyAdmin:
             self.opsProxyAdmin = Contract.from_abi(
                 "ProxyAdmin", web3.toChecksumAddress(opsProxyAdmin), abi
             )
+        else:
+            self.opsProxyAdmin = None
+        
+        self.testProxyAdmin = None
 
         self.proxyAdmin = self.devProxyAdmin
 
@@ -1086,6 +1113,14 @@ class BadgerSystem:
     def connect_unlock_scheduler(self, address):
         self.unlockScheduler = UnlockScheduler.at(address)
         self.track_contract_upgradeable("unlockScheduler", self.unlockScheduler)
+    
+    def connect_rewards_logger(self, address):
+        self.rewardsLogger = RewardsLogger.at(address)
+        self.track_contract_upgradeable("rewardsLogger", self.rewardsLogger)
+
+    def connect_unified_logger(self, address):
+        self.unifiedLogger = UnifiedLogger.at(address)
+        self.track_contract_upgradeable("unifiedLogger", self.unifiedLogger)
 
     def connect_dao_digg_timelock(self, address):
         # TODO: Implement with Digg
@@ -1220,3 +1255,127 @@ class BadgerSystem:
             return self.logic[logicName]
         else:
             raise Exception("Logic for {} not found".format(logicName))
+
+    def getProxyAdmin(self, contract):
+        potential_admins = self.getConnectedProxyAdmins()
+        for name, admin in potential_admins.items():
+            try:
+                if admin.getProxyAdmin(contract) == admin:
+                    return admin
+            except:
+                continue
+        raise Exception (f"Contract not managed by any connected proxyAdmin from: {potential_admins}")
+    
+    def getConnectedProxyAdmins(self):
+        connected_admins = {}
+        if self.devProxyAdmin:
+            connected_admins["devProxyAdmin"] = self.devProxyAdmin
+        if self.opsProxyAdmin:
+            connected_admins["opsProxyAdmin"] = self.opsProxyAdmin
+        if self.daoProxyAdmin:
+            connected_admins["daoProxyAdmin"] = self.daoProxyAdmin
+        if self.testProxyAdmin:
+            connected_admins["testProxyAdmin"] = self.testProxyAdmin
+        return connected_admins
+    
+    def get_latest_unlock_schedules(self, geyser):
+        latest_schedules = {}
+        tokens = geyser.getDistributionTokens()
+
+        for token in tokens:
+            schedules = geyser.getUnlockSchedulesFor(token)
+            num_schedules = geyser.unlockScheduleCount(token)
+
+            if num_schedules == 0:
+                continue
+            last_schedule = num_schedules - 1
+            s = UnlockSchedule(token, schedules[last_schedule])
+
+            latest_schedules[token] = s
+        
+        return latest_schedules
+
+    def print_logger_unlock_schedules(self, beneficiary, name=None):
+        logger = self.rewardsLogger
+
+        schedules = logger.getAllUnlockSchedulesFor(beneficiary)
+
+        if not name:
+            name = ""
+        
+        console.print(f"[cyan]=== Latest Unlock Schedules {name}===[/cyan]")
+        table = []
+
+        if len(schedules) == 0:
+            return
+        for schedule in schedules:
+            print(schedule)
+            s = LoggerUnlockSchedule(schedule)
+        
+            digg_shares = (s.token == self.digg.token)
+        
+        if digg_shares:
+            scaled = shares_to_fragments(s.amount)
+        else:
+            scaled = val(amount=s.amount, token=s.token)
+
+        table.append(
+            [
+                name,
+                s.beneficiary,
+                s.token,
+                scaled,
+                to_days(s.duration),
+                to_utc_date(s.start),
+                to_utc_date(s.end),
+                "{:.0f}".format(s.start),
+                "{:.0f}".format(s.end),
+            ]
+        )
+            
+        print(tabulate(table, headers=["name", "beneficiary", "token", "amount", "duration", "start", "end", "start", "end"]))
+        print("\n")
+
+
+    def print_latest_unlock_schedules(self, geyser, name=None):
+        if not name:
+            name = ""
+        
+        console.print(f"[cyan]=== Latest Unlock Schedules {name}===[/cyan]")
+        table = []
+        tokens = geyser.getDistributionTokens()
+
+        for token in tokens:
+            schedules = geyser.getUnlockSchedulesFor(token)
+            num_schedules = geyser.unlockScheduleCount(token)
+
+            if num_schedules == 0:
+                continue
+            last_schedule = num_schedules - 1
+            s = UnlockSchedule(token, schedules[last_schedule])
+
+            digg_shares = (token == self.digg.token)
+            
+            if digg_shares:
+                scaled = shares_to_fragments(s.amount)
+            else:
+                scaled = val(amount=s.amount, token=token)
+
+            table.append(
+                [
+                    name,
+                    token,
+                    scaled,
+                    to_days(s.duration),
+                    to_utc_date(s.start),
+                    to_utc_date(s.end),
+                    "{:.0f}".format(s.start),
+                    "{:.0f}".format(s.end),
+                ]
+            )
+            
+        print(tabulate(table, headers=["geyser", "token", "amount", "duration", "start", "end", "start", "end"]))
+        print("\n")
+
+
+

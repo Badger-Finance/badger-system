@@ -89,7 +89,7 @@ contract BadgerBridgeAdapter is OwnableUpgradeable, ReentrancyGuardUpgradeable {
         percentageFeeGovernanceBps = _feeConfig[3];
     }
 
-    function version() external view returns (string memory) {
+    function version() external pure returns (string memory) {
         return "1.1";
     }
 
@@ -192,9 +192,9 @@ contract BadgerBridgeAdapter is OwnableUpgradeable, ReentrancyGuardUpgradeable {
         uint256 toBurnAmount = renBTC.balanceOf(address(this)).sub(startBalanceRenBTC);
         uint256 fee = _processFee(renBTC, toBurnAmount, burnFeeBps);
 
-        emit Burn(toBurnAmount, wbtcTransferred, fee);
-
         uint256 burnAmount = registry.getGatewayBySymbol("BTC").burn(_btcDestination, toBurnAmount.sub(fee));
+
+        emit Burn(burnAmount, wbtcTransferred, fee);
     }
 
     function mintAdapter(MintArguments memory args) external {
@@ -219,7 +219,7 @@ contract BadgerBridgeAdapter is OwnableUpgradeable, ReentrancyGuardUpgradeable {
 
         uint256 amount = isRenBTC ? args._mintAmountMinusFee : wbtcExchanged;
 
-        if (args._vault == address(0)) {
+        if (!isVault) {
             token.safeTransfer(args._user, amount);
             return;
         }
@@ -233,8 +233,8 @@ contract BadgerBridgeAdapter is OwnableUpgradeable, ReentrancyGuardUpgradeable {
             // NB: The curve token wrapper contract is permissionless, we must transfer renbtc over
             // and it will transfer back wrapped lp tokens.
             token.safeTransfer(curveTokenWrapper, amount);
-            uint256 wrappedAmount = ICurveTokenWrapper(curveTokenWrapper).wrap(args._vault);
-            IBridgeVault(args._vault).token().safeApprove(args._vault, wrappedAmount);
+            amount = ICurveTokenWrapper(curveTokenWrapper).wrap(args._vault);
+            IBridgeVault(args._vault).token().safeApprove(args._vault, amount);
         }
 
         IBridgeVault(args._vault).depositFor(args._user, amount);
@@ -271,7 +271,7 @@ contract BadgerBridgeAdapter is OwnableUpgradeable, ReentrancyGuardUpgradeable {
     }
 
     // Minimum amount w/ slippage applied.
-    function _minAmount(uint256 _slippage, uint256 _amount) internal returns (uint256) {
+    function _minAmount(uint256 _slippage, uint256 _amount) internal pure returns (uint256) {
         _slippage = uint256(1e4).sub(_slippage);
         return _amount.mul(_slippage).div(1e4);
     }

@@ -32,11 +32,7 @@ contract ContributorLogger is AccessControlUpgradeable {
         uint256 blockNumber
     );
 
-    event DeleteEntry(
-        uint256 indexed id,
-        uint256 indexed timestamp,
-        uint256 blockNumber
-    );
+    event DeleteEntry(uint256 indexed id, uint256 indexed timestamp, uint256 blockNumber);
 
     function initialize(
         address multisendLib_,
@@ -57,7 +53,7 @@ contract ContributorLogger is AccessControlUpgradeable {
     // ===== Permissioned Functions: Manager =====
 
     /// @dev Stream a token to a recipient over time.
-    /// @dev Amount / amountDuration defines the rate per second. 
+    /// @dev Amount / amountDuration defines the rate per second.
     /// @dev This rate will persist from the start time until the end time.
     /// @dev The start time should not be in the past.
     /// @dev To create an eternal entry, use maxuint256 as end time. The stream will then persist until deleted or updated.
@@ -72,19 +68,8 @@ contract ContributorLogger is AccessControlUpgradeable {
         uint256 id = nextId;
         require(startTime >= block.timestamp, "start time cannot be in past");
         nextId = nextId.add(1);
-        emit CreateEntry(
-            id,
-            recipient,
-            token,
-            amount,
-            amountDuration,
-            startTime,
-            endTime,
-            block.timestamp,
-            block.number
-        );
+        emit CreateEntry(id, recipient, token, amount, amountDuration, startTime, endTime, block.timestamp, block.number);
     }
-
 
     /// @dev Update a stream by changing the rate or time parameters.
     /// @dev The recipient and amount cannot be updated on an entry.
@@ -96,26 +81,13 @@ contract ContributorLogger is AccessControlUpgradeable {
         uint256 endTime
     ) external onlyManager {
         require(id < nextId, "ID does not exist");
-        emit UpdateEntry(
-            id,
-            amount,
-            amountDuration,
-            startTime,
-            endTime,
-            block.timestamp,
-            block.number
-        );
+        emit UpdateEntry(id, amount, amountDuration, startTime, endTime, block.timestamp, block.number);
     }
-    
 
     /// @dev Delete a stream.
     /// @dev Entries can technically be deleted multiple times without issue, the script will handle this case.
     function deleteEntry(uint256 id) external onlyManager {
         require(id < nextId, "ID does not exist");
-        emit DeleteEntry(
-            id,
-            block.timestamp,
-            block.number
-        );
+        emit DeleteEntry(id, block.timestamp, block.number);
     }
 }

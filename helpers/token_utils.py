@@ -202,6 +202,7 @@ def to_token(address):
 
 
 def distribute_from_whales(recipient, percentage=0.8, assets="All"):
+    
     accounts[0].transfer(recipient, Wei("50 ether"))
 
     console.print(
@@ -242,9 +243,12 @@ def distribute_from_whale(whale_config, recipient, percentage=0.2):
         if recipient.balance() < 2 * 10 ** 18:
             distribute_test_ether(recipient, Wei("2 ether"))
         recipient.transfer(forceEther, Wei("2 ether"))
+        console.print("Force send Ether to whale..")
         forceEther.forceSend(whale_config.whale, {"from": recipient})
 
     token = interface.IERC20(whale_config.token)
+
+    console.print("Transfer token {token.address} to recipient")
     token.transfer(
         recipient,
         token.balanceOf(whale_config.whale) * percentage,
@@ -261,7 +265,8 @@ def distribute_test_ether(recipient, amount):
         if accounts[idx].balance() >= amount:
             break
         idx += 1
-    accounts[idx].transfer(recipient, amount)
+    if idx != len(accounts):
+        accounts[idx].transfer(recipient, amount)
 
 
 def getTokenMetadata(address):

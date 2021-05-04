@@ -1,3 +1,4 @@
+import json
 
 from helpers.registry.ChainRegistry import ChainRegistry
 from helpers.registry.YearnRegistry import YearnRegistry
@@ -31,9 +32,8 @@ uniswap_registry = DotMap(
     uniStakingRewards=DotMap(eth_wbtc="0xa1484C3aa22a66C62b77E0AE78E15258bd0cB711"),
 )
 
-multicall_registry = DotMap(
-    multicall="0xeefba1e63905ef1d7acba5a8513c70307c1ce441",
-)
+multicall="0xeefba1e63905ef1d7acba5a8513c70307c1ce441"
+multisend="0x8D29bE29923b68abfDD21e541b9374737B49cdAD"
 
 compound_registry = DotMap(
     cTokens = DotMap(
@@ -89,6 +89,10 @@ aave_registry = DotMap(
     lendingPoolV2="0x7d2768de32b0b80b7a3454c06bdac94a69ddc7a9"
 )
 
+yearn_registry = DotMap(
+    yvWBTC="0xcB550A6D4C8e3517A939BC79d0c7093eb7cF56B5",
+),
+
 curve_registry = DotMap(
     minter="0xd061D61a4d941c39E5453435B6345Dc261C2fcE0",
     crvToken="0xD533a949740bb3306d119CC777fa900bA034cd52",
@@ -125,7 +129,8 @@ eth_registry = ChainRegistry(
     gnosis_safe=gnosis_safe_registry,
     pickle=pickle_registry,
     harvest=harvest_registry,
-    multicall=multicall_registry,
+    multicall=multicall,
+    multisend=multisend,
     badger=badger_registry,
     yearn=yearn_registry,
     aave=aave_registry

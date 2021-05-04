@@ -125,8 +125,6 @@ contract CurveTokenWrapper {
         uint256 beforeBalance = _token.balanceOf(address(this));
         uint256 amount = _lpToken.balanceOf(address(this));
 
-        _lpToken.safeApprove(address(_pool), amount);
-
         _pool.remove_liquidity_one_coin(amount, _i, 0);
 
         return _token.balanceOf(address(this)).sub(beforeBalance);

@@ -5,7 +5,7 @@ import "deps/@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.s
 import "deps/@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import "./vesting/SingleTokenVestingNonRevocable.sol";
 
-import "./Executor.sol";
+import "./ExecutorOnlyCall.sol";
 
 /* 
   A token vesting contract that is capable of interacting with other smart contracts.
@@ -18,7 +18,7 @@ import "./Executor.sol";
   This is intended to allow the token holder to stake their tokens in approved mechanisms.
 */
 
-contract SmartVesting is SingleTokenVestingNonRevocable, Executor, ReentrancyGuardUpgradeable {
+contract SmartVesting is SingleTokenVestingNonRevocable, ExecutorOnlyCall, ReentrancyGuardUpgradeable {
     address internal _governor;
     mapping(address => bool) internal _transferAllowed;
 

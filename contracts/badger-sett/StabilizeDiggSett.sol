@@ -39,6 +39,7 @@ import "contracts/badger-sett/Sett.sol";
 
 interface StabilizeDiggStrategy {
     function balanceOf() external view returns (uint256); // Returns DIGG and DIGG equivalent of strategy, not normalized
+
     function getTokenAddress(uint256) external view returns (address); // Get the token addresses involved in the strategy
 }
 
@@ -46,21 +47,21 @@ contract StabilizeDiggSett is Sett {
     using SafeERC20Upgradeable for IERC20Upgradeable;
     using AddressUpgradeable for address;
     using SafeMathUpgradeable for uint256;
-    
+
     function balanceOfDiggEquivalentInSettAndStrategy() public view returns (uint256) {
         // This will take our strategy and calculate how much digg equivalent we have in wBTC value, normalized to 1e18
         uint256 _diggAmount = 0; // This will be normalized to 1e18
         ERC20Upgradeable diggToken = ERC20Upgradeable(address(token));
         address strategy = IController(controller).strategies(address(token));
         StabilizeDiggStrategy strat = StabilizeDiggStrategy(strategy);
-        
+
         _diggAmount = diggToken.balanceOf(address(this));
-        if(strategy != address(0)){
+        if (strategy != address(0)) {
             _diggAmount = _diggAmount.add(strat.balanceOf()); // The strategy will automatically convert wbtc to digg equivalent
         }
         uint256 decimals = uint256(diggToken.decimals());
         _diggAmount = _diggAmount.mul(1e18).div(10**decimals); // Normalize the Digg amount
-        
+
         return _diggAmount;
     }
 
@@ -90,7 +91,7 @@ contract StabilizeDiggSett is Sett {
 
         uint256 normalizedAmount = _diggTransferred.mul(1e18).div(10**_decimals); // Convert to bDigg/normalized units
         uint256 bDiggToMint = normalizedAmount;
-        if(totalSupply() > 0){
+        if (totalSupply() > 0) {
             // There is already a balance here, calculate our share
             bDiggToMint = normalizedAmount.mul(totalSupply()).div(_poolBefore); // Our share of the total
         }

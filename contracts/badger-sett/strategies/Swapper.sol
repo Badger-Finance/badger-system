@@ -30,7 +30,6 @@ abstract contract Swapper {
     address public constant uniswap = 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D; // Uniswap Router
     address public constant sushiswap = 0xd9e1cE17f2641f24aE83637ab66a2cca9C378B9F; // Sushiswap router
     uint256 public constant MAX_FEE = 10000;
-    
 
     /// @notice Swap specified balance of given token on Uniswap with given path
     function _swap_uniswap(
@@ -83,7 +82,7 @@ abstract contract Swapper {
         return IUniswapV2Factory(factory).getPair(token0, token1);
     }
 
-    function _get_sushi_pair(address token0, address token1) internal view returns (address) { 
+    function _get_sushi_pair(address token0, address token1) internal view returns (address) {
         address factory = IUniswapRouterV2(sushiswap).factory();
         return IUniswapV2Factory(factory).getPair(token0, token1);
     }
@@ -99,7 +98,7 @@ abstract contract Swapper {
         IUniswapRouterV2(sushiswap).addLiquidity(token0, token1, _token0Balance, _token1Balance, 0, 0, address(this), block.timestamp);
     }
 
-        function _processFee(
+    function _processFee(
         address token,
         uint256 amount,
         uint256 feeBps,
@@ -162,7 +161,6 @@ abstract contract Swapper {
         require(a >= b, "diff/expected-higher-number-in-first-position");
         return a.sub(b);
     }
-
 
     uint256[50] private __gap;
 }

@@ -17,6 +17,7 @@ class ChainRegistry:
         tokens=None,
         whales=None,
         multicall=None,
+        multisend=None,
         pancake=None,
         badger=None,
         yearn=None,
@@ -36,6 +37,7 @@ class ChainRegistry:
         self.tokens=tokens
         self.whales=whales
         self.multicall=multicall
+        self.multisend=multisend
         self.pancake=pancake
         self.badger=badger
         self.yearn=yearn
