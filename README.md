@@ -21,11 +21,33 @@ If you're not familiar with brownie, see the [quickstart guide](https://eth-brow
 
 ### Install
 
+For Ubuntu, you can install the prerequisite packages with the following command:
+
+```
+sudo apt-get install -y python3 python3-virtualenv python3-pip
+```
+
+For other systems, install Python 3.9, Pip, and use pip to install virtualenv with
+
+```
+pip install virtualenv
+```
+
+To install NodeJS and yarn on UNIX based systems, it is recommended to use the following commands:
+
+```
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.38.0/install.sh | bash
+nvm install v14.16.3
+npm install -g yarn
+```
+
+With prerequisites installed, install the project with:
+
 ```bash
 git clone https://github.com/Badger-Finance/badger-system
 cd badger-system
 yarn install --lock-file
-python3 -m venv venv
+virtualenv venv
 source venv/bin/activate
 pip install -r requirements.txt
 ```
