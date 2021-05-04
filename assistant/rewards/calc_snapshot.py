@@ -2,15 +2,14 @@ from assistant.rewards.rewards_utils import calculate_sett_balances
 from assistant.rewards.classes.RewardsList import RewardsList
 from assistant.rewards.classes.RewardsLog import rewardsLog
 from assistant.rewards.classes.Schedule import Schedule
-from assistant.rewards.enums import Token
 from helpers.time_utils import to_days, to_hours, to_utc_date
-from helpers.constants import NON_NATIVE_SETTS, NATIVE_DIGG_SETTS
+from helpers.constants import NON_NATIVE_SETTS, NATIVE_DIGG_SETTS, DIGG
 from dotmap import DotMap
 from brownie import *
 from rich.console import Console
 
 console = Console()
-digg = interface.IDigg(Token.digg.value)
+digg = interface.IDigg(DIGG)
 
 
 def calc_snapshot(
@@ -19,9 +18,13 @@ def calc_snapshot(
 
     console.log("==== Processing rewards for {} ====".format(name))
     rewards = RewardsList(nextCycle, badger.badgerTree)
+
     sett = badger.getSett(name)
+
     startTime = web3.eth.getBlock(startBlock)["timestamp"]
+
     endTime = web3.eth.getBlock(endBlock)["timestamp"]
+
 
     userBalances = calculate_sett_balances(badger, name, endBlock)
     if name in NON_NATIVE_SETTS:
@@ -41,7 +44,7 @@ def calc_snapshot(
         # Distribute to users with rewards list
         # Make sure there are tokens to distribute (some geysers only
         # distribute one token)
-        if token == Token.digg.value:
+        if token == DIGG:
 
             # if name in NATIVE_DIGG_SETTS:
             #    tokenDistribution = tokenDistribution * diggAllocation

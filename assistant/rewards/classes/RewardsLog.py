@@ -1,7 +1,7 @@
 from rich.console import Console
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
-from helpers.utils import BADGER, DIGG
+from helpers.constants import BADGER, DIGG
 import numpy as np
 import json
 
@@ -69,11 +69,11 @@ class RewardsLog:
         badger_emissions = []
         digg_emissions = []
         for sett, emissions in self._totalTokenDist.items():
-            if badger in emissions:
+            if BADGER in emissions:
                 badger_emissions.append(emissions[BADGER])
             else:
                 badger_emissions.append(0)
-            if digg in emissions:
+            if DIGG in emissions:
                 digg_emissions.append(emissions[DIGG])
             else:
                 digg_emissions.append(0)

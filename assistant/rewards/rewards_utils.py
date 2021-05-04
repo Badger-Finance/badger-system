@@ -197,6 +197,7 @@ def combine_balances(balances):
 
 @lru_cache(maxsize=None)
 def calculate_sett_balances(badger, name, currentBlock):
+    console.log("Fetching {} sett balances".format(name))
     sett = badger.getSett(name)
     underlyingToken = sett.address
     settType = ["", ""]
@@ -231,4 +232,5 @@ def calculate_sett_balances(badger, name, currentBlock):
         UserBalance(addr, bal, underlyingToken, settType)
         for addr, bal in balances.items()
     ]
+    console.log("\n")
     return UserBalances(userBalances)

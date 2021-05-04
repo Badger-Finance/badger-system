@@ -7,8 +7,7 @@ from rich.console import Console
 from tqdm import tqdm
 from assistant.rewards.boost import badger_boost
 from assistant.rewards.twap import digg_btc_twap, calculate_digg_allocation
-from assistant.rewards.aws_utils import download_latest_tree, upload
-from assistant.rewards.calc_stakes import calc_geyser_stakes
+from assistant.rewards.aws_utils import download_latest_tree, download_tree, upload
 from assistant.rewards.calc_snapshot import calc_snapshot
 from assistant.rewards.meta_rewards.harvest import calc_farm_rewards
 from assistant.rewards.meta_rewards.sushi import calc_all_sushi_rewards
@@ -47,9 +46,6 @@ def calc_geyser_rewards(badger, periodStartBlock, endBlock, cycle):
         rewardsByGeyser[key] = geyserRewards
     # return sum_rewards(rewardsByGeyser, cycle, badger.badgerTree)
     rewards = combine_rewards(list(rewardsByGeyser.values()), cycle, badger.badgerTree)
-    for addr, boost in boosts.items():
-        rewards.add_user_boost(addr, boost)
-
     return rewards
 
 

@@ -3,7 +3,6 @@ from brownie.network.gas.strategies import GasNowStrategy
 from scripts.systems.digg_system import connect_digg
 from helpers.time_utils import days, hours
 from tabulate import tabulate
-from assistant.rewards.classes.BadgerGeyserMock import BadgerGeyserMock
 from scripts.systems.badger_system import BadgerSystem
 from brownie import *
 from rich.console import Console
@@ -60,12 +59,12 @@ def getExpectedDistributionInRange(badger: BadgerSystem, startBlock, endBlock):
 
     # TODO: Only Badger for now
     totals = {}
-    totals[Token.digg.value] = 0
+    totals[DIGG] = 0
     totals[Token.badger.value] = 0
 
     for key, gains in distributions.items():
         totals[Token.badger.value] += gains[Token.badger.value]
-        totals[Token.digg.value] += gains[Token.digg.value]
+        totals[DIGG] += gains[Token.digg.value]
 
     return totals
 
@@ -234,7 +233,7 @@ def compare_rewards(
     sanitySum = Wei("5000000 ether")
 
     sum_digg_after = sum_digg_claims(after)
-    digg_contract = interface.IDigg(Token.digg.value)
+    digg_contract = interface.IDigg(DIGG)
 
     table = []
     table.append(["block range", startBlock, endBlock])

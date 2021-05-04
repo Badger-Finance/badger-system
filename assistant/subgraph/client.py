@@ -1,11 +1,9 @@
 from assistant.subgraph.config import subgraph_config
-from assistant.rewards.enums import Token
 from brownie import interface
 from rich.console import Console
 from gql import gql, Client
 from gql.transport.aiohttp import AIOHTTPTransport
 from decimal import *
-from assistant.rewards.enums import Token
 import json
 from functools import lru_cache
 
