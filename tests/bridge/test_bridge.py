@@ -5,6 +5,7 @@ from brownie import (
     MockVault,
     BadgerBridgeAdapter,
     CurveSwapStrategy,
+    CurveTokenWrapper,
 )
 
 from helpers.constants import AddressZero
@@ -269,6 +270,33 @@ def test_bridge_basic():
             assert interface.IERC20(wbtc).balanceOf(account) == 0
 
 
+def test_bridge_sweep():
+    renbtc = registry.tokens.renbtc
+    wbtc = registry.tokens.wbtc
+
+    badger = connect_badger(badger_config.prod_json)
+    bridge = connect_bridge(badger, badger_config.prod_json)
+    _upgrade_bridge(badger, bridge)
+
+    # Send both renbtc and wbtc to bridge adapter and test sweep.
+    for (whale, token) in [
+        (registry.whales.renbtc.whale, interface.IERC20(renbtc)),
+        (registry.whales.wbtc.whale, interface.IERC20(wbtc)),
+    ]:
+        token.transfer(
+            bridge.adapter,
+            token.balanceOf(whale),
+            {"from": whale},
+        )
+        # Can be called from any account, should always send to governance.
+        randomAccount = accounts[10]
+        beforeBalance = token.balanceOf(badger.devMultisig)
+        beforeBalanceRandomAccount = token.balanceOf(randomAccount)
+        bridge.adapter.sweep({"from": randomAccount})
+        assert token.balanceOf(badger.devMultisig) > beforeBalance
+        assert token.balanceOf(randomAccount) == beforeBalanceRandomAccount
+
+
 def _assert_swap_slippage(router, fromToken, toToken, amountIn, slippage):
     # Should be accessible from a random account.
     account = accounts[8]
@@ -322,3 +350,7 @@ def _upgrade_bridge(badger, bridge):
         logic,
         {"from": badger.governanceTimelock},
     )
+
+    badger.deploy_logic("CurveTokenWrapper", CurveTokenWrapper)
+    logic = badger.logic["CurveTokenWrapper"]
+    bridge.adapter.setCurveTokenWrapper(logic, {"from": badger.devMultisig})

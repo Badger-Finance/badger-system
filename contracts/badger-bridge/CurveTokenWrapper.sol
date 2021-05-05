@@ -132,6 +132,7 @@ contract CurveTokenWrapper {
         return _token.balanceOf(address(this)).sub(beforeBalance);
     }
 
+    // NB: This is a safety measure, failed wraps/unwraps should revert.
     // Sweep all tokens and send to governance.
     function sweep() external {
         address[] memory sweepableTokens = new address[](4);
