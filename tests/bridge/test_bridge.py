@@ -146,16 +146,6 @@ def test_bridge_vault(vault):
             assert interface.IERC20(v).balanceOf(account) == 0
 
 
-# Tests sweeping of renbtc/wbtc tokens held by the bridge contract.
-# def test_bridge_sweep():
-#     renbtc = registry.tokens.renbtc
-#     wbtc = registry.tokens.wbtc
-#
-#     badger = connect_badger(badger_config.prod_json)
-#     bridge = connect_bridge(badger, badger_config.prod_json)
-#
-#     distribute_from_whale(
-
 # Tests swap router failures and wbtc mint/burn.
 def test_bridge_basic_swap_fail():
     renbtc = registry.tokens.renbtc
