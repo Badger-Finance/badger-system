@@ -269,7 +269,8 @@ def fetch_wallet_balances(badger_price, digg_price, digg, blockNumber):
 
     badger_balances = {}
     digg_balances = {}
-
+    sharesPerFragment = digg.logic.UFragments._sharesPerFragment()
+    console.log(sharesPerFragment)
     while continueFetching:
         variables = {
             "firstAmount": increment,
@@ -281,17 +282,23 @@ def fetch_wallet_balances(badger_price, digg_price, digg, blockNumber):
             continueFetching = False
         else:
             lastID = nextPage["tokenBalances"][-1]["id"]
+            console.log(
+                "Fetching {} token balances".format(len(nextPage["tokenBalances"]))
+            )
             for entry in nextPage["tokenBalances"]:
                 address = entry["id"].split("-")[0]
                 if entry["token"]["symbol"] == "BADGER" and int(entry["balance"]) > 0:
                     badger_balances[address] = (
-                        float(entry["balance"]) / 1e18 * badger_price
-                    )
+                        float(entry["balance"]) / 1e18
+                    ) * badger_price
                 if entry["token"]["symbol"] == "DIGG" and int(entry["balance"]) > 0:
-                    fragmentBalance = digg.logic.UFragments.sharesToFragments(
-                        entry["balance"]
-                    )
-                    digg_balances[address] = float(fragmentBalance) / 1e9 * digg_price
+                    # Speed this up
+                    if entry["balance"] == 0:
+                        fragmentBalance = 0
+                    else:
+                        fragmentBalance = sharesPerFragment / int(entry["balance"])
+
+                    digg_balances[address] = (float(fragmentBalance) / 1e9) * digg_price
 
     return badger_balances, digg_balances
 

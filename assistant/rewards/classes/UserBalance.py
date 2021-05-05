@@ -26,8 +26,8 @@ class UserBalances:
     def total_balance(self):
         return sum([u.balance for u in self.userBalances.values()])
 
-    def percentage_of_total(self,addr):
-        return self[addr]/self.total_balance() 
+    def percentage_of_total(self, addr):
+        return self[addr].balance / self.total_balance()
 
     def __getitem__(self, key):
         return self.userBalances.get(key, None)

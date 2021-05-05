@@ -7,7 +7,12 @@ from rich.console import Console
 from tqdm import tqdm
 from assistant.rewards.boost import badger_boost
 from assistant.rewards.twap import digg_btc_twap, calculate_digg_allocation
-from assistant.rewards.aws_utils import download_latest_tree, download_tree, upload
+from assistant.rewards.aws_utils import (
+    download_latest_tree,
+    download_tree,
+    upload,
+    upload_boosts,
+)
 from assistant.rewards.calc_snapshot import calc_snapshot
 from assistant.rewards.meta_rewards.harvest import calc_farm_rewards
 from assistant.rewards.meta_rewards.sushi import calc_all_sushi_rewards
@@ -38,14 +43,29 @@ def calc_geyser_rewards(badger, periodStartBlock, endBlock, cycle):
     # diggAllocation = calculate_digg_allocation(ratio)
     rewardsByGeyser = {}
     boosts = badger_boost(badger, endBlock)
+    apyBoosts = {}
     for key, geyser in badger.geysers.items():
-
-        geyserRewards = calc_snapshot(
+        settAddress = badger.getSett(key).address
+        geyserRewards, apyBoost = calc_snapshot(
             badger, key, periodStartBlock, endBlock, cycle, boosts, 0
         )
+        if len(apyBoost) > 0:
+            for addr in apyBoost:
+                if addr not in apyBoosts:
+                    apyBoosts[addr] = {}
+                else:
+                    apyBoosts[addr][settAddress] = apyBoost[addr]
         rewardsByGeyser[key] = geyserRewards
     # return sum_rewards(rewardsByGeyser, cycle, badger.badgerTree)
     rewards = combine_rewards(list(rewardsByGeyser.values()), cycle, badger.badgerTree)
+    for addr in boosts:
+        apyInfo = apyBoosts[addr]
+        boosts[addr] = {"boost": boosts[addr], "multipliers": apyInfo}
+
+    with open("badger-boosts.json", "w") as fp:
+        json.dump(boosts, fp)
+
+    upload_boosts(test=True)
     return rewards
 
 

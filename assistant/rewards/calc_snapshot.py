@@ -20,18 +20,30 @@ def calc_snapshot(
     rewards = RewardsList(nextCycle, badger.badgerTree)
 
     sett = badger.getSett(name)
-
     startTime = web3.eth.getBlock(startBlock)["timestamp"]
 
     endTime = web3.eth.getBlock(endBlock)["timestamp"]
 
-
     userBalances = calculate_sett_balances(badger, name, endBlock)
+
+    apyBoosts = {}
     if name in NON_NATIVE_SETTS:
+        preBoost = {}
+        postBoost = {}
         for user in userBalances:
-            addr = web3.toChecksumAddress(user.address)
-            boostAmount = boosts.get(addr, 1)
+            preBoost[user.address] = userBalances.percentage_of_total(user.address)
+
+        for user in userBalances:
+            boostAmount = boosts.get(user.address, 1)
+            if boostAmount > 1:
+                console.log("Boosted greater than 1")
+                console.log(user)
+
             user.boost_balance(boostAmount)
+
+        for user in userBalances:
+            postBoost = userBalances.percentage_of_total(user.address)
+            apyBoosts[user.address] = postBoost / preBoost[user.address]
 
     schedulesByToken = parse_schedules(
         badger.rewardsLogger.getAllUnlockSchedulesFor(sett)
@@ -79,7 +91,7 @@ def calc_snapshot(
             )
             console.log("Diff {}".format((abs(tokenDistribution - totalRewards))))
 
-    return rewards
+    return rewards, apyBoosts
 
 
 def get_distributed_for_token_at(token, endTime, schedules, name):

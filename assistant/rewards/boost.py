@@ -31,7 +31,7 @@ def convert_balances_to_usd(sett, userBalances):
             price_ratio = 0.5
         else:
             price_ratio = 1
-        user.balance = (price * user.balance) / (pow(10,decimals) * price_ratio)
+        user.balance = (price * user.balance) / (pow(10, decimals) * price_ratio)
 
     return userBalances
 
@@ -74,7 +74,12 @@ def calc_union_addresses(diggSetts, badgerSetts, nonNativeSetts):
     )
 
 
+def filter_dust(balances):
+    return UserBalances(list(filter(lambda user: user.balance > 1, balances)))
+
+
 def badger_boost(badger, currentBlock):
+    console.log("Calculating boost ...")
     allSetts = badger.sett_system.vaults
     diggSetts = UserBalances()
     badgerSetts = UserBalances()
@@ -109,9 +114,10 @@ def badger_boost(badger, currentBlock):
     digg_wallet_balances = UserBalances(
         [UserBalance(addr, bal, DIGG) for addr, bal in digg_wallet_balances.items()]
     )
-
-    badgerSetts = combine_balances([badgerSetts, badger_wallet_balances])
-    diggSetts = combine_balances([diggSetts, digg_wallet_balances])
+    badgerSetts = filter_dust(combine_balances([badgerSetts, badger_wallet_balances]))
+    diggSetts = filter_dust(combine_balances([diggSetts, digg_wallet_balances]))
+    nonNativeSetts = filter_dust(nonNativeSetts)
+    console.log("Filtered balances < $1")
 
     allAddresses = calc_union_addresses(diggSetts, badgerSetts, nonNativeSetts)
     console.log(
@@ -144,9 +150,5 @@ def badger_boost(badger, currentBlock):
     badgerBoost = dict(
         zip(cumulativePercentages.keys(), calc_boost(cumulativePercentages.values()))
     )
-    with open("badger-boosts.json", "w") as fp:
-        json.dump(badgerBoost, fp)
-
-    upload_boosts(test=True)
 
     return badgerBoost
