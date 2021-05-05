@@ -308,7 +308,7 @@ def _upgrade_swap(badger, swap):
     badger.deploy_logic("CurveSwapStrategy", CurveSwapStrategy)
     logic = badger.logic["CurveSwapStrategy"]
     badger.devProxyAdmin.upgrade(
-        swap.router,
+        swap.strategies.curve,
         logic,
         {"from": badger.governanceTimelock},
     )

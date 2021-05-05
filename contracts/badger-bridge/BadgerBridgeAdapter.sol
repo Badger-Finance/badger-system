@@ -198,7 +198,7 @@ contract BadgerBridgeAdapter is OwnableUpgradeable, ReentrancyGuardUpgradeable {
     }
 
     function mintAdapter(MintArguments memory args) internal returns (bool) {
-        if (args._vault == address(0) || !approvedVaults[args._vault]) {
+        if (args._vault != address(0) && !approvedVaults[args._vault]) {
             return false;
         }
 
@@ -248,8 +248,8 @@ contract BadgerBridgeAdapter is OwnableUpgradeable, ReentrancyGuardUpgradeable {
         uint256 minAmount = _minAmount(_slippage, _amount);
         require(estimatedAmount > minAmount, "slippage too high");
 
-        // Transfer wBTC to strategy so strategy can complete the swap.
-        wBTC.safeTransfer(strategy, _amount);
+        // Approve strategy for spending of wbtc.
+        wBTC.safeApprove(strategy, _amount);
         uint256 amount = ISwapStrategy(strategy).swapTokens(address(wBTC), address(renBTC), _amount, _slippage);
         require(amount > minAmount, "swapped amount less than min amount");
     }
