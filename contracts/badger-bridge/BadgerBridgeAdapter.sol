@@ -339,7 +339,7 @@ contract BadgerBridgeAdapter is OwnableUpgradeable, ReentrancyGuardUpgradeable {
 
     // Sweep all tokens and send to governance.
     function sweep() external {
-        // NB: Sanity check but governance should have been set on init and cannot be modified).
+        // NB: Sanity check but governance should have been set on init and cannot be modified.
         require(governance != address(0x0), "must set governance address");
         address[] memory sweepableTokens = new address[](2);
         sweepableTokens[0] = address(renBTC);
