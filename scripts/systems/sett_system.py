@@ -41,9 +41,33 @@ def deploy_strategy(
     proxyAdmin = badger.devProxyAdmin
 
     console.print(
-        "Deploy Strategy " + strategyName, params
-    )
+        "Deploying Strategy " + strategyName, params
+    )    
 
+    if strategyName == "StrategyUnitProtocolRenbtc":
+        return deploy_proxy(
+            "StrategyUnitProtocolRenbtc",
+            StrategyUnitProtocolRenbtc.abi,
+            badger.logic.StrategyUnitProtocolRenbtc.address,
+            proxyAdmin.address,
+            badger.logic.StrategyUnitProtocolRenbtc.initialize.encode_input(
+                governance,
+                strategist,
+                controller,
+                keeper,
+                guardian,
+                [
+                    params.want,
+                ],
+                [
+                    params.performanceFeeGovernance,
+                    params.performanceFeeStrategist,
+                    params.withdrawalFee,
+                    params.keepCRV,
+                ],
+            ),
+            deployer,
+        )
     if strategyName == "StrategyCurveGaugeRenBtcCrv":
         return deploy_proxy(
             "StrategyCurveGaugeRenBtcCrv",
@@ -395,7 +419,7 @@ def deploy_controller(
     if not keeper:
         keeper = badger.keeper
     if not rewards:
-        rewards = badger.dao.agent
+        rewards = badger.keeper
     if not proxyAdmin:
         proxyAdmin = badger.devProxyAdmin
 
