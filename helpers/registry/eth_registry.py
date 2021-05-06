@@ -113,7 +113,16 @@ curve_registry = DotMap(
             token="0x64eda51d3Ad40D56b9dFc5554E06F94e1Dd786Fd",
             gauge="0x6828bcF74279eE32f2723eC536c22c51Eed383C6",
         ),
+        usdpCrv=DotMap(
+            swap="0x42d7025938bEc20B69cBae5A77421082407f053A",
+            token="0x7Eb40E450b9655f4B3cC4259BCC731c63ff55ae6",
+            gauge="0x055be5DDB7A925BfEF3417FC157f53CA77cA7222",
+        )
     ),
+)
+
+chainlink_registry = DotMap(
+    btc_usd="0xF4030086522a5bEEa4988F8cA5B36dbC97BeE88c"
 )
 
 badger_registry = DotMap(
@@ -133,7 +142,8 @@ eth_registry = ChainRegistry(
     multisend=multisend,
     badger=badger_registry,
     yearn=yearn_registry,
-    aave=aave_registry
+    aave=aave_registry,
+    chainlink=chainlink_registry
 )
 
 eth_registry.tokens = DotMap(
@@ -149,6 +159,7 @@ eth_registry.tokens = DotMap(
     xSushi=eth_registry.sushi.xsushiToken,
     usdc=web3.toChecksumAddress("0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"),
     renbtc=web3.toChecksumAddress("0xeb4c2781e4eba804ce9a9803c67d0893436bb27d"),
+    usdp=web3.toChecksumAddress("0x1456688345527bE1f37E9e627DA0837D6f08C925"),
 )
 
 eth_registry.whales = DotMap(
@@ -245,6 +256,11 @@ eth_registry.whales = DotMap(
     renbtc=DotMap(
         whale="0x35ffd6e268610e764ff6944d07760d0efe5e40e5",
         token="0xeb4c2781e4eba804ce9a9803c67d0893436bb27d",
+        action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT,
+    ),
+    usdp=DotMap(
+        whale="0xD1B3DD045F6E26b22dA0a3e451780e12BB51a121",
+        token="0x1456688345527bE1f37E9e627DA0837D6f08C925",
         action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT,
     )
 )

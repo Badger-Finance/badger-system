@@ -31,6 +31,7 @@ from tests.sett.fixtures import (
     SushiClawUSDCMiniDeploy,
     PancakeMiniDeploy,
     SushiWbtcIbBtcLpOptimizerMiniDeploy,
+    UnitProtocolRenBtcMiniDeploy
 )
 
 
@@ -53,15 +54,16 @@ def generate_sett_test_config(settsToRun, runTestSetts, runProdSetts=False):
 # ===== Sett + Strategy Test Configuration =====
 
 settsToRun = [
-    "native.badger",
-    "native.renCrv",
-    "native.sbtcCrv",
-    "native.tbtcCrv",
-    # "harvest.renCrv",
-    "native.uniBadgerWbtc",
-    "native.sushiBadgerWbtc",
-    "native.sushiWbtcEth",
-    "native.sushiWbtcIbBtc",
+#    "native.badger",
+#    "native.renCrv",
+#    "native.sbtcCrv",
+#    "native.tbtcCrv",
+#    # "harvest.renCrv",
+#    "native.uniBadgerWbtc",
+#    "native.sushiBadgerWbtc",
+#    "native.sushiWbtcEth",
+#    "native.sushiWbtcIbBtc",
+    "native.unitRenBtc",
 ]
 
 yearnSettsToRun = [
@@ -187,6 +189,16 @@ def badger_single_sett(settConfig, deploy=True):
             return HarvestMetaFarmMiniDeploy(
                 "harvest.renCrv",
                 "StrategyHarvestMetaFarm",
+                deployer,
+                strategist=strategist,
+                guardian=guardian,
+                keeper=keeper,
+                governance=governance,
+            ).deploy(deploy=deploy)
+        if settId == "native.unitRenBtc":
+            return UnitProtocolRenBtcMiniDeploy(
+                "native.unitRenBtc",
+                "StrategyUnitProtocolRenbtc",
                 deployer,
                 strategist=strategist,
                 guardian=guardian,
