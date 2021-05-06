@@ -28,17 +28,17 @@ def calc_snapshot(
 
     apyBoosts = {}
     if name in NON_NATIVE_SETTS:
+        console.log(
+            "{} users out of {} boosted in {}".format(
+                len(boosts), len(userBalances), name
+            )
+        )
         preBoost = {}
-        postBoost = {}
         for user in userBalances:
             preBoost[user.address] = userBalances.percentage_of_total(user.address)
 
         for user in userBalances:
             boostAmount = boosts.get(user.address, 1)
-            if boostAmount > 1:
-                console.log("Boosted greater than 1")
-                console.log(user)
-
             user.boost_balance(boostAmount)
 
         for user in userBalances:

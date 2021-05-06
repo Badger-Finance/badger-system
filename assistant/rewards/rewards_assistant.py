@@ -53,19 +53,25 @@ def calc_geyser_rewards(badger, periodStartBlock, endBlock, cycle):
             for addr in apyBoost:
                 if addr not in apyBoosts:
                     apyBoosts[addr] = {}
-                else:
-                    apyBoosts[addr][settAddress] = apyBoost[addr]
+                apyBoosts[addr][settAddress] = apyBoost[addr]
+
         rewardsByGeyser[key] = geyserRewards
-    # return sum_rewards(rewardsByGeyser, cycle, badger.badgerTree)
+
     rewards = combine_rewards(list(rewardsByGeyser.values()), cycle, badger.badgerTree)
-    for addr in boosts:
-        apyInfo = apyBoosts[addr]
-        boosts[addr] = {"boost": boosts[addr], "multipliers": apyInfo}
+
+    boostsMetadata = {}
+    for addr, multipliers in apyBoosts.items():
+
+        boostsMetadata[addr] = {
+            "boost": boosts.get(addr, 1),
+            "multipliers": multipliers,
+        }
 
     with open("badger-boosts.json", "w") as fp:
-        json.dump(boosts, fp)
+        json.dump(boostsMetadata, fp)
 
     upload_boosts(test=True)
+
     return rewards
 
 
