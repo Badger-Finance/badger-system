@@ -25,8 +25,10 @@ from assistant.rewards.classes.RewardsLog import rewardsLog
 
 from assistant.rewards.rewards_checker import compare_rewards, verify_rewards
 from scripts.systems.badger_system import BadgerSystem
+from helpers.gas_utils import gas_strategies
 
-gas_strategy = GasNowStrategy("fast")
+gas_strategies.set_default(gas_strategies.exponentialScalingFast)
+gas_strategy = gas_strategies.exponentialScalingFast
 console = Console()
 
 

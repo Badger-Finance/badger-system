@@ -9,10 +9,10 @@
     "testProxyAdmin": "0xB10b3Af646Afadd9C62D663dd5d226B15C25CdFA",
     "devMultisig": "0xB65cef03b9B89f99517643226d76e286ee999e77",
     "opsMultisig": "0x576cD258835C529B54722F84Bb7d4170aA932C64",
+    "dfdMultisig": "0x5b5cF8620292249669e1DCC73B753d01543D6Ac7",
     "treasuryMultisig": "0xD4868d98849a58F743787c77738D808376210292",
     "testGatedProxy": "0x375C48a3A3685d7e28EB45e612da6Dd51c7E38E0",
     "timelock": "0x21CF9b77F88Adf8F8C98d7E33Fe601DC57bC0893",
-    "founderTimelock": "0x968363577759bb476DedFfc19E7a4eFc56175033",
     "token": "0x3472A5A71965499acd81997a54BBA8D852C6E53d",
     "logic": {
         "SmartVesting": "0x07c0E4f4C977a29c46Fb26597ea8C9105ca50b42",
@@ -54,7 +54,8 @@
         "VipCappedGuestListWrapperUpgradeable": "0xa6aB825f86D9fDaFe9528f34f089A8473A3D85d3",
         "SimpleWrapperGatedUpgradeable": "0xc0a972a3cf8e52167589694d135abb66409f9b30",
         "GatedProxy": "0x1ba9d948c1c4f0cfb0ecaf57b743bb4045b87497",
-        "RewardsLogger": "0x04Bd8c70fdFF3C387Ffe17Fa3265fe6dC925f5d6"
+        "RewardsLogger": "0x04Bd8c70fdFF3C387Ffe17Fa3265fe6dC925f5d6",
+        "VipCappedGuestListBbtcUpgradeable": "0x6D8Bbe75d04725948A84AcFa1C1E91406A5a8ccb"
     },
     "dao": {
         "token": "0x3472A5A71965499acd81997a54BBA8D852C6E53d",
@@ -156,6 +157,9 @@
         "native.sushiDiggWbtc": "0x7f6fe274e172ac7d096a7b214c78584d99ca988b",
         "yearn.wbtc": "0x155482D1e2cB0909333326504f0eA4350760c927"
     },
+    "guest_lists": {
+        "ibbtc": "0x7dD08c5a4Ce91Cf862223330dD373E36fe94189B"
+    },
     "digg_system": {
         "owner": "0xDA25ee226E534d868f0Dd8a459536b03fEE9079b",
         "devProxyAdmin": "0x20Dce41Acca85E8222D6861Aa6D23B6C941777bF",
@@ -198,5 +202,15 @@
     },
     "test": {
         "badgerTree": "0xc014c026d92c03cd3a8fdee6f2cafdc9254f5c9f"
+    },
+    "ibbtc": {
+        "badgerPeak": "0x41671BA1abcbA387b9b2B752c205e22e916BE6e3",
+        "bcrvRenWBTC": "0x6dEf55d2e18486B9dDfaA075bc4e4EE0B28c1545",
+        "bcrvRenWSBTC": "0xd04c48A53c111300aD41190D63681ed3dAd998eC",
+        "btbtc_sbtcCrv": "0xb9D076fDe463dbc9f915E5392F807315Bf940334",
+        "byvWbtcPeak": "0x825218beD8BE0B30be39475755AceE0250C50627",
+        "byvWbtc": "0x4b92d19c11435614CD49Af1b589001b7c08cD4D5",
+        "bBtc": "0xc4E15973E6fF2A35cC804c2CF9D2a1b817a8b40F",
+        "core": "0x2A8facc9D49fBc3ecFf569847833C380A13418a8"
     }
 }

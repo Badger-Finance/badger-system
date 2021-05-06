@@ -46,7 +46,10 @@ name_to_artifact = {
     "SimpleWrapperGatedUpgradeable": SimpleWrapperGatedUpgradeable,
     "BadgerTreeV2": BadgerTreeV2,
     "GatedProxy": GatedProxy,
-    "RewardsLogger": RewardsLogger
+    "RewardsLogger": RewardsLogger,
+    "StabilizeDiggSett": StabilizeDiggSett,
+    "StabilizeStrategyDiggV1": StabilizeStrategyDiggV1,
+    "VipCappedGuestListBbtcUpgradeable": VipCappedGuestListBbtcUpgradeable
 }
 
 

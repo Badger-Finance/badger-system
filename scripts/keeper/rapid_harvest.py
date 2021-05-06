@@ -99,9 +99,8 @@ def rapid_harvest(badger):
     )
 
     # ===== native.digg =====
-    diggBaseRewards = shares_to_fragments(rewards.getDistributions(key).getToStakingRewardsDaily("digg"))
-    assert diggBaseRewards <= diggBaseRewards * diggAllocation
     key = "native.digg"
+    diggBaseRewards = shares_to_fragments(rewards.getDistributions(key).getToStakingRewardsDaily("digg"))
     transfer_for_strategy(
         badger,
         key,
