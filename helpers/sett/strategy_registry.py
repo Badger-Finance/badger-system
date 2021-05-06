@@ -28,6 +28,7 @@ name_to_artifact = {
     "StrategyDiggLpMetaFarm": StrategyDiggLpMetaFarm,
     "StrategySushiDiggWbtcLpOptimizer": StrategySushiDiggWbtcLpOptimizer,
     "StrategyPancakeLpOptimizer": StrategyPancakeLpOptimizer,
+    "StrategyUniGenericLp": StrategyUniGenericLp,
     "DiggRewardsFaucet": DiggRewardsFaucet,
     "DiggSett": DiggSett,
     "HoneypotMeme": HoneypotMeme,
