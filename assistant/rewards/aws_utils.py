@@ -107,9 +107,29 @@ def upload(fileName, bucket="badger-json", publish=True):
 
 def upload_boosts(test):
     fileName = "badger-boosts.json"
-    console.log("Uploading boosts")
+
     if test:
         bucket = "badger-staging-merkle-proofs"
     else:
         bucket = "badger-merkle-proofs"
+    console.log("Uploading file to s3://" + bucket + "/" + fileName)
     s3.upload_file(fileName, bucket, fileName)
+    console.log("✅ Uploaded file to s3://" + bucket + "/" + fileName)
+
+
+def upload_analytics(fileName):
+    bucket = "badger-analytics"
+    console.log(fileName)
+
+    jsonKey = "rewards/{}.json".format(fileName)
+    console.log(jsonKey)
+    pngKey = "rewards/{}.png".format(fileName)
+    console.log(pngKey)
+
+    console.log("Uploading file to s3://" + bucket + "/" + jsonKey)
+    s3.upload_file("logs/{}".format(jsonKey), bucket, jsonKey)
+    console.log("✅ Uploaded file to s3://" + bucket + "/" + jsonKey)
+
+    console.log("Uploading file to s3://" + bucket + "/" + pngKey)
+    s3.upload_file("logs/{}".format(pngKey), bucket, pngKey)
+    console.log("✅ Uploaded file to s3://" + bucket + "/" + pngKey)

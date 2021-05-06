@@ -1,4 +1,5 @@
 from rich.console import Console
+from assistant.rewards.aws_utils import upload_analytics
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 from helpers.constants import BADGER, DIGG
@@ -116,6 +117,8 @@ class RewardsLog:
 
         with open("logs/rewards/{}.json".format(fileName), "w") as f:
             json.dump(data, f, indent=4)
+
+        upload_analytics(fileName)
 
 
 rewardsLog = RewardsLog()

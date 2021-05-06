@@ -44,12 +44,17 @@ def calc_geyser_rewards(badger, periodStartBlock, endBlock, cycle):
     rewardsByGeyser = {}
     boosts = badger_boost(badger, endBlock)
     apyBoosts = {}
+    multiplierData = {}
+
     for key, geyser in badger.geysers.items():
         settAddress = badger.getSett(key).address
         geyserRewards, apyBoost = calc_snapshot(
             badger, key, periodStartBlock, endBlock, cycle, boosts, 0
         )
         if len(apyBoost) > 0:
+            minimum = min(apyBoost.values())
+            maximum = max(apyBoost.values())
+            multiplierData[settAddress] = {"min": minimum, "max": maximum}
             for addr in apyBoost:
                 if addr not in apyBoosts:
                     apyBoosts[addr] = {}
@@ -59,10 +64,10 @@ def calc_geyser_rewards(badger, periodStartBlock, endBlock, cycle):
 
     rewards = combine_rewards(list(rewardsByGeyser.values()), cycle, badger.badgerTree)
 
-    boostsMetadata = {}
-    for addr, multipliers in apyBoosts.items():
+    boostsMetadata = {"multiplierData": multiplierData, "userData": {}}
 
-        boostsMetadata[addr] = {
+    for addr, multipliers in apyBoosts.items():
+        boostsMetadata["userData"][addr] = {
             "boost": boosts.get(addr, 1),
             "multipliers": multipliers,
         }
@@ -227,7 +232,7 @@ def generate_rewards_in_range(badger, startBlock, endBlock, pastRewards):
     )
     print("Uploading to file " + contentFileName)
 
-    rewardsLog.save("rewards-log-{}".format(nextCycle))
+    rewardsLog.save("rewards-{}".format(nextCycle))
     # TODO: Upload file to AWS & serve from server
     with open(contentFileName, "w") as outfile:
         json.dump(merkleTree, outfile, indent=4)
