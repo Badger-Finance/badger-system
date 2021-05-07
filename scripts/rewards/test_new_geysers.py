@@ -8,7 +8,7 @@ from rich.console import Console
 from scripts.systems.badger_system import connect_badger
 from assistant.rewards.aws_utils import download_past_trees
 from assistant.rewards.rewards_assistant import run_action
-from helpers.utils import BADGER, DIGG, FARM, XSUSHI
+from helpers.constants import BADGER, DIGG, FARM, XSUSHI
 
 console = Console()
 rewardsInfo = {}

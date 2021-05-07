@@ -114,13 +114,9 @@ def badger_boost(badger, currentBlock):
     digg_wallet_balances = UserBalances(
         [UserBalance(addr, bal, DIGG) for addr, bal in digg_wallet_balances.items()]
     )
-    console.log("Badger Setts before filter {}".format(len(badgerSetts)))
     badgerSetts = filter_dust(combine_balances([badgerSetts, badger_wallet_balances]))
-    console.log("Badger setts after filter {}".format(len(badgerSetts)))
 
-    console.log("Digg Setts before filter {}".format(len(diggSetts)))
     diggSetts = filter_dust(combine_balances([diggSetts, digg_wallet_balances]))
-    console.log("Digg Setts after filter {}".format(len(diggSetts)))
 
     console.log("Non native Setts before filter {}".format(len(nonNativeSetts)))
     nonNativeSetts = filter_dust(nonNativeSetts)
