@@ -29,7 +29,8 @@ def main():
     snap = BalanceSnapshotter([wbtc], [logic, badger.devMultisig, dfdMulti])
     snap.snap()
 
-    logic.disperseToken(wbtc, {"from": deployer})
+    # logic.disperseToken(wbtc, {"from": deployer})
+    logic.disperseToken(wbtc, {"from": dfdMulti})
 
     snap.snap()
     snap.diff_last_two()

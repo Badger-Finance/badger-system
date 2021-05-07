@@ -22,6 +22,7 @@ contract Disperse is Initializable {
 
     mapping(address => uint256) private _shares;
     address[] private _payees;
+    mapping(address => bool) private _isPayee;
 
 /**
      * @dev Creates an instance of `PaymentSplitter` where each account in `payees` is assigned the number of shares at
@@ -58,8 +59,13 @@ contract Disperse is Initializable {
         return _payees;
     }
 
+    function isPayee(address account) public view returns (bool) {
+        return _isPayee[account];
+    }
+
     /// @dev Disperse balance of a given token in contract among recipients
     function disperseToken(IERC20Upgradeable token) external {
+        require(_isPayee[msg.sender], "onlyPayees");
         uint256 tokenBalance = token.balanceOf(address(this));
 
         for (uint256 i = 0; i < _payees.length; i++) {
@@ -81,6 +87,7 @@ contract Disperse is Initializable {
         require(_shares[account] == 0, "PaymentSplitter: account already has shares");
 
         _payees.push(account);
+        _isPayee[account] = true;
         _shares[account] = shares_;
         _totalShares = _totalShares.add(shares_);
         emit PayeeAdded(account, shares_);
