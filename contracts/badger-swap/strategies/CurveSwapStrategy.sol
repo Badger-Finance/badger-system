@@ -46,6 +46,8 @@ contract CurveSwapStrategy is AccessControlUpgradeable, ReentrancyGuardUpgradeab
         require(exchangeAmount > minAmount, "slippage too high");
 
         _approveBalance(_from, registry, _amount);
+        // msg.sender must supply from token for _amount.
+        IERC20Upgradeable(_from).safeTransferFrom(msg.sender, address(this), _amount);
         amount = ICurveRegistryExchange(registry).exchange(
             pool,
             _from,
