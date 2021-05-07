@@ -14,6 +14,12 @@
     "testGatedProxy": "0x375C48a3A3685d7e28EB45e612da6Dd51c7E38E0",
     "timelock": "0x21CF9b77F88Adf8F8C98d7E33Fe601DC57bC0893",
     "token": "0x3472A5A71965499acd81997a54BBA8D852C6E53d",
+    "multisigs": {
+        "dev": "0xB65cef03b9B89f99517643226d76e286ee999e77",
+        "ops": "0x576cD258835C529B54722F84Bb7d4170aA932C64",
+        "dfd": "0x5b5cF8620292249669e1DCC73B753d01543D6Ac7",
+        "dfdBadgerShared": "0x5b5cF8620292249669e1DCC73B753d01543D6Ac7"
+    },
     "logic": {
         "SmartVesting": "0x07c0E4f4C977a29c46Fb26597ea8C9105ca50b42",
         "SmartTimelock": "0x82C9E7DC49F800820d37a12a5a17548FE3a3A40b",
@@ -65,7 +71,8 @@
     "sett_system": {
         "controllers": {
             "native": "0x63cF44B2548e4493Fd099222A1eC79F3344D9682",
-            "harvest": "0x30392694C25fbBE5C026CF846e9b6525A2aC3eC8"
+            "harvest": "0x30392694C25fbBE5C026CF846e9b6525A2aC3eC8",
+            "experimental": "0x9b4efA18c0c6b4822225b81D150f3518160f8609"
         },
         "vaults": {
             "native.badger": "0x19D97D8fA813EE2f51aD4B4e04EA08bAf4DFfC28",
@@ -79,6 +86,7 @@
             "native.digg": "0x7e7E112A68d8D2E221E11047a72fFC1065c38e1a",
             "native.uniDiggWbtc": "0xC17078FDd324CC473F8175Dc5290fae5f2E84714",
             "native.sushiDiggWbtc": "0x88128580ACdD9c04Ce47AFcE196875747bF2A9f6",
+            "experimental.sushiIBbtcWbtc": "0x8a8ffec8f4a0c8c9585da95d9d97e8cd6de273de",
             "yearn.wbtc": "0x4b92d19c11435614cd49af1b589001b7c08cd4d5"
         },
         "vault_artifacts": {
@@ -93,6 +101,7 @@
             "native.digg": "DiggSett",
             "native.uniDiggWbtc": "Sett",
             "native.sushiDiggWbtc": "Sett",
+            "experimental.sushiIBbtcWbtc": "Sett",
             "yearn.wbtc": "AffiliateTokenGatedUpgradeable"
         },
         "strategies": {
@@ -106,6 +115,7 @@
             "native.sushiBadgerWbtc": "0x3a494D79AA78118795daad8AeFF5825C6c8dF7F1",
             "native.digg": "0x4a8651F2edD68850B944AD93f2c67af817F39F62",
             "native.uniDiggWbtc": "0xadc8d7322f2E284c1d9254170dbe311E9D3356cf",
+            "experimental.sushiIBbtcWbtc": "0xAe793040cEeF16b18348246919Eb659f4b4fDA92",
             "native.sushiDiggWbtc": "0xaa8dddfe7DFA3C3269f1910d89E4413dD006D08a"
         },
         "strategy_artifacts": {
@@ -119,6 +129,7 @@
             "native.sushiBadgerWbtc": "StrategySushiBadgerWbtc",
             "native.digg": "StrategyDiggRewards",
             "native.uniDiggWbtc": "StrategyDiggLpMetaFarm",
+            "experimental.sushiIBbtcWbtc": "StrategySushiLpOptimizer",
             "native.sushiDiggWbtc": "StrategySushiDiggWbtcLpOptimizer"
         },
         "rewards": {
