@@ -66,7 +66,7 @@ def configure_bridge(
 
 def main():
     badger = connect_badger(badger_config.prod_json)
-    bridge = connect_bridge(badger_config.prod_json)
+    bridge = connect_bridge(badger, badger_config.prod_json)
     swap = connect_swap(badger_config.prod_json)
 
     upgrade_bridge(badger, bridge)
