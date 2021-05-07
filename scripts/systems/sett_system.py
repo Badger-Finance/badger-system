@@ -398,6 +398,53 @@ def deploy_strategy(
             ),
             badger.deployer,
         )
+    if strategyName == "StrategyUniGenericLp":
+        return deploy_proxy(
+            "StrategyUniGenericLp",
+            StrategyUniGenericLp.abi,
+            badger.logic.StrategyUniGenericLp.address,
+            badger.devProxyAdmin.address,
+            badger.logic.StrategyUniGenericLp.initialize.encode_input(
+                badger.devMultisig,
+                badger.deployer,
+                controller,
+                badger.keeper,
+                badger.guardian,
+                [
+                    params.want,
+                ],
+                [
+                    params.withdrawalFee,
+                ],
+            ),
+            badger.deployer,
+        )
+    if strategyName == "StrategyPancakeLpOptimizer":
+        return deploy_proxy(
+            "StrategyPancakeLpOptimizer",
+            StrategyPancakeLpOptimizer.abi,
+            badger.logic.StrategyPancakeLpOptimizer.address,
+            badger.devProxyAdmin.address,
+            badger.logic.StrategyPancakeLpOptimizer.initialize.encode_input(
+                badger.devMultisig,
+                badger.deployer,
+                controller,
+                badger.keeper,
+                badger.guardian,
+                [
+                    params.want,
+                    params.token0,
+                    params.token1,
+                ],
+                [
+                    params.performanceFeeGovernance,
+                    params.performanceFeeStrategist,
+                    params.withdrawalFee,
+                ],
+                params.pid,
+            ),
+            badger.deployer,
+        )
 
 
 def deploy_controller(

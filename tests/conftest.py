@@ -32,6 +32,7 @@ from tests.sett.fixtures import (
     PancakeMiniDeploy,
     SushiWbtcIbBtcLpOptimizerMiniDeploy,
     UnitProtocolRenBtcMiniDeploy
+    UniGenericLpMiniDeploy,
 )
 
 
@@ -54,16 +55,17 @@ def generate_sett_test_config(settsToRun, runTestSetts, runProdSetts=False):
 # ===== Sett + Strategy Test Configuration =====
 
 settsToRun = [
-#    "native.badger",
-#    "native.renCrv",
-#    "native.sbtcCrv",
-#    "native.tbtcCrv",
-#    # "harvest.renCrv",
-#    "native.uniBadgerWbtc",
-#    "native.sushiBadgerWbtc",
-#    "native.sushiWbtcEth",
-#    "native.sushiWbtcIbBtc",
     "native.unitRenBtc",
+    # "native.badger",
+    # "native.renCrv",
+    # "native.sbtcCrv",
+    # "native.tbtcCrv",
+    # "harvest.renCrv",
+    # "native.uniBadgerWbtc",
+    # "native.sushiBadgerWbtc",
+    # "native.sushiWbtcEth",
+    # "native.sushiWbtcIbBtc",
+    # "native.uniWbtcIbBtc",
 ]
 
 yearnSettsToRun = [
@@ -310,7 +312,18 @@ def badger_single_sett(settConfig, deploy=True):
                 guardian=guardian,
                 keeper=keeper,
                 governance=governance,
-            ).deploy(deploy=deploy)
+            ).deploy(deploy=True)  # Deploy for now since not already deployed.
+        if settId == "native.uniWbtcIbBtc":
+            return UniGenericLpMiniDeploy(
+                "native.uniWbtcIbBtc",
+                "StrategyUniGenericLp",
+                deployer,
+                [registry.tokens.ibbtc, registry.tokens.wbtc],
+                strategist=strategist,
+                guardian=guardian,
+                keeper=keeper,
+                governance=governance,
+            ).deploy(deploy=True)  # Deploy for now since not already deployed.
         if settId == "yearn.bvyWBTC":
             return YearnMiniDeploy(
                 "yearn.bvyWBTC",

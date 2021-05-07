@@ -22,7 +22,7 @@ from .provisioners import (BadgerLpMetaFarmProvisioner,
                            SushiClawUSDCProvisioner,
                            SushiDiggWbtcLpOptimizerProvisioner,
                            SushiLpOptimizerProvisioner,
-                           SushiWbtcIbBtcLpOptimizerProvisioner)
+                           WbtcIbBtcLpProvisioner)
 
 console = Console()
 
@@ -49,7 +49,7 @@ class SimulationManager:
         self.accounts = accounts[9:]  # Use the 10th account onwards.
         # User accounts (need to be provisioned before running sim).
         self.users = []
-         
+
         self.debug = True
 
         self.badger = badger
@@ -176,6 +176,10 @@ class SimulationManager:
             return PancakeBBadgerBtcbProvisioner(self)
         if settId == "native.bDiggBtcb":
             return PancakeBDiggBtcbProvisioner(self)
+        if settId == "native.sushiWbtcIbBtc":
+            return WbtcIbBtcLpProvisioner(self)
+        if settId == "native.uniWbtcIbBtc":
+            return WbtcIbBtcLpProvisioner(self, isUniswap=True)
         raise Exception(f"invalid strategy settID (no provisioner): {settId}")
 
     def _provisionUserActors(self) -> None:
