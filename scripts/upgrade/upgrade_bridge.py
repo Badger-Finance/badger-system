@@ -1,8 +1,7 @@
 from brownie import (
     BadgerBridgeAdapter,
     CurveSwapStrategy,
-    ContractContainer,
-    BrownieArtifact,
+    network,
 )
 from rich.console import Console
 
@@ -17,8 +16,8 @@ console = Console()
 
 def upgrade_swap_strategy(
         badger: BadgerSystem,
-        strategy: ContractContainer,
-        SwapStrategy: BrownieArtifact) -> str:
+        strategy: network.contract.ProjectContract,
+        SwapStrategy: network.contract.ContractContainer) -> str:
     '''
     Upgrades swap strategy.
     '''
