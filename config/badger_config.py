@@ -17,6 +17,7 @@ pickle = registry.pickle
 harvest = registry.harvest
 sushi = registry.sushi
 pools = curve.pools
+chainlink = registry.chainlink
 
 sett_config = DotMap(
     native=DotMap(
@@ -79,6 +80,16 @@ sett_config = DotMap(
                 performanceFeeStrategist=1000,
                 performanceFeeGovernance=1000,
                 withdrawalFee=75,
+                keepCRV=0,
+            ),
+        ),
+        unitRenBtc=DotMap(
+            strategyName="StrategyUnitProtocolRenbtc",
+            params=DotMap(
+                want=registry.tokens.renbtc,
+                performanceFeeStrategist=1000,
+                performanceFeeGovernance=1000,
+                withdrawalFee=0,
                 keepCRV=0,
             ),
         ),

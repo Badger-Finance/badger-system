@@ -16,7 +16,7 @@ interface ICurveExchange {
         uint256 dx
     ) external view returns (uint256);
 
-    function calc_token_amount(uint256[2] calldata amounts, bool deposit) external returns (uint256 amount);
+    function calc_token_amount(uint256[2] calldata amounts, bool deposit) external view returns (uint256 amount);
 
     function add_liquidity(uint256[2] calldata amounts, uint256 min_mint_amount) external;
 

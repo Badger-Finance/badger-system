@@ -19,6 +19,7 @@ class ContractSystems(Enum):
     PICKLE = ("pickle",)
     HARVEST = ("harvest",)
     CURVE = ("curve",)
+    CHAINLINK = ("chainlink",)
     TOKENS = "tokens"
 
 class ContractRegistries:

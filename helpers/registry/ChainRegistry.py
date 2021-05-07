@@ -23,6 +23,7 @@ class ChainRegistry:
         yearn=None,
         aave=None,
         compound=None,
+        chainlink=None,
         defidollar=None,
     ):
         self.curve=curve
@@ -44,6 +45,7 @@ class ChainRegistry:
         self.yearn=yearn
         self.aave=aave
         self.compound=compound
+        self.chainlink=chainlink
         self.defidollar=defidollar
 
     def yearn_system(self) -> YearnSystem:

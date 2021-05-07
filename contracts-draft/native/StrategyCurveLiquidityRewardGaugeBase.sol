@@ -244,8 +244,8 @@ contract StrategyCurveLiquidityRewardGaugeBase is BaseStrategy {
         if (lpReward != address(0) && getLpRewardStatus(lpReward) && ICurveLiquidityRewardGauge(gauge).rewards_for(address(this)) > 0) {
             ICurveGauge(gauge).claim_rewards();
             claimData.lpRewardClaimed = IERC20Upgradeable(lpReward).balanceOf(address(this));
-	    address[] memory path = new address[](3); // should path go from crv -> lpComponent
-	    path[0] = crv;
+            address[] memory path = new address[](3); // should path go from crv -> lpComponent
+            path[0] = crv;
             path[1] = weth;
             path[2] = lpComponent;
             _swap(lpReward, claimData.lpRewardClaimed, path);
