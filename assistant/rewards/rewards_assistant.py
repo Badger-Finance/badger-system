@@ -32,31 +32,31 @@ gas_strategy = gas_strategies.exponentialScalingFast
 console = Console()
 
 
-def calc_geyser_rewards(badger, periodStartBlock, endBlock, cycle):
+def calc_sett_rewards(badger, periodStartBlock, endBlock, cycle):
     """
-    Calculate rewards for each geyser, and sum them
-    userRewards = (userShareSeconds / totalShareSeconds) / tokensReleased
-    (For each token, for the time period)
+    Calculate rewards for each sett, and sum them
     """
     #ratio = digg_btc_twap(periodStartBlock,endBlock)
     #diggAllocation = calculate_digg_allocation(ratio)
-    rewardsByGeyser = {}
+    rewardsBySett = {}
     boosts = json.load(open("logs/boosts.json"))
-    for key, geyser in badger.geysers.items():
-
-        if key == "yearn.wbtc":
+    noBoosts = ["yearn.wbtc","experimental.sushiIBbtcWbtc"]
+    noRewards = ["native.digg"]
+    for key, sett in badger.sett_system.vaults.items():
+        if key in noRewards:
+            continue
+        if key in noBoosts:
             boost = {}
         else:
             boost = boosts[key]
 
-        geyserRewards = calc_snapshot(
+        settRewards = calc_snapshot(
             badger, key, periodStartBlock, endBlock, cycle, boost,0)
-        rewardsByGeyser[key] = geyserRewards
-    #return sum_rewards(rewardsByGeyser, cycle, badger.badgerTree)
+        rewardsBySett[key] = settRewards
+
     rewards = combine_rewards(
-        list(rewardsByGeyser.values()), cycle, badger.badgerTree)
-    for addr,boost in boosts.items():
-        rewards.add_user_boost(addr,boost)
+        list(rewardsBySett.values()), cycle, badger.badgerTree
+    )
 
     return rewards
 
@@ -181,7 +181,7 @@ def generate_rewards_in_range(badger, startBlock, endBlock, pastRewards):
     currentMerkleData = fetchCurrentMerkleData(badger)
     #sushiRewards = calc_sushi_rewards(badger,startBlock,endBlock,nextCycle,retroactive=False)
     #farmRewards = fetch_current_harvest_rewards(badger,startBlock, endBlock,nextCycle)
-    geyserRewards = calc_geyser_rewards(
+    settRewards = calc_sett_rewards(
         badger, startBlock, endBlock, nextCycle)
 
     #farmRewards = calc_farm_rewards(
@@ -192,7 +192,7 @@ def generate_rewards_in_range(badger, startBlock, endBlock, pastRewards):
     #)
 
     newRewards = combine_rewards(
-        [geyserRewards], nextCycle, badger.badgerTree
+        [settRewards], nextCycle, badger.badgerTree
     )
     cumulativeRewards = process_cumulative_rewards(pastRewards, newRewards)
 

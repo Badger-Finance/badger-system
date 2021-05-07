@@ -60,7 +60,11 @@ def calc_snapshot(badger, name, startBlock, endBlock, nextCycle, boosts, diggAll
                 "{} DIGG tokens distributed".format(
                     digg.sharesToFragments(tokenDistribution)/1e18)
             )
-
+        elif token == "0x20c36f062a31865bED8a5B1e512D9a1A20AA333A":
+            console.log(
+                "{} DFD tokens distributed".format(
+                    tokenDistribution/1e18)
+            )
         else:
             console.log(
                 "{} Badger tokens distributed".format(
@@ -81,6 +85,7 @@ def calc_snapshot(badger, name, startBlock, endBlock, nextCycle, boosts, diggAll
                 rewards.increase_user_rewards(addr, token, int(rewardAmount))
                 rewardsLog.add_user_token(
                     addr, name, token, int(rewardAmount))
+
             console.log("Token Distribution: {}\nRewards Released: {}".format(
                 tokenDistribution/1e18,totalRewards/1e18
             ))

@@ -19,6 +19,7 @@ badger_token = "0x3472A5A71965499acd81997a54BBA8D852C6E53d"
 digg_token = "0x798D1bE841a82a273720CE31c822C61a67a601C3"
 farm_token = "0xa0246c9032bC3A600820415aE600c6388619A14D"
 xSushi_token = "0x8798249c2E607446EfB7Ad49eC89dD1865Ff4272"
+dfd_token = "0x20c36f062a31865bED8a5B1e512D9a1A20AA333A"
 
 tokens_to_check = [
     badger_token,
@@ -164,12 +165,14 @@ def verify_rewards(badger: BadgerSystem, startBlock, endBlock, before_data, afte
     
     total_before_farm = int(before_data["tokenTotals"][farm_token])
     total_before_xsushi = int(before_data["tokenTotals"][xSushi_token])
+    total_before_dfd = int(before_data["tokenTotals"].get(dfd_token,0))
 
     total_after_badger = after_data["tokenTotals"][badger_token]
     total_after_digg = after_data["tokenTotals"][digg_token]
 
     total_after_farm = int(after_data["tokenTotals"][farm_token])
     total_after_xsushi = int(after_data["tokenTotals"][xSushi_token])
+    total_after_dfd = int(after_data["tokenTotals"].get(dfd_token,0))
 
     digg_badger = total_after_badger - total_before_badger
     diff_digg = total_after_digg - total_before_digg
@@ -191,6 +194,8 @@ def verify_rewards(badger: BadgerSystem, startBlock, endBlock, before_data, afte
 
     print_token_diff_table("Farm", total_before_farm, total_after_farm, 0)
     print_token_diff_table("xSushi", total_before_xsushi, total_after_xsushi, 0)
+    print_token_diff_table("dfd", total_before_dfd, total_after_dfd, 40000*1e18)
+
 
     assert total_after_digg < sanity_digg
     assert total_after_badger < sanity_badger
