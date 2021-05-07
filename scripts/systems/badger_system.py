@@ -956,6 +956,26 @@ class BadgerSystem:
         eta = web3.eth.getBlock('latest')['timestamp'] + delay
         return self.governance_queue_transaction(target, signature, data, eta)
 
+    def timelock_run_direct(self, target, signature, data, eta, eth=0):
+        multi = accounts.at(self.devMultisig.address, force=True)
+        self.governanceTimelock.queueTransaction(
+            target,
+            eth,
+            signature,
+            data,
+            eta,
+            {"from": multi}
+        )
+        chain.sleep(days(5))
+        self.governanceTimelock.executeTransaction(
+            target,
+            eth,
+            signature,
+            data,
+            eta,
+            {"from": multi}
+        )
+
     def governance_queue_transaction(self, target, signature, data, eta, eth=0) -> str:
         multi = GnosisSafe(self.devMultisig)
         id = multi.addTx(
@@ -1077,7 +1097,7 @@ class BadgerSystem:
         self.track_contract_upgradeable("rewardsEscrow", self.rewardsEscrow)
 
     def connect_badger_tree(self, address):
-        self.badgerTree = BadgerTree.at(address)
+        self.badgerTree = BadgerTreeV2.at(address)
         self.track_contract_upgradeable("badgerTree", self.badgerTree)
 
     def connect_badger_hunt(self, address):

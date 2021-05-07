@@ -46,7 +46,6 @@ class SettMiniDeployBase:
             self.pre_deploy_setup(deploy=deploy)
 
             distribute_test_ether(self.deployer, Wei("20 ether"))
-            distribute_from_whales(self.deployer)
 
             self.controller = self.badger.sett_system.controllers[self.key]
             self.vault = self.badger.sett_system.vaults[self.key]
@@ -67,6 +66,9 @@ class SettMiniDeployBase:
             return self.badger
 
         self.badger = deploy_badger_minimal(self.deployer, self.keeper, self.guardian)
+        # NB: We always connect to dao contracts and multisig.
+        self.badger.connect_dao()
+        self.badger.connect_multisig("0xB65cef03b9B89f99517643226d76e286ee999e77")
         self.controller = self.badger.add_controller(self.key)
         self.deploy_required_logic()
 
@@ -78,7 +80,6 @@ class SettMiniDeployBase:
         self.want = want
 
         distribute_test_ether(self.deployer, Wei("20 ether"))
-        distribute_from_whales(self.deployer)
 
         self.controller = self.badger.add_controller(self.key)
         self.vault = self.badger.deploy_sett(

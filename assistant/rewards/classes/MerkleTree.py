@@ -93,7 +93,6 @@ def rewards_to_merkle_tree(rewards: RewardsList, startBlock, endBlock, geyserRew
             "index": hex(node["index"]),
             "user": node["user"],
             "cycle": hex(node["cycle"]),
-            "boost": int(node["boost"]),
             "tokens": node["tokens"],
             "cumulativeAmounts": node["cumulativeAmounts"],
             "proof": tree.get_proof(encodedNodes[node["index"]]),

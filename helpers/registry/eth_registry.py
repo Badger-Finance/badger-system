@@ -6,9 +6,6 @@ from brownie.network import web3
 from dotmap import DotMap
 from helpers.registry.WhaleRegistryAction import WhaleRegistryAction
 
-with open("dependency-artifacts/defidollar/BadgerSettPeak.json") as f:
-    BadgerSettPeak = json.load(f)
-
 aragon_registry = DotMap(
     addresses=DotMap(
         agentImpl="0x3a93c17fc82cc33420d1809dda9fb715cc89dd37",
@@ -129,6 +126,27 @@ badger_registry = DotMap(
     token="0x3472a5a71965499acd81997a54bba8d852c6e53d"
 )
 
+defidollar_registry = DotMap(
+    addresses=DotMap(
+        badgerSettPeak="0x41671BA1abcbA387b9b2B752c205e22e916BE6e3",
+        core="0x2A8facc9D49fBc3ecFf569847833C380A13418a8",
+    ),
+    pools=[
+        DotMap(
+            id=0,
+            sett="0x6dEf55d2e18486B9dDfaA075bc4e4EE0B28c1545",
+        ),
+        DotMap(
+            id=1,
+            sett="0xd04c48A53c111300aD41190D63681ed3dAd998eC",
+        ),
+        DotMap(
+            id=2,
+            sett="0xb9D076fDe463dbc9f915E5392F807315Bf940334",
+        ),
+    ],
+)
+
 eth_registry = ChainRegistry(
     curve=curve_registry,
     uniswap=uniswap_registry,
@@ -144,6 +162,7 @@ eth_registry = ChainRegistry(
     yearn=yearn_registry,
     aave=aave_registry,
     chainlink=chainlink_registry
+    defidollar=defidollar_registry,
 )
 
 eth_registry.tokens = DotMap(
@@ -160,6 +179,8 @@ eth_registry.tokens = DotMap(
     usdc=web3.toChecksumAddress("0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"),
     renbtc=web3.toChecksumAddress("0xeb4c2781e4eba804ce9a9803c67d0893436bb27d"),
     usdp=web3.toChecksumAddress("0x1456688345527bE1f37E9e627DA0837D6f08C925"),
+    ibbtc=web3.toChecksumAddress("0xc4E15973E6fF2A35cC804c2CF9D2a1b817a8b40F"),
+    dfd=web3.toChecksumAddress("0x20c36f062a31865bed8a5b1e512d9a1a20aa333a"),
 )
 
 eth_registry.whales = DotMap(
@@ -194,7 +215,7 @@ eth_registry.whales = DotMap(
         action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT,
     ),
     bSbtcCrv=DotMap(
-        whale="0x7af23cc86f3d96f079d5a56d0a89ebcb281060d5",
+        whale="0x10fc82867013fce1bd624fafc719bb92df3172fc",
         token="0xd04c48A53c111300aD41190D63681ed3dAd998eC",
         action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT
     ),
@@ -204,7 +225,7 @@ eth_registry.whales = DotMap(
         action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT,
     ),
     bRenCrv=DotMap(
-        whale="0xedff3e9b6d596501c7fe806ef26bff395c01bdbe",
+        whale="0x2296f174374508278dc12b806a7f27c87d53ca15",
         token="0x6dEf55d2e18486B9dDfaA075bc4e4EE0B28c1545",
         action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT
     ),
@@ -214,7 +235,7 @@ eth_registry.whales = DotMap(
         action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT,
     ),
     bTbtcCrv=DotMap(
-        whale="0xadc68fb9809206c88e4f871c14b904b25ae5e301",
+        whale="0x085a9340ff7692ab6703f17ab5ffc917b580a6fd",
         token="0xb9D076fDe463dbc9f915E5392F807315Bf940334",
         action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT
     ),

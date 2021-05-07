@@ -3,7 +3,7 @@ from scripts.systems.YearnSystem import YearnSystem
 from scripts.systems.TokenSystem import TokenSystem
 
 class ChainRegistry:
-    def __init__(self, 
+    def __init__(self,
         curve=None,
         uniswap=None,
         open_zeppelin=None,
@@ -24,6 +24,7 @@ class ChainRegistry:
         aave=None,
         compound=None,
         chainlink=None,
+        defidollar=None,
     ):
         self.curve=curve
         self.uniswap=uniswap
@@ -45,7 +46,8 @@ class ChainRegistry:
         self.aave=aave
         self.compound=compound
         self.chainlink=chainlink
-    
+        self.defidollar=defidollar
+
     def yearn_system(self) -> YearnSystem:
         if self.yearn == None:
             raise Exception("No yearn system registered")
