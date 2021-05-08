@@ -22,6 +22,7 @@ from helpers.sett.resolvers import (
 )
 from helpers.utils import digg_shares_to_initial_fragments, val
 from scripts.systems.badger_system import BadgerSystem
+from helpers.sett.strategy_earnings import get_harvest_earnings
 
 console = Console()
 
@@ -264,6 +265,17 @@ class SnapshotManager:
             self.resolver.confirm_withdraw(
                 before, after, {"user": user, "amount": userBalance}, tx
             )
+
+    def estimateProfitHarvestViaManager(self, key, strategy, overrides):
+        gas_cost = self.badger.badgerRewardsManager.harvest.estimate_gas(strategy, overrides)
+        earnings = get_harvest_earnings(self.badger, self.strategy, key, overrides)
+        return earnings - gas_cost
+
+    def estimateProfitHarvest(self, key, overrides):
+        gas_cost = self.strategy.harvest.estimate_gas(overrides)
+        earnings = get_harvest_earnings(self.badger, self.strategy, key, overrides)
+        console.log('expected gas cost:', gas_cost, 'expected earnings after gas (in ETH):', earnings)
+        return earnings - gas_cost
 
     def format(self, key, value):
         if type(value) is int:

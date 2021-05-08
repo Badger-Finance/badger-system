@@ -68,6 +68,7 @@ pickle_registry = DotMap(
 sushi_registry = DotMap(
     sushiToken="0x6b3595068778dd592e39a122f4f5a5cf09c90fe2",
     xsushiToken="0x8798249c2E607446EfB7Ad49eC89dD1865Ff4272",
+    xSushiSymbol="XSUSHI",
     sushiChef="0xc2EdaD668740f1aA35E4D8f227fB8E17dcA888Cd",
     router="0xd9e1cE17f2641f24aE83637ab66a2cca9C378B9F",
     factory="0xC0AEe478e3658e2610c5F7A4A2E1777cE9e4f2Ac",
@@ -93,6 +94,7 @@ aave_registry = DotMap(
 curve_registry = DotMap(
     minter="0xd061D61a4d941c39E5453435B6345Dc261C2fcE0",
     crvToken="0xD533a949740bb3306d119CC777fa900bA034cd52",
+    symbol="CRV",
     pools=DotMap(
         sbtcCrv=DotMap(
             swap="0x7fC77b5c7614E1533320Ea6DDc2Eb61fa00A9714",
@@ -114,7 +116,13 @@ curve_registry = DotMap(
 )
 
 badger_registry = DotMap(
-    token="0x3472a5a71965499acd81997a54bba8d852c6e53d"
+    token="0x3472a5a71965499acd81997a54bba8d852c6e53d",
+    symbol="BADGER"
+)
+
+digg_registry = DotMap(
+    token="0x798D1bE841a82a273720CE31c822C61a67a601C3",
+    symbol="DIGG"
 )
 
 eth_registry = ChainRegistry(
@@ -129,7 +137,8 @@ eth_registry = ChainRegistry(
     multicall=multicall_registry,
     badger=badger_registry,
     yearn=yearn_registry,
-    aave=aave_registry
+    aave=aave_registry,
+    digg=digg_registry
 )
 
 eth_registry.tokens = DotMap(

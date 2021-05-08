@@ -1,11 +1,11 @@
 from brownie import *
 
 name_to_artifact = {
-    "SmartVesting": SmartVesting,
     "SmartTimelock": SmartTimelock,
     "RewardsEscrow": RewardsEscrow,
     "BadgerGeyser": BadgerGeyser,
     "BadgerTree": BadgerTree,
+    "BadgerTreeV2": BadgerTreeV2,
     "BadgerHunt": BadgerHunt,
     "SimpleTimelock": SimpleTimelock,
     "Controller": Controller,
