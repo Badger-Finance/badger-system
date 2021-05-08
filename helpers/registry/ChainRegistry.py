@@ -27,6 +27,7 @@ class ChainRegistry:
         aave=None,
         compound=None,
         defidollar=None,
+        digg=None
     ):
         self.curve = curve
         self.uniswap = uniswap
@@ -48,7 +49,7 @@ class ChainRegistry:
         self.aave = aave
         self.compound = compound
         self.defidollar = defidollar
-
+        self.digg = digg
     def yearn_system(self) -> YearnSystem:
         if self.yearn == None:
             raise Exception("No yearn system registered")

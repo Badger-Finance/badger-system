@@ -33,10 +33,8 @@ test()
 '''
 
 HISTORICAL_URL = 'https://api.anyblock.tools/ethereum/ethereum/mainnet/es/'
+CREDENTIALS = "/../../credentials.json"
 BINS = 60 # number of bins for histogram
-
-# Api access credentials from https://www.anyblockanalytics.com/
-AUTH = json.load(open(os.path.dirname(__file__) + "/../../credentials.json"))
 
 # convert wei to gwei
 def to_gwei(x: float) -> float:
@@ -45,6 +43,8 @@ def to_gwei(x: float) -> float:
 
 # Initialize the ElasticSearch Client
 def initialize_elastic(network: str) -> any:
+    # Api access credentials from https://www.anyblockanalytics.com/
+    AUTH = json.load(open(os.path.dirname(__file__) + CREDENTIALS))
     return Elasticsearch(hosts=[network], http_auth=(AUTH['email'], AUTH['key']), timeout=180)
 
 
@@ -162,6 +162,9 @@ def is_outlier(points: list[float], thresh=3.5) -> list[bool]:
 
 # main entry point
 def analyze_gas(options={ 'timeframe': 'minutes', 'periods': 60 }) -> tuple[int, int, int]:
+    if not os.path.isfile(os.path.dirname(__file__) + CREDENTIALS):
+        raise ValueError("No credentials for historical gas analysis found")
+
     gas_data = []
 
     # fetch data

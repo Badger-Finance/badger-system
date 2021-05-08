@@ -59,11 +59,7 @@ class GasStrategies:
             self.set_default(self.bsc_static)
 
     def optimal_price(self):
-        fast = self.fast.get_gas_price()
-        if fast < self.analyzed['mode']:
-            return fast
-        else:
-            return self.analyzed['mode']
+        return min(self.fast.get_gas_price(), self.analyzed['mode'])
 
 gas_strategies = GasStrategies()
 gas_strategies.set_default(gas_strategies.fast)

@@ -1,4 +1,5 @@
 from brownie import *
+from web3.contract import estimate_gas_for_function
 from config.keeper import keeper_config
 from helpers.gas_utils import gas_strategies
 from helpers.registry import registry
@@ -12,7 +13,10 @@ gas_strategies.set_default_for_active_chain()
 
 
 def harvest_all(badger: BadgerSystem, skip):
-    for key, vault in badger.sett_system.vaults.items():
+    # for key, vault in badger.sett_system.vaults.items():
+
+    # testing with CRV strategies first
+    for key in ['native.renCrv', 'native.sbtcCrv', 'native.tbtcCrv']:
         if key in skip:
             continue
 
@@ -28,16 +32,17 @@ def harvest_all(badger: BadgerSystem, skip):
 
         before = snap.snap()
         if strategy.keeper() == badger.badgerRewardsManager:
-            snap.settHarvestViaManager(
-                strategy,
-                {"from": keeper, "gas_limit": 2000000, "allow_revert": True},
-                confirm=False,
-            )
+            estimated_profit = snap.estimateProfitHarvestViaManager(key, strategy, {"from": keeper, "gas_limit": 2000000, "allow_revert": True})
+            if estimated_profit > 0:
+                snap.settHarvestViaManager(
+                    strategy, {"from": keeper, "gas_limit": 2000000, "allow_revert": True}, confirm=False,
+                )
         else:
-            snap.settHarvest(
-                {"from": keeper, "gas_limit": 2000000, "allow_revert": True},
-                confirm=False,
-            )
+            estimated_profit = snap.estimateProfitHarvest(key, {"from": keeper, "gas_limit": 2000000, "allow_revert": True})
+            if estimated_profit > 0:
+                snap.settHarvest(
+                    {"from": keeper, "gas_limit": 2000000, "allow_revert": True}, confirm=False,
+                )
 
         tx_wait()
 
