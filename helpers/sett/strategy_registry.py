@@ -49,7 +49,8 @@ name_to_artifact = {
     "RewardsLogger": RewardsLogger,
     "StabilizeDiggSett": StabilizeDiggSett,
     "StabilizeStrategyDiggV1": StabilizeStrategyDiggV1,
-    "VipCappedGuestListBbtcUpgradeable": VipCappedGuestListBbtcUpgradeable
+    "VipCappedGuestListBbtcUpgradeable": VipCappedGuestListBbtcUpgradeable,
+    "Disperse": Disperse
 }
 
 
