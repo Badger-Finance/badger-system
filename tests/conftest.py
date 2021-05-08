@@ -62,8 +62,8 @@ settsToRun = [
     # "native.uniBadgerWbtc",
     # "native.sushiBadgerWbtc",
     # "native.sushiWbtcEth",
-    # "native.sushiWbtcIbBtc",
-    "native.uniWbtcIbBtc",
+    "native.sushiWbtcIbBtc",
+    # "native.uniWbtcIbBtc",
 ]
 
 yearnSettsToRun = [

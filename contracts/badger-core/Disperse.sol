@@ -9,6 +9,7 @@ import "deps/@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "deps/@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 import "deps/@openzeppelin/contracts-upgradeable/token/ERC20/SafeERC20Upgradeable.sol";
 import "deps/@openzeppelin/contracts-upgradeable/proxy/Initializable.sol";
+import "interfaces/defidollar/ICore.sol";
 
 contract Disperse is Initializable {
     using SafeERC20Upgradeable for IERC20Upgradeable;
@@ -17,6 +18,9 @@ contract Disperse is Initializable {
 
     event PayeeAdded(address account, uint256 shares);
     event PaymentReleased(address token, address to, uint256 amount);
+
+    address public constant core = 0x2A8facc9D49fBc3ecFf569847833C380A13418a8;
+    address public constant ibbtc = 0xc4E15973E6fF2A35cC804c2CF9D2a1b817a8b40F;
 
     uint256 private _totalShares;
 
@@ -65,6 +69,11 @@ contract Disperse is Initializable {
 
     /// @dev Disperse balance of a given token in contract among recipients
     function disperseToken(IERC20Upgradeable token) external {
+        // If dispersing IBBTC, collect the fee first
+        if (address(token) == ibbtc) {
+            ICore(core).collectFee();
+        }
+        
         require(_isPayee[msg.sender], "onlyPayees");
         uint256 tokenBalance = token.balanceOf(address(this));
 

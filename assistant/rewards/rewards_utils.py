@@ -213,7 +213,7 @@ def calculate_sett_balances(badger, name, currentBlock):
     else:
         settType[1] = "native"
      
-    settBalances = fetch_sett_balances(underlyingToken.lower(), currentBlock)
+    settBalances = fetch_sett_balances(name, underlyingToken.lower(), currentBlock)
     geyserBalances = {}
     creamBalances = {}
     # Digg doesn't have a geyser so we have to ignore it

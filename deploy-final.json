@@ -7,9 +7,9 @@
     "opsProxyAdmin": "0x4599f2913a3db4e73aa77a304ccc21516dd7270d",
     "daoProxyAdmin": "0x11A9D034B1bbfbbDCaC9cB3b86ca7D5Df05140F2",
     "testProxyAdmin": "0xB10b3Af646Afadd9C62D663dd5d226B15C25CdFA",
+    "dfdBadgerProxyAdmin": "0xbf0e27fdf5ef7519a9540df401cce0a7a4cd75bc",
     "devMultisig": "0xB65cef03b9B89f99517643226d76e286ee999e77",
     "opsMultisig": "0x576cD258835C529B54722F84Bb7d4170aA932C64",
-    "dfdMultisig": "0x5b5cF8620292249669e1DCC73B753d01543D6Ac7",
     "treasuryMultisig": "0xD4868d98849a58F743787c77738D808376210292",
     "testGatedProxy": "0x375C48a3A3685d7e28EB45e612da6Dd51c7E38E0",
     "timelock": "0x21CF9b77F88Adf8F8C98d7E33Fe601DC57bC0893",
@@ -18,7 +18,10 @@
         "dev": "0xB65cef03b9B89f99517643226d76e286ee999e77",
         "ops": "0x576cD258835C529B54722F84Bb7d4170aA932C64",
         "dfd": "0x5b5cF8620292249669e1DCC73B753d01543D6Ac7",
-        "dfdBadgerShared": "0x5b5cF8620292249669e1DCC73B753d01543D6Ac7"
+        "dfdBadgerShared": "0xCF7346A5E41b0821b80D5B3fdc385EEB6Dc59F44"
+    },
+    "logic-2": {
+        "StrategySushiLpOptimizer": "0x5a954c6871978b29E27894B6Ce5a3729465eD14e"
     },
     "logic": {
         "SmartVesting": "0x07c0E4f4C977a29c46Fb26597ea8C9105ca50b42",
@@ -60,8 +63,9 @@
         "VipCappedGuestListWrapperUpgradeable": "0xa6aB825f86D9fDaFe9528f34f089A8473A3D85d3",
         "SimpleWrapperGatedUpgradeable": "0xc0a972a3cf8e52167589694d135abb66409f9b30",
         "GatedProxy": "0x1ba9d948c1c4f0cfb0ecaf57b743bb4045b87497",
-        "RewardsLogger": "0x04Bd8c70fdFF3C387Ffe17Fa3265fe6dC925f5d6",
-        "VipCappedGuestListBbtcUpgradeable": "0x6D8Bbe75d04725948A84AcFa1C1E91406A5a8ccb"
+        "RewardsLogger": "0x96B3f82782a62e4dcCb236F86665C550F6C0b6C0",
+        "VipCappedGuestListBbtcUpgradeable": "0x6D8Bbe75d04725948A84AcFa1C1E91406A5a8ccb",
+        "Disperse": "0x332937d0bFF49E2292C83CA8d8Fdd58296C4AF49"
     },
     "dao": {
         "token": "0x3472A5A71965499acd81997a54BBA8D852C6E53d",
@@ -86,8 +90,8 @@
             "native.digg": "0x7e7E112A68d8D2E221E11047a72fFC1065c38e1a",
             "native.uniDiggWbtc": "0xC17078FDd324CC473F8175Dc5290fae5f2E84714",
             "native.sushiDiggWbtc": "0x88128580ACdD9c04Ce47AFcE196875747bF2A9f6",
-            "experimental.sushiIBbtcWbtc": "0x8a8ffec8f4a0c8c9585da95d9d97e8cd6de273de",
-            "yearn.wbtc": "0x4b92d19c11435614cd49af1b589001b7c08cd4d5"
+            "yearn.wbtc": "0x4b92d19c11435614cd49af1b589001b7c08cd4d5",
+            "experimental.sushiIBbtcWbtc": "0x8a8ffec8f4a0c8c9585da95d9d97e8cd6de273de"
         },
         "vault_artifacts": {
             "native.badger": "Sett",
@@ -101,8 +105,8 @@
             "native.digg": "DiggSett",
             "native.uniDiggWbtc": "Sett",
             "native.sushiDiggWbtc": "Sett",
-            "experimental.sushiIBbtcWbtc": "Sett",
-            "yearn.wbtc": "AffiliateTokenGatedUpgradeable"
+            "yearn.wbtc": "AffiliateTokenGatedUpgradeable",
+            "experimental.sushiIBbtcWbtc": "Sett"
         },
         "strategies": {
             "native.badger": "0x75b8E21BD623012Efb3b69E1B562465A68944eE6",
@@ -115,8 +119,8 @@
             "native.sushiBadgerWbtc": "0x3a494D79AA78118795daad8AeFF5825C6c8dF7F1",
             "native.digg": "0x4a8651F2edD68850B944AD93f2c67af817F39F62",
             "native.uniDiggWbtc": "0xadc8d7322f2E284c1d9254170dbe311E9D3356cf",
-            "experimental.sushiIBbtcWbtc": "0xAe793040cEeF16b18348246919Eb659f4b4fDA92",
-            "native.sushiDiggWbtc": "0xaa8dddfe7DFA3C3269f1910d89E4413dD006D08a"
+            "native.sushiDiggWbtc": "0xaa8dddfe7DFA3C3269f1910d89E4413dD006D08a",
+            "experimental.sushiIBbtcWbtc": "0xf4146A176b09C664978e03d28d07Db4431525dAd"
         },
         "strategy_artifacts": {
             "native.badger": "StrategyBadgerRewards",

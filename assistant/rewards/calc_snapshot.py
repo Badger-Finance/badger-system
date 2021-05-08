@@ -24,7 +24,8 @@ nonNativeSetts = [
 
 def calc_snapshot(badger, name, startBlock, endBlock, nextCycle, boosts, diggAllocation):
 
-    console.log("==== Processing rewards for {} ====".format(name))
+    console.log("==== Processing rewards for {} at {} ====".format(name, endBlock))
+    
     rewards = RewardsList(nextCycle, badger.badgerTree)
     sett = badger.getSett(name)
     startTime = web3.eth.getBlock(startBlock)["timestamp"]
@@ -72,6 +73,7 @@ def calc_snapshot(badger, name, startBlock, endBlock, nextCycle, boosts, diggAll
             )
 
         if tokenDistribution > 0:
+            console.print(len(userBalances))
             sumBalances = sum([b.balance for b in userBalances])
             rewardsUnit = tokenDistribution/sumBalances
             totalRewards = 0
