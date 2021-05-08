@@ -274,13 +274,16 @@ class SnapshotManager:
     def estimateProfitHarvestViaManager(self, key, strategy, overrides):
         gas_cost = self.badger.badgerRewardsManager.harvest.estimate_gas(strategy, overrides)
         earnings = get_harvest_earnings(self.badger, self.strategy, key, overrides)
-        return earnings - gas_cost
+        profit = earnings - (gas_cost / 10**18)
+        console.log('expected gas cost (in wei):', gas_cost, 'expected earnings (in ETH):', earnings, 'expected profits (in ETH)', profit)
+        return profit
 
     def estimateProfitHarvest(self, key, overrides):
         gas_cost = self.strategy.harvest.estimate_gas(overrides)
         earnings = get_harvest_earnings(self.badger, self.strategy, key, overrides)
-        console.log('expected gas cost:', gas_cost, 'expected earnings after gas (in ETH):', earnings)
-        return earnings - gas_cost
+        profit = earnings - (gas_cost / 10**18)
+        console.log('expected gas cost (in wei):', gas_cost, 'expected earnings (in ETH):', earnings, 'expected profits (in ETH)', profit)
+        return profit
 
     def format(self, key, value):
         if type(value) is int:
