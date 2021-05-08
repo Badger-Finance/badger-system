@@ -16,7 +16,7 @@ client = Client(transport=transport, fetch_schema_from_transport=True)
 
 
 @lru_cache(maxsize=None)
-def fetch_sett_balances(settId, startBlock):
+def fetch_sett_balances(key, settId, startBlock):
     query = gql(
         """
         query balances_and_events($vaultID: Vault_filter, $blockHeight: Block_height,$lastBalanceId:AccountVaultBalance_filter) {

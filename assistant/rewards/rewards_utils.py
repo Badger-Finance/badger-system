@@ -93,12 +93,12 @@ def keccak(value):
 
 
 def combine_rewards(rewardsList, cycle, badgerTree):
-    firstRewards = rewardsList[0]
-    for rewards in rewardsList[1:]:
+    combinedRewards = RewardsList(cycle, badgerTree)
+    for rewards in rewardsList:
         for user, claims in rewards.claims.items():
             for token, claim in claims.items():
-                firstRewards.increase_user_rewards(user, token, claim)
-    return firstRewards
+                combinedRewards.increase_user_rewards(user, token, claim)
+    return combinedRewards
 
 
 def process_cumulative_rewards(current, new: RewardsList):
@@ -210,11 +210,12 @@ def calculate_sett_balances(badger, name, currentBlock):
     else:
         settType[1] = "native"
 
-    settBalances = fetch_sett_balances(underlyingToken.lower(), currentBlock)
+    settBalances = fetch_sett_balances(name, underlyingToken.lower(), currentBlock)
     geyserBalances = {}
     creamBalances = {}
     # Digg doesn't have a geyser so we have to ignore it
-    if name != "native.digg":
+    noGeysers = ["native.digg", "experimental.sushiIBbtcWbtc"]
+    if name not in noGeysers:
         geyserAddr = badger.getGeyser(name).address.lower()
         geyserEvents = fetch_geyser_events(geyserAddr, currentBlock)
         geyserBalances = calc_balances_from_geyser_events(geyserEvents)

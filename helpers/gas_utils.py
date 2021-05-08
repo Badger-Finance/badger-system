@@ -40,6 +40,12 @@ class GasStrategies:
             time_duration=120,
         )
 
+        self.exponentialScalingFast = ExponentialScalingStrategy(
+            initial_gas_price=self.fast.get_gas_price(),
+            max_gas_price=Wei(exponential_scaling_config["max_gas_price"]),
+            time_duration=60,
+        )
+
     def set_default(self, strategy):
         gas_price(strategy)
 

@@ -35,4 +35,5 @@ NON_NATIVE_SETTS = [
     "native.sushiWbtcEth",
     "harvest.renCrv",
     "yearn.wbtc",
+    "experimental.sushiIBbtcWbtc",
 ]

@@ -19,6 +19,7 @@ from helpers.sett.resolvers import (
     StrategyDiggRewardsResolver,
     StrategySushiDiggWbtcLpOptimizerResolver,
     StrategyDiggLpMetaFarmResolver,
+    StrategyUniGenericLpResolver,
 )
 from helpers.utils import digg_shares_to_initial_fragments, val
 from scripts.systems.badger_system import BadgerSystem
@@ -167,6 +168,8 @@ class SnapshotManager:
             return StrategyDiggLpMetaFarmResolver(self)
         if name == "StrategyPancakeLpOptimizer":
             return StrategyBasePancakeResolver(self)
+        if name == "StrategyUniGenericLp":
+            return StrategyUniGenericLpResolver(self)
 
     def settTend(self, overrides, confirm=True):
         user = overrides["from"].address

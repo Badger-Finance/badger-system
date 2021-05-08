@@ -12,3 +12,4 @@ from .UniDiggWbtcLpMiniDeploy import UniDiggWbtcLpMiniDeploy
 from .SushiClawUSDCMiniDeploy import SushiClawUSDCMiniDeploy
 from .YearnMiniDeploy import YearnMiniDeploy
 from .SushiWbtcIbBtcLpOptimizerMiniDeploy import SushiWbtcIbBtcLpOptimizerMiniDeploy
+from .UniGenericLpMiniDeploy import UniGenericLpMiniDeploy

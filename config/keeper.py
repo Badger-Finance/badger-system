@@ -26,10 +26,7 @@ setts_to_skip = {
         ],
     },
     "bsc": {
-        "harvest": [
-            # "native.pancakeBnbBtcB",
-            # "native.pancakeBnbBtcb"
-        ],
+        "harvest": ["native.pancakeBnbBtcB", "native.pancakeBnbBtcb", "native.test"],
         "tend": [],
         "earn": [],
     },
@@ -37,7 +34,7 @@ setts_to_skip = {
 
 run_intervals = {
     "eth": {"harvest": days(1), "tend": hours(12), "earn": minutes(10),},
-    "bsc": {"harvest": minutes(30), "tend": minutes(15), "earn": minutes(10),},
+    "bsc": {"harvest": minutes(10), "tend": minutes(15), "earn": minutes(10),},
 }
 
 earn_default_percentage_threshold = 0.01

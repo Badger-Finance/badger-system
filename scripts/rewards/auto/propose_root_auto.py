@@ -28,7 +28,7 @@ def propose_root(badger: BadgerSystem):
 
 
 def main():
-    badger = connect_badger(badger_config.prod_json, load_keeper=True)
+    badger = connect_badger(load_keeper=True)
 
     while True:
         try:

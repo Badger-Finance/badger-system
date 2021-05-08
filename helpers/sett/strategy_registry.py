@@ -28,6 +28,7 @@ name_to_artifact = {
     "StrategyDiggLpMetaFarm": StrategyDiggLpMetaFarm,
     "StrategySushiDiggWbtcLpOptimizer": StrategySushiDiggWbtcLpOptimizer,
     "StrategyPancakeLpOptimizer": StrategyPancakeLpOptimizer,
+    "StrategyUniGenericLp": StrategyUniGenericLp,
     "DiggRewardsFaucet": DiggRewardsFaucet,
     "DiggSett": DiggSett,
     "HoneypotMeme": HoneypotMeme,
@@ -46,6 +47,10 @@ name_to_artifact = {
     "BadgerTreeV2": BadgerTreeV2,
     "GatedProxy": GatedProxy,
     "RewardsLogger": RewardsLogger,
+    "StabilizeDiggSett": StabilizeDiggSett,
+    "StabilizeStrategyDiggV1": StabilizeStrategyDiggV1,
+    "VipCappedGuestListBbtcUpgradeable": VipCappedGuestListBbtcUpgradeable,
+    "Disperse": Disperse,
 }
 
 

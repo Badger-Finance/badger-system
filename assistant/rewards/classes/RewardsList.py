@@ -26,6 +26,9 @@ class RewardsList:
             self.sources[source][user][token] = 0
         self.sources[source][user][token] += toAdd
 
+    def __repr__(self):
+        return self.claims()
+
     def track_user_metadata_source(self, source, user, metadata):
         if not self.sourceMetadata[source][user][metadata]:
             self.sourceMetadata[source][user][metadata] = DotMap()
@@ -140,9 +143,7 @@ class RewardsList:
             )
         )
 
-        encoder = BadgerTree.at(
-            web3.toChecksumAddress("0x660802Fc641b154aBA66a62137e71f331B6d787A")
-        )
+        # encoder = BadgerTree.at(web3.toChecksumAddress("0x660802Fc641b154aBA66a62137e71f331B6d787A"))
 
         # console.print("nodeEntry", nodeEntry)
         # console.print("encoded_local", encoded_local)

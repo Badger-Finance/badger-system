@@ -31,7 +31,7 @@ from .provisioners import (
     SushiClawUSDCProvisioner,
     SushiDiggWbtcLpOptimizerProvisioner,
     SushiLpOptimizerProvisioner,
-    SushiWbtcIbBtcLpOptimizerProvisioner,
+    WbtcIbBtcLpProvisioner,
 )
 
 console = Console()
@@ -186,6 +186,10 @@ class SimulationManager:
             return PancakeBBadgerBtcbProvisioner(self)
         if settId == "native.bDiggBtcb":
             return PancakeBDiggBtcbProvisioner(self)
+        if settId == "native.sushiWbtcIbBtc":
+            return WbtcIbBtcLpProvisioner(self)
+        if settId == "native.uniWbtcIbBtc":
+            return WbtcIbBtcLpProvisioner(self, isUniswap=True)
         raise Exception(f"invalid strategy settID (no provisioner): {settId}")
 
     def _provisionUserActors(self) -> None:

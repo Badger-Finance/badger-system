@@ -231,14 +231,56 @@ def exec_transaction(contract, params, signer):
     if not "operation" in params.keys():
         params["operation"] = 0
 
-    params["safeTxGas"] = 3000000
-    params["baseGas"] = 3000000
-    params["gasPrice"] = Wei("0.1 ether")
-    params["gasToken"] = "0x0000000000000000000000000000000000000000"
-    params["refundReceiver"] = signer.address
-    params["return"] = signer.address
+    print(signer)
+    if not "safeTxGas" in params.keys():
+        params["safeTxGas"] = 4000000
+    if not "baseGas" in params.keys():
+        params["baseGas"] = 5000000
+    if not "gasPrice" in params.keys():
+        params["gasPrice"] = Wei("0.1 ether")
+    if not "gasToken" in params.keys():
+        params["gasToken"] = "0x0000000000000000000000000000000000000000"
+    if not "refundReceiver" in params.keys():
+        params["refundReceiver"] = signer.address
+    if not "return" in params.keys():
+        params["return"] = signer.address
+    if not "nonce" in params.keys():
+        params["nonce"] = contract.nonce()
 
+    nonce = 2
     # print("exec_direct", contract, color.pretty_dict(params), signer)
+
+    print(contract)
+
+    encoded = contract.encodeTransactionData(
+        params["to"],
+        params["value"],
+        params["data"],
+        params["operation"],
+        params["safeTxGas"],
+        params["baseGas"],
+        params["gasPrice"],
+        params["gasToken"],
+        params["refundReceiver"],
+        nonce,
+    )
+
+    hash = contract.getTransactionHash(
+        params["to"],
+        params["value"],
+        params["data"],
+        params["operation"],
+        params["safeTxGas"],
+        params["baseGas"],
+        params["gasPrice"],
+        params["gasToken"],
+        params["refundReceiver"],
+        nonce,
+    )
+
+    console.log("Transaction Data", params)
+    console.print("Encoded TX", encoded)
+    console.print("Tx Hash", hash)
 
     tx = contract.execTransaction(
         params["to"],

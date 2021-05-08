@@ -57,8 +57,8 @@ def calc_next_cycle_range(badger):
     lastClaimEnd = badger.badgerTree.lastPublishEndBlock()
     startBlock = lastClaimEnd + 1
 
-    # Claim at current block
-    endBlock = chain.height
+    # Claim at current block, minus a buffer for thegraph
+    endBlock = chain.height - 100
 
     # Sanity check: Ensure start block is not too far in the past
     # assert startBlock > endBlock - rewards_config.maxStartBlockAge

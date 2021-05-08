@@ -10,4 +10,4 @@ from .BadgerLpMetaFarmProvisioner import BadgerLpMetaFarmProvisioner
 from .CurveGaugeProvisioner import CurveGaugeProvisioner
 from .SushiClawUSDCProvisioner import SushiClawUSDCProvisioner
 from .PancakeBnbBtcbProvisioner import PancakeBnbBtcbProvisioner
-from .SushiWbtcIbBtcLpOptimizerProvisioner import SushiWbtcIbBtcLpOptimizerProvisioner
+from .WbtcIbBtcLpProvisioner import WbtcIbBtcLpProvisioner

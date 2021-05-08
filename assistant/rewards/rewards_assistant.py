@@ -28,42 +28,43 @@ from assistant.rewards.classes.RewardsLog import rewardsLog
 
 from assistant.rewards.rewards_checker import compare_rewards, verify_rewards
 from scripts.systems.badger_system import BadgerSystem
+from helpers.gas_utils import gas_strategies
 
-gas_strategy = GasNowStrategy("fast")
+gas_strategies.set_default(gas_strategies.exponentialScalingFast)
+gas_strategy = gas_strategies.exponentialScalingFast
 console = Console()
 
 
-def calc_geyser_rewards(badger, periodStartBlock, endBlock, cycle):
+def calc_sett_rewards(badger, periodStartBlock, endBlock, cycle):
     """
-    Calculate rewards for each geyser, and sum them
-    userRewards = (userShareSeconds / totalShareSeconds) / tokensReleased
-    (For each token, for the time period)
+    Calculate rewards for each sett, and sum them
     """
     # ratio = digg_btc_twap(periodStartBlock,endBlock)
     # diggAllocation = calculate_digg_allocation(ratio)
-    rewardsByGeyser = {}
+    rewardsBySett = {}
+    noRewards = ["native.digg"]
     boosts = badger_boost(badger, endBlock)
     apyBoosts = {}
     multiplierData = {}
+    for key, sett in badger.sett_system.vaults.items():
+        if key in noRewards:
+            continue
 
-    for key, geyser in badger.geysers.items():
-        settAddress = badger.getSett(key).address
-        geyserRewards, apyBoost = calc_snapshot(
+        settRewards, apyBoost = calc_snapshot(
             badger, key, periodStartBlock, endBlock, cycle, boosts, 0
         )
         if len(apyBoost) > 0:
             minimum = min(apyBoost.values())
             maximum = max(apyBoost.values())
-            multiplierData[settAddress] = {"min": minimum, "max": maximum}
+            multiplierData[sett.address] = {"min": minimum, "max": maximum}
             for addr in apyBoost:
                 if addr not in apyBoosts:
                     apyBoosts[addr] = {}
-                apyBoosts[addr][settAddress] = apyBoost[addr]
+                apyBoosts[addr][sett.address] = apyBoost[addr]
 
-        rewardsByGeyser[key] = geyserRewards
+        rewardsBySett[key] = settRewards
 
-    rewards = combine_rewards(list(rewardsByGeyser.values()), cycle, badger.badgerTree)
-
+    rewards = combine_rewards(list(rewardsBySett.values()), cycle, badger.badgerTree)
     boostsMetadata = {"multiplierData": multiplierData, "userData": {}}
 
     for addr, multipliers in apyBoosts.items():
@@ -198,7 +199,7 @@ def generate_rewards_in_range(badger, startBlock, endBlock, pastRewards):
     currentMerkleData = fetchCurrentMerkleData(badger)
     # sushiRewards = calc_sushi_rewards(badger,startBlock,endBlock,nextCycle,retroactive=False)
     # farmRewards = fetch_current_harvest_rewards(badger,startBlock, endBlock,nextCycle)
-    geyserRewards = calc_geyser_rewards(badger, startBlock, endBlock, nextCycle)
+    settRewards = calc_sett_rewards(badger, startBlock, endBlock, nextCycle)
 
     # farmRewards = calc_farm_rewards(
     #    badger, startBlock, endBlock, nextCycle, retroactive=False
@@ -207,7 +208,7 @@ def generate_rewards_in_range(badger, startBlock, endBlock, pastRewards):
     #    badger, startBlock, endBlock, nextCycle, retroactive=False
     # )
 
-    newRewards = combine_rewards([geyserRewards], nextCycle, badger.badgerTree)
+    newRewards = combine_rewards([settRewards], nextCycle, badger.badgerTree)
     cumulativeRewards = process_cumulative_rewards(pastRewards, newRewards)
 
     # Take metadata from geyserRewards

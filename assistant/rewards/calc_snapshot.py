@@ -16,7 +16,8 @@ def calc_snapshot(
     badger, name, startBlock, endBlock, nextCycle, boosts, diggAllocation
 ):
 
-    console.log("==== Processing rewards for {} ====".format(name))
+    console.log("==== Processing rewards for {} at {} ====".format(name, endBlock))
+
     rewards = RewardsList(nextCycle, badger.badgerTree)
 
     sett = badger.getSett(name)
@@ -62,16 +63,21 @@ def calc_snapshot(
             #    tokenDistribution = tokenDistribution * diggAllocation
             # else:
             #    tokenDistribution = tokenDistribution * (1 - diggAllocation)
-            diggFragments = digg.sharesToFragments(tokenDistribution) / 1e18
-            rewardsLog.add_total_token_dist(name, token, diggFragments)
-            console.log("{} DIGG tokens distributed".format(diggFragments))
 
+            console.log(
+                "{} DIGG tokens distributed".format(
+                    digg.sharesToFragments(tokenDistribution) / 1e18
+                )
+            )
+        elif token == "0x20c36f062a31865bED8a5B1e512D9a1A20AA333A":
+            console.log("{} DFD tokens distributed".format(tokenDistribution / 1e18))
         else:
             badgerAmount = tokenDistribution / 1e18
             rewardsLog.add_total_token_dist(name, token, badgerAmount)
             console.log("{} Badger tokens distributed".format(badgerAmount))
 
         if tokenDistribution > 0:
+            console.print(len(userBalances))
             sumBalances = sum([b.balance for b in userBalances])
             rewardsUnit = tokenDistribution / sumBalances
             totalRewards = 0

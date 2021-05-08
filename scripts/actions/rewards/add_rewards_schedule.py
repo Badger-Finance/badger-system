@@ -41,7 +41,7 @@ pretty.install()
 
 
 def main():
-    badger = connect_badger("deploy-final.json")
+    badger = connect_badger()
     admin = badger.devProxyAdmin
     multisig = badger.devMultisig
     contracts = badger.contracts_upgradeable

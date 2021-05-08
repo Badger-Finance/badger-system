@@ -122,6 +122,9 @@ sett_config = DotMap(
                 performanceFeeStrategist=0, performanceFeeGovernance=0, withdrawalFee=0,
             ),
         ),
+        uniGenericLp=DotMap(
+            strategyName="StrategyUniGenericLp", params=DotMap(withdrawalFee=0,),
+        ),
     ),
     sushi=DotMap(
         sushiBadgerWBtc=DotMap(
