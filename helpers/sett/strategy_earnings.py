@@ -9,7 +9,7 @@ console = Console()
 endpoint = "https://api.0x.org/"
 endpoint_bsc = "https://bsc.api.0x.org/"
 
-# returns harvest earnings in eth
+# returns harvest earnings denominated in eth
 def get_harvest_earnings(badger: BadgerSystem, strategy: Contract, key: str, overrides):
   token = get_symbol(badger, strategy)
   if not token:
@@ -30,7 +30,7 @@ def get_harvest_earnings(badger: BadgerSystem, strategy: Contract, key: str, ove
   token_contract = interface.IERC20(token_address)
   decimals = token_contract.decimals()
   eth_profit = earnings / (10**decimals) * float(price)
-  console.log("harvest earnings:", token, "earnings:", earnings, "price:", price, "eth profit:", eth_profit, "decimals:", decimals)
+  console.log("harvest earnings:", token, "earnings:", earnings, "price:", price, "eth profit:", eth_profit)
 
   return eth_profit
 
