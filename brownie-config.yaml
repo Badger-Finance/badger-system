@@ -18,11 +18,6 @@ networks:
       chain_id: 56
       mnemonic: brownie 
 
-
-project_structure:
-  contracts: contracts
-  # contracts: contracts
-
 # automatically fetch contract sources from Etherscan
 autofetch_sources: True
 
