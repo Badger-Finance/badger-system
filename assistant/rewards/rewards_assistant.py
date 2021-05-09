@@ -327,7 +327,6 @@ def guardian(badger: BadgerSystem, startBlock, endBlock, pastRewards, test=False
     console.print("===== Guardian Complete =====")
 
     if not test:
-        upload(rewards_data["contentFileName"]),
         badgerTree.approveRoot(
             rewards_data["merkleTree"]["merkleRoot"],
             rewards_data["rootHash"],
@@ -336,6 +335,7 @@ def guardian(badger: BadgerSystem, startBlock, endBlock, pastRewards, test=False
             rewards_data["merkleTree"]["endBlock"],
             {"from": badger.guardian, "gas_price": gas_strategy},
         )
+        upload(rewards_data["contentFileName"]),
         
 
 
