@@ -39,10 +39,7 @@ def calc_snapshot(badger, name, startBlock, endBlock, nextCycle, boosts, diggAll
         user.boost_balance(boostAmount)
 
     schedulesByToken = parse_schedules(badger.rewardsLogger.getAllUnlockSchedulesFor(sett))
-    console.log(schedulesByToken)
     for token,schedules in schedulesByToken.items():
-        console.log(token)
-        console.log(schedules)
         endDist = get_distributed_for_token_at(token, endTime, schedules, name)
         startDist = get_distributed_for_token_at(token, startTime, schedules, name)
         tokenDistribution = int(endDist) - int(startDist)
