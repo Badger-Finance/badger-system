@@ -173,7 +173,7 @@ def fetch_current_rewards_tree(badger, print_output=False):
 
 
 def generate_rewards_in_range(badger, startBlock, endBlock, pastRewards):
-    endBlock = endBlock - 10
+    endBlock = endBlock
     blockDuration = endBlock - startBlock
 
     nextCycle = getNextCycle(badger)
