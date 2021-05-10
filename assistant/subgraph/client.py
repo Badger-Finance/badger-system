@@ -10,9 +10,13 @@ from functools import lru_cache
 getcontext().prec = 20
 console = Console()
 
-subgraph_url = subgraph_config["url"]
-transport = AIOHTTPTransport(url=subgraph_url)
-client = Client(transport=transport, fetch_schema_from_transport=True)
+tokens_subgraph_url = subgraph_config["tokens"]
+tokens_transport = AIOHTTPTransport(url=tokens_subgraph_url)
+tokens_client = Client(transport=tokens_transport, fetch_schema_from_transport=True)
+
+sett_subgraph_url = subgraph_config["setts"]
+sett_transport = AIOHTTPTransport(url=sett_subgraph_url)
+sett_client = Client(transport=sett_transport, fetch_schema_from_transport=True)
 
 
 @lru_cache(maxsize=None)
@@ -37,7 +41,7 @@ def fetch_sett_balances(key, settId, startBlock):
     balances = {}
     while True:
         variables["lastBalanceId"] = {"id_gt": lastBalanceId}
-        results = client.execute(query, variable_values=variables)
+        results = sett_client.execute(query, variable_values=variables)
         if len(results["vaults"]) == 0:
             return {}
         newBalances = {}
@@ -97,7 +101,7 @@ def fetch_geyser_events(geyserId, startBlock):
     while True:
         variables["lastStakedId"] = {"id_gt": lastStakedId}
         variables["lastUnstakedId"] = {"id_gt": lastUnstakedId}
-        result = client.execute(query, variable_values=variables)
+        result = sett_client.execute(query, variable_values=variables)
 
         if len(result["geysers"]) == 0:
             return {"stakes": [], "unstakes": [], "totalStaked": 0}
@@ -158,7 +162,7 @@ def fetch_sett_transfers(settID, startBlock, endBlock):
     )
     variables = {"vaultID": {"id": settID}, "blockHeight": {"number": endBlock}}
 
-    results = client.execute(query, variable_values=variables)
+    results = sett_client.execute(query, variable_values=variables)
 
     def filter_by_startBlock(transfer):
         return int(transfer["transaction"]["blockNumber"]) > startBlock
@@ -202,7 +206,7 @@ def fetch_farm_harvest_events():
 
     """
     )
-    results = client.execute(query)
+    results = sett_client.execute(query)
     for event in results["farmHarvestEvents"]:
         event["rewardAmount"] = event.pop("farmToRewards")
 
@@ -226,7 +230,7 @@ def fetch_sushi_harvest_events():
         }
     """
     )
-    results = client.execute(query)
+    results = sett_client.execute(query)
     wbtcEthEvents = []
     wbtcBadgerEvents = []
     wbtcDiggEvents = []
@@ -277,7 +281,7 @@ def fetch_wallet_balances(badger_price, digg_price, digg, blockNumber):
             "lastID": lastID,
             "blockNumber": {"number": blockNumber},
         }
-        nextPage = client.execute(query, variable_values=variables)
+        nextPage = tokens_client.execute(query, variable_values=variables)
         if len(nextPage["tokenBalances"]) == 0:
             continueFetching = False
         else:
@@ -305,7 +309,9 @@ def fetch_wallet_balances(badger_price, digg_price, digg, blockNumber):
 
 def fetch_cream_balances(tokenSymbol, blockNumber):
     cream_transport = AIOHTTPTransport(url=subgraph_config["cream_url"])
-    cream_client = Client(transport=cream_transport, fetch_schema_from_transport=True)
+    cream_sett_client = Client(
+        transport=cream_transport, fetch_schema_from_transport=True
+    )
     increment = 1000
 
     query = gql(
@@ -347,7 +353,7 @@ def fetch_cream_balances(tokenSymbol, blockNumber):
             "symbol": tokenSymbol,
             "blockNumber": {"number": blockNumber},
         }
-        nextPage = cream_client.execute(query, variable_values=variables)
+        nextPage = cream_sett_client.execute(query, variable_values=variables)
         if len(nextPage["accountCTokens"]) == 0:
             if len(nextPage["markets"]) == 0:
                 console.log("No Cream deposits found for {}".format(tokenSymbol))
