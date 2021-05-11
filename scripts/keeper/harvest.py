@@ -12,10 +12,7 @@ from tabulate import tabulate
 gas_strategies.set_default_for_active_chain()
 
 def harvest_all(badger: BadgerSystem, skip):
-    # for key, vault in badger.sett_system.vaults.items():
-
-    # testing with CRV strategies first
-    for key in ['native.renCrv', 'native.sbtcCrv', 'native.tbtcCrv']:
+    for key, vault in badger.sett_system.vaults.items():
         if key in skip:
             continue
 
