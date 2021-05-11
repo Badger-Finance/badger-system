@@ -16,13 +16,18 @@ def get_harvest_earnings(badger: BadgerSystem, strategy: Contract, key: str, ove
     console.log("token for strategy at", strategy.address, "not found")
     return 0
 
-  token_address = eth_registry.tokens[token.lower()]
-  if not type(token_address) == str:
-    console.log("address for token", token, "not found")
-    return 0
+  if key == 'harvest.renCrv':
+    crv_gauge = Contract.from_explorer('0xb1f2cdec61db658f091671f5f199635aef202cac')
+    token_address = eth_registry.tokens[token.lower()]
+    earnings = crv_gauge.claimable_tokens.call('0x3952555B3Be488F51f0b03315a85560a83c24E04', overrides)
 
-  crv_gauge = Contract.from_explorer(strategy.gauge())
-  earnings = crv_gauge.claimable_tokens.call(strategy.address, overrides)
+  else:
+    crv_gauge = Contract.from_explorer(strategy.gauge())
+    token_address = eth_registry.tokens[token.lower()]
+    if not type(token_address) == str:
+      console.log("address for token", token, "not found")
+      return 0
+    earnings = crv_gauge.claimable_tokens.call(strategy.address, overrides)
 
   if earnings > 0: price = get_price(token, sellAmount=earnings)
   else: price = get_price(token)
@@ -77,7 +82,8 @@ def get_symbol(badger: BadgerSystem, strategy: str):
 def is_crv_strategy(badger: BadgerSystem, strategy: str):
   return strategy == badger.getStrategy("native.renCrv") or \
     strategy == badger.getStrategy("native.sbtcCrv") or \
-    strategy == badger.getStrategy("native.tbtcCrv")
+    strategy == badger.getStrategy("native.tbtcCrv") or \
+    strategy == badger.getStrategy("harvest.renCrv")
 
 
 def is_badger_strategy(badger: BadgerSystem, strategy: str):
