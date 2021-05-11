@@ -279,12 +279,9 @@ def test_bridge_sweep():
             {"from": whale},
         )
         # Can be called from any account, should always send to governance.
-        randomAccount = accounts[10]
         beforeBalance = token.balanceOf(badger.devMultisig)
-        beforeBalanceRandomAccount = token.balanceOf(randomAccount)
-        bridge.adapter.sweep({"from": randomAccount})
+        bridge.adapter.sweep({"from": badger.devMultisig})
         assert token.balanceOf(badger.devMultisig) > beforeBalance
-        assert token.balanceOf(randomAccount) == beforeBalanceRandomAccount
 
 
 def _assert_swap_slippage(router, fromToken, toToken, amountIn, slippage):
