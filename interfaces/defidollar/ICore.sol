@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.6.11;
+pragma solidity ^0.6.0;
 
 interface ICore {
     function mint(
@@ -18,6 +18,8 @@ interface ICore {
     function pricePerShare() external view returns (uint256);
 
     function setGuestList(address guestlist) external;
+
+    function collectFee() external;
 
     function owner() external view returns (address);
 }

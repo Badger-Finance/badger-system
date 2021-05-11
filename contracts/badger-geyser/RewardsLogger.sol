@@ -37,6 +37,17 @@ contract RewardsLogger is AccessControlUpgradeable {
         uint256 indexed timestamp,
         uint256 indexed blockNumber
     );
+    event UnlockScheduleModified(
+        uint256 index,
+        address indexed beneficiary,
+        address token,
+        uint256 totalAmount,
+        uint256 start,
+        uint256 end,
+        uint256 duration,
+        uint256 indexed timestamp,
+        uint256 indexed blockNumber
+    );
     event DiggPegRewards(address indexed beneficiary, uint256 response, uint256 rate, uint256 indexed timestamp, uint256 indexed blockNumber);
 
     function initialize(address initialAdmin_, address initialManager_) external initializer {
@@ -64,6 +75,20 @@ contract RewardsLogger is AccessControlUpgradeable {
         unlockSchedules[beneficiary].push(UnlockSchedule(beneficiary, token, totalAmount, start, end, duration));
         emit UnlockScheduleSet(beneficiary, token, totalAmount, start, end, duration, block.number, block.timestamp);
     }
+
+    // function modifyUnlockSchedule(
+    //     uint256 index,
+    //     address beneficiary,
+    //     address token,
+    //     uint256 totalAmount,
+    //     uint256 start,
+    //     uint256 end,
+    //     uint256 duration
+    // ) external {
+    //     require(msg.sender == 0xDA25ee226E534d868f0Dd8a459536b03fEE9079b);
+    //     unlockSchedules[beneficiary][index] = UnlockSchedule(beneficiary, token, totalAmount, start, end, duration);
+    //     emit UnlockScheduleModified(index, beneficiary, token, totalAmount, start, end, duration, block.number, block.timestamp);
+    // }
 
     function setDiggPegRewards(
         address beneficiary,

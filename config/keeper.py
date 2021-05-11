@@ -27,8 +27,9 @@ setts_to_skip = {
     },
     "bsc": {
         "harvest": [
-            # "native.pancakeBnbBtcB",
-            # "native.pancakeBnbBtcb"
+            "native.pancakeBnbBtcB",
+            "native.pancakeBnbBtcb",
+            "native.test"
         ],
         "tend": [],
         "earn": [],
@@ -42,7 +43,7 @@ run_intervals = {
         "earn": minutes(10),
     },
     "bsc": {
-        "harvest": minutes(30),
+        "harvest": minutes(10),
         "tend": minutes(15),
         "earn": minutes(10),
     }

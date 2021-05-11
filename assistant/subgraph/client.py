@@ -16,7 +16,15 @@ transport = AIOHTTPTransport(url=subgraph_url)
 client = Client(transport=transport, fetch_schema_from_transport=True)
 
 @lru_cache(maxsize=None)
-def fetch_sett_balances(settId, startBlock):
+def fetch_sett_balances(key, settId, startBlock):
+    if key == "experimental.sushiIBbtcWbtc":
+        subgraph_url = subgraph_config["ibbtc-url"]
+    else:
+        subgraph_url = subgraph_config["url"]
+    
+    transport = AIOHTTPTransport(url=subgraph_url)
+    sett_client = Client(transport=transport, fetch_schema_from_transport=True)
+
     query = gql(
         """
         query balances_and_events($vaultID: Vault_filter, $blockHeight: Block_height,$lastBalanceId:AccountVaultBalance_filter) {
@@ -37,7 +45,7 @@ def fetch_sett_balances(settId, startBlock):
     balances = {}
     while True:
         variables["lastBalanceId"] = {"id_gt": lastBalanceId}
-        results = client.execute(query, variable_values=variables)
+        results = sett_client.execute(query, variable_values=variables)
         if len(results["vaults"]) == 0:
             return {}
         newBalances = {}

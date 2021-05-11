@@ -24,7 +24,8 @@ nonNativeSetts = [
 
 def calc_snapshot(badger, name, startBlock, endBlock, nextCycle, boosts, diggAllocation):
 
-    console.log("==== Processing rewards for {} ====".format(name))
+    console.log("==== Processing rewards for {} at {} ====".format(name, endBlock))
+    
     rewards = RewardsList(nextCycle, badger.badgerTree)
     sett = badger.getSett(name)
     startTime = web3.eth.getBlock(startBlock)["timestamp"]
@@ -38,10 +39,7 @@ def calc_snapshot(badger, name, startBlock, endBlock, nextCycle, boosts, diggAll
         user.boost_balance(boostAmount)
 
     schedulesByToken = parse_schedules(badger.rewardsLogger.getAllUnlockSchedulesFor(sett))
-    console.log(schedulesByToken)
     for token,schedules in schedulesByToken.items():
-        console.log(token)
-        console.log(schedules)
         endDist = get_distributed_for_token_at(token, endTime, schedules, name)
         startDist = get_distributed_for_token_at(token, startTime, schedules, name)
         tokenDistribution = int(endDist) - int(startDist)
@@ -60,7 +58,11 @@ def calc_snapshot(badger, name, startBlock, endBlock, nextCycle, boosts, diggAll
                 "{} DIGG tokens distributed".format(
                     digg.sharesToFragments(tokenDistribution)/1e18)
             )
-
+        elif token == "0x20c36f062a31865bED8a5B1e512D9a1A20AA333A":
+            console.log(
+                "{} DFD tokens distributed".format(
+                    tokenDistribution/1e18)
+            )
         else:
             console.log(
                 "{} Badger tokens distributed".format(
@@ -68,6 +70,7 @@ def calc_snapshot(badger, name, startBlock, endBlock, nextCycle, boosts, diggAll
             )
 
         if tokenDistribution > 0:
+            console.print(len(userBalances))
             sumBalances = sum([b.balance for b in userBalances])
             rewardsUnit = tokenDistribution/sumBalances
             totalRewards = 0
@@ -81,6 +84,7 @@ def calc_snapshot(badger, name, startBlock, endBlock, nextCycle, boosts, diggAll
                 rewards.increase_user_rewards(addr, token, int(rewardAmount))
                 rewardsLog.add_user_token(
                     addr, name, token, int(rewardAmount))
+
             console.log("Token Distribution: {}\nRewards Released: {}".format(
                 tokenDistribution/1e18,totalRewards/1e18
             ))
