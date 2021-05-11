@@ -86,6 +86,12 @@ contract StrategySushiLpOptimizer is BaseStrategy {
         IERC20Upgradeable(sushi).approve(xsushi, uint256(-1));
     }
 
+    /// ===== Permissioned Functions =====
+    function setPid(uint256 _pid) external {
+        _onlyGovernance();
+        pid = _pid; // LP token pool ID
+    }
+
     /// ===== View Functions =====
     function version() external pure returns (string memory) {
         return "1.1";
