@@ -11,7 +11,16 @@ from tabulate import tabulate
 
 gas_strategies.set_default_for_active_chain()
 
-def harvest_all(badger: BadgerSystem, skip):
+def skip_messages(estimated_profit, req_profit_estimate):
+    if estimated_profit == 'skip':
+        console.log('profit estimation unsuccessful')
+        if req_profit_estimate: 
+            console.log('skipping harvest')
+        else:
+            console.log('continuing with harvest')
+            
+
+def harvest_all(badger: BadgerSystem, skip, req_profit_estimate: bool):
     for key, vault in badger.sett_system.vaults.items():
         if key in skip:
             continue
@@ -29,13 +38,15 @@ def harvest_all(badger: BadgerSystem, skip):
         before = snap.snap()
         if strategy.keeper() == badger.badgerRewardsManager:
             estimated_profit = snap.estimateProfitHarvestViaManager(key, strategy, {"from": keeper, "gas_limit": 2000000, "allow_revert": True})
-            if estimated_profit > 0:
+            skip_messages(estimated_profit, req_profit_estimate)
+            if not req_profit_estimate or estimated_profit > 0:
                 snap.settHarvestViaManager(
                     strategy, {"from": keeper, "gas_limit": 2000000, "allow_revert": True}, confirm=False,
                 )
         else:
             estimated_profit = snap.estimateProfitHarvest(key, {"from": keeper, "gas_limit": 2000000, "allow_revert": True})
-            if estimated_profit > 0:
+            skip_messages(estimated_profit, req_profit_estimate)
+            if not req_profit_estimate or estimated_profit > 0:
                 snap.settHarvest(
                     {"from": keeper, "gas_limit": 2000000, "allow_revert": True}, confirm=False,
                 )
@@ -51,6 +62,7 @@ def harvest_all(badger: BadgerSystem, skip):
 
 def main():
     badger = connect_badger(load_keeper=True)
+    req_profit_estimate = False
 
     if rpc.is_active():
         """
@@ -61,4 +73,4 @@ def main():
         accounts[0].transfer(badger.guardian, Wei("5 ether"))
 
     skip = keeper_config.get_active_chain_skipped_setts("harvest")
-    harvest_all(badger, skip)
+    harvest_all(badger, skip, req_profit_estimate)

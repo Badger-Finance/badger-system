@@ -1,7 +1,7 @@
 from brownie import *
 from rich.console import Console
 from scripts.systems.badger_system import BadgerSystem
-from helpers.registry.eth_registry import curve_registry, badger_registry, sushi_registry, digg_registry, eth_registry
+from helpers.registry.eth_registry import curve_registry, badger_registry, sushi_registry, digg_registry, harvest_registry, eth_registry
 import requests
 
 console = Console()
@@ -14,20 +14,25 @@ def get_harvest_earnings(badger: BadgerSystem, strategy: Contract, key: str, ove
   token = get_symbol(badger, strategy)
   if not token:
     console.log("token for strategy at", strategy.address, "not found")
-    return 0
+    return 'skip'
 
   if key == 'harvest.renCrv':
-    crv_gauge = Contract.from_explorer('0xb1f2cdec61db658f091671f5f199635aef202cac')
-    token_address = eth_registry.tokens[token.lower()]
-    earnings = crv_gauge.claimable_tokens.call('0x3952555B3Be488F51f0b03315a85560a83c24E04', overrides)
+    metafarm = "0xae024f29c26d6f71ec71658b1980189956b0546d"
+    earnings = Contract.from_explorer(metafarm).balanceOf(strategy.address)
+    token = harvest_registry.farmToken
+    token_address = harvest_registry.farmToken
 
-  else:
+  elif key.endswith('Crv'):
     crv_gauge = Contract.from_explorer(strategy.gauge())
     token_address = eth_registry.tokens[token.lower()]
     if not type(token_address) == str:
       console.log("address for token", token, "not found")
-      return 0
+      return 'skip'
     earnings = crv_gauge.claimable_tokens.call(strategy.address, overrides)
+  
+  else:
+    console.log('Profit estimation not supported yet for strategy at', strategy.address)
+    return 'skip'
 
   if earnings > 0: price = get_price(token, sellAmount=earnings)
   else: price = get_price(token)
@@ -44,15 +49,11 @@ def get_price(token: str, buyToken="WETH", sellAmount=1000000000000000000, netwo
   """
   get_price uses the 0x api to get the most accurate eth price for the token
 
-  :param token: token ticker, can also be token address
+  :param token: token ticker or token address
   :param buyToken: token to denominate price in, default is WETH
   :param sellAmount: token amount to sell in base unit, default is 1e18
   :return: eth price of one token
-  """ 
-  if len(token) == 42:
-    # get ticker
-    token_contract = interface.IERC20(token)
-    token = token_contract.symbol()
+  """
 
   params = "swap/v1/quote?buyToken=" + buyToken + "&sellToken=" + token + "&sellAmount=" + str(sellAmount)
   if network == "bsc":
@@ -69,6 +70,7 @@ def get_price(token: str, buyToken="WETH", sellAmount=1000000000000000000, netwo
 
 
 def get_symbol(badger: BadgerSystem, strategy: str):
+
   if is_crv_strategy(badger, strategy):
     return curve_registry.symbol
   if is_badger_strategy(badger, strategy):
@@ -77,13 +79,18 @@ def get_symbol(badger: BadgerSystem, strategy: str):
     return digg_registry.symbol
   if is_xsushi_strategy(badger, strategy):
     return sushi_registry.xSushiSymbol
+  if is_farm_strategy(badger, strategy):
+    return harvest_registry.symbol
+
+
+def is_farm_strategy(badger: BadgerSystem, strategy: str):
+  return strategy == badger.getStrategy('harvest.renCrv')
 
 
 def is_crv_strategy(badger: BadgerSystem, strategy: str):
   return strategy == badger.getStrategy("native.renCrv") or \
     strategy == badger.getStrategy("native.sbtcCrv") or \
-    strategy == badger.getStrategy("native.tbtcCrv") or \
-    strategy == badger.getStrategy("harvest.renCrv")
+    strategy == badger.getStrategy("native.tbtcCrv")
 
 
 def is_badger_strategy(badger: BadgerSystem, strategy: str):

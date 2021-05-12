@@ -45,6 +45,7 @@ compound_registry = DotMap(
 multichain_registry = DotMap(eth_address="0xC564EE9f21Ed8A2d8E7e76c085740d5e4c5FaFbE")
 
 harvest_registry = DotMap(
+    symbol="FARM",
     badgerTree="0x06466a741094f51b45FB150c6D1e857B3E879967",
     farmToken="0xa0246c9032bC3A600820415aE600c6388619A14D",
     depositHelper="0xf8ce90c2710713552fb564869694b2505bfc0846",
