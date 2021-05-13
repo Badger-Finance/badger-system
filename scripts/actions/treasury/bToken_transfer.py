@@ -57,7 +57,7 @@ def main():
 
     snap = BalanceSnapshotter(
         [badgerToken, diggToken, bBadger, bDigg],
-        [badger.devMultisig, badger.deployer, badger.rewardsEscrow, recipient]
+        [badger.devMultisig, badger.deployer, badger.rewardsEscrow, recipient],
     )
 
     snap.snap(name="Before Transfers", print=True)
@@ -76,5 +76,3 @@ def main():
     safe.preview(safe_tx)
     data = safe.print_transaction(safe_tx)
     safe.post_transaction(safe_tx)
-    
-

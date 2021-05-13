@@ -90,7 +90,6 @@ contract RewardsLogger is AccessControlUpgradeable {
     //     emit UnlockScheduleModified(index, beneficiary, token, totalAmount, start, end, duration, block.number, block.timestamp);
     // }
 
-
     function setDiggPegRewards(
         address beneficiary,
         uint256 response,

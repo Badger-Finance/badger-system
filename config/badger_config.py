@@ -119,16 +119,11 @@ sett_config = DotMap(
             # Unfinished
             strategyName="StrategyDiggLpMetaFarm",
             params=DotMap(
-                performanceFeeStrategist=0,
-                performanceFeeGovernance=0,
-                withdrawalFee=0,
+                performanceFeeStrategist=0, performanceFeeGovernance=0, withdrawalFee=0,
             ),
         ),
         uniGenericLp=DotMap(
-            strategyName="StrategyUniGenericLp",
-            params=DotMap(
-                withdrawalFee=0,
-            ),
+            strategyName="StrategyUniGenericLp", params=DotMap(withdrawalFee=0,),
         ),
     ),
     sushi=DotMap(
@@ -172,9 +167,9 @@ sett_config = DotMap(
         ),
         sushiWbtcIbBtc=DotMap(
             params=DotMap(
-                    performanceFeeStrategist=1000,
-                    performanceFeeGovernance=1000,
-                    withdrawalFee=0,
+                performanceFeeStrategist=1000,
+                performanceFeeGovernance=1000,
+                withdrawalFee=0,
             ),
         ),
     ),
@@ -294,7 +289,7 @@ badger_config = DotMap(
 
 # TODO: Currently a copy of badger config params, needs to be set.
 # diggStartTime = globalStartTime
-diggStartTime = 1611097200 # 6PM EST 1/19
+diggStartTime = 1611097200  # 6PM EST 1/19
 
 """
 Test Config
@@ -314,8 +309,8 @@ digg_config_test = DotMap(
     startTime=diggStartTime,
     prod_json="deploy-final.json",
     initialSupply=total_digg,
-    airdropAmount = int(total_digg * airdrop_pct / 100),
-    liquidityMiningAmount = int(total_digg * liquidity_mining_pct / 100),
+    airdropAmount=int(total_digg * airdrop_pct / 100),
+    liquidityMiningAmount=int(total_digg * liquidity_mining_pct / 100),
     deviationThreshold=50000000000000000,
     rebaseLag=10,
     # TODO: Need to set this value to exact time we want to start rebases.
@@ -342,26 +337,26 @@ digg_config_test = DotMap(
         minimumProviders=1,
     ),
     centralizedOracleParams=DotMap(
-        owners=[AddressZero, AddressZero, AddressZero],
-        threshold=1,
+        owners=[AddressZero, AddressZero, AddressZero], threshold=1,
     ),
     tokenLockParams=DotMap(
-        diggAmount=int(total_digg * dao_treasury_pct / 100),
-        lockDuration=days(30)
+        diggAmount=int(total_digg * dao_treasury_pct / 100), lockDuration=days(30)
     ),
     # TODO: Currently a copy of badger config params, needs to be set.
     teamVestingParams=DotMap(
         diggAmount=int(total_digg * team_vesting_pct / 100),
         startTime=diggStartTime,
         cliffDuration=days(30),
-        totalDuration=days(365)
+        totalDuration=days(365),
     ),
     geyserParams=DotMap(
         # TODO: Needs to be set
         diggDistributionStart=globalStartTime + days(15),
         unlockSchedules=DotMap(
             # Setting distribution amt to 25% for now.
-            digg=[DotMap(amount=1000 * (10 ** digg_decimals), duration=days(7),)],  # 1 week
+            digg=[
+                DotMap(amount=1000 * (10 ** digg_decimals), duration=days(7),)
+            ],  # 1 week
         ),
     ),
 )
@@ -370,8 +365,8 @@ digg_config = DotMap(
     startTime=diggStartTime,
     prod_json="deploy-final.json",
     initialSupply=total_digg,
-    airdropAmount = int(total_digg * airdrop_pct / 100),
-    liquidityMiningAmount = int(total_digg * liquidity_mining_pct / 100),
+    airdropAmount=int(total_digg * airdrop_pct / 100),
+    liquidityMiningAmount=int(total_digg * liquidity_mining_pct / 100),
     deviationThreshold=50000000000000000,
     rebaseLag=10,
     # TODO: Need to set this value to exact time we want to start rebases.
@@ -387,32 +382,28 @@ digg_config = DotMap(
     ),
     # cpi oracle always reports 1
     cpiOracleParams=DotMap(
-        reportExpirationTimeSec=5356800,
-        reportDelaySec=86400,
-        minimumProviders=1,
+        reportExpirationTimeSec=5356800, reportDelaySec=86400, minimumProviders=1,
     ),
     centralizedOracleParams=DotMap(
-        owners=[AddressZero, AddressZero, AddressZero],
-        threshold=1,
+        owners=[AddressZero, AddressZero, AddressZero], threshold=1,
     ),
     tokenLockParams=DotMap(
-        diggAmount=int(total_digg * dao_treasury_pct / 100),
-        lockDuration=days(7)
+        diggAmount=int(total_digg * dao_treasury_pct / 100), lockDuration=days(7)
     ),
     teamVestingParams=DotMap(
         diggAmount=int(total_digg * team_vesting_pct / 100),
         startTime=diggStartTime,
         cliffDuration=days(0),
-        totalDuration=days(365)
+        totalDuration=days(365),
     ),
     # TODO: Set this to the prod airdrop root
     airdropRoot="0xe083d1a60e1ca84c995048be8b9b5b4d4e371f31bcbdff8b775cb47502f4108b",
     airdropTotalShares="0x2666666666666600000000000000000000075fbb5707c39d0359f2ba7a800000",
     # TODO: Need to set this value to exact time we want allow reclaiming of airdrop.
-    reclaimAllowedTimestamp=chain.time()
+    reclaimAllowedTimestamp=chain.time(),
 )
 
-'''
+"""
 NB: The CLAW system config primarily specifies default values for the
 parameterization of EMP (expiring multiparty synthetic contracts).
 
@@ -422,7 +413,7 @@ multiparty synthetics (to be released by UMA team).
 All Addresses below are MAINNET addresses.
 
 Most numerical values are denominated in wei.
-'''
+"""
 claw_config = DotMap(
     # NB: This is just for writing out deployment addrs during local testing.
     prod_json="deploy-claw.json",
@@ -431,15 +422,16 @@ claw_config = DotMap(
     # Actual param is `expirationTimestamp`.
     # NB: It is recommended by UMA to set expiry @ 10:00 pm UTC on expiry date.
     expirationTimestampDaysDelta=days(60),  # Rolling w/ 2 month lifespan EMPs.
-    collateralRequirement=1.2 * 10**18,  # Default UMA specified min collateral requirement is 1.2.
-    disputeBondPercentage=0.1 * 10**18,
-    sponsorDisputeRewardPercentage=0.1 * 10**18,
-    disputerDisputeRewardPercentage=0.1 * 10**18,
+    collateralRequirement=1.2
+    * 10 ** 18,  # Default UMA specified min collateral requirement is 1.2.
+    disputeBondPercentage=0.1 * 10 ** 18,
+    sponsorDisputeRewardPercentage=0.1 * 10 ** 18,
+    disputerDisputeRewardPercentage=0.1 * 10 ** 18,
     # This represents the minimum dollar value required to mint synthetics.
     # The default value below of $100 in wei is a balance between sponsors setting a position
     # so small that there's no incentive to liquidate and setting a value too large so that
     # smaller sponsors get priced out (also creates problems for small liquidators).
-    minSponsorTokens=100 * 10**18,
+    minSponsorTokens=100 * 10 ** 18,
     withdrawalLiveness=7200,  # Default UMA specified min is at least 2 hours.
     liquidationLiveness=7200,  # Default UMA specified min is at least 2 hours.
     # Should be set to the UMA contract store, address below is the MAINNET address.

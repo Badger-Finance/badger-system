@@ -7,6 +7,8 @@ from .StrategyHarvestMetaFarmResolver import StrategyHarvestMetaFarmResolver
 from .StrategySushiLpOptimizerResolver import StrategySushiLpOptimizerResolver
 from .StrategySushiBadgerWbtcResolver import StrategySushiBadgerWbtcResolver
 from .StrategyDiggRewardsResolver import StrategyDiggRewardsResolver
-from .StrategySushiDiggWbtcLpOptimizerResolver import StrategySushiDiggWbtcLpOptimizerResolver
+from .StrategySushiDiggWbtcLpOptimizerResolver import (
+    StrategySushiDiggWbtcLpOptimizerResolver,
+)
 from .StrategyDiggLpMetaFarmResolver import StrategyDiggLpMetaFarmResolver
 from .StrategyUniGenericLpResolver import StrategyUniGenericLpResolver

@@ -1,20 +1,31 @@
-
-import json
-import requests
 from brownie import *
 from rich.console import Console
 from collections import Counter
 from assistant.subgraph.client import (
     fetch_sett_balances,
-    fetch_sett_transfers,
     fetch_geyser_events,
-    fetch_cream_balances
 )
 from assistant.rewards.classes.RewardsList import RewardsList
-from assistant.rewards.classes.UserBalance import UserBalance,UserBalances
+from assistant.rewards.classes.UserBalance import UserBalance, UserBalances
 from functools import lru_cache
 
+blacklist = [
+    "0x19D97D8fA813EE2f51aD4B4e04EA08bAf4DFfC28",
+    "0x6dEf55d2e18486B9dDfaA075bc4e4EE0B28c1545",
+    "0xd04c48A53c111300aD41190D63681ed3dAd998eC",
+    "0xb9D076fDe463dbc9f915E5392F807315Bf940334",
+    "0x235c9e24D3FB2FAFd58a2E49D454Fdcd2DBf7FF1",
+    "0xAf5A1DECfa95BAF63E0084a35c62592B774A2A87",
+    "0x1862A18181346EBd9EdAf800804f89190DeF24a5",
+    "0x758a43ee2bff8230eeb784879cdcff4828f2544d",
+    "0xC17078FDd324CC473F8175Dc5290fae5f2E84714",
+    "0x88128580ACdD9c04Ce47AFcE196875747bF2A9f6",
+    "0x7e7E112A68d8D2E221E11047a72fFC1065c38e1a",
+]
+
+cream_addresses = {"native.badger": "0x8b950f43fcac4931d408f1fcda55c6cb6cbf3096"}
 console = Console()
+
 
 def get_cumulative_claimable_for_token(claim, token):
     tokens = claim["tokens"]
@@ -77,37 +88,18 @@ def publish_new_root(badger, root, contentHash):
     )
 
 
-
-blacklist = [
-    "0x19D97D8fA813EE2f51aD4B4e04EA08bAf4DFfC28",
-    "0x6dEf55d2e18486B9dDfaA075bc4e4EE0B28c1545",
-    "0xd04c48A53c111300aD41190D63681ed3dAd998eC",
-    "0xb9D076fDe463dbc9f915E5392F807315Bf940334",
-    "0x235c9e24D3FB2FAFd58a2E49D454Fdcd2DBf7FF1",
-    "0xAf5A1DECfa95BAF63E0084a35c62592B774A2A87",
-    "0x1862A18181346EBd9EdAf800804f89190DeF24a5",
-    "0x758a43ee2bff8230eeb784879cdcff4828f2544d",
-    "0xC17078FDd324CC473F8175Dc5290fae5f2E84714",
-    "0x88128580ACdD9c04Ce47AFcE196875747bF2A9f6",
-    "0x7e7E112A68d8D2E221E11047a72fFC1065c38e1a",
-]
-
-cream_addresses = {
-    "native.badger": "0x8b950f43fcac4931d408f1fcda55c6cb6cbf3096"
-}
-
-
 def keccak(value):
     return web3.toHex(web3.keccak(text=value))
 
-def combine_rewards(rewardsList,cycle, badgerTree):
-    # make sure first element has all meta info
-    firstRewards = rewardsList[0]
-    for rewards in rewardsList[1:]:
-        for user,claims in rewards.claims.items():
-            for token,claim in claims.items():
-                firstRewards.increase_user_rewards(user,token,claim)
-    return firstRewards
+
+def combine_rewards(rewardsList, cycle, badgerTree):
+    combinedRewards = RewardsList(cycle, badgerTree)
+    for rewards in rewardsList:
+        for user, claims in rewards.claims.items():
+            for token, claim in claims.items():
+                combinedRewards.increase_user_rewards(user, token, claim)
+    return combinedRewards
+
 
 def process_cumulative_rewards(current, new: RewardsList):
     result = RewardsList(new.cycle, new.badgerTree)
@@ -125,8 +117,8 @@ def process_cumulative_rewards(current, new: RewardsList):
             result.increase_user_rewards(user, token, int(amount))
 
     # result.printState()
-    result.boosts = new.boosts
     return result
+
 
 def sum_rewards(sources, cycle, badgerTree):
     """
@@ -153,30 +145,33 @@ def sum_rewards(sources, cycle, badgerTree):
     # totals.printState()
     return totals
 
-def get_latest_event_block(firstEvent,events):
+
+def get_latest_event_block(firstEvent, events):
     try:
         event_index = events.index(firstEvent)
     except ValueError:
         return -1
     if event_index - 1 >= 0 and event_index - 1 < len(events):
-        # startBlock starts with the last harvest that happened 
-        latestEvent = events[event_index - 1] 
+        # startBlock starts with the last harvest that happened
+        latestEvent = events[event_index - 1]
         return latestEvent["blockNumber"]
     else:
         return -1
 
-def calc_meta_farm_rewards(badger,name, startBlock, endBlock):
-    console.log("Calculating rewards between {} and {}".format(startBlock,endBlock))
+
+def calc_meta_farm_rewards(badger, name, startBlock, endBlock):
+    console.log("Calculating rewards between {} and {}".format(startBlock, endBlock))
     startBlock = int(startBlock)
     endBlock = int(endBlock)
     startBlockTime = web3.eth.getBlock(startBlock)["timestamp"]
     endBlockTime = web3.eth.getBlock(endBlock)["timestamp"]
     sett = badger.getSett(name)
 
-    balances = calculate_sett_balances(badger,name,endBlock)
+    balances = calculate_sett_balances(badger, name, endBlock)
     # TODO: Do we want to use  multiple snapshots
     # here or just the end?
     return balances
+
 
 def calc_balances_from_geyser_events(geyserEvents):
     balances = {}
@@ -192,6 +187,7 @@ def calc_balances_from_geyser_events(geyserEvents):
     console.log("Fetched {} geyser balances".format(len(balances)))
     return balances
 
+
 def combine_balances(balances):
     allBalances = UserBalances()
     for userBalances in balances:
@@ -201,9 +197,10 @@ def combine_balances(balances):
 
 @lru_cache(maxsize=None)
 def calculate_sett_balances(badger, name, currentBlock):
+    console.log("Fetching {} sett balances".format(name))
     sett = badger.getSett(name)
     underlyingToken = sett.address
-    settType = ["",""]
+    settType = ["", ""]
     if "uni" in name or "sushi" in name:
         settType[0] = "halfLP"
     elif "crv" in name:
@@ -212,30 +209,29 @@ def calculate_sett_balances(badger, name, currentBlock):
         settType[1] = "nonNative"
     else:
         settType[1] = "native"
-     
+
     settBalances = fetch_sett_balances(name, underlyingToken.lower(), currentBlock)
     geyserBalances = {}
     creamBalances = {}
     # Digg doesn't have a geyser so we have to ignore it
-    noGeysers = ["native.digg","experimental.sushiIBbtcWbtc"]
+    noGeysers = ["native.digg", "experimental.sushiIBbtcWbtc"]
     if name not in noGeysers:
         geyserAddr = badger.getGeyser(name).address.lower()
-        geyserEvents = fetch_geyser_events(
-            geyserAddr, currentBlock
-        )
+        geyserEvents = fetch_geyser_events(geyserAddr, currentBlock)
         geyserBalances = calc_balances_from_geyser_events(geyserEvents)
         settBalances[geyserAddr] = 0
 
     balances = {}
-    for b in [settBalances,geyserBalances,creamBalances]:
+    for b in [settBalances, geyserBalances, creamBalances]:
         balances = dict(Counter(balances) + Counter(b))
     # Get rid of blacklisted and negative balances
-    for addr,balance in balances.items():
+    for addr, balance in balances.items():
         if addr in blacklist or balance < 0:
             del balances[addr]
 
     userBalances = [
-        UserBalance(addr,bal,underlyingToken,settType)
-        for addr,bal in balances.items()
+        UserBalance(addr, bal, underlyingToken, settType)
+        for addr, bal in balances.items()
     ]
+    console.log("\n")
     return UserBalances(userBalances)

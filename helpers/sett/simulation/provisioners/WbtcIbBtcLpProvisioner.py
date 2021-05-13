@@ -17,7 +17,9 @@ class WbtcIbBtcLpProvisioner(BaseProvisioner):
             registry.whales.bTbtcCrv,
             registry.whales.bRenCrv,
         ]
-        self.badgerSettPeak = interface.IPeak(registry.defidollar.addresses.badgerSettPeak)
+        self.badgerSettPeak = interface.IPeak(
+            registry.defidollar.addresses.badgerSettPeak
+        )
         self.core = interface.ICore(registry.defidollar.addresses.core)
         self.isUniswap = isUniswap
 
@@ -34,9 +36,7 @@ class WbtcIbBtcLpProvisioner(BaseProvisioner):
                 swap = SushiswapSystem()
             # Generate lp tokens.
             swap.addMaxLiquidity(
-                registry.tokens.ibbtc,
-                registry.tokens.wbtc,
-                user,
+                registry.tokens.ibbtc, registry.tokens.wbtc, user,
             )
 
     def _mintIbBtc(self, user) -> None:

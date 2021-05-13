@@ -8,7 +8,6 @@ import "deps/@openzeppelin/contracts-upgradeable/cryptography/MerkleProofUpgrade
 import "interfaces/yearn/GuestlistApi.sol";
 import "interfaces/yearn/BadgerWrapperApi.sol";
 
-
 /**
  * @notice A basic guest list contract for testing.
  * @dev For a Vyper implementation of this contract containing additional
@@ -118,7 +117,11 @@ contract VipCappedGuestListBbtcUpgradeable is OwnableUpgradeable {
      * from the wrapper tests' perspective this is a pass/fail call anyway.
      * @param _guest The guest's address to check.
      */
-    function authorized(address _guest, uint256 _amount, bytes32[] calldata _merkleProof) external view returns (bool) {
+    function authorized(
+        address _guest,
+        uint256 _amount,
+        bytes32[] calldata _merkleProof
+    ) external view returns (bool) {
         // Yes: If the user is on the list, and under the cap
         // Yes: If the user is not on the list, supplies a valid proof (thereby being added to the list), and is under the cap
         // No: If the user is not on the list, does not supply a valid proof, or is over the cap

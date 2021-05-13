@@ -23,6 +23,7 @@ console = Console()
 @pytest.fixture(scope="function", autouse="True")
 def setup():
     from assistant.rewards import rewards_assistant
+
     return rewards_assistant
 
 
@@ -30,19 +31,18 @@ def setup():
 # def setup_badger(badger_tree_unit):
 #     return badger_tree_unit
 
+
 def random_32_bytes():
     return "0x" + secrets.token_hex(32)
 
+
 # generates merkle root purely off dummy data
 def internal_generate_rewards_in_range(
-        rewards_assistant,
-        currentMerkleData,
-        newRewards,
-        startBlock,
-        endBlock,
-        pastRewards
+    rewards_assistant, currentMerkleData, newRewards, startBlock, endBlock, pastRewards
 ):
-    cumulativeRewards = rewards_assistant.process_cumulative_rewards(pastRewards, newRewards)
+    cumulativeRewards = rewards_assistant.process_cumulative_rewards(
+        pastRewards, newRewards
+    )
 
     # Take metadata from geyserRewards
     console.print("Processing to merkle tree")
@@ -97,7 +97,7 @@ def test_rewards_flow(setup):
             rewardsContract.currentCycle(),
             startBlock,
             startBlock + 1,
-            {"from": proposer}
+            {"from": proposer},
         )
     with brownie.reverts("Incorrect cycle"):
         rewardsContract.proposeRoot(
@@ -106,7 +106,7 @@ def test_rewards_flow(setup):
             rewardsContract.currentCycle() + 2,
             startBlock,
             startBlock + 1,
-            {"from": proposer}
+            {"from": proposer},
         )
     with brownie.reverts("Incorrect start block"):
         rewardsContract.proposeRoot(
@@ -115,7 +115,7 @@ def test_rewards_flow(setup):
             rewardsContract.currentCycle() + 1,
             rewardsContract.lastPublishEndBlock() + 2,
             startBlock + 1,
-            {"from": proposer}
+            {"from": proposer},
         )
     with brownie.reverts("Incorrect start block"):
         rewardsContract.proposeRoot(
@@ -124,7 +124,7 @@ def test_rewards_flow(setup):
             rewardsContract.currentCycle() + 1,
             rewardsContract.lastPublishEndBlock(),
             startBlock + 1,
-            {"from": proposer}
+            {"from": proposer},
         )
 
     # Ensure event
@@ -134,7 +134,7 @@ def test_rewards_flow(setup):
         rewardsContract.currentCycle() + 1,
         startBlock,
         startBlock + 1,
-        {"from": proposer}
+        {"from": proposer},
     )
     assert "RootProposed" in tx.events.keys()
 
@@ -148,7 +148,7 @@ def test_rewards_flow(setup):
             rewardsContract.currentCycle(),
             startBlock,
             startBlock + 1,
-            {"from": validator}
+            {"from": validator},
         )
     with brownie.reverts("Incorrect content hash"):
         rewardsContract.approveRoot(
@@ -157,7 +157,7 @@ def test_rewards_flow(setup):
             rewardsContract.currentCycle(),
             startBlock,
             startBlock + 1,
-            {"from": validator}
+            {"from": validator},
         )
     with brownie.reverts("Incorrect cycle"):
         rewardsContract.approveRoot(
@@ -166,7 +166,7 @@ def test_rewards_flow(setup):
             rewardsContract.currentCycle(),
             startBlock,
             startBlock + 1,
-            {"from": validator}
+            {"from": validator},
         )
     with brownie.reverts("Incorrect cycle"):
         rewardsContract.approveRoot(
@@ -175,7 +175,7 @@ def test_rewards_flow(setup):
             rewardsContract.currentCycle() + 2,
             startBlock,
             startBlock + 1,
-            {"from": validator}
+            {"from": validator},
         )
     with brownie.reverts("Incorrect cycle start block"):
         rewardsContract.approveRoot(
@@ -184,7 +184,7 @@ def test_rewards_flow(setup):
             rewardsContract.pendingCycle(),
             startBlock + 1,
             startBlock + 1,
-            {"from": validator}
+            {"from": validator},
         )
     with brownie.reverts("Incorrect cycle start block"):
         rewardsContract.approveRoot(
@@ -193,7 +193,7 @@ def test_rewards_flow(setup):
             rewardsContract.pendingCycle(),
             startBlock - 1,
             startBlock + 1,
-            {"from": validator}
+            {"from": validator},
         )
     with brownie.reverts("Incorrect cycle end block"):
         rewardsContract.approveRoot(
@@ -202,7 +202,7 @@ def test_rewards_flow(setup):
             rewardsContract.pendingCycle(),
             startBlock,
             startBlock + 9,
-            {"from": validator}
+            {"from": validator},
         )
     with brownie.reverts("Incorrect cycle end block"):
         rewardsContract.approveRoot(
@@ -211,7 +211,7 @@ def test_rewards_flow(setup):
             rewardsContract.pendingCycle(),
             startBlock,
             startBlock + 11,
-            {"from": validator}
+            {"from": validator},
         )
     with brownie.reverts("Incorrect cycle end block"):
         rewardsContract.approveRoot(
@@ -220,7 +220,7 @@ def test_rewards_flow(setup):
             rewardsContract.pendingCycle(),
             startBlock,
             startBlock,
-            {"from": validator}
+            {"from": validator},
         )
 
     # Ensure event
@@ -230,7 +230,7 @@ def test_rewards_flow(setup):
         rewardsContract.pendingCycle(),
         startBlock,
         startBlock + 1,
-        {"from": validator}
+        {"from": validator},
     )
     assert "RootUpdated" in tx.events.keys()
 
@@ -241,10 +241,10 @@ def test_rewards_flow(setup):
             rewardsContract.currentCycle() + 1,
             rewardsContract.lastPublishStartBlock() + 1,
             startBlock + 1,
-            {"from": proposer}
+            {"from": proposer},
         )
 
-    # Claim as a user 
+    # Claim as a user
     rewardsContract = admin.deploy(badgerTree)
     rewardsContract.initialize(admin, proposer, validator)
 
@@ -258,37 +258,26 @@ def test_rewards_flow(setup):
     farmClaim = 100000000000
     xSushiClaim = 5555555555
 
-    geyserRewards = DotMap({
-        "badger_tree": rewardsContract,
-        "claims": {
-            user.address: {
-                FARM_ADDRESS: farmClaim,
-                XSUSHI_ADDRESS: xSushiClaim
+    geyserRewards = DotMap(
+        {
+            "badger_tree": rewardsContract,
+            "claims": {
+                user.address: {FARM_ADDRESS: farmClaim, XSUSHI_ADDRESS: xSushiClaim},
+                accounts[5].address: {FARM_ADDRESS: 100, XSUSHI_ADDRESS: 100},
+                accounts[6].address: {FARM_ADDRESS: 100, XSUSHI_ADDRESS: 100},
             },
-            accounts[5].address: {
-                FARM_ADDRESS: 100,
-                XSUSHI_ADDRESS: 100
-            },
-            accounts[6].address: {
-                FARM_ADDRESS: 100,
-                XSUSHI_ADDRESS: 100
-            }
-        },
-        "tokens": [
-            FARM_ADDRESS,
-            XSUSHI_ADDRESS
-        ],
-        "cycle": nextCycle
-    })
-    pastRewards = DotMap({
-        "badger_tree": rewardsContract,
-        "claims": {},
-        "tokens": [
-            FARM_ADDRESS,
-            XSUSHI_ADDRESS
-        ],
-        "cycle": currCycle
-    })
+            "tokens": [FARM_ADDRESS, XSUSHI_ADDRESS],
+            "cycle": nextCycle,
+        }
+    )
+    pastRewards = DotMap(
+        {
+            "badger_tree": rewardsContract,
+            "claims": {},
+            "tokens": [FARM_ADDRESS, XSUSHI_ADDRESS],
+            "cycle": currCycle,
+        }
+    )
 
     rewards_data = internal_generate_rewards_in_range(
         rewards_assistant,
@@ -296,7 +285,7 @@ def test_rewards_flow(setup):
         geyserRewards,
         startBlock,
         endBlock,
-        pastRewards
+        pastRewards,
     )
 
     rewardsContract.proposeRoot(
@@ -305,7 +294,7 @@ def test_rewards_flow(setup):
         rewards_data["merkleTree"]["cycle"],
         rewards_data["merkleTree"]["startBlock"],
         rewards_data["merkleTree"]["endBlock"],
-        {"from": proposer}
+        {"from": proposer},
     )
     rewardsContract.approveRoot(
         rewards_data["merkleTree"]["merkleRoot"],
@@ -313,41 +302,38 @@ def test_rewards_flow(setup):
         rewards_data["merkleTree"]["cycle"],
         rewards_data["merkleTree"]["startBlock"],
         rewards_data["merkleTree"]["endBlock"],
-        {"from": validator}
+        {"from": validator},
     )
 
     # Claim as user who has xSushi and FARM
 
     # This revert message means the claim was valid and it tried to transfer rewards
-    # it can't actually transfer any with this setup 
+    # it can't actually transfer any with this setup
     with brownie.reverts("ERC20: transfer amount exceeds balance"):
         rewardsContract.claim(
-            [
-                FARM_ADDRESS, #FARM
-                XSUSHI_ADDRESS #XSUSHI
-            ],
+            [FARM_ADDRESS, XSUSHI_ADDRESS],  # FARM  # XSUSHI
             [farmClaim, xSushiClaim],
             rewards_data["merkleTree"]["claims"][user]["index"],
             rewards_data["merkleTree"]["cycle"],
             rewards_data["merkleTree"]["claims"][user]["proof"],
             [farmClaim, xSushiClaim],
-            {"from": user}
+            {"from": user},
         )
 
     # Ensure tokens are as expected
     # farmBalance = Contract.at("0xa0246c9032bC3A600820415aE600c6388619A14D").balanceOf(user)
     # assert farmClaim == farmBalance
 
-    # Claim partial as a user 
+    # Claim partial as a user
     with brownie.reverts("ERC20: transfer amount exceeds balance"):
         rewardsContract.claim(
-            [FARM_ADDRESS,  XSUSHI_ADDRESS],
+            [FARM_ADDRESS, XSUSHI_ADDRESS],
             [farmClaim, xSushiClaim],
             rewards_data["merkleTree"]["claims"][user]["index"],
             rewards_data["merkleTree"]["cycle"],
             rewards_data["merkleTree"]["claims"][user]["proof"],
             [farmClaim - 100, xSushiClaim - 100],
-            {"from": user}
+            {"from": user},
         )
 
     # Claim with MockToken and confirm new balance
@@ -361,29 +347,29 @@ def test_rewards_flow(setup):
     nextCycle = currCycle + 1
     currentRoot = rewardsContract.merkleRoot()
 
-    geyserRewards = DotMap({
-        "badger_tree": rewardsContract,
-        "claims": {
-            user.address: {},
-            accounts[5].address: {},
-            accounts[6].address: {}
-        },
-        "tokens": [
-            mockContract
-        ],
-        "cycle": nextCycle
-    })
+    geyserRewards = DotMap(
+        {
+            "badger_tree": rewardsContract,
+            "claims": {
+                user.address: {},
+                accounts[5].address: {},
+                accounts[6].address: {},
+            },
+            "tokens": [mockContract],
+            "cycle": nextCycle,
+        }
+    )
     geyserRewards["claims"][user.address][str(mockContract)] = 100
     geyserRewards["claims"][accounts[5].address][str(mockContract)] = 20
     geyserRewards["claims"][accounts[6].address][str(mockContract)] = 0
-    pastRewards = DotMap({
-        "badger_tree": rewardsContract,
-        "claims": {},
-        "tokens": [
-            mockContract
-        ],
-        "cycle": currCycle
-    })
+    pastRewards = DotMap(
+        {
+            "badger_tree": rewardsContract,
+            "claims": {},
+            "tokens": [mockContract],
+            "cycle": currCycle,
+        }
+    )
 
     rewards_data = internal_generate_rewards_in_range(
         rewards_assistant,
@@ -391,7 +377,7 @@ def test_rewards_flow(setup):
         geyserRewards,
         startBlock,
         endBlock,
-        pastRewards
+        pastRewards,
     )
 
     rewardsContract.proposeRoot(
@@ -400,7 +386,7 @@ def test_rewards_flow(setup):
         rewards_data["merkleTree"]["cycle"],
         rewards_data["merkleTree"]["startBlock"],
         rewards_data["merkleTree"]["endBlock"],
-        {"from": proposer}
+        {"from": proposer},
     )
     rewardsContract.approveRoot(
         rewards_data["merkleTree"]["merkleRoot"],
@@ -408,7 +394,7 @@ def test_rewards_flow(setup):
         rewards_data["merkleTree"]["cycle"],
         rewards_data["merkleTree"]["startBlock"],
         rewards_data["merkleTree"]["endBlock"],
-        {"from": validator}
+        {"from": validator},
     )
 
     rewardsContract.claim(
@@ -418,7 +404,7 @@ def test_rewards_flow(setup):
         rewards_data["merkleTree"]["cycle"],
         rewards_data["merkleTree"]["claims"][user]["proof"],
         [100],
-        {"from": user}
+        {"from": user},
     )
 
     assert mockContract.balanceOf(user) == 100
@@ -434,37 +420,26 @@ def test_rewards_flow(setup):
     nextCycle = currCycle + 1
     currentRoot = rewardsContract.merkleRoot()
 
-    geyserRewards = DotMap({
-        "badger_tree": rewardsContract,
-        "claims": {
-            user.address: {
-                FARM_ADDRESS: 0,
-                XSUSHI_ADDRESS: 0
+    geyserRewards = DotMap(
+        {
+            "badger_tree": rewardsContract,
+            "claims": {
+                user.address: {FARM_ADDRESS: 0, XSUSHI_ADDRESS: 0},
+                accounts[5].address: {FARM_ADDRESS: 0, XSUSHI_ADDRESS: 0},
+                accounts[6].address: {FARM_ADDRESS: 0, XSUSHI_ADDRESS: 0},
             },
-            accounts[5].address: {
-                FARM_ADDRESS: 0,
-                XSUSHI_ADDRESS: 0
-            },
-            accounts[6].address: {
-                FARM_ADDRESS: 0,
-                XSUSHI_ADDRESS: 0
-            }
-        },
-        "tokens": [
-            FARM_ADDRESS, #FARM
-            XSUSHI_ADDRESS #XSUSHI
-        ],
-        "cycle": nextCycle
-    })
-    pastRewards = DotMap({
-        "badger_tree": rewardsContract,
-        "claims": {},
-        "tokens": [
-            FARM_ADDRESS, #FARM
-            XSUSHI_ADDRESS #XSUSHI
-        ],
-        "cycle": currCycle
-    })
+            "tokens": [FARM_ADDRESS, XSUSHI_ADDRESS],  # FARM  # XSUSHI
+            "cycle": nextCycle,
+        }
+    )
+    pastRewards = DotMap(
+        {
+            "badger_tree": rewardsContract,
+            "claims": {},
+            "tokens": [FARM_ADDRESS, XSUSHI_ADDRESS],  # FARM  # XSUSHI
+            "cycle": currCycle,
+        }
+    )
 
     rewards_data = internal_generate_rewards_in_range(
         rewards_assistant,
@@ -472,7 +447,7 @@ def test_rewards_flow(setup):
         geyserRewards,
         startBlock,
         endBlock,
-        pastRewards
+        pastRewards,
     )
 
     rewardsContract.proposeRoot(
@@ -481,7 +456,7 @@ def test_rewards_flow(setup):
         rewards_data["merkleTree"]["cycle"],
         rewards_data["merkleTree"]["startBlock"],
         rewards_data["merkleTree"]["endBlock"],
-        {"from": proposer}
+        {"from": proposer},
     )
     rewardsContract.approveRoot(
         rewards_data["merkleTree"]["merkleRoot"],
@@ -489,21 +464,18 @@ def test_rewards_flow(setup):
         rewards_data["merkleTree"]["cycle"],
         rewards_data["merkleTree"]["startBlock"],
         rewards_data["merkleTree"]["endBlock"],
-        {"from": validator}
+        {"from": validator},
     )
 
     with brownie.reverts("No tokens to claim"):
         rewardsContract.claim(
-            [
-                FARM_ADDRESS, #FARM
-                XSUSHI_ADDRESS #XSUSHI
-            ],
+            [FARM_ADDRESS, XSUSHI_ADDRESS],  # FARM  # XSUSHI
             [0, 0],
             rewards_data["merkleTree"]["claims"][user]["index"],
             rewards_data["merkleTree"]["cycle"],
             rewards_data["merkleTree"]["claims"][user]["proof"],
             [0, 0],
-            {"from": user}
+            {"from": user},
         )
 
 
@@ -517,14 +489,16 @@ def test_salary(setup):
     rewards_contract.initialize(admin, proposer, validator)
 
     def make_salary_entry(recipient, token, total_amount, duration, start_time):
-        return DotMap({
-            "recipient": recipient,
-            "token": token,
-            "totalAmount": total_amount,
-            "duration": duration,
-            "startTime": start_time,
-            "endTime": start_time + duration
-        })
+        return DotMap(
+            {
+                "recipient": recipient,
+                "token": token,
+                "totalAmount": total_amount,
+                "duration": duration,
+                "startTime": start_time,
+                "endTime": start_time + duration,
+            }
+        )
 
     def update_root(rewards_data):
         rewards_contract.proposeRoot(
@@ -533,7 +507,7 @@ def test_salary(setup):
             rewards_data["merkleTree"]["cycle"],
             rewards_data["merkleTree"]["startBlock"],
             rewards_data["merkleTree"]["endBlock"],
-            {"from": proposer}
+            {"from": proposer},
         )
         rewards_contract.approveRoot(
             rewards_data["merkleTree"]["merkleRoot"],
@@ -541,15 +515,24 @@ def test_salary(setup):
             rewards_data["merkleTree"]["cycle"],
             rewards_data["merkleTree"]["startBlock"],
             rewards_data["merkleTree"]["endBlock"],
-            {"from": validator}
+            {"from": validator},
         )
 
     def calculate_payment(salary_entry, start_block_time, end_block_time):
-        print(f"salary_entry: {salary_entry}\nstart_block_time:\t{start_block_time}\nend_block_time:  \t{end_block_time}")
-        if salary_entry.startTime <= end_block_time and salary_entry.endTime > start_block_time:
+        print(
+            f"salary_entry: {salary_entry}\nstart_block_time:\t{start_block_time}\nend_block_time:  \t{end_block_time}"
+        )
+        if (
+            salary_entry.startTime <= end_block_time
+            and salary_entry.endTime > start_block_time
+        ):
             start_time = max(salary_entry.startTime, start_block_time)
             end_time = min(salary_entry.endTime, end_block_time)
-            return salary_entry.totalAmount * salary_entry.duration / (end_time - start_time)
+            return (
+                salary_entry.totalAmount
+                * salary_entry.duration
+                / (end_time - start_time)
+            )
         return 0
 
     mock_token = rewards_assistant.MockToken
@@ -562,54 +545,58 @@ def test_salary(setup):
             mock_contract,
             1_000_000_000_000_000_000,
             SECS_PER_DAY * 360,
-            chain.time() - SECS_PER_DAY * 30
+            chain.time() - SECS_PER_DAY * 30,
         ),
         make_salary_entry(
             users[1].address,
             mock_contract,
             1_000_000_000_000_000_000,
             SECS_PER_DAY * 180,
-            chain.time() - SECS_PER_DAY * 200
+            chain.time() - SECS_PER_DAY * 200,
         ),
         make_salary_entry(
             users[2].address,
             mock_contract,
             1_000_000_000_000_000_000,
             SECS_PER_DAY * 180,
-            chain.time() + SECS_PER_DAY * 30
+            chain.time() + SECS_PER_DAY * 30,
         ),
         make_salary_entry(
             users[3].address,
             mock_contract,
             1_000_000_000_000_000_000,
             SECS_PER_DAY * 180,
-            chain.time() + SECS_PER_HOUR * 2
-        )
+            chain.time() + SECS_PER_HOUR * 2,
+        ),
     ]
 
-    void_state = DotMap({
-        "badger_tree": rewards_contract,
-        "claims": {},
-        "tokens": [mock_contract.address],
-        "cycle": rewards_contract.currentCycle()
-    })
-    initial_state = DotMap({
-        "badger_tree": rewards_contract,
-        "claims": {
-            users[20].address: {mock_contract.address: 456}
-        },
-        "tokens": [mock_contract.address],
-        "cycle": rewards_contract.currentCycle() + 1
-    })
+    void_state = DotMap(
+        {
+            "badger_tree": rewards_contract,
+            "claims": {},
+            "tokens": [mock_contract.address],
+            "cycle": rewards_contract.currentCycle(),
+        }
+    )
+    initial_state = DotMap(
+        {
+            "badger_tree": rewards_contract,
+            "claims": {users[20].address: {mock_contract.address: 456}},
+            "tokens": [mock_contract.address],
+            "cycle": rewards_contract.currentCycle() + 1,
+        }
+    )
 
-    update_root(internal_generate_rewards_in_range(
-        rewards_assistant,
-        {"contentHash": rewards_contract.merkleRoot()},
-        initial_state,
-        rewards_contract.lastPublishEndBlock() + 1,
-        web3.eth.blockNumber,
-        void_state
-    ))
+    update_root(
+        internal_generate_rewards_in_range(
+            rewards_assistant,
+            {"contentHash": rewards_contract.merkleRoot()},
+            initial_state,
+            rewards_contract.lastPublishEndBlock() + 1,
+            web3.eth.blockNumber,
+            void_state,
+        )
+    )
 
     sleep_time = SECS_PER_HOUR * 4
     chain.sleep(sleep_time)
@@ -618,21 +605,28 @@ def test_salary(setup):
     last_publish_time = rewards_contract.lastPublishTimestamp()
     chain_time = chain.time()
 
-    claims = {entry.recipient: {
-            mock_contract.address: calculate_payment(entry, rewards_contract.lastPublishTimestamp(), chain.time())
-        } for entry in salaries}
+    claims = {
+        entry.recipient: {
+            mock_contract.address: calculate_payment(
+                entry, rewards_contract.lastPublishTimestamp(), chain.time()
+            )
+        }
+        for entry in salaries
+    }
 
     assert claims[users[0]][mock_contract.address] > 0
     assert claims[users[1]][mock_contract.address] == 0
     assert claims[users[2]][mock_contract.address] == 0
     assert claims[users[3]][mock_contract.address] > 0
 
-    update_state = DotMap({
-        "badger_tree": rewards_contract,
-        "claims": claims,
-        "tokens": [mock_contract],
-        "cycle": rewards_contract.currentCycle() + 1
-    })
+    update_state = DotMap(
+        {
+            "badger_tree": rewards_contract,
+            "claims": claims,
+            "tokens": [mock_contract],
+            "cycle": rewards_contract.currentCycle() + 1,
+        }
+    )
 
     rewards_data = internal_generate_rewards_in_range(
         rewards_assistant,
@@ -640,7 +634,7 @@ def test_salary(setup):
         update_state,
         rewards_contract.lastPublishEndBlock() + 1,
         web3.eth.blockNumber,
-        initial_state
+        initial_state,
     )
     console.log(rewards_data)
     update_root(rewards_data)
@@ -654,5 +648,5 @@ def test_salary(setup):
         rewards_data["merkleTree"]["cycle"],
         rewards_data["merkleTree"]["claims"][entry1.recipient]["proof"],
         [calculate_payment(entry1, last_publish_time, chain_time)],
-        {"from": entry1.recipient}
+        {"from": entry1.recipient},
     )

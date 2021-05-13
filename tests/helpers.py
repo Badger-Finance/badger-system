@@ -8,6 +8,7 @@ from helpers.registry import registry
 
 whale_registry = registry.whales
 
+
 def get_token_balances(accounts, tokens):
     balances = DotMap()
     for token in tokens:
@@ -30,10 +31,13 @@ def create_uniswap_pair(token0, token1, signer):
 
     return uniswap.getPair(token0, token1)
 
+
 """
 If the recipient is a contract the ForceEther transfer might throw an error. Passing a 
 user account as an intermediary can fix this
 """
+
+
 def distribute_from_whales(recipient, intermediary=None):
     if intermediary == None:
         intermediary = recipient
@@ -48,6 +52,7 @@ def distribute_from_whales(recipient, intermediary=None):
                 token.transfer(
                     recipient, token.balanceOf(whale.whale), {"from": whale.whale}
                 )
+
 
 def distribute_rewards_escrow(badger, token, recipient, amount):
     """

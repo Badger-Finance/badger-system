@@ -61,38 +61,30 @@ def swap_transfer(recipient, params):
     assert badger.rewardsEscrow.isApproved(uniswap.router)
 
     # === Approve UNI Router for Badger ===
-    
+
     # Note: The allowance must first be set to 0
     id = multi.addTx(
         MultisigTxMetadata(
             description="Approve UNI Router to send BADGER",
             operation="call",
-            callInfo={
-                'address': uniswap.router,
-                'amount': params["max_in"] // 2
-            },
+            callInfo={"address": uniswap.router, "amount": params["max_in"] // 2},
         ),
         params={
             "to": badger.rewardsEscrow.address,
             "data": badger.rewardsEscrow.call.encode_input(
-                badger.token,
-                0,
-                badger.token.approve.encode_input(uniswap.router, 0),
+                badger.token, 0, badger.token.approve.encode_input(uniswap.router, 0),
             ),
         },
     )
 
     tx = multi.executeTx(id)
-    
+
     # Set proper allowance
     id = multi.addTx(
         MultisigTxMetadata(
             description="Approve UNI Router to send BADGER",
             operation="call",
-            callInfo={
-                'address': uniswap.router,
-                'amount': params["max_in"] // 2
-            },
+            callInfo={"address": uniswap.router, "amount": params["max_in"] // 2},
         ),
         params={
             "to": badger.rewardsEscrow.address,
@@ -152,28 +144,29 @@ def swap_transfer(recipient, params):
     tx = multi.executeTx(id)
     print(tx.call_trace())
     print(tx.events)
-    
 
     printUniTrade(
         method="swapTokensForExactTokens",
         params=(
             params["exact_amount_out"],
             params["max_in"],
-            params['path'],
+            params["path"],
             badger.rewardsEscrow,
             expiration,
         ),
     )
 
     console.log("=== Post Trade ===")
-    console.print({
-        'before_input_coin': beforeBadger,
-        'after_input_coin': badger.token.balanceOf(badger.rewardsEscrow),
-        'before_output_coin': before,
-        'post_output_coin': end_token.balanceOf(badger.rewardsEscrow),
-        'end_token': end_token,
-        'chain_time_before': chain.time()
-    })
+    console.print(
+        {
+            "before_input_coin": beforeBadger,
+            "after_input_coin": badger.token.balanceOf(badger.rewardsEscrow),
+            "before_output_coin": before,
+            "post_output_coin": end_token.balanceOf(badger.rewardsEscrow),
+            "end_token": end_token,
+            "chain_time_before": chain.time(),
+        }
+    )
 
     assert end_token.balanceOf(badger.rewardsEscrow) >= params["exact_amount_out"]
 
@@ -240,7 +233,7 @@ def swap_transfer(recipient, params):
 
     assert after == before + rest
 
-    print(before, after, before+params["exact_amount_out"])
+    print(before, after, before + params["exact_amount_out"])
 
     console.print("\n[green] ✅ Actions Complete [/green]")
 
@@ -266,6 +259,7 @@ def fetch_usd_price(token_address):
     usd_price = data["market_data"]["current_price"]["usd"]
     console.print(usd_price)
     return usd_price
+
 
 def address_to_id(token_address):
     if token_address == registry.tokens.wbtc:
@@ -297,10 +291,10 @@ def from_dollars(badger, token_address, dollars):
             "dollars": dollars,
             "token_amount_scaled": tokens_amount,
             "token_amount_unscaled": output,
-            "decimals": decimals
+            "decimals": decimals,
         }
     )
-    
+
     return output
 
 

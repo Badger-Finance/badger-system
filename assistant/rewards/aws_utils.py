@@ -1,6 +1,4 @@
 import boto3
-import json
-import requests
 from brownie import *
 from rich.console import Console
 from config.env_config import env_config
@@ -16,8 +14,8 @@ merkle_bucket = "badger-merkle-proofs"
 rewards_bucket = "badger-json"
 analytics_bucket = "badger-analytics"
 
+
 def download_latest_tree():
-    from config.env_config import env_config
 
     s3 = boto3.client(
         "s3",
@@ -37,7 +35,6 @@ def download_latest_tree():
 
 
 def download_tree(fileName):
-    from config.env_config import env_config
 
     s3 = boto3.client(
         "s3",
@@ -56,6 +53,7 @@ def download_tree(fileName):
 
     return s3_clientdata
 
+
 def download_past_trees(number):
     trees = []
     key = "badger-tree.json"
@@ -63,7 +61,7 @@ def download_past_trees(number):
     versions = response["Versions"][:number]
     for version in versions:
         console.log(version["Key"], version["VersionId"])
-        ## yield version
+        # yield version
         s3_client_obj = s3.get_object(
             Bucket=merkle_bucket, Key=version["Key"], VersionId=version["VersionId"]
         )
@@ -72,7 +70,6 @@ def download_past_trees(number):
 
 
 def upload(fileName, bucket="badger-json", publish=True):
-    from config.env_config import env_config
     if not publish:
         upload_targets = [
             {
@@ -106,3 +103,33 @@ def upload(fileName, bucket="badger-json", publish=True):
         console.print(
             "✅ Uploaded file to s3://" + target["bucket"] + "/" + target["key"]
         )
+
+
+def upload_boosts(test):
+    fileName = "badger-boosts.json"
+
+    if test:
+        bucket = "badger-staging-merkle-proofs"
+    else:
+        bucket = "badger-merkle-proofs"
+    console.log("Uploading file to s3://" + bucket + "/" + fileName)
+    s3.upload_file(fileName, bucket, fileName)
+    console.log("✅ Uploaded file to s3://" + bucket + "/" + fileName)
+
+
+def upload_analytics(fileName):
+    bucket = "badger-analytics"
+    console.log(fileName)
+
+    jsonKey = "rewards/{}.json".format(fileName)
+    console.log(jsonKey)
+    pngKey = "rewards/{}.png".format(fileName)
+    console.log(pngKey)
+
+    console.log("Uploading file to s3://" + bucket + "/" + jsonKey)
+    s3.upload_file("logs/{}".format(jsonKey), bucket, jsonKey)
+    console.log("✅ Uploaded file to s3://" + bucket + "/" + jsonKey)
+
+    console.log("Uploading file to s3://" + bucket + "/" + pngKey)
+    s3.upload_file("logs/{}".format(pngKey), bucket, pngKey)
+    console.log("✅ Uploaded file to s3://" + bucket + "/" + pngKey)

@@ -691,11 +691,11 @@ abstract contract ContextUpgradeable is Initializable {
 
     function __Context_init_unchained() internal initializer {}
 
-    function _msgSender() internal view virtual returns (address payable) {
+    function _msgSender() internal virtual view returns (address payable) {
         return msg.sender;
     }
 
-    function _msgData() internal view virtual returns (bytes memory) {
+    function _msgData() internal virtual view returns (bytes memory) {
         this; // silence state mutability warning without generating bytecode - see https://github.com/ethereum/solidity/issues/2691
         return msg.data;
     }
@@ -956,11 +956,11 @@ abstract contract BaseStrategy is PausableUpgradeable, SettAccessControl {
     }
 
     /// @notice Get the total balance of want realized in the strategy, whether idle or active in Strategy positions.
-    function balanceOf() public view virtual returns (uint256) {
+    function balanceOf() public virtual view returns (uint256) {
         return balanceOfWant().add(balanceOfPool());
     }
 
-    function isTendable() public pure virtual returns (bool) {
+    function isTendable() public virtual pure returns (bool) {
         return false;
     }
 
@@ -1136,7 +1136,7 @@ abstract contract BaseStrategy is PausableUpgradeable, SettAccessControl {
     /// @notice Specify tokens used in yield process, should not be available to withdraw via withdrawOther()
     function _onlyNotProtectedTokens(address _asset) internal virtual;
 
-    function getProtectedTokens() external view virtual returns (address[] memory);
+    function getProtectedTokens() external virtual view returns (address[] memory);
 
     /// @dev Internal logic for strategy migration. Should exit positions as efficiently as possible
     function _withdrawAll() internal virtual;
@@ -1152,10 +1152,10 @@ abstract contract BaseStrategy is PausableUpgradeable, SettAccessControl {
     // function harvest() external virtual;
 
     /// @dev User-friendly name for this strategy for purposes of convenient reading
-    function getName() external pure virtual returns (string memory);
+    function getName() external virtual pure returns (string memory);
 
     /// @dev Balance of want currently held in strategy positions
-    function balanceOfPool() public view virtual returns (uint256);
+    function balanceOfPool() public virtual view returns (uint256);
 
     uint256[49] private __gap;
 }
@@ -1344,7 +1344,7 @@ contract StabilizeStrategyDiggV1 is BaseStrategy {
         return address(tokenList[_id].token);
     }
 
-    function getName() external pure override returns (string memory) {
+    function getName() external override pure returns (string memory) {
         return "StabilizeStrategyDiggV1";
     }
 
@@ -1352,7 +1352,7 @@ contract StabilizeStrategyDiggV1 is BaseStrategy {
         return "1.0";
     }
 
-    function balanceOf() public view override returns (uint256) {
+    function balanceOf() public override view returns (uint256) {
         // This will return the DIGG and DIGG equivalent of WBTC in Digg decimals
         uint256 _diggAmount = tokenList[0].token.balanceOf(address(this));
         uint256 _wBTCAmount = tokenList[1].token.balanceOf(address(this));
@@ -1383,11 +1383,11 @@ contract StabilizeStrategyDiggV1 is BaseStrategy {
     }
 
     /// @dev Not used
-    function balanceOfPool() public view override returns (uint256) {
+    function balanceOfPool() public override view returns (uint256) {
         return 0;
     }
 
-    function getProtectedTokens() external view override returns (address[] memory) {
+    function getProtectedTokens() external override view returns (address[] memory) {
         address[] memory protectedTokens = new address[](2);
         protectedTokens[0] = address(tokenList[0].token);
         protectedTokens[1] = address(tokenList[1].token);
@@ -1420,20 +1420,19 @@ contract StabilizeStrategyDiggV1 is BaseStrategy {
         // Amount sold is split between these two biggest liquidity providers to decrease the chance of price inequities between the exchanges
         // This also helps reduce slippage and creates a higher return than using one exchange
         // Look at the total balance of the pooled tokens in Uniswap compared to the total for both exchanges
-        uint256 uniPercent =
+        uint256 uniPercent = tokenList[0]
+            .token
+            .balanceOf(address(UNISWAP_DIGG_LP))
+            .add(tokenList[1].token.balanceOf(address(UNISWAP_DIGG_LP)))
+            .mul(DIVISION_FACTOR)
+            .div(
             tokenList[0]
                 .token
                 .balanceOf(address(UNISWAP_DIGG_LP))
+                .add(tokenList[0].token.balanceOf(address(SUSHISWAP_DIGG_LP)))
                 .add(tokenList[1].token.balanceOf(address(UNISWAP_DIGG_LP)))
-                .mul(DIVISION_FACTOR)
-                .div(
-                tokenList[0]
-                    .token
-                    .balanceOf(address(UNISWAP_DIGG_LP))
-                    .add(tokenList[0].token.balanceOf(address(SUSHISWAP_DIGG_LP)))
-                    .add(tokenList[1].token.balanceOf(address(UNISWAP_DIGG_LP)))
-                    .add(tokenList[1].token.balanceOf(address(SUSHISWAP_DIGG_LP)))
-            );
+                .add(tokenList[1].token.balanceOf(address(SUSHISWAP_DIGG_LP)))
+        );
         uint256 uniAmount = _amount.mul(uniPercent).div(DIVISION_FACTOR);
         _amount = _amount.sub(uniAmount);
 
@@ -1674,10 +1673,9 @@ contract StabilizeStrategyDiggV1 is BaseStrategy {
                     uint256 changedDiggPercent = lastDiggTotalSupply.sub(currentTotalSupply).mul(DIVISION_FACTOR).div(lastDiggTotalSupply);
 
                     // The faster the rise and the larger the negative rebase, the more that is bought
-                    uint256 sellPercent =
-                        changedDiggPercent.mul(wbtcSupplyChangeFactor.add(uint256(percentChange).mul(wbtcSellAmplificationFactor))).div(
-                            DIVISION_FACTOR
-                        );
+                    uint256 sellPercent = changedDiggPercent
+                        .mul(wbtcSupplyChangeFactor.add(uint256(percentChange).mul(wbtcSellAmplificationFactor)))
+                        .div(DIVISION_FACTOR);
                     if (sellPercent > maxWBTCSellPercent) {
                         sellPercent = maxWBTCSellPercent;
                     }

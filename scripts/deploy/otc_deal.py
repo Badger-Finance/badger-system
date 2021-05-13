@@ -99,7 +99,7 @@ def main():
 
     # # Oxb1 Test
     beneficiary = accounts.at(params["beneficiary"], force=True)
-    
+
     escrow = OtcEscrow.at("0x7163fB2fA38Ea3BBc1F8525F3d8D0417C0c9d903")
 
     # bBadger.transfer(badger.devMultisig, Wei("100000 ether"), {"from": test_user})
@@ -121,10 +121,11 @@ def main():
     # usdc.approve(escrow, params["usdcAmount"], {"from": beneficiary})
     # tx = escrow.swap({"from": beneficiary})
 
-    tx = multi.execute(MultisigTxMetadata(description="Swap"), {
-        "to": escrow.address,
-        "data": escrow.swap.encode_input()
-    }, print_output=False)
+    tx = multi.execute(
+        MultisigTxMetadata(description="Swap"),
+        {"to": escrow.address, "data": escrow.swap.encode_input()},
+        print_output=False,
+    )
 
     chain.mine()
 
@@ -176,7 +177,6 @@ def main():
     usdc.transfer(beneficiary, params["usdcAmount"], {"from": test_user})
     usdc.transfer(beneficiary, 1500000000000, {"from": test_user})
 
-
     badger.token.transfer(badger.devMultisig, badger_total, {"from": test_user})
 
     multi.execute(
@@ -206,7 +206,7 @@ def main():
         "bBadger.balanceOf(badger.devMultisig)",
         bBadger.balanceOf(badger.devMultisig),
         params["bBadgerAmount"],
-        params["bBadgerAmount"] - bBadger.balanceOf(badger.devMultisig)
+        params["bBadgerAmount"] - bBadger.balanceOf(badger.devMultisig),
     )
     assert bBadger.balanceOf(badger.devMultisig) >= params["bBadgerAmount"]
 

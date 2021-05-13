@@ -28,14 +28,14 @@ contract Disperse is Initializable {
     address[] private _payees;
     mapping(address => bool) private _isPayee;
 
-/**
+    /**
      * @dev Creates an instance of `PaymentSplitter` where each account in `payees` is assigned the number of shares at
      * the matching position in the `shares` array.
      *
      * All addresses in `payees` must be non-zero. Both arrays must have the same non-zero length, and there must be no
      * duplicates in `payees`.
      */
-    function initialize (address[] memory payees, uint256[] memory shares) public initializer {
+    function initialize(address[] memory payees, uint256[] memory shares) public initializer {
         // solhint-disable-next-line max-line-length
         require(payees.length == shares.length, "PaymentSplitter: payees and shares length mismatch");
         require(payees.length > 0, "PaymentSplitter: no payees");
@@ -73,7 +73,7 @@ contract Disperse is Initializable {
         if (address(token) == ibbtc) {
             ICore(core).collectFee();
         }
-        
+
         require(_isPayee[msg.sender], "onlyPayees");
         uint256 tokenBalance = token.balanceOf(address(this));
 
@@ -101,7 +101,4 @@ contract Disperse is Initializable {
         _totalShares = _totalShares.add(shares_);
         emit PayeeAdded(account, shares_);
     }
-
-
-    
 }

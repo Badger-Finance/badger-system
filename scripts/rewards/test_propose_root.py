@@ -17,6 +17,11 @@ def main():
     # If sufficient time has passed since last root proposal, propose a new root
     rootProposed = run_action(
         badger,
-        {"action": "rootUpdater", "startBlock": startBlock, "endBlock": endBlock, "pastRewards": currentRewards},
+        {
+            "action": "rootUpdater",
+            "startBlock": startBlock,
+            "endBlock": endBlock,
+            "pastRewards": currentRewards,
+        },
         test=True,
     )

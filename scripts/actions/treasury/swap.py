@@ -45,7 +45,9 @@ def printUniTrade(method, params):
 def swap_transfer(recipient, params):
     badger = connect_badger("deploy-final.json")
 
-    badger.treasuryMultisig = connect_gnosis_safe("0xD4868d98849a58F743787c77738D808376210292")
+    badger.treasuryMultisig = connect_gnosis_safe(
+        "0xD4868d98849a58F743787c77738D808376210292"
+    )
 
     expectedMultisig = "0xB65cef03b9B89f99517643226d76e286ee999e77"
     assert badger.devMultisig == expectedMultisig
@@ -66,8 +68,7 @@ def swap_transfer(recipient, params):
     # Note: The allowance must first be set to 0
     id = multi.addTx(
         MultisigTxMetadata(
-            description="Approve UNI Router to send BADGER",
-            operation="call",
+            description="Approve UNI Router to send BADGER", operation="call",
         ),
         params={
             "to": badger.token.address,
@@ -80,12 +81,13 @@ def swap_transfer(recipient, params):
     # Set proper allowance
     id = multi.addTx(
         MultisigTxMetadata(
-            description="Approve UNI Router to send BADGER",
-            operation="call",
+            description="Approve UNI Router to send BADGER", operation="call",
         ),
         params={
             "to": badger.token.address,
-            "data": badger.token.approve.encode_input(uniswap.router, int(params["max_in"]*1.5)),
+            "data": badger.token.approve.encode_input(
+                uniswap.router, int(params["max_in"] * 1.5)
+            ),
         },
     )
 
@@ -153,9 +155,14 @@ def swap_transfer(recipient, params):
         {
             "before_input_coin": val(beforeBadger),
             "after_input_coin": val(badger.token.balanceOf(badger.treasuryMultisig)),
-            "change_input_coin": val(beforeBadger-badger.token.balanceOf(badger.treasuryMultisig)),
+            "change_input_coin": val(
+                beforeBadger - badger.token.balanceOf(badger.treasuryMultisig)
+            ),
             "before_output_coin": val(before, decimals=end_token.decimals()),
-            "post_output_coin": val(end_token.balanceOf(badger.treasuryMultisig), decimals=end_token.decimals()),
+            "post_output_coin": val(
+                end_token.balanceOf(badger.treasuryMultisig),
+                decimals=end_token.decimals(),
+            ),
             "end_token": end_token,
             "chain_time_before": chain.time(),
         }
@@ -257,7 +264,12 @@ def main():
         "max_in_scaled": val(max_in),
         "exact_amount_out": exact_amount_out,
         "exact_amount_out_scaled": val(exact_amount_out),
-        "path": [badger.token.address, registry.tokens.wbtc, registry.tokens.usdc, registry.tokens.usdt],
+        "path": [
+            badger.token.address,
+            registry.tokens.wbtc,
+            registry.tokens.usdc,
+            registry.tokens.usdt,
+        ],
     }
 
     console.print("===== Pre Swap =====", style="bold cyan")

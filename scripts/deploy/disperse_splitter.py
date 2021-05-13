@@ -6,6 +6,8 @@ from helpers.registry import registry
 from helpers.token_utils import distribute_from_whales, BalanceSnapshotter
 from helpers.registry import registry
 from brownie import *
+
+
 def main():
     badger = connect_badger()
 
@@ -25,7 +27,11 @@ def main():
     wbtc.transfer(logic, wbtc.balanceOf(deployer) // 2, {"from": deployer})
 
     print(logic.payees())
-    print(logic.isPayee(dfdMulti), logic.isPayee(badger.devMultisig), logic.isPayee(deployer))
+    print(
+        logic.isPayee(dfdMulti),
+        logic.isPayee(badger.devMultisig),
+        logic.isPayee(deployer),
+    )
     # logic.initialize([badger.devMultisig, dfdMulti], [5000, 5000], {'from': deployer})
 
     snap = BalanceSnapshotter([wbtc], [logic, badger.devMultisig, dfdMulti])

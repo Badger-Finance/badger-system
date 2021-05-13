@@ -16,8 +16,7 @@ from helpers.gnosis_safe import GnosisSafe, MultisigTxMetadata, multisig_success
 from helpers.network import network_manager
 from helpers.proxy_utils import deploy_proxy, deploy_proxy_admin
 from helpers.registry import artifacts, registry
-from helpers.sett.strategy_registry import (name_to_artifact,
-                                            contract_name_to_artifact)
+from helpers.sett.strategy_registry import name_to_artifact, contract_name_to_artifact
 from helpers.time_utils import days, to_days, to_utc_date
 from rich.console import Console
 from scripts.systems.claw_system import ClawSystem
@@ -204,7 +203,9 @@ def connect_badger(
     badger.connect_proxy_admins(dev_proxy_admin, dao_proxy_admin, ops_proxy_admin)
 
     if "testProxyAdmin" in badger_deploy:
-        badger.connect_test_proxy_admin("testProxyAdmin", badger_deploy["testProxyAdmin"])
+        badger.connect_test_proxy_admin(
+            "testProxyAdmin", badger_deploy["testProxyAdmin"]
+        )
 
     badger.connect_multisig(badger_deploy["devMultisig"])
     badger.connect_ops_multisig(badger_deploy["opsMultisig"])
@@ -305,12 +306,7 @@ class BadgerSystem:
             print("RPC Inactive")
             import decouple
 
-            print(
-                load_deployer,
-                load_keeper,
-                load_guardian,
-                load_method
-            )
+            print(load_deployer, load_keeper, load_guardian, load_method)
 
             if load_deployer and load_method == LoadMethod.SK:
                 deployer_key = decouple.config("DEPLOYER_PRIVATE_KEY")
@@ -352,14 +348,14 @@ class BadgerSystem:
     def connect_test_proxy_admin(self, name, address):
         abi = artifacts.open_zeppelin["ProxyAdmin"]["abi"]
         self.testProxyAdmin = Contract.from_abi(
-                "ProxyAdmin", web3.toChecksumAddress(address), abi
-            )
+            "ProxyAdmin", web3.toChecksumAddress(address), abi
+        )
         return self.testProxyAdmin
 
     def connect_test_gated_proxy(self, address):
         self.testGatedProxy = GatedProxy.at(address)
         self.track_contract_upgradeable("testGatedProxy", self.testGatedProxy)
-    
+
     def connect_ops_gated_proxy(self, address):
         self.opsGatedProxy = GatedProxy.at(address)
         self.track_contract_upgradeable("opsGatedProxy", self.opsGatedProxy)
@@ -374,7 +370,7 @@ class BadgerSystem:
             self.devProxyAdmin = Contract.from_abi(
                 "ProxyAdmin", web3.toChecksumAddress(devProxyAdmin), abi
             )
-        else: 
+        else:
             self.devProxyAdmin = None
         if daoProxyAdmin:
             self.daoProxyAdmin = Contract.from_abi(
@@ -389,7 +385,7 @@ class BadgerSystem:
             )
         else:
             self.opsProxyAdmin = None
-        
+
         self.testProxyAdmin = None
 
         self.proxyAdmin = self.devProxyAdmin
@@ -433,7 +429,7 @@ class BadgerSystem:
         keeper=None,
         rewards=None,
         proxyAdmin=None,
-        deployer=None
+        deployer=None,
     ):
 
         if not deployer:
@@ -614,7 +610,7 @@ class BadgerSystem:
         guardian=None,
         sett_type=SettType.DEFAULT,
         deployer=None,
-        proxyAdmin=None
+        proxyAdmin=None,
     ):
         if not deployer:
             deployer = self.deployer
@@ -945,35 +941,25 @@ class BadgerSystem:
         )
 
     # NB: Min gov timelock delay is 2 days.
-    def queue_upgrade_sett(self, id, newLogic, delay=2*days(2)) -> str:
+    def queue_upgrade_sett(self, id, newLogic, delay=2 * days(2)) -> str:
         sett = self.getSett(id)
         return self.queue_upgrade(sett.address, newLogic.address)
 
-    def queue_upgrade(self, proxyAddress, newLogicAddress, delay=2*days(2)) -> str:
+    def queue_upgrade(self, proxyAddress, newLogicAddress, delay=2 * days(2)) -> str:
         target = self.devProxyAdmin.address
         signature = "upgrade(address,address)"
         data = encode_abi(["address", "address"], [proxyAddress, newLogicAddress])
-        eta = web3.eth.getBlock('latest')['timestamp'] + delay
+        eta = web3.eth.getBlock("latest")["timestamp"] + delay
         return self.governance_queue_transaction(target, signature, data, eta)
 
     def timelock_run_direct(self, target, signature, data, eta, eth=0):
         multi = accounts.at(self.devMultisig.address, force=True)
         self.governanceTimelock.queueTransaction(
-            target,
-            eth,
-            signature,
-            data,
-            eta,
-            {"from": multi}
+            target, eth, signature, data, eta, {"from": multi}
         )
         chain.sleep(days(5))
         self.governanceTimelock.executeTransaction(
-            target,
-            eth,
-            signature,
-            data,
-            eta,
-            {"from": multi}
+            target, eth, signature, data, eta, {"from": multi}
         )
 
     def governance_queue_transaction(self, target, signature, data, eta, eth=0) -> str:
@@ -983,29 +969,16 @@ class BadgerSystem:
             {
                 "to": self.governanceTimelock.address,
                 "data": self.governanceTimelock.queueTransaction.encode_input(
-                    target,
-                    eth,
-                    signature,
-                    data,
-                    eta,
+                    target, eth, signature, data, eta,
                 ),
             },
         )
         multi.executeTx(id)
 
-        txHash = Web3.solidityKeccak([
-            "address",
-            "uint256",
-            "string",
-            "bytes",
-            "uint256",
-        ], [
-            target,
-            eth,
-            signature,
-            data,
-            eta,
-        ]).hex()
+        txHash = Web3.solidityKeccak(
+            ["address", "uint256", "string", "bytes", "uint256",],
+            [target, eth, signature, data, eta,],
+        ).hex()
 
         txFilename = "{}.json".format(txHash)
         with open(os.path.join(TIMELOCK_DIR, txFilename), "w") as f:
@@ -1133,7 +1106,7 @@ class BadgerSystem:
     def connect_unlock_scheduler(self, address):
         self.unlockScheduler = UnlockScheduler.at(address)
         self.track_contract_upgradeable("unlockScheduler", self.unlockScheduler)
-    
+
     def connect_rewards_logger(self, address):
         self.rewardsLogger = RewardsLogger.at(address)
         self.track_contract_upgradeable("rewardsLogger", self.rewardsLogger)
@@ -1265,7 +1238,9 @@ class BadgerSystem:
         Return seeder account
         """
         if rpc.is_active():
-            seeder = accounts.at("0x3131B6964d96DE3Ad36C7Fe82e9bA9CcdBaf6baa", force=True)
+            seeder = accounts.at(
+                "0x3131B6964d96DE3Ad36C7Fe82e9bA9CcdBaf6baa", force=True
+            )
         else:
             seeder = accounts.load("badger_proxy_deployer")
         return seeder
@@ -1284,8 +1259,10 @@ class BadgerSystem:
                     return admin
             except:
                 continue
-        raise Exception (f"Contract not managed by any connected proxyAdmin from: {potential_admins}")
-    
+        raise Exception(
+            f"Contract not managed by any connected proxyAdmin from: {potential_admins}"
+        )
+
     def getConnectedProxyAdmins(self):
         connected_admins = {}
         if self.devProxyAdmin:
@@ -1297,7 +1274,7 @@ class BadgerSystem:
         if self.testProxyAdmin:
             connected_admins["testProxyAdmin"] = self.testProxyAdmin
         return connected_admins
-    
+
     def get_latest_unlock_schedules(self, geyser):
         latest_schedules = {}
         tokens = geyser.getDistributionTokens()
@@ -1312,7 +1289,7 @@ class BadgerSystem:
             s = UnlockSchedule(token, schedules[last_schedule])
 
             latest_schedules[token] = s
-        
+
         return latest_schedules
 
     def print_logger_unlock_schedules(self, beneficiary, name=None):
@@ -1322,7 +1299,7 @@ class BadgerSystem:
 
         if not name:
             name = ""
-        
+
         console.print(f"[cyan]=== Latest Unlock Schedules {name}===[/cyan]")
         table = []
 
@@ -1331,9 +1308,9 @@ class BadgerSystem:
         for schedule in schedules:
             print(schedule)
             s = LoggerUnlockSchedule(schedule)
-        
-            digg_shares = (s.token == self.digg.token)
-        
+
+            digg_shares = s.token == self.digg.token
+
         if digg_shares:
             scaled = shares_to_fragments(s.amount)
         else:
@@ -1352,15 +1329,29 @@ class BadgerSystem:
                 "{:.0f}".format(s.end),
             ]
         )
-            
-        print(tabulate(table, headers=["name", "beneficiary", "token", "amount", "duration", "start", "end", "start", "end"]))
-        print("\n")
 
+        print(
+            tabulate(
+                table,
+                headers=[
+                    "name",
+                    "beneficiary",
+                    "token",
+                    "amount",
+                    "duration",
+                    "start",
+                    "end",
+                    "start",
+                    "end",
+                ],
+            )
+        )
+        print("\n")
 
     def print_latest_unlock_schedules(self, geyser, name=None):
         if not name:
             name = ""
-        
+
         console.print(f"[cyan]=== Latest Unlock Schedules {name}===[/cyan]")
         table = []
         tokens = geyser.getDistributionTokens()
@@ -1374,8 +1365,8 @@ class BadgerSystem:
             last_schedule = num_schedules - 1
             s = UnlockSchedule(token, schedules[last_schedule])
 
-            digg_shares = (token == self.digg.token)
-            
+            digg_shares = token == self.digg.token
+
             if digg_shares:
                 scaled = shares_to_fragments(s.amount)
             else:
@@ -1393,9 +1384,20 @@ class BadgerSystem:
                     "{:.0f}".format(s.end),
                 ]
             )
-            
-        print(tabulate(table, headers=["geyser", "token", "amount", "duration", "start", "end", "start", "end"]))
+
+        print(
+            tabulate(
+                table,
+                headers=[
+                    "geyser",
+                    "token",
+                    "amount",
+                    "duration",
+                    "start",
+                    "end",
+                    "start",
+                    "end",
+                ],
+            )
+        )
         print("\n")
-
-
-
