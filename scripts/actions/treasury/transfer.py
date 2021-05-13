@@ -20,7 +20,7 @@ def transfer_badger(recipient, params):
     expectedMultisig = "0xB65cef03b9B89f99517643226d76e286ee999e77"
     assert badger.devMultisig == expectedMultisig
     multi = GnosisSafe(badger.devMultisig)
-    
+
     one_wei = Wei("1")
     end_token = badger.token
 
@@ -96,6 +96,7 @@ def transfer_badger(recipient, params):
 
     console.print("\n[green] ✅ Actions Complete [/green]")
 
+
 def fetch_usd_value(token_address, amount):
     price = fetch_usd_price(address_to_id(token_address))
     return price * amount
@@ -145,7 +146,6 @@ def from_dollars(badger, token_address, dollars):
             "token_amount_scaled": tokens_amount,
             "token_amount_unscaled": output,
             "decimals": decimals,
-            
         }
     )
 
@@ -177,7 +177,7 @@ def main():
         "recipient": recipient,
         "amount": amount,
         "amount_scaled": val(amount),
-        "use_test_payment": True
+        "use_test_payment": True,
     }
 
     console.print("===== Pre Transfer =====", style="bold cyan")

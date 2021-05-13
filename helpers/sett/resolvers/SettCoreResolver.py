@@ -78,4 +78,3 @@ class SettCoreResolver:
         Did any of the variables change?
         Print out storage layout of the contract
         """
-

@@ -6,9 +6,13 @@ from helpers.time_utils import to_hours
 from rich.console import Console
 from tqdm import tqdm
 from assistant.rewards.boost import badger_boost
-from assistant.rewards.twap import digg_btc_twap,calculate_digg_allocation
-from assistant.rewards.aws_utils import download_tree, download_latest_tree, upload
-from assistant.rewards.calc_stakes import calc_geyser_stakes
+from assistant.rewards.twap import digg_btc_twap, calculate_digg_allocation
+from assistant.rewards.aws_utils import (
+    download_latest_tree,
+    download_tree,
+    upload,
+    upload_boosts,
+)
 from assistant.rewards.calc_snapshot import calc_snapshot
 from assistant.rewards.meta_rewards.harvest import calc_farm_rewards
 from assistant.rewards.meta_rewards.sushi import calc_all_sushi_rewards
@@ -18,7 +22,6 @@ from assistant.rewards.rewards_utils import (
     process_cumulative_rewards,
     combine_rewards,
 )
-from assistant.rewards.classes.User import User
 from assistant.rewards.classes.MerkleTree import rewards_to_merkle_tree
 from assistant.rewards.classes.RewardsList import RewardsList
 from assistant.rewards.classes.RewardsLog import rewardsLog
@@ -36,27 +39,44 @@ def calc_sett_rewards(badger, periodStartBlock, endBlock, cycle):
     """
     Calculate rewards for each sett, and sum them
     """
-    #ratio = digg_btc_twap(periodStartBlock,endBlock)
-    #diggAllocation = calculate_digg_allocation(ratio)
+    # ratio = digg_btc_twap(periodStartBlock,endBlock)
+    # diggAllocation = calculate_digg_allocation(ratio)
     rewardsBySett = {}
-    boosts = json.load(open("logs/boosts.json"))
-    noBoosts = ["yearn.wbtc","experimental.sushiIBbtcWbtc"]
-    noRewards = ["native.digg"]
+    noRewards = ["native.digg", "experimental.digg"]
+    boosts = badger_boost(badger, endBlock)
+    apyBoosts = {}
+    multiplierData = {}
     for key, sett in badger.sett_system.vaults.items():
         if key in noRewards:
             continue
-        if key in noBoosts:
-            boost = {}
-        else:
-            boost = boosts[key]
 
-        settRewards = calc_snapshot(
-            badger, key, periodStartBlock, endBlock, cycle, boost,0)
+        settRewards, apyBoost = calc_snapshot(
+            badger, key, periodStartBlock, endBlock, cycle, boosts, 0
+        )
+        if len(apyBoost) > 0:
+            minimum = min(apyBoost.values())
+            maximum = max(apyBoost.values())
+            multiplierData[sett.address] = {"min": minimum, "max": maximum}
+            for addr in apyBoost:
+                if addr not in apyBoosts:
+                    apyBoosts[addr] = {}
+                apyBoosts[addr][sett.address] = apyBoost[addr]
+
         rewardsBySett[key] = settRewards
 
-    rewards = combine_rewards(
-        list(rewardsBySett.values()), cycle, badger.badgerTree
-    )
+    rewards = combine_rewards(list(rewardsBySett.values()), cycle, badger.badgerTree)
+    boostsMetadata = {"multiplierData": multiplierData, "userData": {}}
+
+    for addr, multipliers in apyBoosts.items():
+        boostsMetadata["userData"][addr] = {
+            "boost": boosts.get(addr, 1),
+            "multipliers": multipliers,
+        }
+
+    with open("badger-boosts.json", "w") as fp:
+        json.dump(boostsMetadata, fp)
+
+    upload_boosts(test=True)
 
     return rewards
 
@@ -114,8 +134,7 @@ def fetch_pending_rewards_tree(badger, print_output=False):
 
     if print_output:
         console.print(
-            "[green]===== Loading Pending Rewards " +
-            pastFile + " =====[/green]"
+            "[green]===== Loading Pending Rewards " + pastFile + " =====[/green]"
         )
 
     currentTree = json.loads(download_tree(pastFile))
@@ -147,8 +166,7 @@ def fetch_current_rewards_tree(badger, print_output=False):
     pastFile = "rewards-1-" + str(merkle["contentHash"]) + ".json"
 
     console.print(
-        "[bold yellow]===== Loading Past Rewards " +
-        pastFile + " =====[/bold yellow]"
+        "[bold yellow]===== Loading Past Rewards " + pastFile + " =====[/bold yellow]"
     )
 
     currentTree = json.loads(download_tree(pastFile))
@@ -179,27 +197,23 @@ def generate_rewards_in_range(badger, startBlock, endBlock, pastRewards):
     nextCycle = getNextCycle(badger)
 
     currentMerkleData = fetchCurrentMerkleData(badger)
-    #sushiRewards = calc_sushi_rewards(badger,startBlock,endBlock,nextCycle,retroactive=False)
-    #farmRewards = fetch_current_harvest_rewards(badger,startBlock, endBlock,nextCycle)
-    settRewards = calc_sett_rewards(
-        badger, startBlock, endBlock, nextCycle)
+    # sushiRewards = calc_sushi_rewards(badger,startBlock,endBlock,nextCycle,retroactive=False)
+    # farmRewards = fetch_current_harvest_rewards(badger,startBlock, endBlock,nextCycle)
+    settRewards = calc_sett_rewards(badger, startBlock, endBlock, nextCycle)
 
-    #farmRewards = calc_farm_rewards(
+    # farmRewards = calc_farm_rewards(
     #    badger, startBlock, endBlock, nextCycle, retroactive=False
-    #)
-    #sushiRewards = calc_all_sushi_rewards(
+    # )
+    # sushiRewards = calc_all_sushi_rewards(
     #    badger, startBlock, endBlock, nextCycle, retroactive=False
-    #)
+    # )
 
-    newRewards = combine_rewards(
-        [settRewards], nextCycle, badger.badgerTree
-    )
+    newRewards = combine_rewards([settRewards], nextCycle, badger.badgerTree)
     cumulativeRewards = process_cumulative_rewards(pastRewards, newRewards)
 
     # Take metadata from geyserRewards
     console.print("Processing to merkle tree")
-    merkleTree = rewards_to_merkle_tree(
-        cumulativeRewards, startBlock, endBlock, {})
+    merkleTree = rewards_to_merkle_tree(cumulativeRewards, startBlock, endBlock, {})
 
     # Publish data
     rootHash = keccak(merkleTree["merkleRoot"])
@@ -219,8 +233,8 @@ def generate_rewards_in_range(badger, startBlock, endBlock, pastRewards):
     )
     print("Uploading to file " + contentFileName)
 
-    rewardsLog.save("rewards-log-{}".format(nextCycle))
-   # TODO: Upload file to AWS & serve from server
+    rewardsLog.save("rewards-{}".format(nextCycle))
+    # TODO: Upload file to AWS & serve from server
     with open(contentFileName, "w") as outfile:
         json.dump(merkleTree, outfile, indent=4)
 
@@ -230,11 +244,7 @@ def generate_rewards_in_range(badger, startBlock, endBlock, pastRewards):
     # Sanity check new rewards file
 
     verify_rewards(
-        badger,
-        startBlock,
-        endBlock,
-        pastRewards,
-        after_file,
+        badger, startBlock, endBlock, pastRewards, after_file,
     )
 
     return {
@@ -277,12 +287,11 @@ def rootUpdater(badger, startBlock, endBlock, pastRewards, test=False):
         )
         return False
 
-    rewards_data = generate_rewards_in_range(
-        badger, startBlock, endBlock, pastRewards)
+    rewards_data = generate_rewards_in_range(badger, startBlock, endBlock, pastRewards)
 
     console.print("===== Root Updater Complete =====")
     if not test:
-        
+
         badgerTree.proposeRoot(
             rewards_data["merkleTree"]["merkleRoot"],
             rewards_data["rootHash"],
@@ -317,12 +326,10 @@ def guardian(badger: BadgerSystem, startBlock, endBlock, pastRewards, test=False
 
     # Only run if we have a pending root
     if not badgerTree.hasPendingRoot():
-        console.print(
-            "[bold yellow]===== Result: No Pending Root =====[/bold yellow]")
+        console.print("[bold yellow]===== Result: No Pending Root =====[/bold yellow]")
         return False
 
-    rewards_data = generate_rewards_in_range(
-        badger, startBlock, endBlock, pastRewards)
+    rewards_data = generate_rewards_in_range(badger, startBlock, endBlock, pastRewards)
 
     console.print("===== Guardian Complete =====")
 

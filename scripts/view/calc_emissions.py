@@ -11,15 +11,46 @@ def main():
     badger = connect_badger(badger_config.prod_json)
     rewards = get_active_rewards_schedule(badger)
 
-    b1 = rewards.getDistributions("native.uniBadgerWbtc").getToStakingRewardsDaily("badger") * 5
-    b2 = rewards.getDistributions("native.sushiBadgerWbtc").getToStakingRewardsDaily("badger") * 5
-    b3 = rewards.getDistributions("native.badger").getToStakingRewardsDaily("badger") * 5
+    b1 = (
+        rewards.getDistributions("native.uniBadgerWbtc").getToStakingRewardsDaily(
+            "badger"
+        )
+        * 5
+    )
+    b2 = (
+        rewards.getDistributions("native.sushiBadgerWbtc").getToStakingRewardsDaily(
+            "badger"
+        )
+        * 5
+    )
+    b3 = (
+        rewards.getDistributions("native.badger").getToStakingRewardsDaily("badger") * 5
+    )
 
     total_badger = b1 + b2 + b3
 
-    d1 = shares_to_fragments(rewards.getDistributions("native.uniDiggWbtc").getToStakingRewardsDaily("digg")) * 5
-    d2 = shares_to_fragments(rewards.getDistributions("native.sushiDiggWbtc").getToStakingRewardsDaily("digg")) * 5
-    d3 = shares_to_fragments(rewards.getDistributions("native.digg").getToStakingRewardsDaily("digg")) * 6
+    d1 = (
+        shares_to_fragments(
+            rewards.getDistributions("native.uniDiggWbtc").getToStakingRewardsDaily(
+                "digg"
+            )
+        )
+        * 5
+    )
+    d2 = (
+        shares_to_fragments(
+            rewards.getDistributions("native.sushiDiggWbtc").getToStakingRewardsDaily(
+                "digg"
+            )
+        )
+        * 5
+    )
+    d3 = (
+        shares_to_fragments(
+            rewards.getDistributions("native.digg").getToStakingRewardsDaily("digg")
+        )
+        * 6
+    )
 
     total_digg = d1 + d2 + d3
 
@@ -29,7 +60,7 @@ def main():
     table.append(["native.badger", val(b3)])
     table.append(["total badger", val(total_badger)])
     print(tabulate(table, headers=["metric", "value"]))
-    
+
     table = []
     table.append(["native.uniDiggWbtc", val(d1, decimals=9)])
     table.append(["native.sushiDiggWbtc", val(d2, decimals=9)])
@@ -39,24 +70,31 @@ def main():
 
     rewards.printState("Geyser Emissions")
 
-    # Generate Sufficient 
+    # Generate Sufficient
     multi = GnosisSafe(badger.devMultisig)
 
     print(badger.badgerRewardsManager)
 
-    multi.execute(MultisigTxMetadata(description="Transfer Remaining Weekly Badger"), 
-    {
-        "to": badger.rewardsEscrow.address,
-        "data": badger.rewardsEscrow.transfer.encode_input(badger.token, badger.badgerRewardsManager, total_badger)
-    })
+    multi.execute(
+        MultisigTxMetadata(description="Transfer Remaining Weekly Badger"),
+        {
+            "to": badger.rewardsEscrow.address,
+            "data": badger.rewardsEscrow.transfer.encode_input(
+                badger.token, badger.badgerRewardsManager, total_badger
+            ),
+        },
+    )
 
     assert badger.token.balanceOf(badger.badgerRewardsManager) >= total_badger
 
-    multi.execute(MultisigTxMetadata(description="Transfer Remaining Weekly Badger"), 
-    {
-        "to": badger.rewardsEscrow.address,
-        "data": badger.rewardsEscrow.transfer.encode_input(badger.digg.token, badger.badgerRewardsManager, total_digg)
-    })
+    multi.execute(
+        MultisigTxMetadata(description="Transfer Remaining Weekly Badger"),
+        {
+            "to": badger.rewardsEscrow.address,
+            "data": badger.rewardsEscrow.transfer.encode_input(
+                badger.digg.token, badger.badgerRewardsManager, total_digg
+            ),
+        },
+    )
 
     assert badger.digg.token.balanceOf(badger.badgerRewardsManager) >= total_digg
-

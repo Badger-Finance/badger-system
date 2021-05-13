@@ -3,6 +3,7 @@ from brownie import *
 from dotmap import DotMap
 from rich.console import Console
 from eth_utils.hexadecimal import encode_hex
+from helpers.constants import BADGER
 from eth_abi import encode_abi
 from tabulate import tabulate
 
@@ -14,7 +15,6 @@ class RewardsList:
         self.claims = DotMap()
         self.tokens = DotMap()
         self.totals = DotMap()
-        self.boosts = {}
         self.cycle = cycle
         self.badgerTree = badgerTree
         self.metadata = DotMap()
@@ -26,13 +26,13 @@ class RewardsList:
             self.sources[source][user][token] = 0
         self.sources[source][user][token] += toAdd
 
+    def __repr__(self):
+        return self.claims()
+
     def track_user_metadata_source(self, source, user, metadata):
         if not self.sourceMetadata[source][user][metadata]:
             self.sourceMetadata[source][user][metadata] = DotMap()
         self.sourceMetadata[source][user][metadata] = metadata
-
-    def add_user_boost(self,user,boostAmount):
-        self.boosts[user] = boostAmount
 
     def increase_user_rewards(self, user, token, toAdd):
         if toAdd < 0:
@@ -78,12 +78,7 @@ class RewardsList:
                 shareSeconds = self.metadata[user].shareSeconds
                 shareSecondsInRange = self.metadata[user].shareSecondsInRange
             table.append(
-                [
-                    user,
-                    data["0x3472A5A71965499acd81997a54BBA8D852C6E53d"],
-                    shareSeconds,
-                    shareSecondsInRange,
-                ]
+                [user, data[BADGER], shareSeconds, shareSecondsInRange,]
             )
         print("REWARDS LIST")
         print(
@@ -110,23 +105,18 @@ class RewardsList:
         This is the value that will be hashed to form the rest of the tree
         """
         user_str = str(user).lower()
-        if user_str in self.boosts:
-            boost = self.boosts[user_str]
-        else:
-            boost = 1
         nodeEntry = {
             "user": user,
             "tokens": [],
             "cumulativeAmounts": [],
             "cycle": cycle,
-            "index": index
-            }
+            "index": index,
+        }
         intAmounts = []
         for tokenAddress, cumulativeAmount in userData.items():
             nodeEntry["tokens"].append(tokenAddress)
             nodeEntry["cumulativeAmounts"].append(str(int(cumulativeAmount)))
             intAmounts.append(int(cumulativeAmount))
-
 
         # console.print(
         #     "Encoding Node entry...",

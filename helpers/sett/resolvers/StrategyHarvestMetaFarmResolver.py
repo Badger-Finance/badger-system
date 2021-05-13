@@ -9,8 +9,7 @@ class StrategyHarvestMetaFarmResolver(StrategyCoreResolver):
     def confirm_harvest(self, before, after, tx):
         super().confirm_harvest(before, after, tx)
         # Increase or constant in strategy want balance
-        assert (after.balances("want", "strategy") >=
-            before.balances("want", "strategy"))
+        assert after.balances("want", "strategy") >= before.balances("want", "strategy")
         # No idle farm in strategy
         assert after.balances("farm", "strategy") == 0
 
@@ -24,19 +23,23 @@ class StrategyHarvestMetaFarmResolver(StrategyCoreResolver):
         # TODO(bodu): Make test more granular later since we're actually
         # taking out strategist fees on FARM before distributing remaining
         # to the rewards tree.
-        assert (after.balances("farm", "badgerTree") >
-            before.balances("farm", "badgerTree"))
+        assert after.balances("farm", "badgerTree") > before.balances(
+            "farm", "badgerTree"
+        )
 
     def confirm_tend(self, before, after, tx):
         # All FARM from underlying vaults should be harvested
-        assert (before.get("vaultFarm.earned.strategy") >=
-            after.get("vaultFarm.earned.strategy"))
-        assert (before.get("metaFarm.earned.strategy") >=
-            after.get("metaFarm.earned.strategy"))
+        assert before.get("vaultFarm.earned.strategy") >= after.get(
+            "vaultFarm.earned.strategy"
+        )
+        assert before.get("metaFarm.earned.strategy") >= after.get(
+            "metaFarm.earned.strategy"
+        )
 
         # Collected rewards from all vaults are staked in metaVault
-        assert (after.get("metaFarm.staked.strategy") >=
-            before.get("metaFarm.staked.strategy"))
+        assert after.get("metaFarm.staked.strategy") >= before.get(
+            "metaFarm.staked.strategy"
+        )
 
     def get_strategy_destinations(self):
         strategy = self.manager.strategy

@@ -3,6 +3,7 @@ from tests.sett.fixtures.SettMiniDeployBase import SettMiniDeployBase
 from config.badger_config import sett_config
 from helpers.registry import registry
 
+
 class SushiWbtcIbBtcLpOptimizerMiniDeploy(SettMiniDeployBase):
     def fetch_params(self):
         params = sett_config.sushi.sushiWbtcIbBtc.params
@@ -12,9 +13,7 @@ class SushiWbtcIbBtcLpOptimizerMiniDeploy(SettMiniDeployBase):
             params.want = sushiswap.getPair(registry.tokens.ibbtc, registry.tokens.wbtc)
         else:
             params.want = sushiswap.createPair(
-                registry.tokens.ibbtc,
-                registry.tokens.wbtc,
-                self.deployer,
+                registry.tokens.ibbtc, registry.tokens.wbtc, self.deployer,
             )
 
         want = params.want

@@ -1,30 +1,26 @@
 from assistant.subgraph.config import subgraph_config
-from assistant.rewards.enums import Token
 from brownie import interface
 from rich.console import Console
 from gql import gql, Client
 from gql.transport.aiohttp import AIOHTTPTransport
 from decimal import *
-from assistant.rewards.enums import Token
 import json
 from functools import lru_cache
+
 getcontext().prec = 20
 console = Console()
 
-subgraph_url = subgraph_config["url"]
-transport = AIOHTTPTransport(url=subgraph_url)
-client = Client(transport=transport, fetch_schema_from_transport=True)
+tokens_subgraph_url = subgraph_config["tokens"]
+tokens_transport = AIOHTTPTransport(url=tokens_subgraph_url)
+tokens_client = Client(transport=tokens_transport, fetch_schema_from_transport=True)
+
+sett_subgraph_url = subgraph_config["setts"]
+sett_transport = AIOHTTPTransport(url=sett_subgraph_url)
+sett_client = Client(transport=sett_transport, fetch_schema_from_transport=True)
+
 
 @lru_cache(maxsize=None)
 def fetch_sett_balances(key, settId, startBlock):
-    if key == "experimental.sushiIBbtcWbtc":
-        subgraph_url = subgraph_config["ibbtc-url"]
-    else:
-        subgraph_url = subgraph_config["url"]
-    
-    transport = AIOHTTPTransport(url=subgraph_url)
-    sett_client = Client(transport=transport, fetch_schema_from_transport=True)
-
     query = gql(
         """
         query balances_and_events($vaultID: Vault_filter, $blockHeight: Block_height,$lastBalanceId:AccountVaultBalance_filter) {
@@ -63,6 +59,7 @@ def fetch_sett_balances(key, settId, startBlock):
         balances = {**newBalances, **balances}
     console.log("Processing {} balances".format(len(balances)))
     return balances
+
 
 @lru_cache(maxsize=None)
 def fetch_geyser_events(geyserId, startBlock):
@@ -104,7 +101,7 @@ def fetch_geyser_events(geyserId, startBlock):
     while True:
         variables["lastStakedId"] = {"id_gt": lastStakedId}
         variables["lastUnstakedId"] = {"id_gt": lastUnstakedId}
-        result = client.execute(query, variable_values=variables)
+        result = sett_client.execute(query, variable_values=variables)
 
         if len(result["geysers"]) == 0:
             return {"stakes": [], "unstakes": [], "totalStaked": 0}
@@ -165,7 +162,7 @@ def fetch_sett_transfers(settID, startBlock, endBlock):
     )
     variables = {"vaultID": {"id": settID}, "blockHeight": {"number": endBlock}}
 
-    results = client.execute(query, variable_values=variables)
+    results = sett_client.execute(query, variable_values=variables)
 
     def filter_by_startBlock(transfer):
         return int(transfer["transaction"]["blockNumber"]) > startBlock
@@ -181,8 +178,7 @@ def fetch_sett_transfers(settID, startBlock, endBlock):
 
     deposits = map(convert_amount, results["vaults"][0]["deposits"])
     withdrawals = map(
-        negate_withdrawals,
-        map(convert_amount, results["vaults"][0]["withdrawals"]),
+        negate_withdrawals, map(convert_amount, results["vaults"][0]["withdrawals"]),
     )
 
     deposits = list(filter(filter_by_startBlock, list(deposits)))
@@ -191,8 +187,7 @@ def fetch_sett_transfers(settID, startBlock, endBlock):
     console.log("Processing {} withdrawals".format(len((withdrawals))))
 
     return sorted(
-        [*deposits, *withdrawals],
-        key=lambda t: t["transaction"]["timestamp"],
+        [*deposits, *withdrawals], key=lambda t: t["transaction"]["timestamp"],
     )
 
 
@@ -211,7 +206,7 @@ def fetch_farm_harvest_events():
 
     """
     )
-    results = client.execute(query)
+    results = sett_client.execute(query)
     for event in results["farmHarvestEvents"]:
         event["rewardAmount"] = event.pop("farmToRewards")
 
@@ -235,7 +230,7 @@ def fetch_sushi_harvest_events():
         }
     """
     )
-    results = client.execute(query)
+    results = sett_client.execute(query)
     wbtcEthEvents = []
     wbtcBadgerEvents = []
     wbtcDiggEvents = []
@@ -254,6 +249,7 @@ def fetch_sushi_harvest_events():
         "wbtcBadger": wbtcBadgerEvents,
         "wbtcDigg": wbtcDiggEvents,
     }
+
 
 def fetch_wallet_balances(badger_price, digg_price, digg, blockNumber):
     increment = 1000
@@ -277,36 +273,45 @@ def fetch_wallet_balances(badger_price, digg_price, digg, blockNumber):
 
     badger_balances = {}
     digg_balances = {}
-
+    sharesPerFragment = digg.logic.UFragments._sharesPerFragment()
+    console.log(sharesPerFragment)
     while continueFetching:
         variables = {
             "firstAmount": increment,
             "lastID": lastID,
             "blockNumber": {"number": blockNumber},
         }
-        nextPage = client.execute(query, variable_values=variables)
+        nextPage = tokens_client.execute(query, variable_values=variables)
         if len(nextPage["tokenBalances"]) == 0:
             continueFetching = False
         else:
             lastID = nextPage["tokenBalances"][-1]["id"]
+            console.log(
+                "Fetching {} token balances".format(len(nextPage["tokenBalances"]))
+            )
             for entry in nextPage["tokenBalances"]:
                 address = entry["id"].split("-")[0]
                 if entry["token"]["symbol"] == "BADGER" and int(entry["balance"]) > 0:
                     badger_balances[address] = (
-                        float(entry["balance"]) / 1e18 * badger_price
-                    )
+                        float(entry["balance"]) / 1e18
+                    ) * badger_price
                 if entry["token"]["symbol"] == "DIGG" and int(entry["balance"]) > 0:
-                    fragmentBalance = digg.logic.UFragments.sharesToFragments(
-                        entry["balance"]
-                    )
-                    digg_balances[address] = float(fragmentBalance) / 1e9 * digg_price
+                    # Speed this up
+                    if entry["balance"] == 0:
+                        fragmentBalance = 0
+                    else:
+                        fragmentBalance = sharesPerFragment / int(entry["balance"])
+
+                    digg_balances[address] = (float(fragmentBalance) / 1e9) * digg_price
 
     return badger_balances, digg_balances
 
 
 def fetch_cream_balances(tokenSymbol, blockNumber):
     cream_transport = AIOHTTPTransport(url=subgraph_config["cream_url"])
-    cream_client = Client(transport=cream_transport, fetch_schema_from_transport=True)
+    cream_sett_client = Client(
+        transport=cream_transport, fetch_schema_from_transport=True
+    )
     increment = 1000
 
     query = gql(
@@ -348,7 +353,7 @@ def fetch_cream_balances(tokenSymbol, blockNumber):
             "symbol": tokenSymbol,
             "blockNumber": {"number": blockNumber},
         }
-        nextPage = cream_client.execute(query, variable_values=variables)
+        nextPage = cream_sett_client.execute(query, variable_values=variables)
         if len(nextPage["accountCTokens"]) == 0:
             if len(nextPage["markets"]) == 0:
                 console.log("No Cream deposits found for {}".format(tokenSymbol))

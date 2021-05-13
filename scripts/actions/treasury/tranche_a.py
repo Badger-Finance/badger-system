@@ -15,6 +15,7 @@ from scripts.systems.uniswap_system import UniswapSystem
 
 console = Console()
 
+
 def main():
     """
     AAVE
@@ -28,7 +29,7 @@ def main():
 
     dev = badger.deployer
 
-    # AAVE 
+    # AAVE
     aave = registry.aave_system()
     tokens = registry.token_system()
     usdc = tokens.erc20_by_key("usdc")
@@ -39,12 +40,10 @@ def main():
 
     # TODO: Figure out the addresses of these derived tokens
 
-    # TODO: Track the balances of all the appropriate contracts where the USDC ends up 
-    snap = BalanceSnapshotter([usdc], [
-        badger.devMultisig
-    ])
+    # TODO: Track the balances of all the appropriate contracts where the USDC ends up
+    snap = BalanceSnapshotter([usdc], [badger.devMultisig])
 
-    usdc_per_position = Wei("3237154.58 szabo") #szabo = 10^6
+    usdc_per_position = Wei("3237154.58 szabo")  # szabo = 10^6
 
     # AAVE Deposit
     usdc.approve(usdc_per_position, aave.lendingPool, {"from": dev})
@@ -62,6 +61,3 @@ def main():
     # Testing: Check balances and assert we have the aToken
 
     # TODO: Safety features. Call a custom contract balanceVerifier that verifies that the multisig owns the appropriate amount of coins from each platform
-
-
-

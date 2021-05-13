@@ -10,6 +10,7 @@ from tabulate import tabulate
 
 gas_strategies.set_default_for_active_chain()
 
+
 def harvest_all(badger: BadgerSystem, skip):
     for key, vault in badger.sett_system.vaults.items():
         if key in skip:
@@ -28,11 +29,14 @@ def harvest_all(badger: BadgerSystem, skip):
         before = snap.snap()
         if strategy.keeper() == badger.badgerRewardsManager:
             snap.settHarvestViaManager(
-                strategy, {"from": keeper, "gas_limit": 2000000, "allow_revert": True}, confirm=False,
+                strategy,
+                {"from": keeper, "gas_limit": 2000000, "allow_revert": True},
+                confirm=False,
             )
         else:
             snap.settHarvest(
-                {"from": keeper, "gas_limit": 2000000, "allow_revert": True}, confirm=False,
+                {"from": keeper, "gas_limit": 2000000, "allow_revert": True},
+                confirm=False,
             )
 
         tx_wait()

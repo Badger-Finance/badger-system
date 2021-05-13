@@ -7,7 +7,7 @@ from tests.conftest import badger_single_sett, settTestConfig
 
 
 def state_setup(badger, settConfig):
-    settId = settConfig['id']
+    settId = settConfig["id"]
     # TODO: Make this fetch based on the sett prefix name if it has dot
     controller = badger.getControllerFor(settId)
     sett = badger.getSett(settId)
@@ -49,6 +49,7 @@ def state_setup(badger, settConfig):
     accounts.at(strategy.guardian(), force=True)
     accounts.at(controller, force=True)
 
+
 # @pytest.mark.skip()
 @pytest.mark.parametrize(
     "settConfig", settTestConfig,
@@ -58,7 +59,7 @@ def test_strategy_action_permissions(settConfig):
     badger = badger_single_sett(settConfig)
     state_setup(badger, settConfig)
 
-    settId = settConfig['id']
+    settId = settConfig["id"]
 
     controller = badger.getControllerFor(settId)
     sett = badger.getSett(settId)
@@ -120,6 +121,7 @@ def test_strategy_action_permissions(settConfig):
         with brownie.reverts("onlyController"):
             strategy.withdrawOther(controller, {"from": actor})
 
+
 # @pytest.mark.skip()
 @pytest.mark.parametrize(
     "settConfig", settTestConfig,
@@ -129,7 +131,7 @@ def test_strategy_config_permissions(settConfig):
     badger = badger_single_sett(settConfig)
     state_setup(badger, settConfig)
 
-    settId = settConfig['id']
+    settId = settConfig["id"]
 
     controller = badger.getControllerFor(settId)
     sett = badger.getSett(settId)
@@ -206,6 +208,7 @@ def test_strategy_config_permissions(settConfig):
         with brownie.reverts("onlyGovernance"):
             strategy.setFarmPerformanceFeeStrategist(0, {"from": randomUser})
 
+
 # @pytest.mark.skip()
 @pytest.mark.parametrize(
     "settConfig", settTestConfig,
@@ -215,7 +218,7 @@ def test_strategy_pausing_permissions(settConfig):
     badger = badger_single_sett(settConfig)
     state_setup(badger, settConfig)
 
-    settId = settConfig['id']
+    settId = settConfig["id"]
 
     controller = badger.getControllerFor(settId)
     sett = badger.getSett(settId)
@@ -249,7 +252,7 @@ def test_strategy_pausing_permissions(settConfig):
     for unpauser in authorizedUnpausers:
         strategy.pause({"from": unpauser})
         strategy.unpause({"from": unpauser})
-    
+
     with brownie.reverts("onlyGovernance"):
         strategy.unpause({"from": randomUser})
 
@@ -279,11 +282,11 @@ def test_strategy_pausing_permissions(settConfig):
 @pytest.mark.parametrize(
     "settConfig", settTestConfig,
 )
-def test_sett_pausing_permissions(settConfig): 
+def test_sett_pausing_permissions(settConfig):
     # Setup
     badger = badger_single_sett(settConfig)
     state_setup(badger, settConfig)
-    settId = settConfig['id']
+    settId = settConfig["id"]
     sett = badger.getSett(settId)
     deployer = badger.deployer
     randomUser = accounts[8]
@@ -336,6 +339,7 @@ def test_sett_pausing_permissions(settConfig):
     sett.withdraw(1, {"from": deployer})
     sett.withdrawAll({"from": deployer})
 
+
 @pytest.mark.parametrize(
     "settConfig", settTestConfig,
 )
@@ -343,7 +347,7 @@ def test_sett_config_permissions(settConfig):
     # Setup
     badger = badger_single_sett(settConfig)
     state_setup(badger, settConfig)
-    settId = settConfig['id']
+    settId = settConfig["id"]
     sett = badger.getSett(settId)
     randomUser = accounts[8]
     assert sett.strategist() == AddressZero
@@ -379,14 +383,15 @@ def test_sett_config_permissions(settConfig):
     sett.setKeeper(validActor, {"from": validActor})
     assert sett.keeper() == validActor
 
+
 @pytest.mark.parametrize(
     "settConfig", settTestConfig,
-)    
+)
 def test_sett_earn_permissions(settConfig):
     # Setup
     badger = badger_single_sett(settConfig)
     state_setup(badger, settConfig)
-    settId = settConfig['id']
+    settId = settConfig["id"]
     sett = badger.getSett(settId)
     randomUser = accounts[8]
     assert sett.strategist() == AddressZero

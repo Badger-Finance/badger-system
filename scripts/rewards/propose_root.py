@@ -37,4 +37,3 @@ def main():
             console.print("[red]Error[/red]", e)
         finally:
             time.sleep(10 * 60)
-

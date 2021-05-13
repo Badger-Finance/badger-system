@@ -30,6 +30,7 @@ from helpers.token_utils import asset_to_address
 console = Console()
 pretty.install()
 
+
 class StakingRewardsDistributor:
     """
     Generate appropriate staking rewards distributions transaction given a set of emissions
@@ -42,7 +43,7 @@ class StakingRewardsDistributor:
 
         self.start = start
         self.duration = duration
-        self.end =end
+        self.end = end
 
         multi = GnosisSafe(badger.devMultisig)
         for asset, dist in distributions.items():
@@ -84,10 +85,7 @@ class StakingRewardsDistributor:
                 required = dist - preBal
                 console.print(
                     "⊁ We need to add {} to the {} Badger supply of {} to reach the goal of {} Badger".format(
-                        val(required),
-                        key,
-                        val(preBal),
-                        val(dist),
+                        val(required), key, val(preBal), val(dist),
                     ),
                     style="blue",
                 )
@@ -107,10 +105,7 @@ class StakingRewardsDistributor:
 
                 multi.executeTx(id)
 
-            assert (
-                badger.token.balanceOf(stakingRewards)
-                >= dist
-            )
+            assert badger.token.balanceOf(stakingRewards) >= dist
 
             # Modify the rewards duration, if necessary
             if stakingRewards.rewardsDuration() != self.duration:
@@ -163,17 +158,11 @@ class StakingRewardsDistributor:
                     "end": to_utc_date(self.end),
                     "finish": to_utc_date(periodFinish),
                     "rewardRate": rewardRate,
-                    "expectedRewardRate": dist
-                    // rewardsDuration,
-                    "rewardsRateDiff": rewardRate
-                    - dist // rewardsDuration,
+                    "expectedRewardRate": dist // rewardsDuration,
+                    "rewardsRateDiff": rewardRate - dist // rewardsDuration,
                     "oldRewardsRate": oldRewardsRate,
-                    "howTheRateChanged": (
-                        dist // rewardsDuration
-                    )
-                    / oldRewardsRate,
-                    "howWeExpectedItToChange": Wei("35000 ether")
-                    / Wei("50000 ether"),
+                    "howTheRateChanged": (dist // rewardsDuration) / oldRewardsRate,
+                    "howWeExpectedItToChange": Wei("35000 ether") / Wei("50000 ether"),
                     "lastUpdate": to_utc_date(lastUpdate),
                 }
             )
@@ -208,10 +197,18 @@ class StakingRewardsDistributor:
         """
         Ensure the specified geyser is capable of distributing the given asset
         """
-        if key == "native.digg" or key == "native.uniDiggWbtc" or key == "native.sushiDiggWbtc":
+        if (
+            key == "native.digg"
+            or key == "native.uniDiggWbtc"
+            or key == "native.sushiDiggWbtc"
+        ):
             if asset == "digg":
                 return True
-        if key == "native.badger" or key == "native.uniBadgerWbtc" or key == "native.sushiBadgerWbtc":
+        if (
+            key == "native.badger"
+            or key == "native.uniBadgerWbtc"
+            or key == "native.sushiBadgerWbtc"
+        ):
             if asset == "badger":
                 return True
         else:

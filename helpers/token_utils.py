@@ -86,19 +86,15 @@ def diff_token_balances(before, after, scale=True):
     for token, accounts in before.items():
         for account, value in accounts.items():
             if scale:
-                amount = val(
+                amount = (
+                    val(
                         after[token][account] - value,
                         decimals=token_metadata.get_decimals(token),
                     ),
+                )
             else:
                 amount = after[token][account] - value
-            table.append(
-                [
-                    token_metadata.get_symbol(token),
-                    account,
-                    amount
-                ]
-            )
+            table.append([token_metadata.get_symbol(token), account, amount])
 
     print(tabulate(table, headers=["asset", "account", "balance"]))
 
@@ -127,17 +123,19 @@ def print_balances(tokens_by_name, account):
     print("\nToken Balances for {}".format(account))
     print(tabulate(table, headers=["asset", "balance"]))
 
+
 def to_token_scale(asset, unscaled):
     unscaled = float(unscaled)
 
     address = asset_to_address(asset)
     decimals = token_metadata.get_decimals(address)
-    
-    scale_factor = (10**decimals)
-    
+
+    scale_factor = 10 ** decimals
+
     scaled = unscaled * scale_factor
     print("unscaled", unscaled, decimals, scale_factor, scaled, int(scaled))
     return int(scaled)
+
 
 class TokenMetadataRegistry:
     def __init__(self):
@@ -202,7 +200,7 @@ def to_token(address):
 
 
 def distribute_from_whales(recipient, percentage=0.8, assets="All"):
-    
+
     accounts[0].transfer(recipient, Wei("50 ether"))
 
     console.print(

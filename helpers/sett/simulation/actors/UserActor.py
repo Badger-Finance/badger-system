@@ -9,11 +9,7 @@ from .BaseAction import BaseAction
 
 class DepositAndWithdrawAction(BaseAction):
     def __init__(
-        self,
-        snap: SnapshotManager,
-        user: Any,
-        sett: Sett,
-        want: Any,
+        self, snap: SnapshotManager, user: Any, sett: Sett, want: Any,
     ):
         self.snap = snap
         self.user = user
@@ -35,13 +31,10 @@ class DepositAndWithdrawAction(BaseAction):
         # you try to approve an allowance w/o reset + has remaining.
         for amount in [0, MaxUint256]:
             want.approve(
-                self.sett,
-                amount,
-                {"from": user},
+                self.sett, amount, {"from": user},
             )
         self.snap.settDeposit(
-            depositAmount,
-            {"from": user},
+            depositAmount, {"from": user},
         )
 
         afterSettBalance = sett.balanceOf(user)
@@ -56,11 +49,7 @@ class DepositAndWithdrawAction(BaseAction):
 
 class DepositAction(BaseAction):
     def __init__(
-        self,
-        snap: SnapshotManager,
-        user: Any,
-        sett: Sett,
-        want: Any,
+        self, snap: SnapshotManager, user: Any, sett: Sett, want: Any,
     ):
         self.snap = snap
         self.user = user
@@ -80,21 +69,16 @@ class DepositAction(BaseAction):
         # you try to approve an allowance w/o reset + has remaining.
         for amount in [0, MaxUint256]:
             want.approve(
-                self.sett,
-                amount,
-                {"from": user},
+                self.sett, amount, {"from": user},
             )
         self.snap.settDeposit(
-            depositAmount,
-            {"from": user},
+            depositAmount, {"from": user},
         )
 
 
 class WithdrawAction(BaseAction):
     def __init__(
-        self,
-        snap: SnapshotManager,
-        user: Any,
+        self, snap: SnapshotManager, user: Any,
     ):
         self.snap = snap
         self.user = user
@@ -112,30 +96,17 @@ class UserActor:
         self.deposited = False
 
     def generateAction(self) -> BaseAction:
-        '''
+        """
         Produces deposit -> withdraw -> deposit -> withdraw...
         ops for now and interleaved deposit/withdraw ops.
-        '''
+        """
         # Randomly confirm deposit and withdraw in same action
         # does not exceed max precision loss. This can be interleaved
         # between the regular deposit -> withdraw flow.
         if random.random() > 0.5:
-            return DepositAndWithdrawAction(
-                self.snap,
-                self.user,
-                self.sett,
-                self.want,
-            )
+            return DepositAndWithdrawAction(self.snap, self.user, self.sett, self.want,)
         if self.deposited:
             self.deposited = False
-            return WithdrawAction(
-                self.snap,
-                self.user,
-            )
+            return WithdrawAction(self.snap, self.user,)
         self.deposited = True
-        return DepositAction(
-            self.snap,
-            self.user,
-            self.sett,
-            self.want,
-        )
+        return DepositAction(self.snap, self.user, self.sett, self.want,)

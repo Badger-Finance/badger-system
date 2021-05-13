@@ -29,16 +29,14 @@ class DiggSnapshotManager(SnapshotManager):
         # as the rebase logic checks if block ts w/in rebase window.
         self._shift_into_next_rebase_window(digg, value)
 
-        digg.orchestrator.rebase(
-            {"from": digg.owner},
-        )
+        digg.orchestrator.rebase({"from": digg.owner},)
 
         after = self.snap(trackedUsers)
         if confirm:
             self.resolver.confirm_rebase(before, after, value)
 
     def _shift_into_next_rebase_window(self, digg, value):
-        utcnow_unix_offset_secs = (chain.time() % MIN_REBASE_TIME_INTERVAL_SEC)
+        utcnow_unix_offset_secs = chain.time() % MIN_REBASE_TIME_INTERVAL_SEC
         # Shift forward into rebase window into tomorrow.
         secs_remaining_in_day = DAY - utcnow_unix_offset_secs
         shift_secs = (

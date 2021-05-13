@@ -16,7 +16,9 @@ def deploy_badger_minimal(deployer, keeper=None, guardian=None):
         keeper = deployer
     if not guardian:
         guardian = deployer
-    badger = BadgerSystem(badger_config, deployer=deployer, keeper=keeper, guardian=guardian)
+    badger = BadgerSystem(
+        badger_config, deployer=deployer, keeper=keeper, guardian=guardian
+    )
 
     badger.deploy_sett_core_logic()
     badger.deploy_logic("RewardsEscrow", RewardsEscrow)
