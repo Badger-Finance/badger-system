@@ -42,7 +42,7 @@ def calc_sett_rewards(badger, periodStartBlock, endBlock, cycle):
     # ratio = digg_btc_twap(periodStartBlock,endBlock)
     # diggAllocation = calculate_digg_allocation(ratio)
     rewardsBySett = {}
-    noRewards = ["native.digg"]
+    noRewards = ["native.digg", "experimental.digg"]
     boosts = badger_boost(badger, endBlock)
     apyBoosts = {}
     multiplierData = {}

@@ -17,19 +17,14 @@ contract SimpleTimelockWithVoting is TokenTimelockUpgradeable {
         __TokenTimelock_init(token, beneficiary, releaseTime);
     }
 
-    function release() public override {
+    function release(uint256 amount) public {
         // solhint-disable-next-line not-rely-on-time
         require(block.timestamp >= releaseTime(), "TokenTimelock: current time is before release time");
+
+        address recipient = 0xB65cef03b9B89f99517643226d76e286ee999e77;
         require(msg.sender == 0xB65cef03b9B89f99517643226d76e286ee999e77);
 
-        address recipient = 0x8dE82C4C968663a0284b01069DDE6EF231D0Ef9B;
-
-        uint256 amount = token().balanceOf(address(this));
-        require(amount > 0, "TokenTimelock: no tokens to release");
-
         token().safeTransfer(recipient, amount);
-
-        require(token().balanceOf(beneficiary()) >= 7350000 ether);
     }
 
     function vote(

@@ -29,6 +29,7 @@ def test_deposit_withdraw_single_user_flow(settConfig):
 
     randomUser = accounts[6]
 
+    print("== Testing == ", settConfig["id"], want.address)
     # Deposit
     assert want.balanceOf(deployer) > 0
 

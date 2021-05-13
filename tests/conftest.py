@@ -32,6 +32,7 @@ from tests.sett.fixtures import (
     PancakeMiniDeploy,
     SushiWbtcIbBtcLpOptimizerMiniDeploy,
     UniGenericLpMiniDeploy,
+    DiggStabilizeMiniDeploy
 )
 
 
@@ -94,6 +95,9 @@ networkSettsMap = {
 # NB: This is expected to fail if the network ID does not exist.
 baseSettsToRun = networkSettsMap[network_manager.get_active_network()]
 
+stabilizeSett = ["experimental.digg"]
+
+stabilizeTestConfig = generate_sett_test_config(stabilizeSett, False)
 settTestConfig = generate_sett_test_config(baseSettsToRun, runTestSetts)
 diggSettTestConfig = generate_sett_test_config(diggSettsToRun, runTestSetts)
 yearnSettTestConfig = generate_sett_test_config(yearnSettsToRun, runTestSetts)
@@ -315,7 +319,9 @@ def badger_single_sett(settConfig, deploy=True):
                 keeper=keeper,
                 governance=governance,
             ).deploy(deploy=deploy)
-    if settConfig["mode"] == "prod":
+        if settId == "experimental.digg":
+            return DiggStabilizeMiniDeploy().deploy(deploy=deploy)
+    if settConfig['mode'] == 'prod':
         """
         Run vs prod contracts, transferring assets to the test user
         (WIP)
