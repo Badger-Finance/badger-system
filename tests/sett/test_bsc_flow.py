@@ -15,10 +15,12 @@ from tests.helpers import distribute_from_whales
 
 console = Console()
 
+
 class RevertException(Exception):
     def __init__(self, error, tx):
         self.error = error
         self.tx = tx
+
 
 def setup_badger(badger: BadgerSystem, settConfig):
     controller = badger.getController("native")
@@ -51,8 +53,8 @@ def setup_badger(badger: BadgerSystem, settConfig):
     token1 = registry.tokens.bnb
     cake = registry.pancake.cake
 
-    strategy.setTokenSwapPath(cake, token0, [cake, token0], {'from': badger.deployer})
-    strategy.setTokenSwapPath(cake, token1, [cake, token1], {'from': badger.deployer})
+    strategy.setTokenSwapPath(cake, token0, [cake, token0], {"from": badger.deployer})
+    strategy.setTokenSwapPath(cake, token1, [cake, token1], {"from": badger.deployer})
 
     # want = interface.IERC20(registry.pancake.chefPairs.bnbBtcb)
     # multi = accounts.at(badger.devMultisig.address, force=True)
@@ -68,8 +70,12 @@ def setup_badger(badger: BadgerSystem, settConfig):
     table.append(["performanceFeeGovernance", strategy.performanceFeeGovernance()])
     table.append(["performanceFeeStrategist", strategy.performanceFeeStrategist()])
     table.append(["withdrawalFee", strategy.withdrawalFee()])
-    table.append(["path0", strategy.getTokenSwapPath(registry.pancake.cake, strategy.token0())])
-    table.append(["path1", strategy.getTokenSwapPath(registry.pancake.cake, strategy.token1())])
+    table.append(
+        ["path0", strategy.getTokenSwapPath(registry.pancake.cake, strategy.token0())]
+    )
+    table.append(
+        ["path1", strategy.getTokenSwapPath(registry.pancake.cake, strategy.token1())]
+    )
 
     print(tabulate(table, headers=["param", "value"]))
 
@@ -84,7 +90,7 @@ def deposit_withdraw_single_user_flow(badger, settConfig, user):
     # Deposit
     assert want.balanceOf(user) > 0
 
-    depositAmount = int(want.balanceOf(user) * 0.8) 
+    depositAmount = int(want.balanceOf(user) * 0.8)
     assert depositAmount > 0
 
     want.approve(sett, MaxUint256, {"from": user})
@@ -150,12 +156,9 @@ def single_user_harvest_flow(badger: BadgerSystem, settConfig, user):
     numTends = 48
     timeBetweenTends = days(365) // numTends
 
-    console.print({
-        "numTends": numTends,
-        "timeBetweenTends": timeBetweenTends
-    })
+    console.print({"numTends": numTends, "timeBetweenTends": timeBetweenTends})
 
-    for i in range (0,numTends):
+    for i in range(0, numTends):
         console.print("Tend {}".format(i))
         snap.settTend({"from": strategyKeeper})
         chain.sleep(timeBetweenTends)

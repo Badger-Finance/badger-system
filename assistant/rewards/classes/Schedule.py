@@ -1,5 +1,6 @@
-from dataclasses import dataclass  
+from dataclasses import dataclass
 from helpers.time_utils import days, to_days, to_hours, to_utc_date
+
 
 @dataclass
 class Schedule:
@@ -15,9 +16,7 @@ class Schedule:
             self.sett,
             self.token,
             self.initialTokensLocked,
-            self.startTime,
+            to_utc_date(self.startTime),
             to_days(self.duration),
-            self.endTime
+            to_utc_date(self.endTime),
         )
-
-

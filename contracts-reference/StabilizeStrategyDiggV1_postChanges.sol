@@ -1237,7 +1237,7 @@ contract StabilizeStrategyDiggV1 is BaseStrategy {
     uint256 public maxWBTCSellPercent = 50000; // The maximum percent of sellable wBTC;
     uint256 public tradeBatchSize = 10e18; // The normalized size of the trade batches, can be adjusted
     uint256 public tradeAmountLeft = 0; // The amount left to trade
-    uint256 private _maxOracleLag = 12 hours; // Maximum amount of lag the oracle can have before reverting the price
+    uint256 private _maxOracleLag = 24 hours; // Maximum amount of lag the oracle can have before reverting the price
 
     // Constants
     uint256 constant DIVISION_FACTOR = 100000;

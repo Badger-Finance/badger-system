@@ -19,29 +19,27 @@ def main():
 
     confirm_deploy(bridge)
     console.print(
-        "[green]deployed bridge adapter at {}[/green]"
-        .format(bridge.adapter.address))
+        "[green]deployed bridge adapter at {}[/green]".format(bridge.adapter.address)
+    )
     console.print(
-        "[green]deployed swap router at {}[/green]"
-        .format(bridge.swap.router.address))
+        "[green]deployed swap router at {}[/green]".format(bridge.swap.router.address)
+    )
     bridge_system.print_to_file(bridge, "deploy-bridge.json")
     swap_system.print_to_file(bridge.swap, "deploy-swap.json")
 
 
 def confirm_deploy(bridge):
-    '''
+    """
     Redundant sanity checks to confirm various deployment addresses
     are what we expect.
-    '''
+    """
     assert bridge.adapter.governance() == bridge_config.governance
     assert bridge.adapter.rewards() == bridge_config.rewards
     assert bridge.adapter.registry() == bridge_config.registry
     assert bridge.adapter.wBTC() == bridge_config.wbtc
     assert bridge.adapter.mintFeeBps() == bridge_config.mintFeeBps
     assert bridge.adapter.burnFeeBps() == bridge_config.burnFeeBps
-    assert (
-        bridge.adapter.renBTC() ==
-        interface.IGatewayRegistry(bridge_config.registry)
-        .getTokenBySymbol("BTC")
-    )
+    assert bridge.adapter.renBTC() == interface.IGatewayRegistry(
+        bridge_config.registry
+    ).getTokenBySymbol("BTC")
     assert bridge.adapter.router() == bridge.swap.router.address

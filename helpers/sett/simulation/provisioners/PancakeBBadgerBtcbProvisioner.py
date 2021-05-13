@@ -4,6 +4,7 @@ from .BaseProvisioner import BaseProvisioner
 from brownie import chain, interface, accounts
 from helpers.constants import MaxUint256
 
+
 class PancakeBBadgerBtcbProvisioner(BaseProvisioner):
     def __init__(self, manager):
         super().__init__(manager)

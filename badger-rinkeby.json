@@ -1,0 +1,14 @@
+{
+    "testProxyAdmin": "0x5bc46427d571190A27d0166711875dAb9E267FD8",
+    "guestList": "0x7A3EAfc8155b6BdBC3b72fae7637AD25c71FbF20",
+    "logic": {
+        "VipCappedGuestListBbtcUpgradeable": "0x608b6D82eb121F3e5C0baeeD32d81007B916E83C"
+    },
+    "ibbtc": {
+        "bcrvRenWSBTC": "0x303777a7766f541d27601c1edaeea52168294333",
+        "bcrvRenWBTC": "0x915abc19957ff84c327da7828f55f38f7e8abf07",
+        "btbtc_sbtcCrv": "0x08c2195050ebfb1ff97f81d3243a15bb5e506470",
+        "byvWbtc": "0xDfD9D922Da994CA9A5F288C8e299EF62A9aaaf99",
+        "bBtc": "0x6b956ac6888facc4bdc22495cda8edccbd3a79ff"
+    }
+}

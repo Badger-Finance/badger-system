@@ -32,17 +32,9 @@ pretty.install()
 
 
 def main():
-    badger = connect_badger("deploy-final.json")
+    badger = connect_badger()
     digg = badger.digg
-    admin = badger.devProxyAdmin
-    multisig = badger.devMultisig
-    contracts = badger.contracts_upgradeable
-    deployer = badger.deployer
-
-    expectedMultisig = "0xB65cef03b9B89f99517643226d76e286ee999e77"
-    assert multisig == expectedMultisig
-
-    safe = ApeSafe(badger.devMultisig.address)
+    safe = ApeSafe(badger.treasuryMultisig.address)
 
     abi = Sett.abi
 
@@ -54,14 +46,13 @@ def main():
     bDigg = safe.contract_from_abi(badger.getSett("native.digg").address, "Sett", abi)
     rewardsEscrow = safe.contract(badger.rewardsEscrow.address)
 
-
     badger_usd = fetch_usd_price(badger.token.address)
     eth_usd = fetch_usd_price_eth()
 
-    # USD Denominated 
+    # USD Denominated
     # badger_to_send = Wei(str(total_usd / badger_usd) + " ether")
 
-    # Badger denominated
+    # Badger Denominated
     badger_to_send = Wei("5970.744318 ether")
 
     table = []
@@ -71,23 +62,27 @@ def main():
 
     snap = BalanceSnapshotter(
         [badgerToken, bBadger],
-        [badger.devMultisig, badger.deployer, badger.rewardsEscrow]
+        [badger.devMultisig, badger.deployer, badger.rewardsEscrow],
     )
 
     snap.snap(name="Before Transfers")
 
     # Transfer assets to multisig
-    rewardsEscrow.transfer(badgerToken, badger.devMultisig, badger_to_send)
+    # rewardsEscrow.transfer(badgerToken, safe, badger_to_send)
 
     snap.snap(name="After Transfers")
     snap.diff_last_two()
 
     # Deposit bBadger
     badgerToken.approve(bBadger.address, badger_to_send)
-    bBadgerBefore = bBadger.balanceOf(badger.devMultisig)
+    bBadgerBefore = bBadger.balanceOf(safe)
     tx = bBadger.deposit(badger_to_send)
     bBadgerAfter = bBadger.balanceOf(badger.devMultisig)
-    print("bBadger to transfer", bBadgerAfter - bBadgerBefore, val(bBadgerAfter - bBadgerBefore))
+    print(
+        "bBadger to transfer",
+        bBadgerAfter - bBadgerBefore,
+        val(bBadgerAfter - bBadgerBefore),
+    )
     # bBadger.transfer(badger.treasuryMultisig, bBadgerAfter - bBadgerBefore)
     print(tx.events)
 
@@ -98,5 +93,3 @@ def main():
     safe.preview(safe_tx)
     data = safe.print_transaction(safe_tx)
     safe.post_transaction(safe_tx)
-
-

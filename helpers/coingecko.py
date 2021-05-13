@@ -3,6 +3,7 @@ import requests
 from helpers.console_utils import console
 from brownie import web3
 
+
 def address_to_id(token_address):
     checksummed = web3.toChecksumAddress(token_address)
     if checksummed == web3.toChecksumAddress(registry.tokens.wbtc):
@@ -14,9 +15,11 @@ def address_to_id(token_address):
     else:
         assert False
 
+
 def fetch_usd_value(token_address, amount):
     price = fetch_usd_price(address_to_id(token_address))
     return price * amount
+
 
 def fetch_daily_twap(token_address):
     id = address_to_id(token_address)
@@ -30,6 +33,7 @@ def fetch_daily_twap(token_address):
     console.print(market_data)
     return market_data
 
+
 def fetch_usd_price(token_address):
     id = address_to_id(token_address)
     url = "https://api.coingecko.com/api/v3/coins/" + id
@@ -40,6 +44,7 @@ def fetch_usd_price(token_address):
     usd_price = data["market_data"]["current_price"]["usd"]
     console.print(usd_price)
     return usd_price
+
 
 def fetch_usd_price_eth():
     url = "https://api.coingecko.com/api/v3/coins/" + "ethereum"

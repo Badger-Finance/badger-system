@@ -34,38 +34,17 @@ weekly_schedule = {
         "badger": Wei("6845.35 ether"),
         "digg": to_digg_shares(0.464),
     },
-    "native.badger": {
-        "badger": Wei("3422.67 ether"),
-        "digg": to_digg_shares(0.232),
-    },
+    "native.badger": {"badger": Wei("3422.67 ether"), "digg": to_digg_shares(0.232),},
     "native.sushiWbtcEth": {
         "badger": Wei("5353.41 ether"),
         "digg": to_digg_shares(0.363),
     },
-    "native.renCrv": {
-        "badger": Wei("5353.41 ether"),
-        "digg": to_digg_shares(0.363),
-    },
-    "native.sbtcCrv": {
-        "badger": Wei("5353.41 ether"),
-        "digg": to_digg_shares(0.363),
-    },
-    "native.tbtcCrv": {
-        "badger": Wei("5353.41 ether"),
-        "digg": to_digg_shares(0.363),
-    },
-    "harvest.renCrv": {
-        "badger": Wei("5353.41 ether"),
-        "digg": to_digg_shares(0.363),
-    },
-    "native.uniDiggWbtc": {
-        "badger": Wei("0 ether"),
-        "digg": to_digg_shares(15.083),
-    },
-    "native.sushiDiggWbtc": {
-        "badger": Wei("0 ether"),
-        "digg": to_digg_shares(15.083),
-    },
+    "native.renCrv": {"badger": Wei("5353.41 ether"), "digg": to_digg_shares(0.363),},
+    "native.sbtcCrv": {"badger": Wei("5353.41 ether"), "digg": to_digg_shares(0.363),},
+    "native.tbtcCrv": {"badger": Wei("5353.41 ether"), "digg": to_digg_shares(0.363),},
+    "harvest.renCrv": {"badger": Wei("5353.41 ether"), "digg": to_digg_shares(0.363),},
+    "native.uniDiggWbtc": {"badger": Wei("0 ether"), "digg": to_digg_shares(15.083),},
+    "native.sushiDiggWbtc": {"badger": Wei("0 ether"), "digg": to_digg_shares(15.083),},
     "native.digg": {"badger": Wei("0 ether"), "digg": to_digg_shares(7.542)},
     "yearn.wbtc": {"badger": Wei("23339.12 ether"), "digg": to_digg_shares(0)},
 }
@@ -77,6 +56,7 @@ class Emissions:
 
 
 emissions = Emissions(active_emissions=weekly_schedule)
+
 
 def get_active_rewards_schedule(badger: BadgerSystem):
     rest = RewardsSchedule(badger)

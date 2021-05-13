@@ -16,6 +16,7 @@ console = Console()
 
 gas_strategies.set_default_for_active_chain()
 
+
 def main():
     console.print("[white]===== Checking Parameters for rebase =====[/white]")
     badger = connect_badger(load_deployer=True)

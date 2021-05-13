@@ -31,7 +31,7 @@
         "BadgerTree": "0x48eb9b000f8c0a60784d0f96092e08efdc1e4876",
         "BadgerTreeV2": "0xbe82A3259ce427B8bCb54b938b486dC2aF509Cc3",
         "BadgerHunt": "0xC5C8933073B1c682aE07b4bc22d2249c220884bE",
-        "SimpleTimelock": "0x4e3f56bb996ed91ba8d97ea773d3f818730d1a6f",
+        "SimpleTimelock": "0xBDa3AC68e2300B18ce3c8c2796C06058eAcc3947",
         "Controller": "0x6354E79F21B56C11f48bcD7c451BE456D7102A36",
         "Sett": "0x175586ac3f8A7463499D1019A30120aa6fC67C5f",
         "SettV1": "0x5c7AdB3Fd0DF2D1822a36922dd941e16D2bF4E51",
@@ -91,7 +91,8 @@
             "native.uniDiggWbtc": "0xC17078FDd324CC473F8175Dc5290fae5f2E84714",
             "native.sushiDiggWbtc": "0x88128580ACdD9c04Ce47AFcE196875747bF2A9f6",
             "yearn.wbtc": "0x4b92d19c11435614cd49af1b589001b7c08cd4d5",
-            "experimental.sushiIBbtcWbtc": "0x8a8ffec8f4a0c8c9585da95d9d97e8cd6de273de"
+            "experimental.sushiIBbtcWbtc": "0x8a8ffec8f4a0c8c9585da95d9d97e8cd6de273de",
+            "experimental.digg": "0x608b6D82eb121F3e5C0baeeD32d81007B916E83C"
         },
         "vault_artifacts": {
             "native.badger": "Sett",
@@ -106,7 +107,8 @@
             "native.uniDiggWbtc": "Sett",
             "native.sushiDiggWbtc": "Sett",
             "yearn.wbtc": "AffiliateTokenGatedUpgradeable",
-            "experimental.sushiIBbtcWbtc": "Sett"
+            "experimental.sushiIBbtcWbtc": "Sett",
+            "experimental.digg": "Sett"
         },
         "strategies": {
             "native.badger": "0x75b8E21BD623012Efb3b69E1B562465A68944eE6",

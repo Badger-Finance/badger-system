@@ -7,6 +7,7 @@ from helpers.registry import registry
 from tests.conftest import yearnSettTestConfig, badger_single_sett
 from collections import namedtuple
 
+
 @pytest.fixture(scope="module", autouse=True)
 def setup(MockToken, AffiliateToken, YearnTokenVault, YearnRegistry):
     # Assign accounts
@@ -20,9 +21,9 @@ def setup(MockToken, AffiliateToken, YearnTokenVault, YearnRegistry):
     yearnGovernance = accounts[6]
 
     namedAccounts = {
-        "deployer": deployer, 
-        "affiliate": affiliate, 
-        "manager": manager, 
+        "deployer": deployer,
+        "affiliate": affiliate,
+        "manager": manager,
         "guardian": guardian,
         "randomUser1": randomUser1,
         "randomUser2": randomUser2,
@@ -56,36 +57,37 @@ def setup(MockToken, AffiliateToken, YearnTokenVault, YearnRegistry):
     yearnRegistry.endorseVault(vault.address)
 
     # Deploy and initialize the wrapper contract (deployer -> affiliate)
-    wrapper = deployer.deploy(AffiliateToken, mockToken.address, yearnRegistry.address, "BadgerYearnWBTC", "bvyWBTC")
-
-    yield namedtuple(
-        'setup', 
-        'mockToken vault yearnRegistry wrapper namedAccounts'
-    )(
-        mockToken, 
-        vault, 
-        yearnRegistry, 
-        wrapper, 
-        namedAccounts
+    wrapper = deployer.deploy(
+        AffiliateToken,
+        mockToken.address,
+        yearnRegistry.address,
+        "BadgerYearnWBTC",
+        "bvyWBTC",
     )
+
+    yield namedtuple("setup", "mockToken vault yearnRegistry wrapper namedAccounts")(
+        mockToken, vault, yearnRegistry, wrapper, namedAccounts
+    )
+
 
 @pytest.fixture(autouse=True)
 def isolation(fn_isolation):
     pass
 
-#@pytest.mark.skip()
+
+# @pytest.mark.skip()
 def test_deposit_withdraw_flow(setup):
-    randomUser1 = setup.namedAccounts['randomUser1']
-    randomUser2 = setup.namedAccounts['randomUser2']
-    randomUser3 = setup.namedAccounts['randomUser3']
-    deployer = setup.namedAccounts['deployer']
-    guardian = setup.namedAccounts['guardian']
-    manager = setup.namedAccounts['manager']
+    randomUser1 = setup.namedAccounts["randomUser1"]
+    randomUser2 = setup.namedAccounts["randomUser2"]
+    randomUser3 = setup.namedAccounts["randomUser3"]
+    deployer = setup.namedAccounts["deployer"]
+    guardian = setup.namedAccounts["guardian"]
+    manager = setup.namedAccounts["manager"]
 
     if setup.wrapper.bestVault() == setup.vault.address:
-        
+
         # === Deposit flow === #
-        
+
         # Approve wrapper as spender of mockToken for users
         setup.mockToken.approve(setup.wrapper.address, 100e18, {"from": randomUser3})
         setup.mockToken.approve(setup.wrapper.address, 100e18, {"from": randomUser2})
@@ -130,14 +132,13 @@ def test_deposit_withdraw_flow(setup):
 
         # wrapper shares are minted for depositor and vault shares are 0 for depositor
         assert setup.vault.balanceOf(randomUser1.address) == 0
-        assert setup.wrapper.balanceOf(randomUser1.address) == 10e18 
-        
+        assert setup.wrapper.balanceOf(randomUser1.address) == 10e18
+
         # Test pricePerShare to equal 1
         assert setup.wrapper.pricePerShare() == 1e18
         print("-- 2nd User Deposits 10 --")
         print("Wrapper's PPS:", setup.wrapper.pricePerShare())
         print("Vault's PPS:", setup.vault.pricePerShare())
-       
 
         chain.sleep(10000)
         chain.mine(1)
@@ -187,7 +188,7 @@ def test_deposit_withdraw_flow(setup):
         # Should revert since user has no tokens on vault
         with brownie.reverts():
             setup.wrapper.withdraw(1e18, {"from": randomUser3})
-        # User's token balance remains the same 
+        # User's token balance remains the same
         assert setup.mockToken.balanceOf(randomUser3.address) == 10e18
 
         # Test pricePerShare to equal 1
@@ -204,6 +205,3 @@ def test_deposit_withdraw_flow(setup):
         assert setup.mockToken.balanceOf(randomUser3.address) == 10.5e18
 
         assert setup.wrapper.totalVaultBalance(setup.wrapper.address) == 0
-
-
-

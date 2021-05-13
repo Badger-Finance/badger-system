@@ -16,7 +16,6 @@ console = Console()
 class StrategyCoreResolver:
     def __init__(self, manager):
         self.manager = manager
-        
 
     # ===== Read strategy data =====
 
@@ -228,21 +227,19 @@ class StrategyCoreResolver:
         # if there was previous want in strategy or sett (sometimes we withdraw entire
         # balance from the strategy pool) which we check above.
         if (
-            before.balances("want", "strategy") > 0 or
-            before.balances("want", "sett") > 0
+            before.balances("want", "strategy") > 0
+            or before.balances("want", "sett") > 0
         ):
-            assert (
-                after.balances("want", "strategy") +
-                after.balances("want", "sett") <
-                before.balances("want", "strategy") +
-                before.balances("want", "sett")
-            )
+            assert after.balances("want", "strategy") + after.balances(
+                "want", "sett"
+            ) < before.balances("want", "strategy") + before.balances("want", "sett")
 
         # Controller rewards should earn
         if (
-                before.get("strategy.withdrawalFee") > 0 and
-                # Fees are only processed when withdrawing from the strategy.
-                before.balances("want", "strategy") > after.balances("want", "strategy")
+            before.get("strategy.withdrawalFee") > 0
+            and
+            # Fees are only processed when withdrawing from the strategy.
+            before.balances("want", "strategy") > after.balances("want", "strategy")
         ):
             assert after.balances("want", "governanceRewards") > before.balances(
                 "want", "governanceRewards"
@@ -292,7 +289,6 @@ class StrategyCoreResolver:
             before.balances("sett", "user") + expected_shares,
             1,
         )
-
 
     # ===== Strategies must implement =====
     def confirm_harvest(self, before, after, tx):
@@ -346,7 +342,7 @@ class StrategyCoreResolver:
 
         # TODO: Impl more accurate rebase checks.
         # If rebase value is within configured deviation threshold the supply delta is 0.
-        if value > 10**18:
+        if value > 10 ** 18:
             assert after.balances("digg", "user") >= before.balances("digg", "user")
-        elif value < 10**18:
+        elif value < 10 ** 18:
             assert after.balances("digg", "user") <= before.balances("digg", "user")

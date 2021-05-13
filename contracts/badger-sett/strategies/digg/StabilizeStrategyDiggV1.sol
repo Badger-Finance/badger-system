@@ -54,16 +54,26 @@ interface UniswapLikeLPToken {
     function sync() external; // We need to call sync before Trading on Uniswap/Sushiswap due to rebase potential of Digg
 }
 
+interface DiggTreasury {
+    function exchangeWBTCForDigg(
+        uint256, // wBTC that we are sending to the treasury exchange
+        uint256, // digg that we are requesting from the treasury exchange
+        address // address to send the digg to, which is this address
+    ) external;
+}
+
 contract StabilizeStrategyDiggV1 is BaseStrategy {
     using SafeERC20Upgradeable for ERC20Upgradeable;
     using AddressUpgradeable for address;
     using SafeMathUpgradeable for uint256;
 
     // Variables
-    uint256 public stabilizeFee; // 10000 = 100%, this fee goes to Stabilize Treasury
+    uint256 public stabilizeFee; // 1000 = 1%, this fee goes to Stabilize Treasury
+    address public diggExchangeTreasury;
     address public stabilizeVault; // Address to the Stabilize treasury
 
     uint256 public strategyLockedUntil; // The blocknumber that the strategy will prevent withdrawals until
+    bool public diggInExpansion;
     uint256 public lastDiggTotalSupply; // The last recorded total supply of the digg token
     uint256 public lastDiggPrice; // The price of Digg at last trade in BTC units
     uint256 public diggSupplyChangeFactor = 50000; // This is a factor used by the strategy to determine how much digg to sell in expansion
@@ -71,6 +81,9 @@ contract StabilizeStrategyDiggV1 is BaseStrategy {
     uint256 public wbtcSellAmplificationFactor = 2; // The higher this number the more aggressive the buyback in contraction
     uint256 public maxGainedDiggSellPercent = 100000; // The maximum percent of sellable Digg gains through rebase
     uint256 public maxWBTCSellPercent = 50000; // The maximum percent of sellable wBTC;
+    uint256 public tradeBatchSize = 10e18; // The normalized size of the trade batches, can be adjusted
+    uint256 public tradeAmountLeft = 0; // The amount left to trade
+    uint256 private _maxOracleLag = 2 days; // Maximum amount of lag the oracle can have before reverting the price
 
     // Constants
     uint256 constant DIVISION_FACTOR = 100000;
@@ -88,22 +101,10 @@ contract StabilizeStrategyDiggV1 is BaseStrategy {
 
     TokenInfo[] private tokenList; // An array of tokens accepted as deposits
 
-    struct TradeData {
-        uint256 earnedDigg;
-        uint256 earnedWBTC;
-        int256 percentPriceChange;
-        uint256 soldPercent;
-        uint256 soldAmount;
-        uint256 oldSupply;
-        uint256 newSupply;
-    }
-
     event TradeState(
-        uint256 earnedDigg,
-        uint256 earnedWBTC,
+        uint256 soldAmountNormalized,
         int256 percentPriceChange,
         uint256 soldPercent,
-        uint256 soldAmount,
         uint256 oldSupply,
         uint256 newSupply,
         uint256 blocknumber
@@ -117,18 +118,20 @@ contract StabilizeStrategyDiggV1 is BaseStrategy {
         address _controller,
         address _keeper,
         address _guardian,
-        address _vaultConfig,
-        uint256[5] memory _feeConfig
+        uint256 _lockedUntil,
+        address[2] memory _vaultConfig,
+        uint256[4] memory _feeConfig
     ) public initializer {
         __BaseStrategy_init(_governance, _strategist, _controller, _keeper, _guardian);
 
-        stabilizeVault = _vaultConfig;
+        stabilizeVault = _vaultConfig[0];
+        diggExchangeTreasury = _vaultConfig[1];
 
         performanceFeeGovernance = _feeConfig[0];
         performanceFeeStrategist = _feeConfig[1];
         withdrawalFee = _feeConfig[2];
         stabilizeFee = _feeConfig[3];
-        strategyLockedUntil = _feeConfig[4]; // Deployer can optionally lock strategy from withdrawing until a certain blocknumber
+        strategyLockedUntil = _lockedUntil; // Deployer can optionally lock strategy from withdrawing until a certain blocknumber
 
         setupTradeTokens();
         lastDiggPrice = getDiggPrice();
@@ -158,23 +161,27 @@ contract StabilizeStrategyDiggV1 is BaseStrategy {
     // Chainlink price grabbers
     function getDiggUSDPrice() public view returns (uint256) {
         AggregatorV3Interface priceOracle = AggregatorV3Interface(DIGG_ORACLE_ADDRESS);
-        (, int256 intPrice, , , ) = priceOracle.latestRoundData(); // We only want the answer
+        (, int256 intPrice, , uint256 lastUpdateTime, ) = priceOracle.latestRoundData(); // We only want the answer
+        require(block.timestamp.sub(lastUpdateTime) < _maxOracleLag, "Price data is too old to use");
         uint256 usdPrice = uint256(intPrice);
         priceOracle = AggregatorV3Interface(BTC_ORACLE_ADDRESS);
-        (, intPrice, , , ) = priceOracle.latestRoundData(); // We only want the answer
+        (, intPrice, , lastUpdateTime, ) = priceOracle.latestRoundData(); // We only want the answer
+        require(block.timestamp.sub(lastUpdateTime) < _maxOracleLag, "Price data is too old to use");
         usdPrice = usdPrice.mul(uint256(intPrice)).mul(10**2);
         return usdPrice; // Digg Price in USD
     }
 
     function getDiggPrice() public view returns (uint256) {
         AggregatorV3Interface priceOracle = AggregatorV3Interface(DIGG_ORACLE_ADDRESS);
-        (, int256 intPrice, , , ) = priceOracle.latestRoundData(); // We only want the answer
+        (, int256 intPrice, , uint256 lastUpdateTime, ) = priceOracle.latestRoundData(); // We only want the answer
+        require(block.timestamp.sub(lastUpdateTime) < _maxOracleLag, "Price data is too old to use");
         return uint256(intPrice).mul(10**10);
     }
 
     function getWBTCUSDPrice() public view returns (uint256) {
         AggregatorV3Interface priceOracle = AggregatorV3Interface(BTC_ORACLE_ADDRESS);
-        (, int256 intPrice, , , ) = priceOracle.latestRoundData(); // We only want the answer
+        (, int256 intPrice, , uint256 lastUpdateTime, ) = priceOracle.latestRoundData(); // We only want the answer
+        require(block.timestamp.sub(lastUpdateTime) < _maxOracleLag, "Price data is too old to use");
         return uint256(intPrice).mul(10**10);
     }
 
@@ -195,14 +202,30 @@ contract StabilizeStrategyDiggV1 is BaseStrategy {
         // This will return the DIGG and DIGG equivalent of WBTC in Digg decimals
         uint256 _diggAmount = tokenList[0].token.balanceOf(address(this));
         uint256 _wBTCAmount = tokenList[1].token.balanceOf(address(this));
-        if (_wBTCAmount > 0) {
-            _wBTCAmount = _wBTCAmount.mul(1e18).div(10**tokenList[1].decimals); // Normalize the wBTC amount
-            uint256 _value = _wBTCAmount.mul(getWBTCUSDPrice()).div(1e18); // Get the USD value of wBtC
-            _value = _value.mul(1e18).div(getDiggUSDPrice());
-            _value = _value.mul(10**tokenList[0].decimals).div(1e18); // Convert to Digg units
-            _diggAmount = _diggAmount.add(_value);
+        return _diggAmount.add(wbtcInDiggUnits(_wBTCAmount));
+    }
+
+    function wbtcInDiggUnits(uint256 amount) internal view returns (uint256) {
+        if (amount == 0) {
+            return 0;
         }
-        return _diggAmount;
+        amount = amount.mul(1e18).div(10**tokenList[1].decimals); // Normalize the wBTC amount
+        uint256 _digg = amount.mul(getWBTCUSDPrice()).div(1e18); // Get the USD value of wBtC
+        _digg = _digg.mul(1e18).div(getDiggUSDPrice());
+        _digg = _digg.mul(10**tokenList[0].decimals).div(1e18); // Convert to Digg units
+        return _digg;
+    }
+
+    function diggInWBTCUnits(uint256 amount) internal view returns (uint256) {
+        if (amount == 0) {
+            return 0;
+        }
+        // Converts digg into wbtc equivalent
+        amount = amount.mul(1e18).div(10**tokenList[0].decimals); // Normalize the digg amount
+        uint256 _wbtc = amount.mul(getDiggUSDPrice()).div(1e18); // Get the USD value of digg
+        _wbtc = _wbtc.mul(1e18).div(getWBTCUSDPrice());
+        _wbtc = _wbtc.mul(10**tokenList[1].decimals).div(1e18); // Convert to wbtc units
+        return _wbtc;
     }
 
     /// @dev Not used
@@ -218,6 +241,8 @@ contract StabilizeStrategyDiggV1 is BaseStrategy {
     }
 
     // Customer active Strategy functions
+
+    // This function will sell one token for another on Sushiswap and Uniswap
     function exchange(
         uint256 _inID,
         uint256 _outID,
@@ -225,7 +250,7 @@ contract StabilizeStrategyDiggV1 is BaseStrategy {
     ) internal {
         address _inputToken = address(tokenList[_inID].token);
         address _outputToken = address(tokenList[_outID].token);
-        // One route, between DIGG and WBTC on Sushiswap and Uniswap, split based on liquidity
+        // One route, between DIGG and WBTC on Sushiswap and Uniswap, split based on liquidity of LPs
         address[] memory path = new address[](2);
         path[0] = _inputToken;
         path[1] = _outputToken;
@@ -238,8 +263,21 @@ contract StabilizeStrategyDiggV1 is BaseStrategy {
         lpPool.sync(); // Sync the pool amounts
 
         // Now determine the split between Uni and Sushi
-        uint256 uniPercent = tokenList[0].token.balanceOf(address(UNISWAP_DIGG_LP)).mul(DIVISION_FACTOR).div(
-            tokenList[0].token.balanceOf(address(UNISWAP_DIGG_LP)).add(tokenList[0].token.balanceOf(address(SUSHISWAP_DIGG_LP)))
+        // Amount sold is split between these two biggest liquidity providers to decrease the chance of price inequities between the exchanges
+        // This also helps reduce slippage and creates a higher return than using one exchange
+        // Look at the total balance of the pooled tokens in Uniswap compared to the total for both exchanges
+        uint256 uniPercent = tokenList[0]
+            .token
+            .balanceOf(address(UNISWAP_DIGG_LP))
+            .add(tokenList[1].token.balanceOf(address(UNISWAP_DIGG_LP)))
+            .mul(DIVISION_FACTOR)
+            .div(
+            tokenList[0]
+                .token
+                .balanceOf(address(UNISWAP_DIGG_LP))
+                .add(tokenList[0].token.balanceOf(address(SUSHISWAP_DIGG_LP)))
+                .add(tokenList[1].token.balanceOf(address(UNISWAP_DIGG_LP)))
+                .add(tokenList[1].token.balanceOf(address(SUSHISWAP_DIGG_LP)))
         );
         uint256 uniAmount = _amount.mul(uniPercent).div(DIVISION_FACTOR);
         _amount = _amount.sub(uniAmount);
@@ -268,19 +306,27 @@ contract StabilizeStrategyDiggV1 is BaseStrategy {
         return;
     }
 
-    function governancePullCollateral() external {
-        // This will pull wBTC from the contract if the digg balance is empty, in case strategy emptied
+    function governancePullSomeCollateral(uint256 _amount) external {
+        // This will pull wBTC from the contract by governance
         _onlyGovernance();
-        uint256 _balance = tokenList[0].token.balanceOf(address(this));
-        require(_balance == 0, "DIGG contract must be empty to pull out collateral");
         ERC20Upgradeable wbtc = tokenList[1].token;
-        _balance = wbtc.balanceOf(address(this));
-        if (_balance > 0) {
-            wbtc.safeTransfer(governance, _balance);
+        uint256 _balance = wbtc.balanceOf(address(this));
+        if (_amount <= _balance) {
+            wbtc.safeTransfer(governance, _amount);
         }
     }
 
     // Changeable variables by governance
+    function setTradingBatchSize(uint256 _size) external {
+        _onlyGovernance();
+        tradeBatchSize = _size;
+    }
+
+    function setOracleLagTime(uint256 _time) external {
+        _onlyAnyAuthorizedParties();
+        _maxOracleLag = _time;
+    }
+
     function setStabilizeFee(uint256 _fee) external {
         _onlyGovernance();
         require(_fee <= MAX_FEE, "base-strategy/excessive-stabilize-fee");
@@ -293,12 +339,18 @@ contract StabilizeStrategyDiggV1 is BaseStrategy {
         stabilizeVault = _vault;
     }
 
+    function setDiggExchangeTreasury(address _treasury) external {
+        _onlyGovernance();
+        require(_treasury != address(0), "No vault");
+        diggExchangeTreasury = _treasury;
+    }
+
     function setSellFactorsAndPercents(
-        uint256 _dFactor,
-        uint256 _wFactor,
-        uint256 _wAmplifier,
-        uint256 _mPDigg,
-        uint256 _mPWBTC
+        uint256 _dFactor, // This will influence how much digg is sold when the token is in expansion
+        uint256 _wFactor, // This will influence how much wbtc is sold when the token is in contraction
+        uint256 _wAmplifier, // This will amply the amount of wbtc sold based on the change in the price
+        uint256 _mPDigg, // Governance can cap maximum amount of gained digg sold during rebase. 0-100% accepted (0-100000)
+        uint256 _mPWBTC // Governance can cap the maximum amount of wbtc sold during rebase. 0-100% accepted (0-100000)
     ) external {
         _onlyGovernanceOrStrategist();
         require(_mPDigg <= 100000 && _mPWBTC <= 100000, "Percents outside range");
@@ -325,13 +377,85 @@ contract StabilizeStrategyDiggV1 is BaseStrategy {
     function _withdrawAll() internal override {
         // This strategy doesn't do anything when tokens are withdrawn, wBTC stays in strategy until governance decides
         // what to do with it
+        // When a user withdraws, it is performed via _withdrawSome
     }
 
     function _withdrawSome(uint256 _amount) internal override returns (uint256) {
         require(block.number >= strategyLockedUntil, "Unable to withdraw from strategy until certain block");
         // We only have idle DIGG, withdraw from the strategy directly
         // Note: This value is in DIGG fragments
+
+        // Make sure that when the user withdraws, the vaults try to maintain a 1:1 ratio in value
+        uint256 _diggEquivalent = wbtcInDiggUnits(tokenList[1].token.balanceOf(address(this)));
+        uint256 _diggBalance = tokenList[0].token.balanceOf(address(this));
+        uint256 _extraDiggNeeded = 0;
+        if (_amount > _diggBalance) {
+            _extraDiggNeeded = _amount.sub(_diggBalance);
+            _diggBalance = 0;
+        } else {
+            _diggBalance = _diggBalance.sub(_amount);
+        }
+
+        if (_extraDiggNeeded > 0) {
+            // Calculate how much digg we need from digg vault
+            _diggEquivalent = _diggEquivalent.sub(_extraDiggNeeded);
+        }
+
+        if (_diggBalance < _diggEquivalent || _diggEquivalent == 0) {
+            // Now balance the vaults
+            _extraDiggNeeded = _extraDiggNeeded.add(_diggEquivalent.sub(_diggBalance).div(2));
+            // Exchange with the digg treasury to keep this balanced
+            uint256 wbtcAmount = diggInWBTCUnits(_extraDiggNeeded);
+            if (wbtcAmount > tokenList[1].token.balanceOf(address(this))) {
+                wbtcAmount = tokenList[1].token.balanceOf(address(this)); // Make sure we can actual spend it
+                _extraDiggNeeded = wbtcInDiggUnits(wbtcAmount);
+            }
+            _safeApproveHelper(address(tokenList[1].token), diggExchangeTreasury, wbtcAmount);
+            // TODO: Badger team needs to develop a contract that holds Digg, can pull wbtc from this contract and return the requested amount of Digg to this address
+            DiggTreasury(diggExchangeTreasury).exchangeWBTCForDigg(wbtcAmount, _extraDiggNeeded, address(this)); // Internal no slip treasury exchange
+        }
+
         return _amount;
+    }
+
+    // We will separate trades into batches to reduce market slippage
+    // Keepers can call this function after rebalancing to sell/buy slowly
+    function executeTradeBatch() public whenNotPaused {
+        _onlyAuthorizedActors();
+        if (tradeAmountLeft == 0) {
+            return;
+        }
+
+        // Reduce the trade amount left
+        uint256 batchSize = tradeBatchSize;
+        if (tradeAmountLeft < batchSize) {
+            batchSize = tradeAmountLeft;
+        }
+        tradeAmountLeft = tradeAmountLeft.sub(batchSize);
+
+        if (diggInExpansion == true) {
+            // We will be selling digg for wbtc, convert to digg units from normalized
+            batchSize = batchSize.mul(10**tokenList[0].decimals).div(1e18);
+            uint256 _earned = tokenList[1].token.balanceOf(address(this)); // Get the pre-exchange WBTC balance
+            if (batchSize > 0) {
+                exchange(0, 1, batchSize); // Sell Digg for wBTC
+            }
+            _earned = tokenList[1].token.balanceOf(address(this)).sub(_earned);
+
+            if (_earned > 0) {
+                // We will distribute some of this wBTC to different parties
+                _processFee(address(tokenList[1].token), _earned, performanceFeeGovernance, IController(controller).rewards());
+                _processFee(address(tokenList[1].token), _earned, stabilizeFee, stabilizeVault);
+            }
+        } else {
+            // We will be selling wbtc for digg, convert to wbtc units from normalized
+            batchSize = batchSize.mul(10**tokenList[1].decimals).div(1e18);
+            uint256 _earned = tokenList[0].token.balanceOf(address(this)); // Get the pre-exchange Digg balance
+            if (batchSize > 0) {
+                exchange(1, 0, batchSize); // Sell WBTC for digg
+            }
+            _earned = tokenList[0].token.balanceOf(address(this)).sub(_earned);
+        }
     }
 
     function rebalance() external whenNotPaused {
@@ -351,6 +475,7 @@ contract StabilizeStrategyDiggV1 is BaseStrategy {
                 percentChange = -100000;
             }
             if (currentTotalSupply > lastDiggTotalSupply) {
+                diggInExpansion = true;
                 // Price is still positive
                 // We will sell digg for wbtc
 
@@ -374,20 +499,16 @@ contract StabilizeStrategyDiggV1 is BaseStrategy {
                 changedDigg = tokenList[0].token.balanceOf(address(this)).mul(changedDigg).div(DIVISION_FACTOR);
                 // This is the amount of Digg gain from the rebase returned
 
-                uint256 _amount = changedDigg.mul(sellPercent).div(DIVISION_FACTOR);
-                uint256 _earned = tokenList[1].token.balanceOf(address(this)); // Get the pre-exchange WBTC balance
-                if (_amount > 0) {
-                    exchange(0, 1, _amount); // Sell Digg for wBTC
-                }
-                _earned = tokenList[1].token.balanceOf(address(this)).sub(_earned);
+                uint256 _amount = changedDigg.mul(sellPercent).div(DIVISION_FACTOR); // This the amount to sell
 
-                if (_earned > 0) {
-                    // We will distribute some of this wBTC to different parties
-                    _processFee(address(tokenList[1].token), _earned, performanceFeeGovernance, IController(controller).rewards());
-                    _processFee(address(tokenList[1].token), _earned, stabilizeFee, stabilizeVault);
-                }
-                emit TradeState(0, _earned, percentChange, sellPercent, _amount, lastDiggTotalSupply, currentTotalSupply, block.number);
+                // Normalize sell amount
+                _amount = _amount.mul(1e18).div(10**tokenList[0].decimals);
+                tradeAmountLeft = _amount;
+                executeTradeBatch(); // This will start to trade in batches
+
+                emit TradeState(_amount, percentChange, sellPercent, lastDiggTotalSupply, currentTotalSupply, block.number);
             } else {
+                diggInExpansion = false;
                 // Price is now negative
                 // We will sell wbtc for digg only if price begins to rise again
                 if (percentChange > 0) {
@@ -407,13 +528,15 @@ contract StabilizeStrategyDiggV1 is BaseStrategy {
 
                     // We just sell this percentage of wbtc for digg gains
                     uint256 _amount = tokenList[1].token.balanceOf(address(this)).mul(sellPercent).div(DIVISION_FACTOR);
-                    uint256 _earned = tokenList[0].token.balanceOf(address(this)); // Get the pre-exchange Digg balance
-                    if (_amount > 0) {
-                        exchange(1, 0, _amount); // Sell WBTC for digg
-                    }
-                    _earned = tokenList[0].token.balanceOf(address(this)).sub(_earned);
-                    emit TradeState(0, _earned, percentChange, sellPercent, _amount, lastDiggTotalSupply, currentTotalSupply, block.number);
+
+                    //Normalize the amount
+                    _amount = _amount.mul(1e18).div(10**tokenList[1].decimals);
+                    tradeAmountLeft = _amount;
+                    executeTradeBatch();
+
+                    emit TradeState(_amount, percentChange, sellPercent, lastDiggTotalSupply, currentTotalSupply, block.number);
                 } else {
+                    tradeAmountLeft = 0; // Do not trade
                     emit NoTrade(block.number);
                 }
             }

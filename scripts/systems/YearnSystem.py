@@ -1,5 +1,6 @@
 from brownie import interface
 
+
 class YearnSystem:
     def __init__(self, chain_registry):
         self.chain_registry = chain_registry
@@ -13,7 +14,6 @@ class YearnSystem:
 
         address = self.chain_registry.yearn.experimental_vaults[key]
         return self.vault_by_address(address)
-        
 
     def vault_by_address(self, address):
         return interface.VaultAPI(address)

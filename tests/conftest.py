@@ -31,8 +31,9 @@ from tests.sett.fixtures import (
     SushiClawUSDCMiniDeploy,
     PancakeMiniDeploy,
     SushiWbtcIbBtcLpOptimizerMiniDeploy,
-    UnitProtocolRenBtcMiniDeploy
+    UnitProtocolRenBtcMiniDeploy,
     UniGenericLpMiniDeploy,
+    DiggStabilizeMiniDeploy
 )
 
 
@@ -40,15 +41,9 @@ def generate_sett_test_config(settsToRun, runTestSetts, runProdSetts=False):
     setts = []
     for settId in settsToRun:
         if runTestSetts:
-            setts.append({
-                'id': settId,
-                'mode': "test"
-            })
+            setts.append({"id": settId, "mode": "test"})
         if runProdSetts:
-            setts.append({
-                'id': settId,
-                'mode': "prod"
-            })
+            setts.append({"id": settId, "mode": "prod"})
     return setts
 
 
@@ -103,11 +98,16 @@ networkSettsMap = {
 # NB: This is expected to fail if the network ID does not exist.
 baseSettsToRun = networkSettsMap[network_manager.get_active_network()]
 
+stabilizeSett = ["experimental.digg"]
+
+stabilizeTestConfig = generate_sett_test_config(stabilizeSett, False)
 settTestConfig = generate_sett_test_config(baseSettsToRun, runTestSetts)
 diggSettTestConfig = generate_sett_test_config(diggSettsToRun, runTestSetts)
 yearnSettTestConfig = generate_sett_test_config(yearnSettsToRun, runTestSetts)
 clawSettTestConfig = generate_sett_test_config(clawSettsToRun, runTestSetts)
-clawSettSyntheticTestConfig = generate_sett_test_config(clawSettsSytheticTestsToRun, runTestSetts)
+clawSettSyntheticTestConfig = generate_sett_test_config(
+    clawSettsSytheticTestsToRun, runTestSetts
+)
 
 
 @pytest.fixture(scope="function", autouse=True)
@@ -115,6 +115,7 @@ def isolate(fn_isolation):
     # perform a chain rewind after completing each test, to ensure proper isolation
     # https://eth-brownie.readthedocs.io/en/v1.10.3/tests-pytest-intro.html#isolation-fixtures
     pass
+
 
 # @pytest.fixture()
 def badger_single_sett(settConfig, deploy=True):
@@ -133,11 +134,11 @@ def badger_single_sett(settConfig, deploy=True):
 
     strategist = accounts[3]
 
-    settId = settConfig['id']
+    settId = settConfig["id"]
 
-    print('settId:', settId)
+    print("settId:", settId)
 
-    if settConfig['mode'] == 'test':
+    if settConfig["mode"] == "test":
         if settId == "native.badger":
             return BadgerRewardsMiniDeploy(
                 "native.badger",
@@ -290,15 +291,11 @@ def badger_single_sett(settConfig, deploy=True):
                 # Base strategy params (perf/withdrawal fees)
                 sett_config.pancake.pancakeBnbBtcb,
                 # Lp pair tokens (bnb/btcb) for this strategy.
-                [
-                    registry.tokens.btcb,
-                    registry.tokens.bnb,
-                ],
+                [registry.tokens.btcb, registry.tokens.bnb,],
                 # Both want/pid are optional params and used for validation.
                 # In this case, both the lp token and pid (pool id) exist so we can pass them in.
                 want=registry.pancake.chefPairs.bnbBtcb,
                 pid=registry.pancake.chefPids.bnbBtcb,
-
                 strategist=strategist,
                 guardian=guardian,
                 keeper=keeper,
@@ -335,6 +332,8 @@ def badger_single_sett(settConfig, deploy=True):
                 keeper=keeper,
                 governance=governance,
             ).deploy(deploy=deploy)
+        if settId == "experimental.digg":
+            return DiggStabilizeMiniDeploy().deploy(deploy=deploy)
     if settConfig['mode'] == 'prod':
         """
         Run vs prod contracts, transferring assets to the test user
@@ -386,7 +385,9 @@ def digg_distributor_unit():
     deployer = badger.deployer
     devProxyAdminAddress = badger.devProxyAdmin.address
     daoProxyAdminAddress = badger.daoProxyAdmin.address
-    digg = deploy_digg_minimal(deployer, devProxyAdminAddress, daoProxyAdminAddress, owner=deployer)
+    digg = deploy_digg_minimal(
+        deployer, devProxyAdminAddress, daoProxyAdminAddress, owner=deployer
+    )
 
     # deployer should have eth but just in case
     distribute_test_ether(badger.deployer, Wei("20 ether"))
@@ -399,14 +400,16 @@ def digg_distributor_unit():
 
     totalSupply = digg.token.totalSupply()
     # 15% airdropped
-    digg.token.transfer(digg.diggDistributor, totalSupply * .15, {"from": deployer})
+    digg.token.transfer(digg.diggDistributor, totalSupply * 0.15, {"from": deployer})
 
     return digg
 
 
 @pytest.fixture(scope="function")
 def digg_distributor_prod_unit():
-    badger = connect_badger("deploy-final.json", load_deployer=True, load_keeper=True, load_guardian=True)
+    badger = connect_badger(
+        "deploy-final.json", load_deployer=True, load_keeper=True, load_guardian=True
+    )
     digg = connect_digg("deploy-final.json")
     digg.token = digg.uFragments
 

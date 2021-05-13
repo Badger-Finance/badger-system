@@ -15,6 +15,7 @@ CRV_SETTS_TO_UPGRADE = [
     "native.tbtcCrv",
 ]
 
+
 def queue_upgrade_crv_sett(badger: BadgerSystem, settID: str) -> str:
     badger.deploy_logic("SettV1", SettV1)
     logic = badger.logic["SettV1"]
@@ -22,10 +23,7 @@ def queue_upgrade_crv_sett(badger: BadgerSystem, settID: str) -> str:
 
 
 def whitelist_adapter_crv_sett(
-    badger: BadgerSystem,
-    bridge: BridgeSystem,
-    multi: GnosisSafe,
-    settID: str,
+    badger: BadgerSystem, bridge: BridgeSystem, multi: GnosisSafe, settID: str,
 ):
     sett = badger.sett_system.vaults[settID]
     id = multi.addTx(
@@ -41,10 +39,10 @@ def whitelist_adapter_crv_sett(
 
 
 def main():
-    '''
+    """
     Queues crv sett upgrades to support depositFor() calls.
     Also whitelists bridge adapter for crv setts.
-    '''
+    """
     badger = connect_badger(badger_config.prod_json)
     bridge = connect_bridge(badger_config.prod_json)
     multi = GnosisSafe(badger.devMultisig)

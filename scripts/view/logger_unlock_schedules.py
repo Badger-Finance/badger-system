@@ -7,6 +7,7 @@ from scripts.systems.badger_system import connect_badger
 from tabulate import tabulate
 from helpers.registry import registry
 
+
 def main():
     badger = connect_badger()
 

@@ -17,9 +17,15 @@ def encode_nodes(accounts):
     encoded_accounts = []
     for index in range(0, len(accounts)):
         data = accounts[index]
-        encoded = encode_hex(encode_abi(["uint256", "address", "uint256"], (index, data["account"], data["score"])))
+        encoded = encode_hex(
+            encode_abi(
+                ["uint256", "address", "uint256"],
+                (index, data["account"], data["score"]),
+            )
+        )
         encoded_accounts.append(encoded)
     return encoded_accounts
+
 
 def parse_accounts(data):
     output = []
@@ -30,19 +36,17 @@ def parse_accounts(data):
         output.append(encoded)
     return output
 
+
 def main():
     with open("merkle/badger_scores.json") as f:
         accounts = json.load(f)
 
     accounts = parse_accounts(accounts)
-    
+
     encoded_accounts = encode_nodes(accounts)
     tree = MerkleTree(encoded_accounts)
 
-    output = {
-        "root": encode_hex(tree.root),
-        "claims": {}
-    }
+    output = {"root": encode_hex(tree.root), "claims": {}}
 
     for index in range(0, len(accounts)):
         data = accounts[index]
@@ -52,10 +56,8 @@ def main():
             "account": data["account"],
             "score": data["score"],
             "proof": tree.get_proof(index),
-            "node": node
+            "node": node,
         }
-    
+
     with open("merkle/yearn_merklelist.json", "w") as f:
         json.dump(output, f, indent=4)
-
-

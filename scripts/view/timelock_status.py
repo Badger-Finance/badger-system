@@ -52,7 +52,7 @@ def main():
 
     escrows = [
         "0x1fc3C85456322C8514c0ff7694Ea4Ef5bC7F9f37",
-        "0xaeDb773C226e6d74f2cd3542372076779Ff6fA6E"
+        "0xaeDb773C226e6d74f2cd3542372076779Ff6fA6E",
     ]
 
     timelocks = [

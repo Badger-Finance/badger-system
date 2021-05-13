@@ -22,11 +22,10 @@ def main():
 
     for (key, strategyName, isUniswap) in [
         ("native.sushiWbtcIbBtc", "StrategySushiLpOptimizer", False),
-        ("native.uniWbtcIbBtc", "StrategyUniGenericLp", True),
+        # ("native.uniWbtcIbBtc", "StrategyUniGenericLp", True),
     ]:
         if isUniswap:
             params = sett_config.uni.uniGenericLp.params
-
             swap = UniswapSystem()
         else:
             params = sett_config.sushi.sushiWbtcIbBtc.params
@@ -38,9 +37,7 @@ def main():
             params.want = swap.getPair(registry.tokens.ibbtc, registry.tokens.wbtc)
         else:
             params.want = swap.createPair(
-                registry.tokens.ibbtc,
-                registry.tokens.wbtc,
-                deployer,
+                registry.tokens.ibbtc, registry.tokens.wbtc, deployer,
             )
 
         # NB: Work w/ sushi team to setup sushi reward allocations.

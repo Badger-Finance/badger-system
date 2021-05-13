@@ -20,7 +20,7 @@ gnosis_safe_registry = DotMap(
     )
 )
 
-onesplit_registry = DotMap(contract="0x50FDA034C0Ce7a8f7EFDAebDA7Aa7cA21CC1267e"),
+onesplit_registry = (DotMap(contract="0x50FDA034C0Ce7a8f7EFDAebDA7Aa7cA21CC1267e"),)
 
 uniswap_registry = DotMap(
     routerV2="0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D",
@@ -29,13 +29,11 @@ uniswap_registry = DotMap(
     uniStakingRewards=DotMap(eth_wbtc="0xa1484C3aa22a66C62b77E0AE78E15258bd0cB711"),
 )
 
-multicall="0xeefba1e63905ef1d7acba5a8513c70307c1ce441"
-multisend="0x8D29bE29923b68abfDD21e541b9374737B49cdAD"
+multicall = "0xeefba1e63905ef1d7acba5a8513c70307c1ce441"
+multisend = "0x8D29bE29923b68abfDD21e541b9374737B49cdAD"
 
 compound_registry = DotMap(
-    cTokens = DotMap(
-        usdc="0x39AA39c021dfbaE8faC545936693aC917d5E7563"
-    )
+    cTokens=DotMap(usdc="0x39AA39c021dfbaE8faC545936693aC917d5E7563")
 )
 
 multichain_registry = DotMap(eth_address="0xC564EE9f21Ed8A2d8E7e76c085740d5e4c5FaFbE")
@@ -77,18 +75,12 @@ sushi_registry = DotMap(
 
 yearn_registry = YearnRegistry(
     registry="0x50c1a2ea0a861a967d9d0ffe2ae4012c2e053804",
-    experimental_vaults={
-        'wbtc': "0xA696a63cc78DfFa1a63E9E50587C197387FF6C7E"
-    }
+    experimental_vaults={"wbtc": "0xA696a63cc78DfFa1a63E9E50587C197387FF6C7E"},
 )
 
-aave_registry = DotMap(
-    lendingPoolV2="0x7d2768de32b0b80b7a3454c06bdac94a69ddc7a9"
-)
+aave_registry = DotMap(lendingPoolV2="0x7d2768de32b0b80b7a3454c06bdac94a69ddc7a9")
 
-yearn_registry = DotMap(
-    yvWBTC="0xcB550A6D4C8e3517A939BC79d0c7093eb7cF56B5",
-),
+yearn_registry = (DotMap(yvWBTC="0xcB550A6D4C8e3517A939BC79d0c7093eb7cF56B5",),)
 
 curve_registry = DotMap(
     minter="0xd061D61a4d941c39E5453435B6345Dc261C2fcE0",
@@ -122,9 +114,7 @@ chainlink_registry = DotMap(
     btc_usd="0xF4030086522a5bEEa4988F8cA5B36dbC97BeE88c"
 )
 
-badger_registry = DotMap(
-    token="0x3472a5a71965499acd81997a54bba8d852c6e53d"
-)
+badger_registry = DotMap(token="0x3472a5a71965499acd81997a54bba8d852c6e53d")
 
 defidollar_registry = DotMap(
     addresses=DotMap(
@@ -132,18 +122,9 @@ defidollar_registry = DotMap(
         core="0x2A8facc9D49fBc3ecFf569847833C380A13418a8",
     ),
     pools=[
-        DotMap(
-            id=0,
-            sett="0x6dEf55d2e18486B9dDfaA075bc4e4EE0B28c1545",
-        ),
-        DotMap(
-            id=1,
-            sett="0xd04c48A53c111300aD41190D63681ed3dAd998eC",
-        ),
-        DotMap(
-            id=2,
-            sett="0xb9D076fDe463dbc9f915E5392F807315Bf940334",
-        ),
+        DotMap(id=0, sett="0x6dEf55d2e18486B9dDfaA075bc4e4EE0B28c1545",),
+        DotMap(id=1, sett="0xd04c48A53c111300aD41190D63681ed3dAd998eC",),
+        DotMap(id=2, sett="0xb9D076fDe463dbc9f915E5392F807315Bf940334",),
     ],
 )
 
@@ -161,7 +142,7 @@ eth_registry = ChainRegistry(
     badger=badger_registry,
     yearn=yearn_registry,
     aave=aave_registry,
-    chainlink=chainlink_registry
+    chainlink=chainlink_registry,
     defidollar=defidollar_registry,
 )
 
@@ -217,7 +198,7 @@ eth_registry.whales = DotMap(
     bSbtcCrv=DotMap(
         whale="0x10fc82867013fce1bd624fafc719bb92df3172fc",
         token="0xd04c48A53c111300aD41190D63681ed3dAd998eC",
-        action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT
+        action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT,
     ),
     renCrv=DotMap(
         whale="0xb1f2cdec61db658f091671f5f199635aef202cac",
@@ -227,7 +208,7 @@ eth_registry.whales = DotMap(
     bRenCrv=DotMap(
         whale="0x2296f174374508278dc12b806a7f27c87d53ca15",
         token="0x6dEf55d2e18486B9dDfaA075bc4e4EE0B28c1545",
-        action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT
+        action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT,
     ),
     tbtcCrv=DotMap(
         whale="0xaf379f0228ad0d46bb7b4f38f9dc9bcc1ad0360c",
@@ -237,7 +218,7 @@ eth_registry.whales = DotMap(
     bTbtcCrv=DotMap(
         whale="0x085a9340ff7692ab6703f17ab5ffc917b580a6fd",
         token="0xb9D076fDe463dbc9f915E5392F807315Bf940334",
-        action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT
+        action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT,
     ),
     wbtc=DotMap(
         whale="0xc11b1268c1a384e55c48c2391d8d480264a3a7f4",

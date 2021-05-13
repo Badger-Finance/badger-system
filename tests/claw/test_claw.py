@@ -56,7 +56,7 @@ def _manage_position(claw, empName, user):
     # Mint a synthetic amount is in $, we won't try to determine the actual dollar value between
     # the two but rather just mint a random dollar value above the min sponsor amount and a arbitrary max.
     # Min sponsor amount is $100 so let's do w/ $200 - $5000.
-    syntheticAmount = random.random.randint(200, 5000) * 10**18
+    syntheticAmount = random.random.randint(200, 5000) * 10 ** 18
     emp.create((collateralAmount,), (syntheticAmount,), {"from": user})
 
     # We don't need all of these variables but just including them here to be transparent about
@@ -75,7 +75,9 @@ def _manage_position(claw, empName, user):
     token = SyntheticToken.at("0x89337BFb7938804c3776C9FB921EccAf5ab76758")
     token.approve(emp.address, userBalance, {"from": user})
 
-    console.print("[grey]Attempting to deposit/withdraw collateral to/from position[/grey]")
+    console.print(
+        "[grey]Attempting to deposit/withdraw collateral to/from position[/grey]"
+    )
     emp.deposit((collateralAmount,), {"from": user})
     # TODO: Need to add collateral from a second user to be able to withdraw from one since
     # only adding collateral from a single user means the user's collateralization ratio is the

@@ -191,12 +191,7 @@ class GnosisSafe:
 
         table.append([key, metadata, params["to"], params["data"]])
 
-        print(
-            tabulate(
-                table,
-                tablefmt="pretty",
-            )
-        )
+        print(tabulate(table, tablefmt="pretty",))
 
 
 def multisig_success(tx):
@@ -267,7 +262,7 @@ def exec_transaction(contract, params, signer):
         params["gasPrice"],
         params["gasToken"],
         params["refundReceiver"],
-        nonce
+        nonce,
     )
 
     hash = contract.getTransactionHash(
@@ -280,7 +275,7 @@ def exec_transaction(contract, params, signer):
         params["gasPrice"],
         params["gasToken"],
         params["refundReceiver"],
-        nonce
+        nonce,
     )
 
     console.log("Transaction Data", params)

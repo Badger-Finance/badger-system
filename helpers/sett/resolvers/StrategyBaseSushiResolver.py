@@ -19,10 +19,14 @@ class StrategyBaseSushiResolver(StrategyCoreResolver):
         assert after.get("strategy.balanceOf") >= before.get("strategy.balanceOf")
 
         # PPFS should not decrease
-        assert after.get("sett.pricePerFullShare") >= before.get("sett.pricePerFullShare")
+        assert after.get("sett.pricePerFullShare") >= before.get(
+            "sett.pricePerFullShare"
+        )
 
         # Sushi in badger tree should increase
-        assert after.balances("xsushi", "badgerTree") >= before.balances("xsushi", "badgerTree")
+        assert after.balances("xsushi", "badgerTree") >= before.balances(
+            "xsushi", "badgerTree"
+        )
 
         # Strategy should have no sushi
         assert after.balances("sushi", "strategy") == 0
@@ -38,16 +42,16 @@ class StrategyBaseSushiResolver(StrategyCoreResolver):
         print(tabulate(table, headers=["account", "value"]))
 
     def confirm_harvest_events(self, before, after, tx):
-        key = 'HarvestState'
+        key = "HarvestState"
         assert key in tx.events
         assert len(tx.events[key]) == 1
         event = tx.events[key][0]
         keys = [
-            'xSushiHarvested',
-            'totalxSushi',
-            'toStrategist',
-            'toGovernance',
-            'toBadgerTree',
+            "xSushiHarvested",
+            "totalxSushi",
+            "toStrategist",
+            "toGovernance",
+            "toBadgerTree",
         ]
         for key in keys:
             assert key in event
@@ -60,10 +64,12 @@ class StrategyBaseSushiResolver(StrategyCoreResolver):
         # Expect Increase xSushi position in strategy if we have tended sushi.
         event = tx.events["Tend"][0]
         if event["tended"] > 0:
-            assert after.balances("xsushi", "strategy") > before.balances("xsushi", "strategy")
+            assert after.balances("xsushi", "strategy") > before.balances(
+                "xsushi", "strategy"
+            )
 
     def add_entity_balances_for_tokens(self, calls, tokenKey, token, entities):
-        entities['badgerTree'] = self.manager.strategy.badgerTree()
+        entities["badgerTree"] = self.manager.strategy.badgerTree()
         super().add_entity_balances_for_tokens(calls, tokenKey, token, entities)
         return calls
 

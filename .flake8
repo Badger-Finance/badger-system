@@ -1,0 +1,17 @@
+[flake8]
+max-line-length = 88
+extend-ignore = E203,F403,F405
+exclude =
+    airdrop,
+    build,
+    contracts,
+    contracts-draft,
+    contracts-reference,
+    depedency-artifacts,
+    deps,
+    interfaces,
+    logs,
+    venv,
+    node_modules
+
+

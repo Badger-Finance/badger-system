@@ -85,12 +85,14 @@ def main():
 
     unlockLogic = UnlockScheduler.at("0xc63d8a22d18dd42a9de8343fd7c888bda3e7516d")
 
-    print(unlockLogic.initialize.encode_input(
+    print(
+        unlockLogic.initialize.encode_input(
             badger.opsMultisig, badger.opsMultisig, badger.guardian, badger.opsMultisig
-        ))
+        )
+    )
 
     # dep2 = accounts.load("badger-deployer-2")
-    
+
     unlockProxy = UnlockScheduler.at("0x1AADc00011939499a4d263d657Dd74b0E1176cF9")
 
     # unlockProxy = deploy_proxy(
