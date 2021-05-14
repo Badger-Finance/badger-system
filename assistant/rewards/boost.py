@@ -12,6 +12,7 @@ from assistant.badger_api.prices import (
 )
 
 from assistant.rewards.classes.UserBalance import UserBalance, UserBalances
+from assistant.rewards.nfts import calc_nft_multipliers
 
 prices = fetch_token_prices()
 console = Console()
@@ -55,13 +56,14 @@ def calc_boost(percentages):
     return boosts
 
 
-def calc_stake_ratio(address, diggSetts, badgerSetts, nonNativeSetts):
+def calc_stake_ratio(address, diggSetts, badgerSetts, nonNativeSetts, nftBoosts):
+    nftBoost = nftBoost.get(address, 1)
     diggBalance = getattr(diggSetts[address], "balance", 0)
     badgerBalance = getattr(badgerSetts[address], "balance", 0)
     nonNativeBalance = getattr(nonNativeSetts[address], "balance", 0)
     if nonNativeBalance == 0:
         return 0
-    return (diggBalance + badgerBalance) / nonNativeBalance
+    return (nftBoost * diggBalance + badgerBalance) / nonNativeBalance
 
 
 def calc_union_addresses(diggSetts, badgerSetts, nonNativeSetts):
@@ -79,7 +81,9 @@ def filter_dust(balances):
 
 
 def badger_boost(badger, currentBlock):
+
     console.log("Calculating boost ...")
+
     allSetts = badger.sett_system.vaults
     diggSetts = UserBalances()
     badgerSetts = UserBalances()
@@ -128,8 +132,15 @@ def badger_boost(badger, currentBlock):
     console.log(
         "{} addresses collected for boost calculation".format(len(allAddresses))
     )
+
+    console.log("Calculating NFT Multipliers ...")
+
+    nft_multipliers = calc_nft_multipliers(currentBlock)
+    with open("nft_scores.json", "w") as fp:
+        json.dump(scores, fp)
+
     stakeRatiosList = [
-        calc_stake_ratio(addr, diggSetts, badgerSetts, nonNativeSetts)
+        calc_stake_ratio(addr, diggSetts, badgerSetts, nonNativeSetts, nft_multipliers)
         for addr in allAddresses
     ]
     stakeRatios = dict(zip(allAddresses, stakeRatiosList))

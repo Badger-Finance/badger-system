@@ -18,6 +18,52 @@ sett_subgraph_url = subgraph_config["setts"]
 sett_transport = AIOHTTPTransport(url=sett_subgraph_url)
 sett_client = Client(transport=sett_transport, fetch_schema_from_transport=True)
 
+nft_subgraph_url = subgraph_config["nfts"]
+nft_transport = AIOHTTPTransport(url=nft_subgraph_url)
+nft_client = Client(transport=nft_transport, fetch_schema_from_transport=True)
+
+
+def fetch_nfts(block):
+    query = gql(
+        """
+    query fetch_nfts($blockHeight: Block_height, $lastUserId:User_filter) {
+        users(first:1000,where: $lastUserId,block: $blockHeight) {
+            id
+            tokens {
+              token {
+                id
+                tokenId
+              }
+              amount
+            }
+        }
+    }
+    """
+    )
+    lastUserId = ""
+    variables = {"blockHeight": {"number": block}}
+    users = []
+    while True:
+        variables["lastUserId"] = {"id_gt": lastUserId}
+        results = nft_client.execute(query, variable_values=variables)
+        new_users = results["users"]
+        console.log(len(new_users))
+        if len(new_users) == 0:
+            break
+        if len(new_users) > 0:
+            lastUserId = new_users[-1]["id"]
+
+        users = [*new_users, *users]
+
+    tokenIds = [97, 98, 99, 100, 101, 102, 205, 206, 208, 1]
+    for user in users:
+        user["tokens"] = filter(lambda t: int(t["amount"]) > 0, user["tokens"])
+        user["tokens"] = filter(
+            lambda t: int(t["token"]["tokenId"]) in tokenIds, user["tokens"]
+        )
+
+    return users
+
 
 @lru_cache(maxsize=None)
 def fetch_sett_balances(key, settId, startBlock):
