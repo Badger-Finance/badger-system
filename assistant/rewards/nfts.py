@@ -23,7 +23,7 @@ MAX_NFT_BOOST = 0.5
 score_multipliers = {"partner": 1, "collab": 2, "badger": 5}
 
 honeypot_rarity = {97: 500, 98: 500, 99: 100, 100: 100, 101: 10, 102: 10}
-diamond_hands_rarity = {205: 200, 205: 50, 208: 10}
+diamond_hands_rarity = {205: 200, 206: 50, 208: 10}
 jersey_rarity = {1: 200}
 memeAddress = "0xe4605d46fd0b3f8329d936a8b258d69276cba264"
 badgerNftAddress = "0xe1e546e25a5ed890dff8b8d005537c0d373497f8"
@@ -33,7 +33,7 @@ def calc_total_nfts_score(rarities, multiplier_type):
     return sum(
         [
             calc_score(int(k), score_multipliers[multiplier_type])
-            for k in rarities.keys()
+            for k in rarities.values()
         ]
     )
 
@@ -53,41 +53,33 @@ def calc_nft_multipliers(block):
     totalHoneypotScore = calc_total_nfts_score(honeypot_rarity, "partner")
     totalDiamondScore = calc_total_nfts_score(diamond_hands_rarity, "collab")
     totalJerseyScore = calc_total_nfts_score(jersey_rarity, "badger")
+    maxScore = totalJerseyScore + totalHoneypotScore + totalDiamondScore
+    console.log(maxScore)
+    nftMultipliers = {}
+    for addr, score in userScores.items():
+        mult = (score / maxScore * 0.5) + 1
+        nftMultipliers[addr] = {"score": score, "multiplier": mult}
 
-    percentages = calc_percentages(
-        userScores, totalDiamondScore + totalDiamondScore + totalJerseyScore
-    )
-    for addr, perc in percentages.items():
-        percentages[addr] = 1.5 * perc
-
-    return percentages
+    return nftMultipliers
 
 
 def calc_percentages(d, max_score):
     for k, v in d.items():
-        d[k] = v / max_score
+        d[k] = (v / max_score) * 0.5
     return d
 
 
 def calc_nft_score(nft):
-    console.log(nft)
     tokenId = int(nft["token"]["tokenId"])
     nftAddress = nft["token"]["id"].split("-")[0]
     if nftAddress == memeAddress:
-        console.log("memeAddress")
-        console.log(tokenId)
 
-        console.log(honeypot_rarity.keys())
         if tokenId in honeypot_rarity.keys():
-            print("honeypot")
             return honeypot_score(nft)
         elif tokenId in diamond_hands_rarity.keys():
-            print("diamond_hands")
             return diamond_hands_score(nft)
     if nftAddress == badgerNftAddress:
-        console.log("badgerNftAddress")
         if tokenId in jersey_rarity.keys():
-            print("jersey")
             return jersey_score(nft)
     return 0
 
