@@ -54,7 +54,6 @@ def calc_nft_multipliers(block):
     totalDiamondScore = calc_total_nfts_score(diamond_hands_rarity, "collab")
     totalJerseyScore = calc_total_nfts_score(jersey_rarity, "badger")
     maxScore = totalJerseyScore + totalHoneypotScore + totalDiamondScore
-    console.log(maxScore)
     nftMultipliers = {}
     for addr, score in userScores.items():
         mult = (score / maxScore * 0.5) + 1

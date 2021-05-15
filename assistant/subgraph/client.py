@@ -24,6 +24,7 @@ nft_client = Client(transport=nft_transport, fetch_schema_from_transport=True)
 
 
 def fetch_nfts(block):
+    console.log("Fetching Nfts at block {}".format(block))
     query = gql(
         """
     query fetch_nfts($blockHeight: Block_height, $lastUserId:User_filter) {
@@ -47,7 +48,8 @@ def fetch_nfts(block):
         variables["lastUserId"] = {"id_gt": lastUserId}
         results = nft_client.execute(query, variable_values=variables)
         new_users = results["users"]
-        console.log(len(new_users))
+        console.log("Fetching {} users nfts".format(len(new_users)))
+
         if len(new_users) == 0:
             break
         if len(new_users) > 0:
@@ -299,6 +301,7 @@ def fetch_sushi_harvest_events():
 
 def fetch_wallet_balances(badger_price, digg_price, digg, blockNumber):
     increment = 1000
+    console.log("Fetching Badger and Digg token balances at {}".format(blockNumber))
     query = gql(
         """
         query fetchWalletBalance($firstAmount: Int, $lastID: ID,$blockNumber:Block_height) {
@@ -320,7 +323,6 @@ def fetch_wallet_balances(badger_price, digg_price, digg, blockNumber):
     badger_balances = {}
     digg_balances = {}
     sharesPerFragment = digg.logic.UFragments._sharesPerFragment()
-    console.log(sharesPerFragment)
     while continueFetching:
         variables = {
             "firstAmount": increment,
