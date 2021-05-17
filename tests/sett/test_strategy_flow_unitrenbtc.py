@@ -35,6 +35,7 @@ def test_single_user_harvest_flow(settConfig):
 
     tendable = strategy.isTendable()
 
+    distribute_from_whales(deployer);
     startingBalance = want.balanceOf(deployer)
 
     depositAmount = 50 * 1e8 # renBTC decimal is 8
