@@ -20,7 +20,7 @@ def skip_messages(estimated_profit, req_profit_estimate):
             console.log('continuing with harvest')
             
 
-def harvest_all(badger: BadgerSystem, skip, req_profit_estimate: bool):
+def harvest_all(badger: BadgerSystem, skip, req_profit_estimate=False):
     for key, vault in badger.sett_system.vaults.items():
         if key in skip:
             continue
@@ -62,7 +62,6 @@ def harvest_all(badger: BadgerSystem, skip, req_profit_estimate: bool):
 
 def main():
     badger = connect_badger(load_keeper=True)
-    req_profit_estimate = False
 
     if rpc.is_active():
         """
@@ -73,4 +72,4 @@ def main():
         accounts[0].transfer(badger.guardian, Wei("5 ether"))
 
     skip = keeper_config.get_active_chain_skipped_setts("harvest")
-    harvest_all(badger, skip, req_profit_estimate)
+    harvest_all(badger, skip)
