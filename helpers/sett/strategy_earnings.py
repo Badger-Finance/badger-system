@@ -16,31 +16,35 @@ def get_harvest_earnings(badger: BadgerSystem, strategy: Contract, key: str, ove
     console.log("token for strategy at", strategy.address, "not found")
     return 'skip'
 
+  token_address = get_address(token)
+  if not type(token_address) == str:
+      console.log("address for token", token, "not found")
+      return 'skip'
+
   if key == 'harvest.renCrv':
     metafarm = "0xae024f29c26d6f71ec71658b1980189956b0546d"
     earnings = Contract.from_explorer(metafarm).balanceOf(strategy.address)
-    token = harvest_registry.farmToken
     token_address = harvest_registry.farmToken
 
   elif key.endswith('Crv'):
     crv_gauge = Contract.from_explorer(strategy.gauge())
-    token_address = eth_registry.tokens[token.lower()]
-    if not type(token_address) == str:
-      console.log("address for token", token, "not found")
-      return 'skip'
     earnings = crv_gauge.claimable_tokens.call(strategy.address, overrides)
+
+  elif is_xsushi_strategy(badger, strategy):
+    harvest_data = strategy.harvest.call(overrides)
+    earnings = harvest_data[0]
   
   else:
     console.log('Profit estimation not supported yet for strategy at', strategy.address)
     return 'skip'
 
-  if earnings > 0: price = get_price(token, sellAmount=earnings)
+  if earnings > 0: price = get_price(token_address, sellAmount=earnings)
   else: price = get_price(token)
 
   token_contract = interface.IERC20(token_address)
   decimals = token_contract.decimals()
   eth_profit = earnings / (10**decimals) * float(price)
-  console.log("harvest earnings:", token, "earnings:", earnings, "price:", price, "eth profit:", eth_profit)
+  console.log("harvest token:", token, "earnings:", earnings, "price:", price, "eth profit:", eth_profit)
 
   return eth_profit
 
@@ -70,7 +74,6 @@ def get_price(token: str, buyToken="WETH", sellAmount=1000000000000000000, netwo
 
 
 def get_symbol(badger: BadgerSystem, strategy: str):
-
   if is_crv_strategy(badger, strategy):
     return curve_registry.symbol
   if is_badger_strategy(badger, strategy):
@@ -78,7 +81,7 @@ def get_symbol(badger: BadgerSystem, strategy: str):
   if is_digg_strategy(badger, strategy):
     return digg_registry.symbol
   if is_xsushi_strategy(badger, strategy):
-    return sushi_registry.xSushiSymbol
+    return sushi_registry.symbol_xsushi
   if is_farm_strategy(badger, strategy):
     return harvest_registry.symbol
 
@@ -105,3 +108,9 @@ def is_digg_strategy(badger: BadgerSystem, strategy: str):
 
 def is_xsushi_strategy(badger: BadgerSystem, strategy: str):
   return strategy == badger.getStrategy("native.sushiWbtcEth")
+
+
+def get_address(token: str):
+  if token == 'XSUSHI':
+    return eth_registry.tokens.xSushi
+  return eth_registry.tokens[token.lower()]

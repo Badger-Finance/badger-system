@@ -62,6 +62,7 @@ def harvest_all(badger: BadgerSystem, skip, req_profit_estimate=False):
 
 def main():
     badger = connect_badger(load_keeper=True)
+    skip = keeper_config.get_active_chain_skipped_setts("harvest")
 
     if rpc.is_active():
         """
@@ -70,6 +71,6 @@ def main():
         accounts[0].transfer(badger.deployer, Wei("5 ether"))
         accounts[0].transfer(badger.keeper, Wei("5 ether"))
         accounts[0].transfer(badger.guardian, Wei("5 ether"))
+        skip.append('yearn.wbtc')
 
-    skip = keeper_config.get_active_chain_skipped_setts("harvest")
     harvest_all(badger, skip)
