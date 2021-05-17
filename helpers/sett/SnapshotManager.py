@@ -271,8 +271,9 @@ class SnapshotManager:
         earnings = get_harvest_earnings(self.badger, self.strategy, key, overrides)
         if earnings == 'skip': return earnings
 
-        profit = earnings - (gas_cost / 10**18)
-        console.log('expected gas cost (in wei):', gas_cost, 'expected earnings (in ETH):', earnings, 'expected profits (in ETH)', profit)
+        gas_cost_eth = gas_cost / 10**9
+        profit = earnings - gas_cost_eth
+        console.log('(ETH) expected gas cost:', gas_cost_eth, 'expected earnings:', earnings, 'expected profits', profit)
         return profit
 
     def estimateProfitHarvest(self, key, overrides):
@@ -280,8 +281,9 @@ class SnapshotManager:
         earnings = get_harvest_earnings(self.badger, self.strategy, key, overrides)
         if earnings == 'skip': return earnings
         
-        profit = earnings - (gas_cost / 10**18)
-        console.log('expected gas cost (in wei):', gas_cost, 'expected earnings (in ETH):', earnings, 'expected profits (in ETH)', profit)
+        gas_cost_eth = gas_cost / 10**9
+        profit = earnings - gas_cost_eth
+        console.log('(ETH) expected gas cost:', gas_cost_eth, 'expected earnings:', earnings, 'expected profits', profit)
         return profit
 
     def format(self, key, value):
