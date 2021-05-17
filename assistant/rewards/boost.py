@@ -148,12 +148,21 @@ def badger_boost(badger, currentBlock):
         for addr in allAddresses
     ]
     stakeRatios = dict(zip(allAddresses, stakeRatiosList))
+
     stakeRatios = OrderedDict(
         sorted(stakeRatios.items(), key=lambda t: t[1], reverse=True)
     )
+
+    def filterBalance(kv):
+        return stakeRatios[kv[0]] != 0
+
+    console.log(len(nonNativeSetts.userBalances))
+    filteredNonNative = dict(filter(filterBalance, nonNativeSetts.userBalances.items()))
+    console.log(len(filteredNonNative))
+
     sortedNonNative = UserBalances(
         sorted(
-            nonNativeSetts.userBalances.values(),
+            filteredNonNative.values(),
             key=lambda u: stakeRatios[u.address],
             reverse=True,
         )
@@ -169,6 +178,5 @@ def badger_boost(badger, currentBlock):
     badgerBoost = dict(
         zip(cumulativePercentages.keys(), calc_boost(cumulativePercentages.values()))
     )
-    console.log(len(badgerBoost))
 
     return badgerBoost

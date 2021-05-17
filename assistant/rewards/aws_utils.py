@@ -105,7 +105,7 @@ def upload(fileName, bucket="badger-json", publish=True):
         )
 
 
-def upload_boosts(test):
+def upload_boosts(test=False):
     fileName = "badger-boosts.json"
 
     if test:
