@@ -108,7 +108,7 @@
             "native.sushiDiggWbtc": "Sett",
             "yearn.wbtc": "AffiliateTokenGatedUpgradeable",
             "experimental.sushiIBbtcWbtc": "Sett",
-            "experimental.digg": "Sett"
+            "experimental.digg": "SettV3"
         },
         "strategies": {
             "native.badger": "0x75b8E21BD623012Efb3b69E1B562465A68944eE6",
