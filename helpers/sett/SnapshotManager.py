@@ -170,6 +170,8 @@ class SnapshotManager:
             return StrategyBasePancakeResolver(self)
         if name == "StrategyUniGenericLp":
             return StrategyUniGenericLpResolver(self)
+        if name == "StabilizeStrategyDiggV1":
+            return StabilizeStrategyDiggV1Resolver(self)
 
     def settTend(self, overrides, confirm=True):
         user = overrides["from"].address
