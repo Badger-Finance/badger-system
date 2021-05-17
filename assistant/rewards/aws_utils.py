@@ -117,6 +117,17 @@ def upload_boosts(test):
     console.log("✅ Uploaded file to s3://" + bucket + "/" + fileName)
 
 
+def upload_nft_scores(test=True):
+    fileName = "nft_scores.json"
+    if test:
+        bucket = "badger-staging-merkle-proofs"
+    else:
+        bucket = "badger-merkle-proofs"
+    console.log("Uploading file to s3://" + bucket + "/" + fileName)
+    s3.upload_file(fileName, bucket, fileName)
+    console.log("✅ Uploaded file to s3://" + bucket + "/" + fileName)
+
+
 def upload_analytics(fileName):
     bucket = "badger-analytics"
     console.log(fileName)

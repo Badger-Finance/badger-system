@@ -1,7 +1,7 @@
 from brownie import *
 import json
 from rich.console import Console
-from assistant.rewards.aws_utils import upload_boosts
+from assistant.rewards.aws_utils import upload_nft_scores
 from assistant.subgraph.client import fetch_wallet_balances
 from helpers.constants import BADGER, DIGG
 from collections import OrderedDict
@@ -140,6 +140,8 @@ def badger_boost(badger, currentBlock):
     nft_multipliers = calc_nft_multipliers(currentBlock)
     with open("nft_scores.json", "w") as fp:
         json.dump(nft_multipliers, fp)
+
+    upload_nft_scores()
 
     stakeRatiosList = [
         calc_stake_ratio(addr, diggSetts, badgerSetts, nonNativeSetts, nft_multipliers)
