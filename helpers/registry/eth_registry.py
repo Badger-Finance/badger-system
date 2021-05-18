@@ -33,6 +33,7 @@ multicall = "0xeefba1e63905ef1d7acba5a8513c70307c1ce441"
 multisend = "0x8D29bE29923b68abfDD21e541b9374737B49cdAD"
 
 compound_registry = DotMap(
+    comptroller=web3.toChecksumAddress("0x3d9819210a31b4961b30ef54be2aed79b9c9cd3b"),
     cTokens=DotMap(usdc="0x39AA39c021dfbaE8faC545936693aC917d5E7563")
 )
 
@@ -71,7 +72,6 @@ sushi_registry = DotMap(
     ),
     pids=DotMap(sushiBadgerWBtc=73, sushiEthWBtc=21),
 )
-
 
 yearn_registry = YearnRegistry(
     registry="0x50c1a2ea0a861a967d9d0ffe2ae4012c2e053804",
@@ -143,6 +143,7 @@ eth_registry = ChainRegistry(
     yearn=yearn_registry,
     aave=aave_registry,
     chainlink=chainlink_registry,
+    compound=compound_registry,
     defidollar=defidollar_registry,
 )
 
@@ -162,6 +163,7 @@ eth_registry.tokens = DotMap(
     usdp=web3.toChecksumAddress("0x1456688345527bE1f37E9e627DA0837D6f08C925"),
     ibbtc=web3.toChecksumAddress("0xc4E15973E6fF2A35cC804c2CF9D2a1b817a8b40F"),
     dfd=web3.toChecksumAddress("0x20c36f062a31865bed8a5b1e512d9a1a20aa333a"),
+    ausdc="0xBcca60bB61934080951369a648Fb03DF4F96263C"
 )
 
 eth_registry.whales = DotMap(
