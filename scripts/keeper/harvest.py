@@ -11,16 +11,15 @@ from tabulate import tabulate
 
 gas_strategies.set_default_for_active_chain()
 
-def skip_messages(estimated_profit, req_profit_estimate):
-    if estimated_profit == 'skip':
-        console.log('profit estimation unsuccessful')
-        if req_profit_estimate: 
-            console.log('skipping harvest')
-        else:
-            console.log('continuing with harvest')
-            
+def harvest_all(badger: BadgerSystem, skip, min_profit=0):
+    """
+    Runs harvest function for strategies if they are expected to be profitable.
+    If a profit estimate fails for any reason the default behavior is to treat it as having a profit of zero.
 
-def harvest_all(badger: BadgerSystem, skip, req_profit_estimate=False):
+    :param badger: badger system
+    :param skip: strategies to skip checking
+    :param min_profit: minimum estimated profit (in ETH) required for harvest to be executed on chain
+    """
     for key, vault in badger.sett_system.vaults.items():
         if key in skip:
             continue
@@ -38,15 +37,13 @@ def harvest_all(badger: BadgerSystem, skip, req_profit_estimate=False):
         before = snap.snap()
         if strategy.keeper() == badger.badgerRewardsManager:
             estimated_profit = snap.estimateProfitHarvestViaManager(key, strategy, {"from": keeper, "gas_limit": 2000000, "allow_revert": True})
-            skip_messages(estimated_profit, req_profit_estimate)
-            if not req_profit_estimate or estimated_profit > 0:
+            if estimated_profit >= min_profit:
                 snap.settHarvestViaManager(
                     strategy, {"from": keeper, "gas_limit": 2000000, "allow_revert": True}, confirm=False,
                 )
         else:
             estimated_profit = snap.estimateProfitHarvest(key, {"from": keeper, "gas_limit": 2000000, "allow_revert": True})
-            skip_messages(estimated_profit, req_profit_estimate)
-            if not req_profit_estimate or estimated_profit > 0:
+            if estimated_profit >= min_profit:
                 snap.settHarvest(
                     {"from": keeper, "gas_limit": 2000000, "allow_revert": True}, confirm=False,
                 )
@@ -71,6 +68,8 @@ def main():
         accounts[0].transfer(badger.deployer, Wei("5 ether"))
         accounts[0].transfer(badger.keeper, Wei("5 ether"))
         accounts[0].transfer(badger.guardian, Wei("5 ether"))
+
+        skip.append('native.test')
         skip.append('yearn.wbtc')
 
     harvest_all(badger, skip)

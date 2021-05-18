@@ -1,17 +1,17 @@
 from brownie import *
 from rich.console import Console
 from scripts.systems.badger_system import BadgerSystem
+from helpers.network import network_manager
 from helpers.registry.eth_registry import curve_registry, badger_registry, sushi_registry, digg_registry, harvest_registry, eth_registry
+from helpers.registry.bsc_registry import bsc_registry
 import requests
 
 console = Console()
-
-endpoint = "https://api.0x.org/"
-endpoint_bsc = "https://bsc.api.0x.org/"
+curr_network = network_manager.get_active_network()
 
 # returns harvest earnings denominated in eth
 def get_harvest_earnings(badger: BadgerSystem, strategy: Contract, key: str, overrides):
-  token = get_symbol(badger, strategy)
+  token = get_symbol(key)
   if not token:
     console.log("token for strategy at", strategy.address, "not found")
     return 'skip'
@@ -30,7 +30,7 @@ def get_harvest_earnings(badger: BadgerSystem, strategy: Contract, key: str, ove
     crv_gauge = Contract.from_explorer(strategy.gauge())
     earnings = crv_gauge.claimable_tokens.call(strategy.address, overrides)
 
-  elif is_xsushi_strategy(badger, strategy):
+  elif is_xsushi_strategy(key) or is_pancake_strategy(key):
     harvest_data = strategy.harvest.call(overrides)
     earnings = harvest_data[0]
   
@@ -39,17 +39,21 @@ def get_harvest_earnings(badger: BadgerSystem, strategy: Contract, key: str, ove
     return 'skip'
 
   if earnings > 0: price = get_price(token_address, sellAmount=earnings)
-  else: price = get_price(token)
+  else: price = get_price(token_address)
 
   token_contract = interface.IERC20(token_address)
   decimals = token_contract.decimals()
   eth_profit = earnings / (10**decimals) * float(price)
-  console.log("harvest token:", token, "earnings:", earnings, "price:", price, "eth profit:", eth_profit)
+
+  if curr_network == "bsc":
+    console.log("harvest token:", token, "earnings:", earnings, "price in bnb:", price, "bnb profit:", eth_profit)
+  elif curr_network == "eth":
+    console.log("harvest token:", token, "earnings:", earnings, "price in eth:", price, "eth profit:", eth_profit)
 
   return eth_profit
 
 
-def get_price(token: str, buyToken="WETH", sellAmount=1000000000000000000, network="eth"):
+def get_price(token: str, sellAmount=1000000000000000000):
   """
   get_price uses the 0x api to get the most accurate eth price for the token
 
@@ -59,11 +63,17 @@ def get_price(token: str, buyToken="WETH", sellAmount=1000000000000000000, netwo
   :return: eth price of one token
   """
 
-  params = "swap/v1/quote?buyToken=" + buyToken + "&sellToken=" + token + "&sellAmount=" + str(sellAmount)
-  if network == "bsc":
-    r = requests.get(endpoint_bsc + params)
+  if curr_network == "bsc":
+    endpoint = "https://bsc.api.0x.org/"
+    buyToken="WBNB"
+  elif curr_network == "eth":
+    endpoint = "https://api.0x.org/"
+    buyToken="WETH"
   else:
-    r = requests.get(endpoint + params)
+    raise ValueError("Unrecognized network")
+
+  params = "swap/v1/quote?buyToken=" + buyToken + "&sellToken=" + token + "&sellAmount=" + str(sellAmount)
+  r = requests.get(endpoint + params)
   data = r.json()
 
   if not data.get('guaranteedPrice'):
@@ -73,44 +83,55 @@ def get_price(token: str, buyToken="WETH", sellAmount=1000000000000000000, netwo
   return data['guaranteedPrice'] 
 
 
-def get_symbol(badger: BadgerSystem, strategy: str):
-  if is_crv_strategy(badger, strategy):
-    return curve_registry.symbol
-  if is_badger_strategy(badger, strategy):
-    return badger_registry.symbol
-  if is_digg_strategy(badger, strategy):
-    return digg_registry.symbol
-  if is_xsushi_strategy(badger, strategy):
-    return sushi_registry.symbol_xsushi
-  if is_farm_strategy(badger, strategy):
-    return harvest_registry.symbol
+def get_symbol(key: str):
+  if curr_network == 'eth':
+    if is_crv_strategy(key):
+      return curve_registry.symbol
+    if is_badger_strategy(key):
+      return badger_registry.symbol
+    if is_digg_strategy(key):
+      return digg_registry.symbol
+    if is_xsushi_strategy(key):
+      return sushi_registry.symbol_xsushi
+    if is_farm_strategy(key):
+      return harvest_registry.symbol
+  elif curr_network == 'bsc':
+    if is_pancake_strategy(key):
+      return bsc_registry.pancake.symbol
 
 
-def is_farm_strategy(badger: BadgerSystem, strategy: str):
-  return strategy == badger.getStrategy('harvest.renCrv')
+def is_farm_strategy(key: str):
+  return key in ['harvest.renCrv']
 
 
-def is_crv_strategy(badger: BadgerSystem, strategy: str):
-  return strategy == badger.getStrategy("native.renCrv") or \
-    strategy == badger.getStrategy("native.sbtcCrv") or \
-    strategy == badger.getStrategy("native.tbtcCrv")
+def is_crv_strategy(key: str):
+  return key in ["native.renCrv", "native.sbtcCrv", "native.tbtcCrv"]
 
 
-def is_badger_strategy(badger: BadgerSystem, strategy: str):
-  return strategy == badger.getStrategy("native.uniBadgerWbtc") or \
-    strategy == badger.getStrategy("native.sushiBadgerWbtc")
+def is_badger_strategy(key: str):
+  return key in ["native.uniBadgerWbtc", "native.sushiBadgerWbtc"]
 
 
-def is_digg_strategy(badger: BadgerSystem, strategy: str):
-  return strategy == badger.getStrategy("native.uniDiggWbtc") or \
-    strategy == badger.getStrategy("native.sushiDiggWbtc")
+def is_digg_strategy(key: str):
+  return key in ["native.uniDiggWbtc", "native.sushiDiggWbtc"]
 
 
-def is_xsushi_strategy(badger: BadgerSystem, strategy: str):
-  return strategy == badger.getStrategy("native.sushiWbtcEth")
+def is_xsushi_strategy(key: str):
+  return key in ["native.sushiWbtcEth"]
+
+
+def is_pancake_strategy(key: str):
+  return key in ["native.pancakeBnbBtcb", "native.bBadgerBtcb", "native.bDiggBtcb"]
 
 
 def get_address(token: str):
-  if token == 'XSUSHI':
-    return eth_registry.tokens.xSushi
-  return eth_registry.tokens[token.lower()]
+  if curr_network == 'eth':
+    if token == 'XSUSHI':
+      return eth_registry.tokens.xSushi
+    return eth_registry.tokens[token.lower()]
+  elif curr_network == 'bsc':
+    if token == 'Cake':
+      return bsc_registry.pancake.cake
+    else:
+      return bsc_registry.tokens[token.lower()]
+    

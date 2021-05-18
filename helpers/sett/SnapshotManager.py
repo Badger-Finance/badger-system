@@ -269,21 +269,21 @@ class SnapshotManager:
     def estimateProfitHarvestViaManager(self, key, strategy, overrides):
         gas_cost = self.badger.badgerRewardsManager.harvest.estimate_gas(strategy, overrides)
         earnings = get_harvest_earnings(self.badger, self.strategy, key, overrides)
-        if earnings == 'skip': return earnings
+        if earnings == 'skip': return 0
 
         gas_cost_eth = gas_cost / 10**9
         profit = earnings - gas_cost_eth
-        console.log('(ETH) expected gas cost:', gas_cost_eth, 'expected earnings:', earnings, 'expected profits', profit)
+        console.log('expected gas cost:', gas_cost_eth, 'expected earnings:', earnings, 'expected profits', profit)
         return profit
 
     def estimateProfitHarvest(self, key, overrides):
         gas_cost = self.strategy.harvest.estimate_gas(overrides)
         earnings = get_harvest_earnings(self.badger, self.strategy, key, overrides)
-        if earnings == 'skip': return earnings
+        if earnings == 'skip': return 0
         
         gas_cost_eth = gas_cost / 10**9
         profit = earnings - gas_cost_eth
-        console.log('(ETH) expected gas cost:', gas_cost_eth, 'expected earnings:', earnings, 'expected profits', profit)
+        console.log('expected gas cost:', gas_cost_eth, 'expected earnings:', earnings, 'expected profits', profit)
         return profit
 
     def format(self, key, value):

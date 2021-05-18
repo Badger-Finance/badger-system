@@ -11,6 +11,7 @@ gnosis_safe_registry=DotMap(
     )
 pancake_registry=DotMap(
         cake="0x0e09fabb73bd3ade0a17ecc321fd13a19e81ce82",
+        symbol="Cake",
         syrup="0x009cF7bC57584b7998236eff51b98A168DceA9B0",
         masterChef="0x73feaa1eE314F8c655E354234017bE2193C9E24E",
         factoryV2="0xBCfCcbde45cE874adCB698cC183deBcF17952812",
