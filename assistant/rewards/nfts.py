@@ -41,23 +41,38 @@ def calc_total_nfts_score(rarities, multiplier_type):
 def calc_nft_multipliers(block):
     users = fetch_nfts(block)
     userScores = {}
+    userNfts = {}
+    nftMultipliers = {}
     for user in users:
         addr = user["id"]
         nfts = user["tokens"]
-        score = sum([calc_nft_score(nft) for nft in nfts])
-        if score == 0:
+        sumScores = 0
+        userNfts[addr] = []
+        for nft in nfts:
+            score = calc_nft_score(nft)
+            if score > 0:
+                sumScores += score
+                userNfts[addr].append(nft)
+
+        if sumScores == 0:
             continue
         else:
-            userScores[addr] = score
+            userScores[addr] = sumScores
 
     totalHoneypotScore = calc_total_nfts_score(honeypot_rarity, "partner")
     totalDiamondScore = calc_total_nfts_score(diamond_hands_rarity, "collab")
     totalJerseyScore = calc_total_nfts_score(jersey_rarity, "badger")
     maxScore = totalJerseyScore + totalHoneypotScore + totalDiamondScore
-    nftMultipliers = {}
+    console.log("Max NFT score: {}".format((maxScore)))
+
     for addr, score in userScores.items():
         mult = (score / maxScore * 0.5) + 1
-        nftMultipliers[addr] = {"score": score, "multiplier": mult}
+        nftMultipliers[addr] = {
+            "score": score,
+            "multiplier": mult,
+            "nfts": userNfts[addr],
+        }
+    console.log(nftMultipliers)
 
     return nftMultipliers
 

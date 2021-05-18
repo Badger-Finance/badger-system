@@ -68,7 +68,6 @@ def calc_snapshot(badger, name, startBlock, endBlock, nextCycle, boosts):
             console.log("{} Badger tokens distributed".format(badgerAmount))
 
         if tokenDistribution > 0:
-            console.print(len(userBalances))
             sumBalances = sum([b.balance for b in userBalances])
             rewardsUnit = tokenDistribution / sumBalances
             totalRewards = 0

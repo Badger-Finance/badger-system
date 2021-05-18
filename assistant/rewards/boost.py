@@ -58,8 +58,6 @@ def calc_boost(percentages):
 
 def calc_stake_ratio(address, diggSetts, badgerSetts, nonNativeSetts, nftBoosts):
     nftBoost = nftBoosts.get(address, {"multiplier": 1})["multiplier"]
-    if nftBoost != 1:
-        console.log(address, nftBoost)
     diggBalance = getattr(diggSetts[address], "balance", 0)
     badgerBalance = getattr(badgerSetts[address], "balance", 0)
     nonNativeBalance = getattr(nonNativeSetts[address], "balance", 0)
@@ -139,7 +137,7 @@ def badger_boost(badger, currentBlock):
 
     nft_multipliers = calc_nft_multipliers(currentBlock)
     with open("nft_scores.json", "w") as fp:
-        json.dump(nft_multipliers, fp)
+        json.dump(nft_multipliers, fp, indent=4)
 
     upload_nft_scores()
 

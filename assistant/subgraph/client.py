@@ -60,8 +60,8 @@ def fetch_nfts(block):
     tokenIds = [97, 98, 99, 100, 101, 102, 205, 206, 208, 1]
     for user in users:
         user["tokens"] = filter(lambda t: int(t["amount"]) > 0, user["tokens"])
-        user["tokens"] = filter(
-            lambda t: int(t["token"]["tokenId"]) in tokenIds, user["tokens"]
+        user["tokens"] = list(
+            filter(lambda t: int(t["token"]["tokenId"]) in tokenIds, user["tokens"])
         )
 
     return users
