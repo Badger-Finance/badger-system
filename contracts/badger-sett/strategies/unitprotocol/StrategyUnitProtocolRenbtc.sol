@@ -215,8 +215,7 @@ contract StrategyUnitProtocolRenbtc is StrategyUnitProtocolMeta {
     }
 
     function estimateRequiredUsdp3crv(uint256 _usdpAmt) public view returns (uint256) {
-        uint256[2] memory amounts = [_usdpAmt, 0];
-        return ICurveExchange(curvePool).calc_token_amount(amounts, false);
+        return _usdpAmt.mul(1e18).div(virtualPriceToWant());
     }
 
     function checkSlip(uint256 _usdpAmt) public view returns (bool) {
@@ -240,7 +239,7 @@ contract StrategyUnitProtocolRenbtc is StrategyUnitProtocolMeta {
         // use underestimate of current assets.
         uint256 virtualOut = virtualPriceToWant().mul(_usdp3crv).div(1e18);
         uint256 realOut = ICurveFi(curvePool).calc_withdraw_one_coin(_usdp3crv, 0);
-        return virtualOut > realOut ? realOut : virtualOut;
+        return virtualOut; // virtualOut > realOut? realOut : virtualOut;
     }
 
     /// @notice Specify tokens used in yield process, should not be available to withdraw via withdrawOther()
