@@ -26,14 +26,14 @@ contract SingleTokenVestingNonRevocable is OwnableUpgradeable {
 
     IERC20Upgradeable internal _token;
     // beneficiary of tokens after they are released
-    address private _beneficiary;
+    address internal _beneficiary;
 
     // Durations and timestamps are expressed in UNIX time, the same units as block.timestamp.
-    uint256 private _cliff;
-    uint256 private _start;
-    uint256 private _duration;
+    uint256 internal _cliff;
+    uint256 internal _start;
+    uint256 internal _duration;
 
-    uint256 private _released;
+    uint256 internal _released;
 
     /**
      * @dev Creates a vesting contract that vests its balance of any ERC20 token to the
@@ -112,7 +112,7 @@ contract SingleTokenVestingNonRevocable is OwnableUpgradeable {
     /**
      * @notice Transfers vested tokens to beneficiary.
      */
-    function release() public {
+    function release() public virtual {
         uint256 unreleased = _releasableAmount();
 
         require(unreleased > 0, "TokenVesting: no tokens are due");
@@ -131,14 +131,14 @@ contract SingleTokenVestingNonRevocable is OwnableUpgradeable {
     /**
      * @dev Calculates the amount that has already vested but hasn't been released yet.
      */
-    function _releasableAmount() private view returns (uint256) {
+    function _releasableAmount() internal view returns (uint256) {
         return _vestedAmount().sub(_released);
     }
 
     /**
      * @dev Calculates the amount that has already vested.
      */
-    function _vestedAmount() private view returns (uint256) {
+    function _vestedAmount() internal view returns (uint256) {
         uint256 currentBalance = _token.balanceOf(address(this));
         uint256 totalBalance = currentBalance.add(_released);
 

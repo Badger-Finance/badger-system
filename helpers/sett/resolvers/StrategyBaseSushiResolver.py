@@ -16,14 +16,13 @@ class StrategyBaseSushiResolver(StrategyCoreResolver):
         super().confirm_harvest(before, after, tx)
 
         # Strategy want should increase
-        before_balance = before.get("strategy.balanceOf")
-        assert after.get("strategy.balanceOf") >= before_balance if before_balance else 0
+        assert after.get("strategy.balanceOf") >= before.get("strategy.balanceOf")
 
         # PPFS should not decrease
         assert after.get("sett.pricePerFullShare") >= before.get("sett.pricePerFullShare")
 
         # Sushi in badger tree should increase
-        assert after.balances("xsushi", "badgerTree") > before.balances("xsushi", "badgerTree")
+        assert after.balances("xsushi", "badgerTree") >= before.balances("xsushi", "badgerTree")
 
         # Strategy should have no sushi
         assert after.balances("sushi", "strategy") == 0
@@ -79,7 +78,7 @@ class StrategyBaseSushiResolver(StrategyCoreResolver):
         calls = self.add_entity_balances_for_tokens(calls, "xsushi", xsushi, entities)
         return calls
 
-    def add_strategy_snap(self, calls):
+    def add_strategy_snap(self, calls, entities=None):
         super().add_strategy_snap(calls)
         return calls
 

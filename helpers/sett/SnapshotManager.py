@@ -9,7 +9,8 @@ from helpers.multicall import Multicall
 from helpers.registry import registry
 from helpers.sett.resolvers import (
     SettCoreResolver,
-    StrategyBadgerLpMetaFarmResolver,
+    StrategyBadgerLpMetaFarmResolver, 
+    StrategyBasePancakeResolver,
     StrategyHarvestMetaFarmResolver,
     StrategySushiBadgerWbtcResolver,
     StrategyBadgerRewardsResolver,
@@ -70,9 +71,8 @@ class Snap:
         return self.data["shares." + tokenKey + "." + accountKey]
 
     def get(self, key):
-
         if key not in self.data.keys():
-            assert False
+            raise Exception("Key {} not found in snap data".format(key))
         return self.data[key]
 
     # ===== Setters =====
@@ -113,7 +113,7 @@ class SnapshotManager:
         calls = self.resolver.add_balances_snap(calls, entities)
         calls = self.resolver.add_sett_snap(calls)
         # calls = self.resolver.add_sett_permissions_snap(calls)
-        calls = self.resolver.add_strategy_snap(calls)
+        calls = self.resolver.add_strategy_snap(calls, entities=entities)
         return calls
 
     def snap(self, trackedUsers=None):
@@ -126,10 +126,9 @@ class SnapshotManager:
                 entities[key] = user
 
         calls = self.add_snap_calls(entities)
-        multi = Multicall(calls)
 
-        # for call in calls:
-        #     print(call.target, call.function, call.args)
+        multi = Multicall(calls)
+        # multi.printCalls()
 
         data = multi()
         self.snaps[snapBlock] = Snap(
@@ -170,6 +169,8 @@ class SnapshotManager:
             return StrategySushiDiggWbtcLpOptimizerResolver(self)
         if name == "StrategyDiggLpMetaFarm":
             return StrategyDiggLpMetaFarmResolver(self)
+        if name == "StrategyPancakeLpOptimizer":
+            return StrategyBasePancakeResolver(self)
 
     def settTend(self, overrides, confirm=True):
         user = overrides["from"].address
@@ -179,6 +180,24 @@ class SnapshotManager:
         after = self.snap(trackedUsers)
         if confirm:
             self.resolver.confirm_tend(before, after, tx)
+
+    def settTendViaManager(self, strategy, overrides, confirm=True):
+        user = overrides["from"].address
+        trackedUsers = {"user": user}
+        before = self.snap(trackedUsers)
+        tx = self.badger.badgerRewardsManager.tend(strategy, overrides)
+        after = self.snap(trackedUsers)
+        if confirm:
+            self.resolver.confirm_tend(before, after, tx)
+
+    def settHarvestViaManager(self, strategy, overrides, confirm=True):
+        user = overrides["from"].address
+        trackedUsers = {"user": user}
+        before = self.snap(trackedUsers)
+        tx = self.badger.badgerRewardsManager.harvest(strategy, overrides)
+        after = self.snap(trackedUsers)
+        if confirm:
+            self.resolver.confirm_harvest(before, after, tx)
 
     def settHarvest(self, overrides, confirm=True):
         user = overrides["from"].address

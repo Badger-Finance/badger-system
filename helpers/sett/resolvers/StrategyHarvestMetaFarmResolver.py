@@ -27,7 +27,7 @@ class StrategyHarvestMetaFarmResolver(StrategyCoreResolver):
         assert (after.balances("farm", "badgerTree") >
             before.balances("farm", "badgerTree"))
 
-    def confirm_tend(self, before, after):
+    def confirm_tend(self, before, after, tx):
         # All FARM from underlying vaults should be harvested
         assert (before.get("vaultFarm.earned.strategy") >=
             after.get("vaultFarm.earned.strategy"))
@@ -66,7 +66,7 @@ class StrategyHarvestMetaFarmResolver(StrategyCoreResolver):
         calls = self.add_entity_balances_for_tokens(calls, "farm", farm, entities)
         return calls
 
-    def add_strategy_snap(self, calls):
+    def add_strategy_snap(self, calls, entities=None):
         super().add_strategy_snap(calls)
 
         strategy = self.manager.strategy

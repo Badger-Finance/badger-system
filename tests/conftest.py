@@ -6,12 +6,15 @@ from brownie import (
     accounts,
 )
 
-from config.badger_config import badger_config, digg_config
+from config.badger_config import badger_config, digg_config, sett_config
 from scripts.deploy.deploy_badger import deploy_flow
+from scripts.systems.badger_system import connect_badger
 from scripts.systems.badger_minimal import deploy_badger_minimal
+from scripts.systems.digg_minimal import deploy_digg_minimal
 from scripts.systems.constants import SettType
 from helpers.token_utils import distribute_test_ether
-from scripts.systems.badger_system import connect_badger
+from helpers.registry import registry
+from helpers.network import network_manager
 from tests.helpers import distribute_from_whales
 from tests.sett.fixtures import (
     SushiBadgerLpOptimizerMiniDeploy,
@@ -25,6 +28,9 @@ from tests.sett.fixtures import (
     SushiBadgerWBtcMiniDeploy,
     SushiDiggWbtcLpOptimizerMiniDeploy,
     UniDiggWbtcLpMiniDeploy,
+    SushiClawUSDCMiniDeploy,
+    PancakeMiniDeploy,
+    SushiWbtcIbBtcLpOptimizerMiniDeploy,
 )
 
 
@@ -47,17 +53,15 @@ def generate_sett_test_config(settsToRun, runTestSetts, runProdSetts=False):
 # ===== Sett + Strategy Test Configuration =====
 
 settsToRun = [
-    # "native.badger",
-    # "native.renCrv",
-    # "native.sbtcCrv",
-    # "native.tbtcCrv",
+    "native.badger",
+    "native.renCrv",
+    "native.sbtcCrv",
+    "native.tbtcCrv",
     # "harvest.renCrv",
-    # "native.uniBadgerWbtc",
-    # "sushi.sushiBadgerWBtc",
-    # "sushi.sushiWbtcWeth",
-    "native.digg",
-    # "native.uniDiggWbtc",
-    # "native.sushiDiggWbtc",
+    "native.uniBadgerWbtc",
+    "native.sushiBadgerWbtc",
+    "native.sushiWbtcEth",
+    "native.sushiWbtcIbBtc",
 ]
 
 diggSettsToRun = [
@@ -66,10 +70,34 @@ diggSettsToRun = [
     "native.sushiDiggWbtc",
 ]
 
+clawSettsToRun = [
+    "native.sushiSClawUSDC",
+    "native.sushiBClawUSDC",
+]
+
+# Setts w/ backing collateral for testing the CLAW emp contract.
+clawSettsSytheticTestsToRun = [
+    "native.badger",
+    "native.sushiWbtcEth",
+]
+
+bscSettsToRun = [
+    "native.pancakeBnbBtcb",
+]
+
 runTestSetts = True
 
-settTestConfig = generate_sett_test_config(settsToRun, runTestSetts)
+networkSettsMap = {
+    "eth": settsToRun,
+    "bsc": bscSettsToRun,
+}
+# NB: This is expected to fail if the network ID does not exist.
+baseSettsToRun = networkSettsMap[network_manager.get_active_network()]
+
+settTestConfig = generate_sett_test_config(baseSettsToRun, runTestSetts)
 diggSettTestConfig = generate_sett_test_config(diggSettsToRun, runTestSetts)
+clawSettTestConfig = generate_sett_test_config(clawSettsToRun, runTestSetts)
+clawSettSyntheticTestConfig = generate_sett_test_config(clawSettsSytheticTestsToRun, runTestSetts)
 
 
 @pytest.fixture(scope="function", autouse=True)
@@ -160,9 +188,9 @@ def badger_single_sett(settConfig, deploy=True):
                 keeper=keeper,
                 governance=governance,
             ).deploy(deploy=deploy)
-        if settId == "sushi.sushiBadgerWBtc":
+        if settId == "native.sushiBadgerWbtc":
             return SushiBadgerWBtcMiniDeploy(
-                "sushi.sushiBadgerWBtc",
+                "native.sushiBadgerWbtc",
                 "StrategySushiBadgerWbtc",
                 deployer,
                 strategist=strategist,
@@ -170,9 +198,9 @@ def badger_single_sett(settConfig, deploy=True):
                 keeper=keeper,
                 governance=governance,
             ).deploy(deploy=deploy)
-        if settId == "sushi.sushiWbtcWeth":
+        if settId == "native.sushiWbtcEth":
             return SushiBadgerLpOptimizerMiniDeploy(
-                "sushi.sushiWbtcWeth",
+                "native.sushiWbtcEth",
                 "StrategySushiLpOptimizer",
                 deployer,
                 strategist=strategist,
@@ -204,6 +232,56 @@ def badger_single_sett(settConfig, deploy=True):
             return SushiDiggWbtcLpOptimizerMiniDeploy(
                 "native.sushiDiggWbtc",
                 "StrategySushiDiggWbtcLpOptimizer",
+                deployer,
+                strategist=strategist,
+                guardian=guardian,
+                keeper=keeper,
+                governance=governance,
+            ).deploy(deploy=deploy)
+        if settId == "native.sushiSClawUSDC":
+            # Claw/USDC mini deploy can be used for any CLAW synthetic token.
+            return SushiClawUSDCMiniDeploy(
+                "native.sushiSClawUSDC",
+                "StrategySushiLpOptimizer",  # sushi lp optimizer strat is generic
+                deployer,
+                "sClaw",  # This specifies the name of the EMP contract on the CLAW system.
+                strategist=strategist,
+                guardian=guardian,
+                keeper=keeper,
+                governance=governance,
+            ).deploy(deploy=deploy)
+        if settId == "native.sushiBClawUSDC":
+            # Claw/USDC mini deploy can be used for any CLAW synthetic token.
+            return SushiClawUSDCMiniDeploy(
+                "native.sushiBClawUSDC",
+                "StrategySushiLpOptimizer",  # sushi lp optimizer strat is generic
+                deployer,
+                "bClaw",  # This specifies the name of the EMP contract on the CLAW system.
+                strategist=strategist,
+                guardian=guardian,
+                keeper=keeper,
+                governance=governance,
+            ).deploy(deploy=deploy)
+        if settId == "native.pancakeBnbBtcb":
+            return PancakeMiniDeploy.PancakeMiniDeploy(
+                "native.pancakeBnbBtcb",
+                "StrategyPancakeLpOptimzier",  # pancake lp optimizer strat is generic
+                deployer,
+                # Base strategy params (perf/withdrawal fees)
+                sett_config.pancake.pancakeBnbBtcb,
+                # Lp pair tokens (bnb/btcb) for this strategy.
+                [
+                    registry.tokens.btcb,
+                    registry.tokens.bnb,
+                ],
+                # Both want/pid are optional params and used for validation.
+                # In this case, both the lp token and pid (pool id) exist so we can pass them in.
+                want=registry.pancake.chefPairs.bnbBtcb,
+                pid=registry.pancake.chefPids.bnbBtcb,
+        if settId == "native.sushiWbtcIbBtc":
+            return SushiWbtcIbBtcLpOptimizerMiniDeploy(
+                "native.sushiWbtcIbBtc",
+                "StrategySushiLpOptimizer",
                 deployer,
                 strategist=strategist,
                 guardian=guardian,
@@ -253,6 +331,41 @@ def badger_tree_unit():
     )
 
     return badger
+
+
+@pytest.fixture(scope="function")
+def digg_distributor_unit():
+    badger = connect_badger(badger_config.prod_json)
+    deployer = badger.deployer
+    devProxyAdminAddress = badger.devProxyAdmin.address
+    daoProxyAdminAddress = badger.daoProxyAdmin.address
+    digg = deploy_digg_minimal(deployer, devProxyAdminAddress, daoProxyAdminAddress, owner=deployer)
+
+    # deployer should have eth but just in case
+    distribute_test_ether(badger.deployer, Wei("20 ether"))
+
+    digg.deploy_airdrop_distributor(
+        digg_config.airdropRoot,
+        badger.rewardsEscrow,
+        digg_config.reclaimAllowedTimestamp,
+    )
+
+    totalSupply = digg.token.totalSupply()
+    # 15% airdropped
+    digg.token.transfer(digg.diggDistributor, totalSupply * .15, {"from": deployer})
+
+    return digg
+
+
+@pytest.fixture(scope="function")
+def digg_distributor_prod_unit():
+    badger = connect_badger("deploy-final.json", load_deployer=True, load_keeper=True, load_guardian=True)
+    digg = connect_digg("deploy-final.json")
+    digg.token = digg.uFragments
+
+    badger.add_existing_digg(digg)
+    init_prod_digg(badger, badger.deployer)
+    return digg
 
 
 @pytest.fixture()

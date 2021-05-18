@@ -1,4 +1,5 @@
 from .SettCoreResolver import SettCoreResolver
+from .StrategyBasePancakeResolver import StrategyBasePancakeResolver
 from .StrategyBadgerLpMetaFarmResolver import StrategyBadgerLpMetaFarmResolver
 from .StrategyBadgerRewardsResolver import StrategyBadgerRewardsResolver
 from .StrategyCurveGaugeResolver import StrategyCurveGaugeResolver

@@ -4,9 +4,14 @@
     "guardian": "0x29F7F8896Fb913CF7f9949C623F896a154727919",
     "keeper": "0x872213E29C85d7e30F1C8202FC47eD1Ec124BB1D",
     "devProxyAdmin": "0x20Dce41Acca85E8222D6861Aa6D23B6C941777bF",
+    "opsProxyAdmin": "0x4599f2913a3db4e73aa77a304ccc21516dd7270d",
     "daoProxyAdmin": "0x11A9D034B1bbfbbDCaC9cB3b86ca7D5Df05140F2",
+    "testProxyAdmin": "0xB10b3Af646Afadd9C62D663dd5d226B15C25CdFA",
     "devMultisig": "0xB65cef03b9B89f99517643226d76e286ee999e77",
+    "opsMultisig": "0x576cD258835C529B54722F84Bb7d4170aA932C64",
     "treasuryMultisig": "0xD4868d98849a58F743787c77738D808376210292",
+    "timelock": "0x21CF9b77F88Adf8F8C98d7E33Fe601DC57bC0893",
+    "founderTimelock": "0x968363577759bb476DedFfc19E7a4eFc56175033",
     "token": "0x3472A5A71965499acd81997a54BBA8D852C6E53d",
     "logic": {
         "SmartVesting": "0x07c0E4f4C977a29c46Fb26597ea8C9105ca50b42",
@@ -14,12 +19,12 @@
         "RewardsEscrow": "0xC2Bc5fD13Ce64efD249234C870D64569155609cd",
         "BadgerGeyser": "0x51B44fFD22ddEaDdb46E28867aA9988DF919F381",
         "BadgerTree": "0x48eb9b000f8c0a60784d0f96092e08efdc1e4876",
+        "BadgerTreeV2": "0x603ad0e0e0fc873371bd1d98f06e567a8c752ac8",
         "BadgerHunt": "0xC5C8933073B1c682aE07b4bc22d2249c220884bE",
         "SimpleTimelock": "0x4e3f56bb996ed91ba8d97ea773d3f818730d1a6f",
         "Controller": "0x6354E79F21B56C11f48bcD7c451BE456D7102A36",
         "Sett": "0x175586ac3f8A7463499D1019A30120aa6fC67C5f",
-        "SettV1": "0xE4Ae305b08434bF3D74e0086592627F913a258A9",
-        "SettV1.1": "0x175586ac3f8A7463499D1019A30120aa6fC67C5f",
+        "SettV1": "0x5c7AdB3Fd0DF2D1822a36922dd941e16D2bF4E51",
         "StakingRewards": "0x6daCCed8D6d80b0e93a51A4303961678e8A46Fa5",
         "StakingRewardsSignalOnly": "0x752F5C9e91721dc7a7513106fbf249C46439A5EE",
         "StrategyBadgerRewards": "0x38b9344fFB931ABA6476198095e088024CdAC527",
@@ -41,7 +46,12 @@
         "StrategyDiggLpMetaFarm": "0xd0b1e9f652019B993dacdd97011557ec3b2B6019",
         "DiggDistributor": "0x9a7d4078068ebb39ffe471898212353cf661580c",
         "SimpleTimelockWithVoting": "0xa494351C6f392908321Ea90665628f7f521FE809",
-        "DiggSeeder": "0xfcC357420368195eE1F4B387d9d4335d26b0695F"
+        "DiggSeeder": "0xfcC357420368195eE1F4B387d9d4335d26b0695F",
+        "BadgerRewardsManager": "0xE8D0A73ED68231F209bdDB1b0AAcc37C38C16E45",
+        "UnlockScheduler": "0xC63d8A22D18dd42a9De8343Fd7C888bdA3E7516d",
+        "AffiliateTokenGatedUpgradeable": "0x9313cB1AAaD4E600DBd7Ed70f76fB8288EA84138",
+        "VipCappedGuestListWrapperUpgradeable": "0xa6aB825f86D9fDaFe9528f34f089A8473A3D85d3",
+        "SimpleWrapperGatedUpgradeable": "0xc0a972a3cf8e52167589694d135abb66409f9b30"
     },
     "dao": {
         "token": "0x3472A5A71965499acd81997a54BBA8D852C6E53d",
@@ -64,7 +74,22 @@
             "native.sushiBadgerWbtc": "0x1862A18181346EBd9EdAf800804f89190DeF24a5",
             "native.digg": "0x7e7E112A68d8D2E221E11047a72fFC1065c38e1a",
             "native.uniDiggWbtc": "0xC17078FDd324CC473F8175Dc5290fae5f2E84714",
-            "native.sushiDiggWbtc": "0x88128580ACdD9c04Ce47AFcE196875747bF2A9f6"
+            "native.sushiDiggWbtc": "0x88128580ACdD9c04Ce47AFcE196875747bF2A9f6",
+            "yearn.wbtc": "0x4b92d19c11435614cd49af1b589001b7c08cd4d5"
+        },
+        "vault_artifacts": {
+            "native.badger": "Sett",
+            "native.renCrv": "Sett",
+            "native.sbtcCrv": "Sett",
+            "native.tbtcCrv": "Sett",
+            "native.uniBadgerWbtc": "Sett",
+            "harvest.renCrv": "Sett",
+            "native.sushiWbtcEth": "Sett",
+            "native.sushiBadgerWbtc": "Sett",
+            "native.digg": "DiggSett",
+            "native.uniDiggWbtc": "Sett",
+            "native.sushiDiggWbtc": "Sett",
+            "yearn.wbtc": "AffiliateTokenGatedUpgradeable"
         },
         "strategies": {
             "native.badger": "0x75b8E21BD623012Efb3b69E1B562465A68944eE6",
@@ -110,6 +135,8 @@
     "rewardsEscrow": "0x19d099670a21bC0a8211a89B84cEdF59AbB4377F",
     "honeypotMeme": "0x9159D3BeaE435CEcC54d221675465D4C1AB04d87",
     "claimEncoder": "0xf3ff1a5856b1726a8fef921ea57eab2c51466a93",
+    "badgerRewardsManager": "0x5B60952481Eb42B66bdfFC3E049025AC5b91c127",
+    "unlockScheduler": "0x1AADc00011939499a4d263d657Dd74b0E1176cF9",
     "geysers": {
         "native.badger": "0xa9429271a28F8543eFFfa136994c0839E7d7bF77",
         "native.renCrv": "0x2296f174374508278DC12b806A7f27c87D53Ca15",
@@ -120,7 +147,8 @@
         "native.sushiWbtcEth": "0x612f681BCd12A0b284518D42D2DBcC73B146eb65",
         "native.sushiBadgerWbtc": "0xB5b654efBA23596Ed49FAdE44F7e67E23D6712e7",
         "native.uniDiggWbtc": "0x0194B5fe9aB7e0C43a08aCbb771516fc057402e7",
-        "native.sushiDiggWbtc": "0x7f6fe274e172ac7d096a7b214c78584d99ca988b"
+        "native.sushiDiggWbtc": "0x7f6fe274e172ac7d096a7b214c78584d99ca988b",
+        "yearn.wbtc": "0x155482D1e2cB0909333326504f0eA4350760c927"
     },
     "digg_system": {
         "owner": "0xDA25ee226E534d868f0Dd8a459536b03fEE9079b",
@@ -137,5 +165,31 @@
         "diggTeamVesting": "0x124FD4A9bd4914b32c77C9AE51819b1181dbb3D4",
         "diggDistributor": "0x5E79958EfbB8AFdeDB6EC7107110F329e4EAfffA",
         "diggSeeder": "0xb81fA24b359289b7bC8552dB6A2a606fa8B5B61c"
+    },
+    "airdrops": {
+        "gitcoinRound8": "0xd17c7effa924b55951e0f6d555b3a3ea34451179"
+    },
+    "pools": {
+        "uniDiggWbtc": "0xe86204c4eddd2f70ee00ead6805f917671f56c52",
+        "sushiDiggWbtc": "0x9a13867048e01c663ce8ce2fe0cdae69ff9f35e3"
+    },
+    "bridge_system": {
+        "adapter": "0x3e2Ba76558350c7DF7077379f7D429707623c9D2",
+        "logic": {
+            "BadgerBridgeAdapter": "0x835C1532f6fF4022fF098C752c1D008cd444b7a3"
+        }
+    },
+    "swap_system": {
+        "router": "0x0e831bE5ED39fA9CaC685006d673A5e731967846",
+        "strategies": {
+            "curve": "0xFaE8bd34190615f3388f38191DC332B44C53e10B"
+        },
+        "logic": {
+            "SwapStrategyRouter": "0x2cb501d371ba2248BB48455D3293d47cE773E0F7",
+            "CurveSwapStrategy": "0x883c6631248605Ee33E99060B7E8910D3dAB2Cf3"
+        }
+    },
+    "test": {
+        "badgerTree": "0xc014c026d92c03cd3a8fdee6f2cafdc9254f5c9f"
     }
 }

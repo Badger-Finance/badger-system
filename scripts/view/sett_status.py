@@ -14,5 +14,6 @@ def main():
     for key in badger.sett_system.vaults.keys():
         snap = SnapshotManager(badger, key)
         state = snap.snap()
+        snap.printPermissions()
         snap.printTable(state)
 
