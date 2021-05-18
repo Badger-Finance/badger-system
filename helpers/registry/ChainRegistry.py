@@ -1,3 +1,4 @@
+from scripts.systems.CompoundSystem import CompoundSystem
 from scripts.systems.AaveSystem import AaveSystem
 from scripts.systems.YearnSystem import YearnSystem
 from scripts.systems.TokenSystem import TokenSystem
@@ -64,3 +65,8 @@ class ChainRegistry:
         if self.aave == None:
             raise Exception("No aave system registered")
         return AaveSystem(self)
+
+    def compound_system(self) -> CompoundSystem:
+        if self.aave == None:
+            raise Exception("No aave system registered")
+        return CompoundSystem(self)

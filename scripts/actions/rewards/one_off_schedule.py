@@ -34,10 +34,6 @@ from tabulate import tabulate
 from ape_safe import ApeSafe
 console = Console()
 pretty.install()
-from helpers.gas_utils import gas_strategies
-
-gas_strategies.set_default(gas_strategies.exponentialScalingFast)
-
 
 def main():
     badger = connect_badger(load_deployer=True)
@@ -46,18 +42,18 @@ def main():
     contracts = badger.contracts_upgradeable
     deployer = badger.deployer
 
-    # safe = ApeSafe(badger.opsMultisig.address)
-    # logger = safe.contract(badger.rewardsLogger.address)
+    safe = ApeSafe(badger.opsMultisig.address)
+    logger = safe.contract(badger.rewardsLogger.address)
 
     experimental_vault = "0x8a8ffec8f4a0c8c9585da95d9d97e8cd6de273de"
 
-    start = 1620432000
+    start = 1620943200
     duration = days(7)
     end = start + duration
 
-    badger_amount = int(Wei("1000 ether") * .9)
-    digg_amount = int(fragments_to_shares(0.1) * .9)
-    dfd_amount = int(Wei("31250 ether") * .9)
+    badger_amount = int(Wei("4000 ether") * .9)
+    digg_amount = int(fragments_to_shares(0.4) * .9)
+    dfd_amount = int(Wei("205131 ether") * .9)
 
     schedules = [
         LoggerUnlockSchedule((experimental_vault, badger.token.address, badger_amount, start, end, duration)),
@@ -67,18 +63,16 @@ def main():
 
     for i in range(0, len(schedules)):
         schedule = schedules[i]
-        # badger.rewardsLogger.modifyUnlockSchedule(
-        #     i,
-        #     schedule.beneficiary,
-        #     schedule.token,
-        #     schedule.amount,
-        #     schedule.start,
-        #     schedule.end,
-        #     schedule.duration,
-        #     {"from": badger.deployer}
-        # )
+        logger.setUnlockSchedule(
+            schedule.beneficiary,
+            schedule.token,
+            schedule.amount,
+            schedule.start,
+            schedule.end,
+            schedule.duration
+        )
 
     badger.print_logger_unlock_schedules(experimental_vault, name="Experimental iBBTC Vault")
     
-    # helper = ApeSafeHelper(badger, safe)
-    # helper.publish()
+    helper = ApeSafeHelper(badger, safe)
+    helper.publish()

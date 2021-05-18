@@ -108,7 +108,7 @@
             "native.sushiDiggWbtc": "Sett",
             "yearn.wbtc": "AffiliateTokenGatedUpgradeable",
             "experimental.sushiIBbtcWbtc": "Sett",
-            "experimental.digg": "Sett"
+            "experimental.digg": "SettV3"
         },
         "strategies": {
             "native.badger": "0x75b8E21BD623012Efb3b69E1B562465A68944eE6",
@@ -202,9 +202,9 @@
     },
     "bridge_system": {
         "adapter": "0xb6ea1d3fb9100a2Cf166FEBe11f24367b5FCD24A",
-        "curveTokenWrapper": "0x70579665c61CD49501d40C941C6E428d466ADD55",
+        "curveTokenWrapper": "0x65622D49e723a3b3e41b165aB6c0451d896B3C04",
         "logic": {
-            "BadgerBridgeAdapter": "0x8e38bbc7ff0D5253f7379290ACD88154257591Ff"
+            "BadgerBridgeAdapter": "0x1362E51C1aA40fD180824D4A7Fc4F27E2BB3EFE5"
         }
     },
     "swap_system": {
@@ -214,7 +214,7 @@
         },
         "logic": {
             "SwapStrategyRouter": "0x2cb501d371ba2248BB48455D3293d47cE773E0F7",
-            "CurveSwapStrategy": "0x883c6631248605Ee33E99060B7E8910D3dAB2Cf3"
+            "CurveSwapStrategy": "0x4f594f1C067177587617b964632a3CC164C29cE8"
         }
     },
     "test": {

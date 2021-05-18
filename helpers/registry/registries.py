@@ -43,7 +43,6 @@ class ContractRegistries:
 
     def get_active_chain_registry(self) -> ChainRegistry:
         network_id = network_manager.get_active_network()
-        print(network_id)
         if not self.has_registry(network_id):
             console.print("[red]Chain ID {} not found[/red]".format(network_id))
         return self.get_registry(network_id)
