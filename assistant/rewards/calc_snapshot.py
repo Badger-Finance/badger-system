@@ -3,7 +3,7 @@ from assistant.rewards.classes.RewardsList import RewardsList
 from assistant.rewards.classes.RewardsLog import rewardsLog
 from assistant.rewards.classes.Schedule import Schedule
 from helpers.time_utils import to_days, to_hours, to_utc_date
-from helpers.constants import NON_NATIVE_SETTS, NATIVE_DIGG_SETTS, DIGG
+from helpers.constants import NON_NATIVE_SETTS, NATIVE_DIGG_SETTS, DIGG, DFD
 from dotmap import DotMap
 from brownie import *
 from rich.console import Console
@@ -12,9 +12,7 @@ console = Console()
 digg = interface.IDigg(DIGG)
 
 
-def calc_snapshot(
-    badger, name, startBlock, endBlock, nextCycle, boosts, diggAllocation
-):
+def calc_snapshot(badger, name, startBlock, endBlock, nextCycle, boosts):
 
     console.log("==== Processing rewards for {} at {} ====".format(name, endBlock))
 
@@ -55,25 +53,18 @@ def calc_snapshot(
         startDist = get_distributed_for_token_at(token, startTime, schedules, name)
         tokenDistribution = int(endDist) - int(startDist)
         # Distribute to users with rewards list
-        # Make sure there are tokens to distribute (some geysers only
+        # Make sure there are tokens to distribute (some setts only
         # distribute one token)
         if token == DIGG:
-
-            # if name in NATIVE_DIGG_SETTS:
-            #    tokenDistribution = tokenDistribution * diggAllocation
-            # else:
-            #    tokenDistribution = tokenDistribution * (1 - diggAllocation)
-
             console.log(
                 "{} DIGG tokens distributed".format(
                     digg.sharesToFragments(tokenDistribution) / 1e18
                 )
             )
-        elif token == "0x20c36f062a31865bED8a5B1e512D9a1A20AA333A":
+        elif token == DFD:
             console.log("{} DFD tokens distributed".format(tokenDistribution / 1e18))
         else:
             badgerAmount = tokenDistribution / 1e18
-            rewardsLog.add_total_token_dist(name, token, badgerAmount)
             console.log("{} Badger tokens distributed".format(badgerAmount))
 
         if tokenDistribution > 0:

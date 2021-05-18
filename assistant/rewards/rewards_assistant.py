@@ -51,7 +51,7 @@ def calc_sett_rewards(badger, periodStartBlock, endBlock, cycle):
             continue
 
         settRewards, apyBoost = calc_snapshot(
-            badger, key, periodStartBlock, endBlock, cycle, boosts, 0
+            badger, key, periodStartBlock, endBlock, cycle, boosts
         )
         if len(apyBoost) > 0:
             minimum = min(apyBoost.values())
@@ -76,7 +76,7 @@ def calc_sett_rewards(badger, periodStartBlock, endBlock, cycle):
     with open("badger-boosts.json", "w") as fp:
         json.dump(boostsMetadata, fp)
 
-    upload_boosts(test=True)
+    upload_boosts()
 
     return rewards
 
