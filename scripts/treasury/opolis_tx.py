@@ -40,13 +40,9 @@ pretty.install()
 
 def main():
     badger = connect_badger()
-    multisig = badger.treasuryMultisig
+    multisig = badger.devMultisig
 
     safe = ApeSafe(multisig.address)
-
-    payments = load_ltcc_recipients("data/ltcc_recipients.csv")
-    payments.calc_totals()
-    payments.print_recipients()
 
     abi = Sett.abi
     bBadger = safe.contract_from_abi(
@@ -56,16 +52,23 @@ def main():
     usdcToken = safe.contract_from_abi(
         registry.tokens.usdc, "IERC20", interface.IERC20.abi
     )
+
     badgerToken = safe.contract_from_abi(
         badger.token.address, "IERC20", interface.IERC20.abi
     )
+
+    wbtcToken = safe.contract_from_abi(
+        registry.tokens.wbtc, "IERC20", interface.IERC20.abi
+    )
+
+    rewardsEscrow = safe.contract(badger.rewardsEscrow.address)
 
     # TODO: Do this in bBadger going forward - this is the way.
     # Approve treasury multi to stake
     # Deposit badger -> bBadger
 
     snap = BalanceSnapshotter(
-        [badgerToken, bBadger, usdcToken],
+        [badgerToken, usdcToken, wbtcToken],
         [multisig, badger.deployer, badger.rewardsEscrow],
     )
 
@@ -73,14 +76,18 @@ def main():
 
     test_usdc = 1 * 10**6
     full_usdc = 499999 * 10**6
-    full_badger = Wei("9303.56 ether")
-    full_wbtc = 3.68788871 * 10 ** 8
+    full_badger = Wei("10163.59 ether")
+    full_wbtc = 3.805754301 * 10 ** 8
 
     console.print("Sending Amounts")
 
     snap.snap(name="Before Transfers")
 
-    usdcToken.transfer(opolis_dest, test_usdc)
+    usdcToken.transfer(opolis_dest, full_usdc)
+    rewardsEscrow.approveRecipient(opolis_dest)
+    rewardsEscrow.transfer(badger.token, opolis_dest, full_badger)
+    # badgerToken.transfer(opolis_dest, full_badger)
+    wbtcToken.transfer(opolis_dest, full_wbtc)
 
     snap.snap(name="After Transfers")
     snap.diff_last_two()
