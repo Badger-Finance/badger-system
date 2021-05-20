@@ -277,7 +277,8 @@ def badger_single_sett(settConfig, deploy=True):
                 # Both want/pid are optional params and used for validation.
                 # In this case, both the lp token and pid (pool id) exist so we can pass them in.
                 want=registry.pancake.chefPairs.bnbBtcb,
-                pid=registry.pancake.chefPids.bnbBtcb,
+                pid=registry.pancake.chefPids.bnbBtcb
+            ).deploy(deploy=deploy)
         if settId == "native.sushiWbtcIbBtc":
             return SushiWbtcIbBtcLpOptimizerMiniDeploy(
                 "native.sushiWbtcIbBtc",
