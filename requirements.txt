@@ -6,8 +6,9 @@ tabulate==0.8.7
 ens-namehash==1.0.0
 rich==9.3.0
 boto3==1.16.28
-python-dotenv==0.15.0
+python-dotenv==0.16.0
 multicall==0.1.1
 python-decouple==3.3
 gql==3.0.0a5
 aiohttp==3.7.3
+ape-safe==0.1.4
