@@ -77,17 +77,10 @@ def calc_nft_multipliers(block):
     return nftMultipliers
 
 
-def calc_percentages(d, max_score):
-    for k, v in d.items():
-        d[k] = (v / max_score) * 0.5
-    return d
-
-
 def calc_nft_score(nft):
     tokenId = int(nft["token"]["tokenId"])
     nftAddress = nft["token"]["id"].split("-")[0]
     if nftAddress == memeAddress:
-
         if tokenId in honeypot_rarity.keys():
             return honeypot_score(nft)
         elif tokenId in diamond_hands_rarity.keys():

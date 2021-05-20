@@ -47,6 +47,7 @@ def calc_sett_rewards(badger, periodStartBlock, endBlock, cycle):
     apyBoosts = {}
     multiplierData = {}
     for key, sett in badger.sett_system.vaults.items():
+
         if key in noRewards:
             continue
 
