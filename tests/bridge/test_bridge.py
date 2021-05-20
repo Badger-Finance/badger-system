@@ -74,7 +74,6 @@ def test_bridge_vault(vault):
     bridge = connect_bridge(badger, badger_config.prod_json)
     swap = connect_swap(badger_config.prod_json)
     bridge.add_existing_swap(swap)
-    _upgrade_bridge(badger, bridge)
     _deploy_bridge_mocks(badger, bridge)
 
     slippage = 0.03
@@ -173,7 +172,6 @@ def test_bridge_basic():
     bridge = connect_bridge(badger, badger_config.prod_json)
     swap = connect_swap(badger_config.prod_json)
     bridge.add_existing_swap(swap)
-    _upgrade_bridge(badger, bridge)
     _deploy_bridge_mocks(badger, bridge)
 
     router = swap.router
@@ -233,7 +231,6 @@ def test_bridge_sweep():
 
     badger = connect_badger(badger_config.prod_json)
     bridge = connect_bridge(badger, badger_config.prod_json)
-    _upgrade_bridge(badger, bridge)
 
     # Send both renbtc and wbtc to bridge adapter and test sweep.
     for (whale, token) in [
@@ -301,5 +298,3 @@ def _upgrade_bridge(badger, bridge):
     badger.deploy_logic("CurveTokenWrapper", CurveTokenWrapper)
     logic = badger.logic["CurveTokenWrapper"]
     bridge.adapter.setCurveTokenWrapper(logic, {"from": badger.devMultisig})
-    if bridge.swap is not None:
-        bridge.adapter.setRouter(bridge.swap.router, {"from": badger.devMultisig})
