@@ -4,6 +4,7 @@ import numpy as np
 import json
 import os
 from time import time
+from dotmap import DotMap
 
 '''
 Find the cheapest gas price that could be expected to get mined in a reasonable amount of time.
@@ -189,17 +190,25 @@ def analyze_gas(options={ 'timeframe': 'minutes', 'periods': 60 }) -> tuple[int,
             biggest_index = i
     midpoint = (bins[biggest_index] + bins[biggest_index + 1]) / 2
 
+    if int(midpoint) == 0:
+        print("Could not fetch historical gas data")
+        return DotMap(
+            mode=999999999999999999,
+            median=999999999999999999,
+            std=999999999999999999
+        )
+
     # standard deviation
     standard_dev = np.std(filtered_gas_data, dtype=np.float64)
 
     # average
     median = np.median(filtered_gas_data, axis=0)
 
-    return {
-        'mode': int(midpoint),
-        'median': int(median),
-        'std': int(standard_dev)
-    }
+    return DotMap(
+        mode=int(midpoint),
+        median=int(median),
+        std=int(standard_dev)
+    )
 
 
 # run this to test analyze_gas and print values

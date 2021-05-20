@@ -28,7 +28,7 @@ class GasStrategies:
         self.bsc_static = StaticGasStrategy(bsc_static_price)
         self.analyzed = analyze_gas({ 'timeframe': 'minutes', 'periods': 15 })
 
-        print(self.fast.get_gas_price())
+        print('gas prices - fast:', self.fast.get_gas_price(), 'recent average:', self.analyzed.mode)
 
         self.exponentialScaling = ExponentialScalingStrategy(
             initial_gas_price=self.standard.get_gas_price(),
@@ -47,7 +47,7 @@ class GasStrategies:
             self.set_default(self.bsc_static)
 
     def optimal_price(self):
-        return min(self.fast.get_gas_price(), self.analyzed['mode'])
+        return min(self.fast.get_gas_price(), self.analyzed.mode)
 
 gas_strategies = GasStrategies()
 gas_strategies.set_default(gas_strategies.fast)
