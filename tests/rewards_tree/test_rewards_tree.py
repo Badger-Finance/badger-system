@@ -7,7 +7,6 @@ from brownie import *
 from helpers.constants import *
 from helpers.registry import registry
 from rich.console import Console
-from assistant.rewards import rewards_assistant
 
 console = Console()
 
