@@ -24,6 +24,7 @@ from helpers.sett.resolvers import (
 from helpers.utils import digg_shares_to_initial_fragments, val
 from scripts.systems.badger_system import BadgerSystem
 from helpers.sett.strategy_earnings import get_harvest_earnings
+from helpers.tx_timer import tx_timer
 
 console = Console()
 
@@ -200,7 +201,11 @@ class SnapshotManager:
         user = overrides["from"].address
         trackedUsers = {"user": user}
         before = self.snap(trackedUsers)
+
+        tx_timer.start_timer(overrides['from'])
         tx = self.badger.badgerRewardsManager.harvest(strategy, overrides)
+        tx_timer.end_timer()
+
         after = self.snap(trackedUsers)
         if confirm:
             self.resolver.confirm_harvest(before, after, tx)
@@ -209,7 +214,11 @@ class SnapshotManager:
         user = overrides["from"].address
         trackedUsers = {"user": user}
         before = self.snap(trackedUsers)
+
+        tx_timer.start_timer(overrides['from'])
         tx = self.strategy.harvest(overrides)
+        tx_timer.end_timer()
+
         after = self.snap(trackedUsers)
         if confirm:
             self.resolver.confirm_harvest(before, after, tx)
