@@ -31,7 +31,7 @@ def convert_balances_to_usd(sett, userBalances):
             price_ratio = 0.5
         else:
             price_ratio = 1
-        user.balance = (price * user.balance) / (pow(10, decimals) * price_ratio)
+        user.balance = (price_ratio * price * user.balance) / (pow(10, decimals))
 
     return userBalances
 
