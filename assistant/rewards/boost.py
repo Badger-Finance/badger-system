@@ -3,7 +3,7 @@ import json
 from rich.console import Console
 from assistant.rewards.aws_utils import upload_boosts
 from assistant.subgraph.client import fetch_wallet_balances
-from helpers.constants import BADGER, DIGG
+from helpers.constants import BADGER, DIGG, SETT_BOOST_RATIOS, MAX_BOOST
 from collections import OrderedDict
 from assistant.rewards.rewards_utils import combine_balances, calculate_sett_balances
 from assistant.badger_api.prices import (
@@ -15,23 +15,16 @@ from assistant.rewards.classes.UserBalance import UserBalance, UserBalances
 
 prices = fetch_token_prices()
 console = Console()
-MAX_MULTIPLIER = 3
 
 
-def convert_balances_to_usd(sett, userBalances):
+def convert_balances_to_usd(sett,name, userBalances):
     tokenAddress = sett.address
     price = prices[tokenAddress]
     decimals = interface.IERC20(tokenAddress).decimals()
-
-    price_ratio = 1
-    # Weight native lp by half
+    price_ratio = SETT_BOOST_RATIOS[name]
 
     for user in userBalances:
-        if user.type[0] == "halfLP":
-            price_ratio = 0.5
-        else:
-            price_ratio = 1
-        user.balance = (price * user.balance) / (pow(10, decimals) * price_ratio)
+        user.balance = (price_ratio * price * user.balance) / (pow(10, decimals))
 
     return userBalances
 
@@ -48,7 +41,7 @@ def calc_cumulative(l):
 def calc_boost(percentages):
     boosts = []
     for p in percentages:
-        boost = MAX_MULTIPLIER - (p * (MAX_MULTIPLIER - 1))
+        boost = MAX_BOOST - (p * (MAX_BOOST - 1))
         if boost < 1:
             boost = 1
         boosts.append(boost)
@@ -88,7 +81,7 @@ def badger_boost(badger, currentBlock):
         if name in ["experimental.digg"]:
             continue
         balances = calculate_sett_balances(badger, name, currentBlock)
-        balances = convert_balances_to_usd(sett, balances)
+        balances = convert_balances_to_usd(sett, name, balances)
         if name in ["native.uniDiggWbtc", "native.sushiDiggWbtc", "native.digg"]:
             diggSetts = combine_balances([diggSetts, balances])
         elif name in [
