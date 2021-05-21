@@ -68,7 +68,8 @@ BRIDGE_VAULTS = [
 # Tests mint/burn to/from crv sett.
 # We create a mock vault for each pool token.
 @pytest.mark.parametrize(
-    "vault", BRIDGE_VAULTS,
+    "vault",
+    BRIDGE_VAULTS,
 )
 def test_bridge_vault(vault):
     badger = connect_badger(badger_config.prod_json)
@@ -88,11 +89,14 @@ def test_bridge_vault(vault):
         ).address
         # Must approve mock vaults to mint/burn to/from.
         bridge.adapter.setVaultApproval(
-            v, True, {"from": badger.devMultisig},
+            v,
+            True,
+            {"from": badger.devMultisig},
         )
     else:
         badger.sett_system.vaults[vault["id"]].approveContractAccess(
-            bridge.adapter, {"from": badger.devMultisig},
+            bridge.adapter,
+            {"from": badger.devMultisig},
         )
 
     # TODO: Can interleave these mints/burns.
@@ -116,7 +120,9 @@ def test_bridge_vault(vault):
             assert balance > balanceBefore
 
             interface.IERC20(v).approve(
-                bridge.adapter.address, balance, {"from": account},
+                bridge.adapter.address,
+                balance,
+                {"from": account},
             )
             # Approve mock gateway for transfer of underlying token for "mock" burns.
             # NB: In the real world, burns don't require approvals as it's just
@@ -152,8 +158,8 @@ def test_bridge_basic_swap_fail():
         _deploy_swap_mocks(badger, bridge, swap, router_fail=router_fail)
 
         # .1% slippage
-        slippage = .001
-        amount = 1 * 10**8
+        slippage = 0.001
+        amount = 1 * 10 ** 8
 
         for accIdx in range(10, 12):
             account = accounts[accIdx]
@@ -162,7 +168,7 @@ def test_bridge_basic_swap_fail():
                 # Test mints
                 bridge.adapter.mint(
                     wbtc,
-                    slippage * 10**4,
+                    slippage * 10 ** 4,
                     account.address,
                     AddressZero,  # No vault.
                     amount,
@@ -195,10 +201,18 @@ def test_bridge_basic():
     amount = 1 * 10 ** 8
     # Test estimating slippage from a random account for wbtc <-> renbtc swaps.
     _assert_swap_slippage(
-        router, renbtc, wbtc, amount, slippage,
+        router,
+        renbtc,
+        wbtc,
+        amount,
+        slippage,
     )
     _assert_swap_slippage(
-        router, wbtc, renbtc, amount, slippage,
+        router,
+        wbtc,
+        renbtc,
+        amount,
+        slippage,
     )
 
     for accIdx in range(10, 12):
@@ -226,7 +240,9 @@ def test_bridge_basic():
             # NB: In the real world, burns don't require approvals as it's
             # just an internal update the the user's token balance.
             interface.IERC20(renbtc).approve(
-                bridge.mocks.BTC.gateway, balance, {"from": bridge.adapter},
+                bridge.mocks.BTC.gateway,
+                balance,
+                {"from": bridge.adapter},
             )
 
             bridge.adapter.burn(
@@ -268,13 +284,19 @@ def _assert_swap_slippage(router, fromToken, toToken, amountIn, slippage):
     # Should be accessible from a random account.
     account = accounts[8]
     (strategyAddr, amountOut) = router.optimizeSwap.call(
-        fromToken, toToken, amountIn, {"from": account},
+        fromToken,
+        toToken,
+        amountIn,
+        {"from": account},
     )
     assert (1 - (amountOut / amountIn)) < slippage
     strategy = interface.ISwapStrategy(strategyAddr)
     # Redundant slippage check, but just to be sure.
     amountOut = strategy.estimateSwapAmount.call(
-        fromToken, toToken, amountIn, {"from": account},
+        fromToken,
+        toToken,
+        amountIn,
+        {"from": account},
     )
     assert (1 - (amountOut / amountIn)) < slippage
 
@@ -283,7 +305,8 @@ def _deploy_bridge_mocks(badger, bridge):
     # NB: Deploy/use mock gateway
     bridge.deploy_mocks()
     bridge.adapter.setRegistry(
-        bridge.mocks.registry, {"from": badger.devMultisig},
+        bridge.mocks.registry,
+        {"from": badger.devMultisig},
     )
 
 

@@ -52,7 +52,8 @@ def state_setup(badger, settConfig):
 
 # @pytest.mark.skip()
 @pytest.mark.parametrize(
-    "settConfig", settTestConfig,
+    "settConfig",
+    settTestConfig,
 )
 def test_strategy_action_permissions(settConfig):
     # Setup
@@ -124,7 +125,8 @@ def test_strategy_action_permissions(settConfig):
 
 # @pytest.mark.skip()
 @pytest.mark.parametrize(
-    "settConfig", settTestConfig,
+    "settConfig",
+    settTestConfig,
 )
 def test_strategy_config_permissions(settConfig):
     # Setup
@@ -211,7 +213,8 @@ def test_strategy_config_permissions(settConfig):
 
 # @pytest.mark.skip()
 @pytest.mark.parametrize(
-    "settConfig", settTestConfig,
+    "settConfig",
+    settTestConfig,
 )
 def test_strategy_pausing_permissions(settConfig):
     # Setup
@@ -280,7 +283,8 @@ def test_strategy_pausing_permissions(settConfig):
 
 
 @pytest.mark.parametrize(
-    "settConfig", settTestConfig,
+    "settConfig",
+    settTestConfig,
 )
 def test_sett_pausing_permissions(settConfig):
     # Setup
@@ -341,7 +345,8 @@ def test_sett_pausing_permissions(settConfig):
 
 
 @pytest.mark.parametrize(
-    "settConfig", settTestConfig,
+    "settConfig",
+    settTestConfig,
 )
 def test_sett_config_permissions(settConfig):
     # Setup
@@ -385,7 +390,8 @@ def test_sett_config_permissions(settConfig):
 
 
 @pytest.mark.parametrize(
-    "settConfig", settTestConfig,
+    "settConfig",
+    settTestConfig,
 )
 def test_sett_earn_permissions(settConfig):
     # Setup
@@ -416,7 +422,8 @@ def test_sett_earn_permissions(settConfig):
 
 @pytest.mark.skip()
 @pytest.mark.parametrize(
-    "settConfig", settTestConfig,
+    "settConfig",
+    settTestConfig,
 )
 def test_controller_permissions(settConfig):
     # ===== Controller =====

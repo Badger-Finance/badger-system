@@ -14,6 +14,7 @@ from helpers.token_utils import (
 )
 from helpers.console_utils import console
 
+
 class LtccRecipient:
     def __init__(self, name, address, assets):
         self.name = name
@@ -31,5 +32,3 @@ class LtccRecipient:
             return self.assets[asset]
         else:
             return -1
-
-

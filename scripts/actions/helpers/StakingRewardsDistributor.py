@@ -85,7 +85,10 @@ class StakingRewardsDistributor:
                 required = dist - preBal
                 console.print(
                     "⊁ We need to add {} to the {} Badger supply of {} to reach the goal of {} Badger".format(
-                        val(required), key, val(preBal), val(dist),
+                        val(required),
+                        key,
+                        val(preBal),
+                        val(dist),
                     ),
                     style="blue",
                 )
@@ -134,7 +137,8 @@ class StakingRewardsDistributor:
                 {
                     "to": stakingRewards.address,
                     "data": stakingRewards.notifyRewardAmount.encode_input(
-                        self.start, dist,
+                        self.start,
+                        dist,
                     ),
                 },
             )

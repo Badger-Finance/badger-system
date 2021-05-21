@@ -7,7 +7,9 @@ from .BaseAction import BaseAction
 
 class SettHarvestAction(BaseAction):
     def __init__(
-        self, snap: SnapshotManager, keeper: Any,
+        self,
+        snap: SnapshotManager,
+        keeper: Any,
     ):
         self.snap = snap
         self.keeper = keeper
@@ -18,7 +20,9 @@ class SettHarvestAction(BaseAction):
 
 class SettTendAction(BaseAction):
     def __init__(
-        self, snap: SnapshotManager, keeper: Any,
+        self,
+        snap: SnapshotManager,
+        keeper: Any,
     ):
         self.snap = snap
         self.keeper = keeper
@@ -36,7 +40,12 @@ class StrategyKeeperActor:
             SettHarvestAction(self.snap, self.keeper),
         ]
         if manager.strategy.isTendable():
-            self.randomActions.append(SettTendAction(self.snap, self.keeper,))
+            self.randomActions.append(
+                SettTendAction(
+                    self.snap,
+                    self.keeper,
+                )
+            )
 
     def generateAction(self) -> BaseAction:
         """
