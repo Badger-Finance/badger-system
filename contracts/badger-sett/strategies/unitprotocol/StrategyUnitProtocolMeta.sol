@@ -131,11 +131,12 @@ abstract contract StrategyUnitProtocolMeta is BaseStrategy {
         (, int256 price, , , ) = IChainlinkAggregator(unitOracle).latestRoundData();
 
         if (price > 0) {
-            int256 ethPrice = 1;
             if (collateralPriceEth) {
-                (, ethPrice, , , ) = IChainlinkAggregator(eth_usd).latestRoundData(); // eth price from chainlink in 1e8 decimal
+                (, int256 ethPrice, , , ) = IChainlinkAggregator(eth_usd).latestRoundData(); // eth price from chainlink in 1e8 decimal
+                return uint256(price).mul(collateralPriceDecimal).mul(uint256(ethPrice)).div(1e8).div(collateralPriceEth ? 1e18 : 1);
+            } else{
+                return uint256(price).mul(collateralPriceDecimal).div(1e8);
             }
-            return uint256(price).mul(collateralPriceDecimal).mul(uint256(ethPrice)).div(1e8).div(collateralPriceEth ? 1e18 : 1);
         } else {
             return 0;
         }
@@ -176,19 +177,21 @@ abstract contract StrategyUnitProtocolMeta is BaseStrategy {
         if (requiredPaidback > 0) {
             _withdrawUSDP(requiredPaidback);
 
-            uint256 _actualPaidDebt = IERC20Upgradeable(debtToken).balanceOf(address(this));
-            uint256 _fee = getDebtBalance().sub(getDebtWithoutFee());
+            uint256 _currentDebtVal = IERC20Upgradeable(debtToken).balanceOf(address(this));
+            uint256 _actualPaidDebt = _currentDebtVal;
+            uint256 _totalDebtWithoutFee = getDebtWithoutFee();
+            uint256 _fee = getDebtBalance().sub(_totalDebtWithoutFee);
 
             require(_actualPaidDebt > _fee, "!notEnoughForFee");
             _actualPaidDebt = _actualPaidDebt.sub(_fee); // unit protocol will charge fee first
-            _actualPaidDebt = _capMaxDebtPaid(_actualPaidDebt);
+            _actualPaidDebt = _capMaxDebtPaid(_actualPaidDebt, _totalDebtWithoutFee);
 
-            require(IERC20Upgradeable(debtToken).balanceOf(address(this)) >= _actualPaidDebt.add(_fee), "!notEnoughRepayment");
+            require(_currentDebtVal >= _actualPaidDebt.add(_fee), "!notEnoughRepayment");
             repayAndRedeemCollateral(0, _actualPaidDebt);
         }
     }
 
-    /// @dev Internal deposit logic to be implemented by Stratgies
+    /// @dev Internal deposit logic to be implemented by Strategies
     function _deposit(uint256 _want) internal override {
         if (_want > 0) {
             uint256 _newDebt = calculateDebtFor(_want.add(getCollateralBalance()), true);
@@ -201,8 +204,8 @@ abstract contract StrategyUnitProtocolMeta is BaseStrategy {
     }
 
     // to avoid repay all debt resulting to close the CDP unexpectedly
-    function _capMaxDebtPaid(uint256 _actualPaidDebt) internal view returns (uint256) {
-        uint256 _maxDebtToRepay = getDebtWithoutFee().sub(ratioBuffMax);
+    function _capMaxDebtPaid(uint256 _actualPaidDebt, uint256 _totalDebtWithoutFee) internal view returns (uint256) {
+        uint256 _maxDebtToRepay = _totalDebtWithoutFee.sub(ratioBuffMax);
         return _actualPaidDebt >= _maxDebtToRepay ? _maxDebtToRepay : _actualPaidDebt;
     }
 
@@ -221,14 +224,16 @@ abstract contract StrategyUnitProtocolMeta is BaseStrategy {
         bool _fullWithdraw = _amount == balanceOfPool();
         uint256 _wantBefore = IERC20Upgradeable(want).balanceOf(address(this));
         if (!_fullWithdraw) {
-            uint256 _actualPaidDebt = IERC20Upgradeable(debtToken).balanceOf(address(this));
-            uint256 _fee = getDebtBalance().sub(getDebtWithoutFee());
+            uint256 _currentDebtVal = IERC20Upgradeable(debtToken).balanceOf(address(this));
+            uint256 _actualPaidDebt = _currentDebtVal;
+            uint256 _totalDebtWithoutFee = getDebtWithoutFee();
+            uint256 _fee = getDebtBalance().sub(_totalDebtWithoutFee);
 
             require(_actualPaidDebt > _fee, "!notEnoughForFee");
             _actualPaidDebt = _actualPaidDebt.sub(_fee); // unit protocol will charge fee first
-            _actualPaidDebt = _capMaxDebtPaid(_actualPaidDebt);
+            _actualPaidDebt = _capMaxDebtPaid(_actualPaidDebt, _totalDebtWithoutFee);
 
-            require(IERC20Upgradeable(debtToken).balanceOf(address(this)) >= _actualPaidDebt.add(_fee), "!notEnoughRepayment");
+            require(_currentDebtVal >= _actualPaidDebt.add(_fee), "!notEnoughRepayment");
             repayAndRedeemCollateral(_amount, _actualPaidDebt);
         } else {
             require(IERC20Upgradeable(debtToken).balanceOf(address(this)) >= getDebtBalance(), "!notEnoughFullRepayment");
