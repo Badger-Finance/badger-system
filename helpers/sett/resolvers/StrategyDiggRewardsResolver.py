@@ -27,17 +27,17 @@ class StrategyDiggRewardsResolver(StrategyCoreResolver):
         print(tabulate(table, headers=["account", "value"]))
 
     def confirm_harvest_events(self, before, after, tx):
-        key = 'HarvestState'
+        key = "HarvestState"
         assert key in tx.events
         assert len(tx.events[key]) == 1
         event = tx.events[key][0]
         keys = [
-            'totalDigg',
-            'totalShares',
-            'totalScaledShares',
-            'diggIncrease',
-            'sharesIncrease',
-            'scaledSharesIncrease',
+            "totalDigg",
+            "totalShares",
+            "totalScaledShares",
+            "diggIncrease",
+            "sharesIncrease",
+            "scaledSharesIncrease",
         ]
         for key in keys:
             assert key in event
@@ -50,9 +50,7 @@ class StrategyDiggRewardsResolver(StrategyCoreResolver):
         # No staking position, strategy want should increase irrespective of
         # current balance.
         # TODO: Add more specific check that the correct reward amount was deposited.
-        assert (
-            after.get("strategy.balanceOf") >= before.get("strategy.balanceOf")
-        )
+        assert after.get("strategy.balanceOf") >= before.get("strategy.balanceOf")
 
         # PPFS should not decrease
         assert after.get("sett.pricePerFullShare") >= before.get(
@@ -75,7 +73,9 @@ class StrategyDiggRewardsResolver(StrategyCoreResolver):
         sharesTransferred = after.get("sett.shares") - before.get("sett.shares")
         sharesTransferredScaled = digg.sharesToScaledShares(sharesTransferred)
 
-        totalSupply = before.get("sett.totalSupply")  # bDIGG is already at 18 decimal scale
+        totalSupply = before.get(
+            "sett.totalSupply"
+        )  # bDIGG is already at 18 decimal scale
         if totalSupply == 0:
             expected_shares = sharesTransferredScaled
         else:

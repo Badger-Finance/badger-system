@@ -4,21 +4,30 @@ from dotmap import DotMap
 from rich import pretty
 from rich.console import Console
 from scripts.actions.helpers.GeyserDistributor import GeyserDistributor
-from scripts.actions.helpers.StakingRewardsDistributor import \
-    StakingRewardsDistributor
+from scripts.actions.helpers.StakingRewardsDistributor import StakingRewardsDistributor
 from scripts.deploy.unlock_scheduler import grant_token_locking_permission
 from scripts.systems.badger_system import BadgerSystem, connect_badger
 from tabulate import tabulate
 
 from helpers.constants import *
-from helpers.gnosis_safe import (GnosisSafe, MultisigTx, MultisigTxMetadata,
-                                 convert_to_test_mode, exec_direct,
-                                 get_first_owner)
+from helpers.gnosis_safe import (
+    GnosisSafe,
+    MultisigTx,
+    MultisigTxMetadata,
+    convert_to_test_mode,
+    exec_direct,
+    get_first_owner,
+)
 from helpers.registry import registry
 from helpers.time_utils import days, hours, to_days, to_timestamp, to_utc_date
-from helpers.utils import (fragments_to_shares,
-                           initial_fragments_to_current_fragments,
-                           shares_to_fragments, to_digg_shares, val)
+from helpers.utils import (
+    fragments_to_shares,
+    initial_fragments_to_current_fragments,
+    shares_to_fragments,
+    to_digg_shares,
+    val,
+)
+from helpers.constants import BADGER, DIGG
 
 console = Console()
 pretty.install()
@@ -26,9 +35,9 @@ pretty.install()
 
 def asset_to_address(asset):
     if asset == "badger":
-        return "0x3472A5A71965499acd81997a54BBA8D852C6E53d"
+        return BADGER
     if asset == "digg":
-        return "0x798D1bE841a82a273720CE31c822C61a67a601C3"
+        return DIGG
 
 
 class RewardsDist:
@@ -129,9 +138,7 @@ class RewardsSchedule:
 
     def setAmounts(self, amounts):
         for key, values in amounts.items():
-            print(
-                key,
-            )
+            print(key,)
             self.distributions[key] = RewardsDist(key, values)
 
     def tokensPerDay(self, amount):
@@ -151,8 +158,8 @@ class RewardsSchedule:
                 if not asset in self.totals:
                     self.totals[asset] = 0
                 self.totals[asset] += amount
-        
-        console.print('totals', self.totals)
+
+        console.print("totals", self.totals)
         return self.totals
 
     def transfer(self, token, amount, recipient):
@@ -201,8 +208,7 @@ class RewardsSchedule:
         # Setup
         accounts[7].transfer(multi.get_first_owner(), Wei("2 ether"))
         print(
-            "Supplied ETH",
-            accounts.at(multi.get_first_owner(), force=True).balance(),
+            "Supplied ETH", accounts.at(multi.get_first_owner(), force=True).balance(),
         )
 
         badger = self.badger

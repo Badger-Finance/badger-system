@@ -64,7 +64,7 @@ def setup_badger(badger: BadgerSystem):
             "data": strategy.setTokenSwapPath.encode_input(
                 registry.pancake.cake,
                 strategy.token0(),
-                [registry.pancake.cake, registry.tokens.btcb, strategy.token0()]
+                [registry.pancake.cake, registry.tokens.btcb, strategy.token0()],
             ),
         },
     )
@@ -76,7 +76,7 @@ def setup_badger(badger: BadgerSystem):
             "data": strategy.setTokenSwapPath.encode_input(
                 registry.pancake.cake,
                 strategy.token1(),
-                [registry.pancake.cake, registry.tokens.btcb]
+                [registry.pancake.cake, registry.tokens.btcb],
             ),
         },
     )
@@ -136,14 +136,20 @@ def single_user_harvest_flow(badger: BadgerSystem, sett_id, user):
     sett = badger.getSett(sett_id)
     strategist = accounts.at(strategy.strategist(), force=True)
 
-    console.log({
+    console.log(
+        {
             "key": sett_id,
             "want": strategy.want(),
             "token0": strategy.token0(),
             "token1": strategy.token1(),
-            "path0": strategy.getTokenSwapPath(registry.pancake.cake, strategy.token0()),
-            "path1": strategy.getTokenSwapPath(registry.pancake.cake, strategy.token1()),
-        })
+            "path0": strategy.getTokenSwapPath(
+                registry.pancake.cake, strategy.token0()
+            ),
+            "path1": strategy.getTokenSwapPath(
+                registry.pancake.cake, strategy.token1()
+            ),
+        }
+    )
 
     strategist = badger.deployer
     settKeeper = accounts.at(sett.keeper(), force=True)
@@ -202,11 +208,11 @@ def main():
     distribute_from_whales(user)
 
     setts_to_run = [
-        #"native.pancakeBnbBtcb", 
-        "native.bDiggBtcb"]
+        # "native.pancakeBnbBtcb",
+        "native.bDiggBtcb"
+    ]
     setup_badger(badger)
 
     for sett_id in setts_to_run:
         # deposit_withdraw_single_user_flow(badger, sett_id, user)
         single_user_harvest_flow(badger, sett_id, user)
-

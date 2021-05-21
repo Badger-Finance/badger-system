@@ -12,8 +12,32 @@ def main():
     badger = connect_badger(badger_config.prod_json)
     console.print("\n[white]===== 🦡 Sett Status 🦡 =====[white]\n")
     for key in badger.sett_system.vaults.keys():
-        snap = SnapshotManager(badger, key)
-        state = snap.snap()
-        snap.printPermissions()
-        snap.printTable(state)
+        sett = badger.getSett(key)
 
+        admin = badger.getProxyAdmin(sett)
+        sett_impl = admin.getProxyImplementation(sett)
+        sett_admin = admin.getProxyAdmin(sett)
+
+        sett_type = badger.getSettType(key)
+
+        print(key, sett_type)
+
+        table = []
+
+        table.append(["Sett Key", key])
+        table.append(["Sett Type", sett_type])
+        table.append(["Sett Logic", sett_impl])
+        table.append(["Sett Admin", sett_admin])
+
+        if sett_type == "v1":
+            snap = SnapshotManager(badger, key)
+            state = snap.snap()
+            snap.printPermissions()
+            # snap.printTable(state)
+            strategy = badger.getStrategy(key)
+            strategy_impl = badger.devProxyAdmin.getProxyImplementation(strategy)
+            strategy_admin = admin.getProxyAdmin(strategy)
+            table.append(["Strategy Logic", strategy_impl])
+            table.append(["Strategy Admin", strategy_admin])
+
+        print(tabulate(table, ["Key", "Value"]))

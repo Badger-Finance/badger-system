@@ -36,7 +36,9 @@ def approve_root(badger: BadgerSystem):
         return False
 
     if rpc.is_active():
-        badger.guardian = accounts.at("0x626F69162Ea1556A75Dd4443D87D2fe38dd25901" ,force=True)
+        badger.guardian = accounts.at(
+            "0x626F69162Ea1556A75Dd4443D87D2fe38dd25901", force=True
+        )
 
     current = fetchCurrentMerkleData(badger)
     pending = fetchPendingMerkleData(badger)

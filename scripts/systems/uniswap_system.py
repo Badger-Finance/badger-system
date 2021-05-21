@@ -3,6 +3,7 @@ from brownie import *
 from helpers.constants import AddressZero, MaxUint256
 from helpers.registry import registry
 
+
 class UniswapSystem:
     def __init__(self):
         self.contract_registry = registry.uniswap
@@ -30,7 +31,7 @@ class UniswapSystem:
 
         assert balanceA > 0
         assert balanceB > 0
-        
+
         # TODO: Determine if passed in contracts or addresses and process accordingly. Should be able to accept both in any combinantion. Currently expects contracts
         tokenA.approve(self.router, MaxUint256, {"from": signer})
         tokenB.approve(self.router, MaxUint256, {"from": signer})

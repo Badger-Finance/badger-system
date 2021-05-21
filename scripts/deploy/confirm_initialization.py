@@ -8,4 +8,4 @@ from scripts.systems.badger_system import BadgerSystem, connect_badger
 
 console = Console()
 
-def confirm_initialization(badger: BadgerSystem):
+# def confirm_initialization(badger: BadgerSystem):

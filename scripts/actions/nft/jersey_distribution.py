@@ -215,18 +215,17 @@ second_set = [
     "0x70134D406cB230a5e8Aa7c2Dfa929097C6e237d3",
     "0x06e0Fe46a6590d32377EB0D9A8AD6f9D9adFd74C",
     "0x20943A7fBDcB4B84Ea553C13D765cD4AdAee709b",
-    "0x6E3185aD3A3cc9259C0A789a6762e551829f0843"
+    "0x6E3185aD3A3cc9259C0A789a6762e551829f0843",
 ]
 
-third_set = [
-    "0xA9275b17e17bfc9e11423ee19b20Ac47aD99b41B"
-]
+third_set = ["0xA9275b17e17bfc9e11423ee19b20Ac47aD99b41B"]
 
 nft_id = 1
 
+
 def main():
     badger = connect_badger()
-    
+
     safe = ApeSafe(badger.opsMultisig.address)
 
     nft = safe.contract_from_abi(

@@ -9,9 +9,9 @@ console = Console()
 
 class StrategyDiggLpMetaFarmResolver(StrategyCoreResolver):
     def confirm_rebase(self, before, after, value):
-        '''
+        """
         Lp token balance should stay the same.
-        '''
+        """
         super().confirm_rebase(before, after, value)
         assert snapBalancesMatchForToken(before, after, "want")
 
@@ -22,12 +22,12 @@ class StrategyDiggLpMetaFarmResolver(StrategyCoreResolver):
         # No staking position, strategy want should increase irrespective of
         # current balance.
         # TODO: Add more specific check that the correct reward amount was deposited.
-        assert (
-            after.get("strategy.balanceOf") >= before.get("strategy.balanceOf")
-        )
+        assert after.get("strategy.balanceOf") >= before.get("strategy.balanceOf")
 
         # PPFS should not decrease
-        assert after.get("sett.pricePerFullShare") >= before.get("sett.pricePerFullShare")
+        assert after.get("sett.pricePerFullShare") >= before.get(
+            "sett.pricePerFullShare"
+        )
 
     def add_balances_snap(self, calls, entities):
         super().add_balances_snap(calls, entities)

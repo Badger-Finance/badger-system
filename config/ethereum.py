@@ -3,7 +3,8 @@ from brownie import *
 import os
 
 
-API_KEY = os.getenv('GASSTATION_KEY')
+API_KEY = os.getenv("GASSTATION_KEY")
+
 
 class EthConfig:
     def __init__(self):

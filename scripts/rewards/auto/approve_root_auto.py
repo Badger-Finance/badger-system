@@ -13,8 +13,7 @@ console = Console()
 
 gas_strategies.set_default(gas_strategies.exponentialScaling)
 
-def approve_root():
-    badger = connect_badger(badger_config.prod_json, load_guardian=True)
+def approve_root(badger):
     (currentRewards, startBlock, endBlock) = get_last_proposed_cycle(badger)
 
     # If there is a pending root, approve after independently verifying it
@@ -31,7 +30,10 @@ def approve_root():
 
 
 def main():
-    badger = connect_badger(badger_config.prod_json, load_keeper=True)
+    badger = connect_badger(badger_config.prod_json, load_guardian=True)
+    
+    approve_root(badger)
+    time.sleep(10 * 60)
 
     while True:
         try:
@@ -40,4 +42,3 @@ def main():
             console.print("[red]Error[/red]", e)
         finally:
             time.sleep(10 * 60)
-

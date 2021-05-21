@@ -54,6 +54,9 @@ with open("dependency-artifacts/uniswap/UniswapV2Factory.json") as f:
 with open("dependency-artifacts/uniswap/UniswapV2Router02.json") as f:
     UniswapV2Router = json.load(f)
 
+with open("dependency-artifacts/wbtc/wbtc.json") as f:
+    wbtc = json.load(f)
+
 artifacts = DotMap(
     aragon=DotMap(
         Agent=Agent,
@@ -78,5 +81,5 @@ artifacts = DotMap(
         UniswapV2Pair=UniswapV2Pair,
     ),
     multicall=DotMap(multicall={"abi": Multicall}),
+    wbtc=DotMap(wbtc={"abi": wbtc}),
 )
-

@@ -18,7 +18,5 @@ class DiggLpMetaFarmProvisioner(BaseProvisioner):
         for user in users:
             uniswap = UniswapSystem()
             uniswap.addMaxLiquidity(
-                digg.token,
-                registry.tokens.wbtc,
-                user,
+                digg.token, registry.tokens.wbtc, user,
             )

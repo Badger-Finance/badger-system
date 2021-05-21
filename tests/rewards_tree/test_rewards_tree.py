@@ -3,7 +3,6 @@ import secrets
 
 import brownie
 import pytest
-from assistant.rewards import rewards_assistant
 from brownie import *
 from helpers.constants import *
 from helpers.registry import registry
