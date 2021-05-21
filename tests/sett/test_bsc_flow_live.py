@@ -17,38 +17,37 @@ from tests.helpers import distribute_from_whales
 
 console = Console()
 
-configs = {
-    "native.pancakeBnbBtcb": {
-        "want": registry.pancake.chefPairs.bnbBtcb,
-        "token0": registry.tokens.btcb,
-        "token1": registry.tokens.bnb,
-        "performanceFeeStrategist": 1000,
-        "performanceFeeGovernance": 1000,
-        "withdrawalFee": 50,
-        "wantPid": registry.pancake.chefPids.bnbBtcb,
-    },
-    "native.bBadgerBtcb": {
-        "want": registry.pancake.chefPairs.bBadgerBtcb,
-        "token0": registry.tokens.bBadger,
-        "token1": registry.tokens.btcb,
-        "performanceFeeStrategist": 1000,
-        "performanceFeeGovernance": 1000,
-        "withdrawalFee": 50,
-        "wantPid": registry.pancake.chefPids.bBadgerBtcb,
-    },
-    "native.bDiggBtcb": {
-        "want": registry.pancake.chefPairs.bDiggBtcb,
-        "token0": registry.tokens.bDigg,
-        "token1": registry.tokens.btcb,
-        "performanceFeeStrategist": 1000,
-        "performanceFeeGovernance": 1000,
-        "withdrawalFee": 50,
-        "wantPid": registry.pancake.chefPids.bDiggBtcb,
-    },
-}
-
-
 def setup_badger(badger: BadgerSystem):
+    configs = {
+        "native.pancakeBnbBtcb": {
+            "want": registry.pancake.chefPairs.bnbBtcb,
+            "token0": registry.tokens.btcb,
+            "token1": registry.tokens.bnb,
+            "performanceFeeStrategist": 1000,
+            "performanceFeeGovernance": 1000,
+            "withdrawalFee": 50,
+            "wantPid": registry.pancake.chefPids.bnbBtcb,
+        },
+        "native.bBadgerBtcb": {
+            "want": registry.pancake.chefPairs.bBadgerBtcb,
+            "token0": registry.tokens.bBadger,
+            "token1": registry.tokens.btcb,
+            "performanceFeeStrategist": 1000,
+            "performanceFeeGovernance": 1000,
+            "withdrawalFee": 50,
+            "wantPid": registry.pancake.chefPids.bBadgerBtcb,
+        },
+        "native.bDiggBtcb": {
+            "want": registry.pancake.chefPairs.bDiggBtcb,
+            "token0": registry.tokens.bDigg,
+            "token1": registry.tokens.btcb,
+            "performanceFeeStrategist": 1000,
+            "performanceFeeGovernance": 1000,
+            "withdrawalFee": 50,
+            "wantPid": registry.pancake.chefPids.bDiggBtcb,
+        },
+    }   
+
     # Set paths
 
     key = "native.bDiggBtcb"

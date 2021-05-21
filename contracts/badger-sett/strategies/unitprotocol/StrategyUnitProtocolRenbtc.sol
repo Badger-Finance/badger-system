@@ -105,7 +105,7 @@ contract StrategyUnitProtocolRenbtc is StrategyUnitProtocolMeta {
 
     // **** State Mutation functions ****
 
-    function getHarvestable() external returns (uint256) {
+    function getHarvestable() external view returns (uint256) {
         return ICurveGauge(usdp_gauge).claimable_tokens(address(this));
     }
 
@@ -238,7 +238,7 @@ contract StrategyUnitProtocolRenbtc is StrategyUnitProtocolMeta {
         }
         // use underestimate of current assets.
         uint256 virtualOut = virtualPriceToWant().mul(_usdp3crv).div(1e18);
-        uint256 realOut = ICurveFi(curvePool).calc_withdraw_one_coin(_usdp3crv, 0);
+        // uint256 realOut = ICurveFi(curvePool).calc_withdraw_one_coin(_usdp3crv, 0);
         return virtualOut; // virtualOut > realOut? realOut : virtualOut;
     }
 

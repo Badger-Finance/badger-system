@@ -9,12 +9,11 @@ from brownie import *
 from rich.console import Console
 
 console = Console()
-digg = interface.IDigg(DIGG)
-
 
 def calc_snapshot(
     badger, name, startBlock, endBlock, nextCycle, boosts, diggAllocation
 ):
+    digg = interface.IDigg(DIGG)
 
     console.log("==== Processing rewards for {} at {} ====".format(name, endBlock))
 
