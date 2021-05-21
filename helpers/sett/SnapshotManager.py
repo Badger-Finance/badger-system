@@ -197,7 +197,7 @@ class SnapshotManager:
         trackedUsers = {"user": user}
         before = self.snap(trackedUsers)
 
-        tx_timer.start_timer(overrides['from'])
+        tx_timer.start_timer(overrides['from'], 'Harvest')
         tx = self.badger.badgerRewardsManager.harvest(strategy, overrides)
         tx_timer.end_timer()
 
@@ -210,7 +210,7 @@ class SnapshotManager:
         trackedUsers = {"user": user}
         before = self.snap(trackedUsers)
 
-        tx_timer.start_timer(overrides['from'])
+        tx_timer.start_timer(overrides['from'], 'Harvest')
         tx = self.strategy.harvest(overrides)
         tx_timer.end_timer()
 
