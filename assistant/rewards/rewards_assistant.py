@@ -74,12 +74,34 @@ def calc_sett_rewards(badger, periodStartBlock, endBlock, cycle):
             "multipliers": multipliers,
         }
 
+    validateBoostMetadata(boostsMetadata)
+
     with open("badger-boosts.json", "w") as fp:
         json.dump(boostsMetadata, fp)
 
-    upload_boosts()
+    upload_boosts(test=True)
 
     return rewards
+
+
+def validateBoostMetadata(metadata):
+    multiplierData = metadata["multiplierData"]
+    userData = metadata["userData"]
+
+    for sett, info in multiplierData.items():
+        minVal = info["min"]
+        maxVal = info["max"]
+        console.log("min :{}, max :{} for sett:{}".format(minVal, maxVal, sett))
+
+    for addr, data in userData.items():
+        if sett in data["multipliers"]:
+            mult = data["multipliers"][sett]
+            assert minVal <= mult, "multiplier {} below min val {} for sett {} ".format(
+                mult, minVal, sett
+            )
+            assert maxVal >= mult, "multiplier {} above max val {} for sett {} ".format(
+                mult, maxVal, sett
+            )
 
 
 def fetchPendingMerkleData(badger):
