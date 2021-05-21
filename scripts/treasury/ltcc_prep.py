@@ -85,6 +85,9 @@ def main():
     assert badgerToken.allowance(multisig.address, bBadger.address) >= badger_total
     bBadger.deposit(badger_total)
 
+    snap.snap(name="After bBadger Deposit")
+    snap.diff_last_two()
+
     safe_tx = safe.multisend_from_receipts()
     safe.preview(safe_tx)
     data = safe.print_transaction(safe_tx)

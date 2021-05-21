@@ -30,8 +30,12 @@ def main():
     rewardsEscrow = safe.contract(badger.rewardsEscrow.address)
 
     recipient = badger.badgerRewardsManager
-    token = badger.token
-    amount = Wei("30000 ether")
+
+    # token = badger.token
+    # amount = Wei("30000 ether")
+
+    token = badger.digg.token
+    amount = Wei("2 gwei")
 
     if not rewardsEscrow.isApproved(recipient):
         rewardsEscrow.approveRecipient(recipient)

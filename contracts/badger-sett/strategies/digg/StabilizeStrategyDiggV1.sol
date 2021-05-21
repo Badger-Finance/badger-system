@@ -76,14 +76,14 @@ contract StabilizeStrategyDiggV1 is BaseStrategy {
     bool public diggInExpansion;
     uint256 public lastDiggTotalSupply; // The last recorded total supply of the digg token
     uint256 public lastDiggPrice; // The price of Digg at last trade in BTC units
-    uint256 public diggSupplyChangeFactor = 50000; // This is a factor used by the strategy to determine how much digg to sell in expansion
-    uint256 public wbtcSupplyChangeFactor = 20000; // This is a factor used by the strategy to determine how much wbtc to sell in contraction
-    uint256 public wbtcSellAmplificationFactor = 2; // The higher this number the more aggressive the buyback in contraction
-    uint256 public maxGainedDiggSellPercent = 100000; // The maximum percent of sellable Digg gains through rebase
-    uint256 public maxWBTCSellPercent = 50000; // The maximum percent of sellable wBTC;
-    uint256 public tradeBatchSize = 10e18; // The normalized size of the trade batches, can be adjusted
-    uint256 public tradeAmountLeft = 0; // The amount left to trade
-    uint256 private _maxOracleLag = 2 days; // Maximum amount of lag the oracle can have before reverting the price
+    uint256 public diggSupplyChangeFactor; // This is a factor used by the strategy to determine how much digg to sell in expansion
+    uint256 public wbtcSupplyChangeFactor; // This is a factor used by the strategy to determine how much wbtc to sell in contraction
+    uint256 public wbtcSellAmplificationFactor; // The higher this number the more aggressive the buyback in contraction
+    uint256 public maxGainedDiggSellPercent; // The maximum percent of sellable Digg gains through rebase
+    uint256 public maxWBTCSellPercent; // The maximum percent of sellable wBTC;
+    uint256 public tradeBatchSize; // The normalized size of the trade batches, can be adjusted
+    uint256 public tradeAmountLeft; // The amount left to trade
+    uint256 public maxOracleLag; // Maximum amount of lag the oracle can have before reverting the price
 
     // Constants
     uint256 constant DIVISION_FACTOR = 100000;
@@ -127,6 +127,15 @@ contract StabilizeStrategyDiggV1 is BaseStrategy {
         stabilizeVault = _vaultConfig[0];
         diggExchangeTreasury = _vaultConfig[1];
 
+        diggSupplyChangeFactor = 50000; // This is a factor used by the strategy to determine how much digg to sell in expansion
+        wbtcSupplyChangeFactor = 20000; // This is a factor used by the strategy to determine how much wbtc to sell in contraction
+        wbtcSellAmplificationFactor = 2; // The higher this number the more aggressive the buyback in contraction
+        maxGainedDiggSellPercent = 100000; // The maximum percent of sellable Digg gains through rebase
+        maxWBTCSellPercent = 50000; // The maximum percent of sellable wBTC;
+        tradeBatchSize = 10e18; // The normalized size of the trade batches, can be adjusted
+        tradeAmountLeft = 0; // The amount left to trade
+        maxOracleLag = 365 days; // Maximum amount of lag the oracle can have before reverting the price
+
         performanceFeeGovernance = _feeConfig[0];
         performanceFeeStrategist = _feeConfig[1];
         withdrawalFee = _feeConfig[2];
@@ -162,11 +171,11 @@ contract StabilizeStrategyDiggV1 is BaseStrategy {
     function getDiggUSDPrice() public view returns (uint256) {
         AggregatorV3Interface priceOracle = AggregatorV3Interface(DIGG_ORACLE_ADDRESS);
         (, int256 intPrice, , uint256 lastUpdateTime, ) = priceOracle.latestRoundData(); // We only want the answer
-        require(block.timestamp.sub(lastUpdateTime) < _maxOracleLag, "Price data is too old to use");
+        require(block.timestamp.sub(lastUpdateTime) < maxOracleLag, "Price data is too old to use");
         uint256 usdPrice = uint256(intPrice);
         priceOracle = AggregatorV3Interface(BTC_ORACLE_ADDRESS);
         (, intPrice, , lastUpdateTime, ) = priceOracle.latestRoundData(); // We only want the answer
-        require(block.timestamp.sub(lastUpdateTime) < _maxOracleLag, "Price data is too old to use");
+        require(block.timestamp.sub(lastUpdateTime) < maxOracleLag, "Price data is too old to use");
         usdPrice = usdPrice.mul(uint256(intPrice)).mul(10**2);
         return usdPrice; // Digg Price in USD
     }
@@ -174,14 +183,14 @@ contract StabilizeStrategyDiggV1 is BaseStrategy {
     function getDiggPrice() public view returns (uint256) {
         AggregatorV3Interface priceOracle = AggregatorV3Interface(DIGG_ORACLE_ADDRESS);
         (, int256 intPrice, , uint256 lastUpdateTime, ) = priceOracle.latestRoundData(); // We only want the answer
-        require(block.timestamp.sub(lastUpdateTime) < _maxOracleLag, "Price data is too old to use");
+        require(block.timestamp.sub(lastUpdateTime) < maxOracleLag, "Price data is too old to use");
         return uint256(intPrice).mul(10**10);
     }
 
     function getWBTCUSDPrice() public view returns (uint256) {
         AggregatorV3Interface priceOracle = AggregatorV3Interface(BTC_ORACLE_ADDRESS);
         (, int256 intPrice, , uint256 lastUpdateTime, ) = priceOracle.latestRoundData(); // We only want the answer
-        require(block.timestamp.sub(lastUpdateTime) < _maxOracleLag, "Price data is too old to use");
+        require(block.timestamp.sub(lastUpdateTime) < maxOracleLag, "Price data is too old to use");
         return uint256(intPrice).mul(10**10);
     }
 
@@ -324,7 +333,7 @@ contract StabilizeStrategyDiggV1 is BaseStrategy {
 
     function setOracleLagTime(uint256 _time) external {
         _onlyAnyAuthorizedParties();
-        _maxOracleLag = _time;
+        maxOracleLag = _time;
     }
 
     function setStabilizeFee(uint256 _fee) external {
