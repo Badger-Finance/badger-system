@@ -293,7 +293,9 @@ def badger_single_sett(settConfig, deploy=True):
                 guardian=guardian,
                 keeper=keeper,
                 governance=governance,
-            ).deploy(deploy=True)  # Deploy for now since not already deployed.
+            ).deploy(
+                deploy=True
+            )  # Deploy for now since not already deployed.
         if settId == "native.uniWbtcIbBtc":
             return UniGenericLpMiniDeploy(
                 "native.uniWbtcIbBtc",
@@ -304,7 +306,9 @@ def badger_single_sett(settConfig, deploy=True):
                 guardian=guardian,
                 keeper=keeper,
                 governance=governance,
-            ).deploy(deploy=True)  # Deploy for now since not already deployed.
+            ).deploy(
+                deploy=True
+            )  # Deploy for now since not already deployed.
         if settId == "yearn.bvyWBTC":
             return YearnMiniDeploy(
                 "yearn.bvyWBTC",

@@ -1,5 +1,6 @@
 from brownie import *
 import json
+import csv
 from rich.console import Console
 from assistant.rewards.aws_utils import upload_nft_scores
 from assistant.subgraph.client import fetch_wallet_balances
@@ -72,7 +73,7 @@ def calc_stake_ratio(address, diggSetts, badgerSetts, nonNativeSetts, nftBoosts)
     if nonNativeBalance == 0:
         return 0
 
-    if (diggBalance + badgerBalance) > 0 and nonNativeBalance > 0:
+    if nonNativeBalance > 0:
         if address not in boostInfo:
             boostInfo[address] = {}
         boostInfo[address]["nativeBalance"] = diggBalance + badgerBalance
@@ -202,6 +203,20 @@ def badger_boost(badger, currentBlock):
     for addr, boost in badgerBoost.items():
         boostInfo[addr]["boost"] = boost
 
-    with open("logs/boostInfo.json", "w") as fp:
-        json.dump(boostInfo, fp)
+    with open("logs/boostInfo-{}.csv".format(currentBlock), "w") as fp:
+        writer = csv.writer(fp, delimiter=",")
+        writer.writerow(
+            ["address", "nativeBalance", "nonNativeBalance", "boost", "nftBoost"]
+        )
+        for addr, data in boostInfo.items():
+            writer.writerow(
+                [
+                    addr,
+                    data["nativeBalance"],
+                    data["nonNativeBalance"],
+                    data["boost"],
+                    data["nftBoost"],
+                ]
+            )
+
     return badgerBoost

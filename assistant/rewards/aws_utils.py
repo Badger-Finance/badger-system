@@ -134,13 +134,7 @@ def upload_analytics(fileName):
 
     jsonKey = "rewards/{}.json".format(fileName)
     console.log(jsonKey)
-    pngKey = "rewards/{}.png".format(fileName)
-    console.log(pngKey)
 
     console.log("Uploading file to s3://" + bucket + "/" + jsonKey)
     s3.upload_file("logs/{}".format(jsonKey), bucket, jsonKey)
     console.log("✅ Uploaded file to s3://" + bucket + "/" + jsonKey)
-
-    # console.log("Uploading file to s3://" + bucket + "/" + pngKey)
-    # s3.upload_file("logs/{}".format(pngKey), bucket, pngKey)
-    # console.log("✅ Uploaded file to s3://" + bucket + "/" + pngKey)
