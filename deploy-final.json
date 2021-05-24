@@ -21,6 +21,11 @@
         "dfd": "0x5b5cF8620292249669e1DCC73B753d01543D6Ac7",
         "dfdBadgerShared": "0xCF7346A5E41b0821b80D5B3fdc385EEB6Dc59F44"
     },
+    "keepers": {
+        "legacy": "0x872213E29C85d7e30F1C8202FC47eD1Ec124BB1D",
+        "rootProposer": "0x68de9E2b015904530593426d934CE608e117Fa7A",
+        "autoCompounding": "0xE6C15f7f1e1AFD6bB19D5De395173bB76a7997f5"
+    },
     "logic-2": {
         "StrategySushiLpOptimizer": "0x5a954c6871978b29E27894B6Ce5a3729465eD14e"
     },
@@ -165,6 +170,7 @@
     "badgerRewardsManager": "0x5B60952481Eb42B66bdfFC3E049025AC5b91c127",
     "unlockScheduler": "0x1AADc00011939499a4d263d657Dd74b0E1176cF9",
     "badgerNfts": "0xe1e546e25A5eD890DFf8b8D005537c0d373497F8",
+    "autoCompoundingLogger": "0x70e8D2994EE23353633405f3771d105119cC662d",
     "rewardsLogger": "0x0A4F4e92C3334821EbB523324D09E321a6B0d8ec",
     "unifiedLogger": "0x01ebd1fbbe06be7d0936282da12fae2cde9c700d",
     "geysers": {
