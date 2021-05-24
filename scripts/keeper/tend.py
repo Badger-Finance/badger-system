@@ -73,5 +73,6 @@ def main():
         accounts[0].transfer(badger.keeper, Wei("5 ether"))
 
         skip.append('yearn.wbtc')
+        skip.append('native.test')
 
     tend_all(badger, skip)
