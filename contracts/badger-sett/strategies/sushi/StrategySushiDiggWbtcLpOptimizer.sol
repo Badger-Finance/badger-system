@@ -23,9 +23,7 @@ import "../BaseStrategySwapper.sol";
 import "interfaces/uniswap/IStakingRewards.sol";
 
 /*
-    Strategy to compound DIGG LP Position
-    - Harvest DIGG from special rewards pool and sell to increase LP Position
-    - Optimize Sushi gains from onsen rewards, if present
+    Optimize Sushi rewards for arbitrary Sushi LP pair
     - Sushi rewards will be distrtibuted via the BadgerTree in the form of interest-bearing xSushi
 */
 contract StrategySushiDiggWbtcLpOptimizer is BaseStrategyMultiSwapper {
@@ -54,25 +52,12 @@ contract StrategySushiDiggWbtcLpOptimizer is BaseStrategyMultiSwapper {
         uint256 blockNumber
     );
 
-    event HarvestDiggState(
-        uint256 diggHarvested,
-        uint256 diggConvertedToWbtc,
-        uint256 wbtcFromConversion,
-        uint256 lpGained,
-        uint256 timestamp,
-        uint256 blockNumber
-    );
-
     struct HarvestData {
-        uint256 diggHarvested;
         uint256 xSushiHarvested;
         uint256 totalxSushi;
         uint256 toStrategist;
         uint256 toGovernance;
         uint256 toBadgerTree;
-        uint256 diggConvertedToWbtc;
-        uint256 wbtcFromConversion;
-        uint256 lpGained;
     }
 
     struct TendData {
@@ -119,7 +104,6 @@ contract StrategySushiDiggWbtcLpOptimizer is BaseStrategyMultiSwapper {
     }
 
     function balanceOfPool() public override view returns (uint256) {
-        // Note: Our want balance is actually in the SushiChef.
         (uint256 staked, ) = ISushiChef(chef).userInfo(pid, address(this));
         return staked;
     }
@@ -149,8 +133,10 @@ contract StrategySushiDiggWbtcLpOptimizer is BaseStrategyMultiSwapper {
         require(address(digg) != _asset, "digg");
     }
 
-    /// @dev Deposit DIGG into the sushi chef.
+    /// @dev Deposit Badger into the staking contract
+    /// @dev Track balance in the StakingRewards
     function _deposit(uint256 _want) internal override {
+        // Deposit all want in sushi chef
         ISushiChef(chef).deposit(pid, _want);
     }
 
@@ -171,15 +157,6 @@ contract StrategySushiDiggWbtcLpOptimizer is BaseStrategyMultiSwapper {
         // Send all Sushi to controller rewards
         IERC20Upgradeable(sushi).safeTransfer(IController(controller).rewards(), _sushi);
 
-        // === Transfer extra token: DIGG ===
-
-        // Harvest all pending digg rewards
-        IStakingRewards(diggFaucet).getReward();
-
-        // Send all digg rewards to controller rewards
-        uint256 _diggBalance = IDigg(digg).balanceOf(address(this));
-        IDigg(digg).transfer(IController(controller).rewards(), _diggBalance);
-
         // Note: All want is automatically withdrawn outside this "inner hook" in base strategy function
     }
 
@@ -191,7 +168,6 @@ contract StrategySushiDiggWbtcLpOptimizer is BaseStrategyMultiSwapper {
         // If we lack sufficient idle want, withdraw the difference from the strategy position
         if (_preWant < _amount) {
             uint256 _toWithdraw = _amount.sub(_preWant);
-
             ISushiChef(chef).withdraw(pid, _toWithdraw);
             // Note: Withdrawl process will earn sushi, this will be deposited into SushiBar on next tend()
         }
@@ -229,9 +205,8 @@ contract StrategySushiDiggWbtcLpOptimizer is BaseStrategyMultiSwapper {
         return tendData;
     }
 
-    /// @dev Harvest accumulated digg rewards and convert them to LP tokens
-    /// @dev Harvest accumulated sushi and send to the controller
-    /// @dev Restake the gained LP tokens in the diggFaucet
+    /// @dev Harvest accumulated sushi from SushiChef and SushiBar and send to rewards tree for distribution. Take performance fees on gains
+    /// @dev The less frequent the harvest, the higher the gains due to compounding
     function harvest() external whenNotPaused returns (HarvestData memory) {
         _onlyAuthorizedActors();
 
@@ -239,9 +214,8 @@ contract StrategySushiDiggWbtcLpOptimizer is BaseStrategyMultiSwapper {
 
         uint256 _beforexSushi = IERC20Upgradeable(xsushi).balanceOf(address(this));
         uint256 _beforeLp = IERC20Upgradeable(want).balanceOf(address(this));
-        uint256 _beforeDigg = IERC20Upgradeable(digg).balanceOf(address(this));
 
-        // ===== Harvest sushi rewards from Chef =====
+        // == Harvest sushi rewards from Chef ==
 
         // Note: Deposit of zero harvests rewards balance, but go ahead and deposit idle want if we have it
         ISushiChef(chef).deposit(pid, _beforeLp);
@@ -270,42 +244,6 @@ contract StrategySushiDiggWbtcLpOptimizer is BaseStrategyMultiSwapper {
         harvestData.toBadgerTree = IERC20Upgradeable(xsushi).balanceOf(address(this));
         IERC20Upgradeable(xsushi).safeTransfer(badgerTree, harvestData.toBadgerTree);
 
-        // ===== Harvest all DIGG rewards: Sell to underlying (no performance fees) =====
-
-        IStakingRewards(diggFaucet).getReward();
-
-        uint256 _afterDigg = IERC20Upgradeable(digg).balanceOf(address(this));
-        harvestData.diggHarvested = _afterDigg.sub(_beforeDigg);
-
-        // ===== Swap half of digg for wBTC in liquidity pool =====
-        if (harvestData.diggHarvested > 0) {
-            harvestData.diggConvertedToWbtc = harvestData.diggHarvested.div(2);
-            if (harvestData.diggConvertedToWbtc > 0) {
-                address[] memory path = new address[](2);
-                path[0] = digg; // Digg
-                path[1] = wbtc;
-
-                // Note: We must sync before trading due to having a rebasing asset in the pair
-                address pair = _get_sushi_pair(digg, wbtc);
-                IUniswapV2Pair(pair).sync();
-
-                _swap_sushiswap(digg, harvestData.diggConvertedToWbtc, path);
-                               
-                harvestData.wbtcFromConversion = IERC20Upgradeable(wbtc).balanceOf(address(this));
-
-                // Add DIGG and wBTC as liquidity if any to add
-                _add_max_liquidity_sushiswap(digg, wbtc);
-            }
-        }
-
-        // ===== Deposit gained LP position into Chef & staking rewards =====
-        uint256 _afterLp = IERC20Upgradeable(want).balanceOf(address(this));
-        harvestData.lpGained = _afterLp.sub(_beforeLp);
-
-        if (harvestData.lpGained > 0) {
-            _deposit(harvestData.lpGained);
-        }
-
         emit HarvestState(
             harvestData.xSushiHarvested,
             harvestData.totalxSushi,
@@ -316,16 +254,8 @@ contract StrategySushiDiggWbtcLpOptimizer is BaseStrategyMultiSwapper {
             block.number
         );
 
-        emit HarvestDiggState(
-            harvestData.diggHarvested,
-            harvestData.diggConvertedToWbtc,
-            harvestData.wbtcFromConversion,
-            harvestData.lpGained,
-            block.timestamp,
-            block.number
-        );
-
-        emit Harvest(harvestData.lpGained, block.number);
+        // We never increase underlying position
+        emit Harvest(0, block.number);
 
         return harvestData;
     }
