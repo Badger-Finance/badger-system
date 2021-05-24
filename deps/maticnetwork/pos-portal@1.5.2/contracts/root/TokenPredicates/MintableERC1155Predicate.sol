@@ -1,7 +1,7 @@
 pragma solidity 0.6.6;
 
 import {IMintableERC1155} from "../RootToken/IMintableERC1155.sol";
-import {ERC1155Receiver} from "@openzeppelin/contracts/token/ERC1155/ERC1155Receiver.sol";
+import {ERC1155Receiver} from "deps/@openzeppelin/contracts/token/ERC1155/ERC1155Receiver.sol";
 import {AccessControlMixin} from "../../common/AccessControlMixin.sol";
 import {RLPReader} from "../../lib/RLPReader.sol";
 import {ITokenPredicate} from "./ITokenPredicate.sol";

@@ -1,6 +1,6 @@
 pragma solidity 0.6.6;
 
-import {ERC1155} from "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
+import {ERC1155} from "deps/@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 import {NativeMetaTransaction} from "../../common/NativeMetaTransaction.sol";
 import {ContextMixin} from "../../common/ContextMixin.sol";
 

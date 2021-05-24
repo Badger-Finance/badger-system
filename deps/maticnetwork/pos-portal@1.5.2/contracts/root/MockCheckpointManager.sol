@@ -1,6 +1,6 @@
 pragma solidity 0.6.6;
 
-import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
+import {SafeMath} from "deps/@openzeppelin/contracts/math/SafeMath.sol";
 import {ICheckpointManager} from "./ICheckpointManager.sol";
 
 /**

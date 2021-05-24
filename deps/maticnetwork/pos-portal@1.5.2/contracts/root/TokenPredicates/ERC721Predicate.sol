@@ -1,7 +1,7 @@
 pragma solidity 0.6.6;
 
 import {IRootERC721} from "../RootToken/IRootERC721.sol";
-import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
+import {IERC721Receiver} from "deps/@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import {RLPReader} from "../../lib/RLPReader.sol";
 import {ITokenPredicate} from "./ITokenPredicate.sol";
 import {Initializable} from "../../common/Initializable.sol";

@@ -1,4 +1,4 @@
-import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import {IERC721} from "deps/@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
 pragma solidity 0.6.6;
 

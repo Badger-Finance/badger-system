@@ -1,6 +1,6 @@
 pragma solidity 0.6.6;
 
-import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
+import {SafeMath} from "deps/@openzeppelin/contracts/math/SafeMath.sol";
 import {IRootChainManager} from "./IRootChainManager.sol";
 import {RootChainManagerStorage} from "./RootChainManagerStorage.sol";
 import {IStateSender} from "../StateSender/IStateSender.sol";
@@ -11,7 +11,7 @@ import {Merkle} from "../../lib/Merkle.sol";
 import {ITokenPredicate} from "../TokenPredicates/ITokenPredicate.sol";
 import {Initializable} from "../../common/Initializable.sol";
 import {NativeMetaTransaction} from "../../common/NativeMetaTransaction.sol";
-import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
+import {AccessControl} from "deps/@openzeppelin/contracts/access/AccessControl.sol";
 import {AccessControlMixin} from "../../common/AccessControlMixin.sol";
 import {ContextMixin} from "../../common/ContextMixin.sol";
 

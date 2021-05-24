@@ -1,6 +1,6 @@
 pragma solidity 0.6.6;
 
-import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
+import {IERC721Receiver} from "deps/@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import {AccessControlMixin} from "../../common/AccessControlMixin.sol";
 import {RLPReader} from "../../lib/RLPReader.sol";
 import {IMintableERC721} from "../RootToken/IMintableERC721.sol";

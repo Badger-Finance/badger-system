@@ -1,6 +1,6 @@
 pragma solidity 0.6.6;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {IERC20} from "deps/@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IChildChainManager} from "./IChildChainManager.sol";
 import {IChildToken} from "../ChildToken/IChildToken.sol";
 import {Initializable} from "../../common/Initializable.sol";

@@ -1,6 +1,6 @@
 pragma solidity 0.6.6;
 
-import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
+import {AccessControl} from "deps/@openzeppelin/contracts/access/AccessControl.sol";
 
 contract AccessControlMixin is AccessControl {
     string private _revertMsg;

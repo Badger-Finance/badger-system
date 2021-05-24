@@ -1,6 +1,6 @@
 pragma solidity 0.6.6;
 
-import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import {ERC721} from "deps/@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import {AccessControlMixin} from "../../common/AccessControlMixin.sol";
 import {IChildToken} from "./IChildToken.sol";
 import {NativeMetaTransaction} from "../../common/NativeMetaTransaction.sol";

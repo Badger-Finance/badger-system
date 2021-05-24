@@ -1,6 +1,6 @@
 pragma solidity 0.6.6;
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "deps/@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "../../child/IStateReceiver.sol";
 import "./ChildPotatoFarm.sol";
 

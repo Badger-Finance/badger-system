@@ -2,10 +2,10 @@
 
 pragma solidity ^0.6.0;
 
-import "@openzeppelin/contracts/GSN/Context.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/math/SafeMath.sol";
-import "@openzeppelin/contracts/utils/Address.sol";
+import "deps/@openzeppelin/contracts/GSN/Context.sol";
+import "deps/@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "deps/@openzeppelin/contracts/math/SafeMath.sol";
+import "deps/@openzeppelin/contracts/utils/Address.sol";
 
 /**
  * Modified openzeppelin implemtation to add setters for name, symbol and decimals.
