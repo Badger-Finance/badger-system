@@ -18,7 +18,7 @@ def harvest_all(badger: BadgerSystem, skip, min_profit=0):
 
     :param badger: badger system
     :param skip: strategies to skip checking
-    :param min_profit: minimum estimated profit (in ETH) required for harvest to be executed on chain
+    :param min_profit: minimum estimated profit (in ETH or BNB) required for harvest to be executed on chain
     """
     for key, vault in badger.sett_system.vaults.items():
         if key in skip:

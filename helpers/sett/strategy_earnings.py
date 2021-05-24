@@ -9,7 +9,76 @@ import requests
 console = Console()
 curr_network = network_manager.get_active_network()
 
-# returns harvest earnings denominated in eth
+# returns tend earnings denominated in eth/bnb
+def get_tend_earnings_manager(badger: BadgerSystem, strategy: Contract, key: str, overrides):
+  token = get_symbol(key, True)
+  if not token:
+    console.log("token for strategy at", strategy.address, "not found")
+    return 'skip'
+
+  token_address = get_address(token)
+  if not type(token_address) == str:
+    console.log("address for token", token, "not found")
+    return 'skip'
+
+  try:
+    tend_data = strategy.tend.call({'from': badger.badgerRewardsManager, "gas_limit": overrides["gas_limit"]})
+    earnings = tend_data[0]
+
+  except:
+    console.log('estimation failed', key)
+    return 0
+  
+  if earnings > 0: price = get_price(token_address, sellAmount=earnings)
+  else: price = get_price(token_address)
+
+  token_contract = interface.IERC20(token_address)
+  decimals = token_contract.decimals()
+  eth_profit = earnings / (10**decimals) * float(price)
+
+  if curr_network == "bsc":
+    console.log("harvest token:", token, "earnings:", earnings, "price in bnb:", price, "bnb profit:", eth_profit)
+  elif curr_network == "eth":
+    console.log("harvest token:", token, "earnings:", earnings, "price in eth:", price, "eth profit:", eth_profit)
+
+  return eth_profit
+
+# returns tend earnings denominated in eth/bnb
+def get_tend_earnings(badger: BadgerSystem, strategy: Contract, key: str, overrides):
+  token = get_symbol(key, True)
+  if not token:
+    console.log("token for strategy at", strategy.address, "not found")
+    return 'skip'
+
+  token_address = get_address(token)
+  if not type(token_address) == str:
+    console.log("address for token", token, "not found")
+    return 'skip'
+
+  try:
+    tend_data = strategy.tend.call(overrides)
+    earnings = tend_data[0]
+
+  except:
+    console.log('estimation failed', key)
+    return 0
+  
+  if earnings > 0: price = get_price(token_address, sellAmount=earnings)
+  else: price = get_price(token_address)
+
+  token_contract = interface.IERC20(token_address)
+  decimals = token_contract.decimals()
+  eth_profit = earnings / (10**decimals) * float(price)
+
+  if curr_network == "bsc":
+    console.log("harvest token:", token, "earnings:", earnings, "price in bnb:", price, "bnb profit:", eth_profit)
+  elif curr_network == "eth":
+    console.log("harvest token:", token, "earnings:", earnings, "price in eth:", price, "eth profit:", eth_profit)
+
+  return eth_profit
+
+
+# returns harvest earnings denominated in eth/bnb
 def get_harvest_earnings(badger: BadgerSystem, strategy: Contract, key: str, overrides):
   token = get_symbol(key)
   if not token:
@@ -18,8 +87,8 @@ def get_harvest_earnings(badger: BadgerSystem, strategy: Contract, key: str, ove
 
   token_address = get_address(token)
   if not type(token_address) == str:
-      console.log("address for token", token, "not found")
-      return 'skip'
+    console.log("address for token", token, "not found")
+    return 'skip'
 
   if key == 'harvest.renCrv':
     metafarm = "0xae024f29c26d6f71ec71658b1980189956b0546d"
@@ -83,7 +152,7 @@ def get_price(token: str, sellAmount=1000000000000000000):
   return data['guaranteedPrice'] 
 
 
-def get_symbol(key: str):
+def get_symbol(key: str, tend=False):
   if curr_network == 'eth':
     if is_crv_strategy(key):
       return curve_registry.symbol
@@ -91,6 +160,8 @@ def get_symbol(key: str):
       return badger_registry.symbol
     if is_digg_strategy(key):
       return digg_registry.symbol
+    if is_sushi_strategy(key, tend):
+      return sushi_registry.symbol
     if is_xsushi_strategy(key):
       return sushi_registry.symbol_xsushi
     if is_farm_strategy(key):
@@ -114,6 +185,10 @@ def is_badger_strategy(key: str):
 
 def is_digg_strategy(key: str):
   return key in ["native.uniDiggWbtc", "native.sushiDiggWbtc"]
+
+
+def is_sushi_strategy(key: str, tend=False):
+  return key in ["native.sushiWbtcEth"] and tend
 
 
 def is_xsushi_strategy(key: str):
