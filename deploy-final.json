@@ -4,6 +4,7 @@
     "guardian": "0x29F7F8896Fb913CF7f9949C623F896a154727919",
     "keeper": "0x872213E29C85d7e30F1C8202FC47eD1Ec124BB1D",
     "devProxyAdmin": "0x20Dce41Acca85E8222D6861Aa6D23B6C941777bF",
+    "devUngatedProxyAdmin": "0x9215cBDCDe25629d0e3D69ee5562d1b444Cf69F9",
     "opsProxyAdmin": "0x4599f2913a3db4e73aa77a304ccc21516dd7270d",
     "daoProxyAdmin": "0x11A9D034B1bbfbbDCaC9cB3b86ca7D5Df05140F2",
     "testProxyAdmin": "0xB10b3Af646Afadd9C62D663dd5d226B15C25CdFA",
@@ -214,12 +215,12 @@
         }
     },
     "swap_system": {
-        "router": "0x0e831bE5ED39fA9CaC685006d673A5e731967846",
+        "router": "0x618591aa0e9a29bEc845D841735Ce3aFAD8fa645",
         "strategies": {
-            "curve": "0xFaE8bd34190615f3388f38191DC332B44C53e10B"
+            "curve": "0x1a6BC004fCDd57F1f55Ba3a3807FAE71F8d89e8D"
         },
         "logic": {
-            "SwapStrategyRouter": "0x2cb501d371ba2248BB48455D3293d47cE773E0F7",
+            "SwapStrategyRouter": "0x338cdC5D9c8Bb428fDA4C47e66841DEA954fDEDE",
             "CurveSwapStrategy": "0x4f594f1C067177587617b964632a3CC164C29cE8"
         }
     },
