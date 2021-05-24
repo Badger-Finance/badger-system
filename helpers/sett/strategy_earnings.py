@@ -1,3 +1,4 @@
+from typing import Tuple
 from brownie import *
 from rich.console import Console
 from scripts.systems.badger_system import BadgerSystem
@@ -11,15 +12,8 @@ curr_network = network_manager.get_active_network()
 
 # returns tend earnings denominated in eth/bnb
 def get_tend_earnings_manager(badger: BadgerSystem, strategy: Contract, key: str, overrides):
-  token = get_symbol(key, True)
-  if not token:
-    console.log("token for strategy at", strategy.address, "not found")
-    return 'skip'
-
-  token_address = get_address(token)
-  if not type(token_address) == str:
-    console.log("address for token", token, "not found")
-    return 'skip'
+  (token, token_address) = token_data(key, strategy, True)
+  if not token or not token_address: return 'skip'
 
   try:
     tend_data = strategy.tend.call({'from': badger.badgerRewardsManager, "gas_limit": overrides["gas_limit"]})
@@ -29,31 +23,12 @@ def get_tend_earnings_manager(badger: BadgerSystem, strategy: Contract, key: str
     console.log('estimation failed', key)
     return 0
   
-  if earnings > 0: price = get_price(token_address, sellAmount=earnings)
-  else: price = get_price(token_address)
-
-  token_contract = interface.IERC20(token_address)
-  decimals = token_contract.decimals()
-  eth_profit = earnings / (10**decimals) * float(price)
-
-  if curr_network == "bsc":
-    console.log("harvest token:", token, "earnings:", earnings, "price in bnb:", price, "bnb profit:", eth_profit)
-  elif curr_network == "eth":
-    console.log("harvest token:", token, "earnings:", earnings, "price in eth:", price, "eth profit:", eth_profit)
-
-  return eth_profit
+  return calc_profit(earnings, token_address, token)
 
 # returns tend earnings denominated in eth/bnb
 def get_tend_earnings(badger: BadgerSystem, strategy: Contract, key: str, overrides):
-  token = get_symbol(key, True)
-  if not token:
-    console.log("token for strategy at", strategy.address, "not found")
-    return 'skip'
-
-  token_address = get_address(token)
-  if not type(token_address) == str:
-    console.log("address for token", token, "not found")
-    return 'skip'
+  (token, token_address) = token_data(key, strategy, True)
+  if not token or not token_address: return 'skip'
 
   try:
     tend_data = strategy.tend.call(overrides)
@@ -63,32 +38,13 @@ def get_tend_earnings(badger: BadgerSystem, strategy: Contract, key: str, overri
     console.log('estimation failed', key)
     return 0
   
-  if earnings > 0: price = get_price(token_address, sellAmount=earnings)
-  else: price = get_price(token_address)
-
-  token_contract = interface.IERC20(token_address)
-  decimals = token_contract.decimals()
-  eth_profit = earnings / (10**decimals) * float(price)
-
-  if curr_network == "bsc":
-    console.log("harvest token:", token, "earnings:", earnings, "price in bnb:", price, "bnb profit:", eth_profit)
-  elif curr_network == "eth":
-    console.log("harvest token:", token, "earnings:", earnings, "price in eth:", price, "eth profit:", eth_profit)
-
-  return eth_profit
+  return calc_profit(earnings, token_address, token)
 
 
 # returns harvest earnings denominated in eth/bnb
 def get_harvest_earnings(badger: BadgerSystem, strategy: Contract, key: str, overrides):
-  token = get_symbol(key)
-  if not token:
-    console.log("token for strategy at", strategy.address, "not found")
-    return 'skip'
-
-  token_address = get_address(token)
-  if not type(token_address) == str:
-    console.log("address for token", token, "not found")
-    return 'skip'
+  (token, token_address) = token_data(key, strategy, False)
+  if not token or not token_address: return 'skip'
 
   if key == 'harvest.renCrv':
     metafarm = "0xae024f29c26d6f71ec71658b1980189956b0546d"
@@ -107,19 +63,7 @@ def get_harvest_earnings(badger: BadgerSystem, strategy: Contract, key: str, ove
     console.log('Profit estimation not supported yet for strategy at', strategy.address)
     return 'skip'
 
-  if earnings > 0: price = get_price(token_address, sellAmount=earnings)
-  else: price = get_price(token_address)
-
-  token_contract = interface.IERC20(token_address)
-  decimals = token_contract.decimals()
-  eth_profit = earnings / (10**decimals) * float(price)
-
-  if curr_network == "bsc":
-    console.log("harvest token:", token, "earnings:", earnings, "price in bnb:", price, "bnb profit:", eth_profit)
-  elif curr_network == "eth":
-    console.log("harvest token:", token, "earnings:", earnings, "price in eth:", price, "eth profit:", eth_profit)
-
-  return eth_profit
+  return calc_profit(earnings, token_address, token)
 
 
 def get_price(token: str, sellAmount=1000000000000000000):
@@ -152,18 +96,46 @@ def get_price(token: str, sellAmount=1000000000000000000):
   return data['guaranteedPrice'] 
 
 
+def token_data(key: str, strategy: Contract, tend: bool) -> tuple[str,str]:
+  token = get_symbol(key, tend)
+  if not token:
+    console.log("token for strategy at", strategy.address, "not found")
+
+  token_address = get_address(token)
+  if not type(token_address) == str:
+    console.log("address for token", token, "not found")
+
+  return (token, token_address)
+
+
+def calc_profit(earnings: int, token_address: str, token: str) -> int:
+  if earnings > 0: price = get_price(token_address, sellAmount=earnings)
+  else: price = get_price(token_address)
+
+  token_contract = interface.IERC20(token_address)
+  decimals = token_contract.decimals()
+  eth_profit = earnings / (10**decimals) * float(price)
+
+  if curr_network == "bsc":
+    console.log("harvest token:", token, "earnings:", earnings, "price in bnb:", price, "bnb profit:", eth_profit)
+  elif curr_network == "eth":
+    console.log("harvest token:", token, "earnings:", earnings, "price in eth:", price, "eth profit:", eth_profit)
+
+  return eth_profit
+
+
 def get_symbol(key: str, tend=False):
   if curr_network == 'eth':
     if is_crv_strategy(key):
       return curve_registry.symbol
     if is_badger_strategy(key):
       return badger_registry.symbol
-    if is_digg_strategy(key):
-      return digg_registry.symbol
     if is_sushi_strategy(key, tend):
       return sushi_registry.symbol
     if is_xsushi_strategy(key):
       return sushi_registry.symbol_xsushi
+    if is_digg_strategy(key):
+      return digg_registry.symbol
     if is_farm_strategy(key):
       return harvest_registry.symbol
   elif curr_network == 'bsc':
@@ -188,7 +160,7 @@ def is_digg_strategy(key: str):
 
 
 def is_sushi_strategy(key: str, tend=False):
-  return key in ["native.sushiWbtcEth"] and tend
+  return key in ["native.sushiWbtcEth", "native.sushiDiggWbtc"] and tend
 
 
 def is_xsushi_strategy(key: str):
