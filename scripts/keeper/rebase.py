@@ -74,7 +74,7 @@ def rebase(badger: BadgerSystem, account):
         print("pair before", pair.getReserves())
         print("uniPair before", uniPair.getReserves())
 
-        tx_timer.start_timer(overrides['from'], 'Rebase')
+        tx_timer.start_timer(account, 'Rebase')
         tx = digg.orchestrator.rebase({"from": account})
         tx_timer.end_timer()
 
