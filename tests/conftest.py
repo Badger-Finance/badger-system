@@ -8,6 +8,7 @@ from brownie import (
 
 from config.badger_config import badger_config, digg_config, sett_config
 from scripts.deploy.deploy_badger import deploy_flow
+from scripts.systems.digg_system import connect_digg
 from scripts.systems.badger_system import connect_badger
 from scripts.systems.badger_minimal import deploy_badger_minimal
 from scripts.systems.digg_minimal import deploy_digg_minimal
@@ -401,7 +402,7 @@ def digg_distributor_prod_unit():
     digg.token = digg.uFragments
 
     badger.add_existing_digg(digg)
-    init_prod_digg(badger, badger.deployer)
+    #init_prod_digg(badger, badger.deployer) #deploy_digg script removed.
     return digg
 
 
