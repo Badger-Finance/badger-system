@@ -29,6 +29,7 @@ from scripts.systems.digg_system import connect_digg
 from scripts.systems.sushiswap_system import SushiswapSystem
 from scripts.systems.uniswap_system import UniswapSystem
 from tabulate import tabulate
+from helpers.tx_timer import tx_timer
 
 console = Console()
 
@@ -73,7 +74,9 @@ def rebase(badger: BadgerSystem, account):
         print("pair before", pair.getReserves())
         print("uniPair before", uniPair.getReserves())
 
+        tx_timer.start_timer(overrides['from'], 'Rebase')
         tx = digg.orchestrator.rebase({"from": account})
+        tx_timer.end_timer()
 
         if rpc.is_active():
             chain.mine()
