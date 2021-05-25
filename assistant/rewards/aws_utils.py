@@ -1,13 +1,21 @@
 import boto3
 from brownie import *
-import requests
 from rich.console import Console
+from config.env_config import env_config
 
 console = Console()
 
+s3 = boto3.client(
+    "s3",
+    aws_access_key_id=env_config.aws_access_key_id,
+    aws_secret_access_key=env_config.aws_secret_access_key,
+)
+merkle_bucket = "badger-merkle-proofs"
+rewards_bucket = "badger-json"
+analytics_bucket = "badger-analytics"
+
 
 def download_latest_tree():
-    from config.env_config import env_config
 
     s3 = boto3.client(
         "s3",
@@ -16,7 +24,7 @@ def download_latest_tree():
     )
 
     target = {
-        "bucket": "badger-merkle-proofs",
+        "bucket": merkle_bucket,
         "key": "badger-tree.json",
     }  # badger-api production
 
@@ -26,15 +34,7 @@ def download_latest_tree():
     return s3_clientdata
 
 
-def download(fileName):
-    url = "https://m2066zr7zl.execute-api.us-east-1.amazonaws.com/rewards/{}".format(
-        fileName
-    )
-    return requests.get(url=url).json()
-
-
-def download_bucket(fileName):
-    from config.env_config import env_config
+def download_tree(fileName):
 
     s3 = boto3.client(
         "s3",
@@ -54,8 +54,22 @@ def download_bucket(fileName):
     return s3_clientdata
 
 
+def download_past_trees(number):
+    trees = []
+    key = "badger-tree.json"
+    response = s3.list_object_versions(Prefix=key, Bucket=merkle_bucket)
+    versions = response["Versions"][:number]
+    for version in versions:
+        console.log(version["Key"], version["VersionId"])
+        # yield version
+        s3_client_obj = s3.get_object(
+            Bucket=merkle_bucket, Key=version["Key"], VersionId=version["VersionId"]
+        )
+        trees.append(s3_client_obj["Body"].read())
+    return trees
+
+
 def upload(fileName, bucket="badger-json", publish=True):
-    from config.env_config import env_config
     if not publish:
         upload_targets = [
             {
@@ -81,11 +95,6 @@ def upload(fileName, bucket="badger-json", publish=True):
             }  # badger-api production
         )
 
-    s3 = boto3.client(
-        "s3",
-        aws_access_key_id=env_config.aws_access_key_id,
-        aws_secret_access_key=env_config.aws_secret_access_key,
-    )
     for target in upload_targets:
         console.print(
             "Uploading file to s3://" + target["bucket"] + "/" + target["key"]
@@ -94,3 +103,33 @@ def upload(fileName, bucket="badger-json", publish=True):
         console.print(
             "✅ Uploaded file to s3://" + target["bucket"] + "/" + target["key"]
         )
+
+
+def upload_boosts(test):
+    fileName = "badger-boosts.json"
+
+    if test:
+        bucket = "badger-staging-merkle-proofs"
+    else:
+        bucket = "badger-merkle-proofs"
+    console.log("Uploading file to s3://" + bucket + "/" + fileName)
+    s3.upload_file(fileName, bucket, fileName)
+    console.log("✅ Uploaded file to s3://" + bucket + "/" + fileName)
+
+
+def upload_analytics(fileName):
+    bucket = "badger-analytics"
+    console.log(fileName)
+
+    jsonKey = "rewards/{}.json".format(fileName)
+    console.log(jsonKey)
+    pngKey = "rewards/{}.png".format(fileName)
+    console.log(pngKey)
+
+    console.log("Uploading file to s3://" + bucket + "/" + jsonKey)
+    s3.upload_file("logs/{}".format(jsonKey), bucket, jsonKey)
+    console.log("✅ Uploaded file to s3://" + bucket + "/" + jsonKey)
+
+    # console.log("Uploading file to s3://" + bucket + "/" + pngKey)
+    # s3.upload_file("logs/{}".format(pngKey), bucket, pngKey)
+    # console.log("✅ Uploaded file to s3://" + bucket + "/" + pngKey)

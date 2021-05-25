@@ -86,19 +86,15 @@ def diff_token_balances(before, after, scale=True):
     for token, accounts in before.items():
         for account, value in accounts.items():
             if scale:
-                amount = val(
+                amount = (
+                    val(
                         after[token][account] - value,
                         decimals=token_metadata.get_decimals(token),
                     ),
+                )
             else:
                 amount = after[token][account] - value
-            table.append(
-                [
-                    token_metadata.get_symbol(token),
-                    account,
-                    amount
-                ]
-            )
+            table.append([token_metadata.get_symbol(token), account, amount])
 
     print(tabulate(table, headers=["asset", "account", "balance"]))
 
@@ -127,17 +123,34 @@ def print_balances(tokens_by_name, account):
     print("\nToken Balances for {}".format(account))
     print(tabulate(table, headers=["asset", "balance"]))
 
+def badger_to_bBadger(badger, amount):
+    bBadger = badger.getSett("native.badger")
+    ppfs = bBadger.getPricePerFullShare()
+
+    console.print(
+        {
+            "badger amount": amount,
+            "ppfs": ppfs,
+            "mult": 10 ** badger.token.decimals(),
+            "bBadger amount": amount * 10 ** badger.token.decimals() // ppfs,
+        }
+    )
+
+    return amount * 10 ** badger.token.decimals() // ppfs
+
+
 def to_token_scale(asset, unscaled):
     unscaled = float(unscaled)
 
     address = asset_to_address(asset)
     decimals = token_metadata.get_decimals(address)
-    
-    scale_factor = (10**decimals)
-    
+
+    scale_factor = 10 ** decimals
+
     scaled = unscaled * scale_factor
     print("unscaled", unscaled, decimals, scale_factor, scaled, int(scaled))
     return int(scaled)
+
 
 class TokenMetadataRegistry:
     def __init__(self):
@@ -202,6 +215,7 @@ def to_token(address):
 
 
 def distribute_from_whales(recipient, percentage=0.8, assets="All"):
+
     accounts[0].transfer(recipient, Wei("50 ether"))
 
     console.print(
@@ -242,9 +256,12 @@ def distribute_from_whale(whale_config, recipient, percentage=0.2):
         if recipient.balance() < 2 * 10 ** 18:
             distribute_test_ether(recipient, Wei("2 ether"))
         recipient.transfer(forceEther, Wei("2 ether"))
+        console.print("Force send Ether to whale..")
         forceEther.forceSend(whale_config.whale, {"from": recipient})
 
     token = interface.IERC20(whale_config.token)
+
+    console.print("Transfer token {token.address} to recipient")
     token.transfer(
         recipient,
         token.balanceOf(whale_config.whale) * percentage,
@@ -261,7 +278,8 @@ def distribute_test_ether(recipient, amount):
         if accounts[idx].balance() >= amount:
             break
         idx += 1
-    accounts[idx].transfer(recipient, amount)
+    if idx != len(accounts):
+        accounts[idx].transfer(recipient, amount)
 
 
 def getTokenMetadata(address):

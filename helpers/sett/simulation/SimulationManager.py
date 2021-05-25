@@ -1,40 +1,43 @@
-import time
 import random
-from hexbytes import HexBytes
-from brownie import accounts, web3
+import time
 from enum import Enum
-from rich.console import Console
 
-from scripts.systems.badger_system import BadgerSystem
-from helpers.sett.SnapshotManager import SnapshotManager
+from brownie import accounts, web3
 from helpers.sett.DiggSnapshotManager import DiggSnapshotManager
-from .provisioners import (
-    BaseProvisioner,
-    BadgerRewardsProvisioner,
-    DiggRewardsProvisioner,
-    DiggLpMetaFarmProvisioner,
-    SushiDiggWbtcLpOptimizerProvisioner,
-    HarvestMetaFarmProvisioner,
-    SushiBadgerWbtcProvisioner,
-    SushiLpOptimizerProvisioner,
-    BadgerLpMetaFarmProvisioner,
-    CurveGaugeProvisioner,
-    SushiClawUSDCProvisioner,
-    PancakeBnbBtcbProvisioner,
-    SushiWbtcIbBtcLpOptimizerProvisioner,
-)
+from helpers.sett.SnapshotManager import SnapshotManager
+from hexbytes import HexBytes
+from rich.console import Console
+from scripts.systems.badger_system import BadgerSystem
+
 from .actors import (
-    UserActor,
-    SettKeeperActor,
-    StrategyKeeperActor,
     ChainActor,
     DiggActor,
+    SettKeeperActor,
+    StrategyKeeperActor,
+    UserActor,
+)
+from .provisioners import (
+    BadgerLpMetaFarmProvisioner,
+    BadgerRewardsProvisioner,
+    BaseProvisioner,
+    CurveGaugeProvisioner,
+    DiggLpMetaFarmProvisioner,
+    DiggRewardsProvisioner,
+    HarvestMetaFarmProvisioner,
+    PancakeBBadgerBtcbProvisioner,
+    PancakeBDiggBtcbProvisioner,
+    PancakeBnbBtcbProvisioner,
+    SushiBadgerWbtcProvisioner,
+    SushiClawUSDCProvisioner,
+    SushiDiggWbtcLpOptimizerProvisioner,
+    SushiLpOptimizerProvisioner,
+    WbtcIbBtcLpProvisioner,
 )
 
 console = Console()
 
 # Provision num users for sim.
-NUM_USERS = 10
+NUM_USERS = 4
 
 
 class SimulationManagerState(Enum):
@@ -56,6 +59,8 @@ class SimulationManager:
         self.accounts = accounts[9:]  # Use the 10th account onwards.
         # User accounts (need to be provisioned before running sim).
         self.users = []
+
+        self.debug = True
 
         self.badger = badger
         self.snap = snap
@@ -86,31 +91,52 @@ class SimulationManager:
             self.seed = int(time.time())
         console.print(f"initialized simulation manager with seed: {self.seed}")
         random.seed(self.seed)
+        console.print("Random Seed")
         self.provisioner = self._initProvisioner(settId)
+        console.print("initialization complete")
 
     def provision(self) -> None:
+        if self.debug:
+            console.print("provisioning")
         if self.state != SimulationManagerState.IDLE:
             raise Exception(f"invalid state: {self.state}")
 
+        if self.debug:
+            console.print(f"collecting {NUM_USERS} users")
+
         accountsUsed = set([])
         while len(self.users) < NUM_USERS:
-            idx = int(random.random()*len(self.accounts))
+            # if self.debug:
+            #     console.print("processing user")
+            idx = int(random.random() * len(self.accounts))
             if idx in accountsUsed:
                 continue
             if web3.eth.getCode(self.accounts[idx].address) != HexBytes("0x"):
                 continue
 
             self.users.append(self.accounts[idx])
+            if self.debug:
+                console.print(f"added user {idx}")
             accountsUsed.add(idx)
 
+        if self.debug:
+            console.print("distributing token")
         self.provisioner._distributeTokens(self.users)
+
+        if self.debug:
+            console.print("distributing want")
         self.provisioner._distributeWant(self.users)
+
+        if self.debug:
+            console.print("provisioning users")
         self._provisionUserActors()
+
         console.print(f"provisioned {len(self.users)} users {len(self.actors)} actors")
 
         self.state = SimulationManagerState.PROVISIONED
 
     def randomize(self, numActions: int) -> None:
+        console.print(f"Randomizing {numActions} actions")
         if self.state != SimulationManagerState.PROVISIONED:
             raise Exception(f"invalid state: {self.state}")
 
@@ -156,8 +182,14 @@ class SimulationManager:
             return SushiClawUSDCProvisioner(self)
         if settId == "native.pancakeBnbBtcb":
             return PancakeBnbBtcbProvisioner(self)
+        if settId == "native.bBadgerBtcb":
+            return PancakeBBadgerBtcbProvisioner(self)
+        if settId == "native.bDiggBtcb":
+            return PancakeBDiggBtcbProvisioner(self)
         if settId == "native.sushiWbtcIbBtc":
-            return SushiWbtcIbBtcLpOptimizerProvisioner(self)
+            return WbtcIbBtcLpProvisioner(self)
+        if settId == "native.uniWbtcIbBtc":
+            return WbtcIbBtcLpProvisioner(self, isUniswap=True)
         raise Exception(f"invalid strategy settID (no provisioner): {settId}")
 
     def _provisionUserActors(self) -> None:

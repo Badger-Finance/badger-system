@@ -1,4 +1,5 @@
 __pycache__
+.venv
 .history
 .hypothesis/
 build/
@@ -41,5 +42,4 @@ credentials.json
 
 venv
 .vscode
-
 .idea

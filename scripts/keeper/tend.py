@@ -74,5 +74,7 @@ def main():
 
         skip.append('yearn.wbtc')
         skip.append('native.test')
+        skip.append('experimental.sushiIBbtcWbtc')
+        skip.append('experimental.digg')
 
     tend_all(badger, skip)

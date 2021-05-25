@@ -7,8 +7,7 @@ from helpers.gas_utils import gas_strategies
 from helpers.registry import registry
 from helpers.sett.SnapshotManager import SnapshotManager
 from helpers.snapshot import diff_numbers_by_key, snap_strategy_balance
-from helpers.utils import (shares_to_fragments, to_digg_shares, to_tabulate,
-                           tx_wait)
+from helpers.utils import shares_to_fragments, to_digg_shares, to_tabulate, tx_wait
 from rich.console import Console
 from scripts.systems.badger_system import BadgerSystem, connect_badger
 from scripts.systems.digg_system import connect_digg
@@ -45,7 +44,9 @@ def transfer_for_strategy_internal(badger, key, amount):
     strategy = badger.getStrategy(key)
     manager = badger.badgerRewardsManager
     want = interface.IERC20(strategy.want())
-    manager.transferWant(want, strategy, amount, {"from": badger.keeper, "gas_limit": 1000000})
+    manager.transferWant(
+        want, strategy, amount, {"from": badger.keeper, "gas_limit": 1000000}
+    )
 
 
 def rapid_harvest(badger):
@@ -56,7 +57,7 @@ def rapid_harvest(badger):
 
     # TODO: Output message when failure
     # TODO: Use test mode if RPC active, no otherwise
-    
+
     rewards = get_active_rewards_schedule(badger)
     digg = badger.digg
     manager = badger.badgerRewardsManager
@@ -100,11 +101,11 @@ def rapid_harvest(badger):
 
     # ===== native.digg =====
     key = "native.digg"
+    diggBaseRewards = shares_to_fragments(
+        rewards.getDistributions(key).getToStakingRewardsDaily("digg")
+    )
     transfer_for_strategy(
-        badger,
-        key,
-        shares_to_fragments(rewards.getDistributions(key).getToStakingRewardsDaily("digg")),
-        decimals=9,
+        badger, key, diggBaseRewards, decimals=9,
     )
 
 

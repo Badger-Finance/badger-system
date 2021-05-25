@@ -40,7 +40,7 @@ contract DiggSett is Sett {
     function shares() public view returns (uint256) {
         uint256 settShares = IDigg(address(token)).sharesOf(address(this));
 
-        /// Get the shares directly from the current digg strategy, as the controller does not have a wrapper function for digg shares
+        // Get the shares directly from the current digg strategy, as the controller does not have a wrapper function for digg shares
         address strategy = IController(controller).strategies(address(token));
         uint256 strategyShares = IDiggStrategy(strategy).sharesOf();
 

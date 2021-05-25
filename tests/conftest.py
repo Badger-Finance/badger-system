@@ -10,6 +10,7 @@ from config.badger_config import badger_config, digg_config, sett_config
 from scripts.deploy.deploy_badger import deploy_flow
 from scripts.systems.badger_system import connect_badger
 from scripts.systems.badger_minimal import deploy_badger_minimal
+from scripts.systems.digg_minimal import deploy_digg_minimal
 from scripts.systems.constants import SettType
 from helpers.token_utils import distribute_test_ether
 from helpers.registry import registry
@@ -30,6 +31,8 @@ from tests.sett.fixtures import (
     SushiClawUSDCMiniDeploy,
     PancakeMiniDeploy,
     SushiWbtcIbBtcLpOptimizerMiniDeploy,
+    UniGenericLpMiniDeploy,
+    DiggStabilizeMiniDeploy
 )
 
 
@@ -37,30 +40,29 @@ def generate_sett_test_config(settsToRun, runTestSetts, runProdSetts=False):
     setts = []
     for settId in settsToRun:
         if runTestSetts:
-            setts.append({
-                'id': settId,
-                'mode': "test"
-            })
+            setts.append({"id": settId, "mode": "test"})
         if runProdSetts:
-            setts.append({
-                'id': settId,
-                'mode': "prod"
-            })
+            setts.append({"id": settId, "mode": "prod"})
     return setts
 
 
 # ===== Sett + Strategy Test Configuration =====
 
 settsToRun = [
-    "native.badger",
-    "native.renCrv",
-    "native.sbtcCrv",
-    "native.tbtcCrv",
+    # "native.badger",
+    # "native.renCrv",
+    # "native.sbtcCrv",
+    # "native.tbtcCrv",
     # "harvest.renCrv",
-    "native.uniBadgerWbtc",
-    "native.sushiBadgerWbtc",
-    "native.sushiWbtcEth",
+    # "native.uniBadgerWbtc",
+    # "native.sushiBadgerWbtc",
+    # "native.sushiWbtcEth",
     "native.sushiWbtcIbBtc",
+    # "native.uniWbtcIbBtc",
+]
+
+yearnSettsToRun = [
+    "yearn.bvyWBTC",
 ]
 
 diggSettsToRun = [
@@ -93,10 +95,16 @@ networkSettsMap = {
 # NB: This is expected to fail if the network ID does not exist.
 baseSettsToRun = networkSettsMap[network_manager.get_active_network()]
 
+stabilizeSett = ["experimental.digg"]
+
+stabilizeTestConfig = generate_sett_test_config(stabilizeSett, False)
 settTestConfig = generate_sett_test_config(baseSettsToRun, runTestSetts)
 diggSettTestConfig = generate_sett_test_config(diggSettsToRun, runTestSetts)
+yearnSettTestConfig = generate_sett_test_config(yearnSettsToRun, runTestSetts)
 clawSettTestConfig = generate_sett_test_config(clawSettsToRun, runTestSetts)
-clawSettSyntheticTestConfig = generate_sett_test_config(clawSettsSytheticTestsToRun, runTestSetts)
+clawSettSyntheticTestConfig = generate_sett_test_config(
+    clawSettsSytheticTestsToRun, runTestSetts
+)
 
 
 @pytest.fixture(scope="function", autouse=True)
@@ -122,11 +130,12 @@ def badger_single_sett(settConfig, deploy=True):
             governance = accounts.at(badger_deploy["devMultisig"], force=True)
 
     strategist = accounts[3]
-    print(settConfig)
 
-    settId = settConfig['id']
+    settId = settConfig["id"]
 
-    if settConfig['mode'] == 'test':
+    print("settId:", settId)
+
+    if settConfig["mode"] == "test":
         if settId == "native.badger":
             return BadgerRewardsMiniDeploy(
                 "native.badger",
@@ -269,14 +278,15 @@ def badger_single_sett(settConfig, deploy=True):
                 # Base strategy params (perf/withdrawal fees)
                 sett_config.pancake.pancakeBnbBtcb,
                 # Lp pair tokens (bnb/btcb) for this strategy.
-                [
-                    registry.tokens.btcb,
-                    registry.tokens.bnb,
-                ],
+                [registry.tokens.btcb, registry.tokens.bnb,],
                 # Both want/pid are optional params and used for validation.
                 # In this case, both the lp token and pid (pool id) exist so we can pass them in.
                 want=registry.pancake.chefPairs.bnbBtcb,
                 pid=registry.pancake.chefPids.bnbBtcb,
+                strategist=strategist,
+                guardian=guardian,
+                keeper=keeper,
+                governance=governance,
             ).deploy(deploy=deploy)
         if settId == "native.sushiWbtcIbBtc":
             return SushiWbtcIbBtcLpOptimizerMiniDeploy(
@@ -287,7 +297,30 @@ def badger_single_sett(settConfig, deploy=True):
                 guardian=guardian,
                 keeper=keeper,
                 governance=governance,
+            ).deploy(deploy=True)  # Deploy for now since not already deployed.
+        if settId == "native.uniWbtcIbBtc":
+            return UniGenericLpMiniDeploy(
+                "native.uniWbtcIbBtc",
+                "StrategyUniGenericLp",
+                deployer,
+                [registry.tokens.ibbtc, registry.tokens.wbtc],
+                strategist=strategist,
+                guardian=guardian,
+                keeper=keeper,
+                governance=governance,
+            ).deploy(deploy=True)  # Deploy for now since not already deployed.
+        if settId == "yearn.bvyWBTC":
+            return YearnMiniDeploy(
+                "yearn.bvyWBTC",
+                "AffiliateTokenGatedUpgradable",
+                deployer,
+                strategist=strategist,
+                guardian=guardian,
+                keeper=keeper,
+                governance=governance,
             ).deploy(deploy=deploy)
+        if settId == "experimental.digg":
+            return DiggStabilizeMiniDeploy().deploy(deploy=deploy)
     if settConfig['mode'] == 'prod':
         """
         Run vs prod contracts, transferring assets to the test user
@@ -331,6 +364,45 @@ def badger_tree_unit():
     )
 
     return badger
+
+
+@pytest.fixture(scope="function")
+def digg_distributor_unit():
+    badger = connect_badger(badger_config.prod_json)
+    deployer = badger.deployer
+    devProxyAdminAddress = badger.devProxyAdmin.address
+    daoProxyAdminAddress = badger.daoProxyAdmin.address
+    digg = deploy_digg_minimal(
+        deployer, devProxyAdminAddress, daoProxyAdminAddress, owner=deployer
+    )
+
+    # deployer should have eth but just in case
+    distribute_test_ether(badger.deployer, Wei("20 ether"))
+
+    digg.deploy_airdrop_distributor(
+        digg_config.airdropRoot,
+        badger.rewardsEscrow,
+        digg_config.reclaimAllowedTimestamp,
+    )
+
+    totalSupply = digg.token.totalSupply()
+    # 15% airdropped
+    digg.token.transfer(digg.diggDistributor, totalSupply * 0.15, {"from": deployer})
+
+    return digg
+
+
+@pytest.fixture(scope="function")
+def digg_distributor_prod_unit():
+    badger = connect_badger(
+        "deploy-final.json", load_deployer=True, load_keeper=True, load_guardian=True
+    )
+    digg = connect_digg("deploy-final.json")
+    digg.token = digg.uFragments
+
+    badger.add_existing_digg(digg)
+    init_prod_digg(badger, badger.deployer)
+    return digg
 
 
 @pytest.fixture()

@@ -33,7 +33,7 @@ strat_keys = [
     "native.sushiBadgerWbtc",
     "native.digg",
     "native.uniDiggWbtc",
-    "native.sushiDiggWbtc"
+    "native.sushiDiggWbtc",
 ]
 
 
@@ -56,8 +56,10 @@ def diff_numbers_by_key(a, b):
         diff[key] = b_value - a_value
     return diff
 
+
 def main():
     test_main()
+
 
 def test_main():
     badger = connect_badger("deploy-final.json")
@@ -103,7 +105,10 @@ def test_main():
     # Get tokens
     before = wbtc.balanceOf(manager)
     manager.swapExactTokensForTokensUniswap(
-        badger.token, badger_swap_amount, [badger.token, registry.tokens.wbtc], {'from': keeper}
+        badger.token,
+        badger_swap_amount,
+        [badger.token, registry.tokens.wbtc],
+        {"from": keeper},
     )
     after = wbtc.balanceOf(manager)
 
@@ -111,11 +116,16 @@ def test_main():
     assert after > before
 
     manager.swapExactTokensForTokensSushiswap(
-        badger.token, badger_swap_amount, [badger.token, registry.tokens.wbtc], {'from': keeper}
+        badger.token,
+        badger_swap_amount,
+        [badger.token, registry.tokens.wbtc],
+        {"from": keeper},
     )
     after2 = wbtc.balanceOf(manager)
 
-    console.print("token swap sushi", {"before": before, "after": after, "after2": after2})
+    console.print(
+        "token swap sushi", {"before": before, "after": after, "after2": after2}
+    )
 
     assert after2 > after
 
@@ -161,19 +171,15 @@ def test_main():
         if "uni" in key:
             before = snap_strategy_balance(strat, manager)
 
-            console.print("PreSwap", {
-                "key": key,
-                "startToken": startToken,
-                "amount": amount
-            })
+            console.print(
+                "PreSwap", {"key": key, "startToken": startToken, "amount": amount}
+            )
 
             manager.swapExactTokensForTokensUniswap(
-                startToken, amount, [startToken, wbtc], {'from': keeper}
+                startToken, amount, [startToken, wbtc], {"from": keeper}
             )
 
-            manager.addLiquidityUniswap(
-                startToken, wbtc, {'from': keeper}
-            )
+            manager.addLiquidityUniswap(startToken, wbtc, {"from": keeper})
 
             after_swap = snap_strategy_balance(strat, manager)
             diff_swap = diff_numbers_by_key(before, after_swap)
@@ -191,12 +197,10 @@ def test_main():
         if "sushi" in key:
             before = snap_strategy_balance(strat, manager)
             manager.swapExactTokensForTokensSushiswap(
-                startToken, amount, [startToken, wbtc], {'from': keeper}
+                startToken, amount, [startToken, wbtc], {"from": keeper}
             )
 
-            manager.addLiquiditySushiswap(
-                startToken, wbtc, {'from': keeper}
-            )
+            manager.addLiquiditySushiswap(startToken, wbtc, {"from": keeper})
 
             after_swap = snap_strategy_balance(strat, manager)
             diff_swap = diff_numbers_by_key(before, after_swap)
@@ -216,7 +220,7 @@ def test_main():
         if strat.isTendable():
             tx = manager.tend(strat, {"from": keeper})
             print("tend events", tx.events)
-        if (key != "native.uniBadgerWbtc"):
+        if key != "native.uniBadgerWbtc":
             tx = manager.harvest(strat, {"from": keeper})
             print("harvest events", tx.events)
 

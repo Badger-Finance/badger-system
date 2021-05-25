@@ -181,4 +181,3 @@ def confirm_badger_tree_params(badger, tree, params):
     assert tree.merkleRoot() == EmptyBytes32
     assert tree.merkleContentHash() == EmptyBytes32
     assert badger.token.balanceOf(tree) == params.initialBalance
-

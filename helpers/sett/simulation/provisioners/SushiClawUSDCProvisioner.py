@@ -2,6 +2,7 @@ from scripts.systems.sushiswap_system import SushiswapSystem
 from helpers.registry import registry
 from .BaseProvisioner import BaseProvisioner
 
+
 class SushiClawUSDCProvisioner(BaseProvisioner):
     def __init__(self, manager):
         super().__init__(manager)
@@ -23,7 +24,5 @@ class SushiClawUSDCProvisioner(BaseProvisioner):
             sushiswap = SushiswapSystem()
             # Generate lp tokens.
             sushiswap.addMaxLiquidity(
-                claw.emp.tokenCurrency(),
-                registry.tokens.usdc,
-                user,
+                claw.emp.tokenCurrency(), registry.tokens.usdc, user,
             )

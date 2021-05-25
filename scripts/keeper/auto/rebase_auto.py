@@ -16,11 +16,12 @@ console = Console()
 
 gas_strategies.set_default_for_active_chain()
 
+
 def main():
     console.print("[white]===== Checking Parameters for rebase =====[/white]")
     badger = connect_badger(load_deployer=True)
 
     console.print("=== Rebase (Eternal) ===")
-    console.print("Interval between runs: {} minutes".format(to_minutes(60)))
+    console.print("Interval between runs: {} minutes".format(to_minutes(120)))
 
-    run_persistent(rebase, (badger, badger.deployer), run_interval=60)
+    run_persistent(rebase, (badger, badger.deployer), run_interval=120)

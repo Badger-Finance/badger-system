@@ -11,6 +11,7 @@ import "deps/@openzeppelin/contracts-upgradeable/utils/EnumerableSetUpgradeable.
 import "deps/@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import "deps/@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 import "deps/@openzeppelin/contracts-upgradeable/math/MathUpgradeable.sol";
+
 /**
     ===== Digg Rewards Faucet =====
     Allow a specified recipient to withdraw DIGG rewards at a rate specified configurable by the admin.
@@ -28,7 +29,6 @@ contract RewardsFaucet is Initializable, AccessControlUpgradeable, PausableUpgra
 
     bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
     bytes32 public constant UNPAUSER_ROLE = keccak256("UNPAUSER_ROLE");
-
 
     /* ========== STATE VARIABLES ========== */
 
@@ -78,7 +78,6 @@ contract RewardsFaucet is Initializable, AccessControlUpgradeable, PausableUpgra
             rewardsToken.safeTransfer(msg.sender, reward);
             emit RewardPaid(msg.sender, reward);
         }
-
     }
 
     /* ========== RESTRICTED FUNCTIONS ========== */
@@ -88,7 +87,11 @@ contract RewardsFaucet is Initializable, AccessControlUpgradeable, PausableUpgra
     /// @param startTimestamp Timestamp to start distribution. If in the past, all "previously" distributed rewards within the range will be immediately claimable.
     /// @param duration Duration over which to distribute the DIGG Shares.
     /// @param totalReward Number of DIGG Shares to distribute within the specified time.
-    function notifyRewardAmount(uint256 startTimestamp, uint256 duration, uint256 totalReward) external whenNotPaused {
+    function notifyRewardAmount(
+        uint256 startTimestamp,
+        uint256 duration,
+        uint256 totalReward
+    ) external whenNotPaused {
         _onlyAdmin();
         rewardsDuration = duration;
         rewardRate = totalReward.div(rewardsDuration);
@@ -105,7 +108,6 @@ contract RewardsFaucet is Initializable, AccessControlUpgradeable, PausableUpgra
         periodFinish = startTimestamp.add(rewardsDuration);
         emit RewardAdded(totalReward);
         emit RewardsDurationUpdated(rewardsDuration);
-
     }
 
     function initializeRecipient(address _recipient) external whenNotPaused {

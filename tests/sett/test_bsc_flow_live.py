@@ -17,38 +17,37 @@ from tests.helpers import distribute_from_whales
 
 console = Console()
 
-configs = {
-    "native.pancakeBnbBtcb": {
-        "want": registry.pancake.chefPairs.bnbBtcb,
-        "token0": registry.tokens.btcb,
-        "token1": registry.tokens.bnb,
-        "performanceFeeStrategist": 1000,
-        "performanceFeeGovernance": 1000,
-        "withdrawalFee": 50,
-        "wantPid": registry.pancake.chefPids.bnbBtcb,
-    },
-    "native.bBadgerBtcb": {
-        "want": registry.pancake.chefPairs.bBadgerBtcb,
-        "token0": registry.tokens.bBadger,
-        "token1": registry.tokens.btcb,
-        "performanceFeeStrategist": 1000,
-        "performanceFeeGovernance": 1000,
-        "withdrawalFee": 50,
-        "wantPid": registry.pancake.chefPids.bBadgerBtcb,
-    },
-    "native.bDiggBtcb": {
-        "want": registry.pancake.chefPairs.bDiggBtcb,
-        "token0": registry.tokens.bDigg,
-        "token1": registry.tokens.btcb,
-        "performanceFeeStrategist": 1000,
-        "performanceFeeGovernance": 1000,
-        "withdrawalFee": 50,
-        "wantPid": registry.pancake.chefPids.bDiggBtcb,
-    },
-}
-
-
 def setup_badger(badger: BadgerSystem):
+    configs = {
+        "native.pancakeBnbBtcb": {
+            "want": registry.pancake.chefPairs.bnbBtcb,
+            "token0": registry.tokens.btcb,
+            "token1": registry.tokens.bnb,
+            "performanceFeeStrategist": 1000,
+            "performanceFeeGovernance": 1000,
+            "withdrawalFee": 50,
+            "wantPid": registry.pancake.chefPids.bnbBtcb,
+        },
+        "native.bBadgerBtcb": {
+            "want": registry.pancake.chefPairs.bBadgerBtcb,
+            "token0": registry.tokens.bBadger,
+            "token1": registry.tokens.btcb,
+            "performanceFeeStrategist": 1000,
+            "performanceFeeGovernance": 1000,
+            "withdrawalFee": 50,
+            "wantPid": registry.pancake.chefPids.bBadgerBtcb,
+        },
+        "native.bDiggBtcb": {
+            "want": registry.pancake.chefPairs.bDiggBtcb,
+            "token0": registry.tokens.bDigg,
+            "token1": registry.tokens.btcb,
+            "performanceFeeStrategist": 1000,
+            "performanceFeeGovernance": 1000,
+            "withdrawalFee": 50,
+            "wantPid": registry.pancake.chefPids.bDiggBtcb,
+        },
+    }   
+
     # Set paths
 
     key = "native.bDiggBtcb"
@@ -64,7 +63,7 @@ def setup_badger(badger: BadgerSystem):
             "data": strategy.setTokenSwapPath.encode_input(
                 registry.pancake.cake,
                 strategy.token0(),
-                [registry.pancake.cake, registry.tokens.btcb, strategy.token0()]
+                [registry.pancake.cake, registry.tokens.btcb, strategy.token0()],
             ),
         },
     )
@@ -76,7 +75,7 @@ def setup_badger(badger: BadgerSystem):
             "data": strategy.setTokenSwapPath.encode_input(
                 registry.pancake.cake,
                 strategy.token1(),
-                [registry.pancake.cake, registry.tokens.btcb, strategy.token1()]
+                [registry.pancake.cake, registry.tokens.btcb, strategy.token1()],
             ),
         },
     )
@@ -135,7 +134,7 @@ def single_user_harvest_flow(badger: BadgerSystem, sett_id, user):
     snap = SnapshotManager(badger, sett_id)
     sett = badger.getSett(sett_id)
     strategist = badger.deployer
-    
+
     settKeeper = accounts.at(sett.keeper(), force=True)
     strategyKeeper = accounts.at(strategy.keeper(), force=True)
     randomUser = accounts[6]
@@ -199,8 +198,9 @@ def test_main():
     distribute_from_whales(user)
 
     setts_to_run = [
-        #"native.pancakeBnbBtcb", 
-        "native.bDiggBtcb"]
+        # "native.pancakeBnbBtcb",
+        "native.bDiggBtcb"
+    ]
     setup_badger(badger)
 
     for sett_id in setts_to_run:

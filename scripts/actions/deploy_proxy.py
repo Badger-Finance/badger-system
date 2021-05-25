@@ -56,4 +56,3 @@ def main():
         contract.approveStrategy(
             strategy, {"from": badger.deployer, "gas_strategy": gas_strategies.fast}
         )
-

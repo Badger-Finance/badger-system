@@ -71,5 +71,7 @@ def main():
 
         skip.append('native.test')
         skip.append('yearn.wbtc')
+        skip.append('experimental.sushiIBbtcWbtc')
+        skip.append('experimental.digg')
 
     harvest_all(badger, skip)

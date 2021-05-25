@@ -164,7 +164,12 @@ def is_outlier(points: list[float], thresh=3.5) -> list[bool]:
 # main entry point
 def analyze_gas(options={ 'timeframe': 'minutes', 'periods': 60 }) -> tuple[int, int, int]:
     if not os.path.isfile(os.path.dirname(__file__) + CREDENTIALS):
-        raise ValueError("No credentials for historical gas analysis found")
+        print("Could not fetch historical gas data")
+        return DotMap(
+            mode=999999999999999999,
+            median=999999999999999999,
+            std=999999999999999999
+        )
 
     gas_data = []
 

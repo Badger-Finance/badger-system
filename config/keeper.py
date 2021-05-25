@@ -13,7 +13,7 @@ setts_to_skip = {
             "native.sushiBadgerWbtc",
             "native.digg",
             "native.uniDiggWbtc",
-            "native.sushiDiggWbtc"
+            "native.sushiDiggWbtc",
         ],
         "tend": [],
         "earn": [
@@ -22,30 +22,19 @@ setts_to_skip = {
             "native.sushiBadgerWbtc",
             "native.digg",
             "native.uniDiggWbtc",
-            "native.sushiDiggWbtc"
+            "native.sushiDiggWbtc",
         ],
     },
     "bsc": {
-        "harvest": [
-            # "native.pancakeBnbBtcB",
-            # "native.pancakeBnbBtcb"
-        ],
+        "harvest": ["native.pancakeBnbBtcB", "native.pancakeBnbBtcb", "native.test"],
         "tend": [],
         "earn": [],
-    }
+    },
 }
 
 run_intervals = {
-    "eth": {
-        "harvest": days(1),
-        "tend": hours(12),
-        "earn": minutes(10),
-    },
-    "bsc": {
-        "harvest": minutes(30),
-        "tend": minutes(15),
-        "earn": minutes(10),
-    }
+    "eth": {"harvest": days(1), "tend": hours(12), "earn": minutes(10),},
+    "bsc": {"harvest": minutes(10), "tend": minutes(15), "earn": minutes(10),},
 }
 
 earn_default_percentage_threshold = 0.01
@@ -59,10 +48,9 @@ earn_threshold_value_override = {
         "harvest.renCrv": btc_threshold,
         "native.sushiWbtcEth": Wei("0.00000202 ether"),
     },
-    "bsc": {
-        "native.pancakeBnbBtcb": Wei("0.0001 ether")
-    }
+    "bsc": {"native.pancakeBnbBtcb": Wei("0.0001 ether")},
 }
+
 
 class KeeperConfig:
     def __init__(self):

@@ -1,4 +1,4 @@
-// SP-License-upgradeable-Identifier: UNLICENSED
+//SPDX-License-Identifier: MIT
 pragma solidity ^0.6.11;
 
 import "deps/@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
@@ -112,47 +112,44 @@ contract DiggSeeder is OwnableUpgradeable {
             All DIGG Schedules are denominated in Shares
         */
 
-        address[10] memory geysers =
-            [
-                native_uniBadgerWbtc_geyser,
-                native_sushiBadgerWbtc_geyser,
-                native_badger_geyser,
-                native_renCrv_geyser,
-                native_sbtcCrv_geyser,
-                native_tbtcCrv_geyser,
-                harvest_renCrv_geyser,
-                native_sushiWbtcEth_geyser,
-                native_uniDiggWbtc_geyser,
-                native_sushiDiggWbtc_geyser
-            ];
+        address[10] memory geysers = [
+            native_uniBadgerWbtc_geyser,
+            native_sushiBadgerWbtc_geyser,
+            native_badger_geyser,
+            native_renCrv_geyser,
+            native_sbtcCrv_geyser,
+            native_tbtcCrv_geyser,
+            harvest_renCrv_geyser,
+            native_sushiWbtcEth_geyser,
+            native_uniDiggWbtc_geyser,
+            native_sushiDiggWbtc_geyser
+        ];
 
-        uint256[10] memory digg_emissions =
-            [
-                native_uniBadgerWbtc_fragments,
-                native_sushiBadgerWbtc_fragments,
-                native_badger_fragments,
-                native_renCrv_fragments,
-                native_sbtcCrv_fragments,
-                native_tbtcCrv_fragments,
-                harvest_renCrv_fragments,
-                native_sushiWbtcEth_fragments,
-                native_uniDiggWbtc_fragments,
-                native_sushiDiggWbtc_fragments
-            ];
+        uint256[10] memory digg_emissions = [
+            native_uniBadgerWbtc_fragments,
+            native_sushiBadgerWbtc_fragments,
+            native_badger_fragments,
+            native_renCrv_fragments,
+            native_sbtcCrv_fragments,
+            native_tbtcCrv_fragments,
+            harvest_renCrv_fragments,
+            native_sushiWbtcEth_fragments,
+            native_uniDiggWbtc_fragments,
+            native_sushiDiggWbtc_fragments
+        ];
 
-        uint256[10] memory badger_emissions =
-            [
-                native_uniBadgerWbtc_badger_emissions,
-                native_sushiBadgerWbtc_badger_emissions,
-                native_badger_badger_emissions,
-                native_renCrv_badger_emissions,
-                native_sbtcCrv_badger_emissions,
-                native_tbtcCrv_badger_emissions,
-                harvest_renCrv_badger_emissions,
-                native_sushiWbtcEth_badger_emissions,
-                0,
-                0
-            ];
+        uint256[10] memory badger_emissions = [
+            native_uniBadgerWbtc_badger_emissions,
+            native_sushiBadgerWbtc_badger_emissions,
+            native_badger_badger_emissions,
+            native_renCrv_badger_emissions,
+            native_sbtcCrv_badger_emissions,
+            native_tbtcCrv_badger_emissions,
+            harvest_renCrv_badger_emissions,
+            native_sushiWbtcEth_badger_emissions,
+            0,
+            0
+        ];
 
         for (uint256 i = 0; i < geysers.length; i++) {
             IBadgerGeyser geyser = IBadgerGeyser(geysers[i]);

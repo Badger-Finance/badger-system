@@ -2,6 +2,7 @@ from scripts.systems.badger_system import BadgerSystem, connect_badger
 from brownie import *
 from helpers.registry import registry
 
+
 def snap_strategy_balance(badger: BadgerSystem, key, manager):
     digg = badger.digg
 
@@ -19,9 +20,10 @@ def snap_strategy_balance(badger: BadgerSystem, key, manager):
         "balanceOfPool": strategy.balanceOfPool(),
         "balanceOfWant": strategy.balanceOfWant(),
         "balanceOf": strategy.balanceOf(),
-        "pricePerFullShare": sett.getPricePerFullShare()
+        "pricePerFullShare": sett.getPricePerFullShare(),
     }
     return state
+
 
 def diff_numbers_by_key(a, b):
     diff = {}
