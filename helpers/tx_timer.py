@@ -1,6 +1,7 @@
 from time import sleep, time
 from threading import Thread
 import requests
+import os
 
 class TxTimer:
     '''
@@ -8,12 +9,12 @@ class TxTimer:
     - sends alert if tx takes longer than threshold
     '''
 
-    def __init__(self, time_threshold=1200, timer_tick=1, webhook=None) -> None:
+    def __init__(self, time_threshold=1200, timer_tick=1) -> None:
         self.time_threshold = time_threshold
         self.timer_tick = timer_tick
         self.waiting = False
         self.sender = None
-        self.webhook = webhook
+        self.webhook = os.environ['TX_TIMER_WEBHOOK']
         self.tx_type = ''
 
 
