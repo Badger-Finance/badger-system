@@ -945,6 +945,10 @@ class BadgerSystem:
         sett = self.getSett(id)
         return self.queue_upgrade(sett.address, newLogic.address)
 
+    def queue_upgrade_strategy(self, id, newLogic, delay=2 * days(2)) -> str:
+        strategy = self.getStrategy(id)
+        return self.queue_upgrade(strategy.address, newLogic.address)
+
     def queue_upgrade(self, proxyAddress, newLogicAddress, delay=2 * days(2)) -> str:
         target = self.devProxyAdmin.address
         signature = "upgrade(address,address)"
@@ -1226,7 +1230,7 @@ class BadgerSystem:
 
     def getStrategyWant(self, id):
         return interface.IERC20(self.sett_system.strategies[id].want())
-    
+
     def getSettType(self, id):
         """
         Look at the artifact type of the sett and determine it's version. Currently hardcoded.
