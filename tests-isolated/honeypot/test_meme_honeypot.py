@@ -18,7 +18,7 @@ console = Console()
 @pytest.fixture(scope="function", autouse="True")
 def setup():
     badger = connect_badger(badger_config.prod_json)
-    deployer = accounts.load("badger_deployer")
+    deployer = accounts[0]
     # distribute_from_whales(deployer)
 
     # Deploy Honeypot
