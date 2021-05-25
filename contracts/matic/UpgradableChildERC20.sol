@@ -5,9 +5,11 @@ import {IChildToken} from "deps/maticnetwork/pos-portal@1.5.2/contracts/child/Ch
 import {AccessControlMixin} from "deps/maticnetwork/pos-portal@1.5.2/contracts/common/AccessControlMixin.sol";
 import {NativeMetaTransaction} from "deps/maticnetwork/pos-portal@1.5.2/contracts/common/NativeMetaTransaction.sol";
 import {ContextMixin} from "deps/maticnetwork/pos-portal@1.5.2/contracts/common/ContextMixin.sol";
+import {IMetaToken} from "interfaces/badger/IMetaToken.sol";
 
-contract UpgradeableChildProxyERC20 is ERC20, IChildToken, AccessControlMixin, NativeMetaTransaction, ContextMixin {
+contract UpgradeableChildERC20 is ERC20, IChildToken, AccessControlMixin, NativeMetaTransaction, ContextMixin {
     bytes32 public constant DEPOSITOR_ROLE = keccak256("DEPOSITOR_ROLE");
+    address metaToken;
 
     constructor() public ERC20("", "") {}
 
@@ -19,7 +21,8 @@ contract UpgradeableChildProxyERC20 is ERC20, IChildToken, AccessControlMixin, N
         string calldata name_,
         string calldata symbol_,
         uint8 decimals_,
-        address childChainManager
+        address childChainManager,
+        address metaToken
     ) external initializer {
         setName(name_);
         setSymbol(symbol_);
@@ -28,6 +31,8 @@ contract UpgradeableChildProxyERC20 is ERC20, IChildToken, AccessControlMixin, N
         _setupRole(DEFAULT_ADMIN_ROLE, _msgSender());
         _setupRole(DEPOSITOR_ROLE, childChainManager);
         _initializeEIP712(name_);
+        // NB: All deposits/withdraws are proxied to the meta token contract.
+        metaToken = metaToken;
     }
 
     // This is to support Native meta transactions
@@ -52,6 +57,9 @@ contract UpgradeableChildProxyERC20 is ERC20, IChildToken, AccessControlMixin, N
     function deposit(address user, bytes calldata depositData) external override only(DEPOSITOR_ROLE) {
         uint256 amount = abi.decode(depositData, (uint256));
         _mint(user, amount);
+
+        // Forward deposit to meta token contract.
+        IMetaToken(metaToken).deposit(user, amount);
     }
 
     /**
@@ -61,5 +69,8 @@ contract UpgradeableChildProxyERC20 is ERC20, IChildToken, AccessControlMixin, N
      */
     function withdraw(uint256 amount) external {
         _burn(_msgSender(), amount);
+
+        // Forward withdraw to meta token contract.
+        IMetaToken(metaToken).withdraw(_msgSender(), amount);
     }
 }

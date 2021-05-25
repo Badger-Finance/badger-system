@@ -86,11 +86,14 @@ bscSettsToRun = [
     "native.pancakeBnbBtcb",
 ]
 
+maticSettsToRun = []
+
 runTestSetts = True
 
 networkSettsMap = {
     "eth": settsToRun,
     "bsc": bscSettsToRun,
+    "matic": maticSettsToRun,
 }
 # NB: This is expected to fail if the network ID does not exist.
 baseSettsToRun = networkSettsMap[network_manager.get_active_network()]
