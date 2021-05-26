@@ -20,7 +20,8 @@ def main():
     test = True
     badger = connect_badger(badger_config.prod_json,load_deployer=False)
     nextCycle = badger.badgerTree.currentCycle() + 1
-    startBlock = 11537600
+    startBlock = 11951320
+
     endBlock = chain.height
     rewards = calc_sushi_rewards(badger,startBlock,endBlock,nextCycle,retroactive=True)
     rewardsLogger.save("retroactive-xsushi")

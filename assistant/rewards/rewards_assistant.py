@@ -1,7 +1,7 @@
 import json
 
 from tqdm import tqdm
-from assistant.rewards.aws_utils import download,upload
+from assistant.rewards.aws_utils import download,download_latest,upload
 from assistant.rewards.calc_stakes import calc_geyser_stakes
 from assistant.rewards.calc_harvest import calc_balances_from_geyser_events,get_initial_user_state
 from assistant.rewards.RewardsLogger import rewardsLogger
@@ -80,7 +80,9 @@ def calc_sushi_rewards(badger,startBlock,endBlock,nextCycle,retroactive):
 
     wbtcEthEvents = list(filter(filter_events,sushi_harvest_events["wbtcEth"]))
     wbtcBadgerEvents = list(filter(filter_events,sushi_harvest_events["wbtcBadger"]))
+    console.log(wbtcBadgerEvents)
     wBtcDiggEvents = list(filter(filter_events,sushi_harvest_events["wbtcDigg"])) 
+    console.log(wBtcDiggEvents)
     totalxSushi = sum([int(e["toBadgerTree"]) for e in wbtcEthEvents]) \
          + sum([int(e["toBadgerTree"]) for e in wbtcBadgerEvents]) \
          + sum([int(e["toBadgerTree"]) for e in wBtcDiggEvents])
@@ -91,7 +93,7 @@ def calc_sushi_rewards(badger,startBlock,endBlock,nextCycle,retroactive):
     if len(wbtcEthEvents) > 0:
         wbtcEthStartBlock = get_latest_event_block(wbtcEthEvents[0],sushi_harvest_events["wbtcEth"])
         if wbtcEthStartBlock == -1 or retroactive:
-            wbtcEthStartBlock = 11537600
+            wbtcEthStartBlock = 11951320
 
         console.log(wbtcEthStartBlock)
             
@@ -103,7 +105,7 @@ def calc_sushi_rewards(badger,startBlock,endBlock,nextCycle,retroactive):
     if len(wbtcBadgerEvents) > 0:
         wbtcBadgerStartBlock = get_latest_event_block(wbtcBadgerEvents[0],sushi_harvest_events["wbtcBadger"])
         if wbtcBadgerStartBlock == -1 or retroactive:
-            wbtcBadgerStartBlock = 11539529
+            wbtcBadgerStartBlock = 11951320
 
     
         console.log("Processing {} wbtcBadger sushi events".format(len(wbtcBadgerEvents)))
@@ -135,7 +137,6 @@ def calc_sushi_rewards(badger,startBlock,endBlock,nextCycle,retroactive):
     ))
     difference = abs(totalxSushi - xSushiFromRewards)
     console.log("Difference {}".format(abs(totalxSushi/1e18 - xSushiFromRewards/1e18)))
-    assert difference < 10000000
     return finalRewards
 
             
@@ -405,7 +406,7 @@ def fetch_current_rewards_tree(badger, print_output=False):
         "[bold yellow]===== Loading Past Rewards " + pastFile + " =====[/bold yellow]"
     )
 
-    currentTree = download(pastFile)
+    currentTree = json.loads(download_latest())
 
     # Invariant: File shoulld have same root as latest
     assert currentTree["merkleRoot"] == merkle["root"]
@@ -428,7 +429,7 @@ def generate_rewards_in_range(badger, startBlock, endBlock, pastRewards):
     nextCycle = getNextCycle(badger)
 
     currentMerkleData = fetchCurrentMerkleData(badger)
-    #sushiRewards = calc_sushi_rewards(badger,startBlock,endBlock,nextCycle,retroactive=False)
+    sushiRewards = calc_sushi_rewards(badger,startBlock,endBlock,nextCycle,retroactive=False)
     #farmRewards = fetch_current_harvest_rewards(badger,startBlock, endBlock,nextCycle)
 
     geyserRewards = calc_geyser_rewards(badger, startBlock, endBlock, nextCycle)
