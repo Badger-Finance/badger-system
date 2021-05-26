@@ -279,12 +279,9 @@ def test_rewards_flow(setup):
         first_claimer
     )
 
-    console.log('Cycle Contract 1: ', rewardsContract.currentCycle())
     # Second rewards cycle
     chain.mine(10)
     start_block = rewardsContract.lastPublishStartBlock() + 1
-
-    console.log('Cycle Contract 2: ', rewardsContract.currentCycle())
 
     rewardsContract.proposeRoot(
         rewards2["merkleRoot"],
@@ -305,16 +302,10 @@ def test_rewards_flow(setup):
 
     # Claim from previous cycle
     second_claimer = rewards_accounts[1]
-
-    console.log('Cycle USer 1: ', rewards1["claims"][second_claimer]["cycle"])
-
     token_contract1 = Contract.from_abi(
         "Token1", rewards1["claims"][second_claimer]["tokens"][0], ERC20_abi
     )
     token_contract2 = interface.IDigg(registry.tokens.digg) # Digg token contract
-
-    console.log('Cycle Contract 3: ', rewardsContract.currentCycle())
-    console.log('Cycle User 2: ', rewards1["claims"][second_claimer]["cycle"])
 
     prev_balance1 = token_contract1.balanceOf(second_claimer)
     prev_balance2 = token_contract2.balanceOf(second_claimer)
@@ -332,11 +323,6 @@ def test_rewards_flow(setup):
     )
     assert prev_balance1 + claim_amount1 == token_contract1.balanceOf(second_claimer)
     # Calculation for Digg balance:
-    console.log(Decimal(prev_balance2 + claim_amount2))
-    console.log(Decimal(
-        token_contract2._sharesPerFragment()
-    ))
-    console.log(token_contract2.balanceOf(second_claimer))
     assert Decimal(claim_amount2) // Decimal(
         token_contract2._sharesPerFragment()
     ) == token_contract2.balanceOf(second_claimer) - prev_balance2
