@@ -7,6 +7,7 @@ from brownie import *
 from helpers.constants import *
 from helpers.registry import registry
 from rich.console import Console
+from assistant.rewards.rewards_utils import keccak
 
 console = Console()
 
@@ -32,6 +33,10 @@ def test_root_publish(setup):
     rootUpdater = setup.rootUpdater
     user = accounts[4]
 
+    # New Blocks to update to
+    startBlock = badgerTree.lastPublishStartBlock() + 100
+    endBlock = badgerTree.lastPublishEndBlock() + 100
+
     startingCycle = badgerTree.currentCycle()
     assert startingCycle == 0
 
@@ -43,17 +48,20 @@ def test_root_publish(setup):
     # Ensure non-root updater cannot update root
     with brownie.reverts():
         badgerTree.proposeRoot(
-            root, contentHash, badgerTree.currentCycle() + 1, {"from": guardian}
+            root, contentHash, badgerTree.currentCycle() + 1, startBlock, endBlock, {"from": guardian}
         )
 
     # Ensure root updater can propose new root, but not update
     badgerTree.proposeRoot(
-        root, contentHash, badgerTree.currentCycle() + 1, {"from": rootUpdater}
+        root, contentHash, badgerTree.currentCycle() + 1, startBlock, endBlock, {"from": rootUpdater}
     )
 
     assert badgerTree.getCurrentMerkleData()[0] == EmptyBytes32
     assert badgerTree.getCurrentMerkleData()[1] == EmptyBytes32
     assert badgerTree.currentCycle() == startingCycle
+
+    assert badgerTree.lastProposeStartBlock() == startBlock
+    assert badgerTree.lastProposeEndBlock() == endBlock
 
     assert badgerTree.pendingMerkleRoot() == root
     assert badgerTree.pendingMerkleContentHash() == contentHash
@@ -61,16 +69,19 @@ def test_root_publish(setup):
     # Ensure non-root approver cannot approve root
     with brownie.reverts():
         badgerTree.approveRoot(
-            root, contentHash, badgerTree.currentCycle() + 1, {"from": rootUpdater}
+            root, contentHash, badgerTree.currentCycle() + 1, startBlock, endBlock, {"from": rootUpdater}
         )
 
     badgerTree.approveRoot(
-        root, contentHash, badgerTree.currentCycle() + 1, {"from": guardian}
+        root, contentHash, badgerTree.currentCycle() + 1, startBlock, endBlock, {"from": guardian}
     )
 
     assert badgerTree.getCurrentMerkleData()[0] == root
     assert badgerTree.getCurrentMerkleData()[1] == contentHash
     assert badgerTree.currentCycle() == startingCycle + 1
+
+    assert badgerTree.lastPublishStartBlock() == startBlock
+    assert badgerTree.lastPublishEndBlock() == endBlock
 
     oldRoot = root
     oldContentHash = contentHash
@@ -80,10 +91,10 @@ def test_root_publish(setup):
 
     # Ensure root updater can update another root
     badgerTree.proposeRoot(
-        root, contentHash, badgerTree.currentCycle() + 1, {"from": rootUpdater}
+        root, contentHash, badgerTree.currentCycle() + 1, startBlock, endBlock, {"from": rootUpdater}
     )
     badgerTree.approveRoot(
-        root, contentHash, badgerTree.currentCycle() + 1, {"from": guardian}
+        root, contentHash, badgerTree.currentCycle() + 1, startBlock, endBlock, {"from": guardian}
     )
     print(badgerTree.getCurrentMerkleData())
     assert badgerTree.getCurrentMerkleData()[0] == root
@@ -95,13 +106,21 @@ def test_root_publish(setup):
 # @pytest.mark.skip()
 def test_guardian_pause(setup):
     badgerTree = setup.badgerTree
+    deployer = setup.deployer
     guardian = setup.guardian
     rootUpdater = setup.rootUpdater
     user = accounts[4]
 
+    # New Blocks to update to
+    startBlock = badgerTree.lastPublishStartBlock() + 100
+    endBlock = badgerTree.lastPublishEndBlock() + 100
+
     # Ensure non-guardian cannot pause
     with brownie.reverts():
         badgerTree.pause({"from": user})
+
+    # Give PAUSER_ROLE to guardian
+    badgerTree.grantRole(keccak("PAUSER_ROLE"), guardian.address, {"from": deployer})
 
     # Ensure guardian can pause
     badgerTree.pause({"from": guardian})
@@ -109,16 +128,19 @@ def test_guardian_pause(setup):
     # Ensure root updater cannot update root while paused
     with brownie.reverts():
         badgerTree.proposeRoot(
-            random_32_bytes(), random_32_bytes(), 1, {"from": rootUpdater}
+            random_32_bytes(), random_32_bytes(), 1, startBlock, endBlock, {"from": rootUpdater}
         )
 
     # Ensure non-root updater cannot update root while paused
     with brownie.reverts():
-        badgerTree.proposeRoot(random_32_bytes(), random_32_bytes(), 1, {"from": user})
+        badgerTree.proposeRoot(random_32_bytes(), random_32_bytes(), 1, startBlock, endBlock, {"from": user})
 
     # Ensure non-guardian cannot unpause
     with brownie.reverts():
         badgerTree.unpause({"from": user})
+    
+    # Give UNPAUSER_ROLE to guardian
+    badgerTree.grantRole(keccak("UNPAUSER_ROLE"), guardian.address, {"from": deployer})
 
     # Ensure guardian can unpause
     badgerTree.unpause({"from": guardian})
@@ -128,15 +150,15 @@ def test_guardian_pause(setup):
     contentHash = random_32_bytes()
     with brownie.reverts():
         badgerTree.proposeRoot(
-            root, contentHash, badgerTree.currentCycle() + 1, {"from": user}
+            root, contentHash, badgerTree.currentCycle() + 1, startBlock, endBlock, {"from": user}
         )
 
     # Ensure root updater can update root after unpause
     badgerTree.proposeRoot(
-        root, contentHash, badgerTree.currentCycle() + 1, {"from": rootUpdater}
+        root, contentHash, badgerTree.currentCycle() + 1, startBlock, endBlock, {"from": rootUpdater}
     )
     badgerTree.approveRoot(
-        root, contentHash, badgerTree.currentCycle() + 1, {"from": guardian}
+        root, contentHash, badgerTree.currentCycle() + 1, startBlock, endBlock, {"from": guardian}
     )
 
     assert badgerTree.getCurrentMerkleData()[0] == root
