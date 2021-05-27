@@ -22,13 +22,17 @@ from tabulate import tabulate
 from helpers.gnosis_safe import convert_to_test_mode, exec_direct, get_first_owner
 from helpers.constants import MaxUint256
 from scripts.systems.sushiswap_system import SushiswapSystem
+
 console = Console()
+
 
 def test_main():
     main()
 
-def Average(lst): 
-    return sum(lst) / len(lst) 
+
+def Average(lst):
+    return sum(lst) / len(lst)
+
 
 def get_average_daily_price(file):
     with open(file + ".json") as f:
@@ -41,18 +45,15 @@ def get_average_daily_price(file):
         diggBal = float(entry["reserve1"])
         wbtcPerDigg = wbtcBal / diggBal
         locals()
-        console.print({
-            "wbtcBal": wbtcBal,
-            "diggBal": diggBal,
-            "wbtcPerDigg": wbtcPerDigg,
-        })
+        console.print(
+            {"wbtcBal": wbtcBal, "diggBal": diggBal, "wbtcPerDigg": wbtcPerDigg,}
+        )
         price_points.append(wbtcPerDigg)
-    
+
     average_price = Average(price_points)
-    console.print("Average for {} is {}".format(file, average_price)) 
+    console.print("Average for {} is {}".format(file, average_price))
     return average_price
 
-    
 
 def main():
     """
@@ -80,12 +81,9 @@ def main():
     sushiTWAP = get_average_daily_price("scripts/oracle/data/sushi_digg_hour")
     averageTWAP = Average([uniTWAP, sushiTWAP])
 
-    console.print({
-        "uniTWAP": uniTWAP,
-        "sushiTWAP": sushiTWAP,
-        "averageTWAP": averageTWAP
-    })
-
+    console.print(
+        {"uniTWAP": uniTWAP, "sushiTWAP": sushiTWAP, "averageTWAP": averageTWAP}
+    )
 
     supplyBefore = digg.token.totalSupply()
 
@@ -101,7 +99,7 @@ def main():
     print("digg_per_btc", digg_per_btc, averageTWAP, marketValue)
 
     centralizedMulti = GnosisSafe(digg.centralizedOracle)
-    
+
     print(digg.marketMedianOracle.providerReports(digg.centralizedOracle, 0))
     print(digg.marketMedianOracle.providerReports(digg.centralizedOracle, 1))
 
@@ -127,7 +125,7 @@ def main():
         chain.mine()
         in_rebase_window = digg.uFragmentsPolicy.inRebaseWindow()
 
-    tx = digg.orchestrator.rebase({'from': badger.deployer})
+    tx = digg.orchestrator.rebase({"from": badger.deployer})
     chain.mine()
 
     supplyAfter = digg.token.totalSupply()
@@ -135,7 +133,7 @@ def main():
     print("spfAfter", digg.token._sharesPerFragment())
     print("supplyAfter", supplyAfter)
     print("supplyChange", supplyAfter / supplyBefore)
-    print("supplyChangeOtherWay", supplyBefore / supplyAfter )
+    print("supplyChangeOtherWay", supplyBefore / supplyAfter)
 
     print("pair after", pair.getReserves())
     print("uniPair after", uniPair.getReserves())
@@ -143,4 +141,3 @@ def main():
     # Make sure sync() was called on the pools from call trace or events
 
     # Call Sync manually as deployer
-

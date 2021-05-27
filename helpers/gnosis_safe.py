@@ -20,41 +20,47 @@ On test networks leveraging Ganache --unlock, take control of a Gnosis safe with
     - Leveraging approved hash voting
 """
 
+
 class ApeSafeHelper:
     def __init__(self, badger, safe: ApeSafe):
         self.badger = badger
         self.safe = safe
-    
+
     def getSett(self, key):
         abi = Sett.abi
-        return self.safe.contract_from_abi(self.badger.getSett(key).address, "Sett", abi)
+        return self.safe.contract_from_abi(
+            self.badger.getSett(key).address, "Sett", abi
+        )
 
     def getStrategy(self, key):
         # Get strategy name
         # abi = contract_name_to_artifact()
         # return self.safe.contract_from_abi(self.badger.getSett(key).address, "Strategy", abi)
         return True
-    
+
     def publish(self):
         safe_tx = self.safe.multisend_from_receipts()
         self.safe.preview(safe_tx)
         data = self.safe.print_transaction(safe_tx)
         self.safe.post_transaction(safe_tx)
 
+
 class OPERATION(Enum):
     CREATE = 0
     CALL = 2
+
 
 class MultiSend:
     def __init__(self, address):
         self.multisend = interface.IMultisend(address)
 
+
 class MultisendTx:
     def __init__(self, call_type=0, to="", value=0, data=""):
-        self.call_type=call_type
-        self.to=to
-        self.value=value
-        self.data=data
+        self.call_type = call_type
+        self.to = to
+        self.value = value
+        self.data = data
 
         self.encoded = ""
         if self.call_type == 0:
@@ -70,15 +76,17 @@ class MultisendTx:
         [data] - arbitrary hex data [signature][params]
         """
 
+
 class MultisendBuilder:
     def __init__(self):
         self.txs = []
 
-    def add(self, tx: MultisendTx): 
+    def add(self, tx: MultisendTx):
         self.txs.append(tx)
         """
         """
-    
+
+
 class MultisigTxMetadata:
     def __init__(self, description, operation=None, callInfo=None):
         self.description = description
@@ -87,27 +95,38 @@ class MultisigTxMetadata:
 
         if not operation:
             self.operation = ""
-        
+
         if not callInfo:
             self.callInfo = ""
 
     def __str__(self):
-        return "description: " + self.description + "\n" + 'operation: ' + str(self.operation) + "\n" + 'callInfo: ' + str(self.callInfo) + "\n"
+        return (
+            "description: "
+            + self.description
+            + "\n"
+            + "operation: "
+            + str(self.operation)
+            + "\n"
+            + "callInfo: "
+            + str(self.callInfo)
+            + "\n"
+        )
 
 
 class MultisigTx:
     def __init__(self, params, metadata: MultisigTxMetadata):
         self.params = params
         self.metadata = metadata
-    
+
     # def printMetadata(self):
 
     # def printParams(self):
 
+
 class GnosisSafe:
     def __init__(self, contract, testMode=True):
         self.contract = connect_gnosis_safe(contract)
-        
+
         console.print("contract", contract)
         self.firstOwner = get_first_owner(contract)
         self.transactions = []
@@ -149,14 +168,13 @@ class GnosisSafe:
             tx = exec_direct(self.contract, tx.params)
             if print_output:
                 print(tx.call_trace())
-            # try: 
+            # try:
             #     failEvents = tx.events['ExecutionFailure']
             #     if len(failEvents) > 0:
             #         print(tx.events)
             #         assert False
             # except EventLookupError:
             return tx
-        
 
     def get_first_owner(self):
         return self.contract.getOwners()[0]
@@ -213,14 +231,56 @@ def exec_transaction(contract, params, signer):
     if not "operation" in params.keys():
         params["operation"] = 0
 
-    params["safeTxGas"] = 3000000
-    params["baseGas"] = 3000000
-    params["gasPrice"] = Wei("0.1 ether")
-    params["gasToken"] = "0x0000000000000000000000000000000000000000"
-    params["refundReceiver"] = signer.address
-    params["return"] = signer.address
+    print(signer)
+    if not "safeTxGas" in params.keys():
+        params["safeTxGas"] = 4000000
+    if not "baseGas" in params.keys():
+        params["baseGas"] = 5000000
+    if not "gasPrice" in params.keys():
+        params["gasPrice"] = Wei("0.1 ether")
+    if not "gasToken" in params.keys():
+        params["gasToken"] = "0x0000000000000000000000000000000000000000"
+    if not "refundReceiver" in params.keys():
+        params["refundReceiver"] = signer.address
+    if not "return" in params.keys():
+        params["return"] = signer.address
+    if not "nonce" in params.keys():
+        params["nonce"] = contract.nonce()
 
+    nonce = 2
     # print("exec_direct", contract, color.pretty_dict(params), signer)
+
+    print(contract)
+
+    encoded = contract.encodeTransactionData(
+        params["to"],
+        params["value"],
+        params["data"],
+        params["operation"],
+        params["safeTxGas"],
+        params["baseGas"],
+        params["gasPrice"],
+        params["gasToken"],
+        params["refundReceiver"],
+        nonce,
+    )
+
+    hash = contract.getTransactionHash(
+        params["to"],
+        params["value"],
+        params["data"],
+        params["operation"],
+        params["safeTxGas"],
+        params["baseGas"],
+        params["gasPrice"],
+        params["gasToken"],
+        params["refundReceiver"],
+        nonce,
+    )
+
+    console.log("Transaction Data", params)
+    console.print("Encoded TX", encoded)
+    console.print("Tx Hash", hash)
 
     tx = contract.execTransaction(
         params["to"],

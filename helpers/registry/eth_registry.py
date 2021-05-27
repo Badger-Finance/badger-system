@@ -1,12 +1,10 @@
+import json
 
 from helpers.registry.ChainRegistry import ChainRegistry
 from helpers.registry.YearnRegistry import YearnRegistry
 from brownie.network import web3
 from dotmap import DotMap
 from helpers.registry.WhaleRegistryAction import WhaleRegistryAction
-
-with open("dependency-artifacts/defidollar/BadgerSettPeak.json") as f:
-    BadgerSettPeak = json.load(f)
 
 aragon_registry = DotMap(
     addresses=DotMap(
@@ -22,7 +20,7 @@ gnosis_safe_registry = DotMap(
     )
 )
 
-onesplit_registry = DotMap(contract="0x50FDA034C0Ce7a8f7EFDAebDA7Aa7cA21CC1267e"),
+onesplit_registry = (DotMap(contract="0x50FDA034C0Ce7a8f7EFDAebDA7Aa7cA21CC1267e"),)
 
 uniswap_registry = DotMap(
     routerV2="0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D",
@@ -31,14 +29,12 @@ uniswap_registry = DotMap(
     uniStakingRewards=DotMap(eth_wbtc="0xa1484C3aa22a66C62b77E0AE78E15258bd0cB711"),
 )
 
-multicall_registry = DotMap(
-    multicall="0xeefba1e63905ef1d7acba5a8513c70307c1ce441",
-)
+multicall = "0xeefba1e63905ef1d7acba5a8513c70307c1ce441"
+multisend = "0x8D29bE29923b68abfDD21e541b9374737B49cdAD"
 
 compound_registry = DotMap(
-    cTokens = DotMap(
-        usdc="0x39AA39c021dfbaE8faC545936693aC917d5E7563"
-    )
+    comptroller=web3.toChecksumAddress("0x3d9819210a31b4961b30ef54be2aed79b9c9cd3b"),
+    cTokens=DotMap(usdc="0x39AA39c021dfbaE8faC545936693aC917d5E7563")
 )
 
 multichain_registry = DotMap(eth_address="0xC564EE9f21Ed8A2d8E7e76c085740d5e4c5FaFbE")
@@ -77,17 +73,14 @@ sushi_registry = DotMap(
     pids=DotMap(sushiBadgerWBtc=73, sushiEthWBtc=21),
 )
 
-
 yearn_registry = YearnRegistry(
     registry="0x50c1a2ea0a861a967d9d0ffe2ae4012c2e053804",
-    experimental_vaults={
-        'wbtc': "0xA696a63cc78DfFa1a63E9E50587C197387FF6C7E"
-    }
+    experimental_vaults={"wbtc": "0xA696a63cc78DfFa1a63E9E50587C197387FF6C7E"},
 )
 
-aave_registry = DotMap(
-    lendingPoolV2="0x7d2768de32b0b80b7a3454c06bdac94a69ddc7a9"
-)
+aave_registry = DotMap(lendingPoolV2="0x7d2768de32b0b80b7a3454c06bdac94a69ddc7a9")
+
+yearn_registry = (DotMap(yvWBTC="0xcB550A6D4C8e3517A939BC79d0c7093eb7cF56B5",),)
 
 curve_registry = DotMap(
     minter="0xd061D61a4d941c39E5453435B6345Dc261C2fcE0",
@@ -112,6 +105,20 @@ curve_registry = DotMap(
     ),
 )
 
+badger_registry = DotMap(token="0x3472a5a71965499acd81997a54bba8d852c6e53d")
+
+defidollar_registry = DotMap(
+    addresses=DotMap(
+        badgerSettPeak="0x41671BA1abcbA387b9b2B752c205e22e916BE6e3",
+        core="0x2A8facc9D49fBc3ecFf569847833C380A13418a8",
+    ),
+    pools=[
+        DotMap(id=0, sett="0x6dEf55d2e18486B9dDfaA075bc4e4EE0B28c1545",),
+        DotMap(id=1, sett="0xd04c48A53c111300aD41190D63681ed3dAd998eC",),
+        DotMap(id=2, sett="0xb9D076fDe463dbc9f915E5392F807315Bf940334",),
+    ],
+)
+
 mstable_registry = DotMap(
     nexus="0xAFcE80b19A8cE13DEc0739a1aaB7A028d6845Eb3",
     dao="0xF6FF1F7FCEB2cE6d26687EaaB5988b445d0b94a2",
@@ -129,10 +136,6 @@ mstable_registry = DotMap(
     ),
 )
 
-badger_registry = DotMap(
-    token="0x3472a5a71965499acd81997a54bba8d852c6e53d"
-)
-
 eth_registry = ChainRegistry(
     curve=curve_registry,
     uniswap=uniswap_registry,
@@ -142,10 +145,13 @@ eth_registry = ChainRegistry(
     gnosis_safe=gnosis_safe_registry,
     pickle=pickle_registry,
     harvest=harvest_registry,
-    multicall=multicall_registry,
+    multicall=multicall,
+    multisend=multisend,
     badger=badger_registry,
     yearn=yearn_registry,
-    aave=aave_registry
+    aave=aave_registry,
+    compound=compound_registry,
+    defidollar=defidollar_registry,
     mstable=mstable_registry
 )
 
@@ -163,6 +169,9 @@ eth_registry.tokens = DotMap(
     usdc=web3.toChecksumAddress("0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"),
     renbtc=web3.toChecksumAddress("0xeb4c2781e4eba804ce9a9803c67d0893436bb27d"),
     mta=web3.toChecksumAddress("0xa3BeD4E1c75D00fa6f4E5E6922DB7261B5E9AcD2"),
+    ibbtc=web3.toChecksumAddress("0xc4E15973E6fF2A35cC804c2CF9D2a1b817a8b40F"),
+    dfd=web3.toChecksumAddress("0x20c36f062a31865bed8a5b1e512d9a1a20aa333a"),
+    ausdc="0xBcca60bB61934080951369a648Fb03DF4F96263C"
 )
 
 eth_registry.whales = DotMap(
@@ -197,9 +206,9 @@ eth_registry.whales = DotMap(
         action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT,
     ),
     bSbtcCrv=DotMap(
-        whale="0x7af23cc86f3d96f079d5a56d0a89ebcb281060d5",
+        whale="0x10fc82867013fce1bd624fafc719bb92df3172fc",
         token="0xd04c48A53c111300aD41190D63681ed3dAd998eC",
-        action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT
+        action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT,
     ),
     renCrv=DotMap(
         whale="0xb1f2cdec61db658f091671f5f199635aef202cac",
@@ -207,9 +216,9 @@ eth_registry.whales = DotMap(
         action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT,
     ),
     bRenCrv=DotMap(
-        whale="0xedff3e9b6d596501c7fe806ef26bff395c01bdbe",
+        whale="0x2296f174374508278dc12b806a7f27c87d53ca15",
         token="0x6dEf55d2e18486B9dDfaA075bc4e4EE0B28c1545",
-        action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT
+        action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT,
     ),
     tbtcCrv=DotMap(
         whale="0xaf379f0228ad0d46bb7b4f38f9dc9bcc1ad0360c",
@@ -217,9 +226,9 @@ eth_registry.whales = DotMap(
         action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT,
     ),
     bTbtcCrv=DotMap(
-        whale="0xadc68fb9809206c88e4f871c14b904b25ae5e301",
+        whale="0x085a9340ff7692ab6703f17ab5ffc917b580a6fd",
         token="0xb9D076fDe463dbc9f915E5392F807315Bf940334",
-        action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT
+        action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT,
     ),
     wbtc=DotMap(
         whale="0xc11b1268c1a384e55c48c2391d8d480264a3a7f4",
@@ -260,5 +269,5 @@ eth_registry.whales = DotMap(
         whale="0x35ffd6e268610e764ff6944d07760d0efe5e40e5",
         token="0xeb4c2781e4eba804ce9a9803c67d0893436bb27d",
         action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT,
-    )
+    ),
 )

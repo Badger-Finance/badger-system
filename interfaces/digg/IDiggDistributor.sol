@@ -1,9 +1,11 @@
+//SPDX-License-Identifier: MIT
 pragma solidity >=0.5.0 <0.8.0;
 
 interface IDiggDistributor {
-    
     function rewardsEscrow() external view returns (address);
+
     function reclaimAllowedTimestamp() external view returns (uint256);
+
     function isOpen() external view returns (bool);
 
     function claim(
@@ -21,7 +23,6 @@ interface IDiggDistributor {
     function pause() external;
 
     function unpause() external;
-    
-    function openAirdrop() external;
 
+    function openAirdrop() external;
 }

@@ -24,7 +24,13 @@ from helpers.gnosis_safe import (
 )
 from helpers.registry import registry
 from helpers.time_utils import days, hours, to_days, to_timestamp, to_utc_date
-from helpers.utils import fragments_to_shares, initial_fragments_to_current_fragments, shares_to_fragments, to_digg_shares, val
+from helpers.utils import (
+    fragments_to_shares,
+    initial_fragments_to_current_fragments,
+    shares_to_fragments,
+    to_digg_shares,
+    val,
+)
 from rich import pretty
 from rich.console import Console
 from scripts.systems.badger_system import BadgerSystem, connect_badger
@@ -35,7 +41,7 @@ pretty.install()
 
 
 def main():
-    badger = connect_badger("deploy-final.json")
+    badger = connect_badger()
     admin = badger.devProxyAdmin
     multisig = badger.devMultisig
     contracts = badger.contracts_upgradeable
@@ -65,4 +71,3 @@ def main():
     # console.print(
     #     "\n[green] ✅ Total matches expected {} [/green]".format(val(expected))
     # )
-

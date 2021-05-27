@@ -17,5 +17,3 @@ def main():
         logic = badger.devProxyAdmin.getProxyImplementation(sett)
         table.append([key, logic])
     print(tabulate(table, ["key", "logic"]))
-
-

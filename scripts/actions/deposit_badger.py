@@ -24,7 +24,13 @@ from helpers.gnosis_safe import (
 )
 from helpers.registry import registry
 from helpers.time_utils import days, hours, to_days, to_timestamp, to_utc_date
-from helpers.utils import fragments_to_shares, initial_fragments_to_current_fragments, to_digg_shares, tx_wait, val
+from helpers.utils import (
+    fragments_to_shares,
+    initial_fragments_to_current_fragments,
+    to_digg_shares,
+    tx_wait,
+    val,
+)
 from rich import pretty
 from rich.console import Console
 from scripts.systems.badger_system import BadgerSystem, connect_badger
@@ -44,7 +50,6 @@ def main():
 
     amount = Wei("10000 ether")
 
-
     # print(badger.deployer)
     # print(badger.token.balanceOf(badger.deployer), badger.token.balanceOf(badger.opsMultisig))
 
@@ -59,7 +64,7 @@ def main():
 
     bBadger = badger.getSett("native.badger")
     # badger.token.approve(bBadger, amount, {"from": account})
-    
+
     # bBadger.deposit(amount, {"from": account})
     # tx_wait()
     print(bBadger.balanceOf(account))
@@ -78,4 +83,3 @@ def main():
     # print("expected total ", expected)
 
     # assert total == expected
-

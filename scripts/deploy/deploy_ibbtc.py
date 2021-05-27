@@ -1,65 +1,71 @@
-import decouple
+import time
 
-from scripts.systems.badger_system import BadgerSystem, connect_badger
+from scripts.systems.badger_system import connect_badger
 from scripts.systems.sushiswap_system import SushiswapSystem
+from scripts.systems.uniswap_system import UniswapSystem
 from config.badger_config import sett_config
 from helpers.registry import registry
 
 sleep_between_tx = 1
+
 
 def main():
 
     badger = connect_badger("deploy-final.json")
 
     deployer = badger.deployer
-    key = "native.sushiWbtcIbBtc"
     controller = badger.getController("native")
     governance = badger.devMultisig
     strategist = badger.deployer
     keeper = badger.keeper
     guardian = badger.guardian
 
-    params = sett_config.sushi.sushiWbtcIbBtc.params
-    params.badgerTree = badger.badgerTree
+    for (key, strategyName, isUniswap) in [
+        ("native.sushiWbtcIbBtc", "StrategySushiLpOptimizer", False),
+        # ("native.uniWbtcIbBtc", "StrategyUniGenericLp", True),
+    ]:
+        if isUniswap:
+            params = sett_config.uni.uniGenericLp.params
+            swap = UniswapSystem()
+        else:
+            params = sett_config.sushi.sushiWbtcIbBtc.params
+            params.badgerTree = badger.badgerTree
 
-    sushiswap = SushiswapSystem()
-    if sushiswap.hasPair(registry.tokens.ibbtc, registry.tokens.wbtc):
-        params.want = sushiswap.getPair(registry.tokens.ibbtc, registry.tokens.wbtc)
-    else:
-        params.want = sushiswap.createPair(
-            registry.tokens.ibbtc,
-            registry.tokens.wbtc,
-            deployer,
+            swap = SushiswapSystem()
+
+        if swap.hasPair(registry.tokens.ibbtc, registry.tokens.wbtc):
+            params.want = swap.getPair(registry.tokens.ibbtc, registry.tokens.wbtc)
+        else:
+            params.want = swap.createPair(
+                registry.tokens.ibbtc, registry.tokens.wbtc, deployer,
+            )
+
+        # NB: Work w/ sushi team to setup sushi reward allocations.
+
+        vault = badger.deploy_sett(
+            key,
+            params.want,
+            controller,
+            governance=governance,
+            strategist=strategist,
+            keeper=keeper,
+            guardian=guardian,
         )
+        time.sleep(sleep_between_tx)
 
-    # Setup sushi reward allocations (ONLY DO THIS ONCE).
-    params.pid = sushiswap.add_chef_rewards(params.want)
+        strategy = badger.deploy_strategy(
+            key,
+            strategyName,
+            controller,
+            params,
+            governance=governance,
+            strategist=strategist,
+            keeper=keeper,
+            guardian=guardian,
+        )
+        time.sleep(sleep_between_tx)
 
-    vault = badger.deploy_sett(
-	key,
-	params.want,
-	controller,
-	governance=governance,
-	strategist=strategist,
-	keeper=keeper,
-	guardian=guardian,
-    )
-    time.sleep(sleep_between_tx)
+        badger.wire_up_sett(vault, strategy, controller)
 
-    strategy = badger.deploy_strategy(
-	key,
-	strategyName,
-	controller,
-	params,
-	governance=governance,
-	strategist=strategist,
-	keeper=keeper,
-	guardian=guardian,
-    )
-    time.sleep(sleep_between_tx)
-
-    badger.wire_up_sett(vault, strategy, controller)
-
-    assert vault.paused()
-    vault.unpause({"from": governance})
-    assert vault.paused() == False
+        # TODO: Unpause vault.
+        assert vault.paused()

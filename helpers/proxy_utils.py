@@ -21,7 +21,9 @@ def deploy_proxy_admin(deployer):
     )
 
 
-def deploy_proxy_uninitialized(contractName, logicAbi, logic, proxyAdmin, deployer: Account):
+def deploy_proxy_uninitialized(
+    contractName, logicAbi, logic, proxyAdmin, deployer: Account
+):
     abi = artifacts.open_zeppelin["AdminUpgradeabilityProxy"]["abi"]
     bytecode = artifacts.open_zeppelin["AdminUpgradeabilityProxy"]["bytecode"]
 
@@ -36,7 +38,9 @@ def deploy_proxy_uninitialized(contractName, logicAbi, logic, proxyAdmin, deploy
     return Contract.from_abi(contractName, tx.contract_address, logicAbi)
 
 
-def deploy_proxy(contractName, logicAbi, logic, proxyAdmin, initializer, deployer: Account):
+def deploy_proxy(
+    contractName, logicAbi, logic, proxyAdmin, initializer, deployer: Account
+):
     abi = artifacts.open_zeppelin["AdminUpgradeabilityProxy"]["abi"]
     bytecode = artifacts.open_zeppelin["AdminUpgradeabilityProxy"]["bytecode"]
 
@@ -50,4 +54,3 @@ def deploy_proxy(contractName, logicAbi, logic, proxyAdmin, initializer, deploye
 
     print("Deployng contract:", contractName, "address:", tx.contract_address)
     return Contract.from_abi(contractName, tx.contract_address, logicAbi)
-

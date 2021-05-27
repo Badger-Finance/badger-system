@@ -3,15 +3,13 @@ from brownie.network.gas.strategies import GasNowStrategy
 from scripts.systems.digg_system import connect_digg
 from helpers.time_utils import days, hours
 from tabulate import tabulate
-from assistant.rewards.BadgerGeyserMock import BadgerGeyserMock
 from scripts.systems.badger_system import BadgerSystem
 from brownie import *
 from rich.console import Console
 from assistant.rewards.aws_utils import upload
 import json
-import brownie
-from config.badger_config import badger_config, globalStartTime
 from helpers.utils import val
+from helpers.constants import BADGER, DIGG, FARM, XSUSHI
 
 console = Console()
 
@@ -19,16 +17,17 @@ badger_token = "0x3472A5A71965499acd81997a54BBA8D852C6E53d"
 digg_token = "0x798D1bE841a82a273720CE31c822C61a67a601C3"
 farm_token = "0xa0246c9032bC3A600820415aE600c6388619A14D"
 xSushi_token = "0x8798249c2E607446EfB7Ad49eC89dD1865Ff4272"
+dfd_token = "0x20c36f062a31865bED8a5B1e512D9a1A20AA333A"
 
-tokens_to_check = [
-    badger_token,
-    digg_token,
-    farm_token,
-    xSushi_token
-]
+tokens_to_check = [BADGER, DIGG, FARM, XSUSHI]
 
 gas_strategy = GasNowStrategy("rapid")
-digg_contract = interface.IDigg(digg_token)
+
+
+def get_digg_contract():
+    digg_contract = interface.IDigg(digg_token)
+    return digg_contract
+
 
 def sec(amount):
     return "{:,.1f}".format(amount / 1e12)
@@ -39,8 +38,8 @@ def get_distributed_in_range(key, geyser, startBlock, endBlock):
     periodStartTime = web3.eth.getBlock(startBlock)["timestamp"]
 
     geyserMock = BadgerGeyserMock(key)
-    distributionTokens = geyser.getDistributionTokens()
-    for token in distributionTokens:
+    distributionTokenss = geyser.getDistributionTokenss()
+    for token in distributionTokenss:
         geyserMock.add_distribution_token(token)
         unlockSchedules = geyser.getUnlockSchedulesFor(token)
         for schedule in unlockSchedules:
@@ -65,14 +64,15 @@ def getExpectedDistributionInRange(badger: BadgerSystem, startBlock, endBlock):
 
     # TODO: Only Badger for now
     totals = {}
-    totals[digg_token] = 0
-    totals[badger_token] = 0
+    totals[DIGG] = 0
+    totals[Token.badger.value] = 0
 
     for key, gains in distributions.items():
-        totals[badger_token] += gains[badger_token]
-        totals[digg_token] += gains[digg_token]
+        totals[Token.badger.value] += gains[Token.badger.value]
+        totals[DIGG] += gains[Token.digg.value]
 
     return totals
+
 
 def sum_claims(claims):
     total = 0
@@ -80,12 +80,14 @@ def sum_claims(claims):
         total += int(claim["cumulativeAmounts"][0])
     return total
 
+
 def sum_digg_claims(claims):
     total = 0
     for user, claim in claims.items():
         # print(claim["cumulativeAmounts"])
         total += int(claim["cumulativeAmounts"][1])
     return total
+
 
 def diff_rewards(
     badger: BadgerSystem, before_file, after_file,
@@ -111,10 +113,11 @@ def diff_rewards(
         )
     print(tabulate(table, headers=["user", "a", "b", "diff", "% gained"],))
 
+
 def get_expected_total_rewards(periodEndTime):
     startTime = 1611489600
     timePassed = periodEndTime - startTime
-    print('timePassed', timePassed)
+    print("timePassed", timePassed)
 
     badger_base = Wei("4248761 ether")
     badger_per_day = Wei("184452 ether") // 7
@@ -124,9 +127,10 @@ def get_expected_total_rewards(periodEndTime):
 
     return {
         "badger": badger_base + (badger_per_day * timePassed // days(1)),
-        "digg": digg_base + (digg_per_day * timePassed // days(1))
+        "digg": digg_base + (digg_per_day * timePassed // days(1)),
     }
-    
+
+
 def print_token_diff_table(name, before, after, sanity_diff, decimals=18):
     diff = after - before
 
@@ -139,6 +143,7 @@ def print_token_diff_table(name, before, after, sanity_diff, decimals=18):
 
     assert diff <= sanity_diff
 
+
 def verify_rewards(badger: BadgerSystem, startBlock, endBlock, before_data, after_data):
     before = before_data["claims"]
     after = after_data["claims"]
@@ -148,6 +153,7 @@ def verify_rewards(badger: BadgerSystem, startBlock, endBlock, before_data, afte
     periodStartTime = web3.eth.getBlock(int(startBlock))["timestamp"]
     periodEndTime = web3.eth.getBlock(int(endBlock))["timestamp"]
 
+    digg_contract = get_digg_contract()
     spf = digg_contract._initialSharesPerFragment()
 
     expected_totals = get_expected_total_rewards(periodEndTime)
@@ -157,15 +163,17 @@ def verify_rewards(badger: BadgerSystem, startBlock, endBlock, before_data, afte
 
     total_before_badger = before_data["tokenTotals"][badger_token]
     total_before_digg = before_data["tokenTotals"][digg_token]
-    
+
     total_before_farm = int(before_data["tokenTotals"][farm_token])
     total_before_xsushi = int(before_data["tokenTotals"][xSushi_token])
+    total_before_dfd = int(before_data["tokenTotals"].get(dfd_token, 0))
 
-    total_after_badger = after_data["tokenTotals"][badger_token]
-    total_after_digg = after_data["tokenTotals"][digg_token]
+    total_after_badger = after_data["tokenTotals"][BADGER]
+    total_after_digg = after_data["tokenTotals"][DIGG]
 
     total_after_farm = int(after_data["tokenTotals"][farm_token])
     total_after_xsushi = int(after_data["tokenTotals"][xSushi_token])
+    total_after_dfd = int(after_data["tokenTotals"].get(dfd_token, 0))
 
     digg_badger = total_after_badger - total_before_badger
     diff_digg = total_after_digg - total_before_digg
@@ -187,9 +195,11 @@ def verify_rewards(badger: BadgerSystem, startBlock, endBlock, before_data, afte
 
     print_token_diff_table("Farm", total_before_farm, total_after_farm, 0)
     print_token_diff_table("xSushi", total_before_xsushi, total_after_xsushi, 0)
+    print_token_diff_table("dfd", total_before_dfd, total_after_dfd, 40000 * 1e18)
 
     assert total_after_digg < sanity_digg
     assert total_after_badger < sanity_badger
+
 
 def compare_rewards(
     badger: BadgerSystem,
@@ -221,7 +231,7 @@ def compare_rewards(
     duration = periodEndTime - periodStartTime
 
     print("duration: ", duration)
-    
+
     # Expected gains must match up with the distributions from various rewards programs
     expectedGains = getExpectedDistributionInRange(badger, startBlock, endBlock)
 
@@ -231,7 +241,7 @@ def compare_rewards(
     sanitySum = Wei("5000000 ether")
 
     sum_digg_after = sum_digg_claims(after)
-    digg_contract = interface.IDigg(digg_token)
+    digg_contract = interface.IDigg(DIGG)
 
     table = []
     table.append(["block range", startBlock, endBlock])
@@ -239,7 +249,13 @@ def compare_rewards(
     table.append(["sum before", sum_before, val(sum_before)])
     table.append(["sum after", sum_after, val(sum_after)])
     table.append(["digg shares after", sum_digg_after, val(sum_digg_after)])
-    table.append(["digg tokens after", digg_contract.sharesToFragments(sum_digg_after), val(digg_contract.sharesToFragments(sum_digg_after))])
+    table.append(
+        [
+            "digg tokens after",
+            digg_contract.sharesToFragments(sum_digg_after),
+            val(digg_contract.sharesToFragments(sum_digg_after)),
+        ]
+    )
     table.append(
         ["From last period", sum_after - sum_before, val(sum_after - sum_before),]
     )
@@ -250,7 +266,7 @@ def compare_rewards(
 
     assert sum_after >= sum_before
     assert sum_after <= sanitySum
-    # assert sum_after - (sum_before + expectedGains[badger_token]) < 10000
+    # assert sum_after - (sum_before + expectedGains[Token.badger]) < 10000
     table = []
     # Each users' cumulative claims must only increase
     for user, claim in after.items():
@@ -313,7 +329,7 @@ def push_rewards(badger: BadgerSystem, afterContentHash):
         after_file["endBlock"],
         {"from": badger.keeper, "gas_price": gas_strategy},
     ),
-    
+
     time.sleep(15)
 
     badger.badgerTree.approveRoot(
@@ -342,13 +358,12 @@ def test_claims(badger: BadgerSystem, startBlock, endBlock, before_file, after_f
         web3.toChecksumAddress("0x302218182415dc9800179f50a8b16ff98b8d04c3"),
         web3.toChecksumAddress("0xbc159b71c296c21a1895a8ddf0aa45969c5f17c2"),
         web3.toChecksumAddress("0x264571c538137922c6e8aF4927C3D3F681399E50"),
-        web3.toChecksumAddress("0x57ef012861c4937a76b5d6061be800199a2b9100")
+        web3.toChecksumAddress("0x57ef012861c4937a76b5d6061be800199a2b9100"),
     ]
     for user, claim in claims.items():
         if not user in users:
             continue
 
-        
         claimed = badger.badgerTree.getClaimedFor(user, [badger.token.address])[1][0]
         claimed_digg = badger.badgerTree.getClaimedFor(user, [digg.token.address])[1][0]
 
@@ -360,19 +375,27 @@ def test_claims(badger: BadgerSystem, startBlock, endBlock, before_file, after_f
 
         print("=== Claim: " + user + " ===")
 
-        console.print({
-            'user': user,
-            'badger_claimed': val(claimed),
-            'badger_claimable': val(badger_claimable),
-            'badger_diff': val(badger_diff),
-            'digg_claimed': claimed_digg,
-            'digg_claimable': digg_claimable,
-            'digg_diff': digg_diff,
-            'digg_claimed_scaled': val(digg_contract.sharesToFragments(claimed_digg), decimals=9),
-            'digg_claimable_scaled': val(digg_contract.sharesToFragments(digg_claimable), decimals=9),
-            'digg_diff_scaled': val(digg_contract.sharesToFragments(digg_diff), decimals=9),
-        })
-        
+        console.print(
+            {
+                "user": user,
+                "badger_claimed": val(claimed),
+                "badger_claimable": val(badger_claimable),
+                "badger_diff": val(badger_diff),
+                "digg_claimed": claimed_digg,
+                "digg_claimable": digg_claimable,
+                "digg_diff": digg_diff,
+                "digg_claimed_scaled": val(
+                    digg_contract.sharesToFragments(claimed_digg), decimals=9
+                ),
+                "digg_claimable_scaled": val(
+                    digg_contract.sharesToFragments(digg_claimable), decimals=9
+                ),
+                "digg_diff_scaled": val(
+                    digg_contract.sharesToFragments(digg_diff), decimals=9
+                ),
+            }
+        )
+
         accounts[0].transfer(user, Wei("0.5 ether"))
         accounts.at(user, force=True)
 
@@ -407,14 +430,31 @@ def test_claims(badger: BadgerSystem, startBlock, endBlock, before_file, after_f
         diff = post - pre
         table.append([user, "badger", pre, post, diff, claim["cumulativeAmounts"][0]])
 
-        table.append([user, "digg shares", pre_digg_shares, post_digg_shares, post_digg_shares - pre_digg_shares, claim["cumulativeAmounts"][1]])
+        table.append(
+            [
+                user,
+                "digg shares",
+                pre_digg_shares,
+                post_digg_shares,
+                post_digg_shares - pre_digg_shares,
+                claim["cumulativeAmounts"][1],
+            ]
+        )
 
         table.append([user, "digg tokens", pre_digg, post_digg, "", ""])
-        print(tabulate(table, headers=["user", "token", "before", "after", "diff", "claim"]))
+        print(
+            tabulate(
+                table, headers=["user", "token", "before", "after", "diff", "claim"]
+            )
+        )
 
         total_claimed += int(claim["cumulativeAmounts"][0])
 
         assert post == pre + (int(claim["cumulativeAmounts"][0]) - claimed)
-        assert post_digg_shares - (pre_digg_shares + (int(claim["cumulativeAmounts"][1]) - claimed_digg)) < 10 ** 18
+        assert (
+            post_digg_shares
+            - (pre_digg_shares + (int(claim["cumulativeAmounts"][1]) - claimed_digg))
+            < 10 ** 18
+        )
 
     print(total_claimable, total_claimed, total_claimable - total_claimed)

@@ -6,14 +6,14 @@ import "deps/@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "deps/@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import "deps/@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import "interfaces/badger/IBadgerGeyser.sol";
-import "contracts/badger-timelock/Executor.sol";
+import "contracts/badger-timelock/ExecutorOnlyCall.sol";
 
 /**
  * @title A holder of tokens to be distributed via a Geyser.
  * Used in cases when a staking asset address is not known at the time of staking geyser creation.
  * Owner must be trusted to set the correct staking asset and distribute the tokens to the geyser.
  */
-contract RewardsEscrow is OwnableUpgradeable, ReentrancyGuardUpgradeable, Executor {
+contract RewardsEscrow is OwnableUpgradeable, ReentrancyGuardUpgradeable, ExecutorOnlyCall {
     mapping(address => bool) public isApproved;
 
     event Approve(address recipient);

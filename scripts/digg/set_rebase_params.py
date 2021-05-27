@@ -58,4 +58,3 @@ def main():
 
     tx = badger.digg.orchestrator.rebase({"from": badger.deployer})
     print(tx.call_trace())
-

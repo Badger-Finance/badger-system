@@ -13,11 +13,12 @@ console = Console()
 
 
 def main():
-    badger = connect_badger(badger_config.prod_json, load_keeper=False,load_deployer=False)
+    badger = connect_badger(
+        badger_config.prod_json, load_keeper=False, load_deployer=False
+    )
     outputName = "rewards-1-0x77218a9a95f4a10df4ec8795cbc4bda027532c9353569c1be9ac691381e2686f.json"
 
     with open(outputName) as f:
         rewards = json.load(f)
 
     upload(outputName)
-

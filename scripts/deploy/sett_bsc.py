@@ -68,6 +68,7 @@ class RevertException(Exception):
         self.error = error
         self.tx = tx
 
+
 def vault_report(badger: BadgerSystem):
     controller = badger.getController("native")
 
@@ -77,13 +78,20 @@ def vault_report(badger: BadgerSystem):
 
         snap.printPermissions()
 
-        console.print({
-            "want": strategy.want(),
-            "token0": strategy.token0(),
-            "token1": strategy.token1(),
-            "path0": strategy.getTokenSwapPath(registry.pancake.cake, strategy.token0()),
-            "path1": strategy.getTokenSwapPath(registry.pancake.cake, strategy.token1()),
-        })
+        console.print(
+            {
+                "want": strategy.want(),
+                "token0": strategy.token0(),
+                "token1": strategy.token1(),
+                "path0": strategy.getTokenSwapPath(
+                    registry.pancake.cake, strategy.token0()
+                ),
+                "path1": strategy.getTokenSwapPath(
+                    registry.pancake.cake, strategy.token1()
+                ),
+            }
+        )
+
 
 def test_upgrades(badger: BadgerSystem, seeder: Account):
     controller = badger.getController("native")
