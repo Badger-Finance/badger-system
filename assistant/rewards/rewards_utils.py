@@ -203,7 +203,7 @@ def calculate_sett_balances(badger, name, currentBlock):
     settType = ["", ""]
     if "uni" in name or "sushi" in name:
         settType[0] = "halfLP"
-    elif "crv" in name:
+    if "crv" in name or name == "experimental.sushiIBbtcWbtc":
         settType[0] = "fullLP"
     if "badger" in name.lower() or "digg" in name.lower() or "eth" in name.lower():
         settType[1] = "nonNative"

@@ -55,11 +55,10 @@ BRIDGE_VAULTS = [
     {
         "inToken": registry.tokens.wbtc,
         "outToken": registry.tokens.wbtc,
-        # NB: Only deployed to BSC right now. We're testing w/ mock.
-        "id": "native.test",
-        "symbol": "bwBTC",
+        "id": "yearn.wbtc",
+        "symbol": "byvwBTC",
         "token": registry.tokens.wbtc,
-        "address": AddressZero,
+        "address": "0x4b92d19c11435614cd49af1b589001b7c08cd4d5",
         "upgrade": False,
     },
 ]
@@ -74,27 +73,13 @@ def test_bridge_vault(vault):
     badger = connect_badger(badger_config.prod_json)
     bridge = connect_bridge(badger, badger_config.prod_json)
     swap = connect_swap(badger_config.prod_json)
-    _upgrade_bridge(badger, bridge)
-    _upgrade_swap(badger, swap)
+    bridge.add_existing_swap(swap)
     _deploy_bridge_mocks(badger, bridge)
 
     slippage = 0.03
     amount = 1 * 10 ** 8
 
     v = vault["address"]
-    if v == AddressZero:
-        v = MockVault.deploy(
-            vault["id"], vault["symbol"], vault["token"], {"from": badger.deployer}
-        ).address
-        # Must approve mock vaults to mint/burn to/from.
-        bridge.adapter.setVaultApproval(
-            v, True, {"from": badger.devMultisig},
-        )
-    else:
-        badger.sett_system.vaults[vault["id"]].approveContractAccess(
-            bridge.adapter, {"from": badger.devMultisig},
-        )
-
     # TODO: Can interleave these mints/burns.
     for accIdx in range(10, 12):
         account = accounts[accIdx]
@@ -144,6 +129,7 @@ def test_bridge_basic_swap_fail():
     badger = connect_badger(badger_config.prod_json)
     bridge = connect_bridge(badger, badger_config.prod_json)
     swap = connect_swap(badger_config.prod_json)
+    bridge.add_existing_swap(swap)
     _upgrade_bridge(badger, bridge)
     _deploy_bridge_mocks(badger, bridge)
 
@@ -185,8 +171,7 @@ def test_bridge_basic():
     badger = connect_badger(badger_config.prod_json)
     bridge = connect_bridge(badger, badger_config.prod_json)
     swap = connect_swap(badger_config.prod_json)
-    _upgrade_bridge(badger, bridge)
-    _upgrade_swap(badger, swap)
+    bridge.add_existing_swap(swap)
     _deploy_bridge_mocks(badger, bridge)
 
     router = swap.router
@@ -246,7 +231,6 @@ def test_bridge_sweep():
 
     badger = connect_badger(badger_config.prod_json)
     bridge = connect_bridge(badger, badger_config.prod_json)
-    _upgrade_bridge(badger, bridge)
 
     # Send both renbtc and wbtc to bridge adapter and test sweep.
     for (whale, token) in [
