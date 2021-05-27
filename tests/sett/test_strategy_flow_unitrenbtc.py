@@ -52,14 +52,10 @@ def test_single_user_harvest_flow(settConfig):
     # Earn
     snap.settEarn({"from": settKeeper})
 
-    chain.sleep(hours(0.1))
-    chain.mine()
-
     # Harvest
-    snap.settHarvest({"from": strategyKeeper})
-
     chain.sleep(hours(0.1))
     chain.mine()
+    snap.settHarvest({"from": strategyKeeper})
 
     # Withdraw half
     snap.settWithdraw(depositAmount // 2, {"from": deployer})
@@ -70,21 +66,37 @@ def test_single_user_harvest_flow(settConfig):
     strategy.setMinRatio(safeRatio, {"from": governance})
     strategy.keepMinRatio({"from": governance})
     assert strategy.currentRatio() > safeRatio
-
-    chain.sleep(hours(0.1))
-    chain.mine()
-
-    # Harvest again
-    snap.settHarvest({"from": strategyKeeper})
     
     # sugar-daddy usdp discrepancy due to accrued interest in Unit Protocol
-    usdpToken = interface.IERC20Upgradeable("0x1456688345527bE1f37E9e627DA0837D6f08C925")
     debtTotal = strategy.getDebtBalance()
-    usdpOfPool = strategy.usdpOfPool()
-    usdpToken.transfer(strategy, (debtTotal - usdpOfPool) * 2, {'from':deployer})
+    curveGauge = interface.ICurveGauge("0x055be5DDB7A925BfEF3417FC157f53CA77cA7222")
+    usdp3crvInGauge = curveGauge.balanceOf(strategy)
+    curvePool = interface.ICurveFi("0x42d7025938bEc20B69cBae5A77421082407f053A")    
+    usdpOfPool = curvePool.calc_withdraw_one_coin(usdp3crvInGauge,0)
+    sugar = (debtTotal - usdpOfPool) * 2
+    if(sugar > 0):
+       usdpToken = interface.IERC20("0x1456688345527bE1f37E9e627DA0837D6f08C925")
+       usdpToken.transfer(strategy, sugar, {'from':deployer})  
+       print("sugar debt=", sugar)       
+
+    # Harvest again
+    chain.sleep(hours(0.1))
+    chain.mine()
+    snap.settHarvest({"from": strategyKeeper})
     
-    # Withdraw rest
-    snap.settWithdraw(depositAmount // 2 - 1, {"from": deployer})
+    # Withdraw all
+    wantInSettBalance = sett.getPricePerFullShare() * sett.totalSupply() / 1e18
+    print("wantInSett=", wantInSettBalance)
+    print("wantInStrategy=", strategy.balanceOfPool())
+    print("pricePerFullShare=", sett.getPricePerFullShare())
+    wantToWithdraw = sett.balanceOf(deployer) * sett.getPricePerFullShare() / 1e18
+    print("wantToWithdraw=", wantToWithdraw)
+    assert wantToWithdraw <= wantInSettBalance
+    
+    renbtcToken = interface.IERC20("0xEB4C2781e4ebA804CE9a9803C67d0893436bB27D")
+    controller.withdrawAll(renbtcToken, {"from": deployer})
+    
+    snap.settWithdrawAll({"from": deployer})
 
     assert True
 

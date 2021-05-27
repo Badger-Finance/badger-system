@@ -87,7 +87,7 @@ abstract contract StrategyUnitProtocolMeta is BaseStrategy {
     // if borrow is true (for addCollateralAndBorrow): return (maxDebt - currentDebt) if positive value, otherwise return 0
     // if borrow is false (for repayAndRedeemCollateral): return (currentDebt - maxDebt) if positive value, otherwise return 0
     function calculateDebtFor(uint256 collateralAmt, bool borrow) public view returns (uint256) {
-        uint256 maxDebt = collateralValue(collateralAmt).mul(ratioBuffMax).div(_getBufferedMinRatio(ratioBuffMax));
+        uint256 maxDebt = collateralAmt > 0? collateralValue(collateralAmt).mul(ratioBuffMax).div(_getBufferedMinRatio(ratioBuffMax)) : 0;
 
         uint256 debtAmt = getDebtBalance();
 
@@ -114,7 +114,8 @@ abstract contract StrategyUnitProtocolMeta is BaseStrategy {
     }
 
     function requiredPaidDebt(uint256 _redeemCollateralAmt) public view returns (uint256) {
-        uint256 collateralAmt = getCollateralBalance().sub(_redeemCollateralAmt);
+        uint256 totalCollateral = getCollateralBalance();
+        uint256 collateralAmt = _redeemCollateralAmt >= totalCollateral? 0 : totalCollateral.sub(_redeemCollateralAmt);
         return calculateDebtFor(collateralAmt, false);
     }
 
@@ -221,7 +222,7 @@ abstract contract StrategyUnitProtocolMeta is BaseStrategy {
             _withdrawUSDP(requiredPaidback);
         }
 
-        bool _fullWithdraw = _amount == balanceOfPool();
+        bool _fullWithdraw = _amount >= balanceOfPool();
         uint256 _wantBefore = IERC20Upgradeable(want).balanceOf(address(this));
         if (!_fullWithdraw) {
             uint256 _currentDebtVal = IERC20Upgradeable(debtToken).balanceOf(address(this));
