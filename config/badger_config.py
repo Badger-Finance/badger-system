@@ -13,6 +13,7 @@ with open("merkle/airdrop.json") as f:
 
 registry = registries.get_registry("eth")
 curve = registry.curve
+mstable = registry.mstable
 pickle = registry.pickle
 harvest = registry.harvest
 sushi = registry.sushi
@@ -82,6 +83,31 @@ sett_config = DotMap(
                 keepCRV=0,
             ),
         ),
+        imBtc=DotMap(
+            strategyName="StrategyMStableVault",
+            params=DotMap(
+                want=mstable.pools.imBtc.token,
+                vault=mstable.pools.imBtc.vault,
+                lpComponent=registry.tokens.wbtc,
+                performanceFeeStrategist=0,
+                performanceFeeGovernance=1000,
+                withdrawalFee=75,
+                govMta=1000,
+            ),
+        ),
+        mBtcHBtc=DotMap(
+            strategyName="StrategyMStableVault",
+            params=DotMap(
+                want=mstable.pools.mBtcHBtc.token,
+                vault=mstable.pools.mBtcHBtc.vault,
+                minter=curve.minter,
+                lpComponent=registry.tokens.wbtc,
+                performanceFeeStrategist=0,
+                performanceFeeGovernance=1000,
+                withdrawalFee=75,
+                govMta=1000,
+            ),
+        )
     ),
     pickle=DotMap(
         renCrv=DotMap(

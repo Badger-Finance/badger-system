@@ -27,6 +27,7 @@ class ChainRegistry:
         aave=None,
         compound=None,
         defidollar=None,
+        mstable=None,
     ):
         self.curve = curve
         self.uniswap = uniswap
@@ -48,6 +49,7 @@ class ChainRegistry:
         self.aave = aave
         self.compound = compound
         self.defidollar = defidollar
+        self.mstable=mstable
 
     def yearn_system(self) -> YearnSystem:
         if self.yearn == None:

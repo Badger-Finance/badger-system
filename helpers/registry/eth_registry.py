@@ -119,6 +119,23 @@ defidollar_registry = DotMap(
     ],
 )
 
+mstable_registry = DotMap(
+    nexus="0xAFcE80b19A8cE13DEc0739a1aaB7A028d6845Eb3",
+    dao="0xF6FF1F7FCEB2cE6d26687EaaB5988b445d0b94a2",
+    mtaToken="0xa3bed4e1c75d00fa6f4e5e6922db7261b5e9acd2",
+    votingLockup="0xae8bc96da4f9a9613c323478be181fdb2aa0e1bf",
+    pools=DotMap(
+        imBtc=DotMap(
+            token="0x17d8CBB6Bce8cEE970a4027d1198F6700A7a6c24",
+            vault="0xF38522f63f40f9Dd81aBAfD2B8EFc2EC958a3016",
+        ),
+        mBtcHBtc=DotMap(
+            token="0x48c59199Da51B7E30Ea200a74Ea07974e62C4bA7",
+            vault="0xF65D53AA6e2E4A5f4F026e73cb3e22C22D75E35C",
+        ),
+    ),
+)
+
 eth_registry = ChainRegistry(
     curve=curve_registry,
     uniswap=uniswap_registry,
@@ -135,6 +152,7 @@ eth_registry = ChainRegistry(
     aave=aave_registry,
     compound=compound_registry,
     defidollar=defidollar_registry,
+    mstable=mstable_registry
 )
 
 eth_registry.tokens = DotMap(
@@ -150,6 +168,7 @@ eth_registry.tokens = DotMap(
     xSushi=eth_registry.sushi.xsushiToken,
     usdc=web3.toChecksumAddress("0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"),
     renbtc=web3.toChecksumAddress("0xeb4c2781e4eba804ce9a9803c67d0893436bb27d"),
+    mta=web3.toChecksumAddress("0xa3BeD4E1c75D00fa6f4E5E6922DB7261B5E9AcD2"),
     ibbtc=web3.toChecksumAddress("0xc4E15973E6fF2A35cC804c2CF9D2a1b817a8b40F"),
     dfd=web3.toChecksumAddress("0x20c36f062a31865bed8a5b1e512d9a1a20aa333a"),
     ausdc="0xBcca60bB61934080951369a648Fb03DF4F96263C"
