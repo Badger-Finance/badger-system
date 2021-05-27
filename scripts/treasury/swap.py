@@ -68,7 +68,8 @@ def swap_transfer(recipient, params):
     # Note: The allowance must first be set to 0
     id = multi.addTx(
         MultisigTxMetadata(
-            description="Approve UNI Router to send BADGER", operation="call",
+            description="Approve UNI Router to send BADGER",
+            operation="call",
         ),
         params={
             "to": badger.token.address,
@@ -81,7 +82,8 @@ def swap_transfer(recipient, params):
     # Set proper allowance
     id = multi.addTx(
         MultisigTxMetadata(
-            description="Approve UNI Router to send BADGER", operation="call",
+            description="Approve UNI Router to send BADGER",
+            operation="call",
         ),
         params={
             "to": badger.token.address,
@@ -121,7 +123,9 @@ def swap_transfer(recipient, params):
 
     id = multi.addTx(
         MultisigTxMetadata(
-            description="Trade Badger for output token", operation="call", callInfo={},
+            description="Trade Badger for output token",
+            operation="call",
+            callInfo={},
         ),
         params={
             "to": uniswap.router.address,

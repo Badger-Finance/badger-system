@@ -36,7 +36,9 @@ class WbtcIbBtcLpProvisioner(BaseProvisioner):
                 swap = SushiswapSystem()
             # Generate lp tokens.
             swap.addMaxLiquidity(
-                registry.tokens.ibbtc, registry.tokens.wbtc, user,
+                registry.tokens.ibbtc,
+                registry.tokens.wbtc,
+                user,
             )
 
     def _mintIbBtc(self, user) -> None:

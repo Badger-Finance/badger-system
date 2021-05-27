@@ -28,17 +28,30 @@ pancake_registry = DotMap(
         bBadgerBtcb="0x5A58609dA96469E9dEf3fE344bC39B00d18eb9A5",
         bDiggBtcb="0x81d776C90c89B8d51E9497D58338933127e2fA80",
     ),
-    chefPids=DotMap(bnbBtcb=15, bBadgerBtcb=0, bDiggBtcb=104,),
-    pidsV2=DotMap(bnbBtcb=262, bBadgerBtcb=332, bDiggBtcb=331,),
+    chefPids=DotMap(
+        bnbBtcb=15,
+        bBadgerBtcb=0,
+        bDiggBtcb=104,
+    ),
+    pidsV2=DotMap(
+        bnbBtcb=262,
+        bBadgerBtcb=332,
+        bDiggBtcb=331,
+    ),
 )
-multicall_registry = DotMap(multicall="0xE1dDc30f691CA671518090931e3bFC1184BFa4Aa",)
+multicall_registry = DotMap(
+    multicall="0xE1dDc30f691CA671518090931e3bFC1184BFa4Aa",
+)
 sushi_registry = DotMap(
     sushiToken="",
     xsushiToken="",
     sushiChef="",
     router="",
     factory="",
-    lpTokens=DotMap(sushiBadgerWBtc="", sushiWbtcWeth="",),
+    lpTokens=DotMap(
+        sushiBadgerWBtc="",
+        sushiWbtcWeth="",
+    ),
     pids=DotMap(sushiBadgerWBtc=0, sushiEthWBtc=0),
 )
 token_registry = DotMap(

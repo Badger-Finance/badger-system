@@ -80,7 +80,7 @@ Run a local ganache instance connected to badger contracts, with all Sett-relate
 ```bash
 source venv/bin/activate
 export TEST_ACCOUNT=<enter your account here>
-export ALCHEMYAPI_TOKEN=<enter infura key here>
+export ALCHEMYAPI_TOKEN=<enter Alchemy key here>
 brownie run scripts/local_instance.py
 ```
 

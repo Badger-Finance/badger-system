@@ -135,7 +135,11 @@ def gitcoin_round_8_flow():
         )
 
     airdropProxy.claim(
-        user_claim["index"], user.address, amount, user_claim["proof"], {"from": user},
+        user_claim["index"],
+        user.address,
+        amount,
+        user_claim["proof"],
+        {"from": user},
     )
 
     with brownie.reverts("AirdropDistributor: Drop already claimed."):
