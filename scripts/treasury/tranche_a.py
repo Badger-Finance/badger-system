@@ -43,7 +43,16 @@ def main():
     # TODO: Figure out the addresses of these derived tokens
 
     # TODO: Track the balances of all the appropriate contracts where the USDC ends up
-    snap = BalanceSnapshotter([usdc, ausdc, cusdc, dfd, badger.token], [badger.devMultisig, aave.lendingPool, cusdc, compound.comptroller, badger.badgerTree])
+    snap = BalanceSnapshotter(
+        [usdc, ausdc, cusdc, dfd, badger.token],
+        [
+            badger.devMultisig,
+            aave.lendingPool,
+            cusdc,
+            compound.comptroller,
+            badger.badgerTree,
+        ],
+    )
 
     usdc_per_position = Wei("3237154580000 wei")  # szabo = 10^6
     round_1 = Wei("1000000 wei")
@@ -84,7 +93,7 @@ def main():
     # usdcToken.approve(cusdc, round_1)
     # cusdc.redeem(round_1)
     # lendingPool.withdraw(usdc, round_1, badger.devMultisig)
-    
+
     snap.snap()
     snap.diff_last_two()
 

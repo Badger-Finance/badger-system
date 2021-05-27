@@ -6,7 +6,9 @@ from dotmap import DotMap
 
 def connect_gnosis_safe(address):
     return Contract.from_abi(
-        "GnosisSafe", address, artifacts.gnosis_safe.GnosisSafe["abi"],
+        "GnosisSafe",
+        address,
+        artifacts.gnosis_safe.GnosisSafe["abi"],
     )
 
 

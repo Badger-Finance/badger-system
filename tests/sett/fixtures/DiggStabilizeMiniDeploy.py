@@ -6,7 +6,8 @@ from scripts.systems.badger_system import BadgerSystem, connect_badger
 from config.badger_config import badger_config, sett_config
 from brownie import *
 
-class DiggStabilizeMiniDeploy():
+
+class DiggStabilizeMiniDeploy:
     def deploy(self, sett_type=SettType.DEFAULT, deploy=True) -> BadgerSystem:
         badger = connect_badger()
 
@@ -19,13 +20,15 @@ class DiggStabilizeMiniDeploy():
         safe = ApeSafe(badger.devMultisig.address)
         ops = ApeSafe(badger.opsMultisig.address)
 
-        bDigg = safe.contract_from_abi(badger.getSett("native.digg").address, "Sett", Sett.abi)
-        
+        bDigg = safe.contract_from_abi(
+            badger.getSett("native.digg").address, "Sett", Sett.abi
+        )
+
         controller = ops.contract(badger.getController("experimental").address)
 
         stabilizeVault = "0xE05D2A6b97dce9B8e59ad074c2E4b6D51a24aAe3"
         diggTreasury = DiggTreasury.deploy({"from": dev})
-        
+
         strategy = StabilizeStrategyDiggV1.deploy({"from": dev})
         strategy.initialize(
             badger.devMultisig,
@@ -36,10 +39,10 @@ class DiggStabilizeMiniDeploy():
             0,
             [stabilizeVault, diggTreasury],
             [250, 0, 50, 250],
-            {'from': dev}
+            {"from": dev},
         )
 
-        diggTreasury.initialize(strategy, {'from': dev})
+        diggTreasury.initialize(strategy, {"from": dev})
 
         """
             address _governance,

@@ -28,7 +28,11 @@ class BalanceSnapshotter:
         self.snaps.append({"name": name, "balances": balances})
         if print:
             if name != "":
-                console.print("[green]== Balances: {} ==[/green]".format(name,))
+                console.print(
+                    "[green]== Balances: {} ==[/green]".format(
+                        name,
+                    )
+                )
             balances.print()
 
     def diff_last_two(self):
@@ -122,6 +126,7 @@ def print_balances(tokens_by_name, account):
 
     print("\nToken Balances for {}".format(account))
     print(tabulate(table, headers=["asset", "balance"]))
+
 
 def badger_to_bBadger(badger, amount):
     bBadger = badger.getSett("native.badger")

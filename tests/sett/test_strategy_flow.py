@@ -13,7 +13,8 @@ console = Console()
 
 # @pytest.mark.skip()
 @pytest.mark.parametrize(
-    "settConfig", settTestConfig,
+    "settConfig",
+    settTestConfig,
 )
 def test_deposit_withdraw_single_user_flow(settConfig):
     badger = badger_single_sett(settConfig)
@@ -62,7 +63,8 @@ def test_deposit_withdraw_single_user_flow(settConfig):
 
 # @pytest.mark.skip()
 @pytest.mark.parametrize(
-    "settConfig", settTestConfig,
+    "settConfig",
+    settTestConfig,
 )
 def test_single_user_harvest_flow(settConfig):
     badger = badger_single_sett(settConfig)

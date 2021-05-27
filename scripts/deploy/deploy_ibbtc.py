@@ -37,7 +37,9 @@ def main():
             params.want = swap.getPair(registry.tokens.ibbtc, registry.tokens.wbtc)
         else:
             params.want = swap.createPair(
-                registry.tokens.ibbtc, registry.tokens.wbtc, deployer,
+                registry.tokens.ibbtc,
+                registry.tokens.wbtc,
+                deployer,
             )
 
         # NB: Work w/ sushi team to setup sushi reward allocations.

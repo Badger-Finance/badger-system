@@ -35,7 +35,7 @@ def test_main():
     dev = badger.deployer
 
     distribute_from_whales(dev, assets=["digg"])
-    digg.token.transfer(badger.devMultisig, digg.token.balanceOf(dev), {'from':dev})
+    digg.token.transfer(badger.devMultisig, digg.token.balanceOf(dev), {"from": dev})
 
     multi = GnosisSafe(badger.devMultisig)
     safe = ApeSafe(badger.devMultisig.address)

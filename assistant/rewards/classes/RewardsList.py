@@ -78,7 +78,12 @@ class RewardsList:
                 shareSeconds = self.metadata[user].shareSeconds
                 shareSecondsInRange = self.metadata[user].shareSecondsInRange
             table.append(
-                [user, data[BADGER], shareSeconds, shareSecondsInRange,]
+                [
+                    user,
+                    data[BADGER],
+                    shareSeconds,
+                    shareSecondsInRange,
+                ]
             )
         print("REWARDS LIST")
         print(

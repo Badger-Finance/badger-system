@@ -40,7 +40,8 @@ def test_all_claims_full_amount(setup):
 async def _process_claim(loop, pool, digg, user, claim):
     # Unlock their account (force=True)
     await loop.run_in_executor(
-        pool, partial(accounts.at, user, force=True),
+        pool,
+        partial(accounts.at, user, force=True),
     )
 
     index = claim["index"]
@@ -52,7 +53,12 @@ async def _process_claim(loop, pool, digg, user, claim):
 
     # Make their claim
     claimPartial = partial(
-        digg.diggDistributor.claim, index, user, amount, proof, {"from": user},
+        digg.diggDistributor.claim,
+        index,
+        user,
+        amount,
+        proof,
+        {"from": user},
     )
     await loop.run_in_executor(pool, claimPartial)
 
@@ -65,10 +71,12 @@ async def _process_claim(loop, pool, digg, user, claim):
     # Some share dust will settle in the digg distributor due to
     # shares <-> frags conversion.
     transferAmountFrags = await loop.run_in_executor(
-        pool, partial(token.sharesToFragments, amount),
+        pool,
+        partial(token.sharesToFragments, amount),
     )
     transferAmountShares = await loop.run_in_executor(
-        pool, partial(token.fragmentsToShares, transferAmountFrags),
+        pool,
+        partial(token.fragmentsToShares, transferAmountFrags),
     )
 
     # Ensure their claim is correct.

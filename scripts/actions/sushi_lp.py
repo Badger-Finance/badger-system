@@ -49,22 +49,26 @@ def main():
     sushiswap = SushiswapSystem()
 
     pair = interface.IUniswapV2Pair(sushiBbadgerPair)
-    console.print({
-        "getReserves": pair.getReserves(),
-        "token0": pair.token0(),
-        "token1": pair.token1(),
-        "price0CumulativeLast": pair.price0CumulativeLast(),
-        "price1CumulativeLast": pair.price1CumulativeLast()
-    })
+    console.print(
+        {
+            "getReserves": pair.getReserves(),
+            "token0": pair.token0(),
+            "token1": pair.token1(),
+            "price0CumulativeLast": pair.price0CumulativeLast(),
+            "price1CumulativeLast": pair.price1CumulativeLast(),
+        }
+    )
 
     pair = interface.IUniswapV2Pair(sushiBDiggPair)
-    console.print({
-        "getReserves": pair.getReserves(),
-        "token0": pair.token0(),
-        "token1": pair.token1(),
-        "price0CumulativeLast": pair.price0CumulativeLast(),
-        "price1CumulativeLast": pair.price1CumulativeLast()
-    })
+    console.print(
+        {
+            "getReserves": pair.getReserves(),
+            "token0": pair.token0(),
+            "token1": pair.token1(),
+            "price0CumulativeLast": pair.price0CumulativeLast(),
+            "price1CumulativeLast": pair.price1CumulativeLast(),
+        }
+    )
 
     usd_amount = 500000
 
@@ -97,23 +101,26 @@ def main():
     after.print()
 
     pair = interface.IUniswapV2Pair(sushiBbadgerPair)
-    console.print({
-        "getReserves": pair.getReserves(),
-        "token0": pair.token0(),
-        "token1": pair.token1(),
-        "price0CumulativeLast": pair.price0CumulativeLast(),
-        "price1CumulativeLast": pair.price1CumulativeLast()
-    })
+    console.print(
+        {
+            "getReserves": pair.getReserves(),
+            "token0": pair.token0(),
+            "token1": pair.token1(),
+            "price0CumulativeLast": pair.price0CumulativeLast(),
+            "price1CumulativeLast": pair.price1CumulativeLast(),
+        }
+    )
 
     pair = interface.IUniswapV2Pair(sushiBDiggPair)
-    console.print({
-        "getReserves": pair.getReserves(),
-        "token0": pair.token0(),
-        "token1": pair.token1(),
-        "price0CumulativeLast": pair.price0CumulativeLast(),
-        "price1CumulativeLast": pair.price1CumulativeLast()
-    })
-
+    console.print(
+        {
+            "getReserves": pair.getReserves(),
+            "token0": pair.token0(),
+            "token1": pair.token1(),
+            "price0CumulativeLast": pair.price0CumulativeLast(),
+            "price1CumulativeLast": pair.price1CumulativeLast(),
+        }
+    )
 
     router = safe.contract(sushiswap.router.address)
     rewardsEscrow = safe.contract(badger.rewardsEscrow.address)
@@ -282,8 +289,8 @@ def main():
     router.addLiquidityETH(
         tokenA.address,
         amountA,
-        int(amountA * .95),
-        int(eth_out * .95),
+        int(amountA * 0.95),
+        int(eth_out * 0.95),
         badger.devMultisig,
         chain.time() + 200000,
         {"value": eth_out},
@@ -314,8 +321,8 @@ def main():
     router.addLiquidityETH(
         tokenA.address,
         amountA,
-        int(amountA * .95),
-        int(eth_out * .95),
+        int(amountA * 0.95),
+        int(eth_out * 0.95),
         badger.devMultisig,
         chain.time() + 200000,
         {"value": eth_out},
@@ -340,42 +347,47 @@ def main():
     safe.post_transaction(safe_tx)
 
     pair = interface.IUniswapV2Pair(sushiBbadgerPair)
-    console.print({
-        "getReserves": pair.getReserves(),
-        "token0": pair.token0(),
-        "token1": pair.token1(),
-        "price0CumulativeLast": pair.price0CumulativeLast(),
-        "price1CumulativeLast": pair.price1CumulativeLast()
-    })
+    console.print(
+        {
+            "getReserves": pair.getReserves(),
+            "token0": pair.token0(),
+            "token1": pair.token1(),
+            "price0CumulativeLast": pair.price0CumulativeLast(),
+            "price1CumulativeLast": pair.price1CumulativeLast(),
+        }
+    )
 
     pair = interface.IUniswapV2Pair(sushiBDiggPair)
-    console.print({
-        "getReserves": pair.getReserves(),
-        "token0": pair.token0(),
-        "token1": pair.token1(),
-        "price0CumulativeLast": pair.price0CumulativeLast(),
-        "price1CumulativeLast": pair.price1CumulativeLast()
-    })
+    console.print(
+        {
+            "getReserves": pair.getReserves(),
+            "token0": pair.token0(),
+            "token1": pair.token1(),
+            "price0CumulativeLast": pair.price0CumulativeLast(),
+            "price1CumulativeLast": pair.price1CumulativeLast(),
+        }
+    )
 
     safe.post_transaction(safe_tx)
 
     pair = interface.IUniswapV2Pair(sushiBbadgerPair)
-    console.print({
-        "getReserves": pair.getReserves(),
-        "token0": pair.token0(),
-        "token1": pair.token1(),
-        "price0CumulativeLast": pair.price0CumulativeLast(),
-        "price1CumulativeLast": pair.price1CumulativeLast()
-    })
+    console.print(
+        {
+            "getReserves": pair.getReserves(),
+            "token0": pair.token0(),
+            "token1": pair.token1(),
+            "price0CumulativeLast": pair.price0CumulativeLast(),
+            "price1CumulativeLast": pair.price1CumulativeLast(),
+        }
+    )
 
     pair = interface.IUniswapV2Pair(sushiBDiggPair)
-    console.print({
-        "getReserves": pair.getReserves(),
-        "token0": pair.token0(),
-        "token1": pair.token1(),
-        "price0CumulativeLast": pair.price0CumulativeLast(),
-        "price1CumulativeLast": pair.price1CumulativeLast()
-    })
-
-    
-
+    console.print(
+        {
+            "getReserves": pair.getReserves(),
+            "token0": pair.token0(),
+            "token1": pair.token1(),
+            "price0CumulativeLast": pair.price0CumulativeLast(),
+            "price1CumulativeLast": pair.price1CumulativeLast(),
+        }
+    )
