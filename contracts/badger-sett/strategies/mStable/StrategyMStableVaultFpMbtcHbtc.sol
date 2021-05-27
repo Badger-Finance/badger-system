@@ -4,7 +4,7 @@ pragma experimental ABIEncoderV2;
 
 import "./StrategyMStableVaultBase.sol";
 
-/// @title  StrategyMStableVaultImbtc
+/// @title  StrategyMStableVaultFpMbtcHbtc
 /// @author mStable
 /// @notice Strategy utilising mStable's mBTC Feeder Pool with HBTC
 contract StrategyMStableVaultFpMbtcHbtc is StrategyMStableVaultBase {

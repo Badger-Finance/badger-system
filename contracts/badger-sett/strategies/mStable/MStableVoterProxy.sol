@@ -85,12 +85,12 @@ contract MStableVoterProxy is IMStableVoterProxy, PausableUpgradeable, SettAcces
 
     /// @dev Callable by either the mStableDAO or the BadgerDAO signers
     function _onlyGovernors() internal view {
-        require(msg.sender == governance || msg.sender == nexus.governor(), "onlyGovernors");
+        require(msg.sender == badgerGovernance || msg.sender == nexus.governor(), "onlyGovernors");
     }
 
     /// @dev Callable by either the mStableDAO or the BadgerDAO signers
     function _onlyHarvesters() internal view {
-        require(msg.sender == governance || msg.sender == nexus.governor() || msg.sender == keeper, "onlyHarvesters");
+        require(msg.sender == badgerGovernance || msg.sender == nexus.governor() || msg.sender == keeper, "onlyHarvesters");
     }
 
     /***************************************
