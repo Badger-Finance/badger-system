@@ -17,3 +17,23 @@ UNPAUSER_ROLE = web3.keccak(text="UNPAUSER_ROLE").hex()
 DISTRIBUTOR_ROLE = web3.keccak(text="DISTRIBUTOR_ROLE").hex()
 ROOT_PROPOSER_ROLE = web3.keccak(text="ROOT_PROPOSER_ROLE").hex()
 ROOT_VALIDATOR_ROLE = web3.keccak(text="ROOT_VALIDATOR_ROLE").hex()
+APPROVED_ACCOUNT_ROLE = web3.keccak(text="APPROVED_ACCOUNT_ROLE").hex()
+
+DIGG = "0x798D1bE841a82a273720CE31c822C61a67a601C3"
+BADGER = "0x3472A5A71965499acd81997a54BBA8D852C6E53d"
+FARM = "0xa0246c9032bC3A600820415aE600c6388619A14D"
+XSUSHI = "0x8798249c2E607446EfB7Ad49eC89dD1865Ff4272"
+
+MAX_BOOST = 3
+DIGG_SETTS = ["native.uniDiggWbtc", "native.sushiDiggWbtc", "native.digg"]
+BADGER_SETTS = ["native.badger", "native.uniBadgerWbtc", "native.sushiBadgerWbtc"]
+NATIVE_DIGG_SETTS = ["native.uniDiggWbtc", "native.sushiDiggWbtc"]
+NON_NATIVE_SETTS = [
+    "native.renCrv",
+    "native.sbtcCrv",
+    "native.tbtcCrv",
+    "native.sushiWbtcEth",
+    "harvest.renCrv",
+    "yearn.wbtc",
+    "experimental.sushiIBbtcWbtc",
+]

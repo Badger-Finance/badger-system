@@ -5,15 +5,14 @@ from brownie import DiggRewardsFaucet, chain
 from tests.sett.fixtures.DiggSettMiniDeployBase import DiggSettMiniDeployBase
 from config.badger_config import sett_config, digg_config_test
 
+
 class DiggRewardsMiniDeploy(DiggSettMiniDeployBase):
     def fetch_params(self):
         params = sett_config.native.badger.params
         params.want = self.digg.token
         want = params.want
 
-        self.rewards = self.badger.deploy_digg_rewards_faucet(
-            self.key, self.digg.token
-        )
+        self.rewards = self.badger.deploy_digg_rewards_faucet(self.key, self.digg.token)
 
         params.geyser = self.rewards
 
@@ -31,12 +30,17 @@ class DiggRewardsMiniDeploy(DiggSettMiniDeployBase):
         amount = digg_config_test.geyserParams.unlockSchedules.digg[0].amount
         digg = self.digg.token
 
-        digg.transfer(self.rewards, amount, {'from': self.deployer})
-        self.rewards.notifyRewardAmount(chain.time(), days(7), digg.fragmentsToShares(amount), {'from': self.deployer})
+        digg.transfer(self.rewards, amount, {"from": self.deployer})
+        self.rewards.notifyRewardAmount(
+            chain.time(),
+            days(7),
+            digg.fragmentsToShares(amount),
+            {"from": self.deployer},
+        )
         print(digg.balanceOf(self.rewards), digg.sharesOf(self.rewards))
 
-        self.rewards.grantRole(PAUSER_ROLE, self.keeper, {'from': self.deployer})
-        self.rewards.grantRole(UNPAUSER_ROLE, self.guardian, {'from': self.deployer})
+        self.rewards.grantRole(PAUSER_ROLE, self.keeper, {"from": self.deployer})
+        self.rewards.grantRole(UNPAUSER_ROLE, self.guardian, {"from": self.deployer})
 
         # Make strategy the recipient of the DIGG faucet
         self.rewards.initializeRecipient(self.strategy, {"from": self.deployer})

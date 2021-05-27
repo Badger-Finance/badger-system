@@ -9,6 +9,7 @@ from helpers.registry.artifacts import artifacts
 from helpers.network import network_manager
 from helpers.console_utils import console
 
+
 class ContractSystems(Enum):
     ARAGON = ("aragon",)
     GNOSIS_SAFE = ("gnosis-safe",)
@@ -20,6 +21,7 @@ class ContractSystems(Enum):
     HARVEST = ("harvest",)
     CURVE = ("curve",)
     TOKENS = "tokens"
+
 
 class ContractRegistries:
     """
@@ -40,10 +42,10 @@ class ContractRegistries:
 
     def get_active_chain_registry(self) -> ChainRegistry:
         network_id = network_manager.get_active_network()
-        print(network_id)
         if not self.has_registry(network_id):
             console.print("[red]Chain ID {} not found[/red]".format(network_id))
         return self.get_registry(network_id)
+
 
 registries = ContractRegistries()
 registry = registries.get_active_chain_registry()

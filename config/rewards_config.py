@@ -1,5 +1,6 @@
 from helpers.time_utils import hours
 
+
 class RewardsConfig:
     def __init__(self):
         self.globalStakingStartBlock = 11252068

@@ -5,16 +5,9 @@ import time
 import brownie
 import decouple
 from brownie import *
-from config.badger_config import (
-    Airdrop,
-    badger_config,
-    claw_config,
-    digg_config,
-    sett_config,
-)
 from helpers.constants import *
 from helpers.proxy_utils import deploy_proxy
-from helpers.registry import token_registry
+from helpers.registry import registry
 from helpers.time_utils import days
 from helpers.token_utils import (
     distribute_from_whales,
@@ -23,6 +16,8 @@ from helpers.token_utils import (
 )
 from rich.console import Console
 from scripts.systems.badger_system import connect_badger
+
+token_registry = registry.tokens
 
 console = Console()
 
@@ -60,7 +55,7 @@ def gitcoin_round_8_flow():
     )
     bBadger = badger.getSett("native.badger")
 
-    with open("airdrop/gitcoin-round-8-airdrop.json") as f:
+    with open("./airdrop/gitcoin-round-8-airdrop.json") as f:
         merkle = json.load(f)
 
     # ===== Local Setup =====
@@ -140,11 +135,7 @@ def gitcoin_round_8_flow():
         )
 
     airdropProxy.claim(
-        user_claim["index"],
-        user.address,
-        amount,
-        user_claim["proof"],
-        {"from": user},
+        user_claim["index"], user.address, amount, user_claim["proof"], {"from": user},
     )
 
     with brownie.reverts("AirdropDistributor: Drop already claimed."):

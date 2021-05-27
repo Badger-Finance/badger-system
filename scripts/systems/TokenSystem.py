@@ -1,8 +1,10 @@
 from brownie import interface
 
+
 class TokenSystem:
     def __init__(self, registry):
         self.registry = registry
+
     def erc20_by_key(self, key):
         if not key in self.registry.tokens:
             raise Exception("Token with key {} not found in registry".format(key))

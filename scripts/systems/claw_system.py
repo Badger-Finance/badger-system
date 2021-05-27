@@ -16,9 +16,7 @@ console = Console()
 
 def print_to_file(claw, path):
     system = {
-        "claw_system": {
-            "emps": {},
-        },
+        "claw_system": {"emps": {},},
     }
 
     for key, value in claw.emps.items():
@@ -43,10 +41,7 @@ def connect_claw(badger_deploy_file):
 
     claw_deploy = badger_deploy["claw_system"]
 
-    claw = ClawSystem(
-        claw_config,
-        badger_deploy["deployer"],
-    )
+    claw = ClawSystem(claw_config, badger_deploy["deployer"],)
     # arguments: (attr name, address)
     emps = claw_deploy["emps"]
     connectable = [
@@ -61,14 +56,15 @@ def connect_claw(badger_deploy_file):
 
 
 class ClawSystem:
-    '''
+    """
     NB: The claw system has no owner as it consists only of EMP (expiring mulitparty) contracts.
 
     EMP contracts are not pausable, and no EOAs or multisigs have any special privileges.
     UMA governance can shut the contract down through a DVM vote, which would basically just be early settlement.
     This shutdown mechanism has never been used.
 
-    '''
+    """
+
     def __init__(self, deployer, config):
         self.deployer = deployer
         self.config = config
@@ -101,31 +97,37 @@ class ClawSystem:
         # but for some reason (perhaps this is an issue w/ the mainnet fork) using that
         # address throws a `ContractNotFound` error. Pulling from the tx events does not
         # have the same issue.
-        tx = self.empCreator.createExpiringMultiParty((
-            expirationUnix,
-            emp.collateralAddress,
-            emp.priceFeedIdentifier,
-            syntheticName,  # long name
-            syntheticSymbol,  # short name
-            (self.config.collateralRequirement,),
-            (self.config.disputeBondPercentage,),
-            (self.config.sponsorDisputeRewardPercentage,),
-            (self.config.disputerDisputeRewardPercentage,),
-            (self.config.minSponsorTokens,),
-            self.config.withdrawalLiveness,
-            self.config.liquidationLiveness,
-            self.config.excessTokenBeneficiary,
-        ), {"from": self.deployer})
+        tx = self.empCreator.createExpiringMultiParty(
+            (
+                expirationUnix,
+                emp.collateralAddress,
+                emp.priceFeedIdentifier,
+                syntheticName,  # long name
+                syntheticSymbol,  # short name
+                (self.config.collateralRequirement,),
+                (self.config.disputeBondPercentage,),
+                (self.config.sponsorDisputeRewardPercentage,),
+                (self.config.disputerDisputeRewardPercentage,),
+                (self.config.minSponsorTokens,),
+                self.config.withdrawalLiveness,
+                self.config.liquidationLiveness,
+                self.config.excessTokenBeneficiary,
+            ),
+            {"from": self.deployer},
+        )
         empAddr = tx.events["CreatedExpiringMultiParty"]["expiringMultiPartyAddress"]
-        console.print(f"[green]Deployed synthetic {syntheticName} ({syntheticSymbol}) to address {empAddr}[/green]")
+        console.print(
+            f"[green]Deployed synthetic {syntheticName} ({syntheticSymbol}) to address {empAddr}[/green]"
+        )
         return ExpiringMultiParty.at(empAddr)
 
     def _get_expiration_timestamp(self) -> int:
         import time
+
         now = int(time.time())  # unix time is in UTC
         startDay = now - (now % ONE_DAY)
         # NB: It is recommended by UMA to set expiry @ 10:00 pm UTC on expiry date.
-        startDay += (22 * ONE_HOUR)
+        startDay += 22 * ONE_HOUR
         # Add configured number of days from start date.
         return startDay + self.config.expirationTimestampDaysDelta
 
@@ -142,7 +144,9 @@ class ClawSystem:
                 found = True
 
         if not found:
-            raise Exception(f"whale for collateral address {collateralAddress} not found")
+            raise Exception(
+                f"whale for collateral address {collateralAddress} not found"
+            )
         distribute_from_whale(whale, user)
 
         emp = self.emp
@@ -150,23 +154,31 @@ class ClawSystem:
 
         userBalance = collateral.balanceOf(user)
         collateral.approve(emp.address, userBalance, {"from": user})
-        console.print("[grey]Attempting to mint synthetic tokens from collateral[/grey]")
+        console.print(
+            "[grey]Attempting to mint synthetic tokens from collateral[/grey]"
+        )
         # Mint a synthetic amount is in $, we won't try to determine the actual dollar value between
         # the two but rather just mint a random dollar value above the min sponsor amount and a arbitrary max.
         # Min sponsor amount is $100 so let's do w/ $100 - $200.
-        syntheticAmount = random.randint(100, 200) * 10**18
+        syntheticAmount = random.randint(100, 200) * 10 ** 18
         # Need to  ensure that we start w/ lower amounts of collateral as subsequent mints need must keep the total
         # position above the global collateralization ratio.
         rawTotalPositionCollateral = emp.rawTotalPositionCollateral()
         if rawTotalPositionCollateral == 0:
             # arbtirarily start the collateral low (1% of user balance)
-            collateralAmount = userBalance * .01
+            collateralAmount = userBalance * 0.01
         else:
             cumulativeFeeMultiplier = emp.cumulativeFeeMultiplier()
-            globalCollateralizationRatio = (cumulativeFeeMultiplier * rawTotalPositionCollateral) / emp.totalTokensOutstanding()
-            minCollateralAmount = (globalCollateralizationRatio * syntheticAmount) / cumulativeFeeMultiplier
+            globalCollateralizationRatio = (
+                cumulativeFeeMultiplier * rawTotalPositionCollateral
+            ) / emp.totalTokensOutstanding()
+            minCollateralAmount = (
+                globalCollateralizationRatio * syntheticAmount
+            ) / cumulativeFeeMultiplier
             # collateral amount should be between the min collateral amount to keep above GCR and 5% greater.
-            collateralAmount = random.randint(int(minCollateralAmount), int(minCollateralAmount * 1.05))
+            collateralAmount = random.randint(
+                int(minCollateralAmount), int(minCollateralAmount * 1.05)
+            )
         emp.create((collateralAmount,), (syntheticAmount,), {"from": user})
 
     def set_emp(self, empName):

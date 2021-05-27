@@ -1,4 +1,5 @@
 __pycache__
+.venv
 .history
 .hypothesis/
 build/
@@ -39,5 +40,4 @@ deploy-1337final.json
 
 venv
 .vscode
-
 .idea

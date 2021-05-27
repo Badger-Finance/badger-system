@@ -2,6 +2,7 @@ import time
 
 from helpers.console_utils import console
 
+
 def run_persistent(function, args, num_args=1, run_interval=10):
     while True:
         try:

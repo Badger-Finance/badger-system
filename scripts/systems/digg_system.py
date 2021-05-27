@@ -127,8 +127,8 @@ class DiggSystem:
             self.deployer = deployer
         if env_config.debug:
             print("deployer / owner", deployer, owner, self.deployer, self.owner)
-        self.owner=""
-        self.deployer=self.owner
+        #        self.owner=""
+        #        self.deployer=self.owner
 
         self.connect_proxy_admins(devProxyAdmin, daoProxyAdmin)
         self.connect_dao()
@@ -206,9 +206,13 @@ class DiggSystem:
         self.logic = DotMap(
             # UFragments=UFragments.deploy({"from": deployer}),
             UFragments=UFragments.at("0xfabec03b04279c6e73f27aaf25866acc844448ae"),
-            UFragmentsPolicy=UFragmentsPolicy.at("0x4750caa4999404cb26ff6db2d0abc09b000122e0"),
+            UFragmentsPolicy=UFragmentsPolicy.at(
+                "0x4750caa4999404cb26ff6db2d0abc09b000122e0"
+            ),
             # Timelock & Vesting: Use logic from existing badger deploy
-            SimpleTimelock=SimpleTimelock.at("0x4e3f56bb996ed91ba8d97ea773d3f818730d1a6f"),
+            SimpleTimelock=SimpleTimelock.at(
+                "0x4e3f56bb996ed91ba8d97ea773d3f818730d1a6f"
+            ),
             SmartVesting=SmartVesting.at("0x07c0E4f4C977a29c46Fb26597ea8C9105ca50b42"),
             # DiggDistributor=DiggDistributor.deploy({"from": deployer}, publish_source=True),
         )
@@ -257,9 +261,7 @@ class DiggSystem:
             UFragments.abi,
             self.logic.UFragments.address,
             self.devProxyAdmin.address,
-            self.logic.UFragments.initialize.encode_input(
-                self.owner,
-            ),
+            self.logic.UFragments.initialize.encode_input(self.owner,),
             deployer,
         )
         self.track_contract_upgradeable("uFragments", self.uFragments)
@@ -272,8 +274,7 @@ class DiggSystem:
     def deploy_constant_oracle(self):
         deployer = self.deployer
         self.constantOracle = ConstantOracle.deploy(
-            self.cpiMedianOracle,
-            {'from': deployer},
+            self.cpiMedianOracle, {"from": deployer},
         )
         # self.constantOracle = ConstantOracle.deploy(
         #     self.cpiMedianOracle, {"from": deployer}, publish_source=True,

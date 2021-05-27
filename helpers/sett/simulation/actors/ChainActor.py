@@ -12,9 +12,7 @@ class MineAction(BaseAction):
 
 class SleepAction(BaseAction):
     def run(self):
-        chain.sleep(days(
-            random.random() * random.randrange(10)
-        ))
+        chain.sleep(days(random.random() * random.randrange(10)))
 
 
 class ChainActor:
@@ -25,8 +23,8 @@ class ChainActor:
         ]
 
     def generateAction(self) -> BaseAction:
-        '''
+        """
         Produces random actions. (Mine or Sleep)
-        '''
+        """
         idx = int(random.random() * len(self.randomActions))
         return self.randomActions[idx]
