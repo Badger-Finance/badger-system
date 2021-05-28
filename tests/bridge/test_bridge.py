@@ -5,7 +5,7 @@ from brownie import (
     MockVault,
     BadgerBridgeAdapter,
     CurveSwapStrategy,
-    CurveTokenWrapper,
+    CurveTokenWrapper
 )
 
 from helpers.constants import AddressZero
@@ -62,6 +62,118 @@ BRIDGE_VAULTS = [
         "upgrade": False,
     },
 ]
+
+#there's probably a better way if importing these addresses - export to a config file or something?
+coreContract = "0x2A8facc9D49fBc3ecFf569847833C380A13418a8"
+ibbtcContract = "0xc4E15973E6fF2A35cC804c2CF9D2a1b817a8b40F"
+peakContract = "0x41671BA1abcbA387b9b2B752c205e22e916BE6e3"
+wbtcPeakContract = "0x825218beD8BE0B30be39475755AceE0250C50627"
+wbtcAddr = "0x4b92d19c11435614CD49Af1b589001b7c08cD4D5"
+
+@pytest.mark.parametrize(
+    "vault, poolId", [(BRIDGE_VAULTS[0], 0), (BRIDGE_VAULTS[1], 2), (BRIDGE_VAULTS[2], 1), (BRIDGE_VAULTS[3], 3)], #vaults correspond with poolid on defidollar side
+)
+
+def test_bridge_ibbtc(vault, poolId):
+    badger = connect_badger(badger_config.prod_json)
+    bridge = connect_bridge(badger, badger_config.prod_json)
+    swap = connect_swap(badger_config.prod_json)
+    _upgrade_bridge(badger, bridge)
+    _upgrade_swap(badger, swap)
+    _deploy_bridge_mocks(badger, bridge)
+
+    slippage = .03
+    amount = 1 * 10**8
+
+    v = vault["address"]
+    if v == AddressZero:
+        v = MockVault.deploy(
+            vault["id"],
+            vault["symbol"],
+            vault["token"],
+            {"from": badger.deployer}
+        ).address
+        # Must approve mock vaults to mint/burn to/from.
+        bridge.adapter.setVaultApproval(
+            v,
+            True,
+            {"from": badger.devMultisig},
+        )
+    else:
+        badger.sett_system.vaults[vault["id"]].approveContractAccess(
+            bridge.adapter,
+            {"from": badger.devMultisig},
+        )
+
+    if poolId == 3:
+        v = wbtcAddr
+
+    #Setting contract addresses in adapter
+    bridge.adapter.setVaultPoolId(v, poolId, {"from": badger.devMultisig})
+    bridge.adapter.setIbbtcContracts(ibbtcContract, peakContract, wbtcPeakContract, {"from": badger.devMultisig})
+
+    #mint btokens to account
+    bridge.adapter.mint(
+        vault["inToken"],
+        slippage * 10**4,
+        accounts[0],
+        v,
+        amount,
+        # Darknode args hash/sig optional since gateway is mocked.
+        "",
+        "", 
+        {"from": accounts[0]},
+    )
+
+    balance = interface.IERC20(v).balanceOf(accounts[0])
+
+    #governance / guestlist / contract approval stuff
+    gov = interface.ICore(coreContract).owner()
+    interface.ICore(coreContract).setGuestList(AddressZero, {"from": gov})
+
+    gov2 = interface.IBadgerSettPeak(peakContract).owner()
+    interface.IBadgerSettPeak(peakContract).approveContractAccess(bridge.adapter, {"from": gov2})
+
+    gov3 = interface.IBadgerYearnWbtcPeak(wbtcPeakContract).owner()
+    interface.IBadgerYearnWbtcPeak(wbtcPeakContract).approveContractAccess(bridge.adapter, {"from": gov3})
+
+    #allowance approval
+    interface.IERC20(v).approve(bridge.adapter, balance, {"from": accounts[0]})
+    if vault["symbol"] == "bwBTC":
+        interface.IERC20(wbtcAddr).approve(wbtcPeakContract, balance, {"from": bridge.adapter})
+    else:
+        interface.IERC20(v).approve(peakContract, balance, {"from": bridge.adapter})
+
+    #minting
+    accountsBalanceBefore = interface.IERC20(ibbtcContract).balanceOf(accounts[0].address)
+    bridge.adapter.mint(
+        ibbtcContract,
+        slippage * 10**4,
+        accounts[0],
+        v,
+        balance,
+        # Darknode args hash/sig optional since gateway is mocked.
+        "",
+        "", 
+        {"from": accounts[0]},
+    )
+    accountsBalanceAfter = interface.IERC20(ibbtcContract).balanceOf(accounts[0].address)
+
+    assert accountsBalanceAfter > accountsBalanceBefore
+
+    #burning
+    interface.IERC20(ibbtcContract).approve(bridge.adapter, accountsBalanceAfter, {"from": accounts[0]})
+    bridge.adapter.burn(
+        ibbtcContract,
+        v,
+        slippage * 10**4,
+        accounts[0].address,
+        accountsBalanceAfter,
+        {"from": accounts[0]},
+    )
+
+    assert interface.IERC20(ibbtcContract).balanceOf(accounts[0].address) == 0
+
 
 
 # Tests mint/burn to/from crv sett.
@@ -256,9 +368,12 @@ def test_bridge_sweep():
             {"from": whale},
         )
         # Can be called from any account, should always send to governance.
+        randomAccount = accounts[10]
         beforeBalance = token.balanceOf(badger.devMultisig)
-        bridge.adapter.sweep({"from": badger.devMultisig})
+        beforeBalanceRandomAccount = token.balanceOf(randomAccount)
+        bridge.adapter.sweep({"from": randomAccount})
         assert token.balanceOf(badger.devMultisig) > beforeBalance
+        assert token.balanceOf(randomAccount) == beforeBalanceRandomAccount
 
 
 def _assert_swap_slippage(router, fromToken, toToken, amountIn, slippage):
