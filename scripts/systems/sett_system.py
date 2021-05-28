@@ -385,6 +385,33 @@ def deploy_strategy(
             ),
             badger.deployer,
         )
+    if strategyName == "StrategyMStableVault":
+        return deploy_proxy(
+            "StrategyMStableVault",
+            StrategyMStableVaultImbtc.abi,
+            badger.logic.StrategyUnitProtocolRenbtc.address,
+            proxyAdmin.address,
+            badger.logic.StrategyUnitProtocolRenbtc.initialize.encode_input(
+                governance,
+                strategist,
+                controller,
+                keeper,
+                guardian,
+                [
+                    params.want,
+                    params.vault,
+                    params.lpComponent,
+                    params.badgerTree,
+                ],
+                [
+                    params.performanceFeeGovernance,
+                    params.performanceFeeStrategist,
+                    params.withdrawalFee,
+                    params.govMta,
+                ],
+            ),
+            deployer,
+        )
 
 
 def deploy_controller(
