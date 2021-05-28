@@ -5,7 +5,7 @@ from brownie import (
     MockVault,
     BadgerBridgeAdapter,
     CurveSwapStrategy,
-    CurveTokenWrapper
+    CurveTokenWrapper,
 )
 
 from helpers.constants import AddressZero
@@ -64,6 +64,7 @@ BRIDGE_VAULTS = [
     },
 ]
 
+
 #there's probably a better way if importing these addresses - export to a config file or something?
 coreContract = "0x2A8facc9D49fBc3ecFf569847833C380A13418a8"
 ibbtcContract = "0xc4E15973E6fF2A35cC804c2CF9D2a1b817a8b40F"
@@ -71,6 +72,7 @@ peakContract = "0x41671BA1abcbA387b9b2B752c205e22e916BE6e3"
 wbtcPeakContract = "0x825218beD8BE0B30be39475755AceE0250C50627"
 wbtcAddr = "0x4b92d19c11435614CD49Af1b589001b7c08cD4D5"
 
+#test mint/burn ibbtc using btokens from badger vaults
 @pytest.mark.parametrize(
     "vault, poolId", [(BRIDGE_VAULTS[0], 0), (BRIDGE_VAULTS[1], 2), (BRIDGE_VAULTS[2], 1), (BRIDGE_VAULTS[3], 3)], #vaults correspond with poolid on defidollar side
 )
@@ -174,7 +176,6 @@ def test_bridge_ibbtc(vault, poolId):
     )
 
     assert interface.IERC20(ibbtcContract).balanceOf(accounts[0].address) == 0
-
 
 
 # Tests mint/burn to/from crv sett.
@@ -391,12 +392,9 @@ def test_bridge_sweep():
             {"from": whale},
         )
         # Can be called from any account, should always send to governance.
-        randomAccount = accounts[10]
         beforeBalance = token.balanceOf(badger.devMultisig)
-        beforeBalanceRandomAccount = token.balanceOf(randomAccount)
-        bridge.adapter.sweep({"from": randomAccount})
+        bridge.adapter.sweep({"from": badger.devMultisig})
         assert token.balanceOf(badger.devMultisig) > beforeBalance
-        assert token.balanceOf(randomAccount) == beforeBalanceRandomAccount
 
 
 def _assert_swap_slippage(router, fromToken, toToken, amountIn, slippage):
