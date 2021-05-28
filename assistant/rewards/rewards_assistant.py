@@ -76,7 +76,7 @@ def calc_sett_rewards(badger, periodStartBlock, endBlock, cycle):
     with open("badger-boosts.json", "w") as fp:
         json.dump(boostsMetadata, fp)
 
-    upload_boosts(test=False)
+    upload_boosts(test=True)
 
     return rewards
 
@@ -197,18 +197,13 @@ def generate_rewards_in_range(badger, startBlock, endBlock, pastRewards):
     nextCycle = getNextCycle(badger)
 
     currentMerkleData = fetchCurrentMerkleData(badger)
-    # sushiRewards = calc_sushi_rewards(badger,startBlock,endBlock,nextCycle,retroactive=False)
     # farmRewards = fetch_current_harvest_rewards(badger,startBlock, endBlock,nextCycle)
+    sushiRewards = calc_all_sushi_rewards(
+        badger, 11951320, endBlock, nextCycle
+    )
     settRewards = calc_sett_rewards(badger, startBlock, endBlock, nextCycle)
 
-    # farmRewards = calc_farm_rewards(
-    #    badger, startBlock, endBlock, nextCycle, retroactive=False
-    # )
-    # sushiRewards = calc_all_sushi_rewards(
-    #    badger, startBlock, endBlock, nextCycle, retroactive=False
-    # )
-
-    newRewards = combine_rewards([settRewards], nextCycle, badger.badgerTree)
+    newRewards = combine_rewards([settRewards,sushiRewards], nextCycle, badger.badgerTree)
     cumulativeRewards = process_cumulative_rewards(pastRewards, newRewards)
 
     # Take metadata from geyserRewards
