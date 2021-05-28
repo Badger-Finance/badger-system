@@ -15,12 +15,16 @@ import "interfaces/bridge/IBridgeVault.sol";
 import "interfaces/bridge/ICurveTokenWrapper.sol";
 import "interfaces/curve/ICurveFi.sol";
 
+import "interfaces/bridge/IBadgerSettPeak.sol";
+import "interfaces/bridge/IBadgerYearnWbtcPeak.sol";
+
 contract BadgerBridgeAdapter is OwnableUpgradeable, ReentrancyGuardUpgradeable {
     using SafeMathUpgradeable for uint256;
     using SafeERC20 for IERC20;
 
     IERC20 public renBTC;
     IERC20 public wBTC;
+    
 
     // RenVM gateway registry.
     IGatewayRegistry public registry;
@@ -57,6 +61,15 @@ contract BadgerBridgeAdapter is OwnableUpgradeable, ReentrancyGuardUpgradeable {
         address _user;
         address _token;
     }
+
+    IERC20 public ibBTC;
+    // Peak contract for minting ibbtc from renbtc, sbtc, tbtc.
+    IBadgerSettPeak public settPeak;
+    // Peak contract for minting ibbtc from wbtc.
+    IBadgerYearnWbtcPeak public yearnWbtcPeak;
+
+    mapping(address => uint256) public vaultToPoolId;
+
 
     function initialize(
         address _governance,
@@ -127,22 +140,39 @@ contract BadgerBridgeAdapter is OwnableUpgradeable, ReentrancyGuardUpgradeable {
         bytes32 _nHash,
         bytes calldata _sig
     ) external nonReentrant {
-        require(_token == address(renBTC) || _token == address(wBTC), "invalid token address");
+        require(_token == address(renBTC) || _token == address(wBTC) || _token == address(ibBTC), "invalid token address");
 
-        // Mint renBTC tokens
-        bytes32 pHash = keccak256(abi.encode(_token, _slippage, _user, _vault));
-        uint256 mintAmount = registry.getGatewayBySymbol("BTC").mint(pHash, _amount, _nHash, _sig);
+        if (_token == address(ibBTC)) {
+            //mint ibbtc tokens
+            uint256 poolId = vaultToPoolId[_vault];
+            IERC20(_vault).safeTransferFrom(msg.sender, address(this), _amount);
 
-        require(mintAmount > 0, "zero mint amount");
+            uint256 mintAmount = 0;
+            bytes32[] memory test;
+            if (poolId == 3) {
+                mintAmount = yearnWbtcPeak.mint(_amount, test);
+            } else {
+                mintAmount = settPeak.mint(poolId, _amount, test);
+            }
 
-        uint256 fee = _processFee(renBTC, mintAmount, mintFeeBps);
-        uint256 mintAmountMinusFee = mintAmount.sub(fee);
+            ibBTC.safeTransfer(msg.sender, mintAmount);
 
-        MintArguments memory args = MintArguments(mintAmount, mintAmountMinusFee, fee, _slippage, _vault, _user, _token);
-        bool success = mintAdapter(args);
+        } else {
+            // Mint renBTC tokens
+            bytes32 pHash = keccak256(abi.encode(_token, _slippage, _user, _vault));
+            uint256 mintAmount = registry.getGatewayBySymbol("BTC").mint(pHash, _amount, _nHash, _sig);
 
-        if (!success) {
-            renBTC.safeTransfer(_user, mintAmountMinusFee);
+            require(mintAmount > 0, "zero mint amount");
+
+            uint256 fee = _processFee(renBTC, mintAmount, mintFeeBps);
+            uint256 mintAmountMinusFee = mintAmount.sub(fee);
+
+            MintArguments memory args = MintArguments(mintAmount, mintAmountMinusFee, fee, _slippage, _vault, _user, _token);
+            bool success = mintAdapter(args);
+
+            if (!success) {
+                renBTC.safeTransfer(_user, mintAmountMinusFee);
+            }
         }
     }
 
@@ -154,7 +184,7 @@ contract BadgerBridgeAdapter is OwnableUpgradeable, ReentrancyGuardUpgradeable {
         bytes calldata _btcDestination,
         uint256 _amount
     ) external nonReentrant {
-        require(_token == address(renBTC) || _token == address(wBTC), "invalid token address");
+        require(_token == address(renBTC) || _token == address(wBTC) || _token == address(ibBTC), "invalid token address");
         require(!(_vault != address(0) && !approvedVaults[_vault]), "Vault not approved");
 
         bool isVault = _vault != address(0);
@@ -162,6 +192,20 @@ contract BadgerBridgeAdapter is OwnableUpgradeable, ReentrancyGuardUpgradeable {
         IERC20 token = isRenBTC ? renBTC : wBTC;
         uint256 startBalanceRenBTC = renBTC.balanceOf(address(this));
         uint256 startBalanceWBTC = wBTC.balanceOf(address(this));
+
+        if (_token == address(ibBTC)) {
+            //redeem ibbtc
+            ibBTC.safeTransferFrom(msg.sender, address(this), _amount);
+            uint256 poolId = vaultToPoolId[_vault];
+            uint256 redeemAmount = 0;
+            if (poolId == 3) {
+                redeemAmount = yearnWbtcPeak.redeem(_amount);
+            } else {
+                redeemAmount = settPeak.redeem(poolId, _amount);
+            }
+            IERC20(_vault).safeTransfer(msg.sender, redeemAmount);
+            return;
+        }
 
         // Vaults can require up to two levels of unwrapping.
         if (isVault) {
@@ -333,13 +377,22 @@ contract BadgerBridgeAdapter is OwnableUpgradeable, ReentrancyGuardUpgradeable {
         approvedVaults[_vault] = _status;
     }
 
+    function setVaultPoolId(address _vault, uint256 _poolId) external onlyOwner {
+        vaultToPoolId[_vault] = _poolId;
+    }
+
+    function setIbbtcContracts(address _ibbtc, address _settPeak, address _yearnWbtcPeak) external onlyOwner {
+        ibBTC = IERC20(_ibbtc);
+        settPeak = IBadgerSettPeak(_settPeak);
+        yearnWbtcPeak = IBadgerYearnWbtcPeak(_yearnWbtcPeak);
+    }
+
     function setCurveTokenWrapper(address _wrapper) external onlyOwner {
         curveTokenWrapper = _wrapper;
     }
 
     // Sweep all tokens and send to governance.
     function sweep() external {
-        require(msg.sender == governance && msg.sender == tx.origin, "caller must be governance");
         // NB: Sanity check but governance should have been set on init and cannot be modified.
         require(governance != address(0x0), "must set governance address");
         address[] memory sweepableTokens = new address[](2);
