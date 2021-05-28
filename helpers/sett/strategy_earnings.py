@@ -46,12 +46,10 @@ def get_harvest_earnings(badger: BadgerSystem, strategy: Contract, key: str, ove
   (token, token_address) = token_data(key, strategy, False)
   if not token or not token_address: return 'skip'
 
-  if key == 'harvest.renCrv':
-    metafarm = "0xae024f29c26d6f71ec71658b1980189956b0546d"
-    earnings = Contract.from_explorer(metafarm).balanceOf(strategy.address)
-    token_address = harvest_registry.farmToken
+  if is_farm_strategy(key):
+    earnings = Contract.from_explorer(harvest_registry.farms.farm).balanceOf(strategy.address)
 
-  elif key.endswith('Crv'):
+  elif is_crv_strategy(key):
     crv_gauge = Contract.from_explorer(strategy.gauge())
     earnings = crv_gauge.claimable_tokens.call(strategy.address, overrides)
 
@@ -104,7 +102,7 @@ def token_data(key: str, strategy: Contract, tend: bool) -> tuple[str,str]:
   token_address = get_address(token)
   if not type(token_address) == str:
     console.log("address for token", token, "not found")
-
+  console.log(token, token_address)
   return (token, token_address)
 
 
@@ -143,6 +141,18 @@ def get_symbol(key: str, tend=False):
       return bsc_registry.pancake.symbol
 
 
+def get_address(token: str):
+  if curr_network == 'eth':
+    if token == 'XSUSHI':
+      return eth_registry.tokens.xSushi
+    return eth_registry.tokens[token.lower()]
+  elif curr_network == 'bsc':
+    if token == 'Cake':
+      return bsc_registry.pancake.cake
+    else:
+      return bsc_registry.tokens[token.lower()]
+
+
 def is_farm_strategy(key: str):
   return key in ['harvest.renCrv']
 
@@ -169,16 +179,4 @@ def is_xsushi_strategy(key: str):
 
 def is_pancake_strategy(key: str):
   return key in ["native.pancakeBnbBtcb", "native.bBadgerBtcb", "native.bDiggBtcb"]
-
-
-def get_address(token: str):
-  if curr_network == 'eth':
-    if token == 'XSUSHI':
-      return eth_registry.tokens.xSushi
-    return eth_registry.tokens[token.lower()]
-  elif curr_network == 'bsc':
-    if token == 'Cake':
-      return bsc_registry.pancake.cake
-    else:
-      return bsc_registry.tokens[token.lower()]
     
