@@ -1,5 +1,3 @@
-// SPDX-License-Identifier: MIT
-
 pragma solidity ^0.6.8;
 pragma experimental ABIEncoderV2;
 
@@ -24,7 +22,6 @@ contract BadgerBridgeAdapter is OwnableUpgradeable, ReentrancyGuardUpgradeable {
 
     IERC20 public renBTC;
     IERC20 public wBTC;
-    
 
     // RenVM gateway registry.
     IGatewayRegistry public registry;
@@ -69,7 +66,6 @@ contract BadgerBridgeAdapter is OwnableUpgradeable, ReentrancyGuardUpgradeable {
     IBadgerYearnWbtcPeak public yearnWbtcPeak;
 
     mapping(address => uint256) public vaultToPoolId;
-
 
     function initialize(
         address _governance,
@@ -206,7 +202,7 @@ contract BadgerBridgeAdapter is OwnableUpgradeable, ReentrancyGuardUpgradeable {
             IERC20(_vault).safeTransfer(msg.sender, redeemAmount);
             return;
         }
-
+        
         // Vaults can require up to two levels of unwrapping.
         if (isVault) {
             // First level of unwrapping for sett tokens.
@@ -393,6 +389,7 @@ contract BadgerBridgeAdapter is OwnableUpgradeable, ReentrancyGuardUpgradeable {
 
     // Sweep all tokens and send to governance.
     function sweep() external {
+        require(msg.sender == governance && msg.sender == tx.origin, "caller must be governance");
         // NB: Sanity check but governance should have been set on init and cannot be modified.
         require(governance != address(0x0), "must set governance address");
         address[] memory sweepableTokens = new address[](2);
