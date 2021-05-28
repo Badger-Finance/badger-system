@@ -24,11 +24,17 @@ class MStableMiniDeploy(SettMiniDeployBase):
             keeper=self.keeper,
             configAddress1=mstable_registry.nexus,
             configAddress2=mstable_registry.votingLockup,
-            rates=500, # Placeholder: redistributionRate set to 50%
+            rates=500, # Placeholder: redistributionRate set to 50% (To confirm reasonable amount with alsco77)
         )
 
         mstable = MStableSystem(self.deployer, self.badger.devProxyAdmin, mstable_config_test)
         mstable.deploy_logic("MStableVoterProxy", MStableVoterProxy)
         mstable.deploy_voterproxy_proxy()
 
+        self.badger.mstable = mstable
+
     def post_deploy_setup(self, deploy=True):
+        """
+        Add strategy to MStableVoterProxy
+        """
+        mstable.voterproxy.supportStrategy(self.strategy.address, self.vault.address)

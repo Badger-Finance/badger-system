@@ -400,6 +400,7 @@ def deploy_strategy(
                 [
                     params.want,
                     params.vault,
+                    badger.mstable.voterproxy.address,
                     params.lpComponent,
                     params.badgerTree,
                 ],
