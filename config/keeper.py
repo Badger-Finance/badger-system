@@ -14,8 +14,14 @@ setts_to_skip = {
             "native.digg",
             "native.uniDiggWbtc",
             "native.sushiDiggWbtc",
+            "yearn.wbtc",
+            "experimental.digg",
+            "experimental.sushiIBbtcWbtc"
         ],
-        "tend": [],
+        "tend": [
+            "yearn.wbtc",
+            "experimental.digg"
+        ],
         "earn": [
             "native.uniBadgerWbtc",
             "native.badger",
@@ -23,6 +29,8 @@ setts_to_skip = {
             "native.digg",
             "native.uniDiggWbtc",
             "native.sushiDiggWbtc",
+            "yearn.wbtc",
+            "experimental.digg"
         ],
     },
     "bsc": {
