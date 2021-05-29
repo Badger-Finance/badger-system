@@ -12,7 +12,16 @@ curr_network = network_manager.get_active_network()
 
 # returns tend earnings denominated in eth/bnb
 def get_tend_earnings_manager(badger: BadgerSystem, strategy: Contract, key: str, overrides):
-  (token, token_address) = token_data(key, strategy, True)
+  '''
+  get the estimated profit from tending the strategy via the manager
+
+  :param strategy: the strategy to be tended
+  :param key: key for the strategy
+  :param overrides: transaction overrides
+  :return: profit in eth/bnb or 'skip' if the strategy can't be estimated
+  '''
+  
+  (token, token_address) = token_data(key, True)
   if not token or not token_address: return 'skip'
 
   try:
@@ -26,8 +35,17 @@ def get_tend_earnings_manager(badger: BadgerSystem, strategy: Contract, key: str
   return calc_profit(earnings, token_address, token)
 
 # returns tend earnings denominated in eth/bnb
-def get_tend_earnings(badger: BadgerSystem, strategy: Contract, key: str, overrides):
-  (token, token_address) = token_data(key, strategy, True)
+def get_tend_earnings(strategy: Contract, key: str, overrides):
+  '''
+  get the estimated profit from tending the strategy
+
+  :param strategy: the strategy to be tended
+  :param key: key for the strategy
+  :param overrides: transaction overrides
+  :return: profit in eth/bnb or 'skip' if the strategy can't be estimated
+  '''
+
+  (token, token_address) = token_data(key, True)
   if not token or not token_address: return 'skip'
 
   try:
@@ -42,8 +60,17 @@ def get_tend_earnings(badger: BadgerSystem, strategy: Contract, key: str, overri
 
 
 # returns harvest earnings denominated in eth/bnb
-def get_harvest_earnings(badger: BadgerSystem, strategy: Contract, key: str, overrides):
-  (token, token_address) = token_data(key, strategy, False)
+def get_harvest_earnings(strategy: Contract, key: str, overrides):
+  '''
+  get the estimated profit from harvesting the strategy
+
+  :param strategy: the strategy to be harvested
+  :param key: key for the strategy
+  :param overrides: transaction overrides
+  :return: profit in eth/bnb or 'skip' if the strategy can't be estimated
+  '''
+
+  (token, token_address) = token_data(key, False)
   if not token or not token_address: return 'skip'
 
   if is_farm_strategy(key):
@@ -71,7 +98,7 @@ def get_price(token: str, sellAmount=1000000000000000000):
   :param token: token ticker or token address
   :param buyToken: token to denominate price in, default is WETH
   :param sellAmount: token amount to sell in base unit, default is 1e18
-  :return: eth price of one token
+  :return: eth/bnb price per token for the specified amount to sell
   """
 
   if curr_network == "bsc":
@@ -94,19 +121,36 @@ def get_price(token: str, sellAmount=1000000000000000000):
   return data['guaranteedPrice'] 
 
 
-def token_data(key: str, strategy: Contract, tend: bool) -> tuple[str,str]:
+def token_data(key: str, tend: bool) -> tuple[str,str]:
+  '''
+  returns the yield token symbol and address for the strategy
+
+  :param key: strategy key e.g. native.sushiWbtcEth
+  :param tend: whether or not this is token data for a tend (as opposed to a harvest)
+  :return: tuple of token symbol and address
+  '''
+
   token = get_symbol(key, tend)
   if not token:
-    console.log("token for strategy at", strategy.address, "not found")
+    console.log("token for strategy", key, "not found")
 
   token_address = get_address(token)
   if not type(token_address) == str:
     console.log("address for token", token, "not found")
-  console.log(token, token_address)
+
   return (token, token_address)
 
 
 def calc_profit(earnings: int, token_address: str, token: str) -> int:
+  '''
+  calculate profit in eth/bnb for the selected token and earned amount
+
+  :param earnings: amount of token that has been earned
+  :param token_address: address of earned token
+  :param token: token symbol
+  :return: amount of eth/bnb that could be earned from selling the specified amount
+  '''
+
   if earnings > 0: price = get_price(token_address, sellAmount=earnings)
   else: price = get_price(token_address)
 
@@ -122,7 +166,15 @@ def calc_profit(earnings: int, token_address: str, token: str) -> int:
   return eth_profit
 
 
-def get_symbol(key: str, tend=False):
+def get_symbol(key: str, tend=False) -> str:
+  '''
+  get the symbol of the yield token for the selected strategy
+
+  :param key: strategy key
+  :param tend: whether this is for a tend (as opposed to a harvest)
+  :return: token symbol
+  '''
+
   if curr_network == 'eth':
     if is_crv_strategy(key):
       return curve_registry.symbol
@@ -141,7 +193,14 @@ def get_symbol(key: str, tend=False):
       return bsc_registry.pancake.symbol
 
 
-def get_address(token: str):
+def get_address(token: str) -> str:
+  '''
+  get the address of the token
+
+  :param token: token symbol
+  :return: token address
+  '''
+
   if curr_network == 'eth':
     if token == 'XSUSHI':
       return eth_registry.tokens.xSushi
@@ -153,30 +212,30 @@ def get_address(token: str):
       return bsc_registry.tokens[token.lower()]
 
 
-def is_farm_strategy(key: str):
+def is_farm_strategy(key: str) -> bool:
   return key in ['harvest.renCrv']
 
 
-def is_crv_strategy(key: str):
+def is_crv_strategy(key: str) -> bool:
   return key in ["native.renCrv", "native.sbtcCrv", "native.tbtcCrv"]
 
 
-def is_badger_strategy(key: str):
+def is_badger_strategy(key: str) -> bool:
   return key in ["native.uniBadgerWbtc", "native.sushiBadgerWbtc"]
 
 
-def is_digg_strategy(key: str):
+def is_digg_strategy(key: str) -> bool:
   return key in ["native.uniDiggWbtc", "native.sushiDiggWbtc"]
 
 
-def is_sushi_strategy(key: str, tend=False):
+def is_sushi_strategy(key: str, tend=False) -> bool:
   return key in ["native.sushiWbtcEth", "native.sushiDiggWbtc"] and tend
 
 
-def is_xsushi_strategy(key: str):
+def is_xsushi_strategy(key: str) -> bool:
   return key in ["native.sushiWbtcEth"]
 
 
-def is_pancake_strategy(key: str):
+def is_pancake_strategy(key: str) -> bool:
   return key in ["native.pancakeBnbBtcb", "native.bBadgerBtcb", "native.bDiggBtcb"]
     

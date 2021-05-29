@@ -300,7 +300,7 @@ class SnapshotManager:
 
     def estimateProfitTend(self, key, overrides):
         gas_cost = self.strategy.tend.estimate_gas(overrides)
-        earnings = get_tend_earnings(self.badger, self.strategy, key, overrides)
+        earnings = get_tend_earnings(self.strategy, key, overrides)
         if earnings == 'skip': return 0
         
         gas_cost_eth = gas_cost / 10**9
@@ -310,7 +310,7 @@ class SnapshotManager:
 
     def estimateProfitHarvestViaManager(self, key, strategy, overrides):
         gas_cost = self.badger.badgerRewardsManager.harvest.estimate_gas(strategy, overrides)
-        earnings = get_harvest_earnings(self.badger, self.strategy, key, overrides)
+        earnings = get_harvest_earnings(self.strategy, key, overrides)
         if earnings == 'skip': return 0
 
         gas_cost_eth = gas_cost / 10**9
@@ -320,7 +320,7 @@ class SnapshotManager:
 
     def estimateProfitHarvest(self, key, overrides):
         gas_cost = self.strategy.harvest.estimate_gas(overrides)
-        earnings = get_harvest_earnings(self.badger, self.strategy, key, overrides)
+        earnings = get_harvest_earnings(self.strategy, key, overrides)
         if earnings == 'skip': return 0
         
         gas_cost_eth = gas_cost / 10**9
