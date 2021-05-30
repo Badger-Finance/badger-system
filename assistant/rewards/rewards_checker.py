@@ -10,6 +10,7 @@ from assistant.rewards.aws_utils import upload
 import json
 from helpers.utils import val
 from helpers.constants import BADGER, DIGG, FARM, XSUSHI
+from helpers.digg_utils import diggUtils
 
 console = Console()
 
@@ -22,11 +23,6 @@ dfd_token = "0x20c36f062a31865bED8a5B1e512D9a1A20AA333A"
 tokens_to_check = [BADGER, DIGG, FARM, XSUSHI]
 
 gas_strategy = GasNowStrategy("rapid")
-
-
-def get_digg_contract():
-    digg_contract = interface.IDigg(digg_token)
-    return digg_contract
 
 
 def sec(amount):
@@ -153,13 +149,12 @@ def verify_rewards(badger: BadgerSystem, startBlock, endBlock, before_data, afte
     periodStartTime = web3.eth.getBlock(int(startBlock))["timestamp"]
     periodEndTime = web3.eth.getBlock(int(endBlock))["timestamp"]
 
-    digg_contract = get_digg_contract()
-    spf = digg_contract._initialSharesPerFragment()
+    spf = diggUtils.initialShares
 
     expected_totals = get_expected_total_rewards(periodEndTime)
 
     sanity_badger = expected_totals["badger"]
-    sanity_digg = expected_totals["digg"] * digg_contract._initialSharesPerFragment()
+    sanity_digg = expected_totals["digg"] * diggUtils.initialShares
 
     total_before_badger = before_data["tokenTotals"][badger_token]
     total_before_digg = before_data["tokenTotals"][digg_token]
@@ -241,7 +236,6 @@ def compare_rewards(
     sanitySum = Wei("5000000 ether")
 
     sum_digg_after = sum_digg_claims(after)
-    digg_contract = interface.IDigg(DIGG)
 
     table = []
     table.append(["block range", startBlock, endBlock])
@@ -252,8 +246,8 @@ def compare_rewards(
     table.append(
         [
             "digg tokens after",
-            digg_contract.sharesToFragments(sum_digg_after),
-            val(digg_contract.sharesToFragments(sum_digg_after)),
+            diggUtils.sharesToFragments(sum_digg_after),
+            val(diggUtils.sharesToFragments(sum_digg_after)),
         ]
     )
     table.append(
@@ -385,13 +379,13 @@ def test_claims(badger: BadgerSystem, startBlock, endBlock, before_file, after_f
                 "digg_claimable": digg_claimable,
                 "digg_diff": digg_diff,
                 "digg_claimed_scaled": val(
-                    digg_contract.sharesToFragments(claimed_digg), decimals=9
+                    diggUtils.sharesToFragments(claimed_digg), decimals=9
                 ),
                 "digg_claimable_scaled": val(
-                    digg_contract.sharesToFragments(digg_claimable), decimals=9
+                    diggUtils.sharesToFragments(digg_claimable), decimals=9
                 ),
                 "digg_diff_scaled": val(
-                    digg_contract.sharesToFragments(digg_diff), decimals=9
+                    diggUtils.sharesToFragments(digg_diff), decimals=9
                 ),
             }
         )

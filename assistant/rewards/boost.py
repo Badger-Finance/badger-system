@@ -5,6 +5,7 @@ from rich.console import Console
 from assistant.rewards.aws_utils import upload_nft_scores
 from assistant.subgraph.client import fetch_wallet_balances
 from helpers.constants import BADGER, DIGG
+from helpers.digg_utils import diggUtils
 from collections import OrderedDict
 from assistant.rewards.rewards_utils import combine_balances, calculate_sett_balances
 from assistant.badger_api.prices import (
@@ -21,7 +22,7 @@ console = Console()
 MAX_MULTIPLIER = 3
 
 
-def addBoostInfo(balances, name):
+def add_boost_info(balances, name):
     for user in balances:
         if user.address not in boostInfo:
             boostInfo[user.address] = {}
@@ -97,7 +98,7 @@ def filter_dust(balances):
     return UserBalances(list(filter(lambda user: user.balance > 1, balances)))
 
 
-def badger_boost(badger, currentBlock):
+def badger_boost(badger, pastRewards, currentBlock):
 
     console.log("Calculating boost ...")
 
@@ -108,7 +109,7 @@ def badger_boost(badger, currentBlock):
     for name, sett in allSetts.items():
         balances = calculate_sett_balances(badger, name, currentBlock)
         balances = convert_balances_to_usd(sett, balances)
-        addBoostInfo(balances, name)
+        add_boost_info(balances, name)
 
         if name in ["native.uniDiggWbtc", "native.sushiDiggWbtc", "native.digg"]:
             diggSetts = combine_balances([diggSetts, balances])
@@ -125,6 +126,32 @@ def badger_boost(badger, currentBlock):
         prices[BADGER], prices[DIGG], badger.digg, currentBlock
     )
 
+    for addr, claimData in pastRewards["claims"].items():
+        tokens = claimData["tokens"]
+        amounts = claimData["cumulativeAmounts"]
+
+        claimableBadger = 0
+        claimableDigg = 0
+        if BADGER in tokens:
+            badgerAmount = float(amounts[tokens.index(BADGER)])
+            claimableBadger = float(badgerAmount) / 1e18
+            console.log("{} {}".format(addr, claimableBadger))
+        if DIGG in tokens:
+            diggAmount = float(amounts[tokens.index(DIGG)])
+            claimableDigg = diggUtils.sharesToFragments(diggAmount) / 1e9
+            console.log("{} {}".format(addr, claimableDigg))
+
+        claimableBadger *= prices[BADGER]
+        claimableDigg *= prices[DIGG]
+
+        console.log("{} {} {}".format(addr, claimableBadger, claimableDigg))
+
+        currentBadger = badger_wallet_balances.get(addr.lower(), 0)
+        currentDigg = digg_wallet_balances.get(addr.lower(), 0)
+
+        badger_wallet_balances[addr] = currentBadger + claimableBadger
+        digg_wallet_balances[addr] = currentDigg + claimableDigg
+
     console.log(
         "{} Badger balances fetched, {} Digg balances fetched".format(
             len(badger_wallet_balances), len(digg_wallet_balances)
@@ -133,13 +160,13 @@ def badger_boost(badger, currentBlock):
     badger_wallet_balances = UserBalances(
         [UserBalance(addr, bal, BADGER) for addr, bal in badger_wallet_balances.items()]
     )
-    addBoostInfo(badger_wallet_balances, "Badger")
+    add_boost_info(badger_wallet_balances, "Badger")
 
     digg_wallet_balances = UserBalances(
         [UserBalance(addr, bal, DIGG) for addr, bal in digg_wallet_balances.items()]
     )
 
-    addBoostInfo(digg_wallet_balances, "Digg")
+    add_boost_info(digg_wallet_balances, "Digg")
 
     badgerSetts = filter_dust(combine_balances([badgerSetts, badger_wallet_balances]))
 
@@ -158,14 +185,10 @@ def badger_boost(badger, currentBlock):
 
     console.log("Calculating NFT Multipliers ...")
 
-    nft_multipliers = calc_nft_multipliers(currentBlock)
-    with open("nft_scores.json", "w") as fp:
-        json.dump(nft_multipliers, fp, indent=4)
-
-    upload_nft_scores()
+    nftMultipliers = calc_nft_multipliers(currentBlock)
 
     stakeRatiosList = [
-        calc_stake_ratio(addr, diggSetts, badgerSetts, nonNativeSetts, nft_multipliers)
+        calc_stake_ratio(addr, diggSetts, badgerSetts, nonNativeSetts, nftMultipliers)
         for addr in allAddresses
     ]
     stakeRatios = dict(zip(allAddresses, stakeRatiosList))
@@ -174,16 +197,9 @@ def badger_boost(badger, currentBlock):
         sorted(stakeRatios.items(), key=lambda t: t[1], reverse=True)
     )
 
-    def filterBalance(kv):
-        return stakeRatios[kv[0]] != 0
-
-    console.log(len(nonNativeSetts.userBalances))
-    filteredNonNative = dict(filter(filterBalance, nonNativeSetts.userBalances.items()))
-    console.log(len(filteredNonNative))
-
     sortedNonNative = UserBalances(
         sorted(
-            filteredNonNative.values(),
+            nonNativeSetts.userBalances.values(),
             key=lambda u: stakeRatios[u.address],
             reverse=True,
         )
@@ -201,6 +217,10 @@ def badger_boost(badger, currentBlock):
         zip(cumulativePercentages.keys(), calc_boost(cumulativePercentages.values()))
     )
     for addr, boost in badgerBoost.items():
+        # Users with no stake ratio have a boost of 1
+        if stakeRatios[addr] == 0:
+            badgerBoost[addr] = 1
+
         boostInfo[addr]["boost"] = boost
 
     with open("logs/boostInfo-{}.csv".format(currentBlock), "w") as fp:
@@ -212,11 +232,11 @@ def badger_boost(badger, currentBlock):
             writer.writerow(
                 [
                     addr,
-                    data["nativeBalance"],
-                    data["nonNativeBalance"],
-                    data["boost"],
-                    data["nftBoost"],
+                    data.get("nativeBalance", 0),
+                    data.get("nonNativeBalance", 0),
+                    data.get("boost", 0),
+                    data.get("nftBoost", 0),
                 ]
             )
 
-    return badgerBoost
+    return badgerBoost, stakeRatios, nftMultipliers

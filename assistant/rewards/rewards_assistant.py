@@ -35,7 +35,7 @@ gas_strategy = gas_strategies.exponentialScalingFast
 console = Console()
 
 
-def calc_sett_rewards(badger, periodStartBlock, endBlock, cycle):
+def calc_sett_rewards(badger, periodStartBlock, endBlock, pastRewards, cycle):
     """
     Calculate rewards for each sett, and sum them
     """
@@ -43,7 +43,7 @@ def calc_sett_rewards(badger, periodStartBlock, endBlock, cycle):
     # diggAllocation = calculate_digg_allocation(ratio)
     rewardsBySett = {}
     noRewards = ["native.digg"]
-    boosts = badger_boost(badger, endBlock)
+    boosts, stakeRatios, nftMultipliers = badger_boost(badger, pastRewards, endBlock)
     apyBoosts = {}
     multiplierData = {}
     for key, sett in badger.sett_system.vaults.items():
@@ -54,6 +54,7 @@ def calc_sett_rewards(badger, periodStartBlock, endBlock, cycle):
         settRewards, apyBoost = calc_snapshot(
             badger, key, periodStartBlock, endBlock, cycle, boosts
         )
+
         if len(apyBoost) > 0:
             minimum = min(apyBoost.values())
             maximum = max(apyBoost.values())
@@ -71,7 +72,9 @@ def calc_sett_rewards(badger, periodStartBlock, endBlock, cycle):
     for addr, multipliers in apyBoosts.items():
         boostsMetadata["userData"][addr] = {
             "boost": boosts.get(addr, 1),
+            "stakeRatio": stakeRatios.get(addr, 0),
             "multipliers": multipliers,
+            "nftMultiplier": nftMultipliers.get(addr, 1),
         }
 
     validateBoostMetadata(boostsMetadata)
@@ -222,7 +225,9 @@ def generate_rewards_in_range(badger, startBlock, endBlock, pastRewards):
     currentMerkleData = fetchCurrentMerkleData(badger)
     # sushiRewards = calc_sushi_rewards(badger,startBlock,endBlock,nextCycle,retroactive=False)
     # farmRewards = fetch_current_harvest_rewards(badger,startBlock, endBlock,nextCycle)
-    settRewards = calc_sett_rewards(badger, startBlock, endBlock, nextCycle)
+    settRewards = calc_sett_rewards(
+        badger, startBlock, endBlock, pastRewards, nextCycle
+    )
 
     # farmRewards = calc_farm_rewards(
     #    badger, startBlock, endBlock, nextCycle, retroactive=False

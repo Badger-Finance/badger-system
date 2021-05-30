@@ -1,4 +1,5 @@
 from assistant.subgraph.config import subgraph_config
+from helpers.digg_utils import diggUtils
 from brownie import interface
 from rich.console import Console
 from gql import gql, Client
@@ -322,7 +323,6 @@ def fetch_wallet_balances(badger_price, digg_price, digg, blockNumber):
 
     badger_balances = {}
     digg_balances = {}
-    sharesPerFragment = digg.logic.UFragments._sharesPerFragment()
     while continueFetching:
         variables = {
             "firstAmount": increment,
@@ -344,11 +344,12 @@ def fetch_wallet_balances(badger_price, digg_price, digg, blockNumber):
                         float(entry["balance"]) / 1e18
                     ) * badger_price
                 if entry["token"]["symbol"] == "DIGG" and int(entry["balance"]) > 0:
-                    # Speed this up
                     if entry["balance"] == 0:
                         fragmentBalance = 0
                     else:
-                        fragmentBalance = sharesPerFragment / int(entry["balance"])
+                        fragmentBalance = diggUtils.sharesToFragments(
+                            int(entry["balance"])
+                        )
 
                     digg_balances[address] = (float(fragmentBalance) / 1e9) * digg_price
 

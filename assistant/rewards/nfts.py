@@ -72,7 +72,6 @@ def calc_nft_multipliers(block):
             "multiplier": mult,
             "nfts": userNfts[addr],
         }
-    console.log(nftMultipliers)
 
     return nftMultipliers
 

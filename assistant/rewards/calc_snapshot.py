@@ -4,20 +4,17 @@ from assistant.rewards.classes.RewardsLog import rewardsLog
 from assistant.rewards.classes.Schedule import Schedule
 from helpers.time_utils import to_days, to_hours, to_utc_date
 from helpers.constants import NON_NATIVE_SETTS, NATIVE_DIGG_SETTS, DIGG, DFD
+from helpers.digg_utils import diggUtils
 from dotmap import DotMap
 from brownie import *
 from rich.console import Console
 
 console = Console()
-digg = interface.IDigg(DIGG)
 
 
 def calc_snapshot(badger, name, startBlock, endBlock, nextCycle, boosts):
-
     console.log("==== Processing rewards for {} at {} ====".format(name, endBlock))
-
     rewards = RewardsList(nextCycle, badger.badgerTree)
-
     sett = badger.getSett(name)
     startTime = web3.eth.getBlock(startBlock)["timestamp"]
 
@@ -58,7 +55,7 @@ def calc_snapshot(badger, name, startBlock, endBlock, nextCycle, boosts):
         if token == DIGG:
             console.log(
                 "{} DIGG tokens distributed".format(
-                    digg.sharesToFragments(tokenDistribution) / 1e18
+                    diggUtils.sharesToFragments(tokenDistribution) / 1e18
                 )
             )
         elif token == DFD:
