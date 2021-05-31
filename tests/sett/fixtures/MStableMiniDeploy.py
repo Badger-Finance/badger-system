@@ -27,7 +27,7 @@ class MStableMiniDeploy(SettMiniDeployBase):
             keeper=self.keeper,
             configAddress1=registry.mstable.nexus,
             configAddress2=registry.mstable.votingLockup,
-            rates=500, # Placeholder: redistributionRate set to 50% (To confirm reasonable amount with alsco77)
+            rates=8000, # Placeholder: redistributionRate set to 80%
         )
 
         self.mstable = MStableSystem(self.deployer, self.badger.devProxyAdmin, mstable_config_test)
