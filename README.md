@@ -21,6 +21,8 @@ If you're not familiar with brownie, see the [quickstart guide](https://eth-brow
 
 ### Install
 
+This repository is currently only supported on Linux based systems. For Windows 10 users, it is recommended to use the Windows Susystem for Linux 2 (WSL2) in order to run Linux executables natively and interact with the system in a convenient way. Instructions on how to quickly setup WSL2 can be found [here](https://docs.microsoft.com/en-us/windows/wsl/install-win10).
+
 For Ubuntu, you can install the prerequisite packages with the following command:
 
 ```
