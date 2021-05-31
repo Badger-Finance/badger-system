@@ -1226,7 +1226,7 @@ class BadgerSystem:
 
     def getStrategyWant(self, id):
         return interface.IERC20(self.sett_system.strategies[id].want())
-    
+
     def getSettType(self, id):
         """
         Look at the artifact type of the sett and determine it's version. Currently hardcoded.

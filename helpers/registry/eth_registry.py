@@ -34,7 +34,7 @@ multisend = "0x8D29bE29923b68abfDD21e541b9374737B49cdAD"
 
 compound_registry = DotMap(
     comptroller=web3.toChecksumAddress("0x3d9819210a31b4961b30ef54be2aed79b9c9cd3b"),
-    cTokens=DotMap(usdc="0x39AA39c021dfbaE8faC545936693aC917d5E7563")
+    cTokens=DotMap(usdc="0x39AA39c021dfbaE8faC545936693aC917d5E7563"),
 )
 
 multichain_registry = DotMap(eth_address="0xC564EE9f21Ed8A2d8E7e76c085740d5e4c5FaFbE")
@@ -152,7 +152,7 @@ eth_registry.tokens = DotMap(
     renbtc=web3.toChecksumAddress("0xeb4c2781e4eba804ce9a9803c67d0893436bb27d"),
     ibbtc=web3.toChecksumAddress("0xc4E15973E6fF2A35cC804c2CF9D2a1b817a8b40F"),
     dfd=web3.toChecksumAddress("0x20c36f062a31865bed8a5b1e512d9a1a20aa333a"),
-    ausdc="0xBcca60bB61934080951369a648Fb03DF4F96263C"
+    ausdc="0xBcca60bB61934080951369a648Fb03DF4F96263C",
 )
 
 eth_registry.whales = DotMap(

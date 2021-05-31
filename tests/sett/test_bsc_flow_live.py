@@ -17,6 +17,7 @@ from tests.helpers import distribute_from_whales
 
 console = Console()
 
+
 def setup_badger(badger: BadgerSystem):
     configs = {
         "native.pancakeBnbBtcb": {
@@ -46,7 +47,7 @@ def setup_badger(badger: BadgerSystem):
             "withdrawalFee": 50,
             "wantPid": registry.pancake.chefPids.bDiggBtcb,
         },
-    }   
+    }
 
     # Set paths
 

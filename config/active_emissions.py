@@ -35,10 +35,7 @@ weekly_schedule = {
         "digg": to_digg_shares(0),
     },
     "native.badger": {"badger": Wei("2893.00 ether"), "digg": to_digg_shares(0),},
-    "native.sushiWbtcEth": {
-        "badger": Wei("4525.00 ether"),
-        "digg": to_digg_shares(0),
-    },
+    "native.sushiWbtcEth": {"badger": Wei("4525.00 ether"), "digg": to_digg_shares(0),},
     "native.renCrv": {"badger": Wei("4525.00 ether"), "digg": to_digg_shares(0),},
     "native.sbtcCrv": {"badger": Wei("2262.00 ether"), "digg": to_digg_shares(0),},
     "native.tbtcCrv": {"badger": Wei("2262.00 ether"), "digg": to_digg_shares(0),},
