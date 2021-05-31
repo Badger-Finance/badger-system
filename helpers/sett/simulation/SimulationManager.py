@@ -32,6 +32,7 @@ from .provisioners import (
     SushiDiggWbtcLpOptimizerProvisioner,
     SushiLpOptimizerProvisioner,
     WbtcIbBtcLpProvisioner,
+    MStableVaultImbtcProvisioner,
 )
 
 console = Console()
@@ -188,6 +189,8 @@ class SimulationManager:
             return PancakeBDiggBtcbProvisioner(self)
         if settId == "native.sushiWbtcIbBtc":
             return WbtcIbBtcLpProvisioner(self)
+        if name == "StrategyMStableVault":
+            return MStableVaultImbtcProvisioner(self)
         if settId == "native.uniWbtcIbBtc":
             return WbtcIbBtcLpProvisioner(self, isUniswap=True)
         raise Exception(f"invalid strategy settID (no provisioner): {settId}")

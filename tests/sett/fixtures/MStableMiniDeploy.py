@@ -34,6 +34,7 @@ class MStableMiniDeploy(SettMiniDeployBase):
         self.mstable.deploy_logic("MStableVoterProxy", MStableVoterProxy)
         self.mstable.deploy_voterproxy_proxy()
 
+        # required to pass proxy address to strategy upon deployment
         self.badger.mstable = self.mstable
 
     def post_deploy_setup(self, deploy=True):
