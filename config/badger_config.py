@@ -84,7 +84,7 @@ sett_config = DotMap(
             ),
         ),
         imBtc=DotMap(
-            strategyName="StrategyMStableVault",
+            strategyName="StrategyMStableVaultImbtc",
             params=DotMap(
                 want=mstable.pools.imBtc.token,
                 vault=mstable.pools.imBtc.vault,
@@ -97,7 +97,7 @@ sett_config = DotMap(
             ),
         ),
         mBtcHBtc=DotMap(
-            strategyName="StrategyMStableVault",
+            strategyName="StrategyMStableVaultFpMbtcHbtc",
             params=DotMap(
                 want=mstable.pools.mBtcHBtc.token,
                 vault=mstable.pools.mBtcHBtc.vault,

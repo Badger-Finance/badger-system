@@ -1,9 +1,10 @@
 from tests.sett.fixtures.SettMiniDeployBase import SettMiniDeployBase
 from config.badger_config import badger_config, sett_config
-from systems.mstable_system import MStableSystem
+from scripts.systems.mstable_system import MStableSystem
 from helpers.constants import AddressZero
-from helpers.registry import mstable_registry
+from helpers.registry import registries
 from brownie import MStableVoterProxy
+from dotmap import DotMap
 
 
 class MStableMiniDeploy(SettMiniDeployBase):
@@ -17,24 +18,26 @@ class MStableMiniDeploy(SettMiniDeployBase):
         """
         Deploy MStableVoterProxy
         """
+        registry = registries.get_registry("eth")
+            
         mstable_config_test = DotMap(
-            dualGovernance=AddressZero, # Placeholder as dualGovernance multi-sig hasn't been launched
+            dualGovernance=self.governance, # Placeholder as dualGovernance multi-sig hasn't been launched
             badgerGovernance=self.governance,
             strategist=self.strategist,
             keeper=self.keeper,
-            configAddress1=mstable_registry.nexus,
-            configAddress2=mstable_registry.votingLockup,
+            configAddress1=registry.mstable.nexus,
+            configAddress2=registry.mstable.votingLockup,
             rates=500, # Placeholder: redistributionRate set to 50% (To confirm reasonable amount with alsco77)
         )
 
-        mstable = MStableSystem(self.deployer, self.badger.devProxyAdmin, mstable_config_test)
-        mstable.deploy_logic("MStableVoterProxy", MStableVoterProxy)
-        mstable.deploy_voterproxy_proxy()
+        self.mstable = MStableSystem(self.deployer, self.badger.devProxyAdmin, mstable_config_test)
+        self.mstable.deploy_logic("MStableVoterProxy", MStableVoterProxy)
+        self.mstable.deploy_voterproxy_proxy()
 
-        self.badger.mstable = mstable
+        self.badger.mstable = self.mstable
 
     def post_deploy_setup(self, deploy=True):
         """
         Add strategy to MStableVoterProxy
         """
-        mstable.voterproxy.supportStrategy(self.strategy.address, self.vault.address)
+        self.mstable.voterproxy.supportStrategy(self.strategy.address, self.vault.address, {'from': self.governance}) # Must be dualGovernance

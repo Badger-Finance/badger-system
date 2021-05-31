@@ -324,7 +324,7 @@ def badger_single_sett(settConfig, deploy=True):
         if settId == "native.mstableImBtc":
             return MStableMiniDeploy(
                 "native.mstableImBtc",
-                "StrategyMStableVault",
+                "StrategyMStableVaultImbtc",
                 deployer,
                 strategist=strategist,
                 guardian=guardian,

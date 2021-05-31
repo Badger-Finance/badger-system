@@ -385,13 +385,13 @@ def deploy_strategy(
             ),
             badger.deployer,
         )
-    if strategyName == "StrategyMStableVault":
+    if strategyName == "StrategyMStableVaultImbtc":
         return deploy_proxy(
-            "StrategyMStableVault",
+            "StrategyMStableVaultImbtc",
             StrategyMStableVaultImbtc.abi,
-            badger.logic.StrategyUnitProtocolRenbtc.address,
+            badger.logic.StrategyMStableVaultImbtc.address,
             proxyAdmin.address,
-            badger.logic.StrategyUnitProtocolRenbtc.initialize.encode_input(
+            badger.logic.StrategyMStableVaultImbtc.initialize.encode_input(
                 governance,
                 strategist,
                 controller,

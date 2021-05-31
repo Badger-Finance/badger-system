@@ -6,6 +6,7 @@ from brownie import (
 
 from helpers.registry import registry, artifacts
 from helpers.proxy_utils import deploy_proxy
+from dotmap import DotMap
 
 from rich.console import Console
 
@@ -20,6 +21,7 @@ class MStableSystem:
         self.deployer = deployer
         self.devProxyAdmin = devProxyAdmin
         self.config = config
+        self.logic = DotMap()
 
     # ===== Deployers =====
 
@@ -34,10 +36,10 @@ class MStableSystem:
             logic.MStableVoterProxy.address,
             web3.toChecksumAddress(devProxyAdmin.address),
             logic.MStableVoterProxy.initialize.encode_input(
-                config.dualGovernance,
-                config.badgerGovernance,
-                config.strategist,
-                config.keeper,
+                config.dualGovernance.address,
+                config.badgerGovernance.address,
+                config.strategist.address,
+                config.keeper.address,
                 [
                     config.configAddress1,
                     config.configAddress2,
