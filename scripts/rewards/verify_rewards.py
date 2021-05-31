@@ -56,7 +56,9 @@ def main():
     newLogic = BadgerTree.at("0x0f81D3f48Fedb8E67a5b87A8a4De57766157f19B")
 
     multi.execute(
-        MultisigTxMetadata(description="Upgrade Tree",),
+        MultisigTxMetadata(
+            description="Upgrade Tree",
+        ),
         {
             "to": badger.opsProxyAdmin.address,
             "data": badger.opsProxyAdmin.upgrade.encode_input(

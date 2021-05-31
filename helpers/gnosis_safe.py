@@ -191,7 +191,12 @@ class GnosisSafe:
 
         table.append([key, metadata, params["to"], params["data"]])
 
-        print(tabulate(table, tablefmt="pretty",))
+        print(
+            tabulate(
+                table,
+                tablefmt="pretty",
+            )
+        )
 
 
 def multisig_success(tx):

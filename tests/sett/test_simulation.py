@@ -7,7 +7,8 @@ from tests.conftest import badger_single_sett, settTestConfig
 
 # @pytest.mark.skip()
 @pytest.mark.parametrize(
-    "settConfig", settTestConfig,
+    "settConfig",
+    settTestConfig,
 )
 def test_simulation(settConfig):
     # connect to prod deploy and run simulation

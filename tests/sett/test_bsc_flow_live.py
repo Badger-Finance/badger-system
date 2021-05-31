@@ -17,6 +17,7 @@ from tests.helpers import distribute_from_whales
 
 console = Console()
 
+
 def setup_badger(badger: BadgerSystem):
     configs = {
         "native.pancakeBnbBtcb": {
@@ -46,7 +47,7 @@ def setup_badger(badger: BadgerSystem):
             "withdrawalFee": 50,
             "wantPid": registry.pancake.chefPids.bDiggBtcb,
         },
-    }   
+    }
 
     # Set paths
 
@@ -125,7 +126,8 @@ def deposit_withdraw_single_user_flow(badger, sett_id, user):
 
 # @pytest.mark.skip()
 @pytest.mark.parametrize(
-    "settConfig", settTestConfig,
+    "settConfig",
+    settTestConfig,
 )
 def single_user_harvest_flow(badger: BadgerSystem, sett_id, user):
     controller = badger.getController("native")

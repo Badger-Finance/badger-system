@@ -23,7 +23,10 @@ def queue_upgrade_crv_sett(badger: BadgerSystem, settID: str) -> str:
 
 
 def whitelist_adapter_crv_sett(
-    badger: BadgerSystem, bridge: BridgeSystem, multi: GnosisSafe, settID: str,
+    badger: BadgerSystem,
+    bridge: BridgeSystem,
+    multi: GnosisSafe,
+    settID: str,
 ):
     sett = badger.sett_system.vaults[settID]
     id = multi.addTx(

@@ -34,7 +34,7 @@ multisend = "0x8D29bE29923b68abfDD21e541b9374737B49cdAD"
 
 compound_registry = DotMap(
     comptroller=web3.toChecksumAddress("0x3d9819210a31b4961b30ef54be2aed79b9c9cd3b"),
-    cTokens=DotMap(usdc="0x39AA39c021dfbaE8faC545936693aC917d5E7563")
+    cTokens=DotMap(usdc="0x39AA39c021dfbaE8faC545936693aC917d5E7563"),
 )
 
 multichain_registry = DotMap(eth_address="0xC564EE9f21Ed8A2d8E7e76c085740d5e4c5FaFbE")
@@ -80,7 +80,11 @@ yearn_registry = YearnRegistry(
 
 aave_registry = DotMap(lendingPoolV2="0x7d2768de32b0b80b7a3454c06bdac94a69ddc7a9")
 
-yearn_registry = (DotMap(yvWBTC="0xcB550A6D4C8e3517A939BC79d0c7093eb7cF56B5",),)
+yearn_registry = (
+    DotMap(
+        yvWBTC="0xcB550A6D4C8e3517A939BC79d0c7093eb7cF56B5",
+    ),
+)
 
 curve_registry = DotMap(
     minter="0xd061D61a4d941c39E5453435B6345Dc261C2fcE0",
@@ -113,9 +117,18 @@ defidollar_registry = DotMap(
         core="0x2A8facc9D49fBc3ecFf569847833C380A13418a8",
     ),
     pools=[
-        DotMap(id=0, sett="0x6dEf55d2e18486B9dDfaA075bc4e4EE0B28c1545",),
-        DotMap(id=1, sett="0xd04c48A53c111300aD41190D63681ed3dAd998eC",),
-        DotMap(id=2, sett="0xb9D076fDe463dbc9f915E5392F807315Bf940334",),
+        DotMap(
+            id=0,
+            sett="0x6dEf55d2e18486B9dDfaA075bc4e4EE0B28c1545",
+        ),
+        DotMap(
+            id=1,
+            sett="0xd04c48A53c111300aD41190D63681ed3dAd998eC",
+        ),
+        DotMap(
+            id=2,
+            sett="0xb9D076fDe463dbc9f915E5392F807315Bf940334",
+        ),
     ],
 )
 
@@ -152,7 +165,7 @@ eth_registry.tokens = DotMap(
     renbtc=web3.toChecksumAddress("0xeb4c2781e4eba804ce9a9803c67d0893436bb27d"),
     ibbtc=web3.toChecksumAddress("0xc4E15973E6fF2A35cC804c2CF9D2a1b817a8b40F"),
     dfd=web3.toChecksumAddress("0x20c36f062a31865bed8a5b1e512d9a1a20aa333a"),
-    ausdc="0xBcca60bB61934080951369a648Fb03DF4F96263C"
+    ausdc="0xBcca60bB61934080951369a648Fb03DF4F96263C",
 )
 
 eth_registry.whales = DotMap(

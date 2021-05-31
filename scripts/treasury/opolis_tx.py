@@ -4,7 +4,7 @@ from helpers.token_utils import (
     token_metadata,
     asset_to_address,
     to_token_scale,
-    badger_to_bBadger
+    badger_to_bBadger,
 )
 from ape_safe import ApeSafe
 from helpers.coingecko import fetch_usd_price, fetch_usd_price_eth
@@ -35,8 +35,10 @@ from rich.console import Console
 from scripts.systems.badger_system import BadgerSystem, connect_badger
 from tabulate import tabulate
 from helpers.ltcc import LtccPayments, LtccRecipient, load_ltcc_recipients
+
 console = Console()
 pretty.install()
+
 
 def main():
     badger = connect_badger()
@@ -74,8 +76,8 @@ def main():
 
     opolis_dest = "0x27657399177403a891CC7A22Bd6F2C00621Db7b0"
 
-    test_usdc = 1 * 10**6
-    full_usdc = 499999 * 10**6
+    test_usdc = 1 * 10 ** 6
+    full_usdc = 499999 * 10 ** 6
     full_badger = Wei("10163.59 ether")
     full_wbtc = 3.805754301 * 10 ** 8
 
