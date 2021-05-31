@@ -1,16 +1,13 @@
 from tqdm import tqdm
 from brownie import *
 from assistant.rewards.classes.RewardsList import RewardsList
-from assistant.rewards.rewards_utils import (
-    calculate_sett_balances
-)
+from assistant.rewards.rewards_utils import calculate_sett_balances
 from rich.console import Console
 
 console = Console()
 
-def calc_rewards(
-    badger, start, end, nextCycle, events, name, token
-):
+
+def calc_rewards(badger, start, end, nextCycle, events, name, token):
     def filter_events(e):
         return int(e["blockNumber"]) > start and int(e["blockNumber"]) < end
 
@@ -19,9 +16,7 @@ def calc_rewards(
     if len(filteredEvents) > 0:
         console.log(filteredEvents)
         console.log("{} events to process for {}".format(len(filteredEvents), name))
-        rewards = process_rewards(
-            badger, filteredEvents, name, nextCycle, token
-        )
+        rewards = process_rewards(badger, filteredEvents, name, nextCycle, token)
     else:
         console.log("No events to process for {}".format(name))
     return rewards
@@ -32,7 +27,7 @@ def process_rewards(badger, events, name, nextCycle, token):
     rewards = RewardsList(nextCycle, badger.badgerTree)
     total = 0
     for event in events:
-        userState = calc_meta_farm_rewards(badger,name,event["blockNumber"])
+        userState = calc_meta_farm_rewards(badger, name, event["blockNumber"])
         totalBalance = sum([u.balance for u in userState])
         total += int(event["rewardAmount"])
         console.log("{} total {} processed".format(total / 1e18, token))
@@ -62,7 +57,7 @@ def process_rewards(badger, events, name, nextCycle, token):
 
 
 def calc_meta_farm_rewards(badger, name, harvestBlock):
-    console.log("Calculating rewards for {} harvest at {}".format(name,harvestBlock))
+    console.log("Calculating rewards for {} harvest at {}".format(name, harvestBlock))
     harvestBlock = int(harvestBlock)
     sett = badger.getSett(name)
     balances = calculate_sett_balances(badger, name, harvestBlock)

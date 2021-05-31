@@ -159,9 +159,6 @@ def get_latest_event_block(firstEvent, events):
         return -1
 
 
-
-
-
 def calc_balances_from_geyser_events(geyserEvents):
     balances = {}
     events = [*geyserEvents["stakes"], *geyserEvents["unstakes"]]

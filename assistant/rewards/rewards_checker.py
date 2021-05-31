@@ -194,7 +194,9 @@ def verify_rewards(badger: BadgerSystem, startBlock, endBlock, before_data, afte
     print(tabulate(table, headers=["key", "value", "scaled"]))
 
     print_token_diff_table("Farm", total_before_farm, total_after_farm, 0)
-    print_token_diff_table("xSushi", total_before_xsushi, total_after_xsushi, 1000000*1e18)
+    print_token_diff_table(
+        "xSushi", total_before_xsushi, total_after_xsushi, 1000000 * 1e18
+    )
     print_token_diff_table("dfd", total_before_dfd, total_after_dfd, 40000 * 1e18)
 
     assert total_after_digg < sanity_digg

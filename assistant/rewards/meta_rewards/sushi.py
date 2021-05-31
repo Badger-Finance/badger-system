@@ -34,6 +34,15 @@ def calc_all_sushi_rewards(badger, startBlock, endBlock, nextCycle):
         allSushiEvents["wbtcDigg"],
         "native.sushiDiggWbtc",
     )
+
+    iBbtcWbtcRewards = calc_sushi_rewards(
+        badger,
+        startBlock,
+        endBlock,
+        nextCycle,
+        allSushiEvents["iBbtcWbtc"],
+        "experimental.sushiIBbtcWbtc",
+    )
     # Verify all rewards are correct (for extra safety)
     return combine_rewards(
         [wbtcEthRewards, wbtcBadgerRewards, wbtcDiggRewards],
@@ -42,15 +51,7 @@ def calc_all_sushi_rewards(badger, startBlock, endBlock, nextCycle):
     )
 
 
-def calc_sushi_rewards(
-    badger, startBlock, endBlock, nextCycle, events, name
-):
+def calc_sushi_rewards(badger, startBlock, endBlock, nextCycle, events, name):
     return calc_rewards(
-        badger,
-        startBlock,
-        endBlock,
-        nextCycle,
-        events,
-        name,
-        xSushiTokenAddress,
+        badger, startBlock, endBlock, nextCycle, events, name, xSushiTokenAddress,
     )

@@ -198,12 +198,12 @@ def generate_rewards_in_range(badger, startBlock, endBlock, pastRewards):
 
     currentMerkleData = fetchCurrentMerkleData(badger)
     # farmRewards = fetch_current_harvest_rewards(badger,startBlock, endBlock,nextCycle)
-    sushiRewards = calc_all_sushi_rewards(
-        badger, 11951320, endBlock, nextCycle
-    )
+    sushiRewards = calc_all_sushi_rewards(badger, 11951320, endBlock, nextCycle)
     settRewards = calc_sett_rewards(badger, startBlock, endBlock, nextCycle)
 
-    newRewards = combine_rewards([settRewards,sushiRewards], nextCycle, badger.badgerTree)
+    newRewards = combine_rewards(
+        [settRewards, sushiRewards], nextCycle, badger.badgerTree
+    )
     cumulativeRewards = process_cumulative_rewards(pastRewards, newRewards)
 
     # Take metadata from geyserRewards
@@ -338,7 +338,6 @@ def guardian(badger: BadgerSystem, startBlock, endBlock, pastRewards, test=False
             {"from": badger.guardian, "gas_price": gas_strategy},
         )
         upload(rewards_data["contentFileName"]),
-        
 
 
 def run_action(badger, args, test):
