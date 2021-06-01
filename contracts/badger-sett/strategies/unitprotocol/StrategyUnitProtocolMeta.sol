@@ -31,11 +31,13 @@ abstract contract StrategyUnitProtocolMeta is BaseStrategy {
     bool public collateralPriceEth = false;
 
     // configurable minimum collateralization percent this strategy would hold for CDP
-    uint256 public minRatio = 200;
+    uint256 public ltv = 5000;
+    uint256 public ltvMax = 10000; // BPS
+
     // collateralization percent buffer in CDP debt actions
     uint256 public ratioBuff = 200;
     uint256 public constant ratioBuffMax = 10000;
-    uint public constant Q112 = 2 ** 112;
+    uint256 public constant Q112 = 2**112;
 
     // **** Modifiers **** //
 
@@ -89,7 +91,7 @@ abstract contract StrategyUnitProtocolMeta is BaseStrategy {
     // if borrow is true (for addCollateralAndBorrow): return (maxDebt - currentDebt) if positive value, otherwise return 0
     // if borrow is false (for repayAndRedeemCollateral): return (currentDebt - maxDebt) if positive value, otherwise return 0
     function calculateDebtFor(uint256 collateralAmt, bool borrow) public view returns (uint256) {
-        uint256 maxDebt = collateralAmt > 0? collateralValue(collateralAmt).mul(ratioBuffMax).div(_getBufferedMinRatio(ratioBuffMax)) : 0;
+        uint256 maxDebt = collateralAmt > 0 ? _getMaxLtv(collateralValue(collateralAmt)) : 0;
 
         uint256 debtAmt = getDebtBalance();
 
@@ -104,10 +106,10 @@ abstract contract StrategyUnitProtocolMeta is BaseStrategy {
         return (debt > 0) ? debt : 0;
     }
 
-    function _getBufferedMinRatio(uint256 _multiplier) internal view returns (uint256) {
+    function _getMaxLtv(uint256 _multiplier) internal view returns (uint256) {
         require(ratioBuffMax > 0, "!ratioBufferMax");
-        require(minRatio > 0, "!minRatio");
-        return minRatio.mul(_multiplier).mul(ratioBuffMax.add(ratioBuff)).div(ratioBuffMax).div(100);
+        require(ltv > 0, "!ltv");
+        return ltv.mul(_multiplier).mul(ratioBuffMax.add(ratioBuff)).div(ratioBuffMax).div(ltvMax);
     }
 
     function borrowableDebt() public view returns (uint256) {
@@ -117,7 +119,7 @@ abstract contract StrategyUnitProtocolMeta is BaseStrategy {
 
     function requiredPaidDebt(uint256 _redeemCollateralAmt) public view returns (uint256) {
         uint256 totalCollateral = getCollateralBalance();
-        uint256 collateralAmt = _redeemCollateralAmt >= totalCollateral? 0 : totalCollateral.sub(_redeemCollateralAmt);
+        uint256 collateralAmt = _redeemCollateralAmt >= totalCollateral ? 0 : totalCollateral.sub(_redeemCollateralAmt);
         return calculateDebtFor(collateralAmt, false);
     }
 
@@ -129,13 +131,13 @@ abstract contract StrategyUnitProtocolMeta is BaseStrategy {
     // **** Oracle (using chainlink) ****
 
     function getLatestCollateralPrice() public view returns (uint256) {
-        if (useUnitUsdOracle){
+        if (useUnitUsdOracle) {
             address unitOracleRegistry = IUnitCDPManager(cdpMgr01).oracleRegistry();
             address unitUsdOracle = IUnitOracleRegistry(unitOracleRegistry).oracleByAsset(collateral);
-            uint usdPriceInQ122 = IUnitUsdOracle(unitUsdOracle).assetToUsd(collateral, collateralDecimal);
-            return uint256(usdPriceInQ122 / Q112).mul(collateralPriceDecimal).div(1e18);// usd price from unit protocol oracle in 1e18 decimal		
+            uint256 usdPriceInQ122 = IUnitUsdOracle(unitUsdOracle).assetToUsd(collateral, collateralDecimal);
+            return uint256(usdPriceInQ122 / Q112).mul(collateralPriceDecimal).div(1e18); // usd price from unit protocol oracle in 1e18 decimal
         }
-	
+
         require(unitOracle != address(0), "!_collateralOracle");
 
         (, int256 price, , , ) = IChainlinkAggregator(unitOracle).latestRoundData();
@@ -144,7 +146,7 @@ abstract contract StrategyUnitProtocolMeta is BaseStrategy {
             if (collateralPriceEth) {
                 (, int256 ethPrice, , , ) = IChainlinkAggregator(eth_usd).latestRoundData(); // eth price from chainlink in 1e8 decimal
                 return uint256(price).mul(collateralPriceDecimal).mul(uint256(ethPrice)).div(1e8).div(collateralPriceEth ? 1e18 : 1);
-            } else{
+            } else {
                 return uint256(price).mul(collateralPriceDecimal).div(1e8);
             }
         } else {
@@ -154,9 +156,9 @@ abstract contract StrategyUnitProtocolMeta is BaseStrategy {
 
     // **** Setters ****
 
-    function setMinRatio(uint256 _minRatio) external {
+    function setLtv(uint256 _ltv) external {
         _onlyGovernance();
-        minRatio = _minRatio;
+        ltv = _ltv;
     }
 
     function setRatioBuff(uint256 _ratioBuff) external {
