@@ -11,6 +11,7 @@ from tabulate import tabulate
 
 gas_strategies.set_default_for_active_chain()
 
+
 def harvest_all(badger: BadgerSystem, skip, min_profit=0):
     """
     Runs harvest function for strategies if they are expected to be profitable.
@@ -36,16 +37,25 @@ def harvest_all(badger: BadgerSystem, skip, min_profit=0):
 
         before = snap.snap()
         if strategy.keeper() == badger.badgerRewardsManager:
-            estimated_profit = snap.estimateProfitHarvestViaManager(key, strategy, {"from": keeper, "gas_limit": 2000000, "allow_revert": True})
+            estimated_profit = snap.estimateProfitHarvestViaManager(
+                key,
+                strategy,
+                {"from": keeper, "gas_limit": 2000000, "allow_revert": True},
+            )
             if estimated_profit >= min_profit:
                 snap.settHarvestViaManager(
-                    strategy, {"from": keeper, "gas_limit": 2000000, "allow_revert": True}, confirm=False,
+                    strategy,
+                    {"from": keeper, "gas_limit": 2000000, "allow_revert": True},
+                    confirm=False,
                 )
         else:
-            estimated_profit = snap.estimateProfitHarvest(key, {"from": keeper, "gas_limit": 2000000, "allow_revert": True})
+            estimated_profit = snap.estimateProfitHarvest(
+                key, {"from": keeper, "gas_limit": 2000000, "allow_revert": True}
+            )
             if estimated_profit >= min_profit:
                 snap.settHarvest(
-                    {"from": keeper, "gas_limit": 2000000, "allow_revert": True}, confirm=False,
+                    {"from": keeper, "gas_limit": 2000000, "allow_revert": True},
+                    confirm=False,
                 )
 
         tx_wait()
@@ -69,7 +79,9 @@ def main():
         accounts[0].transfer(badger.keeper, Wei("5 ether"))
         accounts[0].transfer(badger.guardian, Wei("5 ether"))
 
-        skip.append('native.test')
-        skip.append('yearn.wbtc')
+        skip.append("native.test")
+        skip.append("yearn.wbtc")
+        skip.append("experimental.sushiIBbtcWbtc")
+        skip.append("experimental.digg")
 
     harvest_all(badger, skip)

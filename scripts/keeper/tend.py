@@ -40,13 +40,17 @@ def tend_all(badger: BadgerSystem, skip, min_profit=0):
         before = snap.snap()
 
         if strategy.keeper() == badger.badgerRewardsManager:
-            estimated_profit = snap.estimateProfitTendViaManager(key, strategy, {"from": keeper, "gas_limit": 1000000})
+            estimated_profit = snap.estimateProfitTendViaManager(
+                key, strategy, {"from": keeper, "gas_limit": 1000000}
+            )
             if estimated_profit >= min_profit:
                 snap.settTendViaManager(
                     strategy, {"from": keeper, "gas_limit": 1000000}, confirm=False,
                 )
         else:
-            estimated_profit = snap.estimateProfitTend(key, {"from": keeper, "gas_limit": 1000000})
+            estimated_profit = snap.estimateProfitTend(
+                key, {"from": keeper, "gas_limit": 1000000}
+            )
             if estimated_profit >= min_profit:
                 snap.settTend(
                     {"from": keeper, "gas_limit": 1000000}, confirm=False,
@@ -72,7 +76,9 @@ def main():
         """
         accounts[0].transfer(badger.keeper, Wei("5 ether"))
 
-        skip.append('yearn.wbtc')
-        skip.append('native.test')
+        skip.append("yearn.wbtc")
+        skip.append("native.test")
+        skip.append("experimental.sushiIBbtcWbtc")
+        skip.append("experimental.digg")
 
     tend_all(badger, skip)
