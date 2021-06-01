@@ -57,6 +57,7 @@ contract BadgerBridgeAdapter is OwnableUpgradeable, ReentrancyGuardUpgradeable {
         address _vault;
         address _user;
         address _token;
+        bool _mintIbbtc;
     }
 
     IERC20 public ibBTC;
@@ -125,6 +126,8 @@ contract BadgerBridgeAdapter is OwnableUpgradeable, ReentrancyGuardUpgradeable {
         renBTC.safeTransfer(msg.sender, _mintAmount.sub(_fee));
     }
 
+    event checkArgs(address _token, address renBTC, address wBTC);
+
     function mint(
         // user args
         address _token, // either renBTC or wBTC
@@ -134,41 +137,25 @@ contract BadgerBridgeAdapter is OwnableUpgradeable, ReentrancyGuardUpgradeable {
         // darknode args
         uint256 _amount,
         bytes32 _nHash,
-        bytes calldata _sig
+        bytes calldata _sig,
+        bool _mintIbbtc
     ) external nonReentrant {
-        require(_token == address(renBTC) || _token == address(wBTC) || _token == address(ibBTC), "invalid token address");
+        require(_token == address(renBTC) || _token == address(wBTC), "invalid token address");
+        emit checkArgs(_token, address(renBTC), address(wBTC));
+        // Mint renBTC tokens
+        bytes32 pHash = keccak256(abi.encode(_token, _slippage, _user, _vault));
+        uint256 mintAmount = registry.getGatewayBySymbol("BTC").mint(pHash, _amount, _nHash, _sig);
 
-        if (_token == address(ibBTC)) {
-            //mint ibbtc tokens
-            uint256 poolId = vaultToPoolId[_vault];
-            IERC20(_vault).safeTransferFrom(msg.sender, address(this), _amount);
+        require(mintAmount > 0, "zero mint amount");
 
-            uint256 mintAmount = 0;
-            bytes32[] memory test;
-            if (poolId == 3) {
-                mintAmount = yearnWbtcPeak.mint(_amount, test);
-            } else {
-                mintAmount = settPeak.mint(poolId, _amount, test);
-            }
+        uint256 fee = _processFee(renBTC, mintAmount, mintFeeBps);
+        uint256 mintAmountMinusFee = mintAmount.sub(fee);
 
-            ibBTC.safeTransfer(msg.sender, mintAmount);
+        MintArguments memory args = MintArguments(mintAmount, mintAmountMinusFee, fee, _slippage, _vault, _user, _token, _mintIbbtc);
+        bool success = mintAdapter(args);
 
-        } else {
-            // Mint renBTC tokens
-            bytes32 pHash = keccak256(abi.encode(_token, _slippage, _user, _vault));
-            uint256 mintAmount = registry.getGatewayBySymbol("BTC").mint(pHash, _amount, _nHash, _sig);
-
-            require(mintAmount > 0, "zero mint amount");
-
-            uint256 fee = _processFee(renBTC, mintAmount, mintFeeBps);
-            uint256 mintAmountMinusFee = mintAmount.sub(fee);
-
-            MintArguments memory args = MintArguments(mintAmount, mintAmountMinusFee, fee, _slippage, _vault, _user, _token);
-            bool success = mintAdapter(args);
-
-            if (!success) {
-                renBTC.safeTransfer(_user, mintAmountMinusFee);
-            }
+        if (!success) {
+            renBTC.safeTransfer(_user, mintAmountMinusFee);
         }
     }
 
@@ -237,6 +224,10 @@ contract BadgerBridgeAdapter is OwnableUpgradeable, ReentrancyGuardUpgradeable {
         emit Burn(burnAmount, wbtcTransferred, fee);
     }
 
+    event balanceCheckAfter(uint256 afterBalance);
+    event balanceCheckBefore(uint256 beforeBalance);
+    event checkAllowance(uint256 allowance);
+
     function mintAdapter(MintArguments memory args) internal returns (bool) {
         if (args._vault != address(0) && !approvedVaults[args._vault]) {
             return false;
@@ -279,8 +270,32 @@ contract BadgerBridgeAdapter is OwnableUpgradeable, ReentrancyGuardUpgradeable {
             IBridgeVault(args._vault).token().safeApprove(args._vault, amount);
         }
 
-        IBridgeVault(args._vault).depositFor(args._user, amount);
+        if (args._mintIbbtc) {
+            //emit balanceCheckBefore(IERC20(args._vault).balanceOf(address(this)));
+            IBridgeVault(args._vault).depositFor(address(this), amount);
+            uint256 balance = IERC20(args._vault).balanceOf(address(this));
+            //emit balanceCheckAfter(balance);
+            
+            _mintIbbtc(args._vault, args._user, balance);
+        } else {    
+            IBridgeVault(args._vault).depositFor(args._user, amount);
+        }
+
         return true;
+    }
+
+    function _mintIbbtc(address _vault, address _user, uint256 _amount) internal {
+        uint256 poolId = vaultToPoolId[_vault];
+        uint256 mintAmount = 0;
+        bytes32[] memory dummy;
+        if (poolId == 3) {
+            IERC20(_vault).approve(address(yearnWbtcPeak), _amount);
+            mintAmount = yearnWbtcPeak.mint(_amount, dummy);
+        } else {
+            IERC20(_vault).approve(address(settPeak), _amount);
+            mintAmount = settPeak.mint(poolId, _amount, dummy);
+        }
+        ibBTC.safeTransfer(_user, mintAmount);
     }
 
     function _swapWBTCForRenBTC(uint256 _amount, uint256 _slippage) internal {
