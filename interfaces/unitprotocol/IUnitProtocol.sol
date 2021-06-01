@@ -32,4 +32,16 @@ interface IUnitCDPManager {
         uint256 assetAmount,
         uint256 usdpAmount
     ) external;
+	
+    function oracleRegistry() external view returns (address);
+}
+
+interface IUnitUsdOracle {
+    // returns Q112-encoded value
+    // returned value 10**18 * 2**112 is $1
+    function assetToUsd(address asset, uint amount) external view returns (uint);
+}
+
+interface IUnitOracleRegistry {
+    function oracleByAsset(address asset) external view returns (address);
 }
