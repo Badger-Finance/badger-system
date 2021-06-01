@@ -32,7 +32,9 @@ def deploy_bridge_minimal(
 
     bridge.deploy_logic("BadgerBridgeAdapter", BadgerBridgeAdapter, test=test)
     bridge.deploy_adapter(
-        registry, swap.router, deployer,
+        registry,
+        swap.router,
+        deployer,
     )
     bridge.deploy_curve_token_wrapper()
     bridge.adapter.setCurveTokenWrapper(bridge.curveTokenWrapper, {"from": deployer})

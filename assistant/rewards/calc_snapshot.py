@@ -10,6 +10,7 @@ from rich.console import Console
 
 console = Console()
 
+
 def calc_snapshot(
     badger, name, startBlock, endBlock, nextCycle, boosts, diggAllocation
 ):

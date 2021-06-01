@@ -130,11 +130,16 @@ sett_config = DotMap(
             # Unfinished
             strategyName="StrategyDiggLpMetaFarm",
             params=DotMap(
-                performanceFeeStrategist=0, performanceFeeGovernance=0, withdrawalFee=0,
+                performanceFeeStrategist=0,
+                performanceFeeGovernance=0,
+                withdrawalFee=0,
             ),
         ),
         uniGenericLp=DotMap(
-            strategyName="StrategyUniGenericLp", params=DotMap(withdrawalFee=0,),
+            strategyName="StrategyUniGenericLp",
+            params=DotMap(
+                withdrawalFee=0,
+            ),
         ),
     ),
     sushi=DotMap(
@@ -252,10 +257,13 @@ badger_config = DotMap(
     initialHuntAmount=badger_total_supply * 5 // 100,
     rewardsEscrowBadgerAmount=badger_total_supply * 40 // 100,
     tokenLockParams=DotMap(
-        badgerLockAmount=badger_total_supply * 35 // 100, lockDuration=days(30),
+        badgerLockAmount=badger_total_supply * 35 // 100,
+        lockDuration=days(30),
     ),
     teamVestingParams=DotMap(
-        startTime=globalStartTime, cliffDuration=days(30), totalDuration=days(365),
+        startTime=globalStartTime,
+        cliffDuration=days(30),
+        totalDuration=days(365),
     ),
     devMultisigParams=DotMap(
         threshold=1,
@@ -280,18 +288,47 @@ badger_config = DotMap(
     geyserParams=DotMap(
         badgerDistributionStart=globalStartTime,
         unlockSchedules=DotMap(
-            badger=[DotMap(amount=Wei("45000 ether"), duration=days(7),)],  # 1 week
+            badger=[
+                DotMap(
+                    amount=Wei("45000 ether"),
+                    duration=days(7),
+                )
+            ],  # 1 week
             uniBadgerWbtc=[
-                DotMap(amount=Wei("65000 ether"), duration=days(7),)  # 1 week
+                DotMap(
+                    amount=Wei("65000 ether"),
+                    duration=days(7),
+                )  # 1 week
             ],
-            bSbtcCrv=[DotMap(amount=Wei("76750 ether"), duration=days(7),)],  # 1 week
-            bRenCrv=[DotMap(amount=Wei("76750 ether"), duration=days(7),)],  # 1 week
-            bTbtcCrv=[DotMap(amount=Wei("76750 ether"), duration=days(7),)],  # 1 week
+            bSbtcCrv=[
+                DotMap(
+                    amount=Wei("76750 ether"),
+                    duration=days(7),
+                )
+            ],  # 1 week
+            bRenCrv=[
+                DotMap(
+                    amount=Wei("76750 ether"),
+                    duration=days(7),
+                )
+            ],  # 1 week
+            bTbtcCrv=[
+                DotMap(
+                    amount=Wei("76750 ether"),
+                    duration=days(7),
+                )
+            ],  # 1 week
             bSuperRenCrvPickle=[
-                DotMap(amount=Wei("76750 ether"), duration=days(7),)  # 1 week
+                DotMap(
+                    amount=Wei("76750 ether"),
+                    duration=days(7),
+                )  # 1 week
             ],
             bSuperRenCrvHarvest=[
-                DotMap(amount=Wei("76750 ether"), duration=days(7),)  # 1 week
+                DotMap(
+                    amount=Wei("76750 ether"),
+                    duration=days(7),
+                )  # 1 week
             ],
         ),
     ),
@@ -348,7 +385,8 @@ digg_config_test = DotMap(
         minimumProviders=1,
     ),
     centralizedOracleParams=DotMap(
-        owners=[AddressZero, AddressZero, AddressZero], threshold=1,
+        owners=[AddressZero, AddressZero, AddressZero],
+        threshold=1,
     ),
     tokenLockParams=DotMap(
         diggAmount=int(total_digg * dao_treasury_pct / 100), lockDuration=days(30)
@@ -366,7 +404,10 @@ digg_config_test = DotMap(
         unlockSchedules=DotMap(
             # Setting distribution amt to 25% for now.
             digg=[
-                DotMap(amount=1000 * (10 ** digg_decimals), duration=days(7),)
+                DotMap(
+                    amount=1000 * (10 ** digg_decimals),
+                    duration=days(7),
+                )
             ],  # 1 week
         ),
     ),
@@ -393,10 +434,13 @@ digg_config = DotMap(
     ),
     # cpi oracle always reports 1
     cpiOracleParams=DotMap(
-        reportExpirationTimeSec=5356800, reportDelaySec=86400, minimumProviders=1,
+        reportExpirationTimeSec=5356800,
+        reportDelaySec=86400,
+        minimumProviders=1,
     ),
     centralizedOracleParams=DotMap(
-        owners=[AddressZero, AddressZero, AddressZero], threshold=1,
+        owners=[AddressZero, AddressZero, AddressZero],
+        threshold=1,
     ),
     tokenLockParams=DotMap(
         diggAmount=int(total_digg * dao_treasury_pct / 100), lockDuration=days(7)

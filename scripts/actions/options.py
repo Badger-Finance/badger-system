@@ -30,9 +30,10 @@ console = Console()
 amount = 177739297999371831309
 amount = 177739000000000000000
 
+
 def main():
     badger = connect_badger()
-    
+
     bDigg = badger.getSett("native.digg")
 
     # rug = accounts.at(web3.toChecksumAddress("0x533e3c0e6b48010873b947bddc4721b1bdff9648"), force=True)
@@ -45,13 +46,21 @@ def main():
     round_2 = bDigg_to_deposit - round_1
 
     safe = ApeSafe(badger.devMultisig.address)
-    bDigg = safe.contract_from_abi("0x7e7E112A68d8D2E221E11047a72fFC1065c38e1a", "Sett", Sett.abi)
-    dropt = safe.contract_from_abi(web3.toChecksumAddress("0x02660b54750efab874fb43b4b613c135c7815eef"), "SyntheticToken", SyntheticToken.abi)
-    kpiOptions = safe.contract_from_abi(web3.toChecksumAddress("0xbc044745f137d4693c2aa823c760f855254fad42"), "ExpiringMultiParty", ExpiringMultiParty.abi)
-
-    snap = BalanceSnapshotter(
-        [bDigg, dropt], [badger.devMultisig, kpiOptions, dropt]
+    bDigg = safe.contract_from_abi(
+        "0x7e7E112A68d8D2E221E11047a72fFC1065c38e1a", "Sett", Sett.abi
     )
+    dropt = safe.contract_from_abi(
+        web3.toChecksumAddress("0x02660b54750efab874fb43b4b613c135c7815eef"),
+        "SyntheticToken",
+        SyntheticToken.abi,
+    )
+    kpiOptions = safe.contract_from_abi(
+        web3.toChecksumAddress("0xbc044745f137d4693c2aa823c760f855254fad42"),
+        "ExpiringMultiParty",
+        ExpiringMultiParty.abi,
+    )
+
+    snap = BalanceSnapshotter([bDigg, dropt], [badger.devMultisig, kpiOptions, dropt])
 
     snap.snap()
 

@@ -33,26 +33,29 @@ pretty.install()
 
 tokens = registry.token_system()
 
+
 def crv_swap(badger, safe: ApeSafe, amount_in, max_slippage):
     wbtc = safe.contract(tokens.erc20_by_key("wbtc").address)
     renbtc = safe.contract(tokens.erc20_by_key("renbtc").address)
 
-    indicies = {
-        'wbtc': 1,
-        'renbtc': 0
-    }
+    indicies = {"wbtc": 1, "renbtc": 0}
 
     # sbtc = interface.ICurveFi("0x7fc77b5c7614e1533320ea6ddc2eb61fa00a9714")
-    
-    sbtc = safe.contract_from_abi(address=web3.toChecksumAddress("0x7fc77b5c7614e1533320ea6ddc2eb61fa00a9714"), name="ICurveFi", abi=interface.ICurveFi.abi)
+
+    sbtc = safe.contract_from_abi(
+        address=web3.toChecksumAddress("0x7fc77b5c7614e1533320ea6ddc2eb61fa00a9714"),
+        name="ICurveFi",
+        abi=interface.ICurveFi.abi,
+    )
 
     # wbtc.approve(sbtc, amount_in)
     renbtc.approve(sbtc, amount_in)
 
     required_out = amount_in - int(amount_in * max_slippage)
     print(required_out)
-    
-    sbtc.exchange(indicies['renbtc'], indicies['wbtc'], amount_in, required_out)
+
+    sbtc.exchange(indicies["renbtc"], indicies["wbtc"], amount_in, required_out)
+
 
 def main():
     badger = connect_badger()
@@ -79,7 +82,7 @@ def main():
     snap.snap(name="Before", print=True)
 
     crv_swap(badger, safe, amount_in=367606868, max_slippage=0.005)
-    
+
     snap.snap(name="After")
     snap.diff_last_two()
 
