@@ -68,11 +68,12 @@ class LtccPayments:
         print("===== LTCC Payments for {} =====".format(self.date_range))
         print(tabulate(table, headers=["name", "address", "usdc", "badger"]))
 
+
 def load_ltcc_recipients(filepath):
     payments = LtccPayments("Payments")
     with open(filepath, newline="") as csvfile:
         reader = csv.reader(csvfile, delimiter="\t", quotechar="|")
         for row in reader:
             print(row[0], row[1], row[2], row[3])
-            payments.add_recipient(row[1],row[0], {"usdc": row[2], "badger": row[3]})
+            payments.add_recipient(row[1], row[0], {"usdc": row[2], "badger": row[3]})
     return payments

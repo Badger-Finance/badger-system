@@ -120,7 +120,8 @@ def deposit_withdraw_single_user_flow(badger, settConfig, user):
 
 # @pytest.mark.skip()
 @pytest.mark.parametrize(
-    "settConfig", settTestConfig,
+    "settConfig",
+    settTestConfig,
 )
 def single_user_harvest_flow(badger: BadgerSystem, settConfig, user):
     strategy = badger.getStrategy(settConfig["id"])

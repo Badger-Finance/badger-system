@@ -21,6 +21,7 @@ abstract contract StrategyUnitProtocolMeta is BaseStrategy {
     address public constant unitVaultParameters = 0xB46F8CF42e504Efe8BEf895f848741daA55e9f1D;
     address public constant debtToken = 0x1456688345527bE1f37E9e627DA0837D6f08C925;
     address public constant eth_usd = 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419;
+    bool public useUnitUsdOracle = true;
 
     // sub-strategy related constants
     address public collateral;
@@ -34,6 +35,7 @@ abstract contract StrategyUnitProtocolMeta is BaseStrategy {
     // collateralization percent buffer in CDP debt actions
     uint256 public ratioBuff = 200;
     uint256 public constant ratioBuffMax = 10000;
+    uint public constant Q112 = 2 ** 112;
 
     // **** Modifiers **** //
 
@@ -127,6 +129,13 @@ abstract contract StrategyUnitProtocolMeta is BaseStrategy {
     // **** Oracle (using chainlink) ****
 
     function getLatestCollateralPrice() public view returns (uint256) {
+        if (useUnitUsdOracle){
+            address unitOracleRegistry = IUnitCDPManager(cdpMgr01).oracleRegistry();
+            address unitUsdOracle = IUnitOracleRegistry(unitOracleRegistry).oracleByAsset(collateral);
+            uint usdPriceInQ122 = IUnitUsdOracle(unitUsdOracle).assetToUsd(collateral, collateralDecimal);
+            return uint256(usdPriceInQ122 / Q112).mul(collateralPriceDecimal).div(1e18);// usd price from unit protocol oracle in 1e18 decimal		
+        }
+	
         require(unitOracle != address(0), "!_collateralOracle");
 
         (, int256 price, , , ) = IChainlinkAggregator(unitOracle).latestRoundData();
@@ -153,6 +162,11 @@ abstract contract StrategyUnitProtocolMeta is BaseStrategy {
     function setRatioBuff(uint256 _ratioBuff) external {
         _onlyGovernance();
         ratioBuff = _ratioBuff;
+    }
+
+    function setUseUnitUsdOracle(bool _useUnitUsdOracle) external {
+        _onlyGovernance();
+        useUnitUsdOracle = _useUnitUsdOracle;
     }
 
     // **** Unit Protocol CDP actions ****
