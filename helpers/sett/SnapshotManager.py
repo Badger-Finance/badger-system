@@ -19,6 +19,7 @@ from helpers.sett.resolvers import (
     StrategyDiggRewardsResolver,
     StrategySushiDiggWbtcLpOptimizerResolver,
     StrategyDiggLpMetaFarmResolver,
+    StrategyUnitProtocolRenbtcResolver,
     StrategyUniGenericLpResolver,
 )
 from helpers.utils import digg_shares_to_initial_fragments, val
@@ -172,6 +173,8 @@ class SnapshotManager:
             return StrategyDiggLpMetaFarmResolver(self)
         if name == "StrategyPancakeLpOptimizer":
             return StrategyBasePancakeResolver(self)
+        if name == "StrategyUnitProtocolRenbtc":
+            return StrategyUnitProtocolRenbtcResolver(self)
         if name == "StrategyUniGenericLp":
             return StrategyUniGenericLpResolver(self)
         if name == "StabilizeStrategyDiggV1":
