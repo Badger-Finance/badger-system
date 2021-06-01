@@ -1,3 +1,4 @@
+from sys import version_info
 import pytest
 from brownie import (
     accounts,
@@ -115,21 +116,6 @@ def test_bridge_ibbtc(vault, poolId):
     bridge.adapter.setVaultPoolId(v, poolId, {"from": badger.devMultisig})
     bridge.adapter.setIbbtcContracts(ibbtcContract, peakContract, wbtcPeakContract, {"from": badger.devMultisig})
 
-    #mint btokens to account
-    bridge.adapter.mint(
-        vault["inToken"],
-        slippage * 10**4,
-        accounts[0],
-        v,
-        amount,
-        # Darknode args hash/sig optional since gateway is mocked.
-        "",
-        "", 
-        {"from": accounts[0]},
-    )
-
-    balance = interface.IERC20(v).balanceOf(accounts[0])
-
     #governance / guestlist / contract approval stuff
     gov = interface.ICore(coreContract).owner()
     interface.ICore(coreContract).setGuestList(AddressZero, {"from": gov})
@@ -141,23 +127,24 @@ def test_bridge_ibbtc(vault, poolId):
     interface.IBadgerYearnWbtcPeak(wbtcPeakContract).approveContractAccess(bridge.adapter, {"from": gov3})
 
     #allowance approval
-    interface.IERC20(v).approve(bridge.adapter, balance, {"from": accounts[0]})
-    if vault["symbol"] == "bwBTC":
-        interface.IERC20(wbtcAddr).approve(wbtcPeakContract, balance, {"from": bridge.adapter})
-    else:
-        interface.IERC20(v).approve(peakContract, balance, {"from": bridge.adapter})
+    #interface.IERC20(v).approve(bridge.adapter, amount, {"from": accounts[0]})
+    #if vault["symbol"] == "bwBTC":
+    #    interface.IERC20(wbtcAddr).approve(wbtcPeakContract, amount, {"from": bridge.adapter})
+    #else:
+    #    interface.IERC20(v).approve(peakContract, amount, {"from": bridge.adapter})
 
     #minting
     accountsBalanceBefore = interface.IERC20(ibbtcContract).balanceOf(accounts[0].address)
     bridge.adapter.mint(
-        ibbtcContract,
+        vault["inToken"],
         slippage * 10**4,
         accounts[0],
         v,
-        balance,
+        amount,
         # Darknode args hash/sig optional since gateway is mocked.
         "",
         "", 
+        True,
         {"from": accounts[0]},
     )
     accountsBalanceAfter = interface.IERC20(ibbtcContract).balanceOf(accounts[0].address)
@@ -229,6 +216,7 @@ def test_bridge_vault(vault):
                 # Darknode args hash/sig optional since gateway is mocked.
                 "",
                 "",
+                False,
                 {"from": account},
             )
             balance = interface.IERC20(v).balanceOf(account)
@@ -292,6 +280,7 @@ def test_bridge_basic_swap_fail():
                     # Darknode args hash/sig optional since gateway is mocked.
                     "",
                     "",
+                    False,
                     {"from": account},
                 )
                 assert interface.IERC20(renbtc).balanceOf(account) > balanceBefore
@@ -346,6 +335,7 @@ def test_bridge_basic():
                 # Darknode args hash/sig optional since gateway is mocked.
                 "",
                 "",
+                False,
                 {"from": account},
             )
             assert interface.IERC20(wbtc).balanceOf(account) > balanceBefore
