@@ -883,6 +883,18 @@ class BadgerSystem:
 
         self.wire_up_sett(sett, strategy, controller)
 
+    def upgrade_strategy_native_rencrv(self): 
+        sett = self.getSett("native.renCrv")
+        controller = self.getController("native")
+        params = sett_config.native.renCrv.params
+
+        strategy = self.deploy_strategy(
+            "native.renCrv", "StrategyCurveGaugeRenBtcCrv", controller, params
+        )
+        
+        self.queue_upgrade_sett("native.renCrv", strategy, delay=2 * days(2))
+
+
     def deploy_strategy_native_rencrv(self):
         sett = self.getSett("native.renCrv")
         controller = self.getController("native")
