@@ -11,6 +11,7 @@ from config.badger_config import badger_config
 
 console = Console()
 
+
 def upgrade_crv_strategy(
     badger: BadgerSystem,
     previous: network.contract.ProjectContract,
@@ -33,7 +34,6 @@ def main():
     upgrade_crv_strategy(badger, previousRenBTCStrat, StrategyCurveGaugeRenBtcCrv)
     console.print("[orange]Queued swap strategy update for RenCRV[/orange]")
 
-        
     previousSBTCStrat = badger.getStrategy("native.sbtcCrv")
     upgrade_crv_strategy(badger, previousSBTCStrat, StrategyCurveGaugeSbtcCrv)
     console.print("[orange]Queued swap strategy update for sBTCCRV[/orange]")

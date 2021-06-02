@@ -883,7 +883,7 @@ class BadgerSystem:
 
         self.wire_up_sett(sett, strategy, controller)
 
-    def upgrade_strategy_native_rencrv(self): 
+    def upgrade_strategy_native_rencrv(self):
         sett = self.getSett("native.renCrv")
         controller = self.getController("native")
         params = sett_config.native.renCrv.params
@@ -891,9 +891,8 @@ class BadgerSystem:
         strategy = self.deploy_strategy(
             "native.renCrv", "StrategyCurveGaugeRenBtcCrv", controller, params
         )
-        
-        self.queue_upgrade_sett("native.renCrv", strategy, delay=2 * days(2))
 
+        self.queue_upgrade_sett("native.renCrv", strategy, delay=2 * days(2))
 
     def deploy_strategy_native_rencrv(self):
         sett = self.getSett("native.renCrv")
@@ -1266,7 +1265,7 @@ class BadgerSystem:
 
     def getStrategyWant(self, id):
         return interface.IERC20(self.sett_system.strategies[id].want())
-    
+
     def getSettType(self, id):
         """
         Look at the artifact type of the sett and determine it's version. Currently hardcoded.

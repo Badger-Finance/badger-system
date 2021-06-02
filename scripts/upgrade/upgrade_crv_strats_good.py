@@ -15,4 +15,3 @@ console = Console()
 def main():
     badger = connect_badger(badger_config.prod_json)
     badger.upgrade_strategy_native_rencrv()
-

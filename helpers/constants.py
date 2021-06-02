@@ -51,5 +51,5 @@ SETT_BOOST_RATIOS = {
     "harvest.renCrv": 1,
     "native.sushiWbtcEth": 1,
     "yearn.wbtc": 1,
-    "experimental.sushiIBbtcWbtc": 1
+    "experimental.sushiIBbtcWbtc": 1,
 }
