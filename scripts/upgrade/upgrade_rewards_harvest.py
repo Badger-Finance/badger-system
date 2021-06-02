@@ -29,7 +29,6 @@ def test_update_rewards(badger: BadgerSystem) -> str:
 
     result = badger.timelock_run_direct(controller.address, FUNCTION_TO_CALL, data, eta)
 
-    
     assert controller.rewards() == GOVERNANCE_MULTISIG_ADDRESS
     console.print(
         "[orange] Controller Rewards {} [/orange]".format(controller.rewards())
