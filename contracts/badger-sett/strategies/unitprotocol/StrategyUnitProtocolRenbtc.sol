@@ -82,7 +82,7 @@ contract StrategyUnitProtocolRenbtc is StrategyUnitProtocolMeta {
         withdrawalFee = _feeConfig[2];
         keepCRV = _feeConfig[3];
 
-        ltv = 5000;
+        minRatio = 200;
         ratioBuff = 200;
     }
 
