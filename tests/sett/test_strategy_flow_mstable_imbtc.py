@@ -11,7 +11,7 @@ from rich.console import Console
 
 console = Console()
 
-# @pytest.mark.skip()
+#@pytest.mark.skip()
 @pytest.mark.parametrize(
     "settConfig", settTestConfig,
 )
@@ -52,7 +52,7 @@ def test_deposit_withdraw_single_user_flow(settConfig):
     max = sett.max()
     remain = max - min
 
-    #snap.settEarn({"from": settKeeper})
+    snap.settEarn({"from": settKeeper})
 
     chain.sleep(15)
     chain.mine(1)
@@ -66,7 +66,7 @@ def test_deposit_withdraw_single_user_flow(settConfig):
 
     assert False
 
-# @pytest.mark.skip()
+#@pytest.mark.skip()
 @pytest.mark.parametrize(
     "settConfig", settTestConfig,
 )
@@ -102,7 +102,7 @@ def test_single_user_harvest_flow(settConfig):
     print("want.balanceOf(sett)", want.balanceOf(sett))
 
     # Earn
-    #snap.settEarn({"from": settKeeper})
+    snap.settEarn({"from": settKeeper})
 
     chain.sleep(days(0.5))
     chain.mine()

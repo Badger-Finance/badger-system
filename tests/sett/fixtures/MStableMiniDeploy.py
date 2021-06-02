@@ -1,10 +1,12 @@
 from tests.sett.fixtures.SettMiniDeployBase import SettMiniDeployBase
+from helpers.token_utils import distribute_test_ether
 from config.badger_config import badger_config, sett_config
 from scripts.systems.mstable_system import MStableSystem
 from helpers.constants import AddressZero
-from helpers.registry import registries
-from brownie import MStableVoterProxy
+from helpers.registry import registry
+from brownie import MStableVoterProxy, Wei, accounts
 from dotmap import DotMap
+from scripts.systems.constants import SettType
 
 
 class MStableMiniDeploy(SettMiniDeployBase):
@@ -18,10 +20,11 @@ class MStableMiniDeploy(SettMiniDeployBase):
         """
         Deploy MStableVoterProxy
         """
-        registry = registries.get_registry("eth")
+
+        self.dualGovernance = accounts[6]
             
         mstable_config_test = DotMap(
-            dualGovernance=self.governance, # Placeholder as dualGovernance multi-sig hasn't been launched
+            dualGovernance=self.dualGovernance, # Placeholder as dualGovernance multi-sig hasn't been launched
             badgerGovernance=self.governance,
             strategist=self.strategist,
             keeper=self.keeper,
@@ -41,4 +44,44 @@ class MStableMiniDeploy(SettMiniDeployBase):
         """
         Add strategy to MStableVoterProxy
         """
-        self.mstable.voterproxy.supportStrategy(self.strategy.address, self.vault.address, {'from': self.governance}) # Must be dualGovernance
+
+        # Deploy strategy and vault on simulation test
+        if not deploy:
+            distribute_test_ether(self.deployer, Wei("20 ether"))
+
+            (params, want) = self.fetch_params()
+
+            self.params = params
+            self.want = want
+
+            self.controller = self.badger.add_controller(self.key)
+            self.vault = self.badger.deploy_sett(
+                self.key,
+                self.want,
+                self.controller,
+                governance=self.governance,
+                strategist=self.strategist,
+                keeper=self.keeper,
+                guardian=self.guardian,
+                sett_type=SettType.DEFAULT,
+            )
+            print("Deploying Strategy with key: ", self.key)
+            self.strategy = self.badger.deploy_strategy(
+                self.key,
+                self.strategyName,
+                self.controller,
+                self.params,
+                governance=self.governance,
+                strategist=self.strategist,
+                keeper=self.keeper,
+                guardian=self.guardian,
+            )
+
+            self.badger.wire_up_sett(self.vault, self.strategy, self.controller)
+
+        # Deploy VoterProxy
+        self.mstable.voterproxy.supportStrategy(
+            self.strategy.address, 
+            registry.mstable.pools.imBtc.vault,
+            {'from': self.dualGovernance}
+        ) # Must be dualGovernance
