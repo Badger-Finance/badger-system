@@ -14,10 +14,13 @@ def fetch_sheet_data(
     spreadsheet_id: str, spreadsheet_range: str
 ) -> Iterable[Iterable[str]]:
     """
-    Fetches values from google sheet.
-    For creating OAuth credentials see https://developers.google.com/sheets/api/quickstart/python
+    Fetches values from google sheet. For creating OAuth credentials see:
+    https://developers.google.com/sheets/api/quickstart/python
     Once you have downloaded a json file with your credentials, rename it to
-    `google-sheet-credentials.json` and copy it into the root of this repo
+    `google-sheet-credentials.json` and copy it into the root of this repo.
+    The first time the script runs it will open a browser window and have you confirm
+    that you want this app to use your google account. After confirming it will generate
+    a token file with this authorization that it will use in subsequent runs.
 
     :param spreadsheet_id: id of google sheet, found in url
     :param spreadsheet_range: row/col range to fetch e.g. 'A5:D10'
