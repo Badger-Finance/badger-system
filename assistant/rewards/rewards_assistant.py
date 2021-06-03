@@ -198,7 +198,8 @@ def generate_rewards_in_range(badger, startBlock, endBlock, pastRewards):
 
     currentMerkleData = fetchCurrentMerkleData(badger)
     # farmRewards = fetch_current_harvest_rewards(badger,startBlock, endBlock,nextCycle)
-    sushiRewards = calc_all_sushi_rewards(badger, 11951320, endBlock, nextCycle)
+
+    sushiRewards = calc_all_sushi_rewards(badger, startBlock, endBlock, nextCycle)
     settRewards = calc_sett_rewards(badger, startBlock, endBlock, nextCycle)
 
     newRewards = combine_rewards(
