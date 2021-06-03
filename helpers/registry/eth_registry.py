@@ -275,4 +275,14 @@ eth_registry.whales = DotMap(
         token="0x17d8cbb6bce8cee970a4027d1198f6700a7a6c24",
         action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT,
     ),
+    mBtcHBtc=DotMap(
+        whale="0x3dd46846eed8d147841ae162c8425c08bd8e1b41",
+        token="0x48c59199Da51B7E30Ea200a74Ea07974e62C4bA7",
+        action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT,
+    ),
+    mta=DotMap(
+        whale="0xf65d53aa6e2e4a5f4f026e73cb3e22c22d75e35c",
+        token="0xa3bed4e1c75d00fa6f4e5e6922db7261b5e9acd2",
+        action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT,
+    ),
 )

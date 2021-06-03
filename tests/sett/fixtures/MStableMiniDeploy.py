@@ -1,5 +1,5 @@
 from tests.sett.fixtures.SettMiniDeployBase import SettMiniDeployBase
-from helpers.token_utils import distribute_test_ether
+from helpers.token_utils import distribute_test_ether, distribute_from_whales
 from config.badger_config import badger_config, sett_config
 from scripts.systems.mstable_system import MStableSystem
 from helpers.constants import AddressZero
@@ -85,3 +85,9 @@ class MStableMiniDeploy(SettMiniDeployBase):
             registry.mstable.pools.imBtc.vault,
             {'from': self.dualGovernance}
         ) # Must be dualGovernance
+
+        # Add final state of mstable system to badger system
+        self.badger.mstable = self.mstable
+
+        # Distribute tokens from whales to deployer (including mBtcHBtc, imbtc & mta)
+        distribute_from_whales(self.deployer, 1)
