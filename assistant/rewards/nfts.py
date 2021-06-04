@@ -13,62 +13,28 @@ Jersey    200    0xe1e546e25a5ed890dff8b8d005537c0d373497f8    Badger    1
 """
 import math
 import json
-from typing import Iterable
 from assistant.subgraph.client import fetch_nfts
 from rich.console import Console
 from helpers.google_sheets import fetch_sheet_data
 
 console = Console()
 
-NFT_SHEET_ID = "1tLRI7Bk7d4d1mCYGxoI6uIFvj1eA8-9jhCXvgXxWiDA"
-
-MAX_NFT_BOOST = float(fetch_sheet_data(NFT_SHEET_ID, "H2:I2")[0][1].strip("%")) / 100
-
-
-def build_dict(
-    data: Iterable[Iterable[str]], name: str, key_idx: int, data_idx: int
-) -> dict:
-    """
-    build a dictionary from sheet data
-
-    :param data: 2D array of spreadsheet data
-    :param name: select every row from data that has name in its first column
-    :param key_idx: each entry in the dictionary will have the value at this column index as its key
-    :param data_idx: each entry in the dictionary will have the value at this row index as its value
-    """
-    filtered_data = [row for row in data if name in row[0]]
-    dict = {}
-    for row in filtered_data:
-        dict[row[key_idx]] = row[data_idx]
-    return dict
-
-
-# build the data structures to be processed
-def nft_metadata(spreadsheet_id: str, spreadsheet_name: str):
-    sheet_data = fetch_sheet_data(spreadsheet_id, spreadsheet_name)
-    honeypot_rarity = build_dict(sheet_data, "Honeypot", 4, 1)
-    diamond_hands_rarity = build_dict(sheet_data, "Diamond Hands", 4, 1)
-    jersey_rarity = build_dict(sheet_data, "Jersey", 4, 1)
-    memeAddress = next(filter(lambda row: "Honeypot" in row[0], sheet_data), None)[2]
-    badgerNftAddress = next(filter(lambda row: "Jersey" in row[0], sheet_data), None)[2]
-    return (
-        honeypot_rarity,
-        diamond_hands_rarity,
-        jersey_rarity,
-        memeAddress,
-        badgerNftAddress,
-    )
-
-
+nft_data = json.load("nft_data.json")
 (
+    score_multipliers,
     honeypot_rarity,
     diamond_hands_rarity,
     jersey_rarity,
     memeAddress,
     badgerNftAddress,
-) = nft_metadata(NFT_SHEET_ID, "A5:J14")
-
-score_multipliers = build_dict(fetch_sheet_data(NFT_SHEET_ID, "D1:F3"), "", 0, 2)
+) = (
+    nft_data["score_multipliers"],
+    nft_data["honeypot_rarity"],
+    nft_data["diamond_hands_rarity"],
+    nft_data["jersey_rarity"],
+    nft_data["memeAddress"],
+    nft_data["badgerNftAddress"],
+)
 
 
 def calc_total_nfts_score(rarities, multiplier_type):
