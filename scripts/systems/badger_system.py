@@ -870,6 +870,56 @@ class BadgerSystem:
         )
 
     # ===== Strategy Macros =====
+    def deploy_new_strat(self, controllerName, name, fullName):
+        """
+        Given a ControllerName, a name and a full Strategy Name, deploy the strat and wire it up to the sett
+        NOTICE: This is an idea of how to generalize strategy deployment
+
+        Parameters
+        ----------
+        controllerName: str
+            The name of the controller (for getController)
+        name: str
+            The name of the strategy (short name)
+        fullName: str
+            The LongName of the strategy (for display purposes)
+        """
+        settName = controllerName + "." + name
+        sett = self.getSett(settName)
+        controller = self.getController(controllerName)
+        params = sett_config[controllerName][name].params
+
+        strategy = self.deploy_strategy(
+            settName, fullName, controller, params
+        )
+
+        self.wire_up_sett(sett, strategy, controller)
+
+    def upgrade_strat(self, controllerName, name, fullName):
+        """
+        Given a ControllerName, a name and a full Strategy Name, deploy the strat and replace the previous one in the sett
+        NOTICE: This is an idea of how to generalize strategy upgrades
+
+        Parameters
+        ----------
+        controllerName: str
+            The name of the controller (for getController)
+        name: str
+            The name of the strategy (short name)
+        fullName: str
+            The LongName of the strategy (for display purposes)
+        """
+        settName = controllerName + "." + name
+        sett = self.getSett(settName)
+        controller = self.getController(controllerName)
+        params = sett_config[controllerName][name].params
+
+        strategy = self.deploy_strategy(
+            settName, fullName, controller, params
+        )
+
+        self.queue_upgrade_sett(settName, strategy, delay=2 * days(2))
+
     def deploy_strategy_native_badger(self):
         sett = self.getSett("native.badger")
         controller = self.getController("native")
@@ -905,6 +955,17 @@ class BadgerSystem:
 
         self.wire_up_sett(sett, strategy, controller)
 
+    def upgrade_strategy_native_sbtccrv(self):
+        sett = self.getSett("native.sbtcCrv")
+        controller = self.getController("native")
+        params = sett_config.native.sbtcCrv.params
+
+        strategy = self.deploy_strategy(
+            "native.sbtcCrv", "StrategyCurveGaugeSbtcCrv", controller, params
+        )
+
+        self.queue_upgrade_sett("native.sbtcCrv", strategy, delay=2 * days(2))
+
     def deploy_strategy_native_sbtccrv(self):
         sett = self.getSett("native.sbtcCrv")
         controller = self.getController("native")
@@ -915,6 +976,17 @@ class BadgerSystem:
         )
 
         self.wire_up_sett(sett, strategy, controller)
+
+    def upgrade_strategy_native_sbtccrv(self):
+        sett = self.getSett("native.tbtcCrv")
+        controller = self.getController("native")
+        params = sett_config.native.tbtcCrv.params
+
+        strategy = self.deploy_strategy(
+            "native.tbtcCrv", "StrategyCurveGaugeTbtcCrv", controller, params
+        )
+
+        self.queue_upgrade_sett("native.tbtcCrv", strategy, delay=2 * days(2))
 
     def deploy_strategy_native_tbtccrv(self):
         sett = self.getSett("native.tbtcCrv")
