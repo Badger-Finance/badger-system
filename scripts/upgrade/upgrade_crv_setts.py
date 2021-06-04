@@ -47,7 +47,7 @@ def main():
     Also whitelists bridge adapter for crv setts.
     """
     badger = connect_badger(badger_config.prod_json)
-    bridge = connect_bridge(badger_config.prod_json)
+    bridge = connect_bridge(badger, badger_config.prod_json)
     multi = GnosisSafe(badger.devMultisig)
 
     for settID in CRV_SETTS_TO_UPGRADE:
