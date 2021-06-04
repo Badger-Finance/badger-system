@@ -29,7 +29,7 @@ import "../BaseStrategy.sol";
 ///          - earns APY on staked MTA
 ///          - boost rewards in vault deposits
 ///          - vote on proposals on the mStableDAO (after the next version of staking comes that allows vote delegation)
-contract StrategyMStableVaultBase is BaseStrategy {
+abstract contract StrategyMStableVaultBase is BaseStrategy {
     using SafeERC20Upgradeable for IERC20Upgradeable;
     using SafeMathUpgradeable for uint256;
 
@@ -40,6 +40,7 @@ contract StrategyMStableVaultBase is BaseStrategy {
 
     address public constant mta = 0xa3BeD4E1c75D00fa6f4E5E6922DB7261B5E9AcD2; // MTA token
     address public constant weth = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2; // Weth Token, used for mta -> weth -> lpComponent route
+    address public constant mBTC = 0x945Facb997494CC2570096c74b5F66A3507330a1; // mBTC token
 
     uint256 public govMta; // % of MTA returned to VoterProxy
 
@@ -94,7 +95,11 @@ contract StrategyMStableVaultBase is BaseStrategy {
         withdrawalFee = _feeConfig[2];
         govMta = _feeConfig[3];
 
+        // For FpMbtcHbtc just approve lp to want
         _safeApproveHelper(lpComponent, want, type(uint256).max);
+        // For imBTC, approve lp to mBTC, then mBTC to want (imBTC)
+        _safeApproveHelper(lpComponent, mBTC, type(uint256).max);
+        _safeApproveHelper(mBTC, want, type(uint256).max);
     }
 
     /// ===== View Functions =====
@@ -242,10 +247,7 @@ contract StrategyMStableVaultBase is BaseStrategy {
     /// @dev Mints mStable Asset using a specified input and amount
     /// @param _input Address of asset to be used in the mint
     /// @param _amount Units of _input to mint with
-    function _mintWant(address _input, uint256 _amount) internal virtual {
-        // minOut = amountIn * 0.8
-        IMStableAsset(want).mint(_input, _amount, _amount.mul(80).div(100), address(this));
-    }
+    function _mintWant(address _input, uint256 _amount) internal virtual;
 
     /// @dev Processes performance fees for a particular token
     /// @param _token Address of the token to process
