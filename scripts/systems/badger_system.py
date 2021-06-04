@@ -889,9 +889,7 @@ class BadgerSystem:
         controller = self.getController(controllerName)
         params = sett_config[controllerName][name].params
 
-        strategy = self.deploy_strategy(
-            settName, fullName, controller, params
-        )
+        strategy = self.deploy_strategy(settName, fullName, controller, params)
 
         self.wire_up_sett(sett, strategy, controller)
 
@@ -914,9 +912,7 @@ class BadgerSystem:
         controller = self.getController(controllerName)
         params = sett_config[controllerName][name].params
 
-        strategy = self.deploy_strategy(
-            settName, fullName, controller, params
-        )
+        strategy = self.deploy_strategy(settName, fullName, controller, params)
 
         self.queue_upgrade_sett(settName, strategy, delay=2 * days(2))
 
