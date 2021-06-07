@@ -8,7 +8,7 @@ from tabulate import tabulate
 console = Console()
 
 
-class StrategyMStableVaultImbtcResolver(StrategyCoreResolver):
+class StrategyMStableVaultResolver(StrategyCoreResolver):
 
     # ===== override default =====
     def add_strategy_snap(self, calls, entities=None):
@@ -39,13 +39,19 @@ class StrategyMStableVaultImbtcResolver(StrategyCoreResolver):
         for key in keys:
             assert key in event
 
+        print(event)
+
         self.printMStableState(event, keys)
 
     def printMStableState(self, event, keys):
         table = []
         console.print("[blue]== MStable Strat harvest() State ==[/blue]")
         for key in keys:
-            table.append([key, val(event[key])])
+            if isinstance(event[key], tuple):
+                for index, item in enumerate(event[key]):
+                    table.append([key + " " + str(index), val(event[key][index])])
+            else:
+                table.append([key, val(event[key])])
 
         print(tabulate(table, headers=["account", "value"]))        
 
