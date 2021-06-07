@@ -12,7 +12,7 @@ from helpers.utils import val
 from rich.console import Console
 from scripts.systems.badger_system import BadgerSystem, connect_badger
 from scripts.systems.uniswap_system import UniswapSystem
-from datetime import datetime
+import time
 
 console = Console()
 
@@ -32,11 +32,11 @@ def main():
     safe = ApeSafe(badger.devMultisig.address)
 
     # Fetch tokens for snap + interactions
-    tokens = registry.token_system()
-    usdc = tokens.erc20_by_key("usdc")
+
 
     print("safe")
     ## TODO: Does this work?
+    usdc = safe.contract("0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48")
     dai = safe.contract("0x6B175474E89094C44Da98b954EedeAC495271d0F")
     yDai = safe.contract("0x19D3364A399d251E894aC732651be8B0E4e85001")
     yUsdc = safe.contract("0x5f18C75AbDAe578b483E5F43f12a39cF75b973a9")
@@ -61,7 +61,7 @@ def main():
         dai_min,
         [usdc.address, dai.address],
         badger.devMultisig.address,
-        datetime.now(),
+        time.time() + 500, ## Give it 500 secs
     )
 
     snap.snap()
@@ -89,3 +89,7 @@ def main():
 
     snap.snap()
     snap.diff_last_two()
+
+
+    helper = ApeSafeHelper(badger, safe)
+    helper.publish()
