@@ -1,5 +1,5 @@
 from rich.console import Console
-
+from brownie import rpc
 from config.badger_config import badger_config
 from helpers.sett.strategy_registry import name_to_artifact
 from scripts.systems.badger_system import BadgerSystem, connect_badger
@@ -18,10 +18,14 @@ def queue_upgrade_strategy(
     strategyID: str,
     artifactName: str,
 ) -> str:
-    badger.deploy_logic(artifactName, name_to_artifact[artifactName])
-    logic = badger.logic[artifactName]
+    # if rpc.is_active():
+    #     badger.deploy_logic(artifactName, name_to_artifact[artifactName])
+    #     logic = badger.logic[artifactName]
+    #     return badger.queue_upgrade_strategy(strategyID, logic)
+    # else:
+    logic = badger.getLogic(artifactName)
+    console.print("Preparing Upgrade", logic.address, logic.getName())
     return badger.queue_upgrade_strategy(strategyID, logic)
-
 
 def main():
     """

@@ -96,5 +96,13 @@ abstract contract BaseStrategyMultiSwapper is BaseStrategy {
         IUniswapRouterV2(sushiswap).addLiquidity(token0, token1, _token0Balance, _token1Balance, 0, 0, address(this), block.timestamp);
     }
 
+    function _add_max_liquidity_eth_sushiswap(address token0) internal {
+        uint256 _token0Balance = IERC20Upgradeable(token0).balanceOf(address(this));
+        uint256 _ethBalance = address(this).balance;
+
+        _safeApproveHelper(token0, sushiswap, _token0Balance);
+        IUniswapRouterV2(sushiswap).addLiquidityETH(token0, _token0Balance, 0, 0, address(this), block.timestamp);
+    }
+
     uint256[50] private __gap;
 }
