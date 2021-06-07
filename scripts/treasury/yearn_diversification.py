@@ -31,22 +31,19 @@ def main():
 
     safe = ApeSafe(badger.devMultisig.address)
 
-
     # Fetch tokens for snap + interactions
     tokens = registry.token_system()
     usdc = tokens.erc20_by_key("usdc")
-    
+
     print("safe")
     ## TODO: Does this work?
     dai = safe.contract("0x6B175474E89094C44Da98b954EedeAC495271d0F")
     yDai = safe.contract("0x19D3364A399d251E894aC732651be8B0E4e85001")
     yUsdc = safe.contract("0x5f18C75AbDAe578b483E5F43f12a39cF75b973a9")
 
+    usdc_to_swap = "1500000000000"  ## 1.5 * 10^6 (Million) * 10^6 (Decimals)
+    dai_min = "1497630000000000000000000"  ## 1497630 * 10^18 (decimals)
 
-    usdc_to_swap = "1500000000000" ## 1.5 * 10^6 (Million) * 10^6 (Decimals)
-    dai_min = "1497630000000000000000000" ## 1497630 * 10^18 (decimals)
-
-  
     # TODO: Track the balances of the tokens representing your position here: AAVE USDC (aUSDC), Compound USDC (cUSDC), y3Crv Vault Position (y3Crv)
     snap = BalanceSnapshotter(
         [usdc, dai, yDai, yUsdc],
@@ -59,7 +56,13 @@ def main():
     ## NOTE: Swap to DAI
     uniswap_router = safe.contract("0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D")
     usdc.approve(uniswap_router, usdc_to_swap)
-    uniswap_router.swapExactTokensForTokens(usdc_to_swap, dai_min, [usdc.address, dai.address], badger.devMultisig.address, datetime.now())
+    uniswap_router.swapExactTokensForTokens(
+        usdc_to_swap,
+        dai_min,
+        [usdc.address, dai.address],
+        badger.devMultisig.address,
+        datetime.now(),
+    )
 
     snap.snap()
     snap.diff_last_two()
@@ -68,13 +71,12 @@ def main():
     ## TODO: Get balance of DAI to determine how to deposit
     yDai = safe.contract("0x19D3364A399d251E894aC732651be8B0E4e85001")
 
-    dai_deposit_amount = "1497630000000000000000000" ## TODO, do proper
+    dai_deposit_amount = "1497630000000000000000000"  ## TODO, do proper
     dai.approve(yDai.address, dai_deposit_amount)
     yDai.deposit(dai_deposit_amount)
 
     snap.snap()
     snap.diff_last_two()
-
 
     ## NOTE: Deposit USDC to Yearn
     yUsdc = safe.contract("0x5f18C75AbDAe578b483E5F43f12a39cF75b973a9")
