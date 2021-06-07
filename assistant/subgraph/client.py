@@ -10,6 +10,10 @@ url = subgraph_config["url"]
 transport = AIOHTTPTransport(url=url)
 client = Client(transport=transport, fetch_schema_from_transport=True)
 
+harvests_url = subgraph_config["harvests"]
+harvests_transport = AIOHTTPTransport(url=harvests_url)
+harvests_client = Client(transport=harvests_transport, fetch_schema_from_transport=True)
+
 
 def fetch_sett_balances(settId, startBlock):
     console.print(
@@ -207,18 +211,21 @@ def fetch_sushi_harvest_events():
             }
         }
     """)
-    results = client.execute(query)
+    results = harvests_client.execute(query)
     wbtcEthEvents = []
     wbtcBadgerEvents = []
     wbtcDiggEvents = []
     for event in results["sushiHarvestEvents"]:
         strategy = event["id"].split("-")[0]
+        console.log(strategy)
         if strategy == "0x7a56d65254705b4def63c68488c0182968c452ce":
             wbtcEthEvents.append(event)
         elif strategy == "0x3a494d79aa78118795daad8aeff5825c6c8df7f1":
             wbtcBadgerEvents.append(event)
         elif strategy == "0xaa8dddfe7dfa3c3269f1910d89e4413dd006d08a":
             wbtcDiggEvents.append(event)
+
+    console.log(wbtcDiggEvents)
 
     
     return {

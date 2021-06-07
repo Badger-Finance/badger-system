@@ -79,10 +79,16 @@ def calc_sushi_rewards(badger,startBlock,endBlock,nextCycle,retroactive):
         return int(e["blockNumber"]) > startBlock and int(e["blockNumber"]) < endBlock
 
     wbtcEthEvents = list(filter(filter_events,sushi_harvest_events["wbtcEth"]))
+    console.log("WBTC-ETH")
+
     wbtcBadgerEvents = list(filter(filter_events,sushi_harvest_events["wbtcBadger"]))
+    console.log("WBTC-BADGER")
     console.log(wbtcBadgerEvents)
+
     wBtcDiggEvents = list(filter(filter_events,sushi_harvest_events["wbtcDigg"])) 
+    console.log("WBTC-DIGG")
     console.log(wBtcDiggEvents)
+
     totalxSushi = sum([int(e["toBadgerTree"]) for e in wbtcEthEvents]) \
          + sum([int(e["toBadgerTree"]) for e in wbtcBadgerEvents]) \
          + sum([int(e["toBadgerTree"]) for e in wBtcDiggEvents])
