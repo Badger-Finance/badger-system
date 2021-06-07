@@ -30,7 +30,6 @@ def main():
 
     safe = ApeSafe(badger.devMultisig.address)
     helper = ApeSafeHelper(badger, safe)
-    
 
     # Fetch tokens for snap + interactions
     usdc = safe.contract("0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48")
@@ -76,7 +75,9 @@ def main():
     ## NOTE: Deposit DAI to Yearn
     ## TODO: Get balance of DAI to determine how to deposit
     yDaiVault = helper.contract_from_abi(
-        "0x19D3364A399d251E894aC732651be8B0E4e85001", "yDaiVault", interface.VaultAPI.abi
+        "0x19D3364A399d251E894aC732651be8B0E4e85001",
+        "yDaiVault",
+        interface.VaultAPI.abi,
     )
     dai.approve(yDaiVault.address, dai_to_deposit)
     yDaiVault.deposit(dai_to_deposit)
@@ -86,7 +87,9 @@ def main():
 
     ## NOTE: Deposit USDC to Yearn
     yUsdcVault = helper.contract_from_abi(
-        "0x5f18C75AbDAe578b483E5F43f12a39cF75b973a9", "yUsdcVault", iinterface.VaultAPI.abi
+        "0x5f18C75AbDAe578b483E5F43f12a39cF75b973a9",
+        "yUsdcVault",
+        iinterface.VaultAPI.abi,
     )
 
     usdc.approve(yUsdcVault.address, usdc_to_deposit)
