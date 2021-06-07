@@ -937,7 +937,9 @@ class BadgerSystem:
             "native.renCrv", "StrategyCurveGaugeRenBtcCrv", controller, params
         )
 
-        return self.queue_upgrade_sett_strategy("native.renCrv", strategy, delay=2 * days(2))
+        return self.queue_upgrade_sett_strategy(
+            "native.renCrv", strategy, delay=2 * days(2)
+        )
 
     def deploy_strategy_native_rencrv(self):
         sett = self.getSett("native.renCrv")
@@ -958,7 +960,9 @@ class BadgerSystem:
             "native.sbtcCrv", "StrategyCurveGaugeSbtcCrv", controller, params
         )
 
-        return self.queue_upgrade_sett_strategy("native.sbtcCrv", strategy, delay=2 * days(2))
+        return self.queue_upgrade_sett_strategy(
+            "native.sbtcCrv", strategy, delay=2 * days(2)
+        )
 
     def deploy_strategy_native_sbtccrv(self):
         sett = self.getSett("native.sbtcCrv")
@@ -979,7 +983,9 @@ class BadgerSystem:
             "native.tbtcCrv", "StrategyCurveGaugeTbtcCrv", controller, params
         )
 
-        return self.queue_upgrade_sett_strategy("native.tbtcCrv", strategy, delay=2 * days(2))
+        return self.queue_upgrade_sett_strategy(
+            "native.tbtcCrv", strategy, delay=2 * days(2)
+        )
 
     def deploy_strategy_native_tbtccrv(self):
         sett = self.getSett("native.tbtcCrv")
@@ -1035,7 +1041,7 @@ class BadgerSystem:
 
     def queue_upgrade_sett_strategy(self, id, newLogic, delay=2 * days(2)) -> str:
         """
-            Given new logic, and an id, upgrade the new strategy
+        Given new logic, and an id, upgrade the new strategy
         """
         sett = self.getStrategy(id)
         return self.queue_upgrade(sett.address, newLogic.address)

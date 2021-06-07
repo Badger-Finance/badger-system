@@ -67,8 +67,6 @@ def test_simulation_after_upgrade_crv_setts(settID):
     ## Mints token for us
     distribute_from_whales(deployer)
 
-
-
     snap = SnapshotManager(badger, settID)
     simulation = SimulationManager(badger, snap, settID)
 

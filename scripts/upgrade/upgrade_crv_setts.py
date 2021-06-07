@@ -17,6 +17,7 @@ CRV_NAME_TO_LOGIC = {
     "native.tbtcCrv": "upgrade_strategy_native_tbtccrv",
 }
 
+
 def queue_upgrade_crv_strat(badger: BadgerSystem, stratID: str) -> str:
     upgradeFn = getattr(badger, CRV_NAME_TO_LOGIC[stratID])
     return upgradeFn()
@@ -24,7 +25,7 @@ def queue_upgrade_crv_strat(badger: BadgerSystem, stratID: str) -> str:
 
 def main():
     """
-        Queues crv sett upgrades
+    Queues crv sett upgrades
     """
     badger = connect_badger(badger_config.prod_json)
 
