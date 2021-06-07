@@ -171,7 +171,7 @@ contract StrategyConvexLpOptimizer is BaseStrategyMultiSwapper {
     }
 
     function getName() external override pure returns (string memory) {
-        return "StrategySushiLpOptimizer";
+        return "StrategyConvexLpOptimizer";
     }
 
     function balanceOfPool() public override view returns (uint256) {
