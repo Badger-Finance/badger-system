@@ -6,6 +6,7 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from rich.console import Console
+from typing import Union
 
 console = Console()
 
@@ -66,7 +67,9 @@ def address_data_to_json(data: Iterable[Iterable[str]], columns: Iterable[str]):
     converts table of user data to json
 
     :param data: 2d array of data
-    :param columns: array of labels for each column
+    :param columns: array of labels for each column, length should be 1 less than 
+                    length of inner array of data since first first item becomes 
+                    the key for that entry.
     """
     res = {}
     if len(data) < 1:
@@ -163,6 +166,18 @@ def fetch_all_user_data():
 
     with open("user_data.json", "w") as outfile:
         json.dump(user_data, outfile, indent=4)
+
+
+def get_json_data(name: str):
+    file_name = name + "_data.json"
+    if not os.path.exists(file_name):
+        raise ValueError(
+            file_name
+            + " not found. Run the script in helpers/google_sheets.py to generate"
+        )
+
+    with open(file_name) as json_file:
+        return json.load(json_file)
 
 
 fetch_all_user_data()

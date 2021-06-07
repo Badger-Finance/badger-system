@@ -12,14 +12,13 @@ Diamond Hands 3    10    0xe4605d46fd0b3f8329d936a8b258d69276cba264    Collab   
 Jersey    200    0xe1e546e25a5ed890dff8b8d005537c0d373497f8    Badger    1
 """
 import math
-import json
 from assistant.subgraph.client import fetch_nfts
 from rich.console import Console
-from helpers.google_sheets import fetch_sheet_data
+from helpers.google_sheets import get_json_data
 
 console = Console()
 
-nft_data = json.load("nft_data.json")
+nft_data = get_json_data("nft")
 (
     score_multipliers,
     honeypot_rarity,
