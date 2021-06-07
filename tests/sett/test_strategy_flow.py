@@ -2,7 +2,6 @@ import pytest
 from brownie import *
 from helpers.constants import *
 from tests.conftest import settTestConfig
-from rich.console import Console
 
 from tests.sett.generic_strategy_tests.strategy_flow import (
     assert_deposit_withdraw_single_user_flow,
@@ -12,8 +11,6 @@ from tests.sett.generic_strategy_tests.strategy_flow import (
     assert_single_user_harvest_flow_remove_fees,
 )
 
-console = Console()
-
 # @pytest.mark.skip()
 @pytest.mark.parametrize(
     "settConfig",
@@ -22,6 +19,7 @@ console = Console()
 def test_deposit_withdraw_single_user_flow(settConfig):
     assert_deposit_withdraw_single_user_flow(settConfig)
 
+
 # @pytest.mark.skip()
 @pytest.mark.parametrize(
     "settConfig",
@@ -29,6 +27,7 @@ def test_deposit_withdraw_single_user_flow(settConfig):
 )
 def test_single_user_harvest_flow(settConfig):
     assert_single_user_harvest_flow(settConfig)
+
 
 @pytest.mark.skip()
 @pytest.mark.parametrize("settConfig", settTestConfig)
@@ -40,6 +39,7 @@ def test_migrate_single_user(settConfig):
 @pytest.mark.parametrize("settConfig", settTestConfig)
 def test_withdraw_other(settConfig):
     assert_withdraw_other(settConfig)
+
 
 @pytest.mark.skip()
 @pytest.mark.parametrize("settConfig", settTestConfig)

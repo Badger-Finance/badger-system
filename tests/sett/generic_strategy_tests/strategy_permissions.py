@@ -48,7 +48,6 @@ def state_setup(badger, settConfig):
     accounts.at(controller, force=True)
 
 
-
 def assert_strategy_action_permissions(settConfig):
     # Setup
     badger = badger_single_sett(settConfig)

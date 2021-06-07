@@ -930,7 +930,6 @@ class BadgerSystem:
         self.wire_up_sett(sett, strategy, controller)
 
     def upgrade_strategy_native_rencrv(self):
-        sett = self.getSett("native.renCrv")
         controller = self.getController("native")
         params = sett_config.native.renCrv.params
 
@@ -938,7 +937,7 @@ class BadgerSystem:
             "native.renCrv", "StrategyCurveGaugeRenBtcCrv", controller, params
         )
 
-        self.queue_upgrade_sett("native.renCrv", strategy, delay=2 * days(2))
+        return self.queue_upgrade_sett_strategy("native.renCrv", strategy, delay=2 * days(2))
 
     def deploy_strategy_native_rencrv(self):
         sett = self.getSett("native.renCrv")
@@ -952,7 +951,6 @@ class BadgerSystem:
         self.wire_up_sett(sett, strategy, controller)
 
     def upgrade_strategy_native_sbtccrv(self):
-        sett = self.getSett("native.sbtcCrv")
         controller = self.getController("native")
         params = sett_config.native.sbtcCrv.params
 
@@ -960,7 +958,7 @@ class BadgerSystem:
             "native.sbtcCrv", "StrategyCurveGaugeSbtcCrv", controller, params
         )
 
-        self.queue_upgrade_sett("native.sbtcCrv", strategy, delay=2 * days(2))
+        return self.queue_upgrade_sett_strategy("native.sbtcCrv", strategy, delay=2 * days(2))
 
     def deploy_strategy_native_sbtccrv(self):
         sett = self.getSett("native.sbtcCrv")
@@ -973,8 +971,7 @@ class BadgerSystem:
 
         self.wire_up_sett(sett, strategy, controller)
 
-    def upgrade_strategy_native_sbtccrv(self):
-        sett = self.getSett("native.tbtcCrv")
+    def upgrade_strategy_native_tbtccrv(self):
         controller = self.getController("native")
         params = sett_config.native.tbtcCrv.params
 
@@ -982,7 +979,7 @@ class BadgerSystem:
             "native.tbtcCrv", "StrategyCurveGaugeTbtcCrv", controller, params
         )
 
-        self.queue_upgrade_sett("native.tbtcCrv", strategy, delay=2 * days(2))
+        return self.queue_upgrade_sett_strategy("native.tbtcCrv", strategy, delay=2 * days(2))
 
     def deploy_strategy_native_tbtccrv(self):
         sett = self.getSett("native.tbtcCrv")
@@ -1034,6 +1031,13 @@ class BadgerSystem:
     # NB: Min gov timelock delay is 2 days.
     def queue_upgrade_sett(self, id, newLogic, delay=2 * days(2)) -> str:
         sett = self.getSett(id)
+        return self.queue_upgrade(sett.address, newLogic.address)
+
+    def queue_upgrade_sett_strategy(self, id, newLogic, delay=2 * days(2)) -> str:
+        """
+            Given new logic, and an id, upgrade the new strategy
+        """
+        sett = self.getStrategy(id)
         return self.queue_upgrade(sett.address, newLogic.address)
 
     def queue_upgrade(self, proxyAddress, newLogicAddress, delay=2 * days(2)) -> str:

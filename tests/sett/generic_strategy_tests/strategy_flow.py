@@ -1,13 +1,9 @@
 from helpers.time_utils import days
 import brownie
-import pytest
 from brownie import *
 from helpers.constants import *
 from helpers.sett.SnapshotManager import SnapshotManager
-from tests.conftest import badger_single_sett, settTestConfig
-from tests.helpers import distribute_from_whales, getTokenMetadata
-from tests.assert_recorder import EventRecord, TestRecorder
-from rich.console import Console
+from tests.conftest import badger_single_sett
 
 
 def assert_deposit_withdraw_single_user_flow(settConfig):
@@ -120,6 +116,7 @@ def assert_single_user_harvest_flow(settConfig):
 
     snap.settHarvest({"from": strategyKeeper})
     snap.settWithdraw(depositAmount // 2 - 1, {"from": deployer})
+
 
 def assert_migrate_single_user(settConfig):
     assert False
