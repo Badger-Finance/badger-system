@@ -385,6 +385,28 @@ def deploy_strategy(
             ),
             badger.deployer,
         )
+    if strategyName == "StrategyConvexLpOptimizer":
+        return deploy_proxy(
+            "StrategyConvexLpOptimizer",
+            StrategyConvexLpOptimizer.abi,
+            badger.logic.StrategyConvexLpOptimizer.address,
+            badger.devProxyAdmin.address,
+            badger.logic.StrategyConvexLpOptimizer.initialize.encode_input(
+                governance,
+                strategist,
+                controller,
+                keeper,
+                guardian, 
+                [params.want, params.badgerTree,],
+                params.pid,
+                [
+                    params.performanceFeeGovernance,
+                    params.performanceFeeStrategist,
+                    params.withdrawalFee,
+                ],
+            ),
+            badger.deployer,
+        )
 
 
 def deploy_controller(

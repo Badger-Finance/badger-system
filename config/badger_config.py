@@ -82,6 +82,17 @@ sett_config = DotMap(
                 keepCRV=0,
             ),
         ),
+        convexRenCrv=DotMap(
+            strategyName="StrategyConvexLpOptimizer",
+            params=DotMap(
+                want=pools.renCrv.token,
+                pid=curve.pids.renCrv,
+                lpComponent=registry.tokens.wbtc,
+                performanceFeeStrategist=1000,
+                performanceFeeGovernance=1000,
+                withdrawalFee=75,
+            ),
+        ),
     ),
     pickle=DotMap(
         renCrv=DotMap(

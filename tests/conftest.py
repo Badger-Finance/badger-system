@@ -32,7 +32,8 @@ from tests.sett.fixtures import (
     PancakeMiniDeploy,
     SushiWbtcIbBtcLpOptimizerMiniDeploy,
     UniGenericLpMiniDeploy,
-    DiggStabilizeMiniDeploy
+    DiggStabilizeMiniDeploy,
+    ConvexRenBtcMiniDeploy
 )
 
 
@@ -57,8 +58,9 @@ settsToRun = [
     # "native.uniBadgerWbtc",
     # "native.sushiBadgerWbtc",
     # "native.sushiWbtcEth",
-    "native.sushiWbtcIbBtc",
+    #"native.sushiWbtcIbBtc",
     # "native.uniWbtcIbBtc",
+    "native.convexRenCrv",
 ]
 
 yearnSettsToRun = [
@@ -313,6 +315,16 @@ def badger_single_sett(settConfig, deploy=True):
             return YearnMiniDeploy(
                 "yearn.bvyWBTC",
                 "AffiliateTokenGatedUpgradable",
+                deployer,
+                strategist=strategist,
+                guardian=guardian,
+                keeper=keeper,
+                governance=governance,
+            ).deploy(deploy=deploy)
+        if settId == "native.convexRenCrv":
+            return ConvexRenBtcMiniDeploy(
+                "native.convexRenCrv",
+                "StrategyConvexLpOptimizer",
                 deployer,
                 strategist=strategist,
                 guardian=guardian,
