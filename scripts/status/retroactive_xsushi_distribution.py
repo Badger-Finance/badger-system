@@ -4,7 +4,7 @@ from config.badger_config import badger_config
 from rich.console import Console
 from scripts.systems.badger_system import connect_badger
 import json
-from assistant.rewards.rewards_assistant import calc_sushi_rewards,process_cumulative_rewards,fetch_current_rewards_tree
+from assistant.rewards.rewards_assistant import calc_sushi_rewards, process_cumulative_rewards, fetch_current_rewards_tree
 from assistant.rewards.rewards_checker import test_claims
 from assistant.subgraph.client import fetch_harvest_farm_events
 from assistant.rewards.RewardsList import RewardsList
@@ -16,41 +16,50 @@ from assistant.rewards.RewardsLogger import rewardsLogger
 gas_strategy = GasNowStrategy("fast")
 console = Console()
 
+
 def main():
     test = True
-    badger = connect_badger(badger_config.prod_json,load_deployer=False)
+    badger = connect_badger(badger_config.prod_json, load_deployer=False)
     nextCycle = badger.badgerTree.currentCycle() + 1
-    startBlock = 11951320
 
+    startBlock = 11951320
     endBlock = chain.height
-    rewards = calc_sushi_rewards(badger,startBlock,endBlock,nextCycle,retroactive=True)
-    rewardsLogger.save("retroactive-xsushi")
+
     currentRewards = fetch_current_rewards_tree(badger)
-    
-    cumulative_rewards = process_cumulative_rewards(currentRewards,rewards)
-    merkleTree = rewards_to_merkle_tree(cumulative_rewards,startBlock,endBlock,{})
+
+    console.log(currentRewards["startBlock"])
+    console.log(currentRewards["endBlock"])
+
+    rewards = calc_sushi_rewards(
+        badger, startBlock, endBlock, nextCycle, retroactive=True)
+    rewardsLogger.save("retroactive-xsushi")
+
+    cumulative_rewards = process_cumulative_rewards(currentRewards, rewards)
+    merkleTree = rewards_to_merkle_tree(
+        cumulative_rewards, startBlock, endBlock, {})
     rootHash = web3.toHex(web3.keccak(text=merkleTree["merkleRoot"]))
 
-    contentFileName = "rewards-" + str(chain.id) + "-" + str(merkleTree["merkleRoot"]) + ".json"
+    contentFileName = "rewards-" + \
+        str(chain.id) + "-" + str(merkleTree["merkleRoot"]) + ".json"
     console.log("Saving merkle tree as {}".format(contentFileName))
-    with open(contentFileName,"w") as f:
-        json.dump(merkleTree,f,indent=4)
-
+    with open(contentFileName, "w") as f:
+        json.dump(merkleTree, f, indent=4)
 
     if not test:
         badger.badgerTree.proposeRoot(
-        merkleTree["merkleRoot"],
-        rootHash,
-        nextCycle,
-        {"from" :badger.keeper,"gas_price":gas_strategy})
+            merkleTree["merkleRoot"],
+            rootHash,
+            nextCycle,
+            {"from": badger.keeper, "gas_price": gas_strategy},
+            currentRewards["startBlock"],
+            currentRewards["endBlock"]
+        )
 
         badger.badgerTree.approveRoot(
-        merkleTree["merkleRoot"],
-        rootHash,
-        nextCycle,
-        {"from" :badger.keeper,"gas_price":gas_strategy})
-
-
-
-
-
+            merkleTree["merkleRoot"],
+            rootHash,
+            nextCycle,
+            {"from": badger.keeper, "gas_price": gas_strategy},
+            currentRewards["startBlock"],
+            currentRewards["endBlock"]
+        )
