@@ -154,6 +154,8 @@ contract StrategyConvexLpOptimizer is BaseStrategyMultiSwapper {
         // Approve want: Core Staking Pool
         IERC20Upgradeable(want).approve(address(booster), MAX_UINT_256);
 
+        crvToken.approve(address(crvDepositor), MAX_UINT_256);
+
         // Approve convex assets: Convex Master Chef
         cvxCRV_CRV_SLP_Token.approve(address(convexMasterChef), MAX_UINT_256);
         CVX_ETH_SLP_Token.approve(address(convexMasterChef), MAX_UINT_256);
@@ -281,7 +283,7 @@ contract StrategyConvexLpOptimizer is BaseStrategyMultiSwapper {
     function _tend_CRV_cvxCRV_SLP(uint256 crvToDeposit) internal {
         // 1. Convert half CRV -> cvxCRV
         uint256 halfCrv = crvToDeposit.div(2);
-        crvDepositor.deposit(halfCrv, false, address(0)); // Note: Do not stake, we will use for LP instead
+        crvDepositor.deposit(halfCrv, true); // Note: Do not stake, we will use for LP instead
         // Security Note: What if there is other crvCVX sitting around in the strategy from outside sources?
         // Excess coins will accumulate and possibly be deposited on future tends
 
@@ -345,4 +347,5 @@ contract StrategyConvexLpOptimizer is BaseStrategyMultiSwapper {
         HarvestData memory harvestData;
         return harvestData;
     }
+    receive() external payable {}
 }
