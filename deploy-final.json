@@ -24,7 +24,11 @@
     "keepers": {
         "legacy": "0x872213E29C85d7e30F1C8202FC47eD1Ec124BB1D",
         "rootProposer": "0x68de9E2b015904530593426d934CE608e117Fa7A",
-        "autoCompounding": "0xE6C15f7f1e1AFD6bB19D5De395173bB76a7997f5"
+        "autoCompounding": "0xE6C15f7f1e1AFD6bB19D5De395173bB76a7997f5",
+        "utility": ""
+    },
+    "acl": {
+        "chainlinkOracle": ""
     },
     "logic-2": {
         "StrategySushiLpOptimizer": "0x5a954c6871978b29E27894B6Ce5a3729465eD14e"
@@ -41,6 +45,7 @@
         "Controller": "0x6354E79F21B56C11f48bcD7c451BE456D7102A36",
         "Sett": "0x175586ac3f8A7463499D1019A30120aa6fC67C5f",
         "SettV1": "0x5c7AdB3Fd0DF2D1822a36922dd941e16D2bF4E51",
+        "SettV3": "0x889d5036f2EA5784161090082F3327bb3e433102",
         "StakingRewards": "0x6daCCed8D6d80b0e93a51A4303961678e8A46Fa5",
         "StakingRewardsSignalOnly": "0x752F5C9e91721dc7a7513106fbf249C46439A5EE",
         "StrategyBadgerRewards": "0x38b9344fFB931ABA6476198095e088024CdAC527",
@@ -52,13 +57,13 @@
         "StrategyCurveGaugeRenBtcCrv": "0x8B60386a978dFC3241E9112dB3ea009331838846",
         "HoneypotMeme": "0x7eCc602743bD50FB01fF60e9288fc532B851afc5",
         "StrategySushiLpOptimizer": "0x5435Fc74aeD67C81BB500490A4365AF5e6021bba",
-        "StrategySushiBadgerWbtc": "0x8D216AaBbdE01449dCb34c1e1365E558F614695c",
+        "StrategySushiBadgerWbtc": "0x5362626879686d3d98b467fb713fe19ea083f207",
         "UFragments": "0xFaBec03B04279c6E73F27AaF25866ACc844448Ae",
         "UFragmentsPolicy": "0x4750caa4999404cb26ff6db2d0abc09b000122e0",
         "DiggRewardsFaucet": "0xa42acbbee5796ad0862fd7340edc25f111cd10eb",
         "DiggSett": "0x0f92ca0fb07e420b2fed036a6bb023c6c9e49940",
         "StrategyDiggRewards": "0x5543e25B6Eea80D38863023392a33D976d769e5C",
-        "StrategySushiDiggWbtcLpOptimizer": "0x16626Fd20b8e1541Fdb85D9e63DEf368b374fa75",
+        "StrategySushiDiggWbtcLpOptimizer": "0x072E0715DA0CA5a0dFD40cACc5eFCd43c8b553F8",
         "StrategyDiggLpMetaFarm": "0xd0b1e9f652019B993dacdd97011557ec3b2B6019",
         "DiggDistributor": "0x9a7d4078068ebb39ffe471898212353cf661580c",
         "SimpleTimelockWithVoting": "0xa494351C6f392908321Ea90665628f7f521FE809",
@@ -101,7 +106,11 @@
             "native.sushiDiggWbtc": "0x88128580ACdD9c04Ce47AFcE196875747bF2A9f6",
             "yearn.wbtc": "0x4b92d19c11435614cd49af1b589001b7c08cd4d5",
             "experimental.sushiIBbtcWbtc": "0x8a8ffec8f4a0c8c9585da95d9d97e8cd6de273de",
-            "experimental.digg": "0x608b6D82eb121F3e5C0baeeD32d81007B916E83C"
+            "experimental.digg": "0x608b6D82eb121F3e5C0baeeD32d81007B916E83C",
+            "native.hbtcCrv": "0x8c76970747afd5398e958bdfada4cf0b9fca16c4",
+            "native.pbtcCrv": "0x55912d0cf83b75c492e761932abc4db4a5cb1b17",
+            "native.obtcCrv": "0xf349c0faa80fc1870306ac093f75934078e28991",
+            "native.bbtcCrv": "0x5dce29e92b1b939f8e8c60dcf15bde82a85be4a9"
         },
         "vault_artifacts": {
             "native.badger": "Sett",
@@ -117,7 +126,11 @@
             "native.sushiDiggWbtc": "Sett",
             "yearn.wbtc": "AffiliateTokenGatedUpgradeable",
             "experimental.sushiIBbtcWbtc": "Sett",
-            "experimental.digg": "StabilizeDiggSett"
+            "experimental.digg": "StabilizeDiggSett",
+            "native.hbtcCrv": "SettV3",
+            "native.pbtcCrv": "SettV3",
+            "native.obtcCrv": "SettV3",
+            "native.bbtcCrv": "SettV3"
         },
         "strategies": {
             "native.badger": "0x75b8E21BD623012Efb3b69E1B562465A68944eE6",
@@ -199,6 +212,7 @@
         "orchestrator": "0xbd5d9451e004fc495f105ceab40d6c955e4192ba",
         "cpiMedianOracle": "0x57280661EcAB9B2ad0ddac9B5ed824Ae17424A8C",
         "marketMedianOracle": "0x058ec2bf15011095a25670b618a129c043e2162e",
+        "chainlinkForwarder": "0xB572f69edbfC946af11a1b3ef8D5c2f41D38a642",
         "constantOracle": "0xed57725991983e407837ce4b3e0f0fa38bd161b6",
         "centralizedOracle": "0x72dc16CFa95beB42aeebD2B10F22E55bD17Ce976",
         "daoDiggTimelock": "0x5A54Ca44e8F5A1A695f8621f15Bfa159a140bB61",

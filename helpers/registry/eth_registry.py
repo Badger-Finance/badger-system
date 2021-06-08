@@ -102,6 +102,18 @@ curve_registry = DotMap(
             token="0x64eda51d3Ad40D56b9dFc5554E06F94e1Dd786Fd",
             gauge="0x6828bcF74279eE32f2723eC536c22c51Eed383C6",
         ),
+        hbtcCrv=DotMap(
+            token="0xb19059ebb43466C323583928285a49f558E572Fd",
+        ),
+        pbtcCrv=DotMap(
+            token="0xDE5331AC4B3630f94853Ff322B66407e0D6331E8",
+        ),
+        obtcCrv=DotMap(
+            token="0x410e3E86ef427e30B9235497143881f717d93c2A",
+        ),
+        bbtcCrv=DotMap(
+            token="0x49849C98ae39Fff122806C06791Fa73784FB3675",
+        ),
     ),
 )
 
