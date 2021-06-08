@@ -7,7 +7,6 @@ from tabulate import tabulate
 
 console = Console()
 
-
 class StrategyConvexLpOptimizerResolver(StrategyCoreResolver):
 
     # ===== override default =====
@@ -54,8 +53,7 @@ class StrategyConvexLpOptimizerResolver(StrategyCoreResolver):
         for key in keys:
             table.append([key, val(event[key])])
 
-        print(tabulate(table, headers=["account", "value"]))        
-
+        print(tabulate(table, headers=["account", "value"]))       
 
     # ===== Strategies must implement =====
     def confirm_harvest(self, before, after, tx):
@@ -92,4 +90,54 @@ class StrategyConvexLpOptimizerResolver(StrategyCoreResolver):
 
         strategy = self.manager.strategy
         return {} 
+
+    def add_strategy_snap(self, calls, entities=None):
+        super().add_strategy_snap(calls)
+
+        strategy = self.manager.strategy
+
+        calls.append(
+            Call(
+                strategy.xsushi(),
+                [func.erc20.balanceOf, strategy.address],
+                [["xsushi.balanceOf", as_wei]],
+            )
+        )
+        calls.append(
+            Call(
+                strategy.crv(),
+                [func.erc20.balanceOf, strategy.address],
+                [["crv.balanceOf", as_wei]],
+            )
+        )
+        calls.append(
+            Call(
+                strategy.cvx(),
+                [func.erc20.balanceOf, strategy.address],
+                [["cvx.balanceOf", as_wei]],
+            )
+        )
+        calls.append(
+            Call(
+                strategy.cvxCrv(),
+                [func.erc20.balanceOf, strategy.address],
+                [["cvxCrv.balanceOf", as_wei]],
+            )
+        )
+        calls.append(
+            Call(
+                strategy.cvxCRV_CRV_SLP(),
+                [func.erc20.balanceOf, strategy.address],
+                [["cvxCRV_CRV_SLP.balanceOf", as_wei]],
+            )
+        )
+        calls.append(
+            Call(
+                strategy.CVX_ETH_SLP(),
+                [func.erc20.balanceOf, strategy.address],
+                [["CVX_ETH_SLP.balanceOf", as_wei]],
+            )
+        )
+
+        return calls 
     
