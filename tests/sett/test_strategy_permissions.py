@@ -257,6 +257,7 @@ def test_strategy_pausing_permissions(settConfig):
         strategy.unpause({"from": randomUser})
 
     strategy.pause({"from": strategy.guardian()})
+    sett.pause({"from": strategy.guardian()})
 
     strategyKeeper = accounts.at(strategy.keeper(), force=True)
 
@@ -269,6 +270,7 @@ def test_strategy_pausing_permissions(settConfig):
             strategy.tend({"from": strategyKeeper})
 
     strategy.unpause({"from": authorizedUnpausers[0]})
+    sett.unpause({"from": authorizedUnpausers[0]})
 
     sett.deposit(1, {"from": deployer})
     sett.withdraw(1, {"from": deployer})
@@ -316,6 +318,7 @@ def test_sett_pausing_permissions(settConfig):
         sett.unpause({"from": unpauser})
 
     sett.pause({"from": sett.guardian()})
+
     with brownie.reverts("onlyGovernance"):
         sett.unpause({"from": randomUser})
 
