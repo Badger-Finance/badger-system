@@ -2,7 +2,6 @@ from scripts.rewards.rewards_utils import get_last_proposed_cycle
 import time
 
 from brownie import *
-from config.badger_config import badger_config
 from rich.console import Console
 from scripts.systems.badger_system import connect_badger
 
@@ -12,7 +11,7 @@ console = Console()
 
 
 def main():
-    badger = connect_badger(badger_config.prod_json, load_guardian=False)
+    badger = connect_badger()
     (currentRewards, startBlock, endBlock) = get_last_proposed_cycle(badger)
 
     # If there is a pending root, approve after independently verifying it

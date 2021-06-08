@@ -17,7 +17,7 @@ from helpers.network import network_manager
 from helpers.proxy_utils import deploy_proxy, deploy_proxy_admin
 from helpers.registry import artifacts, registry
 from helpers.sett.strategy_registry import name_to_artifact, contract_name_to_artifact
-from helpers.time_utils import days, to_days, to_utc_date
+from helpers.time_utils import days, hours, to_days, to_hours, to_utc_date
 from rich.console import Console
 from scripts.systems.claw_system import ClawSystem
 from scripts.systems.constants import SettType, TIMELOCK_DIR
@@ -144,6 +144,8 @@ def connect_badger(
     load_deployer=False,
     load_keeper=False,
     load_guardian=False,
+    load_root_proposer=False,
+    load_root_approver=False,
     load_method=LoadMethod.KEYSTORE,
 ):
     """
@@ -182,6 +184,8 @@ def connect_badger(
         load_deployer=load_deployer,
         load_keeper=load_keeper,
         load_guardian=load_guardian,
+        load_root_proposer=load_root_proposer,
+        load_root_approver=load_root_approver,
         load_method=load_method,
     )
 
@@ -282,6 +286,8 @@ class BadgerSystem:
         load_deployer=False,
         load_keeper=False,
         load_guardian=False,
+        load_root_proposer=False,
+        load_root_approver=False,
         load_method=LoadMethod.KEYSTORE,
     ):
         self.config = config
@@ -308,6 +314,7 @@ class BadgerSystem:
 
             print(load_deployer, load_keeper, load_guardian, load_method)
 
+            # === Load SK ===
             if load_deployer and load_method == LoadMethod.SK:
                 deployer_key = decouple.config("DEPLOYER_PRIVATE_KEY")
                 self.deployer = accounts.add(deployer_key)
@@ -317,12 +324,25 @@ class BadgerSystem:
             if load_guardian and load_method == LoadMethod.SK:
                 guardian_key = decouple.config("GUARDIAN_PRIVATE_KEY")
                 self.guardian = accounts.add(guardian_key)
+            if load_root_proposer and load_method == LoadMethod.SK:
+                root_proposer_key = decouple.config("ROOT_PROPOSER_PRIVATE_KEY")
+                self.root_proposer = accounts.add(root_proposer_key)
+            if load_root_approver and load_method == LoadMethod.SK:
+                root_approver_key = decouple.config("ROOT_APPROVER_PRIVATE_KEY")
+                self.root_approver = accounts.add(root_approver_key)
+
+            # === Load Keystore ===
             if load_deployer and load_method == LoadMethod.KEYSTORE:
                 self.deployer = accounts.load("badger-deployer")
             if load_keeper and load_method == LoadMethod.KEYSTORE:
                 self.keeper = accounts.load("badger-keeper")
             if load_guardian and load_method == LoadMethod.KEYSTORE:
                 self.guardian = accounts.load("badger-guardian")
+            if load_root_proposer and load_method == LoadMethod.KEYSTORE:
+                self.root_proposer = accounts.load("root-proposer")
+            if load_root_approver and load_method == LoadMethod.KEYSTORE:
+                self.root_approver = accounts.load("root-approver")
+
             self.publish_source = False  # Publish sources for deployed logic on mainnet
         if deploy:
             self.devProxyAdmin = deploy_proxy_admin(deployer)
@@ -941,15 +961,15 @@ class BadgerSystem:
         )
 
     # NB: Min gov timelock delay is 2 days.
-    def queue_upgrade_sett(self, id, newLogic, delay=2 * days(2)) -> str:
+    def queue_upgrade_sett(self, id, newLogic, delay=days(2) + hours(4)) -> str:
         sett = self.getSett(id)
         return self.queue_upgrade(sett.address, newLogic.address)
 
-    def queue_upgrade_strategy(self, id, newLogic, delay=2 * days(2)) -> str:
+    def queue_upgrade_strategy(self, id, newLogic, delay=days(2) + hours(4)) -> str:
         strategy = self.getStrategy(id)
         return self.queue_upgrade(strategy.address, newLogic.address)
 
-    def queue_upgrade(self, proxyAddress, newLogicAddress, delay=2 * days(2)) -> str:
+    def queue_upgrade(self, proxyAddress, newLogicAddress, delay=days(2) + hours(4)) -> str:
         target = self.devProxyAdmin.address
         signature = "upgrade(address,address)"
         data = encode_abi(["address", "address"], [proxyAddress, newLogicAddress])
@@ -968,6 +988,10 @@ class BadgerSystem:
 
     def governance_queue_transaction(self, target, signature, data, eta, eth=0) -> str:
         multi = GnosisSafe(self.devMultisig)
+        console.print(f"[cyan]===== Queue Timelock Transaction =====[/cyan]")
+        console.print(f"ETA Timestamp: {eta} Date: {to_utc_date(eta)} TimeUntil: {to_hours(eta - chain.time())}")
+        assert to_hours(eta - chain.time()) > 48
+
         id = multi.addTx(
             MultisigTxMetadata(description="Queue timelock transaction"),
             {
@@ -997,7 +1021,7 @@ class BadgerSystem:
             f.write(json.dumps(txData, indent=4, sort_keys=True))
         return txFilename
 
-    def governance_execute_transaction(self, txFilename):
+    def governance_execute_transaction(self, txFilename, remove_file_on_success=True):
         multi = GnosisSafe(self.devMultisig)
 
         with open(os.path.join(TIMELOCK_DIR, txFilename), "r") as f:
@@ -1015,7 +1039,7 @@ class BadgerSystem:
                     ),
                 },
             )
-            if multisig_success(multi.executeTx(id)):
+            if multisig_success(multi.executeTx(id)) and remove_file_on_success:
                 os.remove(os.path.join(TIMELOCK_DIR, txFilename))
 
     # ===== Connectors =====

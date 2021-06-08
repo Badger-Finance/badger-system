@@ -11,7 +11,7 @@ console = Console()
 
 
 def main():
-    badger = connect_badger(badger_config.prod_json, load_guardian=True)
+    badger = connect_badger(badger_config.prod_json, load_root_approver=True)
     (currentRewards, startBlock, endBlock) = get_last_proposed_cycle(badger)
 
     # If there is a pending root, approve after independently verifying it

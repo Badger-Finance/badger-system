@@ -8,6 +8,15 @@ from helpers.time_utils import days, hours, minutes
 setts_to_skip = {
     "eth": {
         "harvest": [
+            "native.renCrv",
+            "native.sbtcCrv",
+            "native.tbtcCrv",
+            "harvest.renCrv",
+            "native.sushiWbtcEth",
+            "native.hbtcCrv",
+            "native.pbtcCrv",
+            "native.obtcCrv",
+            "native.bbtcCrv",   
             "native.uniBadgerWbtc",
             "native.badger",
             "native.sushiBadgerWbtc",

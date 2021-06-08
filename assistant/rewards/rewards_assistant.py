@@ -298,7 +298,7 @@ def rootUpdater(badger, startBlock, endBlock, pastRewards, test=False):
             rewards_data["merkleTree"]["cycle"],
             rewards_data["merkleTree"]["startBlock"],
             rewards_data["merkleTree"]["endBlock"],
-            {"from": badger.keeper, "gas_price": gas_strategy},
+            {"from": badger.root_proposer, "gas_price": gas_strategy},
         )
         upload(rewards_data["contentFileName"], publish=False)
 
@@ -340,7 +340,7 @@ def guardian(badger: BadgerSystem, startBlock, endBlock, pastRewards, test=False
             rewards_data["merkleTree"]["cycle"],
             rewards_data["merkleTree"]["startBlock"],
             rewards_data["merkleTree"]["endBlock"],
-            {"from": badger.guardian, "gas_price": gas_strategy},
+            {"from": badger.root_approver, "gas_price": gas_strategy},
         )
         upload(rewards_data["contentFileName"]),
         
