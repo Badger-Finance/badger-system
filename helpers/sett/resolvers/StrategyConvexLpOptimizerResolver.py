@@ -1,5 +1,5 @@
 from helpers.sett.resolvers.StrategyCoreResolver import StrategyCoreResolver
-from brownie import interface
+from brownie import interface, accounts
 from helpers.multicall import Call, as_wei, func
 from rich.console import Console
 from helpers.utils import val
@@ -91,53 +91,33 @@ class StrategyConvexLpOptimizerResolver(StrategyCoreResolver):
         strategy = self.manager.strategy
         return {} 
 
-    def add_strategy_snap(self, calls, entities=None):
-        super().add_strategy_snap(calls)
+    def add_entity_balances_for_tokens(self, calls, tokenKey, token, entities):
+        entities["badgerTree"] = self.manager.strategy.badgerTree()
+        entities["strategy"] = self.manager.strategy.address
+        entities["user"] = accounts[0].address # deployer being used as user on test_strategy_flow.py
+        entities["randomUser"] = accounts[6].address
 
+
+        super().add_entity_balances_for_tokens(calls, tokenKey, token, entities)
+        return calls
+
+    def add_balances_snap(self, calls, entities):
+        super().add_balances_snap(calls, entities)
         strategy = self.manager.strategy
 
-        calls.append(
-            Call(
-                strategy.xsushi(),
-                [func.erc20.balanceOf, strategy.address],
-                [["xsushi.balanceOf", as_wei]],
-            )
-        )
-        calls.append(
-            Call(
-                strategy.crv(),
-                [func.erc20.balanceOf, strategy.address],
-                [["crv.balanceOf", as_wei]],
-            )
-        )
-        calls.append(
-            Call(
-                strategy.cvx(),
-                [func.erc20.balanceOf, strategy.address],
-                [["cvx.balanceOf", as_wei]],
-            )
-        )
-        calls.append(
-            Call(
-                strategy.cvxCrv(),
-                [func.erc20.balanceOf, strategy.address],
-                [["cvxCrv.balanceOf", as_wei]],
-            )
-        )
-        calls.append(
-            Call(
-                strategy.cvxCRV_CRV_SLP(),
-                [func.erc20.balanceOf, strategy.address],
-                [["cvxCRV_CRV_SLP.balanceOf", as_wei]],
-            )
-        )
-        calls.append(
-            Call(
-                strategy.CVX_ETH_SLP(),
-                [func.erc20.balanceOf, strategy.address],
-                [["CVX_ETH_SLP.balanceOf", as_wei]],
-            )
-        )
+        xsushi = interface.IERC20(strategy.xsushi())
+        crv = interface.IERC20(strategy.crv())
+        cvx = interface.IERC20(strategy.cvx())
+        cvxCrv = interface.IERC20(strategy.cvxCrv())
+        cvxCRV_CRV_SLP = interface.IERC20(strategy.cvxCRV_CRV_SLP())
+        CVX_ETH_SLP = interface.IERC20(strategy.CVX_ETH_SLP())
 
-        return calls 
+        calls = self.add_entity_balances_for_tokens(calls, "xsushi", xsushi, entities)
+        calls = self.add_entity_balances_for_tokens(calls, "crv", crv, entities)
+        calls = self.add_entity_balances_for_tokens(calls, "cvx", cvx, entities)
+        calls = self.add_entity_balances_for_tokens(calls, "cvxCrv", cvxCrv, entities)
+        calls = self.add_entity_balances_for_tokens(calls, "cvxCRV_CRV_SLP", cvxCRV_CRV_SLP, entities)
+        calls = self.add_entity_balances_for_tokens(calls, "CVX_ETH_SLP", CVX_ETH_SLP, entities)
+
+        return calls
     
