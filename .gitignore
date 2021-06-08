@@ -35,7 +35,7 @@ rewards-*.json
 
 deploy-1337final.json
 
-credentials.json
+any-block-credentials.json
 
 # vim swap files
 *.swp
