@@ -485,17 +485,23 @@ def post_deploy_config(badger: BadgerSystem):
 
     # == Badger Hunt ==
     badger.token.transfer(
-        badger.badgerHunt, badger_config.huntParams.badgerAmount, {"from": deployer},
+        badger.badgerHunt,
+        badger_config.huntParams.badgerAmount,
+        {"from": deployer},
     )
 
     # == Badger Tree ==
     badger.token.transfer(
-        badger.badgerTree, supplyForWeek1Rewards, {"from": deployer},
+        badger.badgerTree,
+        supplyForWeek1Rewards,
+        {"from": deployer},
     )
 
     # == Rewards Escrow ==
     badger.token.transfer(
-        badger.rewardsEscrow, toEscrow, {"from": deployer},
+        badger.rewardsEscrow,
+        toEscrow,
+        {"from": deployer},
     )
 
     # == DAO Timelock ==

@@ -52,7 +52,7 @@ name_to_artifact = {
     "StabilizeStrategyDiggV1": StabilizeStrategyDiggV1,
     "VipCappedGuestListBbtcUpgradeable": VipCappedGuestListBbtcUpgradeable,
     "Disperse": Disperse,
-    "DiggTreasury": DiggTreasury
+    "DiggTreasury": DiggTreasury,
 }
 
 

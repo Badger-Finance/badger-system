@@ -138,7 +138,10 @@ def deploy_strategy(
                 controller,
                 keeper,
                 guardian,
-                [params.want, params.geyser,],
+                [
+                    params.want,
+                    params.geyser,
+                ],
                 [
                     params.performanceFeeGovernance,
                     params.performanceFeeStrategist,
@@ -159,7 +162,10 @@ def deploy_strategy(
                 controller,
                 keeper,
                 guardian,
-                [params.want, params.badgerTree,],
+                [
+                    params.want,
+                    params.badgerTree,
+                ],
                 params.pid,
                 [
                     params.performanceFeeGovernance,
@@ -293,7 +299,12 @@ def deploy_strategy(
                 controller,
                 keeper,
                 guardian,
-                [params.want, params.geyser, params.token, params.badgerTree,],
+                [
+                    params.want,
+                    params.geyser,
+                    params.token,
+                    params.badgerTree,
+                ],
                 params.pid,
                 [
                     params.performanceFeeGovernance,
@@ -315,7 +326,11 @@ def deploy_strategy(
                 controller,
                 keeper,
                 guardian,
-                [params.want, params.geyser, params.token,],
+                [
+                    params.want,
+                    params.geyser,
+                    params.token,
+                ],
                 [
                     params.performanceFeeGovernance,
                     params.performanceFeeStrategist,
@@ -336,7 +351,11 @@ def deploy_strategy(
                 controller,
                 badger.keeper,
                 badger.guardian,
-                [params.want, params.token0, params.token1,],
+                [
+                    params.want,
+                    params.token0,
+                    params.token1,
+                ],
                 [
                     params.performanceFeeGovernance,
                     params.performanceFeeStrategist,
@@ -358,8 +377,12 @@ def deploy_strategy(
                 controller,
                 badger.keeper,
                 badger.guardian,
-                [params.want,],
-                [params.withdrawalFee,],
+                [
+                    params.want,
+                ],
+                [
+                    params.withdrawalFee,
+                ],
             ),
             badger.deployer,
         )
@@ -375,7 +398,11 @@ def deploy_strategy(
                 controller,
                 badger.keeper,
                 badger.guardian,
-                [params.want, params.token0, params.token1,],
+                [
+                    params.want,
+                    params.token0,
+                    params.token1,
+                ],
                 [
                     params.performanceFeeGovernance,
                     params.performanceFeeStrategist,
