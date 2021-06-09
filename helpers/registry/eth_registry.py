@@ -160,12 +160,9 @@ eth_registry = ChainRegistry(
     badger=badger_registry,
     yearn=yearn_registry,
     aave=aave_registry,
-<<<<<<< HEAD
     compound=compound_registry,
     defidollar=defidollar_registry,
-=======
     digg=digg_registry
->>>>>>> 3db26975 (harvest gas + profit estimation for CRV strategies)
 )
 
 eth_registry.tokens = DotMap(
