@@ -16,6 +16,8 @@ from assistant.rewards.RewardsLogger import rewardsLogger
 gas_strategy = GasNowStrategy("fast")
 console = Console()
 
+def hash(value):
+    return web3.toHex(web3.keccak(text=value))
 
 def main():
     test = True
@@ -40,7 +42,7 @@ def main():
     rootHash = web3.toHex(web3.keccak(text=merkleTree["merkleRoot"]))
 
     contentFileName = "rewards-" + \
-        str(chain.id) + "-" + str(merkleTree["merkleRoot"]) + ".json"
+        str(chain.id) + "-" + str(rootHash) + ".json"
     console.log("Saving merkle tree as {}".format(contentFileName))
     with open(contentFileName, "w") as f:
         json.dump(merkleTree, f, indent=4)
