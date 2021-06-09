@@ -6,9 +6,15 @@ interface IController {
 
     function strategies(address) external view returns (address);
 
+    function approvedStrategies(address, address) external view returns (address);
+
     function balanceOf(address) external view returns (uint256);
 
     function earn(address, uint256) external;
+
+    function approveStrategy(address, address) external;
+
+    function setStrategy(address, address) external;
 
     function want(address) external view returns (address);
 
