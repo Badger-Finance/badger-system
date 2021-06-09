@@ -86,6 +86,7 @@ sett_config = DotMap(
             strategyName="StrategyConvexLpOptimizer",
             params=DotMap(
                 want=pools.renCrv.token,
+                gauge=pools.renCrv.gauge,
                 pid=curve.pids.renCrv,
                 lpComponent=registry.tokens.wbtc,
                 performanceFeeStrategist=1000,

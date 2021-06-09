@@ -397,7 +397,7 @@ def deploy_strategy(
                 controller,
                 keeper,
                 guardian, 
-                [params.want, params.badgerTree,],
+                [params.want, params.badgerTree, params.gauge,],
                 params.pid,
                 [
                     params.performanceFeeGovernance,

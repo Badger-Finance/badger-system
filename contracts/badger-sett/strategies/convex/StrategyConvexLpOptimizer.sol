@@ -18,6 +18,8 @@ import "interfaces/badger/IController.sol";
 import "interfaces/badger/IMintr.sol";
 import "interfaces/badger/IStrategy.sol";
 
+import "interfaces/curve/ICurveGauge.sol";
+
 import "interfaces/convex/IBooster.sol";
 import "interfaces/convex/CrvDepositor.sol";
 import "interfaces/convex/IClaimZap.sol";
@@ -96,6 +98,7 @@ contract StrategyConvexLpOptimizer is BaseStrategyMultiSwapper {
 
     uint256 public pid;
     address public badgerTree;
+    address public gauge; // Curve Gauge
 
     event HarvestState(
         uint256 xSushiHarvested,
@@ -129,7 +132,7 @@ contract StrategyConvexLpOptimizer is BaseStrategyMultiSwapper {
         address _controller,
         address _keeper,
         address _guardian,
-        address[2] memory _wantConfig,
+        address[3] memory _wantConfig,
         uint256 _pid,
         uint256[3] memory _feeConfig
     ) public initializer whenNotPaused {
@@ -137,6 +140,7 @@ contract StrategyConvexLpOptimizer is BaseStrategyMultiSwapper {
 
         want = _wantConfig[0];
         badgerTree = _wantConfig[1];
+        gauge = _wantConfig[2];
 
         pid = _pid; // Core staking pool ID
 
@@ -177,8 +181,7 @@ contract StrategyConvexLpOptimizer is BaseStrategyMultiSwapper {
     }
 
     function balanceOfPool() public override view returns (uint256) {
-        (uint256 staked, ) = ISushiChef(chef).userInfo(pid, address(this));
-        return staked;
+        return ICurveGauge(gauge).balanceOf(address(this));
     }
 
     function getProtectedTokens() external override view returns (address[] memory) {
@@ -275,9 +278,7 @@ contract StrategyConvexLpOptimizer is BaseStrategyMultiSwapper {
     }
 
     function _tendSushi(uint256 sushiToDeposit) internal {
-        if (sushiToDeposit > 0) {
             IxSushi(xsushi).enter(sushiToDeposit);
-        }
     }
 
     function _tend_CRV_cvxCRV_SLP(uint256 crvToDeposit) internal {
@@ -327,15 +328,25 @@ contract StrategyConvexLpOptimizer is BaseStrategyMultiSwapper {
         // Stage 1: Harvest gains from positions
         _tendGainsFromPositions();
         
+        
         // Track harvested coins
         tendData.sushiTended = sushiToken.balanceOf(address(this));
         tendData.crvTended = crvToken.balanceOf(address(this));
         tendData.cvxTended = cvxToken.balanceOf(address(this));
 
         // Stage 2: Convert & deposit gains into positions
-        _tendSushi(tendData.sushiTended);
-        _tend_CRV_cvxCRV_SLP(tendData.crvTended);
-        _tend_CVX_ETH_SLP(tendData.cvxTended);
+        // Only execute if SUSHI balance is greater than 0
+        if ( tendData.sushiTended > 0 ) {
+            _tendSushi(tendData.sushiTended);
+        }
+        // Only execute if CRV balance is greater than 0
+        if ( tendData.crvTended > 0 ) {
+            _tend_CRV_cvxCRV_SLP(tendData.crvTended);
+        }
+        // Only execute if CVX balance is greater than 0
+        if ( tendData.cvxTended > 0 ) {
+            _tend_CVX_ETH_SLP(tendData.cvxTended);
+        }
 
         emit Tend(tendData.sushiTended);
         return tendData;
