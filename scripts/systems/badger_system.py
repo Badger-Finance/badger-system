@@ -924,7 +924,7 @@ class BadgerSystem:
         self.track_contract_upgradeable("rewardsEscrow", self.rewardsEscrow)
 
     def connect_badger_tree(self, address):
-        self.badgerTree = BadgerTree.at(address)
+        self.badgerTree = BadgerTreeV2.at(address)
         self.track_contract_upgradeable("badgerTree", self.badgerTree)
 
     def connect_badger_hunt(self, address):
