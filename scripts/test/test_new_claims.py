@@ -16,7 +16,10 @@ from helpers.utils import val
 from helpers.token_utils import token_metadata, get_token_balances
 
 console = Console()
+
 debug = False
+retroactive_content_hash = "0x0ab8a47c98979fc2e4515d91447523b43896c59424ff450970efe4874866aad2"
+retroactive_file_name = "rewards-1-" + retroactive_content_hash + ".json"
 
 def get_cumulative_claimable_for_token(claim, token):
     tokens = claim["tokens"]
@@ -178,20 +181,6 @@ def test_rewards_flow():
         interface.IERC20(registry.harvest.farmToken),
     ]
 
-    # newLogic = BadgerTree.deploy({"from": badger.deployer})
-    newLogic = BadgerTree.at("0x0f81D3f48Fedb8E67a5b87A8a4De57766157f19B")
-
-    multi = GnosisSafe(badger.opsMultisig)
-
-    # Upgrade Tree
-    multi.execute(
-        MultisigTxMetadata(description="Upgrade Tree"),
-        {
-            "to": badger.opsProxyAdmin.address,
-            "data": badger.opsProxyAdmin.upgrade.encode_input(tree, newLogic),
-        },
-    )
-
     # Test claimable amounts
 
     # ===== Test VS Existing List =====
@@ -208,8 +197,7 @@ def test_rewards_flow():
             users_to_verify.append(user)
             # test_claim(badger, user, claim, tokens_to_check)
 
-    retroactive_content_hash = "0xfd2f833d90751239abb8e58c8615e2c57793949fe9143110ac8f969c80067709"
-    retroactive_file_name = "rewards-1-" + retroactive_content_hash + ".json"
+    
 
     with open(retroactive_file_name) as f:
         rewards = json.load(f)
