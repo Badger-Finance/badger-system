@@ -1,8 +1,10 @@
+import decimal
 from brownie import (
     Controller,
     interface,
     chain,
 )
+from brownie.network import web3
 from tabulate import tabulate
 from rich.console import Console
 from helpers.multicall import Multicall
@@ -30,6 +32,7 @@ from helpers.sett.strategy_earnings import (
     get_tend_earnings_manager,
 )
 from helpers.tx_timer import tx_timer
+from helpers.gas_utils import gas_strategies
 
 console = Console()
 
@@ -294,18 +297,18 @@ class SnapshotManager:
             )
 
     def estimateProfitTendViaManager(self, key, strategy, overrides):
-        gas_cost = self.badger.badgerRewardsManager.tend.estimate_gas(
+        gas_estimate = self.badger.badgerRewardsManager.tend.estimate_gas(
             strategy, overrides
         )
+        gas_cost = web3.fromWei(gas_strategies.gas_cost(gas_estimate), "ether")
         earnings = get_tend_earnings_manager(self.badger, self.strategy, key, overrides)
         if earnings == "skip":
             return 0
 
-        gas_cost_eth = gas_cost / 10 ** 9
-        profit = earnings - gas_cost_eth
+        profit = decimal.Decimal(earnings) - gas_cost
         console.log(
             "expected gas cost:",
-            gas_cost_eth,
+            gas_cost,
             "expected earnings:",
             earnings,
             "expected profits",
@@ -314,16 +317,16 @@ class SnapshotManager:
         return profit
 
     def estimateProfitTend(self, key, overrides):
-        gas_cost = self.strategy.tend.estimate_gas(overrides)
+        gas_estimate = self.strategy.tend.estimate_gas(overrides)
+        gas_cost = web3.fromWei(gas_strategies.gas_cost(gas_estimate), "ether")
         earnings = get_tend_earnings(self.strategy, key, overrides)
         if earnings == "skip":
             return 0
 
-        gas_cost_eth = gas_cost / 10 ** 9
-        profit = earnings - gas_cost_eth
+        profit = decimal.Decimal(earnings) - gas_cost
         console.log(
             "expected gas cost:",
-            gas_cost_eth,
+            gas_cost,
             "expected earnings:",
             earnings,
             "expected profits",
@@ -332,18 +335,18 @@ class SnapshotManager:
         return profit
 
     def estimateProfitHarvestViaManager(self, key, strategy, overrides):
-        gas_cost = self.badger.badgerRewardsManager.harvest.estimate_gas(
+        gas_estimate = self.badger.badgerRewardsManager.harvest.estimate_gas(
             strategy, overrides
         )
+        gas_cost = web3.fromWei(gas_strategies.gas_cost(gas_estimate), "ether")
         earnings = get_harvest_earnings(self.strategy, key, overrides)
         if earnings == "skip":
             return 0
 
-        gas_cost_eth = gas_cost / 10 ** 9
-        profit = earnings - gas_cost_eth
+        profit = decimal.Decimal(earnings) - gas_cost
         console.log(
             "expected gas cost:",
-            gas_cost_eth,
+            gas_cost,
             "expected earnings:",
             earnings,
             "expected profits",
@@ -352,16 +355,16 @@ class SnapshotManager:
         return profit
 
     def estimateProfitHarvest(self, key, overrides):
-        gas_cost = self.strategy.harvest.estimate_gas(overrides)
+        gas_estimate = self.strategy.harvest.estimate_gas(overrides)
+        gas_cost = web3.fromWei(gas_strategies.gas_cost(gas_estimate), "ether")
         earnings = get_harvest_earnings(self.strategy, key, overrides)
         if earnings == "skip":
             return 0
 
-        gas_cost_eth = gas_cost / 10 ** 9
-        profit = earnings - gas_cost_eth
+        profit = decimal.Decimal(earnings) - gas_cost
         console.log(
             "expected gas cost:",
-            gas_cost_eth,
+            gas_cost,
             "expected earnings:",
             earnings,
             "expected profits",

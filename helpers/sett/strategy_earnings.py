@@ -118,7 +118,7 @@ def get_price(token: str, sellAmount=1000000000000000000):
     :return: eth/bnb price per token for the specified amount to sell
     """
 
-    if curr_network == "bsc":
+    if curr_network == "bsc" or curr_network == "bsc-fork":
         endpoint = "https://bsc.api.0x.org/"
         buyToken = "WBNB"
     elif curr_network == "eth":
@@ -157,6 +157,7 @@ def token_data(key: str, tend: bool) -> tuple[str, str]:
     token = get_symbol(key, tend)
     if not token:
         console.log("token for strategy", key, "not found")
+        return (None, None)
 
     token_address = get_address(token)
     if not type(token_address) == str:
@@ -182,7 +183,7 @@ def calc_profit(earnings: int, token_address: str, token: str) -> int:
 
     token_contract = interface.IERC20(token_address)
     decimals = token_contract.decimals()
-    eth_profit = earnings / (10 ** decimals) * float(price)
+    eth_earnings = earnings / (10 ** decimals) * float(price)
 
     if curr_network == "bsc":
         console.log(
@@ -193,7 +194,7 @@ def calc_profit(earnings: int, token_address: str, token: str) -> int:
             "price in bnb:",
             price,
             "bnb profit:",
-            eth_profit,
+            eth_earnings,
         )
     elif curr_network == "eth":
         console.log(
@@ -203,11 +204,11 @@ def calc_profit(earnings: int, token_address: str, token: str) -> int:
             earnings,
             "price in eth:",
             price,
-            "eth profit:",
-            eth_profit,
+            "eth earnings:",
+            eth_earnings,
         )
 
-    return eth_profit
+    return eth_earnings
 
 
 def get_symbol(key: str, tend=False) -> str:
