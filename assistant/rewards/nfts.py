@@ -12,21 +12,28 @@ Diamond Hands 3    10    0xe4605d46fd0b3f8329d936a8b258d69276cba264    Collab   
 Jersey    200    0xe1e546e25a5ed890dff8b8d005537c0d373497f8    Badger    1
 """
 import math
-import json
 from assistant.subgraph.client import fetch_nfts
 from rich.console import Console
+from helpers.google_sheets import get_json_data
 
 console = Console()
 
-MAX_NFT_BOOST = 0.5
-
-score_multipliers = {"partner": 1, "collab": 2, "badger": 5}
-
-honeypot_rarity = {97: 500, 98: 500, 99: 100, 100: 100, 101: 10, 102: 10}
-diamond_hands_rarity = {205: 200, 206: 50, 208: 10}
-jersey_rarity = {1: 200}
-memeAddress = "0xe4605d46fd0b3f8329d936a8b258d69276cba264"
-badgerNftAddress = "0xe1e546e25a5ed890dff8b8d005537c0d373497f8"
+nft_data = get_json_data("nft")
+(
+    score_multipliers,
+    honeypot_rarity,
+    diamond_hands_rarity,
+    jersey_rarity,
+    memeAddress,
+    badgerNftAddress,
+) = (
+    nft_data["score_multipliers"],
+    nft_data["honeypot_rarity"],
+    nft_data["diamond_hands_rarity"],
+    nft_data["jersey_rarity"],
+    nft_data["memeAddress"],
+    nft_data["badgerNftAddress"],
+)
 
 
 def calc_total_nfts_score(rarities, multiplier_type):
@@ -59,9 +66,9 @@ def calc_nft_multipliers(block):
         else:
             userScores[addr] = sumScores
 
-    totalHoneypotScore = calc_total_nfts_score(honeypot_rarity, "partner")
-    totalDiamondScore = calc_total_nfts_score(diamond_hands_rarity, "collab")
-    totalJerseyScore = calc_total_nfts_score(jersey_rarity, "badger")
+    totalHoneypotScore = calc_total_nfts_score(honeypot_rarity, "Partner")
+    totalDiamondScore = calc_total_nfts_score(diamond_hands_rarity, "Collab")
+    totalJerseyScore = calc_total_nfts_score(jersey_rarity, "Badger")
     maxScore = totalJerseyScore + totalHoneypotScore + totalDiamondScore
     console.log("Max NFT score: {}".format((maxScore)))
 
@@ -98,14 +105,14 @@ def calc_score(rarity, multiplier):
 
 def honeypot_score(honeypot_nft):
     tokenId = int(honeypot_nft["token"]["tokenId"])
-    return calc_score(honeypot_rarity[tokenId], score_multipliers["partner"])
+    return calc_score(honeypot_rarity[tokenId], score_multipliers["Partner"])
 
 
 def diamond_hands_score(diamond_hand_nft):
     tokenId = int(diamond_hand_nft["token"]["tokenId"])
-    return calc_score(diamond_hands_rarity[tokenId], score_multipliers["collab"])
+    return calc_score(diamond_hands_rarity[tokenId], score_multipliers["Collab"])
 
 
 def jersey_score(jersey_nft):
     tokenId = int(jersey_nft["token"]["tokenId"])
-    return calc_score(jersey_rarity[tokenId], score_multipliers["badger"])
+    return calc_score(jersey_rarity[tokenId], score_multipliers["Badger"])

@@ -41,3 +41,7 @@ deploy-1337final.json
 venv
 .vscode
 .idea
+
+# google sheets api credentials
+google-sheet-credentials.json
+google-sheet-token.json
