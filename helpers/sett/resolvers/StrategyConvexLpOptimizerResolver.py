@@ -27,8 +27,6 @@ class StrategyConvexLpOptimizerResolver(StrategyCoreResolver):
         for key in keys:
             assert key in event
 
-        print(event)
-
         console.print("[blue]== Convex Strat harvest() State ==[/blue]")
         self.printState(event, keys)
 
@@ -61,6 +59,7 @@ class StrategyConvexLpOptimizerResolver(StrategyCoreResolver):
         # self.confirm_harvest_events(before, after, tx)
 
         super().confirm_harvest(before, after, tx)
+        self.manager.printCompare(before, after)
 
         # Strategy want should increase
         assert after.get("strategy.balanceOf") >= before.get("strategy.balanceOf")
@@ -72,6 +71,7 @@ class StrategyConvexLpOptimizerResolver(StrategyCoreResolver):
         self.confirm_tend_events(before, after, tx)
 
         console.print("=== Compare Convex Tend() ===")
+        self.manager.printCompare(before, after)
 
         # Expect Increase xSushi position in strategy if we have tended sushi.
         event = tx.events["Tend"][0]

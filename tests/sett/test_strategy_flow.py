@@ -98,6 +98,9 @@ def test_single_user_harvest_flow(settConfig):
     # Earn
     snap.settEarn({"from": settKeeper})
 
+    chain.sleep(days(1))
+    chain.mine()
+
     if tendable:
         with brownie.reverts("onlyAuthorizedActors"):
             strategy.tend({"from": randomUser})
