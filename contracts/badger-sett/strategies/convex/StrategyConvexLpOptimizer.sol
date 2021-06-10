@@ -84,7 +84,7 @@ contract StrategyConvexLpOptimizer is BaseStrategyMultiSwapper {
     address public constant cvxCRV_CRV_SLP = 0x33F6DDAEa2a8a54062E021873bCaEE006CdF4007; // cvxCRV/CRV SLP
     address public constant CVX_ETH_SLP = 0x05767d9EF41dC40689678fFca0608878fb3dE906; // CVX/ETH SLP
     IBooster public constant booster = IBooster(0xF403C135812408BFbE8713b5A23a04b3D48AAE31);
-    IBaseRewardsPool public constant baseRewardsPool = IBaseRewardsPool(0x8E299C62EeD737a5d5a53539dF37b5356a27b07D);
+    IBaseRewardsPool public baseRewardsPool;
     ISushiChef public constant convexMasterChef = ISushiChef(0x5F465e9fcfFc217c5849906216581a657cd60605);
     IClaimZap public constant claimZap = IClaimZap(0xAb9F4BB0aDD2CFbb168da95C590205419cD71f9B);
 
@@ -144,6 +144,9 @@ contract StrategyConvexLpOptimizer is BaseStrategyMultiSwapper {
 
         pid = _pid; // Core staking pool ID
 
+        IBooster.PoolInfo memory poolInfo = booster.poolInfo(pid);
+        baseRewardsPool = IBaseRewardsPool(poolInfo.crvRewards);
+
         performanceFeeGovernance = _feeConfig[0];
         performanceFeeStrategist = _feeConfig[1];
         withdrawalFee = _feeConfig[2];
@@ -173,7 +176,7 @@ contract StrategyConvexLpOptimizer is BaseStrategyMultiSwapper {
 
     /// ===== View Functions =====
     function version() external pure returns (string memory) {
-        return "1.1";
+        return "1.0";
     }
 
     function getName() external override pure returns (string memory) {
@@ -181,7 +184,7 @@ contract StrategyConvexLpOptimizer is BaseStrategyMultiSwapper {
     }
 
     function balanceOfPool() public override view returns (uint256) {
-        return ICurveGauge(gauge).balanceOf(address(this));
+        return baseRewardsPool.balanceOf(address(this));
     }
 
     function getProtectedTokens() external override view returns (address[] memory) {
@@ -248,7 +251,7 @@ contract StrategyConvexLpOptimizer is BaseStrategyMultiSwapper {
         // If we lack sufficient idle want, withdraw the difference from the strategy position
         if (_preWant < _amount) {
             uint256 _toWithdraw = _amount.sub(_preWant);
-            booster.withdraw(pid, _toWithdraw);
+            baseRewardsPool.withdrawAndUnwrap(_toWithdraw, false);
             // Note: Withdrawl process will earn sushi, this will be deposited into SushiBar on next tend()
         }
 
