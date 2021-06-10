@@ -24,7 +24,7 @@ def main():
     badger = connect_badger(badger_config.prod_json, load_deployer=False)
     nextCycle = badger.badgerTree.currentCycle() + 1
 
-    startBlock = 11951320
+    startBlock = 12593628
     endBlock = chain.height
 
     currentRewards = fetch_current_rewards_tree(badger)
@@ -33,7 +33,7 @@ def main():
     console.log(currentRewards["endBlock"])
 
     rewards = calc_sushi_rewards(
-        badger, startBlock, endBlock, nextCycle, retroactive=True)
+        badger, startBlock, endBlock, nextCycle)
     rewardsLogger.save("retroactive-xsushi")
 
     cumulative_rewards = process_cumulative_rewards(currentRewards, rewards)
