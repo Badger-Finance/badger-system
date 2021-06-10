@@ -194,8 +194,15 @@ def test_post_migration_flow(setup):
     vault = setup.vault
     strategy = setup.strategy
 
-    # Get current strategy and want
+    # Get current strategy, want and tokens of interest
     want = interface.IERC20(vault.token())
+    xsushi = interface.IERC20(strategy.xsushi())
+    crv = interface.IERC20(strategy.crv())
+    cvx = interface.IERC20(strategy.cvx())
+    cvxCrv = interface.IERC20(strategy.cvxCrv())
+    cvxCRV_CRV_SLP = interface.IERC20(strategy.cvxCRV_CRV_SLP())
+    CVX_ETH_SLP = interface.IERC20(strategy.CVX_ETH_SLP())
+    
     currentStrategy = interface.IStrategy(controller.strategies(want.address))
 
 
@@ -229,8 +236,8 @@ def test_post_migration_flow(setup):
     print("User1: ", startingBalance1/Wei("1 ether"))
     print("Vault: ", startingBalanceVault/Wei("1 ether"))
 
-    # Deposit
 
+    # Deposit
     # User1 has 0 shares
     assert vault.balanceOf(user1.address) == 0
 
@@ -252,6 +259,7 @@ def test_post_migration_flow(setup):
     chain.sleep(days(1))
     chain.mine()
 
+
     # Earn
     prevBalanceOfPool = strategy.balanceOfPool()
     prevBalanceOfWant = strategy.balanceOfWant()
@@ -270,6 +278,56 @@ def test_post_migration_flow(setup):
     assert strategy.balanceOf() > prevTotalBalance
     # Balance of user remains the same
     assert want.balanceOf(user1.address) == startingBalance1 - depositAmount
+
+    chain.sleep(days(1))
+    chain.mine()
+
+    
+    # Tend
+    prevXSushiBalance = xsushi.balanceOf(strategy.address)
+    prevCrvBalance = crv.balanceOf(strategy.address)
+    prevCvxBalance = cvx.balanceOf(strategy.address)
+    prevcvxCRV_CRV_SLPBalance = cvxCRV_CRV_SLP.balanceOf(strategy.address)
+    prevCVX_ETH_SLPBalance = CVX_ETH_SLP.balanceOf(strategy.address)
+
+    # Connect to convexMasterChef
+    convexMasterChef = interface.ISushiChef(strategy.convexMasterChef())
+
+    # Get stake pool ids
+    cvxCRV_CRV_SLP_Pid = strategy.cvxCRV_CRV_SLP_Pid()
+    CVX_ETH_SLP_Pid = strategy.CVX_ETH_SLP_Pid()
+
+    # Check that strategy has 0 stakes on both pools initially 
+    initialStratStake0 = convexMasterChef.userInfo(cvxCRV_CRV_SLP_Pid, strategy.address)
+    initialStratStake1 = convexMasterChef.userInfo(CVX_ETH_SLP_Pid, strategy.address)
+
+    assert initialStratStake0 == [0, 0]
+    assert initialStratStake1 == [0, 0]
+
+    strategy.tend({"from": keeper})
+
+    print(convexMasterChef.userInfo(cvxCRV_CRV_SLP_Pid, strategy.address))
+    print(convexMasterChef.userInfo(CVX_ETH_SLP_Pid, strategy.address))
+
+    # Check that the strat's stake amount increased for both pools
+    assert convexMasterChef.userInfo(cvxCRV_CRV_SLP_Pid, strategy.address) > initialStratStake0
+    assert convexMasterChef.userInfo(CVX_ETH_SLP_Pid, strategy.address) > initialStratStake1
+
+    # Check that Crv and Cvx balances increase
+    assert crv.balanceOf(strategy.address) > prevCrvBalance 
+    assert cvx.balanceOf(strategy.address) > prevCvxBalance
+
+    # Check that LP balances remain the same
+    assert cvxCRV_CRV_SLP.balanceOf(strategy.address) == prevcvxCRV_CRV_SLPBalance
+    assert CVX_ETH_SLP.balanceOf(strategy.address) == prevCVX_ETH_SLPBalance
+
+    chain.sleep(days(1))
+    chain.mine()
+
+    # Harvest
+
+
+    assert False
 
 
 
