@@ -111,6 +111,7 @@ class StrategyConvexLpOptimizerResolver(StrategyCoreResolver):
         entities["strategy"] = self.manager.strategy.address
         entities["user"] = accounts[0].address # deployer being used as user on test_strategy_flow.py
         entities["randomUser"] = accounts[6].address
+        entities["convexMasterChef"] = self.manager.strategy.convexMasterChef()
 
 
         super().add_entity_balances_for_tokens(calls, tokenKey, token, entities)
@@ -135,4 +136,34 @@ class StrategyConvexLpOptimizerResolver(StrategyCoreResolver):
         calls = self.add_entity_balances_for_tokens(calls, "CVX_ETH_SLP", CVX_ETH_SLP, entities)
 
         return calls
+
+    def add_strategy_snap(self, calls, entities=None):
+        super().add_strategy_snap(calls)
+
+        strategy = self.manager.strategy
+    
+        cvxCRV_CRV_SLP_Pid = strategy.cvxCRV_CRV_SLP_Pid()
+        CVX_ETH_SLP_Pid = strategy.CVX_ETH_SLP_Pid()
+
+        convexMasterChef = strategy.convexMasterChef()
+
+        if entities:
+            for entityKey, entity in entities.items():
+                calls.append(
+                    Call(
+                        convexMasterChef,
+                        [func.sushiChef.userInfo, cvxCRV_CRV_SLP_Pid, entity],
+                        [["convexMasterChef.userInfo.cvxCRV_CRV_SLP_Pid." + entityKey, as_wei]],
+                    )
+                )
+                calls.append(
+                    Call(
+                        convexMasterChef,
+                        [func.sushiChef.userInfo, CVX_ETH_SLP_Pid, entity],
+                        [["convexMasterChef.userInfo.CVX_ETH_SLP_Pid." + entityKey, as_wei]],
+                    )
+                )
+
+        return calls
+
     
