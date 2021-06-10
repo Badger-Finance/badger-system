@@ -94,30 +94,30 @@ def calc_sushi_rewards(badger, startBlock, endBlock, nextCycle):
     xSushiTokenAddress = "0x8798249c2e607446efb7ad49ec89dd1865ff4272"
     sushi_harvest_events = fetch_sushi_harvest_events()
 
-    wbtcEthRewards, wbtcEthXSushi = calc_sett_sushi_rewards(
-        "native.sushiWbtcEth",
-        badger,
-        startBlock,
-        endBlock,
-        sushi_harvest_events,
-        nextCycle
-    )
-    wbtcBadgerRewards, badgerWbtcXSushi = calc_sett_sushi_rewards(
-        "native.sushiBadgerWbtc",
-        badger,
-        startBlock,
-        endBlock,
-        sushi_harvest_events,
-        nextCycle
-    )
-    wbtcDiggRewards, diggWbtcXSushi = calc_sett_sushi_rewards(
-        "native.sushiDiggWbtc",
-        badger,
-        startBlock,
-        endBlock,
-        sushi_harvest_events,
-        nextCycle
-    )
+    #wbtcEthRewards, wbtcEthXSushi = calc_sett_sushi_rewards(
+    #    "native.sushiWbtcEth",
+    #    badger,
+    #    startBlock,
+    #    endBlock,
+    #    sushi_harvest_events,
+    #    nextCycle
+    #)
+   #wbtcBadgerRewards, badgerWbtcXSushi = calc_sett_sushi_rewards(
+    #    "native.sushiBadgerWbtc",
+    #    badger,
+    #    startBlock,
+    #    endBlock,
+    #    sushi_harvest_events,
+    #    nextCycle
+    #)
+    #wbtcDiggRewards, diggWbtcXSushi = calc_sett_sushi_rewards(
+    #    "native.sushiDiggWbtc",
+    #    badger,
+    #    startBlock,
+    #    endBlock,
+    #    sushi_harvest_events,
+    #    nextCycle
+    #)
     ibbtcWbtcRewards, ibbtcWbtcXSushi = calc_sett_sushi_rewards(
         "experimental.sushiIBbtcWbtc",
         badger,
@@ -126,10 +126,10 @@ def calc_sushi_rewards(badger, startBlock, endBlock, nextCycle):
         sushi_harvest_events,
         nextCycle
     )
-    totalxSushi = wbtcEthXSushi + badgerWbtcXSushi + diggWbtcXSushi + ibbtcWbtcXSushi
+    totalxSushi = ibbtcWbtcXSushi
 
     finalRewards = combine_rewards(
-        [wbtcEthRewards, wbtcBadgerRewards, wbtcDiggRewards, ibbtcWbtcRewards], nextCycle, badger.badgerTree)
+        [ibbtcWbtcRewards], nextCycle, badger.badgerTree)
     xSushiFromRewards = 0
 
     for user, claimData in finalRewards.claims.items():
