@@ -1,3 +1,4 @@
+from helpers.registry.YearnRegistry import YearnRegistry
 from sys import version_info
 import pytest
 from brownie import (
@@ -65,12 +66,11 @@ BRIDGE_VAULTS = [
 ]
 
 
-#there's probably a better way if importing these addresses - export to a config file or something?
-coreContract = "0x2A8facc9D49fBc3ecFf569847833C380A13418a8"
-ibbtcContract = "0xc4E15973E6fF2A35cC804c2CF9D2a1b817a8b40F"
-peakContract = "0x41671BA1abcbA387b9b2B752c205e22e916BE6e3"
-wbtcPeakContract = "0x825218beD8BE0B30be39475755AceE0250C50627"
-wbtcAddr = "0x4b92d19c11435614CD49Af1b589001b7c08cD4D5"
+#import addresses
+coreContract = registry.defidollar.addresses.core
+ibbtcContract = registry.defidollar.addresses.ibbtc
+peakContract = registry.defidollar.addresses.badgerPeak
+wbtcPeakContract = registry.defidollar.addresses.wbtcPeak
 
 #test mint/burn ibbtc using btokens from badger vaults
 @pytest.mark.parametrize(
@@ -84,6 +84,11 @@ def test_bridge_ibbtc(vault, poolId):
     _upgrade_bridge(badger, bridge)
     _upgrade_swap(badger, swap)
     _deploy_bridge_mocks(badger, bridge)
+
+    yearnWbtc = connect_badger("deploy-final.json")
+    wbtcAddr = yearnWbtc.sett_system["vaults"]["yearn.wbtc"]
+
+    renbtc = registry.tokens.renbtc
 
     slippage = .03
     amount = 1 * 10**8
@@ -125,13 +130,6 @@ def test_bridge_ibbtc(vault, poolId):
     gov3 = interface.IBadgerYearnWbtcPeak(wbtcPeakContract).owner()
     interface.IBadgerYearnWbtcPeak(wbtcPeakContract).approveContractAccess(bridge.adapter, {"from": gov3})
 
-    #allowance approval
-    #interface.IERC20(v).approve(bridge.adapter, amount, {"from": accounts[0]})
-    #if vault["symbol"] == "bwBTC":
-    #    interface.IERC20(wbtcAddr).approve(wbtcPeakContract, amount, {"from": bridge.adapter})
-    #else:
-    #    interface.IERC20(v).approve(peakContract, amount, {"from": bridge.adapter})
-
     #minting
     accountsBalanceBefore = interface.IERC20(ibbtcContract).balanceOf(accounts[0].address)
     bridge.adapter.mint(
@@ -150,18 +148,29 @@ def test_bridge_ibbtc(vault, poolId):
 
     assert accountsBalanceAfter > accountsBalanceBefore
 
+    gatewayBalanceBefore = interface.IERC20(renbtc).balanceOf(bridge.mocks.BTC.gateway)
+    bridgeBalance = interface.IERC20(renbtc).balanceOf(bridge.adapter)
+
     #burning
     interface.IERC20(ibbtcContract).approve(bridge.adapter, accountsBalanceAfter, {"from": accounts[0]})
+    interface.IERC20(renbtc).approve(
+        bridge.mocks.BTC.gateway,
+        amount,
+        {"from": bridge.adapter}
+    )
     bridge.adapter.burn(
-        ibbtcContract,
+        vault["inToken"],
         v,
         slippage * 10**4,
         accounts[0].address,
         accountsBalanceAfter,
+        True,
         {"from": accounts[0]},
     )
 
     assert interface.IERC20(ibbtcContract).balanceOf(accounts[0].address) == 0
+    assert interface.IERC20(renbtc).balanceOf(bridge.adapter) - bridgeBalance < 2
+    assert interface.IERC20(renbtc).balanceOf(bridge.mocks.BTC.gateway) > gatewayBalanceBefore
 
 
 # Tests mint/burn to/from crv sett.
@@ -219,6 +228,7 @@ def test_bridge_vault(vault):
                 slippage * 10 ** 4,
                 account.address,
                 balance,
+                False,
                 {"from": account},
             )
 
@@ -336,6 +346,7 @@ def test_bridge_basic():
                 slippage * 10 ** 4,
                 account.address,
                 balance,
+                False,
                 {"from": account},
             )
             assert interface.IERC20(wbtc).balanceOf(account) == 0
