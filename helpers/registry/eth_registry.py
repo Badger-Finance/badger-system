@@ -7,6 +7,15 @@ from dotmap import DotMap
 from helpers.registry.WhaleRegistryAction import WhaleRegistryAction
 import json
 
+defidollar_registry = DotMap(
+    addresses = DotMap(
+        core = "0x2A8facc9D49fBc3ecFf569847833C380A13418a8",
+        ibbtc = "0xc4E15973E6fF2A35cC804c2CF9D2a1b817a8b40F",
+        badgerPeak = "0x41671BA1abcbA387b9b2B752c205e22e916BE6e3",
+        wbtcPeak = "0x825218beD8BE0B30be39475755AceE0250C50627",
+    )
+)
+
 aragon_registry = DotMap(
     addresses=DotMap(
         agentImpl="0x3a93c17fc82cc33420d1809dda9fb715cc89dd37",
