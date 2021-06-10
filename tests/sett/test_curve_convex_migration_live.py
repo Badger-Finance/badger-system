@@ -10,9 +10,10 @@ from collections import namedtuple
 from config.badger_config import badger_config, digg_config, sett_config
 from scripts.systems.badger_system import connect_badger
 from scripts.systems.constants import SettType
-from helpers.token_utils import distribute_test_ether
+from helpers.token_utils import distribute_test_ether, distribute_from_whales
 from rich.console import Console
 from helpers.proxy_utils import deploy_proxy
+from helpers.utils import approx
 
 console = Console()
 
@@ -174,8 +175,101 @@ def test_strategy_migration(setup):
     print("Old Strategy: ", currentStrategy.balanceOf())
     print("New Strategy: ", strategy.balanceOf())
 
-    assert False
 
+# @pytest.mark.skip()
+def test_post_migration_flow(setup):
+    # Get Actors:
+    user1 = setup.namedAccounts["user1"]
+    user2 = setup.namedAccounts["user2"]
+    user3 = setup.namedAccounts["user3"]
+    deployer = setup.namedAccounts["deployer"]
+    guardian = setup.namedAccounts["guardian"]
+    keeper = setup.namedAccounts["keeper"]
+    governance = setup.namedAccounts["governance"]
+    strategist = setup.namedAccounts["strategist"]
+
+    # Get System, Controller, Vault and Strategy
+    badger = setup.badger
+    controller = setup.controller
+    vault = setup.vault
+    strategy = setup.strategy
+
+    # Get current strategy and want
+    want = interface.IERC20(vault.token())
+    currentStrategy = interface.IStrategy(controller.strategies(want.address))
+
+
+    # === Migration === #
+
+    # Approve new strategy for want on Controller
+    controller.approveStrategy(strategy.want(), strategy.address, {"from": governance})
+    assert controller.approvedStrategies(strategy.want(), strategy.address)
+
+    # Set new strategy for want on Controller
+    controller.setStrategy(strategy.want(), strategy.address, {"from": governance})
+    assert controller.strategies(vault.token()) == strategy.address
+
+
+    # === Post Migration Strategy Flow == #
+
+    # Transfer assets to users
+    distribute_from_whales(user1, 1, "renCrv")
+
+    startingBalance = want.balanceOf(user1)
+    assert startingBalance > 0
+    want.transfer(user2.address, startingBalance/3, {"from": user1})
+    want.transfer(user3.address, startingBalance/3, {"from": user1})
+
+    startingBalance1 = want.balanceOf(user1)
+    startingBalance2 = want.balanceOf(user2)
+    startingBalance3 = want.balanceOf(user3)
+    startingBalanceVault = want.balanceOf(vault.address)
+
+    print("=== Initial Balances ===")
+    print("User1: ", startingBalance1/Wei("1 ether"))
+    print("Vault: ", startingBalanceVault/Wei("1 ether"))
+
+    # Deposit
+
+    # User1 has 0 shares
+    assert vault.balanceOf(user1.address) == 0
+
+    want.approve(vault.address, MaxUint256, {"from": user1})
+    depositAmount = startingBalance1/2
+    vault.deposit(depositAmount, {"from": user1})
+
+    # Want is deposited correctly
+    assert want.balanceOf(vault.address) == startingBalanceVault + depositAmount
+    # Right amount of shares is minted
+    assert approx(
+        vault.balanceOf(user1.address), 
+        (depositAmount // vault.getPricePerFullShare()) * (10**vault.decimals()), 
+        1
+    )
+    # Want balance of user1 decreases by depositAmount
+    assert want.balanceOf(user1.address) == startingBalance1 - depositAmount
+
+    chain.sleep(days(1))
+    chain.mine()
+
+    # Earn
+    prevBalanceOfPool = strategy.balanceOfPool()
+    prevBalanceOfWant = strategy.balanceOfWant()
+    prevTotalBalance = strategy.balanceOf() 
+
+    vault.earn({"from": deployer}) # deployer set as keeper for this Sett
+
+    # All want should be in pool OR sitting in strategy, not a mix
+    assert (
+        strategy.balanceOfWant() == 0 and strategy.balanceOfPool() > prevBalanceOfPool
+    ) or (
+        strategy.balanceOfPool() == 0 and strategy.balanceOfWant() > prevBalanceOfWant
+    )
+
+    # Total want balance within strategy increases (pool + strategy)
+    assert strategy.balanceOf() > prevTotalBalance
+    # Balance of user remains the same
+    assert want.balanceOf(user1.address) == startingBalance1 - depositAmount
 
 
 
