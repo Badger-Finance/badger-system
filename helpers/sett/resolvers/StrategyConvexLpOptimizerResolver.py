@@ -34,6 +34,7 @@ class StrategyConvexLpOptimizerResolver(StrategyCoreResolver):
         key = 'Tend'
         assert key in tx.events
         assert len(tx.events[key]) == 1
+
         event = tx.events[key][0]
         keys = [
             'tended',
@@ -42,6 +43,22 @@ class StrategyConvexLpOptimizerResolver(StrategyCoreResolver):
             assert key in event
 
         console.print("[blue]== Convex Strat tend() State ==[/blue]")
+        self.printState(event, keys)
+
+        key = 'TendState'
+        assert key in tx.events
+        assert len(tx.events[key]) == 1
+
+        event = tx.events[key][0]
+        keys = [
+            'sushiTended',
+            'crvTended',
+            'cvxTended',
+            'cvxEthLpTended',
+            'cvxCrvCrvLpTended'
+        ]
+        for key in keys:
+            assert key in event
         self.printState(event, keys)
 
     def printState(self, event, keys):

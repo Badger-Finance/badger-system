@@ -124,7 +124,18 @@ contract StrategyConvexLpOptimizer is BaseStrategyMultiSwapper {
         uint256 sushiTended;
         uint256 crvTended;
         uint256 cvxTended;
+        uint256 cvxEthLpTended;
+        uint256 cvxCrvCrvLpTended;
+        
     }
+
+    event TendState(
+        uint256 sushiTended,
+        uint256 crvTended,
+        uint256 cvxTended,
+        uint256 cvxEthLpTended,
+        uint256 cvxCrvCrvLpTended
+    );
 
     function initialize(
         address _governance,
@@ -212,18 +223,9 @@ contract StrategyConvexLpOptimizer is BaseStrategyMultiSwapper {
         booster.deposit(pid, _want, true);
     }
 
-    function _fetchBalances(address[] memory tokens) internal returns (uint256[] memory balances) {
-        
-        balances = new uint256[](tokens.length);
-
-        for (uint256 i = 0; i < tokens.length; i++) {
-            balances[i] = IERC20Upgradeable(tokens[i]).balanceOf(address(this));
-        }
-    }
-
-
     /// @dev Unroll from all strategy positions, and transfer non-core tokens to controller rewards
     function _withdrawAll() internal override {
+        // TODO: Functionality not required for initial migration
         // booster.withdrawAll(pid, true);
 
         // // === Transfer extra token: Sushi ===
@@ -284,12 +286,14 @@ contract StrategyConvexLpOptimizer is BaseStrategyMultiSwapper {
             IxSushi(xsushi).enter(sushiToDeposit);
     }
 
-    function _tend_CRV_cvxCRV_SLP(uint256 crvToDeposit) internal {
+    function _tend_CRV_cvxCRV_SLP(uint256 crvToDeposit) internal returns(uint256 lpGained) {
         // 1. Convert half CRV -> cvxCRV
         uint256 halfCrv = crvToDeposit.div(2);
         crvDepositor.deposit(halfCrv, true); // Note: Do not stake, we will use for LP instead
         // Security Note: What if there is other crvCVX sitting around in the strategy from outside sources?
         // Excess coins will accumulate and possibly be deposited on future tends
+
+        uint256 beforeLpBal = CVX_ETH_SLP_Token.balanceOf(address(this));
 
         // 2. LP on Sushi
         _add_max_liquidity_sushiswap(crv, cvxCrv);
@@ -298,15 +302,20 @@ contract StrategyConvexLpOptimizer is BaseStrategyMultiSwapper {
         uint256 lpBal = cvxCRV_CRV_SLP_Token.balanceOf(address(this));
         convexMasterChef.deposit(cvxCRV_CRV_SLP_Pid, lpBal);
 
+        lpGained = lpBal - beforeLpBal;
+
         //TODO: Sanity checks and limits
+
     }
 
-    function _tend_CVX_ETH_SLP(uint256 cvxToDeposit) internal {
+    function _tend_CVX_ETH_SLP(uint256 cvxToDeposit) internal returns(uint256 lpGained) {
         // 1. Swap Half CVX -> ETH
         uint256 halfCvx = cvxToDeposit.div(2);
         address[] memory path = new address[](2);
         path[0] = cvx;
         path[1] = weth;
+
+        uint256 beforeLpBal = CVX_ETH_SLP_Token.balanceOf(address(this));
 
         _swapEthOut_sushiswap(cvx, halfCvx, path);
 
@@ -316,6 +325,8 @@ contract StrategyConvexLpOptimizer is BaseStrategyMultiSwapper {
         // 3. Stake on Convex
         uint256 lpBal = CVX_ETH_SLP_Token.balanceOf(address(this));
         convexMasterChef.deposit(CVX_ETH_SLP_Pid, lpBal);
+
+        lpGained = lpBal - beforeLpBal;
 
         //TODO: Sanity checks and limits
     }
@@ -344,14 +355,15 @@ contract StrategyConvexLpOptimizer is BaseStrategyMultiSwapper {
         }
         // Only execute if CRV balance is greater than 0
         if ( tendData.crvTended > 0 ) {
-            _tend_CRV_cvxCRV_SLP(tendData.crvTended);
+            tendData.cvxEthLpTended = _tend_CRV_cvxCRV_SLP(tendData.crvTended);
         }
         // Only execute if CVX balance is greater than 0
         if ( tendData.cvxTended > 0 ) {
-            _tend_CVX_ETH_SLP(tendData.cvxTended);
+            tendData.cvxCrvCrvLpTended = _tend_CVX_ETH_SLP(tendData.cvxTended);
         }
 
-        emit Tend(tendData.sushiTended);
+        emit Tend(0);
+        emit TendState(tendData.sushiTended, tendData.crvTended, tendData.cvxTended, tendData.cvxEthLpTended, tendData.cvxCrvCrvLpTended);
         return tendData;
     }
     
@@ -359,6 +371,7 @@ contract StrategyConvexLpOptimizer is BaseStrategyMultiSwapper {
     function harvest() external whenNotPaused returns (HarvestData memory) {
         _onlyAuthorizedActors();
         HarvestData memory harvestData;
+        // TODO: Harvest details still under constructuion. It's being designed to optimize yield while still allowing on-demand access to profits for users.
         return harvestData;
     }
     receive() external payable {}
