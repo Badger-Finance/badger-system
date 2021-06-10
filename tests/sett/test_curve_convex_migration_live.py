@@ -415,6 +415,8 @@ def test_post_migration_flow(setup):
     ):
         assert want.balanceOf(controller.rewards()) > startingRewardsBalance
 
+    print("Fees Withdraw 1: ", want.balanceOf(controller.rewards())-startingRewardsBalance)
+
     # User1's shares decrease after withdraw
     assert vault.balanceOf(user1.address) < sharesUser1
 
@@ -485,6 +487,8 @@ def test_post_migration_flow(setup):
     ):
         assert want.balanceOf(controller.rewards()) > startingRewardsBalance
 
+    print("Fees Withdraw 2: ", want.balanceOf(controller.rewards())-startingRewardsBalance)
+
     # User2's shares should be 0
     assert vault.balanceOf(user2.address) == 0
 
@@ -496,13 +500,13 @@ def test_post_migration_flow(setup):
     endingBalance3 = want.balanceOf(user3)
     endingBalanceVault = want.balanceOf(vault.address)
 
-    print("=== Initial Balances ===")
+    print("=== Final Balances ===")
     print("User1: ", endingBalance1/Wei("1 ether"))
     print("User2: ", endingBalance2/Wei("1 ether"))
     print("Vault: ", endingBalanceVault/Wei("1 ether"))
 
 
-    # assert False
+    assert False
 
 
 
