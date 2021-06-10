@@ -178,8 +178,7 @@ def fetch_sett_transfers(settID, startBlock, endBlock):
 
     deposits = map(convert_amount, results["vaults"][0]["deposits"])
     withdrawals = map(
-        negate_withdrawals,
-        map(convert_amount, results["vaults"][0]["withdrawals"]),
+        negate_withdrawals, map(convert_amount, results["vaults"][0]["withdrawals"]),
     )
 
     deposits = list(filter(filter_by_startBlock, list(deposits)))
@@ -188,8 +187,7 @@ def fetch_sett_transfers(settID, startBlock, endBlock):
     console.log("Processing {} withdrawals".format(len((withdrawals))))
 
     return sorted(
-        [*deposits, *withdrawals],
-        key=lambda t: t["transaction"]["timestamp"],
+        [*deposits, *withdrawals], key=lambda t: t["transaction"]["timestamp"],
     )
 
 

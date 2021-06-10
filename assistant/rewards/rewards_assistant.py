@@ -38,6 +38,9 @@ console = Console()
 def calc_sett_rewards(badger, periodStartBlock, endBlock, cycle):
     """
     Calculate rewards for each sett, and sum them
+    - Calculate badger boost
+    - Calculate sett rewards and generate apy info with boosts
+    - Merge togther rewards from setts to one RewardsList
     """
     # ratio = digg_btc_twap(periodStartBlock,endBlock)
     # diggAllocation = calculate_digg_allocation(ratio)
@@ -191,22 +194,17 @@ def fetch_current_rewards_tree(badger, print_output=False):
 
 
 def generate_rewards_in_range(badger, startBlock, endBlock, pastRewards):
-    endBlock = endBlock
-    blockDuration = endBlock - startBlock
+    """
+    Generate merkle tree for rewards for current cycle period
+    - Calculate rewards per sett
+    - Calculate meta-farm rewards (sushi,farm) 
+    - Merge together and generate merkle tree
+    """
 
     nextCycle = getNextCycle(badger)
-
     currentMerkleData = fetchCurrentMerkleData(badger)
     # sushiRewards = calc_sushi_rewards(badger,startBlock,endBlock,nextCycle,retroactive=False)
-    # farmRewards = fetch_current_harvest_rewards(badger,startBlock, endBlock,nextCycle)
     settRewards = calc_sett_rewards(badger, startBlock, endBlock, nextCycle)
-
-    # farmRewards = calc_farm_rewards(
-    #    badger, startBlock, endBlock, nextCycle, retroactive=False
-    # )
-    # sushiRewards = calc_all_sushi_rewards(
-    #    badger, startBlock, endBlock, nextCycle, retroactive=False
-    # )
 
     newRewards = combine_rewards([settRewards], nextCycle, badger.badgerTree)
     cumulativeRewards = process_cumulative_rewards(pastRewards, newRewards)
@@ -244,11 +242,7 @@ def generate_rewards_in_range(badger, startBlock, endBlock, pastRewards):
     # Sanity check new rewards file
 
     verify_rewards(
-        badger,
-        startBlock,
-        endBlock,
-        pastRewards,
-        after_file,
+        badger, startBlock, endBlock, pastRewards, after_file,
     )
 
     return {
@@ -270,7 +264,6 @@ def rootUpdater(badger, startBlock, endBlock, pastRewards, test=False):
     console.print("\n[bold cyan]===== Root Updater =====[/bold cyan]\n")
 
     badgerTree = badger.badgerTree
-    nextCycle = getNextCycle(badger)
 
     currentMerkleData = fetchCurrentMerkleData(badger)
     currentTime = chain.time()
