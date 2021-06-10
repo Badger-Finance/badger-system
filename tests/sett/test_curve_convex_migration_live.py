@@ -14,6 +14,7 @@ from helpers.token_utils import distribute_test_ether, distribute_from_whales
 from rich.console import Console
 from helpers.proxy_utils import deploy_proxy
 from helpers.utils import approx
+from decimal import Decimal
 
 console = Console()
 
@@ -175,6 +176,8 @@ def test_strategy_migration(setup):
     print("Old Strategy: ", currentStrategy.balanceOf())
     print("New Strategy: ", strategy.balanceOf())
 
+    # assert False
+
 
 # @pytest.mark.skip()
 def test_post_migration_flow(setup):
@@ -234,6 +237,7 @@ def test_post_migration_flow(setup):
 
     print("=== Initial Balances ===")
     print("User1: ", startingBalance1/Wei("1 ether"))
+    print("User2: ", startingBalance2/Wei("1 ether"))
     print("Vault: ", startingBalanceVault/Wei("1 ether"))
 
 
@@ -248,9 +252,10 @@ def test_post_migration_flow(setup):
     # Want is deposited correctly
     assert want.balanceOf(vault.address) == startingBalanceVault + depositAmount
     # Right amount of shares is minted
+    sharesUser1 = (depositAmount // vault.getPricePerFullShare()) * (10**vault.decimals())
     assert approx(
         vault.balanceOf(user1.address), 
-        (depositAmount // vault.getPricePerFullShare()) * (10**vault.decimals()), 
+        sharesUser1, 
         1
     )
     # Want balance of user1 decreases by depositAmount
@@ -283,7 +288,7 @@ def test_post_migration_flow(setup):
     chain.mine()
 
     
-    # Tend
+    # Tend 1
     prevXSushiBalance = xsushi.balanceOf(strategy.address)
     prevCrvBalance = crv.balanceOf(strategy.address)
     prevCvxBalance = cvx.balanceOf(strategy.address)
@@ -306,9 +311,6 @@ def test_post_migration_flow(setup):
 
     strategy.tend({"from": keeper})
 
-    print(convexMasterChef.userInfo(cvxCRV_CRV_SLP_Pid, strategy.address))
-    print(convexMasterChef.userInfo(CVX_ETH_SLP_Pid, strategy.address))
-
     # Check that the strat's stake amount increased for both pools
     assert convexMasterChef.userInfo(cvxCRV_CRV_SLP_Pid, strategy.address) > initialStratStake0
     assert convexMasterChef.userInfo(CVX_ETH_SLP_Pid, strategy.address) > initialStratStake1
@@ -324,10 +326,183 @@ def test_post_migration_flow(setup):
     chain.sleep(days(1))
     chain.mine()
 
+
     # Harvest
+    # Harvest not yet implemented so it is skipped for now
+
+    chain.sleep(days(1))
+    chain.mine()
 
 
-    assert False
+    #Tend 2
+    prevXSushiBalance = xsushi.balanceOf(strategy.address)
+    prevCrvBalance = crv.balanceOf(strategy.address)
+    prevCvxBalance = cvx.balanceOf(strategy.address)
+    prevcvxCRV_CRV_SLPBalance = cvxCRV_CRV_SLP.balanceOf(strategy.address)
+    prevCVX_ETH_SLPBalance = CVX_ETH_SLP.balanceOf(strategy.address)
+
+    # Check that strategy has 0 stakes on both pools initially 
+    initialStratStake0 = convexMasterChef.userInfo(cvxCRV_CRV_SLP_Pid, strategy.address)
+    initialStratStake1 = convexMasterChef.userInfo(CVX_ETH_SLP_Pid, strategy.address)
+
+    strategy.tend({"from": keeper})
+
+    # Check that the strat's stake amount increased for both pools
+    assert convexMasterChef.userInfo(cvxCRV_CRV_SLP_Pid, strategy.address) > initialStratStake0
+    assert convexMasterChef.userInfo(CVX_ETH_SLP_Pid, strategy.address) > initialStratStake1
+
+    # Check that Crv and Cvx balances increase
+    assert crv.balanceOf(strategy.address) > prevCrvBalance 
+    assert cvx.balanceOf(strategy.address) > prevCvxBalance
+
+    # Check that LP balances remain the same
+    assert cvxCRV_CRV_SLP.balanceOf(strategy.address) == prevcvxCRV_CRV_SLPBalance
+    assert CVX_ETH_SLP.balanceOf(strategy.address) == prevCVX_ETH_SLPBalance
+
+
+    # Withdraw 1
+    # Initial conditions
+    startingBalanceVault = want.balanceOf(vault.address)
+    startingBalanceStrat = want.balanceOf(strategy.address)
+    startingBalanceOfPool = strategy.balanceOfPool()
+    startingTotalSupply = vault.totalSupply()
+    startingRewardsBalance = want.balanceOf(controller.rewards())
+
+    vault.withdraw(depositAmount // 2, {"from": user1})
+    
+    # Want in the strategy should be decreased, if idle in sett is insufficient to cover withdrawal
+    if (depositAmount // 2) > startingBalanceVault:
+            # Adjust amount based on total balance x total supply
+            # Division in python is not accurate, use Decimal package to ensure division is consistent 
+            # w/ division inside of EVM
+            expectedWithdraw = Decimal(
+                (depositAmount // 2) * startingBalanceVault
+            ) / Decimal(startingTotalSupply)
+            # Withdraw from idle in sett first
+            expectedWithdraw -= startingBalanceVault
+            # First we attempt to withdraw from idle want in strategy
+            if expectedWithdraw > startingBalanceStrat:
+                # If insufficient, we then attempt to withdraw from activities (balance of pool)
+                # Just ensure that we have enough in the pool balance to satisfy the request
+                expectedWithdraw -= startingBalanceStrat
+                assert expectedWithdraw <= startingBalanceOfPool
+
+                assert approx(
+                    startingBalanceOfPool,
+                    strategy.balanceOfPool() + expectedWithdraw,
+                    1,
+                )
+
+    # The total want between the strategy and sett should be less after than before
+    # if there was previous want in strategy or sett (sometimes we withdraw entire
+    # balance from the strategy pool) which we check above.
+    if (
+        startingBalanceStrat > 0
+        or startingBalanceVault > 0
+    ):
+        assert (
+            want.balanceOf(strategy.address) + want.balanceOf(vault.address)
+         ) < (
+             startingBalanceStrat + startingBalanceVault
+         )
+
+    # Controller rewards should earn
+    if (
+        strategy.withdrawalFee() > 0
+        and
+        # Fees are only processed when withdrawing from the strategy.
+        startingBalanceStrat > want.balanceOf(strategy.address)
+    ):
+        assert want.balanceOf(controller.rewards()) > startingRewardsBalance
+
+    # User1's shares decrease after withdraw
+    assert vault.balanceOf(user1.address) < sharesUser1
+
+
+    # Withdraw 2
+    # Initial conditions
+    startingBalanceVault = want.balanceOf(vault.address)
+    startingBalanceStrat = want.balanceOf(strategy.address)
+    startingBalanceOfPool = strategy.balanceOfPool()
+    startingTotalSupply = vault.totalSupply()
+    startingRewardsBalance = want.balanceOf(controller.rewards())
+
+    # User2 can't withdraw since they have no shares
+    with brownie.reverts("ERC20: burn amount exceeds balance"):
+        vault.withdraw(depositAmount, {"from": user2})
+
+    # User1 transfers the rest of their shares balance to User2
+    remainingAmount = vault.balanceOf(user1.address)
+    vault.transfer(user2.address, remainingAmount, {"from": user1})
+    assert vault.balanceOf(user1.address) == 0
+    assert vault.balanceOf(user2.address) == remainingAmount
+
+    # User2 withdraws using the shares received
+    vault.withdraw(remainingAmount, {"from": user2})
+
+    # Want in the strategy should be decreased, if idle in sett is insufficient to cover withdrawal
+    if remainingAmount > startingBalanceVault:
+            # Adjust amount based on total balance x total supply
+            # Division in python is not accurate, use Decimal package to ensure division is consistent 
+            # w/ division inside of EVM
+            expectedWithdraw = Decimal(
+                remainingAmount * startingBalanceVault
+            ) / Decimal(startingTotalSupply)
+            # Withdraw from idle in sett first
+            expectedWithdraw -= startingBalanceVault
+            # First we attempt to withdraw from idle want in strategy
+            if expectedWithdraw > startingBalanceStrat:
+                # If insufficient, we then attempt to withdraw from activities (balance of pool)
+                # Just ensure that we have enough in the pool balance to satisfy the request
+                expectedWithdraw -= startingBalanceStrat
+                assert expectedWithdraw <= startingBalanceOfPool
+
+                assert approx(
+                    startingBalanceOfPool,
+                    strategy.balanceOfPool() + expectedWithdraw,
+                    1,
+                )
+
+    # The total want between the strategy and sett should be less after than before
+    # if there was previous want in strategy or sett (sometimes we withdraw entire
+    # balance from the strategy pool) which we check above.
+    if (
+        startingBalanceStrat > 0
+        or startingBalanceVault > 0
+    ):
+        assert (
+            want.balanceOf(strategy.address) + want.balanceOf(vault.address)
+         ) < (
+             startingBalanceStrat + startingBalanceVault
+         )
+
+    # Controller rewards should earn
+    if (
+        strategy.withdrawalFee() > 0
+        and
+        # Fees are only processed when withdrawing from the strategy.
+        startingBalanceStrat > want.balanceOf(strategy.address)
+    ):
+        assert want.balanceOf(controller.rewards()) > startingRewardsBalance
+
+    # User2's shares should be 0
+    assert vault.balanceOf(user2.address) == 0
+
+
+    # === End of Flow === #
+
+    endingBalance1 = want.balanceOf(user1)
+    endingBalance2 = want.balanceOf(user2)
+    endingBalance3 = want.balanceOf(user3)
+    endingBalanceVault = want.balanceOf(vault.address)
+
+    print("=== Initial Balances ===")
+    print("User1: ", endingBalance1/Wei("1 ether"))
+    print("User2: ", endingBalance2/Wei("1 ether"))
+    print("Vault: ", endingBalanceVault/Wei("1 ether"))
+
+
+    # assert False
 
 
 
