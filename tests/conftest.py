@@ -33,7 +33,9 @@ from tests.sett.fixtures import (
     SushiWbtcIbBtcLpOptimizerMiniDeploy,
     UniGenericLpMiniDeploy,
     DiggStabilizeMiniDeploy,
-    ConvexRenBtcMiniDeploy
+    ConvexRenBtcMiniDeploy,
+    ConvexSBtcMiniDeploy,
+    ConvexTBtcMiniDeploy
 )
 
 
@@ -61,6 +63,8 @@ settsToRun = [
     #"native.sushiWbtcIbBtc",
     # "native.uniWbtcIbBtc",
     "native.convexRenCrv",
+    "native.convexSbtcCrv",
+    "native.convexTbtcCrv",
 ]
 
 yearnSettsToRun = [
@@ -324,6 +328,36 @@ def badger_single_sett(settConfig, deploy=True):
         if settId == "native.convexRenCrv":
             return ConvexRenBtcMiniDeploy(
                 "native.convexRenCrv",
+                "StrategyConvexLpOptimizer",
+                deployer,
+                strategist=strategist,
+                guardian=guardian,
+                keeper=keeper,
+                governance=governance,
+            ).deploy(deploy=deploy)
+        if settId == "native.convexRenCrv":
+            return ConvexRenBtcMiniDeploy(
+                "native.convexRenCrv",
+                "StrategyConvexLpOptimizer",
+                deployer,
+                strategist=strategist,
+                guardian=guardian,
+                keeper=keeper,
+                governance=governance,
+            ).deploy(deploy=deploy)
+        if settId == "native.convexSbtcCrv":
+            return ConvexSBtcMiniDeploy(
+                "native.convexSbtcCrv",
+                "StrategyConvexLpOptimizer",
+                deployer,
+                strategist=strategist,
+                guardian=guardian,
+                keeper=keeper,
+                governance=governance,
+            ).deploy(deploy=deploy)
+        if settId == "native.convexTbtcCrv":
+            return ConvexTBtcMiniDeploy(
+                "native.convexTbtcCrv",
                 "StrategyConvexLpOptimizer",
                 deployer,
                 strategist=strategist,

@@ -115,7 +115,7 @@ curve_registry = DotMap(
             token="0x49849C98ae39Fff122806C06791Fa73784FB3675",
         ),
     ),
-    pids=DotMap(renCrv=6),
+    pids=DotMap(renCrv=6, sbtcCrv=7, tbtcCrv=16),
 )
 
 badger_registry = DotMap(token="0x3472a5a71965499acd81997a54bba8d852c6e53d")

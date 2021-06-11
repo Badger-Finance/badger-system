@@ -94,6 +94,30 @@ sett_config = DotMap(
                 withdrawalFee=75,
             ),
         ),
+        convexSbtcCrv=DotMap(
+            strategyName="StrategyConvexLpOptimizer",
+            params=DotMap(
+                want=pools.sbtcCrv.token,
+                gauge=pools.sbtcCrv.gauge,
+                pid=curve.pids.sbtcCrv,
+                lpComponent=registry.tokens.wbtc,
+                performanceFeeStrategist=1000,
+                performanceFeeGovernance=1000,
+                withdrawalFee=75,
+            ),
+        ),
+        convexTbtcCrv=DotMap(
+            strategyName="StrategyConvexLpOptimizer",
+            params=DotMap(
+                want=pools.tbtcCrv.token,
+                gauge=pools.tbtcCrv.gauge,
+                pid=curve.pids.tbtcCrv,
+                lpComponent=registry.tokens.wbtc,
+                performanceFeeStrategist=1000,
+                performanceFeeGovernance=1000,
+                withdrawalFee=75,
+            ),
+        ),
     ),
     pickle=DotMap(
         renCrv=DotMap(

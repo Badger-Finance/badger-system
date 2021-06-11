@@ -50,8 +50,11 @@ def setup(
     badger = connect_badger(badger_config.prod_json)
     distribute_test_ether(deployer, Wei("20 ether"))
 
-    # Key of Sett to migrate
-    settKey = "native.renCrv"
+    # Key of Sett to migrate (ONLY UNCOMMENT THE ONE TO TEST):
+
+    # settKey = "native.renCrv"
+    # settKey = "native.sbtcCrv"
+    settKey = "native.tbtcCrv"
 
     # Connect to prod controller and vault
     vault = badger.sett_system.vaults[settKey]
@@ -61,8 +64,21 @@ def setup(
     print("Controller for " + settKey + " fetched with address " + controller.address)
 
     # Deploy and initialize the strategy
-    params = sett_config.native.convexRenCrv.params
-    want = sett_config.native.convexRenCrv.params.want
+    if settKey == "native.renCrv":
+        params = sett_config.native.convexRenCrv.params
+        want = sett_config.native.convexRenCrv.params.want
+        # Transfer assets to users
+        distribute_from_whales(user1, 1, "renCrv")
+    if settKey == "native.sbtcCrv":
+        params = sett_config.native.convexSbtcCrv.params
+        want = sett_config.native.convexSbtcCrv.params.want
+        # Transfer assets to users
+        distribute_from_whales(user1, 1, "sbtcCrv")
+    if settKey == "native.tbtcCrv":
+        params = sett_config.native.convexTbtcCrv.params
+        want = sett_config.native.convexTbtcCrv.params.want
+        # Transfer assets to users
+        distribute_from_whales(user1, 1, "tbtcCrv")
 
     contract = StrategyConvexLpOptimizer.deploy({"from": deployer})
     strategy = deploy_proxy(
@@ -244,9 +260,6 @@ def test_post_migration_flow(setup):
     print("=== Migration Successful ===")
 
     # === Post Migration Strategy Flow == #
-
-    # Transfer assets to users
-    distribute_from_whales(user1, 1, "renCrv")
 
     startingBalance = want.balanceOf(user1)
     assert startingBalance > 0
@@ -525,7 +538,7 @@ def test_post_migration_flow(setup):
 
     # === End of Flow === # 
 
-    # assert False
+    assert False
 
 
 
