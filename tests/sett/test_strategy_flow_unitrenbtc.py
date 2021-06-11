@@ -30,15 +30,15 @@ def test_single_user_harvest_flow(settConfig):
     snap = SnapshotManager(badger, settConfig["id"])
 
     deployer = badger.deployer
-    
+
     governance = strategy.governance()
 
     tendable = strategy.isTendable()
 
-    distribute_from_whales(deployer);
+    distribute_from_whales(deployer)
     startingBalance = want.balanceOf(deployer)
 
-    depositAmount = 50 * 1e8 # renBTC decimal is 8
+    depositAmount = 50 * 1e8  # renBTC decimal is 8
     assert startingBalance >= depositAmount
     assert startingBalance >= 0
 
@@ -59,31 +59,31 @@ def test_single_user_harvest_flow(settConfig):
 
     # Withdraw half
     snap.settWithdraw(depositAmount // 2, {"from": deployer})
-    
+
     # KeepMinRatio to maintain collateralization safe enough from liquidation
     currentRatio = strategy.currentRatio()
     safeRatio = currentRatio + 20
     strategy.setMinRatio(safeRatio, {"from": governance})
     strategy.keepMinRatio({"from": governance})
     assert strategy.currentRatio() > safeRatio
-    
+
     # sugar-daddy usdp discrepancy due to accrued interest in Unit Protocol
     debtTotal = strategy.getDebtBalance()
     curveGauge = interface.ICurveGauge("0x055be5DDB7A925BfEF3417FC157f53CA77cA7222")
     usdp3crvInGauge = curveGauge.balanceOf(strategy)
-    curvePool = interface.ICurveFi("0x42d7025938bEc20B69cBae5A77421082407f053A")    
-    usdpOfPool = curvePool.calc_withdraw_one_coin(usdp3crvInGauge,0)
+    curvePool = interface.ICurveFi("0x42d7025938bEc20B69cBae5A77421082407f053A")
+    usdpOfPool = curvePool.calc_withdraw_one_coin(usdp3crvInGauge, 0)
     sugar = (debtTotal - usdpOfPool) * 2
-    if(sugar > 0):
-       usdpToken = interface.IERC20("0x1456688345527bE1f37E9e627DA0837D6f08C925")
-       usdpToken.transfer(strategy, sugar, {'from':deployer})  
-       print("sugar debt=", sugar)       
+    if sugar > 0:
+        usdpToken = interface.IERC20("0x1456688345527bE1f37E9e627DA0837D6f08C925")
+        usdpToken.transfer(strategy, sugar, {"from": deployer})
+        print("sugar debt=", sugar)
 
     # Harvest again
     chain.sleep(hours(0.1))
     chain.mine()
     snap.settHarvest({"from": strategyKeeper})
-    
+
     # Withdraw all
     wantInSettBalance = sett.getPricePerFullShare() * sett.totalSupply() / 1e18
     print("wantInSett=", wantInSettBalance)
@@ -92,12 +92,10 @@ def test_single_user_harvest_flow(settConfig):
     wantToWithdraw = sett.balanceOf(deployer) * sett.getPricePerFullShare() / 1e18
     print("wantToWithdraw=", wantToWithdraw)
     assert wantToWithdraw <= wantInSettBalance
-    
+
     renbtcToken = interface.IERC20("0xEB4C2781e4ebA804CE9a9803C67d0893436bB27D")
     controller.withdrawAll(renbtcToken, {"from": deployer})
-    
+
     snap.settWithdrawAll({"from": deployer})
 
     assert True
-
-

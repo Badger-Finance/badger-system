@@ -18,7 +18,5 @@ class SushiDiggWbtcLpOptimizerProvisioner(BaseProvisioner):
             sushiswap = SushiswapSystem()
             # Generate lp tokens.
             sushiswap.addMaxLiquidity(
-                digg.token,
-                registry.tokens.wbtc,
-                user,
+                digg.token, registry.tokens.wbtc, user,
             )

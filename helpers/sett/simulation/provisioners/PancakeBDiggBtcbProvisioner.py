@@ -19,7 +19,5 @@ class PancakeBDiggBtcbProvisioner(BaseProvisioner):
             pancakeswap = PancakeswapSystem(version=2)
             # Generate lp tokens.
             pancakeswap.addMaxLiquidity(
-                registry.tokens.bDigg,
-                registry.tokens.btcb,
-                user,
+                registry.tokens.bDigg, registry.tokens.btcb, user,
             )

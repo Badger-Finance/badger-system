@@ -119,13 +119,7 @@ class StrategyDiggRewardsResolver(StrategyCoreResolver):
         )
 
         # Sett Shares
-        calls.append(
-            Call(
-                sett.address,
-                [func.sett.shares],
-                [["sett.shares", as_wei]],
-            )
-        )
+        calls.append(Call(sett.address, [func.sett.shares], [["sett.shares", as_wei]],))
 
         # Strategy Shares
         calls.append(

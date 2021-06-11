@@ -80,11 +80,7 @@ yearn_registry = YearnRegistry(
 
 aave_registry = DotMap(lendingPoolV2="0x7d2768de32b0b80b7a3454c06bdac94a69ddc7a9")
 
-yearn_registry = (
-    DotMap(
-        yvWBTC="0xcB550A6D4C8e3517A939BC79d0c7093eb7cF56B5",
-    ),
-)
+yearn_registry = (DotMap(yvWBTC="0xcB550A6D4C8e3517A939BC79d0c7093eb7cF56B5",),)
 
 curve_registry = DotMap(
     minter="0xd061D61a4d941c39E5453435B6345Dc261C2fcE0",
@@ -110,13 +106,11 @@ curve_registry = DotMap(
             swap="0x42d7025938bEc20B69cBae5A77421082407f053A",
             token="0x7Eb40E450b9655f4B3cC4259BCC731c63ff55ae6",
             gauge="0x055be5DDB7A925BfEF3417FC157f53CA77cA7222",
-        )
+        ),
     ),
 )
 
-chainlink_registry = DotMap(
-    btc_usd="0xF4030086522a5bEEa4988F8cA5B36dbC97BeE88c"
-)
+chainlink_registry = DotMap(btc_usd="0xF4030086522a5bEEa4988F8cA5B36dbC97BeE88c")
 
 badger_registry = DotMap(token="0x3472a5a71965499acd81997a54bba8d852c6e53d")
 
@@ -126,18 +120,9 @@ defidollar_registry = DotMap(
         core="0x2A8facc9D49fBc3ecFf569847833C380A13418a8",
     ),
     pools=[
-        DotMap(
-            id=0,
-            sett="0x6dEf55d2e18486B9dDfaA075bc4e4EE0B28c1545",
-        ),
-        DotMap(
-            id=1,
-            sett="0xd04c48A53c111300aD41190D63681ed3dAd998eC",
-        ),
-        DotMap(
-            id=2,
-            sett="0xb9D076fDe463dbc9f915E5392F807315Bf940334",
-        ),
+        DotMap(id=0, sett="0x6dEf55d2e18486B9dDfaA075bc4e4EE0B28c1545",),
+        DotMap(id=1, sett="0xd04c48A53c111300aD41190D63681ed3dAd998eC",),
+        DotMap(id=2, sett="0xb9D076fDe463dbc9f915E5392F807315Bf940334",),
     ],
 )
 
@@ -279,5 +264,5 @@ eth_registry.whales = DotMap(
         whale="0x42d7025938bEc20B69cBae5A77421082407f053A",
         token="0x1456688345527bE1f37E9e627DA0837D6f08C925",
         action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT,
-    )
+    ),
 )

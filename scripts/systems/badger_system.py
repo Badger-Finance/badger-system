@@ -398,9 +398,7 @@ class BadgerSystem:
                 artifacts.aragon.MiniMeToken["abi"],
             ),
             kernel=Contract.from_abi(
-                "Agent",
-                badger_config.dao.kernel,
-                artifacts.aragon.Agent["abi"],
+                "Agent", badger_config.dao.kernel, artifacts.aragon.Agent["abi"],
             ),
             agent=Contract.from_abi(
                 "Agent", badger_config.dao.agent, artifacts.aragon.Agent["abi"]
@@ -782,15 +780,11 @@ class BadgerSystem:
         controller.setVault(want, vault, {"from": deployer})
 
         controller.approveStrategy(
-            want,
-            strategy,
-            {"from": deployer},
+            want, strategy, {"from": deployer},
         )
 
         controller.setStrategy(
-            want,
-            strategy,
-            {"from": deployer},
+            want, strategy, {"from": deployer},
         )
 
     def wire_up_sett_multisig(self, vault, strategy, controller):
@@ -843,9 +837,7 @@ class BadgerSystem:
         assert rewardsToken.balanceOf(deployer) >= amount
 
         rewardsToken.transfer(
-            rewards,
-            amount,
-            {"from": deployer},
+            rewards, amount, {"from": deployer},
         )
 
         ## uint256 startTimestamp, uint256 _rewardsDuration, uint256 reward
@@ -862,11 +854,7 @@ class BadgerSystem:
         self.rewardsEscrow.approveRecipient(geyser, {"from": deployer})
 
         self.rewardsEscrow.signalTokenLock(
-            self.token,
-            params.amount,
-            params.duration,
-            startTime,
-            {"from": deployer},
+            self.token, params.amount, params.duration, startTime, {"from": deployer},
         )
 
     # ===== Strategy Macros =====
@@ -1070,31 +1058,15 @@ class BadgerSystem:
             {
                 "to": self.governanceTimelock.address,
                 "data": self.governanceTimelock.queueTransaction.encode_input(
-                    target,
-                    eth,
-                    signature,
-                    data,
-                    eta,
+                    target, eth, signature, data, eta,
                 ),
             },
         )
         multi.executeTx(id)
 
         txHash = Web3.solidityKeccak(
-            [
-                "address",
-                "uint256",
-                "string",
-                "bytes",
-                "uint256",
-            ],
-            [
-                target,
-                eth,
-                signature,
-                data,
-                eta,
-            ],
+            ["address", "uint256", "string", "bytes", "uint256",],
+            [target, eth, signature, data, eta,],
         ).hex()
 
         txFilename = "{}.json".format(txHash)

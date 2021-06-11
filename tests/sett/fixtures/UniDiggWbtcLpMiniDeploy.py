@@ -21,9 +21,7 @@ class UniDiggWbtcLpMiniDeploy(DiggSettMiniDeployBase):
             params.want = uniswap.getPair(self.digg.token, registry.tokens.wbtc)
         else:
             params.want = uniswap.createPair(
-                self.digg.token,
-                registry.tokens.wbtc,
-                self.deployer,
+                self.digg.token, registry.tokens.wbtc, self.deployer,
             )
         want = params.want
         params.token = self.digg.token
@@ -76,7 +74,5 @@ class UniDiggWbtcLpMiniDeploy(DiggSettMiniDeployBase):
         uniswap = UniswapSystem()
         # Generate lp tokens.
         uniswap.addMaxLiquidity(
-            self.digg.token,
-            registry.tokens.wbtc,
-            self.deployer,
+            self.digg.token, registry.tokens.wbtc, self.deployer,
         )

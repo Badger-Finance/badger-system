@@ -291,10 +291,7 @@ def badger_single_sett(settConfig, deploy=True):
                 # Base strategy params (perf/withdrawal fees)
                 sett_config.pancake.pancakeBnbBtcb,
                 # Lp pair tokens (bnb/btcb) for this strategy.
-                [
-                    registry.tokens.btcb,
-                    registry.tokens.bnb,
-                ],
+                [registry.tokens.btcb, registry.tokens.bnb,],
                 # Both want/pid are optional params and used for validation.
                 # In this case, both the lp token and pid (pool id) exist so we can pass them in.
                 want=registry.pancake.chefPairs.bnbBtcb,

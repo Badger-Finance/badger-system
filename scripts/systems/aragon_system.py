@@ -76,9 +76,7 @@ class AragonSystem:
 
     def getVotingAt(self, address):
         return Contract.from_abi(
-            "Voting",
-            web3.toChecksumAddress(address),
-            artifacts.aragon.Voting["abi"],
+            "Voting", web3.toChecksumAddress(address), artifacts.aragon.Voting["abi"],
         )
 
     def deployCompanyDao(self, params, signer):

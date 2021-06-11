@@ -138,9 +138,7 @@ class RewardsSchedule:
 
     def setAmounts(self, amounts):
         for key, values in amounts.items():
-            print(
-                key,
-            )
+            print(key,)
             self.distributions[key] = RewardsDist(key, values)
 
     def tokensPerDay(self, amount):
@@ -210,8 +208,7 @@ class RewardsSchedule:
         # Setup
         accounts[7].transfer(multi.get_first_owner(), Wei("2 ether"))
         print(
-            "Supplied ETH",
-            accounts.at(multi.get_first_owner(), force=True).balance(),
+            "Supplied ETH", accounts.at(multi.get_first_owner(), force=True).balance(),
         )
 
         badger = self.badger

@@ -42,19 +42,19 @@ def main():
         test=True,
     )["merkleTree"]
     compare_trees(newTree, lastTree)
-    x = ["{} Diff".format((t)) for t in tokens.keys()]
-    x_pos = [i for i, _ in enumerate(x)]
-    diffs = []
-    for addr, amount in rewardsInfo["old"]["tokenTotals"].items():
-        diffs.append((int(amount)) - (int(rewardsInfo["new"]["tokenTotals"][addr])))
-    plt.bar(x_pos, diffs, color="green")
-    plt.xlabel("Token diffs")
-    plt.ylabel("Diff amount")
-    plt.title("Token diff vs last cycle")
+    # x = ["{} Diff".format((t)) for t in tokens.keys()]
+    # x_pos = [i for i, _ in enumerate(x)]
+    # diffs = []
+    # for addr, amount in rewardsInfo["old"]["tokenTotals"].items():
+    #    diffs.append((int(amount)) - (int(rewardsInfo["new"]["tokenTotals"][addr])))
+    # plt.bar(x_pos, diffs, color="green")
+    # plt.xlabel("Token diffs")
+    # plt.ylabel("Diff amount")
+    # plt.title("Token diff vs last cycle")
 
-    plt.xticks(x_pos, x)
+    # plt.xticks(x_pos, x)
 
-    plt.savefig("logs/geyser_data.png")
+    # plt.savefig("logs/geyser_data.png")
 
     with open("logs/rewards-data.json", "w") as fp:
         json.dump(rewardsInfo, fp, indent=4)

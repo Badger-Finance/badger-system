@@ -133,11 +133,7 @@ class SnapshotManager:
         # multi.printCalls()
 
         data = multi()
-        self.snaps[snapBlock] = Snap(
-            data,
-            snapBlock,
-            [x[0] for x in entities.items()],
-        )
+        self.snaps[snapBlock] = Snap(data, snapBlock, [x[0] for x in entities.items()],)
 
         return self.snaps[snapBlock]
 
