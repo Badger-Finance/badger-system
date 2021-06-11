@@ -208,6 +208,28 @@ def test_post_migration_flow(setup):
     
     currentStrategy = interface.IStrategy(controller.strategies(want.address))
 
+    # Connect to convexMasterChef
+    convexMasterChef = interface.ISushiChef(strategy.convexMasterChef())
+
+    def print_want_balances(event):
+        print("=== Want Balances: " + event + " ===")
+        print("User1: ", want.balanceOf(user1)/Wei("1 ether"))
+        print("User2: ", want.balanceOf(user2)/Wei("1 ether"))
+        print("User3: ", want.balanceOf(user3)/Wei("1 ether"))
+        print("Vault: ", want.balanceOf(vault.address)/Wei("1 ether"))
+        print("Strat: ", want.balanceOf(strategy.address)/Wei("1 ether"))
+        print("Controller: ", want.balanceOf(controller.address)/Wei("1 ether"))
+
+    def print_rewards_lp_balances(event):
+        print("=== Rewards/LP Balances: " + event + " ===")
+        print("Strat_crv: ", crv.balanceOf(strategy.address)/Wei("1 ether"))
+        print("Strat_cvx: ", cvx.balanceOf(strategy.address)/Wei("1 ether"))
+        print("Strat_cvxCrv: ", cvxCrv.balanceOf(strategy.address)/Wei("1 ether"))
+        print("Strat_cvxCRV_CRV_SLP: ", cvxCRV_CRV_SLP.balanceOf(strategy.address)/Wei("1 ether"))
+        print("Strat_CVX_ETH_SLP: ", CVX_ETH_SLP.balanceOf(strategy.address)/Wei("1 ether"))
+        print("convexMasterChef_cvxCRV_CRV_SLP: ", cvxCRV_CRV_SLP.balanceOf(convexMasterChef.address)/Wei("1 ether"))
+        print("convexMasterChef_CVX_ETH_SLP: ", CVX_ETH_SLP.balanceOf(convexMasterChef.address)/Wei("1 ether"))
+
 
     # === Migration === #
 
@@ -219,6 +241,7 @@ def test_post_migration_flow(setup):
     controller.setStrategy(strategy.want(), strategy.address, {"from": governance})
     assert controller.strategies(vault.token()) == strategy.address
 
+    print("=== Migration Successful ===")
 
     # === Post Migration Strategy Flow == #
 
@@ -231,15 +254,10 @@ def test_post_migration_flow(setup):
     want.transfer(user3.address, startingBalance/3, {"from": user1})
 
     startingBalance1 = want.balanceOf(user1)
-    startingBalance2 = want.balanceOf(user2)
-    startingBalance3 = want.balanceOf(user3)
     startingBalanceVault = want.balanceOf(vault.address)
 
-    print("=== Initial Balances ===")
-    print("User1: ", startingBalance1/Wei("1 ether"))
-    print("User2: ", startingBalance2/Wei("1 ether"))
-    print("Vault: ", startingBalanceVault/Wei("1 ether"))
-
+    print_want_balances("Start")
+    print_rewards_lp_balances("Start")
 
     # Deposit
     # User1 has 0 shares
@@ -264,6 +282,8 @@ def test_post_migration_flow(setup):
     chain.sleep(days(1))
     chain.mine()
 
+    print_want_balances("After user1 deposits "+str(depositAmount/Wei("1 ether")))
+
 
     # Earn
     prevBalanceOfPool = strategy.balanceOfPool()
@@ -284,6 +304,9 @@ def test_post_migration_flow(setup):
     # Balance of user remains the same
     assert want.balanceOf(user1.address) == startingBalance1 - depositAmount
 
+    print_want_balances("After earn() is called")
+    print_rewards_lp_balances("After earn() is called")
+
     chain.sleep(days(1))
     chain.mine()
 
@@ -294,9 +317,6 @@ def test_post_migration_flow(setup):
     prevCvxBalance = cvx.balanceOf(strategy.address)
     prevcvxCRV_CRV_SLPBalance = cvxCRV_CRV_SLP.balanceOf(strategy.address)
     prevCVX_ETH_SLPBalance = CVX_ETH_SLP.balanceOf(strategy.address)
-
-    # Connect to convexMasterChef
-    convexMasterChef = interface.ISushiChef(strategy.convexMasterChef())
 
     # Get stake pool ids
     cvxCRV_CRV_SLP_Pid = strategy.cvxCRV_CRV_SLP_Pid()
@@ -322,6 +342,9 @@ def test_post_migration_flow(setup):
     # Check that LP balances remain the same
     assert cvxCRV_CRV_SLP.balanceOf(strategy.address) == prevcvxCRV_CRV_SLPBalance
     assert CVX_ETH_SLP.balanceOf(strategy.address) == prevCVX_ETH_SLPBalance
+
+    print_want_balances("After tend() is called 1st time")
+    print_rewards_lp_balances("After tend() is called 1st time")
 
     chain.sleep(days(1))
     chain.mine()
@@ -358,6 +381,9 @@ def test_post_migration_flow(setup):
     # Check that LP balances remain the same
     assert cvxCRV_CRV_SLP.balanceOf(strategy.address) == prevcvxCRV_CRV_SLPBalance
     assert CVX_ETH_SLP.balanceOf(strategy.address) == prevCVX_ETH_SLPBalance
+
+    print_want_balances("After tend() is called 2nd time")
+    print_rewards_lp_balances("After tend() is called 2nd time")
 
 
     # Withdraw 1
@@ -415,10 +441,13 @@ def test_post_migration_flow(setup):
     ):
         assert want.balanceOf(controller.rewards()) > startingRewardsBalance
 
-    print("Fees Withdraw 1: ", want.balanceOf(controller.rewards())-startingRewardsBalance)
-
     # User1's shares decrease after withdraw
     assert vault.balanceOf(user1.address) < sharesUser1
+
+    print_want_balances("After user1 withdraws " + str((depositAmount // 2)/Wei("1 ether")) + " shares")
+    print_rewards_lp_balances("After user1 withdraws " + str((depositAmount // 2)/Wei("1 ether")) + " shares")
+
+    print("Fees Withdraw 1: ", (want.balanceOf(controller.rewards())-startingRewardsBalance)/Wei("1 ether"))
 
 
     # Withdraw 2
@@ -487,26 +516,16 @@ def test_post_migration_flow(setup):
     ):
         assert want.balanceOf(controller.rewards()) > startingRewardsBalance
 
-    print("Fees Withdraw 2: ", want.balanceOf(controller.rewards())-startingRewardsBalance)
-
     # User2's shares should be 0
     assert vault.balanceOf(user2.address) == 0
+    
+    print_want_balances("After user2 withdraws " + str(remainingAmount/Wei("1 ether")) + " shares")
+    
+    print("Fees Withdraw 2: ", (want.balanceOf(controller.rewards())-startingRewardsBalance)/Wei("1 ether"))
 
+    # === End of Flow === # 
 
-    # === End of Flow === #
-
-    endingBalance1 = want.balanceOf(user1)
-    endingBalance2 = want.balanceOf(user2)
-    endingBalance3 = want.balanceOf(user3)
-    endingBalanceVault = want.balanceOf(vault.address)
-
-    print("=== Final Balances ===")
-    print("User1: ", endingBalance1/Wei("1 ether"))
-    print("User2: ", endingBalance2/Wei("1 ether"))
-    print("Vault: ", endingBalanceVault/Wei("1 ether"))
-
-
-    assert False
+    # assert False
 
 
 
