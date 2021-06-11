@@ -148,8 +148,6 @@ def test_strategy_migration(setup):
     assert initialSettBalance > 0
     # Balance of vault equals to the Sett's balance minus strategy balance
     assert want.balanceOf(vault.address) == initialSettBalance - currentStrategy.balanceOf()
-    # Balance of current Strategy matches balance of Sett
-    assert initialSettBalance == currentStrategy.balanceOf()
     # Balance of new Strategy starts off at 0
     assert strategy.balanceOf() == 0
 
