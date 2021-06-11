@@ -29,7 +29,9 @@ class DiggSnapshotManager(SnapshotManager):
         # as the rebase logic checks if block ts w/in rebase window.
         self._shift_into_next_rebase_window(digg, value)
 
-        digg.orchestrator.rebase({"from": digg.owner},)
+        digg.orchestrator.rebase(
+            {"from": digg.owner},
+        )
 
         after = self.snap(trackedUsers)
         if confirm:

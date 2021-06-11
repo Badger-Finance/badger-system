@@ -102,6 +102,9 @@ def combine_rewards(rewardsList, cycle, badgerTree):
 
 
 def process_cumulative_rewards(current, new: RewardsList):
+    """
+    Combine old merkle rewards with new generated RewardsList
+    """
     result = RewardsList(new.cycle, new.badgerTree)
 
     # Add new rewards
@@ -160,6 +163,9 @@ def get_latest_event_block(firstEvent, events):
 
 
 def calc_balances_from_geyser_events(geyserEvents):
+    """
+    Determine geyser token balances based on stake/unstake events
+    """
     balances = {}
     events = [*geyserEvents["stakes"], *geyserEvents["unstakes"]]
     events = sorted(events, key=lambda e: e["timestamp"])
@@ -183,6 +189,13 @@ def combine_balances(balances):
 
 @lru_cache(maxsize=None)
 def calculate_sett_balances(badger, name, currentBlock):
+    """
+    Generate all user balances of a particular sett at currentBlock
+    - Fetch sett balances
+    - Combine with geyser balances
+    - Zero out blacklisted balances
+
+    """
     console.log("Fetching {} sett balances".format(name))
     sett = badger.getSett(name)
     underlyingToken = sett.address

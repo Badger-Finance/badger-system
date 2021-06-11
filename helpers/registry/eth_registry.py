@@ -80,7 +80,11 @@ yearn_registry = YearnRegistry(
 
 aave_registry = DotMap(lendingPoolV2="0x7d2768de32b0b80b7a3454c06bdac94a69ddc7a9")
 
-yearn_registry = (DotMap(yvWBTC="0xcB550A6D4C8e3517A939BC79d0c7093eb7cF56B5",),)
+yearn_registry = (
+    DotMap(
+        yvWBTC="0xcB550A6D4C8e3517A939BC79d0c7093eb7cF56B5",
+    ),
+)
 
 curve_registry = DotMap(
     minter="0xd061D61a4d941c39E5453435B6345Dc261C2fcE0",
@@ -102,7 +106,16 @@ curve_registry = DotMap(
             token="0x64eda51d3Ad40D56b9dFc5554E06F94e1Dd786Fd",
             gauge="0x6828bcF74279eE32f2723eC536c22c51Eed383C6",
         ),
+        usdpCrv=DotMap(
+            swap="0x42d7025938bEc20B69cBae5A77421082407f053A",
+            token="0x7Eb40E450b9655f4B3cC4259BCC731c63ff55ae6",
+            gauge="0x055be5DDB7A925BfEF3417FC157f53CA77cA7222",
+        )
     ),
+)
+
+chainlink_registry = DotMap(
+    btc_usd="0xF4030086522a5bEEa4988F8cA5B36dbC97BeE88c"
 )
 
 badger_registry = DotMap(token="0x3472a5a71965499acd81997a54bba8d852c6e53d")
@@ -113,9 +126,18 @@ defidollar_registry = DotMap(
         core="0x2A8facc9D49fBc3ecFf569847833C380A13418a8",
     ),
     pools=[
-        DotMap(id=0, sett="0x6dEf55d2e18486B9dDfaA075bc4e4EE0B28c1545",),
-        DotMap(id=1, sett="0xd04c48A53c111300aD41190D63681ed3dAd998eC",),
-        DotMap(id=2, sett="0xb9D076fDe463dbc9f915E5392F807315Bf940334",),
+        DotMap(
+            id=0,
+            sett="0x6dEf55d2e18486B9dDfaA075bc4e4EE0B28c1545",
+        ),
+        DotMap(
+            id=1,
+            sett="0xd04c48A53c111300aD41190D63681ed3dAd998eC",
+        ),
+        DotMap(
+            id=2,
+            sett="0xb9D076fDe463dbc9f915E5392F807315Bf940334",
+        ),
     ],
 )
 
@@ -133,6 +155,7 @@ eth_registry = ChainRegistry(
     badger=badger_registry,
     yearn=yearn_registry,
     aave=aave_registry,
+    chainlink=chainlink_registry,
     compound=compound_registry,
     defidollar=defidollar_registry,
 )
@@ -150,6 +173,7 @@ eth_registry.tokens = DotMap(
     xSushi=eth_registry.sushi.xsushiToken,
     usdc=web3.toChecksumAddress("0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"),
     renbtc=web3.toChecksumAddress("0xeb4c2781e4eba804ce9a9803c67d0893436bb27d"),
+    usdp=web3.toChecksumAddress("0x1456688345527bE1f37E9e627DA0837D6f08C925"),
     ibbtc=web3.toChecksumAddress("0xc4E15973E6fF2A35cC804c2CF9D2a1b817a8b40F"),
     dfd=web3.toChecksumAddress("0x20c36f062a31865bed8a5b1e512d9a1a20aa333a"),
     ausdc="0xBcca60bB61934080951369a648Fb03DF4F96263C",
@@ -251,4 +275,9 @@ eth_registry.whales = DotMap(
         token="0xeb4c2781e4eba804ce9a9803c67d0893436bb27d",
         action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT,
     ),
+    usdp=DotMap(
+        whale="0x42d7025938bEc20B69cBae5A77421082407f053A",
+        token="0x1456688345527bE1f37E9e627DA0837D6f08C925",
+        action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT,
+    )
 )

@@ -38,6 +38,9 @@ console = Console()
 def calc_sett_rewards(badger, periodStartBlock, endBlock, cycle):
     """
     Calculate rewards for each sett, and sum them
+    - Calculate badger boost
+    - Calculate sett rewards and generate apy info with boosts
+    - Merge togther rewards from setts to one RewardsList
     """
     # ratio = digg_btc_twap(periodStartBlock,endBlock)
     # diggAllocation = calculate_digg_allocation(ratio)
@@ -191,11 +194,14 @@ def fetch_current_rewards_tree(badger, print_output=False):
 
 
 def generate_rewards_in_range(badger, startBlock, endBlock, pastRewards):
-    endBlock = endBlock
-    blockDuration = endBlock - startBlock
+    """
+    Generate merkle tree for rewards for current cycle period
+    - Calculate rewards per sett
+    - Calculate meta-farm rewards (sushi,farm) 
+    - Merge together and generate merkle tree
+    """
 
     nextCycle = getNextCycle(badger)
-
     currentMerkleData = fetchCurrentMerkleData(badger)
     # farmRewards = fetch_current_harvest_rewards(badger,startBlock, endBlock,nextCycle)
 
@@ -262,7 +268,6 @@ def rootUpdater(badger, startBlock, endBlock, pastRewards, test=False):
     console.print("\n[bold cyan]===== Root Updater =====[/bold cyan]\n")
 
     badgerTree = badger.badgerTree
-    nextCycle = getNextCycle(badger)
 
     currentMerkleData = fetchCurrentMerkleData(badger)
     currentTime = chain.time()

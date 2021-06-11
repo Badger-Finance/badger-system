@@ -14,6 +14,11 @@ console = Console()
 def calc_snapshot(
     badger, name, startBlock, endBlock, nextCycle, boosts, diggAllocation
 ):
+    """
+    Calculate rewards of sett based on snapshot of vault tokens & boost
+        - Determine token rewards distribution based on on chain token schedules
+        - Divide up token rewards based upon users boosted balance of sett
+    """
     digg = interface.IDigg(DIGG)
 
     console.log("==== Processing rewards for {} at {} ====".format(name, endBlock))

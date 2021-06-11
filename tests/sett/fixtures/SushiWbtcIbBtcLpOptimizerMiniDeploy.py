@@ -13,7 +13,9 @@ class SushiWbtcIbBtcLpOptimizerMiniDeploy(SettMiniDeployBase):
             params.want = sushiswap.getPair(registry.tokens.ibbtc, registry.tokens.wbtc)
         else:
             params.want = sushiswap.createPair(
-                registry.tokens.ibbtc, registry.tokens.wbtc, self.deployer,
+                registry.tokens.ibbtc,
+                registry.tokens.wbtc,
+                self.deployer,
             )
 
         want = params.want
