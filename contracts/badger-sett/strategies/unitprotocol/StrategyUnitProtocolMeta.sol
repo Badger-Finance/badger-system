@@ -35,7 +35,9 @@ abstract contract StrategyUnitProtocolMeta is BaseStrategy {
     // collateralization percent buffer in CDP debt actions
     uint256 public ratioBuff = 200;
     uint256 public constant ratioBuffMax = 10000;
-    uint public constant Q112 = 2 ** 112;
+    // used as dust to avoid closing out a debt repayment
+    uint256 public dustMinDebt = 10000;
+    uint256 public constant Q112 = 2**112;
 
     // **** Modifiers **** //
 
@@ -164,6 +166,11 @@ abstract contract StrategyUnitProtocolMeta is BaseStrategy {
         ratioBuff = _ratioBuff;
     }
 
+    function setDustMinDebt(uint256 _dustDebt) external {
+        _onlyGovernance();
+        dustMinDebt = _dustDebt;
+    }
+
     function setUseUnitUsdOracle(bool _useUnitUsdOracle) external {
         _onlyGovernance();
         useUnitUsdOracle = _useUnitUsdOracle;
@@ -220,7 +227,7 @@ abstract contract StrategyUnitProtocolMeta is BaseStrategy {
 
     // to avoid repay all debt resulting to close the CDP unexpectedly
     function _capMaxDebtPaid(uint256 _actualPaidDebt, uint256 _totalDebtWithoutFee) internal view returns (uint256) {
-        uint256 _maxDebtToRepay = _totalDebtWithoutFee.sub(ratioBuffMax);
+        uint256 _maxDebtToRepay = _totalDebtWithoutFee.sub(dustMinDebt);
         return _actualPaidDebt >= _maxDebtToRepay ? _maxDebtToRepay : _actualPaidDebt;
     }
 
