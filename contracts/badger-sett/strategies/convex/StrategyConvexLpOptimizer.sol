@@ -288,7 +288,7 @@ contract StrategyConvexLpOptimizer is BaseStrategyMultiSwapper {
         // Security Note: What if there is other crvCVX sitting around in the strategy from outside sources?
         // Excess coins will accumulate and possibly be deposited on future tends
 
-        uint256 beforeLpBal = CVX_ETH_SLP_Token.balanceOf(address(this));
+        uint256 beforeLpBal = cvxCRV_CRV_SLP_Token.balanceOf(address(this));
 
         // 2. LP on Sushi
         _add_max_liquidity_sushiswap(crv, cvxCrv);
@@ -336,7 +336,6 @@ contract StrategyConvexLpOptimizer is BaseStrategyMultiSwapper {
 
         // Stage 1: Harvest gains from positions
         _tendGainsFromPositions();
-        
         
         // Track harvested coins
         tendData.sushiTended = sushiToken.balanceOf(address(this));
