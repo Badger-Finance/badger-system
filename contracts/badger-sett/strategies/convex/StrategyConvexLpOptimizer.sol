@@ -267,9 +267,6 @@ contract StrategyConvexLpOptimizer is BaseStrategyMultiSwapper {
     }
 
     function _tendGainsFromPositions() internal {
-        // Harvest Sushi
-        ISushiChef(chef).deposit(pid, 0);
-
         // Harvest CRV + CVX from core staking
         baseRewardsPool.getReward(address(this), true);
 
