@@ -98,7 +98,6 @@ contract StrategyConvexLpOptimizer is BaseStrategyMultiSwapper {
 
     uint256 public pid;
     address public badgerTree;
-    address public gauge; // Curve Gauge
 
     event HarvestState(
         uint256 xSushiHarvested,
@@ -143,7 +142,7 @@ contract StrategyConvexLpOptimizer is BaseStrategyMultiSwapper {
         address _controller,
         address _keeper,
         address _guardian,
-        address[3] memory _wantConfig,
+        address[2] memory _wantConfig,
         uint256 _pid,
         uint256[3] memory _feeConfig
     ) public initializer whenNotPaused {
@@ -151,7 +150,6 @@ contract StrategyConvexLpOptimizer is BaseStrategyMultiSwapper {
 
         want = _wantConfig[0];
         badgerTree = _wantConfig[1];
-        gauge = _wantConfig[2];
 
         pid = _pid; // Core staking pool ID
 

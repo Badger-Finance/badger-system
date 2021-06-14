@@ -60,10 +60,10 @@ settsToRun = [
     # "native.uniBadgerWbtc",
     # "native.sushiBadgerWbtc",
     # "native.sushiWbtcEth",
-    #"native.sushiWbtcIbBtc",
+    # "native.sushiWbtcIbBtc",
     # "native.uniWbtcIbBtc",
-    "native.convexRenCrv",
-    "native.convexSbtcCrv",
+    # "native.convexRenCrv",
+    # "native.convexSbtcCrv",
     "native.convexTbtcCrv",
 ]
 

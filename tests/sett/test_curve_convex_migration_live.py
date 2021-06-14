@@ -92,7 +92,7 @@ def setup(
             controller.address,
             keeper.address,
             guardian.address, 
-            [params.want, badger.badgerTree.address, params.gauge,],
+            [params.want, badger.badgerTree.address,],
             params.pid,
             [
                 params.performanceFeeGovernance,
@@ -190,7 +190,7 @@ def test_strategy_migration(setup):
     print("Old Strategy: ", currentStrategy.balanceOf())
     print("New Strategy: ", strategy.balanceOf())
 
-    # assert False
+    assert False
 
 
 # @pytest.mark.skip()
