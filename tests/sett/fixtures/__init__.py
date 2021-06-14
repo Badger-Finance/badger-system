@@ -16,3 +16,7 @@ from .UniGenericLpMiniDeploy import UniGenericLpMiniDeploy
 from .ConvexRenBtcMiniDeploy import ConvexRenBtcMiniDeploy
 from .ConvexSBtcMiniDeploy import ConvexSBtcMiniDeploy
 from .ConvexTBtcMiniDeploy import ConvexTBtcMiniDeploy
+from .ConvexHBtcMiniDeploy import ConvexHBtcMiniDeploy
+from .ConvexPBtcMiniDeploy import ConvexPBtcMiniDeploy
+from .ConvexOBtcMiniDeploy import ConvexOBtcMiniDeploy
+from .ConvexBBtcMiniDeploy import ConvexBBtcMiniDeploy

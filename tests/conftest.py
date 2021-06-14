@@ -35,7 +35,11 @@ from tests.sett.fixtures import (
     DiggStabilizeMiniDeploy,
     ConvexRenBtcMiniDeploy,
     ConvexSBtcMiniDeploy,
-    ConvexTBtcMiniDeploy
+    ConvexTBtcMiniDeploy,
+    ConvexHBtcMiniDeploy,
+    ConvexPBtcMiniDeploy,
+    ConvexOBtcMiniDeploy,
+    ConvexBBtcMiniDeploy,
 )
 
 
@@ -64,7 +68,11 @@ settsToRun = [
     # "native.uniWbtcIbBtc",
     # "native.convexRenCrv",
     # "native.convexSbtcCrv",
-    "native.convexTbtcCrv",
+    # "native.convexTbtcCrv",
+    "native.convexHbtcCrv",
+    "native.convexPbtcCrv",
+    "native.convexObtcCrv",
+    "native.convexBbtcCrv",
 ]
 
 yearnSettsToRun = [
@@ -358,6 +366,46 @@ def badger_single_sett(settConfig, deploy=True):
         if settId == "native.convexTbtcCrv":
             return ConvexTBtcMiniDeploy(
                 "native.convexTbtcCrv",
+                "StrategyConvexLpOptimizer",
+                deployer,
+                strategist=strategist,
+                guardian=guardian,
+                keeper=keeper,
+                governance=governance,
+            ).deploy(deploy=deploy)
+        if settId == "native.convexHbtcCrv":
+            return ConvexHBtcMiniDeploy(
+                "native.convexHbtcCrv",
+                "StrategyConvexLpOptimizer",
+                deployer,
+                strategist=strategist,
+                guardian=guardian,
+                keeper=keeper,
+                governance=governance,
+            ).deploy(deploy=deploy)
+        if settId == "native.convexPbtcCrv":
+            return ConvexPBtcMiniDeploy(
+                "native.convexPbtcCrv",
+                "StrategyConvexLpOptimizer",
+                deployer,
+                strategist=strategist,
+                guardian=guardian,
+                keeper=keeper,
+                governance=governance,
+            ).deploy(deploy=deploy)
+        if settId == "native.convexObtcCrv":
+            return ConvexOBtcMiniDeploy(
+                "native.convexObtcCrv",
+                "StrategyConvexLpOptimizer",
+                deployer,
+                strategist=strategist,
+                guardian=guardian,
+                keeper=keeper,
+                governance=governance,
+            ).deploy(deploy=deploy)
+        if settId == "native.convexBbtcCrv":
+            return ConvexBBtcMiniDeploy(
+                "native.convexBbtcCrv",
                 "StrategyConvexLpOptimizer",
                 deployer,
                 strategist=strategist,

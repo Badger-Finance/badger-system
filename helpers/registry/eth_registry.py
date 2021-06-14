@@ -104,18 +104,30 @@ curve_registry = DotMap(
         ),
         hbtcCrv=DotMap(
             token="0xb19059ebb43466C323583928285a49f558E572Fd",
+            gauge="0x4c18E409Dc8619bFb6a1cB56D114C3f592E0aE79",
         ),
         pbtcCrv=DotMap(
             token="0xDE5331AC4B3630f94853Ff322B66407e0D6331E8",
+            gauge="0xd7d147c6Bb90A718c3De8C0568F9B560C79fa416",
         ),
         obtcCrv=DotMap(
-            token="0x410e3E86ef427e30B9235497143881f717d93c2A",
+            token="0x2fE94ea3d5d4a175184081439753DE15AeF9d614",
+            gauge="0x11137B10C210b579405c21A07489e28F3c040AB1",
         ),
         bbtcCrv=DotMap(
-            token="0x49849C98ae39Fff122806C06791Fa73784FB3675",
+            token="0x410e3E86ef427e30B9235497143881f717d93c2A",
+            gauge="0xdFc7AdFa664b08767b735dE28f9E84cd30492aeE",
         ),
     ),
-    pids=DotMap(renCrv=6, sbtcCrv=7, tbtcCrv=16),
+    pids=DotMap(
+        renCrv=6, 
+        sbtcCrv=7, 
+        tbtcCrv=16, 
+        hbtcCrv=8, 
+        pbtcCrv=18, 
+        obtcCrv=20, 
+        bbtcCrv=19
+    ),
 )
 
 badger_registry = DotMap(token="0x3472a5a71965499acd81997a54bba8d852c6e53d")
@@ -222,6 +234,26 @@ eth_registry.whales = DotMap(
     bTbtcCrv=DotMap(
         whale="0x085a9340ff7692ab6703f17ab5ffc917b580a6fd",
         token="0xb9D076fDe463dbc9f915E5392F807315Bf940334",
+        action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT,
+    ),
+    hbtcCrv=DotMap(
+        whale="0xcc775989e76ab386e9253df5b0c0b473e22102e2",
+        token=eth_registry.curve.pools.hbtcCrv.token,
+        action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT,
+    ),
+    pbtcCrv=DotMap(
+        whale="0x3c5df3077bcf800640b5dae8c91106575a4826e6",
+        token=eth_registry.curve.pools.pbtcCrv.token,
+        action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT,
+    ),
+    obtcCrv=DotMap(
+        whale="0x966a70a4d3719a6de6a94236532a0167d5246c72",
+        token=eth_registry.curve.pools.obtcCrv.token,
+        action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT,
+    ),
+    bbtcCrv=DotMap(
+        whale="0x93a62da5a14c80f265dabc077fcee437b1a0efde",
+        token=eth_registry.curve.pools.bbtcCrv.token,
         action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT,
     ),
     wbtc=DotMap(
