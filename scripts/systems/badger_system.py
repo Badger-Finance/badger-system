@@ -332,7 +332,7 @@ class BadgerSystem:
         self.strategy_artifacts = DotMap()
         self.logic = DotMap()
         self.sett_system = DotMap(
-            controllers=DotMap(), vaults=DotMap(), strategies=DotMap(), rewards=DotMap()
+            controllers=DotMap(), vaults=DotMap(), strategies=DotMap(), rewards=DotMap(), guestLists=DotMap()
         )
         self.geysers = DotMap()
 
@@ -1158,6 +1158,10 @@ class BadgerSystem:
             for key, address in geysers.items():
                 self.connect_geyser(key, address)
 
+        # Connect Guest Lists
+        for key, address in sett_system["guestLists"].items():
+            self.connect_guest_list(key, address)
+
     def connect_strategy(self, id, address, strategyArtifactName):
         Artifact = contract_name_to_artifact(strategyArtifactName)
         strategy = Artifact.at(address)
@@ -1171,6 +1175,13 @@ class BadgerSystem:
         print(f"connecting sett id {id}")
         self.sett_system.vaults[id] = sett
         self.track_contract_upgradeable(id + ".sett", sett)
+
+    def connect_guest_list(self, id, address, artifactName="VipCappedGuestListBbtcUpgradeable"):
+        Artifact = contract_name_to_artifact(artifactName)
+        guestList = Artifact.at(address)
+        print(f"connecting guest list id {id}")
+        self.sett_system.guestLists[id] = guestList
+        self.track_contract_upgradeable(id + ".guestList", guestList)
 
     def connect_controller(self, id, address):
         controller = Controller.at(address)
@@ -1330,6 +1341,13 @@ class BadgerSystem:
             raise NameError
 
         return self.sett_system.vaults[id]
+
+    def getGuestList(self, id):
+        if not id in self.sett_system.guestLists.keys():
+            console.print("[bold red]Guestlist not found:[/bold red] {}".format(id))
+            raise NameError
+
+        return self.sett_system.guestLists[id]
 
     def getSettRewards(self, id):
         return self.sett_system.rewards[id]
