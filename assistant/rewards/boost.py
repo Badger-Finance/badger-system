@@ -22,6 +22,9 @@ console = Console()
 MAX_MULTIPLIER = 3
 
 
+badgerTree = Contract.from_explorer("0x660802Fc641b154aBA66a62137e71f331B6d787A")
+
+
 def add_boost_info(balances, name):
     for user in balances:
         if user.address not in boostInfo:
@@ -101,6 +104,7 @@ def filter_dust(balances):
 def badger_boost(badger, pastRewards, currentBlock):
 
     console.log("Calculating boost ...")
+    console.log(len(pastRewards["claims"]))
 
     allSetts = badger.sett_system.vaults
     diggSetts = UserBalances()
@@ -125,21 +129,20 @@ def badger_boost(badger, pastRewards, currentBlock):
     badger_wallet_balances, digg_wallet_balances = fetch_wallet_balances(
         prices[BADGER], prices[DIGG], badger.digg, currentBlock
     )
-
     for addr, claimData in pastRewards["claims"].items():
         tokens = claimData["tokens"]
         amounts = claimData["cumulativeAmounts"]
 
         claimableBadger = 0
         claimableDigg = 0
+
+        tokens, amounts = badgerTree.getClaimableFor(addr, tokens, amounts)
         if BADGER in tokens:
             badgerAmount = float(amounts[tokens.index(BADGER)])
             claimableBadger = float(badgerAmount) / 1e18
-            console.log("{} {}".format(addr, claimableBadger))
         if DIGG in tokens:
             diggAmount = float(amounts[tokens.index(DIGG)])
             claimableDigg = diggUtils.sharesToFragments(diggAmount) / 1e9
-            console.log("{} {}".format(addr, claimableDigg))
 
         claimableBadger *= prices[BADGER]
         claimableDigg *= prices[DIGG]
