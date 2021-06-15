@@ -41,6 +41,7 @@
         "Controller": "0x6354E79F21B56C11f48bcD7c451BE456D7102A36",
         "Sett": "0x175586ac3f8A7463499D1019A30120aa6fC67C5f",
         "SettV1": "0x5c7AdB3Fd0DF2D1822a36922dd941e16D2bF4E51",
+        "SettV3": "0x889d5036f2EA5784161090082F3327bb3e433102",
         "StakingRewards": "0x6daCCed8D6d80b0e93a51A4303961678e8A46Fa5",
         "StakingRewardsSignalOnly": "0x752F5C9e91721dc7a7513106fbf249C46439A5EE",
         "StrategyBadgerRewards": "0x38b9344fFB931ABA6476198095e088024CdAC527",
@@ -74,7 +75,8 @@
         "Disperse": "0x332937d0bFF49E2292C83CA8d8Fdd58296C4AF49",
         "StabilizeStrategyDiggV1": "0xFB688967BaC33AbD93DA18Ac0cBF1A69Cd5f0093",
         "StabilizeDiggSett": "0x3ee8ECEF1c5D6B924a03A32eFF4233d3dE5190E5",
-        "DiggTreasury": "0x132069EA2E57b44C53C60697FD37453Afcae2708"
+        "DiggTreasury": "0x132069EA2E57b44C53C60697FD37453Afcae2708",
+        "StrategyUnitProtocolRenbtc": "0x6F97122a92E60190EbD4bb3BF0dA381F4bfC9970"
     },
     "dao": {
         "token": "0x3472A5A71965499acd81997a54BBA8D852C6E53d",
@@ -101,7 +103,8 @@
             "native.sushiDiggWbtc": "0x88128580ACdD9c04Ce47AFcE196875747bF2A9f6",
             "yearn.wbtc": "0x4b92d19c11435614cd49af1b589001b7c08cd4d5",
             "experimental.sushiIBbtcWbtc": "0x8a8ffec8f4a0c8c9585da95d9d97e8cd6de273de",
-            "experimental.digg": "0x608b6D82eb121F3e5C0baeeD32d81007B916E83C"
+            "experimental.digg": "0x608b6D82eb121F3e5C0baeeD32d81007B916E83C",
+            "experimental.renBtc": "0x77f07Dd580cc957109c70c7fa81aa5704f8a3572"
         },
         "vault_artifacts": {
             "native.badger": "Sett",
@@ -117,7 +120,8 @@
             "native.sushiDiggWbtc": "Sett",
             "yearn.wbtc": "AffiliateTokenGatedUpgradeable",
             "experimental.sushiIBbtcWbtc": "Sett",
-            "experimental.digg": "StabilizeDiggSett"
+            "experimental.digg": "StabilizeDiggSett",
+            "experimental.renBtc": "SettV3"
         },
         "strategies": {
             "native.badger": "0x75b8E21BD623012Efb3b69E1B562465A68944eE6",
@@ -132,7 +136,8 @@
             "native.uniDiggWbtc": "0xadc8d7322f2E284c1d9254170dbe311E9D3356cf",
             "native.sushiDiggWbtc": "0xaa8dddfe7DFA3C3269f1910d89E4413dD006D08a",
             "experimental.sushiIBbtcWbtc": "0xf4146A176b09C664978e03d28d07Db4431525dAd",
-            "experimental.digg": "0xA6af1B913E205B8E9B95D3B30768c0989e942316"
+            "experimental.digg": "0xA6af1B913E205B8E9B95D3B30768c0989e942316",
+            "experimental.renBtc": "0x5640d6E2F72e76FBCb5296d59EA28C7375F1fE12"
         },
         "strategy_artifacts": {
             "native.badger": "StrategyBadgerRewards",
@@ -147,7 +152,8 @@
             "native.uniDiggWbtc": "StrategyDiggLpMetaFarm",
             "experimental.sushiIBbtcWbtc": "StrategySushiLpOptimizer",
             "native.sushiDiggWbtc": "StrategySushiDiggWbtcLpOptimizer",
-            "experimental.digg": "StabilizeStrategyDiggV1"
+            "experimental.digg": "StabilizeStrategyDiggV1",
+            "experimental.renBtc": "StrategyUnitProtocolRenbtc"
         },
         "rewards": {
             "native.badger": "0xBD9c69654B8F3E5978DFd138B00cB0Be29F28cCf",
@@ -156,6 +162,10 @@
             "native.digg": "0xec48D3eD49432FFE64f39b6EB559d0fa7AC9cc90",
             "native.uniDiggWbtc": "0xB45e51485ff078E85D9fF29c3AC0CbD9351cEBb1",
             "native.sushiDiggWbtc": "0xF2E434772FC12705E823B2683703ee6cd8d19744"
+        },
+        "guestLists": {
+            "experimental.digg": "0x28E07714500Bc44f3F324e4Cfcffb0E9358EC41C",
+            "experimental.renBtc": "0x9FC48e61B6a75eE263ca160aCF3288A99238719E"
         }
     },
     "uniBadgerWbtcLp": "0xcD7989894bc033581532D2cd88Da5db0A4b12859",
@@ -188,7 +198,8 @@
     },
     "guest_lists": {
         "ibbtc": "0x7dD08c5a4Ce91Cf862223330dD373E36fe94189B",
-        "experimental.digg": "0x28E07714500Bc44f3F324e4Cfcffb0E9358EC41C"
+        "experimental.digg": "0x28E07714500Bc44f3F324e4Cfcffb0E9358EC41C",
+        "experimental.renBtc": "0x9FC48e61B6a75eE263ca160aCF3288A99238719E"
     },
     "digg_system": {
         "owner": "0xDA25ee226E534d868f0Dd8a459536b03fEE9079b",
