@@ -66,13 +66,13 @@ settsToRun = [
     # "native.sushiWbtcEth",
     # "native.sushiWbtcIbBtc",
     # "native.uniWbtcIbBtc",
-    "native.convexRenCrv",
-    "native.convexSbtcCrv",
-    "native.convexTbtcCrv",
-    # "native.convexHbtcCrv",
-    # "native.convexPbtcCrv",
-    # "native.convexObtcCrv",
-    # "native.convexBbtcCrv",
+    # "native.convexRenCrv",
+    # "native.convexSbtcCrv",
+    # "native.convexTbtcCrv",
+    "native.hbtcCrv",
+    "native.pbtcCrv",
+    "native.obtcCrv",
+    "native.bbtcCrv",
 ]
 
 yearnSettsToRun = [
@@ -373,9 +373,9 @@ def badger_single_sett(settConfig, deploy=True):
                 keeper=keeper,
                 governance=governance,
             ).deploy(deploy=deploy)
-        if settId == "native.convexHbtcCrv":
+        if settId == "native.hbtcCrv":
             return ConvexHBtcMiniDeploy(
-                "native.convexHbtcCrv",
+                "native.hbtcCrv",
                 "StrategyConvexLpOptimizer",
                 deployer,
                 strategist=strategist,
@@ -383,9 +383,9 @@ def badger_single_sett(settConfig, deploy=True):
                 keeper=keeper,
                 governance=governance,
             ).deploy(deploy=deploy)
-        if settId == "native.convexPbtcCrv":
+        if settId == "native.pbtcCrv":
             return ConvexPBtcMiniDeploy(
-                "native.convexPbtcCrv",
+                "native.pbtcCrv",
                 "StrategyConvexLpOptimizer",
                 deployer,
                 strategist=strategist,
@@ -393,9 +393,9 @@ def badger_single_sett(settConfig, deploy=True):
                 keeper=keeper,
                 governance=governance,
             ).deploy(deploy=deploy)
-        if settId == "native.convexObtcCrv":
+        if settId == "native.obtcCrv":
             return ConvexOBtcMiniDeploy(
-                "native.convexObtcCrv",
+                "native.obtcCrv",
                 "StrategyConvexLpOptimizer",
                 deployer,
                 strategist=strategist,
@@ -403,9 +403,9 @@ def badger_single_sett(settConfig, deploy=True):
                 keeper=keeper,
                 governance=governance,
             ).deploy(deploy=deploy)
-        if settId == "native.convexBbtcCrv":
+        if settId == "native.bbtcCrv":
             return ConvexBBtcMiniDeploy(
-                "native.convexBbtcCrv",
+                "native.bbtcCrv",
                 "StrategyConvexLpOptimizer",
                 deployer,
                 strategist=strategist,

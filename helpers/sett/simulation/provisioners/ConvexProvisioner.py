@@ -10,6 +10,10 @@ class ConvexProvisioner(BaseProvisioner):
             registry.whales.renCrv,
             registry.whales.sbtcCrv,
             registry.whales.tbtcCrv,
+            registry.whales.hbtcCrv,
+            registry.whales.pbtcCrv,
+            registry.whales.obtcCrv,
+            registry.whales.bbtcCrv,
         ]
 
     def _distributeWant(self, users) -> None:
