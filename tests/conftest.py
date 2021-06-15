@@ -66,13 +66,13 @@ settsToRun = [
     # "native.sushiWbtcEth",
     # "native.sushiWbtcIbBtc",
     # "native.uniWbtcIbBtc",
-    # "native.convexRenCrv",
+    "native.convexRenCrv",
     # "native.convexSbtcCrv",
     # "native.convexTbtcCrv",
-    "native.convexHbtcCrv",
-    "native.convexPbtcCrv",
-    "native.convexObtcCrv",
-    "native.convexBbtcCrv",
+    # "native.convexHbtcCrv",
+    # "native.convexPbtcCrv",
+    # "native.convexObtcCrv",
+    # "native.convexBbtcCrv",
 ]
 
 yearnSettsToRun = [
