@@ -214,7 +214,7 @@ def calculate_sett_balances(badger, name, currentBlock):
     creamBalances = {}
     # Digg doesn't have a geyser so we have to ignore it
     noGeysers = ["native.digg", "experimental.sushiIBbtcWbtc", "experimental.digg"]
-    if name not in noGeysers:
+    if name not in noGeysers or chain == "bsc":
         geyserAddr = badger.getGeyser(name).address.lower()
         geyserEvents = fetch_geyser_events(geyserAddr, currentBlock)
         geyserBalances = calc_balances_from_geyser_events(geyserEvents)

@@ -14,12 +14,13 @@ console = Console()
 tokens_client = make_gql_client("tokens")
 sett_client = make_gql_client("setts")
 harvests_client = make_gql_client("harvests")
+bsc_client = make_gql_client("bsc")
 
 ## TODO: seperate files by chain/subgraph
 
 
 @lru_cache(maxsize=None)
-def fetch_sett_balances(key, settId, startBlock):
+def fetch_sett_balances(key, settId, startBlock, chain="eth"):
     query = gql(
         """
         query balances_and_events($vaultID: Vault_filter, $blockHeight: Block_height,$lastBalanceId:AccountVaultBalance_filter) {
@@ -40,7 +41,12 @@ def fetch_sett_balances(key, settId, startBlock):
     balances = {}
     while True:
         variables["lastBalanceId"] = {"id_gt": lastBalanceId}
-        results = sett_client.execute(query, variable_values=variables)
+        if chain == "eth":
+            client = sett_client
+        elif chain == "bsc":
+            client = bsc_client
+
+        results = client.execute(query, variable_values=variables)
         if len(results["vaults"]) == 0:
             return {}
         newBalances = {}
@@ -254,7 +260,7 @@ def fetch_sushi_harvest_events():
     }
 
 
-def fetch_wallet_balances(badger_price, digg_price, digg, blockNumber):
+def fetch_wallet_balances(badger_price, digg_price, digg, blockNumber, chain="eth"):
     increment = 1000
     query = gql(
         """
@@ -270,21 +276,23 @@ def fetch_wallet_balances(badger_price, digg_price, digg, blockNumber):
     """
     )
 
-    ## Paginate this for more than 1000 balances
     continueFetching = True
     lastID = "0x0000000000000000000000000000000000000000"
 
     badger_balances = {}
     digg_balances = {}
     sharesPerFragment = digg.logic.UFragments._sharesPerFragment()
-    console.log(sharesPerFragment)
     while continueFetching:
         variables = {
             "firstAmount": increment,
             "lastID": lastID,
             "blockNumber": {"number": blockNumber},
         }
-        nextPage = tokens_client.execute(query, variable_values=variables)
+        if chain == "eth":
+            client = tokens_client
+        elif chain == "bsc":
+            client = bsc_client
+        nextPage = client.execute(query, variable_values=variables)
         if len(nextPage["tokenBalances"]) == 0:
             continueFetching = False
         else:
@@ -294,18 +302,26 @@ def fetch_wallet_balances(badger_price, digg_price, digg, blockNumber):
             )
             for entry in nextPage["tokenBalances"]:
                 address = entry["id"].split("-")[0]
-                if entry["token"]["symbol"] == "BADGER" and int(entry["balance"]) > 0:
-                    badger_balances[address] = (
-                        float(entry["balance"]) / 1e18
-                    ) * badger_price
-                if entry["token"]["symbol"] == "DIGG" and int(entry["balance"]) > 0:
-                    # Speed this up
-                    if entry["balance"] == 0:
-                        fragmentBalance = 0
-                    else:
-                        fragmentBalance = sharesPerFragment / int(entry["balance"])
+                symbol = entry["token"]["symbol"]
+                if int(entry["balance"]) > 0:
+                    if symbol == "BADGER" or symbol == "bBADGER":
+                        badger_balances[address] = (
+                            float(entry["balance"]) / 1e18
+                        ) * badger_price
 
-                    digg_balances[address] = (float(fragmentBalance) / 1e9) * digg_price
+                    if symbol == "DIGG":
+                        if entry["balance"] == 0:
+                            fragmentBalance = 0
+                        else:
+                            fragmentBalance = sharesPerFragment / int(entry["balance"])
+                        digg_balances[address] = (
+                            float(fragmentBalance) / 1e9
+                        ) * digg_price
+
+                    if symbol == "bDIGG":
+                        digg_balances[address] = (
+                            float(entry["balance"]) / 1e9
+                        ) * digg_price
 
     return badger_balances, digg_balances
 
