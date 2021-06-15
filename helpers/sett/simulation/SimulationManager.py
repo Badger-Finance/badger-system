@@ -191,7 +191,7 @@ class SimulationManager:
             return WbtcIbBtcLpProvisioner(self)
         if settId == "native.uniWbtcIbBtc":
             return WbtcIbBtcLpProvisioner(self, isUniswap=True)
-        if settId == "native.convexRenCrv":
+        if settId in ["native.convexRenCrv", "native.convexSbtcCrv", "native.convexTbtcCrv"]:
             return ConvexProvisioner(self)
         raise Exception(f"invalid strategy settID (no provisioner): {settId}")
 
