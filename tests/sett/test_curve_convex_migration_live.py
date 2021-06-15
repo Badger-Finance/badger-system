@@ -151,12 +151,16 @@ def test_strategy_migration(setup):
     # Balance of new Strategy starts off at 0
     assert strategy.balanceOf() == 0
 
+    # PPS before migration
+    pps = vault.getPricePerFullShare()
+
     # Print initial balances:
     print("=== Initial Balances ===")
     print("Sett: ", initialSettBalance)
     print("Vault: ", want.balanceOf(vault.address))
     print("Old Strategy: ", currentStrategy.balanceOf())
     print("New Strategy: ", strategy.balanceOf())
+    print("Vault's PPS: ", vault.getPricePerFullShare())
 
 
     # === Migration === #
@@ -182,6 +186,8 @@ def test_strategy_migration(setup):
     assert currentStrategy.balanceOf() == 0
     # Balance of new Strategy starts off at 0
     assert strategy.balanceOf() == 0
+    # PPS remain the same post migration
+    assert pps == vault.getPricePerFullShare()
 
     # Print final balances:
     print("=== Final Balances ===")
@@ -189,6 +195,7 @@ def test_strategy_migration(setup):
     print("Vault: ", want.balanceOf(vault.address))
     print("Old Strategy: ", currentStrategy.balanceOf())
     print("New Strategy: ", strategy.balanceOf())
+    print("Vault's PPS: ", vault.getPricePerFullShare())
 
     # assert False
 
