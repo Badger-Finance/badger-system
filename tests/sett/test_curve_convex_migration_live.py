@@ -52,9 +52,9 @@ def setup(
 
     # Key of Sett to migrate (ONLY UNCOMMENT THE ONE TO TEST):
 
-    # settKey = "native.renCrv"
+    settKey = "native.renCrv"
     # settKey = "native.sbtcCrv"
-    settKey = "native.tbtcCrv"
+    # settKey = "native.tbtcCrv"
 
     # Connect to prod controller and vault
     vault = badger.sett_system.vaults[settKey]
@@ -190,7 +190,7 @@ def test_strategy_migration(setup):
     print("Old Strategy: ", currentStrategy.balanceOf())
     print("New Strategy: ", strategy.balanceOf())
 
-    assert False
+    # assert False
 
 
 # @pytest.mark.skip()
@@ -281,7 +281,7 @@ def test_post_migration_flow(setup):
     # Want is deposited correctly
     assert want.balanceOf(vault.address) == startingBalanceVault + depositAmount
     # Right amount of shares is minted
-    sharesUser1 = (depositAmount // vault.getPricePerFullShare()) * (10**vault.decimals())
+    sharesUser1 = (depositAmount / vault.getPricePerFullShare()) * (10**vault.decimals())
     assert approx(
         vault.balanceOf(user1.address), 
         sharesUser1, 
@@ -333,6 +333,10 @@ def test_post_migration_flow(setup):
     cvxCRV_CRV_SLP_Pid = strategy.cvxCRV_CRV_SLP_Pid()
     CVX_ETH_SLP_Pid = strategy.CVX_ETH_SLP_Pid()
 
+    # Check that LP balances are 0 before tend
+    assert prevcvxCRV_CRV_SLPBalance == 0
+    assert prevCVX_ETH_SLPBalance == 0
+
     # Check that strategy has 0 stakes on both pools initially 
     initialStratStake0 = convexMasterChef.userInfo(cvxCRV_CRV_SLP_Pid, strategy.address)
     initialStratStake1 = convexMasterChef.userInfo(CVX_ETH_SLP_Pid, strategy.address)
@@ -350,7 +354,7 @@ def test_post_migration_flow(setup):
     assert crv.balanceOf(strategy.address) > prevCrvBalance 
     assert cvx.balanceOf(strategy.address) > prevCvxBalance
 
-    # Check that LP balances remain the same
+    # Check that LP balances remain the same (zero)
     assert cvxCRV_CRV_SLP.balanceOf(strategy.address) == prevcvxCRV_CRV_SLPBalance
     assert CVX_ETH_SLP.balanceOf(strategy.address) == prevCVX_ETH_SLPBalance
 
@@ -375,9 +379,12 @@ def test_post_migration_flow(setup):
     prevcvxCRV_CRV_SLPBalance = cvxCRV_CRV_SLP.balanceOf(strategy.address)
     prevCVX_ETH_SLPBalance = CVX_ETH_SLP.balanceOf(strategy.address)
 
-    # Check that strategy has 0 stakes on both pools initially 
     initialStratStake0 = convexMasterChef.userInfo(cvxCRV_CRV_SLP_Pid, strategy.address)
     initialStratStake1 = convexMasterChef.userInfo(CVX_ETH_SLP_Pid, strategy.address)
+
+    # Check that LP balances are 0 before tend
+    assert prevcvxCRV_CRV_SLPBalance == 0
+    assert prevCVX_ETH_SLPBalance == 0
 
     strategy.tend({"from": keeper})
 
@@ -385,11 +392,7 @@ def test_post_migration_flow(setup):
     assert convexMasterChef.userInfo(cvxCRV_CRV_SLP_Pid, strategy.address) > initialStratStake0
     assert convexMasterChef.userInfo(CVX_ETH_SLP_Pid, strategy.address) > initialStratStake1
 
-    # Check that Crv and Cvx balances increase
-    assert crv.balanceOf(strategy.address) > prevCrvBalance 
-    assert cvx.balanceOf(strategy.address) > prevCvxBalance
-
-    # Check that LP balances remain the same
+    # Check that LP balances remain the same (zero)
     assert cvxCRV_CRV_SLP.balanceOf(strategy.address) == prevcvxCRV_CRV_SLPBalance
     assert CVX_ETH_SLP.balanceOf(strategy.address) == prevCVX_ETH_SLPBalance
 
@@ -536,7 +539,7 @@ def test_post_migration_flow(setup):
 
     # === End of Flow === # 
 
-    assert False
+    # assert False
 
 
 

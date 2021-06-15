@@ -109,7 +109,7 @@ class StrategyConvexLpOptimizerResolver(StrategyCoreResolver):
     def add_entity_balances_for_tokens(self, calls, tokenKey, token, entities):
         entities["badgerTree"] = self.manager.strategy.badgerTree()
         entities["strategy"] = self.manager.strategy.address
-        entities["user"] = accounts[0].address # deployer being used as user on test_strategy_flow.py
+        #entities["user"] = accounts[0].address # deployer being used as user on test_strategy_flow.py
         entities["randomUser"] = accounts[6].address
         entities["convexMasterChef"] = self.manager.strategy.convexMasterChef()
 
