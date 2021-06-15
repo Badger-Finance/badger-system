@@ -196,6 +196,7 @@ class GnosisSafe:
             tx = exec_direct(self.contract, tx.params)
             if print_output:
                 print(tx.call_trace())
+                print(tx.events)
             # try:
             #     failEvents = tx.events['ExecutionFailure']
             #     if len(failEvents) > 0:
@@ -306,7 +307,7 @@ def exec_transaction(contract, params, signer):
         nonce,
     )
 
-    console.log("Transaction Data", params)
+    console.print("Transaction Data", params)
     console.print("Encoded TX", encoded)
     console.print("Tx Hash", hash)
 

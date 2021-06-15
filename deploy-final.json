@@ -79,7 +79,8 @@
         "Disperse": "0x332937d0bFF49E2292C83CA8d8Fdd58296C4AF49",
         "StabilizeStrategyDiggV1": "0xFB688967BaC33AbD93DA18Ac0cBF1A69Cd5f0093",
         "StabilizeDiggSett": "0x3ee8ECEF1c5D6B924a03A32eFF4233d3dE5190E5",
-        "DiggTreasury": "0x132069EA2E57b44C53C60697FD37453Afcae2708"
+        "DiggTreasury": "0x132069EA2E57b44C53C60697FD37453Afcae2708",
+        "StrategyConvexLpOptimizer": "0xAB10f878bD27ae01DF36Ba645E458f7dbca7AA46"
     },
     "dao": {
         "token": "0x3472A5A71965499acd81997a54BBA8D852C6E53d",
@@ -145,7 +146,22 @@
             "native.uniDiggWbtc": "0xadc8d7322f2E284c1d9254170dbe311E9D3356cf",
             "native.sushiDiggWbtc": "0xaa8dddfe7DFA3C3269f1910d89E4413dD006D08a",
             "experimental.sushiIBbtcWbtc": "0xf4146A176b09C664978e03d28d07Db4431525dAd",
-            "experimental.digg": "0xA6af1B913E205B8E9B95D3B30768c0989e942316"
+            "experimental.digg": "0xA6af1B913E205B8E9B95D3B30768c0989e942316",
+            "native.hbtcCrv": "0x8b6d0c81dcd20ff6c70263b93a9dcb8af3c0a780",
+            "native.pbtcCrv": "0x6b9436dba38a9d4985a800d72ee3e18f5d8e91b4",
+            "native.obtcCrv": "0x2656644350862dc28440351de997ef898c9db674",
+            "native.bbtcCrv": "0xfe41a816b023a7160d0d991a7265f93ae84ddff6"
+        },
+        "strategies_registry": {
+            "native.renCrv": {
+                "StrategyConvexLpOptimizer": "0x8cbb86a7e0780a6fbefeec108f9b4b0aa8193e24"
+            },
+            "native.sbtcCrv": {
+                "StrategyConvexLpOptimizer": "0xaa9b716ccd717761f40479cd81f8e3a5a7b4cad7"
+            },
+            "native.tbtcCrv": {
+                "StrategyConvexLpOptimizer": "0x1ac31c470b90e366c70efc1ac28d5d7fa2f1dbe1"
+            }
         },
         "strategy_artifacts": {
             "native.badger": "StrategyBadgerRewards",
@@ -160,7 +176,11 @@
             "native.uniDiggWbtc": "StrategyDiggLpMetaFarm",
             "experimental.sushiIBbtcWbtc": "StrategySushiLpOptimizer",
             "native.sushiDiggWbtc": "StrategySushiDiggWbtcLpOptimizer",
-            "experimental.digg": "StabilizeStrategyDiggV1"
+            "experimental.digg": "StabilizeStrategyDiggV1",
+            "native.hbtcCrv": "StrategyConvexLpOptimizer",
+            "native.pbtcCrv": "StrategyConvexLpOptimizer",
+            "native.obtcCrv": "StrategyConvexLpOptimizer",
+            "native.bbtcCrv": "StrategyConvexLpOptimizer"
         },
         "rewards": {
             "native.badger": "0xBD9c69654B8F3E5978DFd138B00cB0Be29F28cCf",
