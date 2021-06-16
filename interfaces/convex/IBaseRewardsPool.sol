@@ -15,4 +15,6 @@ interface IBaseRewardsPool {
     //stake a convex tokenized deposit for another address(transfering ownership)
     function stakeFor(address _account,uint256 _amount) external returns(bool);
     function getReward(address _account, bool _claimExtras) external returns (bool);
+    function rewards(address _account) external view returns (uint256);
+    function earned(address _account) external view returns (uint256);
 }

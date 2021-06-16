@@ -202,18 +202,13 @@ contract StrategyConvexStakingOptimizer is BaseStrategyMultiSwapper {
         performanceFeeStrategist = _feeConfig[1];
         withdrawalFee = _feeConfig[2];
 
-        // Approve Sushi: Chef and xSushi (aka SushiBar)
-        IERC20Upgradeable(want).approve(chef, MAX_UINT_256);
-        sushiToken.approve(xsushi, MAX_UINT_256);
-
-        // Approve CVX + cvxCRV + CRV: Sushi Router
-        // (This is handled automatically on each swap)
-
-        // Approve want: Core Staking Pool
+        // Approvals: Staking Pools
         IERC20Upgradeable(want).approve(address(booster), MAX_UINT_256);
-
-        crvToken.approve(address(crvDepositor), MAX_UINT_256);
+        cvxToken.approve(address(cvxRewardsPool), MAX_UINT_256);
         cvxCrvToken.approve(address(cvxCrvRewardsPool), MAX_UINT_256);
+
+        // Approvals: CRV -> cvxCRV converter
+        crvToken.approve(address(crvDepositor), MAX_UINT_256);
     }
 
     /// ===== Permissioned Functions =====
@@ -347,10 +342,17 @@ contract StrategyConvexStakingOptimizer is BaseStrategyMultiSwapper {
     }
 
     function _tendGainsFromPositions() internal {
-        // Harvest CRV, CVX, cvxCRV, 3CRV from staking positions
+        // Harvest CRV, CVX, cvxCRV, 3CRV, and extra rewards tokens from staking positions
+        // Note: Always claim extras
         baseRewardsPool.getReward(address(this), true);
-        cvxCrvRewardsPool.getReward(address(this), true);
-        cvxRewardsPool.getReward(true);
+
+        if (cvxCrvRewardsPool.earned(address(this)) > 0) {
+            cvxCrvRewardsPool.getReward(address(this), true);
+        }
+        
+        if (cvxRewardsPool.earned(address(this)) > 0) {
+            cvxRewardsPool.getReward(true);
+        }
     }
 
     function _convert_CRV_to_cvxCRV(uint256 crvToDeposit) internal {
@@ -360,7 +362,7 @@ contract StrategyConvexStakingOptimizer is BaseStrategyMultiSwapper {
         path[0] = crv;
         path[1] = cvxCrv;
 
-        _swapEthOut_sushiswap(crv, crvToDeposit, path);
+        _swap_sushiswap(crv, crvToDeposit, path);
     }
 
     /// @notice The more frequent the tend, the higher returns will be
@@ -374,11 +376,7 @@ contract StrategyConvexStakingOptimizer is BaseStrategyMultiSwapper {
         
         // Stage 2: Convert & deposit gains into positions
 
-        // 1. Convert CRV -> cvxCRV
-        if ( tendData.crvTended > 0 ) {
-            _convert_CRV_to_cvxCRV(tendData.crvTended);
-        }
-
+        
         // 2. Process Extra Rewards Tokens
         // for (uint256 i=0; i < extraRewards.length(); i++) {
         //     address token = extraRewards.at(i);
@@ -393,14 +391,22 @@ contract StrategyConvexStakingOptimizer is BaseStrategyMultiSwapper {
         tendData.crvTended = crvToken.balanceOf(address(this));
         tendData.cvxTended = cvxToken.balanceOf(address(this));
 
+        // 1. Convert CRV -> cvxCRV
+        if ( tendData.crvTended > 0 ) {
+            _convert_CRV_to_cvxCRV(tendData.crvTended);
+        }
+
         // 3. Stake all cvxCRV
         if (tendData.cvxCrvTended > 0) {
             cvxCrvRewardsPool.stake(tendData.cvxCrvTended);
         }
+        
+        require(cvxToken.balanceOf(address(this)) == tendData.cvxTended, "cvx-balance-mismatch");
 
         // 4. Stake all CVX
-        if (tendData.cvxTended > 0 ) {
-            cvxRewardsPool.stake(tendData.cvxTended);
+        if (tendData.cvxTended > 0) {
+            cvxToken.approve(address(cvxRewardsPool), MAX_UINT_256);
+            cvxRewardsPool.stake(cvxToken.balanceOf(address(this)));
         }
 
         emit Tend(0);

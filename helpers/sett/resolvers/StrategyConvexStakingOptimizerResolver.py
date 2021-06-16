@@ -51,11 +51,9 @@ class StrategyConvexStakingOptimizerResolver(StrategyCoreResolver):
 
         event = tx.events[key][0]
         keys = [
-            'sushiTended',
             'crvTended',
             'cvxTended',
-            'cvxEthLpTended',
-            'cvxCrvCrvLpTended'
+            'cvxCrvTended',
         ]
         for key in keys:
             assert key in event
