@@ -36,6 +36,20 @@ NON_NATIVE_SETTS = [
     "harvest.renCrv",
     "yearn.wbtc",
     "experimental.sushiIBbtcWbtc",
+    "native.hbtcCrv",
+    "native.pbtcCrv",
+    "native.obtcCrv",
+    "native.bbtcCrv"
+]
+
+NO_GEYSERS = [
+    "native.digg",
+    "experimental.sushiIBbtcWbtc",
+    "experimental.digg",
+    "native.hbtcCrv",
+    "native.pbtcCrv",
+    "native.obtcCrv",
+    "native.bbtcCrv"
 ]
 
 SETT_BOOST_RATIOS = {
@@ -51,5 +65,16 @@ SETT_BOOST_RATIOS = {
     "harvest.renCrv": 1,
     "native.sushiWbtcEth": 1,
     "yearn.wbtc": 1,
-    "experimental.sushiIBbtcWbtc": 1
+    "experimental.sushiIBbtcWbtc": 1,
+    "native.hbtcCrv": 1,
+    "native.pbtcCrv": 1,
+    "native.obtcCrv": 1,
+    "native.bbtcCrv": 1
 }
+
+CONVEX_SETTS = [
+    "native.hbtcCrv",
+    "native.pbtcCrv",
+    "native.obtcCrv",
+    "native.bbtcCrv"
+]

@@ -1,4 +1,5 @@
 from assistant.subgraph.config import subgraph_config
+from helpers.constants import CONVEX_SETTS
 from brownie import interface
 from rich.console import Console
 from gql import gql, Client
@@ -18,6 +19,9 @@ sett_subgraph_url = subgraph_config["setts"]
 sett_transport = AIOHTTPTransport(url=sett_subgraph_url)
 sett_client = Client(transport=sett_transport, fetch_schema_from_transport=True)
 
+convex_subgraph_url = subgraph_config["convex"]
+convex_transport = AIOHTTPTransport(url=convex_subgraph_url)
+convex_client = Client(transport=convex_transport,fetch_schema_from_transport=True)
 
 @lru_cache(maxsize=None)
 def fetch_sett_balances(key, settId, startBlock):
@@ -41,7 +45,12 @@ def fetch_sett_balances(key, settId, startBlock):
     balances = {}
     while True:
         variables["lastBalanceId"] = {"id_gt": lastBalanceId}
-        results = sett_client.execute(query, variable_values=variables)
+        if key in CONVEX_SETTS:
+            client = convex_client
+        else:
+            client = sett_client
+            
+        results = client.execute(query, variable_values=variables)
         if len(results["vaults"]) == 0:
             return {}
         newBalances = {}

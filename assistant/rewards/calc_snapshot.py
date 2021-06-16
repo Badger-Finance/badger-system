@@ -30,7 +30,7 @@ def calc_snapshot(
     if name in NON_NATIVE_SETTS:
         console.log(
             "{} users out of {} boosted in {}".format(
-                len(boosts), len(userBalances), name
+                len(userBalances), len(boosts), name
             )
         )
         preBoost = {}
