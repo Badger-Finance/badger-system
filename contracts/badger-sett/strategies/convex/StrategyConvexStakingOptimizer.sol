@@ -227,12 +227,12 @@ contract StrategyConvexStakingOptimizer is BaseStrategyMultiSwapper {
         address tokenOut,
         address[] calldata path
     ) external {
-        _onlyGovernanceOrStrategist();
+        _onlyGovernance();
         tokenSwapPaths[tokenIn][tokenOut] = path;
         emit TokenSwapPathSet(tokenIn, tokenOut, path);
     }
     function addExtraRewardsToken(address _extraToken, RewardTokenConfig memory _rewardsConfig) external {
-        _onlyGovernanceOrStrategist();
+        _onlyGovernance();
 
         require(!isProtectedToken(_extraToken)); // We can't process tokens that are part of special strategy logic as extra rewards
         require(isProtectedToken(_rewardsConfig.tendConvertTo));  // We should only convert to tokens the strategy handles natively for security reasons
@@ -259,7 +259,7 @@ contract StrategyConvexStakingOptimizer is BaseStrategyMultiSwapper {
     }
 
     function removeExtraRewardsToken(address _extraToken) external {
-        _onlyGovernanceOrStrategist();
+        _onlyGovernance();
         extraRewards.remove(_extraToken);
     }
 
