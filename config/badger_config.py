@@ -83,7 +83,7 @@ sett_config = DotMap(
             ),
         ),
         convexRenCrv=DotMap(
-            strategyName="StrategyConvexLpOptimizer",
+            strategyName="StrategyConvexStakingOptimizer",
             params=DotMap(
                 want=pools.renCrv.token,
                 pid=curve.pids.renCrv,
@@ -94,7 +94,7 @@ sett_config = DotMap(
             ),
         ),
         convexSbtcCrv=DotMap(
-            strategyName="StrategyConvexLpOptimizer",
+            strategyName="StrategyConvexStakingOptimizer",
             params=DotMap(
                 want=pools.sbtcCrv.token,
                 pid=curve.pids.sbtcCrv,
@@ -105,7 +105,7 @@ sett_config = DotMap(
             ),
         ),
         convexTbtcCrv=DotMap(
-            strategyName="StrategyConvexLpOptimizer",
+            strategyName="StrategyConvexStakingOptimizer",
             params=DotMap(
                 want=pools.tbtcCrv.token,
                 pid=curve.pids.tbtcCrv,
@@ -116,7 +116,7 @@ sett_config = DotMap(
             ),
         ),
         convexHbtcCrv=DotMap(
-            strategyName="StrategyConvexLpOptimizer",
+            strategyName="StrategyConvexStakingOptimizer",
             params=DotMap(
                 want=pools.hbtcCrv.token,
                 pid=curve.pids.hbtcCrv,
@@ -127,7 +127,7 @@ sett_config = DotMap(
             ),
         ),
         convexObtcCrv=DotMap(
-            strategyName="StrategyConvexLpOptimizer",
+            strategyName="StrategyConvexStakingOptimizer",
             params=DotMap(
                 want=pools.obtcCrv.token,
                 pid=curve.pids.obtcCrv,
@@ -138,7 +138,7 @@ sett_config = DotMap(
             ),
         ),
         convexPbtcCrv=DotMap(
-            strategyName="StrategyConvexLpOptimizer",
+            strategyName="StrategyConvexStakingOptimizer",
             params=DotMap(
                 want=pools.pbtcCrv.token,
                 pid=curve.pids.pbtcCrv,
@@ -149,7 +149,7 @@ sett_config = DotMap(
             ),
         ),
         convexBbtcCrv=DotMap(
-            strategyName="StrategyConvexLpOptimizer",
+            strategyName="StrategyConvexStakingOptimizer",
             params=DotMap(
                 want=pools.bbtcCrv.token,
                 pid=curve.pids.bbtcCrv,

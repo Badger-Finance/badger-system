@@ -385,13 +385,13 @@ def deploy_strategy(
             ),
             badger.deployer,
         )
-    if strategyName == "StrategyConvexLpOptimizer":
+    if strategyName == "StrategyConvexStakingOptimizer":
         return deploy_proxy(
-            "StrategyConvexLpOptimizer",
-            StrategyConvexLpOptimizer.abi,
-            badger.logic.StrategyConvexLpOptimizer.address,
+            "StrategyConvexStakingOptimizer",
+            StrategyConvexStakingOptimizer.abi,
+            badger.logic.StrategyConvexStakingOptimizer.address,
             badger.devProxyAdmin.address,
-            badger.logic.StrategyConvexLpOptimizer.initialize.encode_input(
+            badger.logic.StrategyConvexStakingOptimizer.initialize.encode_input(
                 governance,
                 strategist,
                 controller,

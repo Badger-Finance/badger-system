@@ -20,7 +20,7 @@ console = Console()
 
 @pytest.fixture(scope="module", autouse=True)
 def setup(
-    StrategyConvexLpOptimizer,
+    StrategyConvexStakingOptimizer,
 ):
     # Assign accounts
     with open(digg_config.prod_json) as f:
@@ -80,10 +80,10 @@ def setup(
         # Transfer assets to users
         distribute_from_whales(user1, 1, "tbtcCrv")
 
-    contract = StrategyConvexLpOptimizer.deploy({"from": deployer})
+    contract = StrategyConvexStakingOptimizer.deploy({"from": deployer})
     strategy = deploy_proxy(
-        "StrategyConvexLpOptimizer",
-        StrategyConvexLpOptimizer.abi,
+        "StrategyConvexStakingOptimizer",
+        StrategyConvexStakingOptimizer.abi,
         contract.address,
         web3.toChecksumAddress(badger.devProxyAdmin.address),
         contract.initialize.encode_input(

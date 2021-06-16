@@ -64,10 +64,10 @@ class ConvexBBtcMiniDeploy(SettMiniDeployBase):
 
     #     self.controller = interface.IController(self.vault.controller())
 
-    #     contract = StrategyConvexLpOptimizer.deploy({"from": self.deployer})
+    #     contract = StrategyConvexStakingOptimizer.deploy({"from": self.deployer})
     #     self.strategy = deploy_proxy(
-    #         "StrategyConvexLpOptimizer",
-    #         StrategyConvexLpOptimizer.abi,
+    #         "StrategyConvexStakingOptimizer",
+    #         StrategyConvexStakingOptimizer.abi,
     #         contract.address,
     #         web3.toChecksumAddress(self.badger.devProxyAdmin.address),
     #         contract.initialize.encode_input(

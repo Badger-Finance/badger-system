@@ -353,63 +353,63 @@ contract StrategyConvexStakingOptimizer is BaseStrategyMultiSwapper {
     // No-op until we optimize harvesting strategy. Auto-compouding is key.
     function harvest() external whenNotPaused returns (HarvestData memory) {
         _onlyAuthorizedActors();
-        require(false, "Harvest functionality under development");
+        // require(false, "Harvest functionality under development");
 
-        uint256 idleWant = IERC20Upgradeable(want).balanceOf(address(this));
+        // uint256 idleWant = IERC20Upgradeable(want).balanceOf(address(this));
         HarvestData memory harvestData;
         // TODO: Harvest details still under constructuion. It's being designed to optimize yield while still allowing on-demand access to profits for users.
 
-        // Withdraw accrued rewards from staking positions (claim unclaimed positions as well)
-        cvxCrvRewardsPool.withdraw(cvxCrvRewardsPool.balanceOf(address(this)), true);
-        cvxRewardsPool.withdraw(cvxRewardsPool.balanceOf(address(this)), true);
+        // // Withdraw accrued rewards from staking positions (claim unclaimed positions as well)
+        // cvxCrvRewardsPool.withdraw(cvxCrvRewardsPool.balanceOf(address(this)), true);
+        // cvxRewardsPool.withdraw(cvxRewardsPool.balanceOf(address(this)), true);
 
-        harvestData.cvxCrvHarvested = cvxCrvToken.balanceOf(address(this));
-        harvestData.cvxHarvsted = cvxToken.balanceOf(address(this));
+        // harvestData.cvxCrvHarvested = cvxCrvToken.balanceOf(address(this));
+        // harvestData.cvxHarvsted = cvxToken.balanceOf(address(this));
 
-        uint256 cvxCrvToSell = harvestData.cvxCrvHarvested.mul(2000).div(MAX_FEE);
-        uint256 cvxToSell = harvestData.cvxHarvsted.mul(2000).div(MAX_FEE);
+        // uint256 cvxCrvToSell = harvestData.cvxCrvHarvested.mul(2000).div(MAX_FEE);
+        // uint256 cvxToSell = harvestData.cvxHarvsted.mul(2000).div(MAX_FEE);
 
-        // Sell 20% of accured rewards for underlying
-        _swap_uniswap(cvxCrv, cvxCrvToSell, getTokenSwapPath(cvxCrv, wbtc));
-        _swap_uniswap(cvx, cvxToSell, getTokenSwapPath(cvx, wbtc));
+        // // Sell 20% of accured rewards for underlying
+        // _swap_uniswap(cvxCrv, cvxCrvToSell, getTokenSwapPath(cvxCrv, wbtc));
+        // _swap_uniswap(cvx, cvxToSell, getTokenSwapPath(cvx, wbtc));
 
-        // Process extra rewards tokens
-        {
-            for (uint256 i = 0; i < extraRewards.length(); i=i+1) {
-                address token = extraRewards.at(i);
-                IERC20Upgradeable tokenContract = IERC20Upgradeable(token);
-                uint256 tokenBalance = tokenContract.balanceOf(address(this));
+        // // Process extra rewards tokens
+        // {
+        //     for (uint256 i = 0; i < extraRewards.length(); i=i+1) {
+        //         address token = extraRewards.at(i);
+        //         IERC20Upgradeable tokenContract = IERC20Upgradeable(token);
+        //         uint256 tokenBalance = tokenContract.balanceOf(address(this));
 
-                // Sell performance fee (as wbtc) proportion
-                uint256 sellBps = getTokenSellBps(token);
-                _swap_uniswap(token, sellBps, getTokenSwapPath(token, wbtc));
-                // TODO: Distribute performance fee
+        //         // Sell performance fee (as wbtc) proportion
+        //         uint256 sellBps = getTokenSellBps(token);
+        //         _swap_uniswap(token, sellBps, getTokenSwapPath(token, wbtc));
+        //         // TODO: Distribute performance fee
 
-                // Distribute remainder to users
-                // token.transfer(tokenBalance.mul(sellBps).div(MAX_BPS));
-            }
-        }
+        //         // Distribute remainder to users
+        //         // token.transfer(tokenBalance.mul(sellBps).div(MAX_BPS));
+        //     }
+        // }
 
-        // TODO: LP into curve position
+        // // TODO: LP into curve position
 
-        uint256 wantGained = IERC20Upgradeable(want).balanceOf(address(this)).sub(idleWant);
+        // uint256 wantGained = IERC20Upgradeable(want).balanceOf(address(this)).sub(idleWant);
 
-        // Half of gained want (10% of rewards) are auto-compounded, half of gained want is taken as a performance fee
-        IERC20Upgradeable(want).transfer(IController(controller).rewards(), wantGained.mul(5000).div(MAX_FEE));
+        // // Half of gained want (10% of rewards) are auto-compounded, half of gained want is taken as a performance fee
+        // IERC20Upgradeable(want).transfer(IController(controller).rewards(), wantGained.mul(5000).div(MAX_FEE));
 
-        // Distribute 60% of accrued rewards as vault positions via tree
-        uint256 cvxCrvToDistribute = harvestData.cvxCrvHarvested.mul(6000).div(MAX_FEE);
-        uint256 cvxToDistribute = harvestData.cvxHarvsted.mul(6000).div(MAX_FEE);
+        // // Distribute 60% of accrued rewards as vault positions via tree
+        // uint256 cvxCrvToDistribute = harvestData.cvxCrvHarvested.mul(6000).div(MAX_FEE);
+        // uint256 cvxToDistribute = harvestData.cvxHarvsted.mul(6000).div(MAX_FEE);
 
-        cvxCrvToken.transfer(badgerTree, cvxCrvToDistribute);
-        cvxToken.transfer(badgerTree, cvxToDistribute);
+        // cvxCrvToken.transfer(badgerTree, cvxCrvToDistribute);
+        // cvxToken.transfer(badgerTree, cvxToDistribute);
 
-        // Take 20% performance fee rewards assets
-        uint256 cvxCrvPerformanceFee = cvxCrvToken.balanceOf(address(this));
-        uint256 cvxPerformanceFee = cvxToken.balanceOf(address(this));
+        // // Take 20% performance fee rewards assets
+        // uint256 cvxCrvPerformanceFee = cvxCrvToken.balanceOf(address(this));
+        // uint256 cvxPerformanceFee = cvxToken.balanceOf(address(this));
 
-        cvxCrvToken.transfer(IController(controller).rewards(), cvxCrvPerformanceFee);
-        cvxToken.transfer(IController(controller).rewards(), cvxPerformanceFee);
+        // cvxCrvToken.transfer(IController(controller).rewards(), cvxCrvPerformanceFee);
+        // cvxToken.transfer(IController(controller).rewards(), cvxPerformanceFee);
 
         return harvestData;
     }
