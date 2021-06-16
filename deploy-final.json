@@ -80,7 +80,8 @@
         "StabilizeStrategyDiggV1": "0xFB688967BaC33AbD93DA18Ac0cBF1A69Cd5f0093",
         "StabilizeDiggSett": "0x3ee8ECEF1c5D6B924a03A32eFF4233d3dE5190E5",
         "DiggTreasury": "0x132069EA2E57b44C53C60697FD37453Afcae2708",
-        "StrategyConvexLpOptimizer": "0xAB10f878bD27ae01DF36Ba645E458f7dbca7AA46"
+        "StrategyConvexLpOptimizer": "0xAB10f878bD27ae01DF36Ba645E458f7dbca7AA46",
+        "StrategyConvexStakingOptimizer" :"0x91fD666ac776dEC57Bcd6E011d791Ae685be48EE"
     },
     "dao": {
         "token": "0x3472A5A71965499acd81997a54BBA8D852C6E53d",
@@ -153,10 +154,10 @@
             "native.sushiDiggWbtc": "0xaa8dddfe7DFA3C3269f1910d89E4413dD006D08a",
             "experimental.sushiIBbtcWbtc": "0xf4146A176b09C664978e03d28d07Db4431525dAd",
             "experimental.digg": "0xA6af1B913E205B8E9B95D3B30768c0989e942316",
-            "native.hbtcCrv": "0x8b6d0c81dcd20ff6c70263b93a9dcb8af3c0a780",
-            "native.pbtcCrv": "0x6b9436dba38a9d4985a800d72ee3e18f5d8e91b4",
-            "native.obtcCrv": "0x2656644350862dc28440351de997ef898c9db674",
-            "native.bbtcCrv": "0xfe41a816b023a7160d0d991a7265f93ae84ddff6"
+            "native.hbtcCrv": "0xca4b98ca964713287a36224364dbed15c9b7abc3",
+            "native.pbtcCrv": "0xcaed73bcdd45d2469b1287a7c21d7a31b2bb7b35",
+            "native.obtcCrv": "0xdbda6fa60c48a7da8e0c7ae25a20fd089c0f6a1f",
+            "native.bbtcCrv": "0x353200ed9f63fa7804816b336d50e9f0d7c88d2c"
         },
         "strategies_registry": {
             "native.renCrv": {
@@ -227,7 +228,11 @@
     },
     "guest_lists": {
         "ibbtc": "0x7dD08c5a4Ce91Cf862223330dD373E36fe94189B",
-        "experimental.digg": "0x28E07714500Bc44f3F324e4Cfcffb0E9358EC41C"
+        "experimental.digg": "0x28E07714500Bc44f3F324e4Cfcffb0E9358EC41C",
+        "native.hbtcCrv": "0xd71ac3c4484da01c6a577506e6c85f310a8867a4",
+        "native.pbtcCrv": "0xbde7bd6a4da5c972532ad8a973deb67d36be8d35",
+        "native.obtcCrv": "0x2999537a71db9d79587ca35033cd0fa08c3c49dd",
+        "native.bbtcCrv": "0x62cc514824b080707ffc0b0f64f992f38b974f9d"
     },
     "digg_system": {
         "owner": "0xDA25ee226E534d868f0Dd8a459536b03fEE9079b",
