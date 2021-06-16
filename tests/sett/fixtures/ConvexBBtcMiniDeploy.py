@@ -45,11 +45,11 @@ class ConvexBBtcMiniDeploy(SettMiniDeployBase):
         timelock = accounts.at("0x21CF9b77F88Adf8F8C98d7E33Fe601DC57bC0893", force=True)
 
         # Add strategy to controller for want
-        self.controller.approveStrategy(self.strategy.want(), self.strategy.address, {"from": timelock})
-        self.controller.setStrategy(self.strategy.want(), self.strategy.address, {"from": timelock})
+        self.controller.approveStrategy(self.strategy.want(), self.strategy.address, {"from": self.governance})
+        self.controller.setStrategy(self.strategy.want(), self.strategy.address, {"from": self.governance})
 
         # Add vault to controller for want
-        self.controller.setVault(self.vault.token(), self.vault.address, {"from": timelock})
+        # self.controller.setVault(self.vault.token(), self.vault.address, {"from": self.governance})
 
         assert self.controller.strategies(self.vault.token()) == self.strategy.address
         assert self.controller.vaults(self.strategy.want()) == self.vault.address

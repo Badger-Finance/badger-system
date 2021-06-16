@@ -184,10 +184,10 @@
             "experimental.sushiIBbtcWbtc": "StrategySushiLpOptimizer",
             "native.sushiDiggWbtc": "StrategySushiDiggWbtcLpOptimizer",
             "experimental.digg": "StabilizeStrategyDiggV1",
-            "native.hbtcCrv": "StrategyConvexLpOptimizer",
-            "native.pbtcCrv": "StrategyConvexLpOptimizer",
-            "native.obtcCrv": "StrategyConvexLpOptimizer",
-            "native.bbtcCrv": "StrategyConvexLpOptimizer"
+            "native.hbtcCrv": "StrategyConvexStakingOptimizer",
+            "native.pbtcCrv": "StrategyConvexStakingOptimizer",
+            "native.obtcCrv": "StrategyConvexStakingOptimizer",
+            "native.bbtcCrv": "StrategyConvexStakingOptimizer"
         },
         "rewards": {
             "native.badger": "0xBD9c69654B8F3E5978DFd138B00cB0Be29F28cCf",
