@@ -67,12 +67,12 @@ settsToRun = [
     # "native.sushiWbtcIbBtc",
     # "native.uniWbtcIbBtc",
     "native.convexRenCrv",
-    "native.convexSbtcCrv",
-    "native.convexTbtcCrv",
-    "native.hbtcCrv",
-    "native.pbtcCrv",
-    "native.obtcCrv",
-    "native.bbtcCrv",
+    # "native.convexSbtcCrv",
+    # "native.convexTbtcCrv",
+    # "native.hbtcCrv",
+    # "native.pbtcCrv",
+    # "native.obtcCrv",
+    # "native.bbtcCrv",
 ]
 
 yearnSettsToRun = [
@@ -336,7 +336,7 @@ def badger_single_sett(settConfig, deploy=True):
         if settId == "native.convexRenCrv":
             return ConvexRenBtcMiniDeploy(
                 "native.convexRenCrv",
-                "StrategyConvexLpOptimizer",
+                "StrategyConvexStakingOptimizer",
                 deployer,
                 strategist=strategist,
                 guardian=guardian,
@@ -346,7 +346,7 @@ def badger_single_sett(settConfig, deploy=True):
         if settId == "native.convexRenCrv":
             return ConvexRenBtcMiniDeploy(
                 "native.convexRenCrv",
-                "StrategyConvexLpOptimizer",
+                "StrategyConvexStakingOptimizer",
                 deployer,
                 strategist=strategist,
                 guardian=guardian,
@@ -356,7 +356,7 @@ def badger_single_sett(settConfig, deploy=True):
         if settId == "native.convexSbtcCrv":
             return ConvexSBtcMiniDeploy(
                 "native.convexSbtcCrv",
-                "StrategyConvexLpOptimizer",
+                "StrategyConvexStakingOptimizer",
                 deployer,
                 strategist=strategist,
                 guardian=guardian,
@@ -366,7 +366,7 @@ def badger_single_sett(settConfig, deploy=True):
         if settId == "native.convexTbtcCrv":
             return ConvexTBtcMiniDeploy(
                 "native.convexTbtcCrv",
-                "StrategyConvexLpOptimizer",
+                "StrategyConvexStakingOptimizer",
                 deployer,
                 strategist=strategist,
                 guardian=guardian,
@@ -376,7 +376,7 @@ def badger_single_sett(settConfig, deploy=True):
         if settId == "native.hbtcCrv":
             return ConvexHBtcMiniDeploy(
                 "native.hbtcCrv",
-                "StrategyConvexLpOptimizer",
+                "StrategyConvexStakingOptimizer",
                 deployer,
                 strategist=strategist,
                 guardian=guardian,
@@ -386,7 +386,7 @@ def badger_single_sett(settConfig, deploy=True):
         if settId == "native.pbtcCrv":
             return ConvexPBtcMiniDeploy(
                 "native.pbtcCrv",
-                "StrategyConvexLpOptimizer",
+                "StrategyConvexStakingOptimizer",
                 deployer,
                 strategist=strategist,
                 guardian=guardian,
@@ -396,7 +396,7 @@ def badger_single_sett(settConfig, deploy=True):
         if settId == "native.obtcCrv":
             return ConvexOBtcMiniDeploy(
                 "native.obtcCrv",
-                "StrategyConvexLpOptimizer",
+                "StrategyConvexStakingOptimizer",
                 deployer,
                 strategist=strategist,
                 guardian=guardian,
@@ -406,7 +406,7 @@ def badger_single_sett(settConfig, deploy=True):
         if settId == "native.bbtcCrv":
             return ConvexBBtcMiniDeploy(
                 "native.bbtcCrv",
-                "StrategyConvexLpOptimizer",
+                "StrategyConvexStakingOptimizer",
                 deployer,
                 strategist=strategist,
                 guardian=guardian,

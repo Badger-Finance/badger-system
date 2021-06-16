@@ -7,7 +7,7 @@ from tabulate import tabulate
 
 console = Console()
 
-class StrategyConvexLpOptimizerResolver(StrategyCoreResolver):
+class StrategyConvexStakingOptimizerResolver(StrategyCoreResolver):
 
     # ===== override default =====
     def confirm_harvest_events(self, before, after, tx):
@@ -112,6 +112,9 @@ class StrategyConvexLpOptimizerResolver(StrategyCoreResolver):
         #entities["user"] = accounts[0].address # deployer being used as user on test_strategy_flow.py
         entities["randomUser"] = accounts[6].address
         entities["convexMasterChef"] = self.manager.strategy.convexMasterChef()
+        entities["cvxCrvRewardsPool"] = self.manager.strategy.cvxCrvRewardsPool()
+        entities["cvxRewardsPool"] = self.manager.strategy.cvxRewardsPool()
+        entities["baseRewardsPool"] = self.manager.strategy.baseRewardsPool()
 
 
         super().add_entity_balances_for_tokens(calls, tokenKey, token, entities)
@@ -121,16 +124,16 @@ class StrategyConvexLpOptimizerResolver(StrategyCoreResolver):
         super().add_balances_snap(calls, entities)
         strategy = self.manager.strategy
 
-        xsushi = interface.IERC20(strategy.xsushi())
         crv = interface.IERC20(strategy.crv())
         cvx = interface.IERC20(strategy.cvx())
+        _3Crv = interface.IERC20("0x6c3F90f043a72FA612cbac8115EE7e52BDe6E490") 
         cvxCrv = interface.IERC20(strategy.cvxCrv())
         cvxCRV_CRV_SLP = interface.IERC20(strategy.cvxCRV_CRV_SLP())
         CVX_ETH_SLP = interface.IERC20(strategy.CVX_ETH_SLP())
 
-        calls = self.add_entity_balances_for_tokens(calls, "xsushi", xsushi, entities)
         calls = self.add_entity_balances_for_tokens(calls, "crv", crv, entities)
         calls = self.add_entity_balances_for_tokens(calls, "cvx", cvx, entities)
+        calls = self.add_entity_balances_for_tokens(calls, "3Crv", _3Crv, entities)
         calls = self.add_entity_balances_for_tokens(calls, "cvxCrv", cvxCrv, entities)
         calls = self.add_entity_balances_for_tokens(calls, "cvxCRV_CRV_SLP", cvxCRV_CRV_SLP, entities)
         calls = self.add_entity_balances_for_tokens(calls, "CVX_ETH_SLP", CVX_ETH_SLP, entities)

@@ -29,8 +29,8 @@ class ConvexTBtcMiniDeploy(SettMiniDeployBase):
             badger_deploy = json.load(f)
 
         # Fetch strategy from strategy_registry
-        self.strategy = StrategyConvexLpOptimizer.at(
-            badger_deploy["sett_system"]["strategies_registry"]["native.tbtcCrv"]["StrategyConvexLpOptimizer"]
+        self.strategy = StrategyConvexStakingOptimizer.at(
+            badger_deploy["sett_system"]["strategies_registry"]["native.tbtcCrv"]["StrategyConvexStakingOptimizer"]
         )
         self.badger.sett_system.strategies[self.key] = self.strategy
 
@@ -72,10 +72,10 @@ class ConvexTBtcMiniDeploy(SettMiniDeployBase):
 
     #     self.controller = interface.IController(self.vault.controller())
 
-    #     contract = StrategyConvexLpOptimizer.deploy({"from": self.deployer})
+    #     contract = StrategyConvexStakingOptimizer.deploy({"from": self.deployer})
     #     self.strategy = deploy_proxy(
-    #         "StrategyConvexLpOptimizer",
-    #         StrategyConvexLpOptimizer.abi,
+    #         "StrategyConvexStakingOptimizer",
+    #         StrategyConvexStakingOptimizer.abi,
     #         contract.address,
     #         web3.toChecksumAddress(self.badger.devProxyAdmin.address),
     #         contract.initialize.encode_input(
