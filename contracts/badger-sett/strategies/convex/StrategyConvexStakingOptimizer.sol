@@ -206,8 +206,9 @@ contract StrategyConvexStakingOptimizer is BaseStrategyMultiSwapper {
     /// ===== Internal Core Implementations =====
     function _onlyNotProtectedTokens(address _asset) internal override {
         require(address(want) != _asset, "want");
-        require(address(sushi) != _asset, "sushi");
-        require(address(xsushi) != _asset, "xsushi");
+        require(address(crv) != _asset, "crv");
+        require(address(cvx) != _asset, "cvx");
+        require(address(cvxCrv) != _asset, "cvxCrv");
     }
 
     /// @dev Deposit Badger into the staking contract
