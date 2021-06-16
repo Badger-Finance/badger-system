@@ -375,7 +375,6 @@ contract StrategyConvexStakingOptimizer is BaseStrategyMultiSwapper {
         _tendGainsFromPositions();
         
         // Stage 2: Convert & deposit gains into positions
-
         
         // 2. Process Extra Rewards Tokens
         // for (uint256 i=0; i < extraRewards.length(); i++) {
@@ -386,15 +385,17 @@ contract StrategyConvexStakingOptimizer is BaseStrategyMultiSwapper {
         //     }
         // }
 
-        // Track harvested + converted coins
-        tendData.cvxCrvTended = cvxCrvToken.balanceOf(address(this));
+        // Track harvested coins, before conversion
         tendData.crvTended = crvToken.balanceOf(address(this));
-        tendData.cvxTended = cvxToken.balanceOf(address(this));
 
         // 1. Convert CRV -> cvxCRV
         if ( tendData.crvTended > 0 ) {
             _convert_CRV_to_cvxCRV(tendData.crvTended);
         }
+
+        // Track harvested + converted coins
+        tendData.cvxCrvTended = cvxCrvToken.balanceOf(address(this));
+        tendData.cvxTended = cvxToken.balanceOf(address(this));
 
         // 3. Stake all cvxCRV
         if (tendData.cvxCrvTended > 0) {
