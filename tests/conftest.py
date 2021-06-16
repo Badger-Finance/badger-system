@@ -66,12 +66,12 @@ settsToRun = [
     # "native.sushiWbtcEth",
     # "native.sushiWbtcIbBtc",
     # "native.uniWbtcIbBtc",
-    "native.convexRenCrv",
+    # "native.convexRenCrv",
     # "native.convexSbtcCrv",
     # "native.convexTbtcCrv",
-    # "native.hbtcCrv",
-    # "native.pbtcCrv",
-    # "native.obtcCrv",
+    "native.hbtcCrv",
+    "native.pbtcCrv",
+    "native.obtcCrv",
     # "native.bbtcCrv",
 ]
 
