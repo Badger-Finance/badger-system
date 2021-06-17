@@ -116,7 +116,6 @@ abstract contract BaseStrategy is PausableUpgradeable, SettAccessControl {
         return false;
     }
     
-
     /// ===== Permissioned Actions: Governance =====
 
     function setGuardian(address _guardian) external {

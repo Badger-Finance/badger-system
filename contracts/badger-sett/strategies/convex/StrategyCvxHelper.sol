@@ -24,7 +24,7 @@ import "../BaseStrategy.sol";
     1. Stake cvxCrv
     2. Sell earned rewards into cvxCrv position and restake
 */
-contract StrategyCvxCrvHelper is BaseStrategy, CurveSwapper, UniswapSwapper, TokenSwapPathRegistry {
+contract StrategyCvxHelper is BaseStrategy, CurveSwapper, UniswapSwapper, TokenSwapPathRegistry {
     using SafeERC20Upgradeable for IERC20Upgradeable;
     using AddressUpgradeable for address;
     using SafeMathUpgradeable for uint256;
@@ -48,7 +48,7 @@ contract StrategyCvxCrvHelper is BaseStrategy, CurveSwapper, UniswapSwapper, Tok
     // ===== Convex Registry =====
     CrvDepositor public constant crvDepositor = CrvDepositor(0x8014595F2AB54cD7c604B00E9fb932176fDc86Ae); // Convert CRV -> cvxCRV/ETH SLP
     IBooster public constant booster = IBooster(0xF403C135812408BFbE8713b5A23a04b3D48AAE31);
-    IBaseRewardsPool public constant cvxCrvRewardsPool = IBaseRewardsPool(0x3Fe65692bfCD0e6CF84cB1E7d24108E434A7587e);
+    ICvxRewardsPool public constant cvxRewardsPool = ICvxRewardsPool(0xCF50b810E57Ac33B91dCF525C6ddd9881B139332);
     uint256 public constant MAX_UINT_256 = uint256(-1);
 
     event HarvestState(uint256 timestamp, uint256 blockNumber);
@@ -79,20 +79,14 @@ contract StrategyCvxCrvHelper is BaseStrategy, CurveSwapper, UniswapSwapper, Tok
         performanceFeeStrategist = _feeConfig[1];
         withdrawalFee = _feeConfig[2];
 
-        address[] memory path = new address[](2);
-        path[0] = crv;
-        path[1] = cvxCrv;
-        _setTokenSwapPath(crv, cvxCrv, path);
-
-        path = new address[](4);
-        path[0] = usdc;
-        path[1] = weth;
-        path[2] = crv;
-        path[3] = cvxCrv;
-        _setTokenSwapPath(usdc, cvxCrv, path);
+        address[] memory path = new address[](3);
+        path[0] = cvxCrv;
+        path[2] = weth;
+        path[3] = cvx;
+        _setTokenSwapPath(cvxCrv, cvx, path);
 
         // Approvals: Staking Pool
-        cvxCrvToken.approve(address(cvxCrvRewardsPool), MAX_UINT_256);
+        cvxToken.approve(address(cvxRewardsPool), MAX_UINT_256);
     }
 
     /// ===== View Functions =====
@@ -105,13 +99,13 @@ contract StrategyCvxCrvHelper is BaseStrategy, CurveSwapper, UniswapSwapper, Tok
     }
 
     function balanceOfPool() public view override returns (uint256) {
-        return cvxCrvRewardsPool.balanceOf(address(this));
+        return cvxRewardsPool.balanceOf(address(this));
     }
 
     function getProtectedTokens() public view override returns (address[] memory) {
         address[] memory protectedTokens = new address[](2);
         protectedTokens[0] = want;
-        protectedTokens[1] = cvxCrv;
+        protectedTokens[1] = cvx;
         return protectedTokens;
     }
 
@@ -127,7 +121,7 @@ contract StrategyCvxCrvHelper is BaseStrategy, CurveSwapper, UniswapSwapper, Tok
     /// @dev Deposit Badger into the staking contract
     function _deposit(uint256 _want) internal override {
         // Deposit all want in core staking pool
-        cvxCrvRewardsPool.stake(_want);
+        cvxRewardsPool.stake(_want);
     }
 
     /// @dev Unroll from all strategy positions, and transfer non-core tokens to controller rewards
@@ -144,7 +138,7 @@ contract StrategyCvxCrvHelper is BaseStrategy, CurveSwapper, UniswapSwapper, Tok
         // If we lack sufficient idle want, withdraw the difference from the strategy position
         if (_preWant < _amount) {
             uint256 _toWithdraw = _amount.sub(_preWant);
-            cvxCrvRewardsPool.stake(_toWithdraw);
+            cvxRewardsPool.stake(_toWithdraw);
             // Note: Withdrawl process will earn sushi, this will be deposited into SushiBar on next tend()
         }
 
@@ -159,31 +153,28 @@ contract StrategyCvxCrvHelper is BaseStrategy, CurveSwapper, UniswapSwapper, Tok
     }
 
     function _tendGainsFromPositions() internal {
-        if (cvxCrvRewardsPool.earned(address(this)) > 0) {
-            cvxCrvRewardsPool.getReward(address(this), true);
+        if (cvxRewardsPool.earned(address(this)) > 0) {
+            cvxRewardsPool.getReward(true);
         }
     }
 
-    function harvest() external whenNotPaused returns (uint256 cvxCrvHarvested) {
+    function harvest() external whenNotPaused returns (uint256 cvxHarvested) {
         _onlyAuthorizedActors();
-        // Stage 1: Harvest gains from positions
+        // 1. Harvest gains from positions
         _tendGainsFromPositions();
 
-        // Sell 3Crv (withdraw to USDC -> swap to CRV)
-        _remove_liquidity_one_coin(threeCrv, threeCrvToken.balanceOf(address(this)), 1, 0);
-
-        _swapExactTokensForTokens(uniswap, usdc, usdcToken.balanceOf(address(this)), getTokenSwapPath(usdc, cvxCrv));
-        _swapExactTokensForTokens(uniswap, cvx, cvxToken.balanceOf(address(this)), getTokenSwapPath(cvx, cvxCrv));
+        // 2. Swap rewards tokens to CVX
+        _swapExactTokensForTokens(uniswap, cvx, cvxCrvToken.balanceOf(address(this)), getTokenSwapPath(cvxCrv, cvx));
 
         // Track harvested + converted coin balance of want
-        cvxCrvHarvested = cvxCrvToken.balanceOf(address(this));
+        cvxHarvested = cvxToken.balanceOf(address(this));
 
-        // 3. Stake all cvxCRV
-        if (cvxCrvHarvested > 0) {
-            cvxCrvRewardsPool.stake(cvxCrvHarvested);
+        // 3. Stake all CVX
+        if (cvxHarvested > 0) {
+            cvxRewardsPool.stake(cvxHarvested);
         }
 
-        emit Tend(cvxCrvHarvested);
-        return cvxCrvHarvested;
+        emit Tend(cvxHarvested);
+        return cvxHarvested;
     }
 }
