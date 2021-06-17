@@ -276,16 +276,6 @@ contract StrategyConvexStakingOptimizer is BaseStrategyMultiSwapper {
         return baseRewardsPool.balanceOf(address(this));
     }
 
-    function isProtectedToken(address token) public view returns (bool) {
-        address[] memory protectedTokens = getProtectedTokens();
-        for (uint256 i = 0; i < protectedTokens.length; i++) {
-            if (token == protectedTokens[i]) {
-                return true;
-            }
-        }
-        return false;
-    }
-
     function getProtectedTokens() public override view returns (address[] memory) {
         address[] memory protectedTokens = new address[](4);
         protectedTokens[0] = want;

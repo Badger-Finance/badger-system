@@ -31,6 +31,7 @@ import "interfaces/convex/ICvxRewardsPool.sol";
 
 import "../../libraries/CurveSwapper.sol";
 import "../../libraries/UniswapSwapper.sol";
+import "../../libraries/TokenSwapPathRegistry.sol";
 
 import "../BaseStrategy.sol";
 
@@ -38,7 +39,7 @@ import "../BaseStrategy.sol";
     1. Stake cvxCrv
     2. Sell earned rewards into cvxCrv position and restake
 */
-contract StrategyCvxCrvHelper is BaseStrategy, CurveSwapper, UniswapSwapper {
+contract StrategyCvxCrvHelper is BaseStrategy, CurveSwapper, UniswapSwapper, TokenSwapPathRegistry {
     using SafeERC20Upgradeable for IERC20Upgradeable;
     using AddressUpgradeable for address;
     using SafeMathUpgradeable for uint256;
@@ -65,15 +66,6 @@ contract StrategyCvxCrvHelper is BaseStrategy, CurveSwapper, UniswapSwapper {
     IBaseRewardsPool public constant cvxCrvRewardsPool = IBaseRewardsPool(0x3Fe65692bfCD0e6CF84cB1E7d24108E434A7587e);
     uint256 public constant MAX_UINT_256 = uint256(-1);
 
-    /**
-    */
-    event ExtraRewardsTokenSet(
-        address indexed token
-    );
-
-    mapping(address => mapping(address => address[])) public tokenSwapPaths;
-    EnumerableSetUpgradeable.AddressSet internal extraRewards; // Tokens other than CVX and cvxCRV to process as rewards
-
     event HarvestState(
         uint256 timestamp,
         uint256 blockNumber
@@ -92,8 +84,6 @@ contract StrategyCvxCrvHelper is BaseStrategy, CurveSwapper, UniswapSwapper {
         uint256 cvxTended,
         uint256 cvxCrvHarvested
     );
-
-    event TokenSwapPathSet(address tokenIn, address tokenOut, address[] path);
 
     function initialize(
         address _governance,
@@ -116,20 +106,10 @@ contract StrategyCvxCrvHelper is BaseStrategy, CurveSwapper, UniswapSwapper {
         path[1] = cvxCrv;
         _setTokenSwapPath(crv, cvxCrv, path);
 
-        path = new address[](2);
-        path[0] = threeCrv;
-        path[1] = cvxCrv;
-        _setTokenSwapPath(crv, cvxCrv, path);
-
         // Approvals: Staking Pool
         cvxCrvToken.approve(address(cvxCrvRewardsPool), MAX_UINT_256);
     }
 
-    function getTokenSwapPath(address tokenIn, address tokenOut) public view returns (address[] memory) {
-        return tokenSwapPaths[tokenIn][tokenOut];
-    }
-
-    /// ===== Permissioned Functions: Governance / Strategist =====
     function setTokenSwapPath(
         address tokenIn,
         address tokenOut,
@@ -137,37 +117,6 @@ contract StrategyCvxCrvHelper is BaseStrategy, CurveSwapper, UniswapSwapper {
     ) external {
         _onlyGovernance();
         _setTokenSwapPath(tokenIn, tokenOut, path);
-    }
-
-    function _setTokenSwapPath(
-        address tokenIn,
-        address tokenOut,
-        address[] memory path
-    ) internal {
-        tokenSwapPaths[tokenIn][tokenOut] = path;
-        emit TokenSwapPathSet(tokenIn, tokenOut, path);
-    }
-
-    function addExtraRewardsToken(address _extraToken) external {
-        _onlyGovernance();
-
-        require(!isProtectedToken(_extraToken)); // We can't process tokens that are part of special strategy logic as extra rewards
-
-        /**
-        === tendConvertTo Attack Vector: Rug rewards via swap ===
-            - Set a token as an extra rewards token
-            - Provide liquidity on that pool (disallow swaps from non-admin to avoid others messing with it)
-            - Convert it to a token on tend that can be rugged by an admin    
-            - Admin steals value
-        */
-
-        extraRewards.add(_extraToken);
-        emit ExtraRewardsTokenSet(_extraToken);
-    }
-
-    function removeExtraRewardsToken(address _extraToken) external {
-        _onlyGovernance();
-        extraRewards.remove(_extraToken);
     }
 
     /// ===== View Functions =====
@@ -183,15 +132,7 @@ contract StrategyCvxCrvHelper is BaseStrategy, CurveSwapper, UniswapSwapper {
         return cvxCrvRewardsPool.balanceOf(address(this));
     }
 
-    function isProtectedToken(address token) public view returns (bool) {
-        address[] memory protectedTokens = getProtectedTokens();
-        for (uint256 i = 0; i < protectedTokens.length; i++) {
-            if (token == protectedTokens[i]) {
-                return true;
-            }
-        }
-        return false;
-    }
+    
 
     function getProtectedTokens() public override view returns (address[] memory) {
         address[] memory protectedTokens = new address[](2);

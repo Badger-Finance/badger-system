@@ -105,6 +105,17 @@ abstract contract BaseStrategy is PausableUpgradeable, SettAccessControl {
     function isTendable() public virtual view returns (bool) {
         return false;
     }
+    
+    function isProtectedToken(address token) public view returns (bool) {
+        address[] memory protectedTokens = getProtectedTokens();
+        for (uint256 i = 0; i < protectedTokens.length; i++) {
+            if (token == protectedTokens[i]) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
 
     /// ===== Permissioned Actions: Governance =====
 
@@ -249,9 +260,7 @@ abstract contract BaseStrategy is PausableUpgradeable, SettAccessControl {
         require(_vault != address(0), "!vault"); // additional protection so we don't burn the funds
         IERC20Upgradeable(want).safeTransfer(_vault, _amount);
     }
-
     
-
     /// @notice Utility function to diff two numbers, expects higher value in first position
     function _diff(uint256 a, uint256 b) internal pure returns (uint256) {
         require(a >= b, "diff/expected-higher-number-in-first-position");
@@ -270,7 +279,9 @@ abstract contract BaseStrategy is PausableUpgradeable, SettAccessControl {
     /// @notice Specify tokens used in yield process, should not be available to withdraw via withdrawOther()
     function _onlyNotProtectedTokens(address _asset) internal virtual;
 
-    function getProtectedTokens() external virtual view returns (address[] memory);
+    function getProtectedTokens() public virtual view returns (address[] memory) {
+        return new address[](0);
+    }
 
     /// @dev Internal logic for strategy migration. Should exit positions as efficiently as possible
     function _withdrawAll() internal virtual;

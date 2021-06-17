@@ -99,7 +99,7 @@ contract StrategyDiggRewards is BaseStrategy {
         return sharesOfWant().add(sharesOfPool());
     }
 
-    function getProtectedTokens() external override view returns (address[] memory) {
+    function getProtectedTokens() public override view returns (address[] memory) {
         address[] memory protectedTokens = new address[](1);
         protectedTokens[0] = want;
         return protectedTokens;
