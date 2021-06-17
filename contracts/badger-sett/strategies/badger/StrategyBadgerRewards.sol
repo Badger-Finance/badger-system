@@ -86,6 +86,17 @@ contract StrategyBadgerRewards is BaseStrategy {
         IStakingRewards(geyser).stake(_want);
     }
 
+
+    /// @dev Reset approval and approve exact amount
+    function _safeApproveHelper(
+        address token,
+        address recipient,
+        uint256 amount
+    ) internal {
+        IERC20Upgradeable(token).safeApprove(recipient, 0);
+        IERC20Upgradeable(token).safeApprove(recipient, amount);
+    }
+
     /// @dev Exit staking rewards
     /// @dev All claimed rewards are in want so no further actions needed
     function _withdrawAll() internal override {

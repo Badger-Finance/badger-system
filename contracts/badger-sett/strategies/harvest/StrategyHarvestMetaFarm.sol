@@ -18,9 +18,9 @@ import "interfaces/uniswap/IUniswapRouterV2.sol";
 import "interfaces/badger/IController.sol";
 import "interfaces/badger/IMintr.sol";
 import "interfaces/badger/IStrategy.sol";
-import "../BaseStrategy.sol";
+import "../BaseStrategySwapper.sol";
 
-contract StrategyHarvestMetaFarm is BaseStrategy {
+contract StrategyHarvestMetaFarm is BaseStrategyMultiSwapper {
     using SafeERC20Upgradeable for IERC20Upgradeable;
     using AddressUpgradeable for address;
     using SafeMathUpgradeable for uint256;

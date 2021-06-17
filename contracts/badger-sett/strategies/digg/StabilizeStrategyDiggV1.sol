@@ -8,7 +8,7 @@ import "deps/@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 import "deps/@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "deps/@openzeppelin/contracts-upgradeable/token/ERC20/SafeERC20Upgradeable.sol";
 import "interfaces/badger/IController.sol";
-import "../BaseStrategy.sol";
+import "../BaseStrategySwapper.sol";
 
 /*
     This is a strategy to stabilize Digg with wBTC. It takes advantage of market momentum and accumulated collateral to
@@ -62,7 +62,7 @@ interface DiggTreasury {
     ) external;
 }
 
-contract StabilizeStrategyDiggV1 is BaseStrategy {
+contract StabilizeStrategyDiggV1 is BaseStrategyMultiSwapper {
     using SafeERC20Upgradeable for ERC20Upgradeable;
     using AddressUpgradeable for address;
     using SafeMathUpgradeable for uint256;

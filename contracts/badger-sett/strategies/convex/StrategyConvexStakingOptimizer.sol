@@ -374,8 +374,7 @@ contract StrategyConvexStakingOptimizer is BaseStrategyMultiSwapper {
         // Stage 1: Harvest gains from positions
         _tendGainsFromPositions();
         
-        // Stage 2: Convert & deposit gains into positions
-        
+        // Stage 2: Convert & deposit gains into positions        
         // 2. Process Extra Rewards Tokens
         // for (uint256 i=0; i < extraRewards.length(); i++) {
         //     address token = extraRewards.at(i);
