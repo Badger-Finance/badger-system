@@ -40,6 +40,8 @@ from tests.sett.fixtures import (
     ConvexPBtcMiniDeploy,
     ConvexOBtcMiniDeploy,
     ConvexBBtcMiniDeploy,
+    HelperCvxMiniDeploy,
+    HelperCvxCrvMiniDeploy,
 )
 
 
@@ -69,10 +71,12 @@ settsToRun = [
     # "native.convexRenCrv",
     # "native.convexSbtcCrv",
     # "native.convexTbtcCrv",
-    "native.hbtcCrv",
-    "native.pbtcCrv",
-    "native.obtcCrv",
+    # "native.hbtcCrv",
+    # "native.pbtcCrv",
+    # "native.obtcCrv",
     # "native.bbtcCrv",
+    "helper.cvx",
+    "helper.cvxCrv",
 ]
 
 yearnSettsToRun = [
@@ -407,6 +411,26 @@ def badger_single_sett(settConfig, deploy=True):
             return ConvexBBtcMiniDeploy(
                 "native.bbtcCrv",
                 "StrategyConvexStakingOptimizer",
+                deployer,
+                strategist=strategist,
+                guardian=guardian,
+                keeper=keeper,
+                governance=governance,
+            ).deploy(deploy=deploy)
+        if settId == "helper.cvx":
+            return HelperCvxMiniDeploy(
+                "helper.cvx",
+                "StrategyCvxHelper",
+                deployer,
+                strategist=strategist,
+                guardian=guardian,
+                keeper=keeper,
+                governance=governance,
+            ).deploy(deploy=deploy)
+        if settId == "helper.cvxCrv":
+            return HelperCvxCrvMiniDeploy(
+                "helper.cvxCrv",
+                "StrategyCvxCrvHelper",
                 deployer,
                 strategist=strategist,
                 guardian=guardian,

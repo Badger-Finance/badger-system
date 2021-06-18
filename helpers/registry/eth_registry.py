@@ -177,7 +177,9 @@ eth_registry.tokens = DotMap(
     renbtc=web3.toChecksumAddress("0xeb4c2781e4eba804ce9a9803c67d0893436bb27d"),
     ibbtc=web3.toChecksumAddress("0xc4E15973E6fF2A35cC804c2CF9D2a1b817a8b40F"),
     dfd=web3.toChecksumAddress("0x20c36f062a31865bed8a5b1e512d9a1a20aa333a"),
-    ausdc="0xBcca60bB61934080951369a648Fb03DF4F96263C"
+    ausdc="0xBcca60bB61934080951369a648Fb03DF4F96263C",
+    cvx="0x4e3FBD56CD56c3e72c1403e103b45Db9da5B9D2B",
+    cvxCrv="0x62B9c7356A2Dc64a1969e19C23e4f579F9810Aa7",
 )
 
 eth_registry.whales = DotMap(
@@ -294,6 +296,16 @@ eth_registry.whales = DotMap(
     renbtc=DotMap(
         whale="0x35ffd6e268610e764ff6944d07760d0efe5e40e5",
         token="0xeb4c2781e4eba804ce9a9803c67d0893436bb27d",
+        action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT,
+    ),
+    cvx=DotMap(
+        whale="0xcd46ec6b6c1214145cb968f33fdc0eab19196cfa",
+        token="0x4e3fbd56cd56c3e72c1403e103b45db9da5b9d2b",
+        action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT,
+    ),
+    cvxCrv=DotMap(
+        whale="0x253643bd61950801b94827462bb30d1859b6373d",
+        token="0x62b9c7356a2dc64a1969e19c23e4f579f9810aa7",
         action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT,
     ),
 )

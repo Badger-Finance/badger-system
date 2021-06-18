@@ -21,6 +21,8 @@ from helpers.sett.resolvers import (
     StrategyDiggLpMetaFarmResolver,
     StrategyUniGenericLpResolver,
     StrategyConvexStakingOptimizerResolver,
+    StrategyCvxHelperResolver,
+    StrategyCvxCrvHelperResolver,
 )
 from helpers.utils import digg_shares_to_initial_fragments, val
 from scripts.systems.badger_system import BadgerSystem
@@ -175,6 +177,10 @@ class SnapshotManager:
             return StabilizeStrategyDiggV1Resolver(self)
         if name == "StrategyConvexStakingOptimizer":
             return StrategyConvexStakingOptimizerResolver(self)
+        if name == "StrategyCvxHelper":
+            return StrategyCvxHelperResolver(self)
+        if name == "StrategyCvxCrvHelper":
+            return StrategyCvxCrvHelperResolver(self)
 
     def settTend(self, overrides, confirm=True):
         user = overrides["from"].address

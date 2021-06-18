@@ -73,7 +73,7 @@ contract StrategyCvxHelper is BaseStrategy, CurveSwapper, UniswapSwapper, TokenS
     ) public initializer whenNotPaused {
         __BaseStrategy_init(_governance, _strategist, _controller, _keeper, _guardian);
 
-        want = cvxCrv;
+        want = cvx;
 
         performanceFeeGovernance = _feeConfig[0];
         performanceFeeStrategist = _feeConfig[1];
@@ -81,8 +81,8 @@ contract StrategyCvxHelper is BaseStrategy, CurveSwapper, UniswapSwapper, TokenS
 
         address[] memory path = new address[](3);
         path[0] = cvxCrv;
-        path[2] = weth;
-        path[3] = cvx;
+        path[1] = weth;
+        path[2] = cvx;
         _setTokenSwapPath(cvxCrv, cvx, path);
 
         // Approvals: Staking Pool
@@ -95,7 +95,7 @@ contract StrategyCvxHelper is BaseStrategy, CurveSwapper, UniswapSwapper, TokenS
     }
 
     function getName() external pure override returns (string memory) {
-        return "StrategyCvxCrvHelper";
+        return "StrategyCvxHelper";
     }
 
     function balanceOfPool() public view override returns (uint256) {
