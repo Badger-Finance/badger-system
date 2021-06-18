@@ -160,6 +160,26 @@ sett_config = DotMap(
             ),
         ),
     ),
+    helper=DotMap(
+        cvx=DotMap(
+            strategyName="StrategyCvxHelper",
+            params=DotMap(
+                want=registry.tokens.cvx,
+                performanceFeeStrategist=1000,
+                performanceFeeGovernance=1000,
+                withdrawalFee=50,
+            ),
+        ),
+        cvxCrv=DotMap(
+            strategyName="StrategyCvxCrvHelper",
+            params=DotMap(
+                want=registry.tokens.cvxCrv,
+                performanceFeeStrategist=1000,
+                performanceFeeGovernance=1000,
+                withdrawalFee=50,
+            ),
+        ),
+    ),
     pickle=DotMap(
         renCrv=DotMap(
             strategyName="StrategyPickleMetaFarm",

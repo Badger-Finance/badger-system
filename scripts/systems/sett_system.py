@@ -407,6 +407,46 @@ def deploy_strategy(
             ),
             badger.deployer,
         )
+    if strategyName == "StrategyCvxHelper":
+        return deploy_proxy(
+            "StrategyCvxHelper",
+            StrategyCvxHelper.abi,
+            badger.logic.StrategyCvxHelper.address,
+            badger.devProxyAdmin.address,
+            badger.logic.StrategyCvxHelper.initialize.encode_input(
+                governance,
+                strategist,
+                controller,
+                keeper,
+                guardian, 
+                [
+                    params.performanceFeeGovernance,
+                    params.performanceFeeStrategist,
+                    params.withdrawalFee,
+                ],
+            ),
+            badger.deployer,
+        )
+    if strategyName == "StrategyCvxCrvHelper":
+        return deploy_proxy(
+            "StrategyCvxCrvHelper",
+            StrategyCvxCrvHelper.abi,
+            badger.logic.StrategyCvxCrvHelper.address,
+            badger.devProxyAdmin.address,
+            badger.logic.StrategyCvxCrvHelper.initialize.encode_input(
+                governance,
+                strategist,
+                controller,
+                keeper,
+                guardian, 
+                [
+                    params.performanceFeeGovernance,
+                    params.performanceFeeStrategist,
+                    params.withdrawalFee,
+                ],
+            ),
+            badger.deployer,
+        )
 
 
 def deploy_controller(

@@ -20,6 +20,7 @@ name_to_artifact = {
     "StrategyBadgerRewards": StrategyBadgerRewards,
     "StrategyBadgerLpMetaFarm": StrategyBadgerLpMetaFarm,
     "StrategyHarvestMetaFarm": StrategyHarvestMetaFarm,
+    # "StrategyPickleMetaFarm": StrategyPickleMetaFarm, # moved to drafts
     "StrategyCurveGaugeTbtcCrv": StrategyCurveGaugeTbtcCrv,
     "StrategyCurveGaugeSbtcCrv": StrategyCurveGaugeSbtcCrv,
     "StrategyCurveGaugeRenBtcCrv": StrategyCurveGaugeRenBtcCrv,
@@ -55,7 +56,10 @@ name_to_artifact = {
     "StabilizeStrategyDiggV1": StabilizeStrategyDiggV1,
     "VipCappedGuestListBbtcUpgradeable": VipCappedGuestListBbtcUpgradeable,
     "Disperse": Disperse,
-    "DiggTreasury": DiggTreasury
+    "DiggTreasury": DiggTreasury,
+    "StrategyCvxHelper": StrategyCvxHelper,
+    "StrategyCvxCrvHelper": StrategyCvxCrvHelper,
+    "StrategyPlaceholder": StrategyPlaceholder,
 }
 
 
