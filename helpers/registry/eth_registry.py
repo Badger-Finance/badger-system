@@ -118,6 +118,10 @@ curve_registry = DotMap(
             token="0x410e3E86ef427e30B9235497143881f717d93c2A",
             gauge="0xdFc7AdFa664b08767b735dE28f9E84cd30492aeE",
         ),
+        triCrypto=DotMap(
+            token="0xca3d75ac011bf5ad07a98d02f18225f9bd9a6bdf",
+            gauge=""
+        )
     ),
     pids=DotMap(
         renCrv=6, 
