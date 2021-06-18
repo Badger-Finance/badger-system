@@ -51,7 +51,6 @@
         "StrategyBadgerRewards": "0x38b9344fFB931ABA6476198095e088024CdAC527",
         "StrategyBadgerLpMetaFarm": "0xB18D0bC54829bdFeAE998b8FE9a8df10953DcAeC",
         "StrategyHarvestMetaFarm": "0x17c118416BD713e00037125D85E58abaC60c4A4E",
-        "StrategyPickleMetaFarm": "0xF6BC36280F32398A031A7294e81131aEE787D178",
         "StrategyCurveGaugeTbtcCrv": "0x1989C39Bc167678EAc6e9ADe5D803Cc3523011cf",
         "StrategyCurveGaugeSbtcCrv": "0xe3c63D747aca7Fb9E9404a09520D7A2A4feFEEaA",
         "StrategyCurveGaugeRenBtcCrv": "0x8B60386a978dFC3241E9112dB3ea009331838846",
@@ -287,5 +286,8 @@
         "byvWbtc": "0x4b92d19c11435614CD49Af1b589001b7c08cD4D5",
         "bBtc": "0xc4E15973E6fF2A35cC804c2CF9D2a1b817a8b40F",
         "core": "0x2A8facc9D49fBc3ecFf569847833C380A13418a8"
+    },
+    "obsolete": {
+        "StrategyPickleMetaFarm": "0xF6BC36280F32398A031A7294e81131aEE787D178"
     }
 }

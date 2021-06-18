@@ -33,6 +33,8 @@ from .provisioners import (
     SushiLpOptimizerProvisioner,
     WbtcIbBtcLpProvisioner,
     ConvexProvisioner,
+    HelperCvxProvisioner,
+    HelperCvxCrvProvisioner
 )
 
 console = Console()
@@ -195,6 +197,10 @@ class SimulationManager:
             return ConvexProvisioner(self)
         if settId in ["native.hbtcCrv", "native.pbtcCrv", "native.obtcCrv", "native.bbtcCrv"]: 
             return ConvexProvisioner(self)
+        if settId == "helper.cvx":
+            return HelperCvxProvisioner(self)
+        if settId == "helper.cvxCrv" :
+            return HelperCvxCrvProvisioner(self)
         raise Exception(f"invalid strategy settID (no provisioner): {settId}")
 
     def _provisionUserActors(self) -> None:
