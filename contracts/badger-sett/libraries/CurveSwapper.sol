@@ -70,11 +70,11 @@ contract CurveSwapper {
     }
 
     function _remove_liquidity_one_coin(
-        address pool,
+        address swap,
         uint256 _token_amount,
         int128 i,
         uint256 _min_amount
     ) internal {
-        ICurveFi(pool).remove_liquidity_one_coin(_token_amount, i, _min_amount);
+        ICurveFi(swap).remove_liquidity_one_coin(_token_amount, i, _min_amount);
     }
 }

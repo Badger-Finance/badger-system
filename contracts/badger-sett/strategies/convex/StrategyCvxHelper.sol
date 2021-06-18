@@ -164,8 +164,12 @@ contract StrategyCvxHelper is BaseStrategy, CurveSwapper, UniswapSwapper, TokenS
         // 1. Harvest gains from positions
         _tendGainsFromPositions();
 
-        // 2. Swap rewards tokens to CVX
-        _swapExactTokensForTokens(uniswap, cvx, cvxCrvToken.balanceOf(address(this)), getTokenSwapPath(cvxCrv, cvx));
+        // 2. Swap cvxCRV tokens to CVX
+        uint256 cvxCrvBalance = cvxCrvToken.balanceOf(address(this));
+
+        if (cvxCrvBalance > 0) {
+            _swapExactTokensForTokens(sushiswap, cvxCrv, cvxCrvBalance, getTokenSwapPath(cvxCrv, cvx));
+        }
 
         // Track harvested + converted coin balance of want
         cvxHarvested = cvxToken.balanceOf(address(this));

@@ -45,6 +45,8 @@ contract StrategyCvxCrvHelper is BaseStrategy, CurveSwapper, UniswapSwapper, Tok
     IERC20Upgradeable public constant usdcToken = IERC20Upgradeable(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48);
     IERC20Upgradeable public constant threeCrvToken = IERC20Upgradeable(0x6c3F90f043a72FA612cbac8115EE7e52BDe6E490);
 
+    address public constant threeCrvSwap = 0xbEbc44782C7dB0a1A60Cb6fe97d0b483032FF1C7;
+
     // ===== Convex Registry =====
     CrvDepositor public constant crvDepositor = CrvDepositor(0x8014595F2AB54cD7c604B00E9fb932176fDc86Ae); // Convert CRV -> cvxCRV/ETH SLP
     IBooster public constant booster = IBooster(0xF403C135812408BFbE8713b5A23a04b3D48AAE31);
@@ -79,16 +81,16 @@ contract StrategyCvxCrvHelper is BaseStrategy, CurveSwapper, UniswapSwapper, Tok
         performanceFeeStrategist = _feeConfig[1];
         withdrawalFee = _feeConfig[2];
 
-        address[] memory path = new address[](2);
-        path[0] = crv;
-        path[1] = cvxCrv;
-        _setTokenSwapPath(crv, cvxCrv, path);
+        address[] memory path = new address[](3);
+        path[0] = cvx;
+        path[1] = weth;
+        path[2] = cvxCrv;
+        _setTokenSwapPath(cvx, cvxCrv, path);
 
-        path = new address[](4);
+        path = new address[](3);
         path[0] = usdc;
         path[1] = weth;
-        path[2] = crv;
-        path[3] = cvxCrv;
+        path[2] = cvxCrv;
         _setTokenSwapPath(usdc, cvxCrv, path);
 
         // Approvals: Staking Pool
@@ -166,19 +168,32 @@ contract StrategyCvxCrvHelper is BaseStrategy, CurveSwapper, UniswapSwapper, Tok
 
     function harvest() external whenNotPaused returns (uint256 cvxCrvHarvested) {
         _onlyAuthorizedActors();
-        // Stage 1: Harvest gains from positions
+        // 1. Harvest gains from positions
         _tendGainsFromPositions();
 
-        // Sell 3Crv (withdraw to USDC -> swap to CRV)
-        _remove_liquidity_one_coin(threeCrv, threeCrvToken.balanceOf(address(this)), 1, 0);
-        _swapExactTokensForTokens(uniswap, usdc, usdcToken.balanceOf(address(this)), getTokenSwapPath(usdc, cvxCrv));
-        
-        _swapExactTokensForTokens(uniswap, cvx, cvxToken.balanceOf(address(this)), getTokenSwapPath(cvx, cvxCrv));
+        // 2. Sell 3Crv (withdraw to USDC -> swap to CRV)
+        uint256 threeCrvBalance = threeCrvToken.balanceOf(address(this));
 
+        if (threeCrvBalance > 0) {      
+            _remove_liquidity_one_coin(threeCrvSwap, threeCrvBalance, 1, 0);
+            uint256 usdcBalance = usdcToken.balanceOf(address(this));
+            require(usdcBalance > 0, "window-tint");
+            if (usdcBalance > 0) {
+                _swapExactTokensForTokens(sushiswap, usdc, usdcBalance, getTokenSwapPath(usdc, cvxCrv));
+            }
+            
+        }
+
+        // 3. Sell CVX
+        uint256 cvxTokenBalance = cvxToken.balanceOf(address(this));
+        if (cvxTokenBalance > 0) {
+            _swapExactTokensForTokens(sushiswap, cvx, cvxTokenBalance, getTokenSwapPath(cvx, cvxCrv));
+        }
+        
         // Track harvested + converted coin balance of want
         cvxCrvHarvested = cvxCrvToken.balanceOf(address(this));
 
-        // 3. Stake all cvxCRV
+        // 4. Stake all cvxCRV
         if (cvxCrvHarvested > 0) {
             cvxCrvRewardsPool.stake(cvxCrvHarvested);
         }

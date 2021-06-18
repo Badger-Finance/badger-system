@@ -5,7 +5,7 @@ interface ICvxRewardsPool {
     //balance
     function balanceOf(address _account) external view returns(uint256);
     //withdraw to a convex tokenized deposit
-    function withdraw(uint256 _amount, bool _claim) external returns(bool);
+    function withdraw(uint256 _amount, bool _claim) external;
     //withdraw directly to curve LP token
     function withdrawAndUnwrap(uint256 _amount, bool _claim) external returns(bool);
     //claim rewards
