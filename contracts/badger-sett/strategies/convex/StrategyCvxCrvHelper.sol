@@ -144,7 +144,7 @@ contract StrategyCvxCrvHelper is BaseStrategy, CurveSwapper, UniswapSwapper, Tok
         // If we lack sufficient idle want, withdraw the difference from the strategy position
         if (_preWant < _amount) {
             uint256 _toWithdraw = _amount.sub(_preWant);
-            cvxCrvRewardsPool.stake(_toWithdraw);
+            cvxCrvRewardsPool.withdraw(_toWithdraw, false);
             // Note: Withdrawl process will earn sushi, this will be deposited into SushiBar on next tend()
         }
 

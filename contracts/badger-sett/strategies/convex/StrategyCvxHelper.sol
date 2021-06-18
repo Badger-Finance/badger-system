@@ -138,7 +138,8 @@ contract StrategyCvxHelper is BaseStrategy, CurveSwapper, UniswapSwapper, TokenS
         // If we lack sufficient idle want, withdraw the difference from the strategy position
         if (_preWant < _amount) {
             uint256 _toWithdraw = _amount.sub(_preWant);
-            cvxRewardsPool.stake(_toWithdraw);
+            cvxRewardsPool.withdraw(_toWithdraw, false);
+            
             // Note: Withdrawl process will earn sushi, this will be deposited into SushiBar on next tend()
         }
 
