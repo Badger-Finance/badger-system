@@ -21,7 +21,7 @@ bsc_client = make_gql_client("bsc")
 
 @lru_cache(maxsize=None)
 def fetch_sett_balances(key, settId, startBlock, chain="eth"):
-    console.log(settId,startBlock)
+    console.log(settId, startBlock)
     query = gql(
         """
         query balances_and_events($vaultID: Vault_filter, $blockHeight: Block_height,$lastBalanceId:AccountVaultBalance_filter) {
