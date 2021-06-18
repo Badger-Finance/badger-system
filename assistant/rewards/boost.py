@@ -10,7 +10,6 @@ from collections import OrderedDict
 from assistant.rewards.rewards_utils import combine_balances, calculate_sett_balances
 from assistant.badger_api.prices import (
     fetch_token_prices,
-    fetch_ppfs,
 )
 
 from assistant.rewards.classes.UserBalance import UserBalance, UserBalances
@@ -22,7 +21,7 @@ console = Console()
 MAX_MULTIPLIER = 3
 
 
-badgerTree = Contract.from_explorer("0x660802Fc641b154aBA66a62137e71f331B6d787A")
+#badgerTree = Contract.from_explorer("0x660802Fc641b154aBA66a62137e71f331B6d787A")
 
 
 def add_boost_info(balances, name):
@@ -82,7 +81,6 @@ def calc_stake_ratio(address, diggSetts, badgerSetts, nonNativeSetts, nftBoosts)
             boostInfo[address] = {}
         boostInfo[address]["nativeBalance"] = diggBalance + badgerBalance
         boostInfo[address]["nonNativeBalance"] = nonNativeBalance
-        boostInfo[address]["nftBoost"] = nftBoost
 
     return (nftBoost * diggBalance + badgerBalance) / nonNativeBalance
 
@@ -129,31 +127,31 @@ def badger_boost(badger, pastRewards, currentBlock):
     badger_wallet_balances, digg_wallet_balances = fetch_wallet_balances(
         prices[BADGER], prices[DIGG], badger.digg, currentBlock
     )
-    for addr, claimData in pastRewards["claims"].items():
-        tokens = claimData["tokens"]
-        amounts = claimData["cumulativeAmounts"]
+    # for addr, claimData in pastRewards["claims"].items():
+    #     tokens = claimData["tokens"]
+    #     amounts = claimData["cumulativeAmounts"]
 
-        claimableBadger = 0
-        claimableDigg = 0
+    #     claimableBadger = 0
+    #     claimableDigg = 0
 
-        tokens, amounts = badgerTree.getClaimableFor(addr, tokens, amounts)
-        if BADGER in tokens:
-            badgerAmount = float(amounts[tokens.index(BADGER)])
-            claimableBadger = float(badgerAmount) / 1e18
-        if DIGG in tokens:
-            diggAmount = float(amounts[tokens.index(DIGG)])
-            claimableDigg = diggUtils.sharesToFragments(diggAmount) / 1e9
+    #     tokens, amounts = badgerTree.getClaimableFor(addr, tokens, amounts)
+    #     if BADGER in tokens:
+    #         badgerAmount = float(amounts[tokens.index(BADGER)])
+    #         claimableBadger = float(badgerAmount) / 1e18
+    #     if DIGG in tokens:
+    #         diggAmount = float(amounts[tokens.index(DIGG)])
+    #         claimableDigg = diggUtils.sharesToFragments(diggAmount) / 1e9
 
-        claimableBadger *= prices[BADGER]
-        claimableDigg *= prices[DIGG]
+    #     claimableBadger *= prices[BADGER]
+    #     claimableDigg *= prices[DIGG]
 
-        console.log("{} {} {}".format(addr, claimableBadger, claimableDigg))
+    #     console.log("{} {} {}".format(addr, claimableBadger, claimableDigg))
 
-        currentBadger = badger_wallet_balances.get(addr.lower(), 0)
-        currentDigg = digg_wallet_balances.get(addr.lower(), 0)
+    #     currentBadger = badger_wallet_balances.get(addr.lower(), 0)
+    #     currentDigg = digg_wallet_balances.get(addr.lower(), 0)
 
-        badger_wallet_balances[addr] = currentBadger + claimableBadger
-        digg_wallet_balances[addr] = currentDigg + claimableDigg
+    #     badger_wallet_balances[addr] = currentBadger + claimableBadger
+    #     digg_wallet_balances[addr] = currentDigg + claimableDigg
 
     console.log(
         "{} Badger balances fetched, {} Digg balances fetched".format(
@@ -224,22 +222,4 @@ def badger_boost(badger, pastRewards, currentBlock):
         if stakeRatios[addr] == 0:
             badgerBoost[addr] = 1
 
-        boostInfo[addr]["boost"] = boost
-
-    with open("logs/boostInfo-{}.csv".format(currentBlock), "w") as fp:
-        writer = csv.writer(fp, delimiter=",")
-        writer.writerow(
-            ["address", "nativeBalance", "nonNativeBalance", "boost", "nftBoost"]
-        )
-        for addr, data in boostInfo.items():
-            writer.writerow(
-                [
-                    addr,
-                    data.get("nativeBalance", 0),
-                    data.get("nonNativeBalance", 0),
-                    data.get("boost", 0),
-                    data.get("nftBoost", 0),
-                ]
-            )
-
-    return badgerBoost, stakeRatios, nftMultipliers
+    return badgerBoost, stakeRatios, nftMultipliers,boostInfo

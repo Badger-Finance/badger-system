@@ -98,7 +98,7 @@ def calc_nft_score(nft):
 
 
 def calc_score(rarity, multiplier):
-    exponent = 1 / multiplier
+    exponent = 1 / int(multiplier)
     denom = math.pow(math.sqrt(rarity), exponent)
     return 1000 / denom
 

@@ -43,7 +43,8 @@ def calc_sett_rewards(badger, periodStartBlock, endBlock, pastRewards, cycle):
     # diggAllocation = calculate_digg_allocation(ratio)
     rewardsBySett = {}
     noRewards = ["native.digg"]
-    boosts, stakeRatios, nftMultipliers = badger_boost(badger, pastRewards, endBlock)
+    boosts, stakeRatios, nftMultipliers, boostInfo = badger_boost(
+        badger, pastRewards, endBlock)
     apyBoosts = {}
     multiplierData = {}
     for key, sett in badger.sett_system.vaults.items():
@@ -70,11 +71,14 @@ def calc_sett_rewards(badger, periodStartBlock, endBlock, pastRewards, cycle):
     boostsMetadata = {"multiplierData": multiplierData, "userData": {}}
 
     for addr, multipliers in apyBoosts.items():
+        balanceData = boostInfo.get(addr, {})
         boostsMetadata["userData"][addr] = {
             "boost": boosts.get(addr, 1),
             "stakeRatio": stakeRatios.get(addr, 0),
             "multipliers": multipliers,
             "nftMultiplier": nftMultipliers.get(addr, 1),
+            "nonNativeBalance": balanceData.get("nonNativeBalance", 0),
+            "nativeBalance": balanceData.get("nativeBalance")
         }
 
     validateBoostMetadata(boostsMetadata)
