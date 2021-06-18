@@ -30,43 +30,40 @@ def get_ethereum_data(block):
 
 
 def get_bsc_data(block):
-    bDiggLpAddress = "0xa861Ba302674b08f7F2F24381b705870521DDfed".lower()
-
-    bDiggHolders = fetch_wallet_balances(1, 1, None, block, chain="bsc")[1]
-
+    bDiggLpAddress = "0xa861ba302674b08f7f2f24381b705870521ddfed".lower()
     bDiggLpHolders = fetch_sett_balances(
         "",
         bDiggLpAddress,
         block,
         chain="bsc"
     )
+
+    bDiggHolders = fetch_wallet_balances(1, 1, None, block, chain="bsc")[1]
+
     return bDiggHolders, bDiggLpHolders
 
 
 def main():
-    block0Eth = 123
-    block1Eth = 400
 
-    block0Bsc = 1234
-    block1Bsc = 1235
-
-    bDiggEth0, diggUlp, diggSlp0 = get_ethereum_data(block0Eth)
-    bDiggEth1, diggUlp1, diggSlp1 = get_ethereum_data(block1Eth)
-
+    block0Bsc = 7192108
+    block1Bsc = 8381879
     bdiggBsc0, bdiggLpBsc0 = get_bsc_data(block0Bsc)
     bdiggBsc1, bdiggLpBsc1 = get_bsc_data(block1Bsc)
+    
+    json2csv("bDiggBSC",bdiggBsc0,bdiggBsc1)
+    json2csv("bDiggLpBSC",bdiggLpBsc0,bdiggLpBsc1)
     
     
 
 
 def json2csv(name, old, new):
-    addrs = set(old.keys()) + set(new.keys())
-    with open("{}.csv".format(name)) as csv_file:
-        csv_reader = csv.reader(csv_file, delimiter=',')
-        csv_reader.writerow(["address, balance_at_t0, balance_at_t1"])
+    addrs = list(set(old.keys()).union(set(new.keys())))
+    with open("bscData/{}.csv".format(name),"w") as csv_file:
+        csv_writer = csv.writer(csv_file, delimiter=',')
+        csv_writer.writerow(["address", "balance_at_t0", "balance_at_t1"])
         for addr in addrs:
-            csv_reader.writerow([
+            csv_writer.writerow([
                 addr,
-                old.get(addr, 0),
-                new.get(addr, 1)]
+                old.get(addr, 0)/1e18,
+                new.get(addr, 0)/1e18]
             )

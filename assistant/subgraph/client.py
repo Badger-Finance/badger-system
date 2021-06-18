@@ -21,6 +21,7 @@ bsc_client = make_gql_client("bsc")
 
 @lru_cache(maxsize=None)
 def fetch_sett_balances(key, settId, startBlock, chain="eth"):
+    console.log(settId,startBlock)
     query = gql(
         """
         query balances_and_events($vaultID: Vault_filter, $blockHeight: Block_height,$lastBalanceId:AccountVaultBalance_filter) {
@@ -281,7 +282,10 @@ def fetch_wallet_balances(badger_price, digg_price, digg, blockNumber, chain="et
 
     badger_balances = {}
     digg_balances = {}
-    sharesPerFragment = digg.logic.UFragments._sharesPerFragment()
+    if digg == None:
+        sharesPerFragment = 0
+    else:
+        sharesPerFragment = digg.logic.UFragments._sharesPerFragment()
     while continueFetching:
         variables = {
             "firstAmount": increment,
