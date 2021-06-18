@@ -12,6 +12,7 @@
     "devMultisig": "0xB65cef03b9B89f99517643226d76e286ee999e77",
     "opsMultisig": "0x576cD258835C529B54722F84Bb7d4170aA932C64",
     "treasuryMultisig": "0xD4868d98849a58F743787c77738D808376210292",
+    "testMultisig": "0x55949f769d0af7453881435612561d109fff07b8",
     "testGatedProxy": "0x375C48a3A3685d7e28EB45e612da6Dd51c7E38E0",
     "timelock": "0x21CF9b77F88Adf8F8C98d7E33Fe601DC57bC0893",
     "token": "0x3472A5A71965499acd81997a54BBA8D852C6E53d",
@@ -19,6 +20,7 @@
         "dev": "0xB65cef03b9B89f99517643226d76e286ee999e77",
         "ops": "0x576cD258835C529B54722F84Bb7d4170aA932C64",
         "dfd": "0x5b5cF8620292249669e1DCC73B753d01543D6Ac7",
+        "test": "0x55949f769d0af7453881435612561d109fff07b8",
         "dfdBadgerShared": "0xCF7346A5E41b0821b80D5B3fdc385EEB6Dc59F44"
     },
     "keepers": {
@@ -51,7 +53,6 @@
         "StrategyBadgerRewards": "0x38b9344fFB931ABA6476198095e088024CdAC527",
         "StrategyBadgerLpMetaFarm": "0xB18D0bC54829bdFeAE998b8FE9a8df10953DcAeC",
         "StrategyHarvestMetaFarm": "0x17c118416BD713e00037125D85E58abaC60c4A4E",
-        "StrategyPickleMetaFarm": "0xF6BC36280F32398A031A7294e81131aEE787D178",
         "StrategyCurveGaugeTbtcCrv": "0x1989C39Bc167678EAc6e9ADe5D803Cc3523011cf",
         "StrategyCurveGaugeSbtcCrv": "0xe3c63D747aca7Fb9E9404a09520D7A2A4feFEEaA",
         "StrategyCurveGaugeRenBtcCrv": "0x8B60386a978dFC3241E9112dB3ea009331838846",
