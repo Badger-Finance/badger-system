@@ -8,7 +8,7 @@ import "deps/@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 import "deps/@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "deps/@openzeppelin/contracts-upgradeable/token/ERC20/SafeERC20Upgradeable.sol";
 import "deps/@openzeppelin/contracts-upgradeable/utils/EnumerableSetUpgradeable.sol";
-
+        
 import "interfaces/convex/IBooster.sol";
 import "interfaces/convex/CrvDepositor.sol";
 import "interfaces/convex/IBaseRewardsPool.sol";
@@ -171,8 +171,8 @@ contract StrategyCvxCrvHelper is BaseStrategy, CurveSwapper, UniswapSwapper, Tok
 
         // Sell 3Crv (withdraw to USDC -> swap to CRV)
         _remove_liquidity_one_coin(threeCrv, threeCrvToken.balanceOf(address(this)), 1, 0);
-
         _swapExactTokensForTokens(uniswap, usdc, usdcToken.balanceOf(address(this)), getTokenSwapPath(usdc, cvxCrv));
+        
         _swapExactTokensForTokens(uniswap, cvx, cvxToken.balanceOf(address(this)), getTokenSwapPath(cvx, cvxCrv));
 
         // Track harvested + converted coin balance of want

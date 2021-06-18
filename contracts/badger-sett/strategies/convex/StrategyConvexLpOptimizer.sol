@@ -25,7 +25,12 @@ import "interfaces/convex/CrvDepositor.sol";
 import "interfaces/convex/IClaimZap.sol";
 import "interfaces/convex/IBaseRewardsPool.sol";
 
-import "../BaseStrategySwapper.sol";
+import "../BaseStrategy.sol";
+
+import "../../libraries/CurveSwapper.sol";
+import "../../libraries/UniswapSwapper.sol";
+import "../../libraries/TokenSwapPathRegistry.sol";
+
 
 /*
     === Deposit ===
@@ -54,9 +59,8 @@ import "../BaseStrategySwapper.sol";
     xSushi
 
     These position coins will be distributed on harvest
-
 */
-contract StrategyConvexLpOptimizer is BaseStrategyMultiSwapper {
+contract StrategyConvexLpOptimizer is BaseStrategy, CurveSwapper, UniswapSwapper {
     using SafeERC20Upgradeable for IERC20Upgradeable;
     using AddressUpgradeable for address;
     using SafeMathUpgradeable for uint256;
@@ -291,7 +295,7 @@ contract StrategyConvexLpOptimizer is BaseStrategyMultiSwapper {
         uint256 beforeLpBal = cvxCRV_CRV_SLP_Token.balanceOf(address(this));
 
         // 2. LP on Sushi
-        _add_max_liquidity_sushiswap(crv, cvxCrv);
+        _addMaxLiquidity(sushiswap, crv, cvxCrv);
 
         // 3. Stake on Convex
         uint256 lpBal = cvxCRV_CRV_SLP_Token.balanceOf(address(this));
@@ -312,10 +316,10 @@ contract StrategyConvexLpOptimizer is BaseStrategyMultiSwapper {
 
         uint256 beforeLpBal = CVX_ETH_SLP_Token.balanceOf(address(this));
 
-        _swapEthOut_sushiswap(cvx, halfCvx, path);
+        // _swapEthOut_sushiswap(cvx, halfCvx, path);
 
         // 2. LP on Sushi
-        _add_max_liquidity_eth_sushiswap(cvx);
+        // _add_max_liquidity_eth_sushiswap(cvx);
 
         // 3. Stake on Convex
         uint256 lpBal = CVX_ETH_SLP_Token.balanceOf(address(this));

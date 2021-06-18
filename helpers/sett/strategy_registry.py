@@ -20,7 +20,6 @@ name_to_artifact = {
     "StrategyBadgerRewards": StrategyBadgerRewards,
     "StrategyBadgerLpMetaFarm": StrategyBadgerLpMetaFarm,
     "StrategyHarvestMetaFarm": StrategyHarvestMetaFarm,
-    "StrategyPickleMetaFarm": StrategyPickleMetaFarm,
     "StrategyCurveGaugeTbtcCrv": StrategyCurveGaugeTbtcCrv,
     "StrategyCurveGaugeSbtcCrv": StrategyCurveGaugeSbtcCrv,
     "StrategyCurveGaugeRenBtcCrv": StrategyCurveGaugeRenBtcCrv,

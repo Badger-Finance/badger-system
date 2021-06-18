@@ -18,6 +18,33 @@ contract CurveSwapper {
     using AddressUpgradeable for address;
     using SafeMathUpgradeable for uint256;
 
+    function _add_liquidity_single_coin(
+        address swap,
+        address pool,
+        uint256 inputAmount,
+        uint256 inputPosition,
+        uint256 numPoolElements,
+        uint256 min_mint_amount
+    ) internal {
+        if (numPoolElements == 2) {
+            uint256[2] memory convertedAmounts;
+            convertedAmounts[inputPosition] = inputPosition;
+            ICurveFi(swap).add_liquidity(convertedAmounts, min_mint_amount);
+        } else if (numPoolElements == 3) {
+            uint256[3] memory convertedAmounts;
+            convertedAmounts[inputPosition] = inputPosition;
+            ICurveFi(swap).add_liquidity(convertedAmounts, min_mint_amount);
+        } else if (numPoolElements == 4) {
+            uint256[4] memory convertedAmounts;
+            convertedAmounts[inputPosition] = inputPosition;
+            ICurveFi(swap).add_liquidity(convertedAmounts, min_mint_amount);
+        } else {
+            revert("Invalidf number of amount elements");
+        }
+    }
+
+
+
     function _add_liquidity(
         address pool,
         uint256[2] memory amounts,
@@ -26,7 +53,7 @@ contract CurveSwapper {
         ICurveFi(pool).add_liquidity(amounts, min_mint_amount);
     }
 
-    function a_dd_liquidity(
+    function _add_liquidity(
         address pool,
         uint256[3] memory amounts,
         uint256 min_mint_amount
