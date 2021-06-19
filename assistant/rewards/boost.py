@@ -8,7 +8,6 @@ from collections import OrderedDict
 from assistant.rewards.rewards_utils import combine_balances, calculate_sett_balances
 from assistant.badger_api.prices import (
     fetch_token_prices,
-    fetch_ppfs,
 )
 
 from assistant.rewards.classes.UserBalance import UserBalance, UserBalances
@@ -94,7 +93,7 @@ def badger_boost(badger, currentBlock):
             nonNativeSetts = combine_balances([nonNativeSetts, balances])
 
     badger_wallet_balances, digg_wallet_balances = fetch_wallet_balances(
-        prices[BADGER], prices[DIGG], badger.digg, currentBlock
+        badger.digg, currentBlock
     )
 
     console.log(
@@ -103,11 +102,13 @@ def badger_boost(badger, currentBlock):
         )
     )
     badger_wallet_balances = UserBalances(
-        [UserBalance(addr, bal, BADGER) for addr, bal in badger_wallet_balances.items()]
+        [UserBalance(addr, bal * prices[BADGER], BADGER)
+         for addr, bal in badger_wallet_balances.items()]
     )
 
     digg_wallet_balances = UserBalances(
-        [UserBalance(addr, bal, DIGG) for addr, bal in digg_wallet_balances.items()]
+        [UserBalance(addr, bal * prices[DIGG], DIGG)
+         for addr, bal in digg_wallet_balances.items()]
     )
     badgerSetts = filter_dust(combine_balances([badgerSetts, badger_wallet_balances]))
 
