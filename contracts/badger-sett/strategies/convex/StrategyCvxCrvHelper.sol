@@ -81,6 +81,7 @@ contract StrategyCvxCrvHelper is BaseStrategy, CurveSwapper, UniswapSwapper, Tok
         performanceFeeStrategist = _feeConfig[1];
         withdrawalFee = _feeConfig[2];
 
+        // Set Swap Paths
         address[] memory path = new address[](3);
         path[0] = cvx;
         path[1] = weth;

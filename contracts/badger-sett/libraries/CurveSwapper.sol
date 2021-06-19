@@ -8,12 +8,13 @@ import "deps/@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "deps/@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 import "deps/@openzeppelin/contracts-upgradeable/token/ERC20/SafeERC20Upgradeable.sol";
 import "interfaces/curve/ICurveFi.sol";
+import "./BaseSwapper.sol";
 /*
     Expands swapping functionality over base strategy
     - ETH in and ETH out Variants
     - Sushiswap support in addition to Uniswap
 */
-contract CurveSwapper {
+contract CurveSwapper is BaseSwapper {
     using SafeERC20Upgradeable for IERC20Upgradeable;
     using AddressUpgradeable for address;
     using SafeMathUpgradeable for uint256;
@@ -21,11 +22,13 @@ contract CurveSwapper {
     function _add_liquidity_single_coin(
         address swap,
         address pool,
+        address inputToken,
         uint256 inputAmount,
         uint256 inputPosition,
         uint256 numPoolElements,
         uint256 min_mint_amount
     ) internal {
+        _safeApproveHelper(inputToken, swap, inputAmount);
         if (numPoolElements == 2) {
             uint256[2] memory convertedAmounts;
             convertedAmounts[inputPosition] = inputPosition;
@@ -42,8 +45,6 @@ contract CurveSwapper {
             revert("Invalidf number of amount elements");
         }
     }
-
-
 
     function _add_liquidity(
         address pool,

@@ -59,7 +59,7 @@ def test_deposit_withdraw_single_user_flow(settConfig):
 
     snap.settWithdraw(depositAmount // 2 - 1, {"from": deployer})
 
-    assert False
+    # assert False
 
 
 # @pytest.mark.skip()
@@ -137,7 +137,7 @@ def test_single_user_harvest_flow(settConfig):
     snap.settHarvest({"from": strategyKeeper})
     snap.settWithdraw(depositAmount // 2 - 1, {"from": deployer})
 
-    assert False
+    # assert False
 
 
 @pytest.mark.skip()

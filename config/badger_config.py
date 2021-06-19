@@ -91,6 +91,11 @@ sett_config = DotMap(
                 performanceFeeStrategist=1000,
                 performanceFeeGovernance=1000,
                 withdrawalFee=50,
+                curvePool=DotMap(
+                    swap=registry.curve.pools.renCrv.swap,
+                    wbtcPosition=1,
+                    numElements=2,
+                )
             ),
         ),
         convexSbtcCrv=DotMap(
@@ -102,6 +107,11 @@ sett_config = DotMap(
                 performanceFeeStrategist=1000,
                 performanceFeeGovernance=1000,
                 withdrawalFee=50,
+                curvePool=DotMap(
+                    swap=registry.curve.pools.sbtcCrv.swap,
+                    wbtcPosition=1,
+                    numElements=3,
+                )
             ),
         ),
         convexTbtcCrv=DotMap(
@@ -113,6 +123,11 @@ sett_config = DotMap(
                 performanceFeeStrategist=1000,
                 performanceFeeGovernance=1000,
                 withdrawalFee=50,
+                curvePool=DotMap(
+                    swap=registry.curve.pools.tbtcCrv.swap,
+                    wbtcPosition=2,
+                    numElements=4,
+                )
             ),
         ),
         convexHbtcCrv=DotMap(
@@ -124,6 +139,11 @@ sett_config = DotMap(
                 performanceFeeStrategist=1000,
                 performanceFeeGovernance=1000,
                 withdrawalFee=50,
+                curvePool=DotMap(
+                    swap=registry.curve.pools.hbtcCrv.swap,
+                    wbtcPosition=1,
+                    numElements=2,
+                )
             ),
         ),
         convexObtcCrv=DotMap(
@@ -135,6 +155,11 @@ sett_config = DotMap(
                 performanceFeeStrategist=1000,
                 performanceFeeGovernance=1000,
                 withdrawalFee=50,
+                curvePool=DotMap(
+                    swap=registry.curve.pools.obtcCrv.swap,
+                    wbtcPosition=2,
+                    numElements=4,
+                )
             ),
         ),
         convexPbtcCrv=DotMap(
@@ -146,6 +171,11 @@ sett_config = DotMap(
                 performanceFeeStrategist=1000,
                 performanceFeeGovernance=1000,
                 withdrawalFee=50,
+                curvePool=DotMap(
+                    swap=registry.curve.pools.pbtcCrv.swap,
+                    wbtcPosition=2,
+                    numElements=4,
+                )
             ),
         ),
         convexBbtcCrv=DotMap(
@@ -157,6 +187,11 @@ sett_config = DotMap(
                 performanceFeeStrategist=1000,
                 performanceFeeGovernance=1000,
                 withdrawalFee=50,
+                curvePool=DotMap(
+                    swap=registry.curve.pools.bbtcCrv.swap,
+                    wbtcPosition=2,
+                    numElements=4,
+                )
             ),
         ),
     ),

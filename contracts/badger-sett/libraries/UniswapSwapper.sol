@@ -10,6 +10,7 @@ import "deps/@openzeppelin/contracts-upgradeable/token/ERC20/SafeERC20Upgradeabl
 import "deps/@openzeppelin/contracts-upgradeable/proxy/Initializable.sol";
 import "deps/@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 
+import "./BaseSwapper.sol";
 import "interfaces/uniswap/IUniswapRouterV2.sol";
 import "interfaces/uniswap/IUniswapV2Factory.sol";
 /*
@@ -17,7 +18,7 @@ import "interfaces/uniswap/IUniswapV2Factory.sol";
     - ETH in and ETH out Variants
     - Sushiswap support in addition to Uniswap
 */
-contract UniswapSwapper {
+contract UniswapSwapper is BaseSwapper{
     using SafeERC20Upgradeable for IERC20Upgradeable;
     using AddressUpgradeable for address;
     using SafeMathUpgradeable for uint256;
@@ -72,16 +73,4 @@ contract UniswapSwapper {
         _safeApproveHelper(token0, router, _token0Balance);
         IUniswapRouterV2(router).addLiquidityETH{ value: address(this).balance }(token0, _token0Balance, 0, 0, address(this), block.timestamp);
     }
-
-    /// @dev Reset approval and approve exact amount
-    function _safeApproveHelper(
-        address token,
-        address recipient,
-        uint256 amount
-    ) internal {
-        IERC20Upgradeable(token).safeApprove(recipient, 0);
-        IERC20Upgradeable(token).safeApprove(recipient, amount);
-    }
-
-    uint256[50] private __gap;
 }
