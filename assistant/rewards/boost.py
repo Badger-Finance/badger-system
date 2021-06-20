@@ -78,7 +78,7 @@ def badger_boost(badger, currentBlock):
     badgerSetts = UserBalances()
     nonNativeSetts = UserBalances()
     for name, sett in allSetts.items():
-        if name in ["experimental.digg"]:
+        if name in ["experimental.digg","experimental.renBtc"]:
             continue
         balances = calculate_sett_balances(badger, name, currentBlock)
         balances = convert_balances_to_usd(sett, name, balances)

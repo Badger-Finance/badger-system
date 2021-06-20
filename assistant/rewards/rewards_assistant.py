@@ -42,7 +42,7 @@ def calc_sett_rewards(badger, periodStartBlock, endBlock, cycle):
     # ratio = digg_btc_twap(periodStartBlock,endBlock)
     # diggAllocation = calculate_digg_allocation(ratio)
     rewardsBySett = {}
-    noRewards = ["native.digg", "experimental.digg"]
+    noRewards = ["native.digg", "experimental.digg","experimental.renBtc"]
     boosts = badger_boost(badger, endBlock)
     apyBoosts = {}
     multiplierData = {}
@@ -76,7 +76,7 @@ def calc_sett_rewards(badger, periodStartBlock, endBlock, cycle):
     with open("badger-boosts.json", "w") as fp:
         json.dump(boostsMetadata, fp)
 
-    upload_boosts(test=False)
+    upload_boosts(test=True)
 
     return rewards
 

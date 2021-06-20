@@ -7,6 +7,7 @@ from helpers.constants import NON_NATIVE_SETTS, NATIVE_DIGG_SETTS, DIGG
 from dotmap import DotMap
 from brownie import *
 from rich.console import Console
+import math
 
 console = Console()
 
@@ -39,8 +40,24 @@ def calc_snapshot(
             preBoost[user.address] = userBalances.percentage_of_total(user.address)
 
         for user in userBalances:
+            
+            # So we have our standard 3x multiplier, except:
+            #- in 2.5-3 range it gets Quartic
+            #- in 2-2.5 range it gets Cubic
+            #- in 1.5-2 range is gets Quadratic
+            #- in 1-1.5 range it gets Linear
+            
             boostAmount = boosts.get(user.address, 1)
-            user.boost_balance(boostAmount)
+            if 1 <= boostAmount < 1.5:
+                boostPower = 1
+            elif 1.5 <= boostAmount < 2:
+                boostPower = 2
+            elif 2 <= boostAmount < 2.5:
+                boostPower = 3
+            elif 2.5 <= boostAmount < 3:
+                boostPower = 4
+                
+            user.boost_balance(math.pow(boostAmount,boostPower))
 
         for user in userBalances:
             postBoost = userBalances.percentage_of_total(user.address)
