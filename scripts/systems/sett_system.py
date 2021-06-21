@@ -1,3 +1,4 @@
+from helpers.constants import AddressZero
 from brownie import *
 from rich.console import Console
 
@@ -40,7 +41,8 @@ def deploy_strategy(
 
     proxyAdmin = badger.devProxyAdmin
 
-    console.print("Deploy Strategy " + strategyName, params)
+    console.print("Deploy Strategy " + strategyName)
+    console.log(params)
 
     if strategyName == "StrategyCurveGaugeRenBtcCrv":
         return deploy_proxy(
@@ -396,14 +398,15 @@ def deploy_strategy(
                 strategist,
                 controller,
                 keeper,
-                guardian, 
-                [params.want, params.badgerTree,],
+                guardian,
+                [params.want, params.badgerTree, AddressZero, AddressZero],
                 params.pid,
                 [
                     params.performanceFeeGovernance,
                     params.performanceFeeStrategist,
                     params.withdrawalFee,
                 ],
+                (params.curvePool.swap, params.curvePool.wbtcPosition, params.curvePool.numElements)
             ),
             badger.deployer,
         )

@@ -99,6 +99,8 @@ contract StrategyConvexStakingOptimizer is BaseStrategy, CurveSwapper, UniswapSw
 
     uint256 public pid;
     address public badgerTree;
+    address public cvxHelperVault;
+    address public cvxCrvHelperVault;
 
     /**
     The default conditions for a rewards token are:
@@ -182,7 +184,7 @@ contract StrategyConvexStakingOptimizer is BaseStrategy, CurveSwapper, UniswapSw
         address _controller,
         address _keeper,
         address _guardian,
-        address[2] memory _wantConfig,
+        address[4] memory _wantConfig,
         uint256 _pid,
         uint256[3] memory _feeConfig,
         CurvePoolConfig memory _curvePool
@@ -191,6 +193,9 @@ contract StrategyConvexStakingOptimizer is BaseStrategy, CurveSwapper, UniswapSw
 
         want = _wantConfig[0];
         badgerTree = _wantConfig[1];
+
+        cvxHelperVault = _wantConfig[2];
+        cvxCrvHelperVault = _wantConfig[3];
 
         pid = _pid; // Core staking pool ID
 
@@ -386,13 +391,7 @@ contract StrategyConvexStakingOptimizer is BaseStrategy, CurveSwapper, UniswapSw
         if ( tendData.crvTended > 0 ) {
             _swapExactTokensForTokens(sushiswap, crv, tendData.crvTended, getTokenSwapPath(crv, cvxCrv));
         }
-
-        // 3. Convert 3CRV -> cvxCRV via USDC
-        uint256 threeCrvBalance = threeCrvToken.balanceOf(address(this));
-        if (threeCrvBalance > 0) {
-            _remove_liquidity_one_coin(threeCrvSwap, threeCrvBalance, 1, 0);
-            _swapExactTokensForTokens(sushiswap, usdc, usdcToken.balanceOf(address(this)), getTokenSwapPath(usdc, cvxCrv));
-        }
+        
 
         // Track harvested + converted coins
         tendData.cvxCrvTended = cvxCrvToken.balanceOf(address(this));
@@ -430,7 +429,14 @@ contract StrategyConvexStakingOptimizer is BaseStrategy, CurveSwapper, UniswapSw
         harvestData.cvxCrvHarvested = cvxCrvToken.balanceOf(address(this));
         harvestData.cvxHarvsted = cvxToken.balanceOf(address(this));
 
-        // 2. Sell 20% of accured rewards for underlying
+        // 2. Convert 3CRV -> cvxCRV via USDC
+        uint256 threeCrvBalance = threeCrvToken.balanceOf(address(this));
+        if (threeCrvBalance > 0) {
+            _remove_liquidity_one_coin(threeCrvSwap, threeCrvBalance, 1, 0);
+            _swapExactTokensForTokens(sushiswap, usdc, usdcToken.balanceOf(address(this)), getTokenSwapPath(usdc, cvxCrv));
+        }
+
+        // 3. Sell 20% of accured rewards for underlying
         if (harvestData.cvxCrvHarvested > 0) {
             uint256 cvxCrvToSell = harvestData.cvxCrvHarvested.mul(2000).div(MAX_FEE);
             _swapExactTokensForTokens(sushiswap, cvxCrv, cvxCrvToSell, getTokenSwapPath(cvxCrv, wbtc));
@@ -458,7 +464,7 @@ contract StrategyConvexStakingOptimizer is BaseStrategy, CurveSwapper, UniswapSw
         //     }
         // }
 
-        // 3. Roll WBTC gained into want position
+        // 4. Roll WBTC gained into want position
         uint256 wbtcToDeposit = wbtcToken.balanceOf(address(this));
 
         if (wbtcToDeposit > 0) {
@@ -467,9 +473,8 @@ contract StrategyConvexStakingOptimizer is BaseStrategy, CurveSwapper, UniswapSw
             // Half of gained want (10% of rewards) are auto-compounded, half of gained want is taken as a performance fee
             IERC20Upgradeable(want).transfer(IController(controller).rewards(), wantGained.mul(5000).div(MAX_FEE));
         }
-        
 
-        // 4. Deposit remaining CVX / cvxCRV rewards into helper vaults and distribute
+        // 5. Deposit remaining CVX / cvxCRV rewards into helper vaults and distribute
         if (harvestData.cvxCrvHarvested > 0) {
             uint256 cvxCrvToDistribute = cvxCrvToken.balanceOf(address(this));
             // uint256 performanceFee = cvxCrvToDistribute.mul(performanceFeeGovernance).div(MAX_FEE);
@@ -479,11 +484,12 @@ contract StrategyConvexStakingOptimizer is BaseStrategy, CurveSwapper, UniswapSw
             // uint256 cvxCrvToTree = cvxCrvToken.balanceOf(address(this));
             // cvxCrvHelperVault.depositFor(badgerTree, cvxCrvToTree);
             
-            // cvxCrvToken.transfer(badgerTree, cvxCrvToDistribute);
+            cvxCrvToken.transfer(badgerTree, cvxCrvToDistribute);
         }
 
         if (harvestData.cvxHarvsted > 0) {
             uint256 cvxToDistribute = cvxToken.balanceOf(address(this));
+            cvxToken.transfer(badgerTree, cvxToDistribute);
         }
 
         return harvestData;

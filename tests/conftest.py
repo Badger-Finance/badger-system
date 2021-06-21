@@ -71,12 +71,12 @@ settsToRun = [
     # "native.convexRenCrv",
     # "native.convexSbtcCrv",
     # "native.convexTbtcCrv",
-    # "native.hbtcCrv",
+    "native.hbtcCrv",
     # "native.pbtcCrv",
     # "native.obtcCrv",
     # "native.bbtcCrv",
-    "helper.cvx",
-    "helper.cvxCrv",
+    # "helper.cvx",
+    # "helper.cvxCrv",
 ]
 
 yearnSettsToRun = [
