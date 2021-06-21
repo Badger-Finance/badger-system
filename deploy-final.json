@@ -118,7 +118,7 @@
             "native.pbtcCrv": "0x55912d0cf83b75c492e761932abc4db4a5cb1b17",
             "native.obtcCrv": "0xf349c0faa80fc1870306ac093f75934078e28991",
             "native.bbtcCrv": "0x5dce29e92b1b939f8e8c60dcf15bde82a85be4a9",
-            "native.tricrypto": "0xbc16bcb59fa93aa0825ab2618d93e9449eb44246",
+            "native.tricrypto": "0xbe08ef12e4a553666291e9ffc24fccfd354f2dd2",
             "native.cvxCrv": "0x2B5455aac8d64C14786c3a29858E43b5945819C0",
             "native.cvx": "0x53c8e199eb2cb7c01543c137078a038937a68e40"
         },
@@ -258,7 +258,8 @@
         "native.hbtcCrv": "0xd71ac3c4484da01c6a577506e6c85f310a8867a4",
         "native.pbtcCrv": "0xbde7bd6a4da5c972532ad8a973deb67d36be8d35",
         "native.obtcCrv": "0x2999537a71db9d79587ca35033cd0fa08c3c49dd",
-        "native.bbtcCrv": "0x62cc514824b080707ffc0b0f64f992f38b974f9d"
+        "native.bbtcCrv": "0x62cc514824b080707ffc0b0f64f992f38b974f9d",
+        "native.tricrypto": "0xeaeA3712DC74d9166365004aF85e7F65f942E316"
     },
     "digg_system": {
         "owner": "0xDA25ee226E534d868f0Dd8a459536b03fEE9079b",
