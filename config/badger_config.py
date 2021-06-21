@@ -205,8 +205,8 @@ sett_config = DotMap(
                 withdrawalFee=50,
                 curvePool=DotMap(
                     swap=registry.curve.pools.triCrypto.swap,
-                    wbtcPosition=2,
-                    numElements=4,
+                    wbtcPosition=1,
+                    numElements=3,
                 )
             ),
         ),
