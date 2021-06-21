@@ -48,6 +48,7 @@
         "Sett": "0x175586ac3f8A7463499D1019A30120aa6fC67C5f",
         "SettV1": "0x5c7AdB3Fd0DF2D1822a36922dd941e16D2bF4E51",
         "SettV3": "0x889d5036f2EA5784161090082F3327bb3e433102",
+        "SettV4": "0xA762292A6A7fD944Db1Fe9389921e6F639B4C9E8",
         "StakingRewards": "0x6daCCed8D6d80b0e93a51A4303961678e8A46Fa5",
         "StakingRewardsSignalOnly": "0x752F5C9e91721dc7a7513106fbf249C46439A5EE",
         "StrategyBadgerRewards": "0x38b9344fFB931ABA6476198095e088024CdAC527",
@@ -82,7 +83,7 @@
         "StabilizeDiggSett": "0x3ee8ECEF1c5D6B924a03A32eFF4233d3dE5190E5",
         "DiggTreasury": "0x132069EA2E57b44C53C60697FD37453Afcae2708",
         "StrategyConvexLpOptimizer": "0xAB10f878bD27ae01DF36Ba645E458f7dbca7AA46",
-        "StrategyConvexStakingOptimizer" :"0x91fD666ac776dEC57Bcd6E011d791Ae685be48EE"
+        "StrategyConvexStakingOptimizer" :"0xa0FC97f346f61e955c5E6Bdaa442c14333968aa4"
     },
     "dao": {
         "token": "0x3472A5A71965499acd81997a54BBA8D852C6E53d",
@@ -116,7 +117,9 @@
             "native.hbtcCrv": "0x8c76970747afd5398e958bdfada4cf0b9fca16c4",
             "native.pbtcCrv": "0x55912d0cf83b75c492e761932abc4db4a5cb1b17",
             "native.obtcCrv": "0xf349c0faa80fc1870306ac093f75934078e28991",
-            "native.bbtcCrv": "0x5dce29e92b1b939f8e8c60dcf15bde82a85be4a9"
+            "native.bbtcCrv": "0x5dce29e92b1b939f8e8c60dcf15bde82a85be4a9",
+            "native.cvxCrv": "0x2B5455aac8d64C14786c3a29858E43b5945819C0",
+            "native.cvx": "0x53c8e199eb2cb7c01543c137078a038937a68e40"
         },
         "vault_artifacts": {
             "native.badger": "Sett",
@@ -139,7 +142,9 @@
             "native.hbtcCrv": "SettV3",
             "native.pbtcCrv": "SettV3",
             "native.obtcCrv": "SettV3",
-            "native.bbtcCrv": "SettV3"
+            "native.bbtcCrv": "SettV3",
+            "native.cvxCrv": "SettV4",
+            "native.cvx": "SettV4"
         },
         "strategies": {
             "native.badger": "0x75b8E21BD623012Efb3b69E1B562465A68944eE6",
@@ -155,10 +160,10 @@
             "native.sushiDiggWbtc": "0xaa8dddfe7DFA3C3269f1910d89E4413dD006D08a",
             "experimental.sushiIBbtcWbtc": "0xf4146A176b09C664978e03d28d07Db4431525dAd",
             "experimental.digg": "0xA6af1B913E205B8E9B95D3B30768c0989e942316",
-            "native.hbtcCrv": "0xca4b98ca964713287a36224364dbed15c9b7abc3",
-            "native.pbtcCrv": "0xcaed73bcdd45d2469b1287a7c21d7a31b2bb7b35",
-            "native.obtcCrv": "0xdbda6fa60c48a7da8e0c7ae25a20fd089c0f6a1f",
-            "native.bbtcCrv": "0x353200ed9f63fa7804816b336d50e9f0d7c88d2c"
+            "native.hbtcCrv": "0xff26f400e57bf726822eacbb64fa1c52f1f27988",
+            "native.pbtcCrv": "0x1c1fd689103bbfd701b3b7d41a3807f12814033d",
+            "native.obtcCrv": "0x2bb864cdb4856ab2d148c5ca52dd7ccec126d138",
+            "native.bbtcCrv": "0x4f3e7a4566320b2709fd1986f2e9f84053d3e2a0"
         },
         "strategies_registry": {
             "native.renCrv": {
@@ -169,6 +174,22 @@
             },
             "native.tbtcCrv": {
                 "StrategyConvexLpOptimizer": "0x1ac31c470b90e366c70efc1ac28d5d7fa2f1dbe1"
+            },
+            "native.hbtcCrv": {
+                "Test": "0xca4b98ca964713287a36224364dbed15c9b7abc3",
+                "StrategyConvexStakingOptimizer": "0xff26f400e57bf726822eacbb64fa1c52f1f27988"
+            },
+            "native.pbtcCrv": {
+                "Test": "0xcaed73bcdd45d2469b1287a7c21d7a31b2bb7b35",
+                "StrategyConvexStakingOptimizer": "0x1c1fd689103bbfd701b3b7d41a3807f12814033d"
+            },
+            "native.obtcCrv": {
+                "Test": "0xdbda6fa60c48a7da8e0c7ae25a20fd089c0f6a1f",
+                "StrategyConvexStakingOptimizer": "0x2bb864cdb4856ab2d148c5ca52dd7ccec126d138"
+            },
+            "native.bbtcCrv": {
+                "Test": "0x353200ed9f63fa7804816b336d50e9f0d7c88d2c",
+                "StrategyConvexStakingOptimizer": "0x4f3e7a4566320b2709fd1986f2e9f84053d3e2a0"
             }
         },
         "strategy_artifacts": {

@@ -121,7 +121,7 @@ contract SettV4 is ERC20Upgradeable, SettAccessControlDefended, PausableUpgradea
     /// ===== View Functions =====
 
     function version() public view returns (string memory) {
-        return "1.3";
+        return "1.4";
     }
 
     function getPricePerFullShare() public view virtual returns (uint256) {
@@ -190,7 +190,7 @@ contract SettV4 is ERC20Upgradeable, SettAccessControlDefended, PausableUpgradea
         _defend();
         _blockLocked();
 
-        _lockForBlock(msg.sender);
+        _lockForBlock(_recipient);
         _depositForWithAuthorization(_recipient, _amount, new bytes32[](0));
     }
 
@@ -199,7 +199,7 @@ contract SettV4 is ERC20Upgradeable, SettAccessControlDefended, PausableUpgradea
         _defend();
         _blockLocked();
 
-        _lockForBlock(msg.sender);
+        _lockForBlock(_recipient);
         _depositForWithAuthorization(_recipient, _amount, proof);
     }
 

@@ -14,6 +14,7 @@ name_to_artifact = {
     "SettV1": Sett,
     "SettV1.1": Sett,
     "SettV3": SettV3,
+    "SettV4": SettV4,
     "StabilizeDiggSett": StabilizeDiggSett,
     "StakingRewards": StakingRewards,
     "StakingRewardsSignalOnly": StakingRewardsSignalOnly,

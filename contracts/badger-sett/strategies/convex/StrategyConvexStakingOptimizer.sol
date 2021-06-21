@@ -365,16 +365,6 @@ contract StrategyConvexStakingOptimizer is BaseStrategy, CurveSwapper, UniswapSw
         }
     }
 
-    function _convert_CRV_to_cvxCRV(uint256 crvToDeposit) internal {
-        // 1. Convert CRV -> cvxCRV
-        // Selling should recieve better price always
-        address[] memory path = new address[](2);
-        path[0] = crv;
-        path[1] = cvxCrv;
-
-        
-    }
-
     /// @notice The more frequent the tend, the higher returns will be
     function tend() external whenNotPaused returns (TendData memory) {
         _onlyAuthorizedActors();
@@ -391,7 +381,6 @@ contract StrategyConvexStakingOptimizer is BaseStrategy, CurveSwapper, UniswapSw
         if ( tendData.crvTended > 0 ) {
             _swapExactTokensForTokens(sushiswap, crv, tendData.crvTended, getTokenSwapPath(crv, cvxCrv));
         }
-        
 
         // Track harvested + converted coins
         tendData.cvxCrvTended = cvxCrvToken.balanceOf(address(this));
@@ -418,81 +407,80 @@ contract StrategyConvexStakingOptimizer is BaseStrategy, CurveSwapper, UniswapSw
         _onlyAuthorizedActors();
         HarvestData memory harvestData;
 
-        uint256 idleWant = IERC20Upgradeable(want).balanceOf(address(this));
+        // uint256 idleWant = IERC20Upgradeable(want).balanceOf(address(this));
         
-        // TODO: Harvest details still under constructuion. It's being designed to optimize yield while still allowing on-demand access to profits for users.
+        // // TODO: Harvest details still under constructuion. It's being designed to optimize yield while still allowing on-demand access to profits for users.
 
-        // 1. Withdraw accrued rewards from staking positions (claim unclaimed positions as well)
-        cvxCrvRewardsPool.withdraw(cvxCrvRewardsPool.balanceOf(address(this)), true);
-        cvxRewardsPool.withdraw(cvxRewardsPool.balanceOf(address(this)), true);
+        // // 1. Withdraw accrued rewards from staking positions (claim unclaimed positions as well)
+        // cvxCrvRewardsPool.withdraw(cvxCrvRewardsPool.balanceOf(address(this)), true);
+        // cvxRewardsPool.withdraw(cvxRewardsPool.balanceOf(address(this)), true);
 
-        harvestData.cvxCrvHarvested = cvxCrvToken.balanceOf(address(this));
-        harvestData.cvxHarvsted = cvxToken.balanceOf(address(this));
+        // harvestData.cvxCrvHarvested = cvxCrvToken.balanceOf(address(this));
+        // harvestData.cvxHarvsted = cvxToken.balanceOf(address(this));
 
-        // 2. Convert 3CRV -> cvxCRV via USDC
-        uint256 threeCrvBalance = threeCrvToken.balanceOf(address(this));
-        if (threeCrvBalance > 0) {
-            _remove_liquidity_one_coin(threeCrvSwap, threeCrvBalance, 1, 0);
-            _swapExactTokensForTokens(sushiswap, usdc, usdcToken.balanceOf(address(this)), getTokenSwapPath(usdc, cvxCrv));
-        }
-
-        // 3. Sell 20% of accured rewards for underlying
-        if (harvestData.cvxCrvHarvested > 0) {
-            uint256 cvxCrvToSell = harvestData.cvxCrvHarvested.mul(2000).div(MAX_FEE);
-            _swapExactTokensForTokens(sushiswap, cvxCrv, cvxCrvToSell, getTokenSwapPath(cvxCrv, wbtc));
-        }
-
-        if (harvestData.cvxHarvsted > 0) {
-            uint256 cvxToSell = harvestData.cvxHarvsted.mul(2000).div(MAX_FEE);
-            _swapExactTokensForTokens(sushiswap, cvx, cvxToSell, getTokenSwapPath(cvx, wbtc));
-        }
-
-        // // Process extra rewards tokens
-        // {
-        //     for (uint256 i = 0; i < extraRewards.length(); i=i+1) {
-        //         address token = extraRewards.at(i);
-        //         IERC20Upgradeable tokenContract = IERC20Upgradeable(token);
-        //         uint256 tokenBalance = tokenContract.balanceOf(address(this));
-
-        //         // Sell performance fee (as wbtc) proportion
-        //         uint256 sellBps = getTokenSellBps(token);
-        //         _swap_uniswap(token, sellBps, getTokenSwapPath(token, wbtc));
-        //         // TODO: Distribute performance fee
-
-        //         // Distribute remainder to users
-        //         // token.transfer(tokenBalance.mul(sellBps).div(MAX_BPS));
-        //     }
+        // // 2. Convert 3CRV -> cvxCRV via USDC
+        // uint256 threeCrvBalance = threeCrvToken.balanceOf(address(this));
+        // if (threeCrvBalance > 0) {
+        //     _remove_liquidity_one_coin(threeCrvSwap, threeCrvBalance, 1, 0);
+        //     _swapExactTokensForTokens(sushiswap, usdc, usdcToken.balanceOf(address(this)), getTokenSwapPath(usdc, cvxCrv));
         // }
 
-        // 4. Roll WBTC gained into want position
-        uint256 wbtcToDeposit = wbtcToken.balanceOf(address(this));
+        // // 3. Sell 20% of accured rewards for underlying
+        // if (harvestData.cvxCrvHarvested > 0) {
+        //     uint256 cvxCrvToSell = harvestData.cvxCrvHarvested.mul(2000).div(MAX_FEE);
+        //     _swapExactTokensForTokens(sushiswap, cvxCrv, cvxCrvToSell, getTokenSwapPath(cvxCrv, wbtc));
+        // }
 
-        if (wbtcToDeposit > 0) {
-            _add_liquidity_single_coin(curvePool.swap, want, wbtc, wbtcToDeposit, curvePool.wbtcPosition, curvePool.numElements, 0);
-            uint256 wantGained = IERC20Upgradeable(want).balanceOf(address(this)).sub(idleWant);
-            // Half of gained want (10% of rewards) are auto-compounded, half of gained want is taken as a performance fee
-            IERC20Upgradeable(want).transfer(IController(controller).rewards(), wantGained.mul(5000).div(MAX_FEE));
-        }
+        // if (harvestData.cvxHarvsted > 0) {
+        //     uint256 cvxToSell = harvestData.cvxHarvsted.mul(2000).div(MAX_FEE);
+        //     _swapExactTokensForTokens(sushiswap, cvx, cvxToSell, getTokenSwapPath(cvx, wbtc));
+        // }
 
-        // 5. Deposit remaining CVX / cvxCRV rewards into helper vaults and distribute
-        if (harvestData.cvxCrvHarvested > 0) {
-            uint256 cvxCrvToDistribute = cvxCrvToken.balanceOf(address(this));
-            // uint256 performanceFee = cvxCrvToDistribute.mul(performanceFeeGovernance).div(MAX_FEE);
+        // // // Process extra rewards tokens
+        // // {
+        // //     for (uint256 i = 0; i < extraRewards.length(); i=i+1) {
+        // //         address token = extraRewards.at(i);
+        // //         IERC20Upgradeable tokenContract = IERC20Upgradeable(token);
+        // //         uint256 tokenBalance = tokenContract.balanceOf(address(this));
 
-            // cvxCrvHelperVault.depositFor(controller.rewards(), performanceFee);
+        // //         // Sell performance fee (as wbtc) proportion
+        // //         uint256 sellBps = getTokenSellBps(token);
+        // //         _swap_uniswap(token, sellBps, getTokenSwapPath(token, wbtc));
+        // //         // TODO: Distribute performance fee
 
-            // uint256 cvxCrvToTree = cvxCrvToken.balanceOf(address(this));
-            // cvxCrvHelperVault.depositFor(badgerTree, cvxCrvToTree);
+        // //         // Distribute remainder to users
+        // //         // token.transfer(tokenBalance.mul(sellBps).div(MAX_BPS));
+        // //     }
+        // // }
+
+        // // 4. Roll WBTC gained into want position
+        // uint256 wbtcToDeposit = wbtcToken.balanceOf(address(this));
+
+        // if (wbtcToDeposit > 0) {
+        //     _add_liquidity_single_coin(curvePool.swap, want, wbtc, wbtcToDeposit, curvePool.wbtcPosition, curvePool.numElements, 0);
+        //     uint256 wantGained = IERC20Upgradeable(want).balanceOf(address(this)).sub(idleWant);
+        //     // Half of gained want (10% of rewards) are auto-compounded, half of gained want is taken as a performance fee
+        //     IERC20Upgradeable(want).transfer(IController(controller).rewards(), wantGained.mul(5000).div(MAX_FEE));
+        // }
+
+        // // 5. Deposit remaining CVX / cvxCRV rewards into helper vaults and distribute
+        // if (harvestData.cvxCrvHarvested > 0) {
+        //     uint256 cvxCrvToDistribute = cvxCrvToken.balanceOf(address(this));
+        //     // uint256 performanceFee = cvxCrvToDistribute.mul(performanceFeeGovernance).div(MAX_FEE);
+
+        //     // cvxCrvHelperVault.depositFor(controller.rewards(), performanceFee);
+
+        //     // uint256 cvxCrvToTree = cvxCrvToken.balanceOf(address(this));
+        //     // cvxCrvHelperVault.depositFor(badgerTree, cvxCrvToTree);
             
-            cvxCrvToken.transfer(badgerTree, cvxCrvToDistribute);
-        }
+        //     cvxCrvToken.transfer(badgerTree, cvxCrvToDistribute);
+        // }
 
-        if (harvestData.cvxHarvsted > 0) {
-            uint256 cvxToDistribute = cvxToken.balanceOf(address(this));
-            cvxToken.transfer(badgerTree, cvxToDistribute);
-        }
+        // if (harvestData.cvxHarvsted > 0) {
+        //     uint256 cvxToDistribute = cvxToken.balanceOf(address(this));
+        //     cvxToken.transfer(badgerTree, cvxToDistribute);
+        // }
 
         return harvestData;
     }
-    receive() external payable {}
 }
