@@ -54,6 +54,17 @@ class ConvexPBtcMiniDeploy(SettMiniDeployBase):
         assert self.controller.strategies(self.vault.token()) == self.strategy.address
         assert self.controller.vaults(self.strategy.want()) == self.vault.address
 
+        # Add actors to guestlist
+        guestlist = VipCappedGuestListBbtcUpgradeable.at(self.vault.guestList())
+
+        addresses = []
+        for account in accounts:
+            addresses.append(account.address)
+            
+        invited = [True]*len(accounts)
+
+        guestlist.setGuests(addresses, invited, {"from": self.deployer})
+
     # Setup used for running simulation without deployed strategy:
 
     # def post_deploy_setup(self, deploy):
