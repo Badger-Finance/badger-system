@@ -308,6 +308,11 @@ eth_registry.whales = DotMap(
         token="0xeb4c2781e4eba804ce9a9803c67d0893436bb27d",
         action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT,
     ),
+    triCrypto=DotMap(
+        whale="0xb325c1ac788f02ff7997cf53c6ff40dd762897b3",
+        token="0xcA3d75aC011BF5aD07a98d02f18225F9bD9A6BDF",
+        action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT,
+    ),
     cvx=DotMap(
         whale="0xcd46ec6b6c1214145cb968f33fdc0eab19196cfa",
         token="0x4e3fbd56cd56c3e72c1403e103b45db9da5b9d2b",
