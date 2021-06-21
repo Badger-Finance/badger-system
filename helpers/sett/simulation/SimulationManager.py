@@ -195,7 +195,7 @@ class SimulationManager:
             return WbtcIbBtcLpProvisioner(self, isUniswap=True)
         if settId in ["native.convexRenCrv", "native.convexSbtcCrv", "native.convexTbtcCrv"]:
             return ConvexProvisioner(self)
-        if settId in ["native.hbtcCrv", "native.pbtcCrv", "native.obtcCrv", "native.bbtcCrv", "native.triCrypto"]: 
+        if settId in ["native.hbtcCrv", "native.pbtcCrv", "native.obtcCrv", "native.bbtcCrv", "native.tricrypto"]: 
             return ConvexProvisioner(self)
         if settId == "helper.cvx":
             return HelperCvxProvisioner(self)
