@@ -40,6 +40,7 @@ from tests.sett.fixtures import (
     ConvexPBtcMiniDeploy,
     ConvexOBtcMiniDeploy,
     ConvexBBtcMiniDeploy,
+    ConvexTriCryptoMiniDeploy,
     HelperCvxMiniDeploy,
     HelperCvxCrvMiniDeploy,
 )
@@ -71,10 +72,11 @@ settsToRun = [
     # "native.convexRenCrv",
     # "native.convexSbtcCrv",
     # "native.convexTbtcCrv",
-    "native.hbtcCrv",
+    # "native.hbtcCrv",
     # "native.pbtcCrv",
     # "native.obtcCrv",
     # "native.bbtcCrv",
+    "native.triCrypto",
     # "helper.cvx",
     # "helper.cvxCrv",
 ]
@@ -410,6 +412,16 @@ def badger_single_sett(settConfig, deploy=True):
         if settId == "native.bbtcCrv":
             return ConvexBBtcMiniDeploy(
                 "native.bbtcCrv",
+                "StrategyConvexStakingOptimizer",
+                deployer,
+                strategist=strategist,
+                guardian=guardian,
+                keeper=keeper,
+                governance=governance,
+            ).deploy(deploy=deploy)
+        if settId == "native.triCrypto":
+            return ConvexTriCryptoMiniDeploy(
+                "native.triCrypto",
                 "StrategyConvexStakingOptimizer",
                 deployer,
                 strategist=strategist,

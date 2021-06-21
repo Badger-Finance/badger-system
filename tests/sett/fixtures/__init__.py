@@ -22,3 +22,4 @@ from .ConvexOBtcMiniDeploy import ConvexOBtcMiniDeploy
 from .ConvexBBtcMiniDeploy import ConvexBBtcMiniDeploy
 from .HelperCvxMiniDeploy import HelperCvxMiniDeploy
 from .HelperCvxCrvMiniDeploy import HelperCvxCrvMiniDeploy
+from .ConvexTriCryptoMiniDeploy import ConvexTriCryptoMiniDeploy

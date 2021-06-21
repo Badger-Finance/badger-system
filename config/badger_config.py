@@ -194,6 +194,22 @@ sett_config = DotMap(
                 )
             ),
         ),
+        convexTriCrypto=DotMap(
+            strategyName="StrategyConvexStakingOptimizer",
+            params=DotMap(
+                want=pools.triCrypto.token,
+                pid=curve.pids.triCrypto,
+                lpComponent=registry.tokens.wbtc,
+                performanceFeeStrategist=1000,
+                performanceFeeGovernance=1000,
+                withdrawalFee=50,
+                curvePool=DotMap(
+                    swap=registry.curve.pools.triCrypto.swap,
+                    wbtcPosition=1,
+                    numElements=3,
+                )
+            ),
+        ),
     ),
     helper=DotMap(
         cvx=DotMap(

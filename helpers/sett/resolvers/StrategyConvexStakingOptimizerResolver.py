@@ -74,7 +74,6 @@ class StrategyConvexStakingOptimizerResolver(StrategyCoreResolver):
         # self.confirm_harvest_events(before, after, tx)
 
         super().confirm_harvest(before, after, tx)
-        self.manager.printCompare(before, after)
 
         # Strategy want should increase
         assert after.get("strategy.balanceOf") >= before.get("strategy.balanceOf")
@@ -94,10 +93,6 @@ class StrategyConvexStakingOptimizerResolver(StrategyCoreResolver):
             assert after.balances("crv", "baseRewardsPool") < before.balances(
                 "crv", "baseRewardsPool"
             )
-            assert after.balances("crv", "strategy") == before.balances(
-                "crv", "strategy"
-            )
-            assert before.balances("crv", "strategy") == 0
 
         if event["cvxTended"] > 0:
             assert after.balances("cvx", "cvxRewardsPool") > before.balances(
@@ -129,7 +124,6 @@ class StrategyConvexStakingOptimizerResolver(StrategyCoreResolver):
     def add_entity_balances_for_tokens(self, calls, tokenKey, token, entities):
         entities["badgerTree"] = self.manager.strategy.badgerTree()
         entities["strategy"] = self.manager.strategy.address
-        #entities["user"] = accounts[0].address # deployer being used as user on test_strategy_flow.py
         entities["randomUser"] = accounts[6].address
         entities["convexMasterChef"] = self.manager.strategy.convexMasterChef()
         entities["cvxCrvRewardsPool"] = self.manager.strategy.cvxCrvRewardsPool()
@@ -149,6 +143,7 @@ class StrategyConvexStakingOptimizerResolver(StrategyCoreResolver):
         _3Crv = interface.IERC20("0x6c3F90f043a72FA612cbac8115EE7e52BDe6E490") 
         BOR = interface.IERC20("0x3c9d6c1c73b31c837832c72e04d3152f051fc1a9") 
         PNT = interface.IERC20("0x89ab32156e46f46d02ade3fecbe5fc4243b9aaed") 
+        wbtc = interface.IERC20("0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599")
         cvxCrv = interface.IERC20(strategy.cvxCrv())
         cvxCRV_CRV_SLP = interface.IERC20(strategy.cvxCRV_CRV_SLP())
         CVX_ETH_SLP = interface.IERC20(strategy.CVX_ETH_SLP())
@@ -158,6 +153,7 @@ class StrategyConvexStakingOptimizerResolver(StrategyCoreResolver):
         calls = self.add_entity_balances_for_tokens(calls, "3Crv", _3Crv, entities)
         calls = self.add_entity_balances_for_tokens(calls, "BOR", BOR, entities)
         calls = self.add_entity_balances_for_tokens(calls, "PNT", PNT, entities)
+        calls = self.add_entity_balances_for_tokens(calls, "WBTC", wbtc, entities)
         calls = self.add_entity_balances_for_tokens(calls, "cvxCrv", cvxCrv, entities)
         calls = self.add_entity_balances_for_tokens(calls, "cvxCRV_CRV_SLP", cvxCRV_CRV_SLP, entities)
         calls = self.add_entity_balances_for_tokens(calls, "CVX_ETH_SLP", CVX_ETH_SLP, entities)
