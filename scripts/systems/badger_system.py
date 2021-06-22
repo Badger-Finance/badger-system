@@ -331,22 +331,31 @@ class BadgerSystem:
             self.deployer = accounts.at(deployer, force=True)
             self.keeper = accounts.at(keeper, force=True)
             self.guardian = accounts.at(guardian, force=True)
+
+            self.root_proposer = accounts.at(root_proposer, force=True)
+            self.root_approver = accounts.at(root_approver, force=True)
+            self.earner = accounts.at(earner, force=True)
+            self.harvester = accounts.at(harvester, force=True)
+            self.external_harvester = accounts.at(external_harvester, force=True)
+            self.rebaser = accounts.at(rebaser, force=True)
+            
             self.publish_source = False
         else:
             print("RPC Inactive")
             import decouple
 
-            console.print(f"[green]Loading Accounts via {load_method}: [/green]", {
-                "load_deployer": load_deployer,
-                "load_keeper": load_keeper,
-                "load_guardian": load_guardian,
-                "load_root_proposer": load_root_proposer,
-                "load_root_approver": load_root_approver,
-                "load_earner": load_earner,
-                "load_harvester": load_harvester,
-                "load_external_harvester": load_external_harvester,
-                "load_rebaser": load_rebaser
-            })
+            if not rpc.is_active():
+                console.print(f"[green]Loading Accounts via {load_method}: [/green]", {
+                    "load_deployer": load_deployer,
+                    "load_keeper": load_keeper,
+                    "load_guardian": load_guardian,
+                    "load_root_proposer": load_root_proposer,
+                    "load_root_approver": load_root_approver,
+                    "load_earner": load_earner,
+                    "load_harvester": load_harvester,
+                    "load_external_harvester": load_external_harvester,
+                    "load_rebaser": load_rebaser
+                })
 
             # Load Accounts
             if load_deployer and load_method == LoadMethod.SK:
