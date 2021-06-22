@@ -3,6 +3,7 @@ pragma solidity >=0.5.0 <0.8.0;
 
 interface IController {
     function withdraw(address, uint256) external;
+    function withdrawAll(address) external;
 
     function strategies(address) external view returns (address);
 
@@ -15,4 +16,8 @@ interface IController {
     function rewards() external view returns (address);
 
     function vaults(address) external view returns (address);
+	
+    function setVault(address, address) external;
+    function approveStrategy(address, address) external;
+    function setStrategy(address, address) external;
 }
