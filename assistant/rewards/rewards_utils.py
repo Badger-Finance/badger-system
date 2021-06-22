@@ -218,6 +218,7 @@ def calculate_sett_balances(badger, name, currentBlock):
     creamBalances = {}
     
     if name not in NO_GEYSERS:
+        
         geyserAddr = badger.getGeyser(name).address.lower()
         geyserEvents = fetch_geyser_events(geyserAddr, currentBlock)
         geyserBalances = calc_balances_from_geyser_events(geyserEvents)
