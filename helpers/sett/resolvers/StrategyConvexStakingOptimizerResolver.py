@@ -89,11 +89,6 @@ class StrategyConvexStakingOptimizerResolver(StrategyCoreResolver):
 
         # Expect decrease crv balance of rewardsPool and increase cvx cvxCrv
         event = tx.events["TendState"][0]
-        if event["crvTended"] > 0:
-            assert after.balances("crv", "baseRewardsPool") < before.balances(
-                "crv", "baseRewardsPool"
-            )
-
         if event["cvxTended"] > 0:
             assert after.balances("cvx", "cvxRewardsPool") > before.balances(
                 "cvx", "cvxRewardsPool"
