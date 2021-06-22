@@ -325,7 +325,7 @@ contract StrategyConvexStakingOptimizer is BaseStrategy, CurveSwapper, UniswapSw
 
     /// @dev Unroll from all strategy positions, and transfer non-core tokens to controller rewards
     function _withdrawAll() internal override {
-        // TODO: Functionality not required for initial migration
+        baseRewardsPool.withdrawAndUnwrap(balanceOfPool(), false);
         // Note: All want is automatically withdrawn outside this "inner hook" in base strategy function
     }
 

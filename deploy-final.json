@@ -70,7 +70,7 @@
         "DiggDistributor": "0x9a7d4078068ebb39ffe471898212353cf661580c",
         "SimpleTimelockWithVoting": "0xa494351C6f392908321Ea90665628f7f521FE809",
         "DiggSeeder": "0xfcC357420368195eE1F4B387d9d4335d26b0695F",
-        "BadgerRewardsManager": "0xE8D0A73ED68231F209bdDB1b0AAcc37C38C16E45",
+        "BadgerRewardsManager": "0xf101Be274FC6cd72CF5fE726fa2e938Ea7401E87",
         "UnlockScheduler": "0xC63d8A22D18dd42a9De8343Fd7C888bdA3E7516d",
         "AffiliateTokenGatedUpgradeable": "0x9313cB1AAaD4E600DBd7Ed70f76fB8288EA84138",
         "VipCappedGuestListWrapperUpgradeable": "0xa6aB825f86D9fDaFe9528f34f089A8473A3D85d3",
@@ -118,7 +118,7 @@
             "native.pbtcCrv": "0x55912d0cf83b75c492e761932abc4db4a5cb1b17",
             "native.obtcCrv": "0xf349c0faa80fc1870306ac093f75934078e28991",
             "native.bbtcCrv": "0x5dce29e92b1b939f8e8c60dcf15bde82a85be4a9",
-            "native.tricrypto": "0xbe08ef12e4a553666291e9ffc24fccfd354f2dd2",
+            "native.tricrypto": "0xBE08Ef12e4a553666291E9fFC24fCCFd354F2Dd2",
             "native.cvxCrv": "0x2B5455aac8d64C14786c3a29858E43b5945819C0",
             "native.cvx": "0x53c8e199eb2cb7c01543c137078a038937a68e40"
         },

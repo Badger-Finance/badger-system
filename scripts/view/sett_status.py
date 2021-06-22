@@ -25,10 +25,10 @@ setts_to_skip = [
     "native.convexRenCrv",
     "native.convexSbtcCrv",
     "native.convexTbtcCrv",
-    "native.hbtcCrv",
-    "native.pbtcCrv",
-    "native.obtcCrv",
-    "native.bbtcCrv",
+    # "native.hbtcCrv",
+    # "native.pbtcCrv",
+    # "native.obtcCrv",
+    # "native.bbtcCrv",
     # "native.tricrypto",
     # "native.cvxCrv",
     # "native.cvx"
@@ -52,10 +52,14 @@ def main():
 
         table = []
 
+        console.print("[green]=== Admin: {} Sett ===[green]".format(key))
         table.append(["Sett Key", key])
         table.append(["Sett Type", sett_type])
         table.append(["Sett Logic", sett_impl])
         table.append(["Sett Admin", sett_admin])
+
+        print(tabulate(table, ["Key", "Value"]))
+        
 
         if sett_type == "v1":
             snap = SnapshotManager(badger, key)
@@ -70,6 +74,8 @@ def main():
                 strategy_impl = admin.getProxyImplementation(sett)
                 strategy_admin = admin.getProxyAdmin(sett)
 
+                table = []
+                console.print("[green]=== Admin: {} Strategy ===[green]".format(key))
                 table.append(["Strategy Logic", strategy_impl])
                 table.append(["Strategy Admin", strategy_admin])
 
