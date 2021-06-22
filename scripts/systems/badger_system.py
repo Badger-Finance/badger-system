@@ -296,12 +296,12 @@ class BadgerSystem:
         deployer,
         keeper,
         guardian,
-        root_proposer,
-        root_approver,
-        earner,
-        harvester,
-        external_harvester,
-        rebaser,
+        root_proposer=None,
+        root_approver=None,
+        earner=None,
+        harvester=None,
+        external_harvester=None,
+        rebaser=None,
         deploy=True,
         load_deployer=False,
         load_keeper=False,
@@ -327,10 +327,25 @@ class BadgerSystem:
 
         # Unlock accounts in test mode
         if rpc.is_active():
+            
+            guardian = deployer
             print("RPC Active")
             self.deployer = accounts.at(deployer, force=True)
             self.keeper = accounts.at(keeper, force=True)
             self.guardian = accounts.at(guardian, force=True)
+
+            if not root_proposer:
+                root_proposer = deployer
+            if not root_approver:
+                root_approver = deployer
+            if not earner:
+                earner = deployer
+            if not harvester:
+                harvester = deployer
+            if not external_harvester:
+                external_harvester = deployer
+            if not rebaser:
+                rebaser = deployer
 
             self.root_proposer = accounts.at(root_proposer, force=True)
             self.root_approver = accounts.at(root_approver, force=True)

@@ -89,7 +89,9 @@
         "StabilizeDiggSett": "0x3ee8ECEF1c5D6B924a03A32eFF4233d3dE5190E5",
         "DiggTreasury": "0x132069EA2E57b44C53C60697FD37453Afcae2708",
         "StrategyConvexLpOptimizer": "0xAB10f878bD27ae01DF36Ba645E458f7dbca7AA46",
-        "StrategyConvexStakingOptimizer" :"0xa0FC97f346f61e955c5E6Bdaa442c14333968aa4"
+        "StrategyConvexStakingOptimizer" :"0xa0FC97f346f61e955c5E6Bdaa442c14333968aa4",
+        "StrategyCvxHelper": "0xf923e3f19350F27dD935442E9a2020e5De088072",
+        "StrategyCvxCrvHelper": "0x0A91870062286382f45527b5577dA0F3546120D4"
     },
     "dao": {
         "token": "0x3472A5A71965499acd81997a54BBA8D852C6E53d",
@@ -172,7 +174,9 @@
             "native.pbtcCrv": "0x1c1fd689103bbfd701b3b7d41a3807f12814033d",
             "native.obtcCrv": "0x2bb864cdb4856ab2d148c5ca52dd7ccec126d138",
             "native.bbtcCrv": "0x4f3e7a4566320b2709fd1986f2e9f84053d3e2a0",
-            "native.tricrypto": "0x05ec4356e1acd89cc2d16adc7415c8c95e736ac1"
+            "native.tricrypto": "0x05ec4356e1acd89cc2d16adc7415c8c95e736ac1",
+            "native.cvxCrv": "0x2B5455aac8d64C14786c3a29858E43b5945819C0",
+            "native.cvx": "0x53c8e199eb2cb7c01543c137078a038937a68e40"
         },
         "strategies_registry": {
             "native.renCrv": {
@@ -219,7 +223,9 @@
             "native.pbtcCrv": "StrategyConvexStakingOptimizer",
             "native.obtcCrv": "StrategyConvexStakingOptimizer",
             "native.bbtcCrv": "StrategyConvexStakingOptimizer",
-            "native.tricrypto": "StrategyConvexStakingOptimizer"
+            "native.tricrypto": "StrategyConvexStakingOptimizer",
+            "native.cvxCrv": "StrategyConvexStakingOptimizer",
+            "native.cvx": "StrategyConvexStakingOptimizer"
         },
         "rewards": {
             "native.badger": "0xBD9c69654B8F3E5978DFd138B00cB0Be29F28cCf",
