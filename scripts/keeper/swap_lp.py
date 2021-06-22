@@ -149,7 +149,7 @@ def main():
     Swap daily allowance for LP tokens & run injection harvest
     """
 
-    badger = connect_badger(load_keeper=True)
+    badger = connect_badger(load_keeper=True, load_external_harvester=True)
     rewards = get_active_rewards_schedule(badger)
 
     if rpc.is_active():
