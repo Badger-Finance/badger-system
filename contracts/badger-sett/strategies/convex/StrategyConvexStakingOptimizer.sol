@@ -392,7 +392,6 @@ contract StrategyConvexStakingOptimizer is BaseStrategy, CurveSwapper, UniswapSw
         
         // 4. Stake all CVX
         if (tendData.cvxTended > 0) {
-            cvxToken.approve(address(cvxRewardsPool), MAX_UINT_256);
             cvxRewardsPool.stake(cvxToken.balanceOf(address(this)));
         }
 
