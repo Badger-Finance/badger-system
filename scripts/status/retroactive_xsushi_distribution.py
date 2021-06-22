@@ -24,7 +24,7 @@ def main():
     badger = connect_badger(badger_config.prod_json, load_deployer=False)
     nextCycle = badger.badgerTree.currentCycle() + 1
 
-    startBlock = 12383985
+    startBlock = 12600786
     endBlock = chain.height
 
     currentRewards = fetch_current_rewards_tree(badger)
