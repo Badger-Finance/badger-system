@@ -72,13 +72,13 @@ settsToRun = [
     # "native.convexRenCrv",
     # "native.convexSbtcCrv",
     # "native.convexTbtcCrv",
-    # "native.hbtcCrv",
-    # "native.pbtcCrv",
-    # "native.obtcCrv",
-    # "native.bbtcCrv",
+    "native.hbtcCrv",
+    "native.pbtcCrv",
+    "native.obtcCrv",
+    "native.bbtcCrv",
     "native.tricrypto",
-    # "helper.cvx",
-    # "helper.cvxCrv",
+    # "native.cvx",
+    # "native.cvxCrv",
 ]
 
 yearnSettsToRun = [
@@ -429,9 +429,9 @@ def badger_single_sett(settConfig, deploy=True):
                 keeper=keeper,
                 governance=governance,
             ).deploy(deploy=deploy)
-        if settId == "helper.cvx":
+        if settId == "native.cvx":
             return HelperCvxMiniDeploy(
-                "helper.cvx",
+                "native.cvx",
                 "StrategyCvxHelper",
                 deployer,
                 strategist=strategist,
@@ -439,9 +439,9 @@ def badger_single_sett(settConfig, deploy=True):
                 keeper=keeper,
                 governance=governance,
             ).deploy(deploy=deploy)
-        if settId == "helper.cvxCrv":
+        if settId == "native.cvxCrv":
             return HelperCvxCrvMiniDeploy(
-                "helper.cvxCrv",
+                "native.cvxCrv",
                 "StrategyCvxCrvHelper",
                 deployer,
                 strategist=strategist,

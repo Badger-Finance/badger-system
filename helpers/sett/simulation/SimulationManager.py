@@ -197,9 +197,9 @@ class SimulationManager:
             return ConvexProvisioner(self)
         if settId in ["native.hbtcCrv", "native.pbtcCrv", "native.obtcCrv", "native.bbtcCrv", "native.tricrypto"]: 
             return ConvexProvisioner(self)
-        if settId == "helper.cvx":
+        if settId == "native.cvx":
             return HelperCvxProvisioner(self)
-        if settId == "helper.cvxCrv" :
+        if settId == "native.cvxCrv" :
             return HelperCvxCrvProvisioner(self)
         raise Exception(f"invalid strategy settID (no provisioner): {settId}")
 

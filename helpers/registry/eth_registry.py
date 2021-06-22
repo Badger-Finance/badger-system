@@ -254,7 +254,7 @@ eth_registry.whales = DotMap(
         action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT,
     ),
     pbtcCrv=DotMap(
-        whale="0x3c5df3077bcf800640b5dae8c91106575a4826e6",
+        whale="0x67031973f76abcd80d8635ee18865813298923b4",
         token=eth_registry.curve.pools.pbtcCrv.token,
         action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT,
     ),
@@ -314,7 +314,7 @@ eth_registry.whales = DotMap(
         action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT,
     ),
     cvx=DotMap(
-        whale="0xcd46ec6b6c1214145cb968f33fdc0eab19196cfa",
+        whale="0xdd5bc57bf90e6c6b341120e5b38fb6eda8e6481d",
         token="0x4e3fbd56cd56c3e72c1403e103b45db9da5b9d2b",
         action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT,
     ),
