@@ -21,7 +21,7 @@ from tabulate import tabulate
 
 console = Console()
 
-contracts_to_approve = [""]
+contracts_to_approve = ["0xA976eA51b9ba3232706aF125a92e32788Dc08Ddc"]
 
 
 def main():
@@ -35,10 +35,16 @@ def main():
     safe = ApeSafe(badger.devMultisig.address)
     helper = ApeSafeHelper(badger, safe)
 
-    setts = [helper.getSett("native.renCrv"), helper.getSett("native.tbtcCrv"), helper.getSett("native.sbtcCrv")]
+    setts = [
+        helper.getSett("native.renCrv"), 
+        helper.getSett("native.tbtcCrv"), 
+        helper.getSett("native.sbtcCrv"),
+        helper.getSett("native.sushiWbtcEth")
+    ]
 
     for contract in contracts_to_approve:
         for sett in setts:
+            console.print(f"Approving contract access for: \n {contract} on \n [green]{sett.address}")
             sett.approveContractAccess(contract)
             assert sett.approved(contract) == True
 

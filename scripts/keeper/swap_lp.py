@@ -50,19 +50,19 @@ def lp_for_strategy_internal(badger, key):
     manager = badger.badgerRewardsManager
     if key == "native.uniBadgerWbtc":
         manager.addLiquidityUniswap(
-            badger.token, wbtc, {"from": badger.keeper, "gas_limit": 1000000}
+            badger.token, wbtc, {"from": badger.keeper, "gas_limit": 2000000}
         )
     if key == "native.sushiBadgerWbtc":
         manager.addLiquiditySushiswap(
-            badger.token, wbtc, {"from": badger.keeper, "gas_limit": 1000000}
+            badger.token, wbtc, {"from": badger.keeper, "gas_limit": 2000000}
         )
     if key == "native.uniDiggWbtc":
         manager.addLiquidityUniswap(
-            digg.token, wbtc, {"from": badger.keeper, "gas_limit": 1000000}
+            digg.token, wbtc, {"from": badger.keeper, "gas_limit": 2000000}
         )
     if key == "native.sushiDiggWbtc":
         manager.addLiquiditySushiswap(
-            digg.token, wbtc, {"from": badger.keeper, "gas_limit": 1000000}
+            digg.token, wbtc, {"from": badger.keeper, "gas_limit": 2000000}
         )
 
 
@@ -149,7 +149,7 @@ def main():
     Swap daily allowance for LP tokens & run injection harvest
     """
 
-    badger = connect_badger("deploy-finxal.json", load_keeper=True)
+    badger = connect_badger(load_keeper=True)
     rewards = get_active_rewards_schedule(badger)
 
     if rpc.is_active():

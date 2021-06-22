@@ -42,18 +42,37 @@ def get_expected_strategy_deposit_location(badger: BadgerSystem, id):
 
 
 def earn_preconditions(key, vaultBalance, strategyBalance):
+    has_override = keeper_config.has_earn_threshold_override_active_chain(key)
+    override_threshold = keeper_config.get_active_chain_earn_threshold_override(key)
+
     # Always allow earn on first run
     if strategyBalance == 0:
+        console.print("No strategy balance, earn()")
         return True
     # Earn if deposits have accumulated over a static threshold
-    if keeper_config.has_earn_threshold_override_active_chain(
-        key
-    ) and vaultBalance >= keeper_config.get_active_chain_earn_threshold_override(key):
+    if has_override and vaultBalance >= override_threshold:
+        console.print(
+            f"Vault balance of {vaultBalance} over earn threshold override of {override_threshold} for {key}"
+        )
         return True
     # Earn if deposits have accumulated over % threshold
     if vaultBalance / strategyBalance > keeper_config.earn_default_percentage_threshold:
+        console.print(
+            f"Vault balance of {vaultBalance} and strategyBalance of {strategyBalance} over standard % threshold of {keeper_config.earn_default_percentage_threshold} for {key}"
+        )
+
         return True
     else:
+        console.print(
+            {
+                "vaultBalance": vaultBalance,
+                "strategyBalance": strategyBalance,
+                "has_override": has_override,
+                "override_threshold": override_threshold,
+                "standard_threshold_pct": keeper_config.earn_default_percentage_threshold,
+                "vault_to_strategy_ratio": vaultBalance / strategyBalance
+            }
+        )
         return False
 
 

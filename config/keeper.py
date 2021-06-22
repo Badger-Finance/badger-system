@@ -8,15 +8,21 @@ from helpers.time_utils import days, hours, minutes
 setts_to_skip = {
     "eth": {
         "harvest": [
+            # "native.renCrv",
+            # "native.sbtcCrv",
+            # "native.tbtcCrv",
             "native.uniBadgerWbtc",
             "native.badger",
-            "native.sushiBadgerWbtc",
+            # "native.sushiBadgerWbtc",
             "native.digg",
             "native.uniDiggWbtc",
-            "native.sushiDiggWbtc",
+            # "native.sushiDiggWbtc",
             "yearn.wbtc",
             "experimental.digg",
-            "experimental.sushiIBbtcWbtc"
+            # "experimental.sushiIBbtcWbtc",
+            "native.convexRenCrv",
+            "native.convexSbtcCrv",
+            "native.convexTbtcCrv"
         ],
         "tend": [
             "yearn.wbtc",
@@ -25,12 +31,19 @@ setts_to_skip = {
         "earn": [
             "native.uniBadgerWbtc",
             "native.badger",
-            "native.sushiBadgerWbtc",
+            # "native.sushiBadgerWbtc",
             "native.digg",
             "native.uniDiggWbtc",
-            "native.sushiDiggWbtc",
+            # "native.sushiDiggWbtc",
             "yearn.wbtc",
-            "experimental.digg"
+            "experimental.digg",
+            "native.convexRenCrv",
+            "native.convexSbtcCrv",
+            "native.convexTbtcCrv",
+            "native.hbtcCrv",
+            "native.pbtcCrv",
+            "native.obtcCrv",
+            "native.bbtcCrv",
         ],
     },
     "bsc": {
@@ -46,7 +59,7 @@ run_intervals = {
 }
 
 earn_default_percentage_threshold = 0.01
-btc_threshold = Wei("3 ether")
+btc_threshold = Wei("2 ether")
 
 earn_threshold_value_override = {
     "eth": {

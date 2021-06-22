@@ -95,7 +95,6 @@ def print_to_file(badger, path):
     system["sett_system"]["controllers"] = {}
     system["sett_system"]["vaults"] = {}
     system["sett_system"]["strategies"] = {}
-    system["sett_system"]["strategy_registry"] = {}
     system["sett_system"]["strategy_artifacts"] = {}
     system["sett_system"]["rewards"] = {}
 
@@ -218,6 +217,8 @@ def connect_badger(
         badger.connect_treasury_multisig(badger_deploy["treasuryMultisig"])
 
     badger.connect_logic(badger_deploy["logic"])
+
+    badger.connect_guest_lists(badger_deploy["guest_lists"])
 
     # badger.connect_dev_multisig(badger_deploy["devMultisig"])
 
@@ -958,10 +959,6 @@ class BadgerSystem:
         sett = self.getSett(id)
         return self.queue_upgrade(sett.address, newLogic.address)
 
-    def queue_upgrade_strategy(self, id, newLogic, delay=2 * days(2)) -> str:
-        strategy = self.getStrategy(id)
-        return self.queue_upgrade(strategy.address, newLogic.address)
-
     def queue_upgrade(self, proxyAddress, newLogicAddress, delay=2 * days(2)) -> str:
         target = self.devProxyAdmin.address
         signature = "upgrade(address,address)"
@@ -1026,41 +1023,11 @@ class BadgerSystem:
             f.write(json.dumps(txData, indent=4, sort_keys=True))
         return txFilename
 
-    def governance_execute_transaction_from_params(
-        self, target, signature, data, eta, eth=0
-    ):
-        multi = GnosisSafe(self.devMultisig)
-
-        console.print(
-            "[yellow]⏰ Executing Timelock Transaction[/yellow]",
-            {
-                "target": target,
-                "eth": eth,
-                "signature": signature,
-                "data": data,
-                "eta": eta,
-            }
-        )
-
-        id = multi.addTx(
-            MultisigTxMetadata(description="Execute timelock transaction"),
-            {
-                "to": self.governanceTimelock.address,
-                "data": self.governanceTimelock.executeTransaction.encode_input(
-                    target, eth, signature, data, eta
-                ),
-            },
-        )
-        multi.executeTx(id)
-
     def governance_execute_transaction(self, txFilename):
         multi = GnosisSafe(self.devMultisig)
 
         with open(os.path.join(TIMELOCK_DIR, txFilename), "r") as f:
             txData = json.load(f)
-
-            console.print("[yellow]⏰ Executing Timelock Transaction[/yellow]", txData)
-
             id = multi.addTx(
                 MultisigTxMetadata(description="Execute timelock transaction"),
                 {
@@ -1090,16 +1057,10 @@ class BadgerSystem:
                 artifactName = sett_system["vault_artifacts"][key]
             self.connect_sett(key, address, settArtifactName=artifactName)
 
-        # Connect Active Strategies
+        # Connect Strategies
         for key, address in sett_system["strategies"].items():
             artifactName = sett_system["strategy_artifacts"][key]
             self.connect_strategy(key, address, artifactName)
-
-        # Connect Strategy Registry, if present
-        if "strategy_registry" in sett_system:
-            for key, key_registry in sett_system["strategy_registry"].items():
-                for artifactName, address in key_registry:
-                    self.add_strategy_registry_entry(key, address, artifactName)
 
         # Connect Rewards
         for key, address in sett_system["rewards"].items():
@@ -1110,6 +1071,9 @@ class BadgerSystem:
             for key, address in geysers.items():
                 self.connect_geyser(key, address)
 
+    def get_sett_ids(self):
+        return self.sett_system["vaults"].keys()
+
     def connect_strategy(self, id, address, strategyArtifactName):
         Artifact = contract_name_to_artifact(strategyArtifactName)
         strategy = Artifact.at(address)
@@ -1117,17 +1081,11 @@ class BadgerSystem:
         self.set_strategy_artifact(id, strategyArtifactName, Artifact)
         self.track_contract_upgradeable(id + ".strategy", strategy)
 
-    def add_strategy_registry_entry(self, id, address, strategyArtifactName):
-        Artifact = contract_name_to_artifact(strategyArtifactName)
-        strategy = Artifact.at(address)
-        self.sett_system.strategies[id] = strategy
-        self.set_strategy_artifact(id, strategyArtifactName, Artifact)
-        self.track_contract_upgradeable(id + ".strategy", strategy)
-
     def connect_sett(self, id, address, settArtifactName="Sett"):
+        # print(f"connecting sett id {id} to {address}")
         Artifact = contract_name_to_artifact(settArtifactName)
         sett = Artifact.at(address)
-        print(f"connecting sett id {id}")
+
         self.sett_system.vaults[id] = sett
         self.track_contract_upgradeable(id + ".sett", sett)
 
@@ -1165,6 +1123,11 @@ class BadgerSystem:
         for name, address in logic.items():
             Artifact = contract_name_to_artifact(name)
             self.logic[name] = Artifact.at(address)
+
+    def connect_guest_lists(self, guest_lists):
+        self.guestLists = {}
+        for key, address in guest_lists.items():
+            self.guestLists[key] = VipCappedGuestListBbtcUpgradeable.at(address)
 
     def connect_dao_badger_timelock(self, address):
         self.daoBadgerTimelock = SimpleTimelock.at(address)
@@ -1268,6 +1231,8 @@ class BadgerSystem:
     # ===== Getters =====
 
     def getGeyser(self, id):
+        if not id in self.geysers:
+            console.print("[bold red]Geyser not found:[/bold red] {}".format(id))
         return self.geysers[id]
 
     def getController(self, id):
@@ -1290,8 +1255,30 @@ class BadgerSystem:
 
         return self.sett_system.vaults[id]
 
+    def getGuestList(self, id):
+        if not id in self.guestLists.keys():
+            console.print("[bold red]Guest list not found:[/bold red] {}".format(id))
+            raise NameError
+
+        return self.guestLists[id]
+
     def getSettRewards(self, id):
         return self.sett_system.rewards[id]
+
+    def getSettType(self, id):
+        """
+        Look at the artifact type of the sett and determine it's version. Currently hardcoded.
+        """
+        if id == "yearn.wbtc":
+            return "v2"
+        else:
+            return "v1"
+
+    def hasStrategy(self, id):
+        if id in self.sett_system.strategies.keys():
+            return True
+        else:
+            return False
 
     def getStrategy(self, id):
         if not id in self.sett_system.strategies.keys():
@@ -1302,15 +1289,6 @@ class BadgerSystem:
 
     def getStrategyWant(self, id):
         return interface.IERC20(self.sett_system.strategies[id].want())
-
-    def getSettType(self, id):
-        """
-        Look at the artifact type of the sett and determine it's version. Currently hardcoded.
-        """
-        if id == "yearn.wbtc":
-            return "v2"
-        else:
-            return "v1"
 
     def getStrategyArtifact(self, id):
         return self.strategy_artifacts[id].artifact
@@ -1396,24 +1374,24 @@ class BadgerSystem:
 
             digg_shares = s.token == self.digg.token
 
-        if digg_shares:
-            scaled = shares_to_fragments(s.amount)
-        else:
-            scaled = val(amount=s.amount, token=s.token)
+            if digg_shares:
+                scaled = shares_to_fragments(s.amount)
+            else:
+                scaled = val(amount=s.amount, token=s.token)
 
-        table.append(
-            [
-                name,
-                s.beneficiary,
-                s.token,
-                scaled,
-                to_days(s.duration),
-                to_utc_date(s.start),
-                to_utc_date(s.end),
-                "{:.0f}".format(s.start),
-                "{:.0f}".format(s.end),
-            ]
-        )
+            table.append(
+                [
+                    name,
+                    s.beneficiary,
+                    s.token,
+                    scaled,
+                    to_days(s.duration),
+                    to_utc_date(s.start),
+                    to_utc_date(s.end),
+                    "{:.0f}".format(s.start),
+                    "{:.0f}".format(s.end),
+                ]
+            )
 
         print(
             tabulate(

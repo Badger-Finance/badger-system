@@ -103,7 +103,7 @@ contract StrategySushiBadgerWbtc is BaseStrategyMultiSwapper {
         return staked;
     }
 
-    function getProtectedTokens() external override view returns (address[] memory) {
+    function getProtectedTokens() public override view returns (address[] memory) {
         address[] memory protectedTokens = new address[](5);
         protectedTokens[0] = want;
         protectedTokens[1] = geyser;

@@ -20,7 +20,7 @@ console = Console()
 
 @pytest.fixture(scope="module", autouse=True)
 def setup(
-    StrategyConvexLpOptimizer,
+    StrategyConvexStakingOptimizer,
 ):
     # Assign accounts
     with open(digg_config.prod_json) as f:
@@ -80,10 +80,10 @@ def setup(
         # Transfer assets to users
         distribute_from_whales(user1, 1, "tbtcCrv")
 
-    contract = StrategyConvexLpOptimizer.deploy({"from": deployer})
+    contract = StrategyConvexStakingOptimizer.deploy({"from": deployer})
     strategy = deploy_proxy(
-        "StrategyConvexLpOptimizer",
-        StrategyConvexLpOptimizer.abi,
+        "StrategyConvexStakingOptimizer",
+        StrategyConvexStakingOptimizer.abi,
         contract.address,
         web3.toChecksumAddress(badger.devProxyAdmin.address),
         contract.initialize.encode_input(
@@ -344,18 +344,7 @@ def test_post_migration_flow(setup):
     assert prevcvxCRV_CRV_SLPBalance == 0
     assert prevCVX_ETH_SLPBalance == 0
 
-    # Check that strategy has 0 stakes on both pools initially 
-    initialStratStake0 = convexMasterChef.userInfo(cvxCRV_CRV_SLP_Pid, strategy.address)
-    initialStratStake1 = convexMasterChef.userInfo(CVX_ETH_SLP_Pid, strategy.address)
-
-    assert initialStratStake0 == [0, 0]
-    assert initialStratStake1 == [0, 0]
-
     strategy.tend({"from": keeper})
-
-    # Check that the strat's stake amount increased for both pools
-    assert convexMasterChef.userInfo(cvxCRV_CRV_SLP_Pid, strategy.address) > initialStratStake0
-    assert convexMasterChef.userInfo(CVX_ETH_SLP_Pid, strategy.address) > initialStratStake1
 
     # Check that Crv and Cvx balances increase
     assert crv.balanceOf(strategy.address) > prevCrvBalance 
@@ -386,18 +375,11 @@ def test_post_migration_flow(setup):
     prevcvxCRV_CRV_SLPBalance = cvxCRV_CRV_SLP.balanceOf(strategy.address)
     prevCVX_ETH_SLPBalance = CVX_ETH_SLP.balanceOf(strategy.address)
 
-    initialStratStake0 = convexMasterChef.userInfo(cvxCRV_CRV_SLP_Pid, strategy.address)
-    initialStratStake1 = convexMasterChef.userInfo(CVX_ETH_SLP_Pid, strategy.address)
-
     # Check that LP balances are 0 before tend
     assert prevcvxCRV_CRV_SLPBalance == 0
     assert prevCVX_ETH_SLPBalance == 0
 
     strategy.tend({"from": keeper})
-
-    # Check that the strat's stake amount increased for both pools
-    assert convexMasterChef.userInfo(cvxCRV_CRV_SLP_Pid, strategy.address) > initialStratStake0
-    assert convexMasterChef.userInfo(CVX_ETH_SLP_Pid, strategy.address) > initialStratStake1
 
     # Check that LP balances remain the same (zero)
     assert cvxCRV_CRV_SLP.balanceOf(strategy.address) == prevcvxCRV_CRV_SLPBalance
