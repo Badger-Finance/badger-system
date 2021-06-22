@@ -144,6 +144,12 @@ def connect_badger(
     load_deployer=False,
     load_keeper=False,
     load_guardian=False,
+    load_root_proposer=False,
+    load_root_approver=False,
+    load_earner=False,
+    load_harvester=False,
+    load_external_harvester=False,
+    load_rebaser=False,
     load_method=LoadMethod.KEYSTORE,
 ):
     """
@@ -178,10 +184,22 @@ def connect_badger(
         badger_deploy["deployer"],
         badger_deploy["keeper"],
         badger_deploy["guardian"],
+        badger_deploy["root_proposer"],
+        badger_deploy["root_approver"],
+        badger_deploy["earner"],
+        badger_deploy["harvester"],
+        badger_deploy["external_harvester"],
+        badger_deploy["rebaser"],
         deploy=False,
         load_deployer=load_deployer,
         load_keeper=load_keeper,
         load_guardian=load_guardian,
+        load_root_proposer=load_root_proposer,
+        load_root_approver=load_root_approver,
+        load_earner=load_earner,
+        load_harvester=load_harvester,
+        load_external_harvester=load_external_harvester,
+        load_rebaser=load_rebaser,
         load_method=load_method,
     )
 
@@ -269,9 +287,7 @@ def connect_badger(
 
     return badger
 
-
 default_gas_strategy = GasNowScalingStrategy()
-
 
 class BadgerSystem:
     def __init__(
@@ -280,10 +296,22 @@ class BadgerSystem:
         deployer,
         keeper,
         guardian,
+        root_proposer,
+        root_approver,
+        earner,
+        harvester,
+        external_harvester,
+        rebaser,
         deploy=True,
         load_deployer=False,
         load_keeper=False,
         load_guardian=False,
+        load_root_proposer=False,
+        load_root_approver=False,
+        load_earner=False,
+        load_harvester=False,
+        load_external_harvester=False,
+        load_rebaser=False,
         load_method=LoadMethod.KEYSTORE,
     ):
         self.config = config
@@ -308,8 +336,19 @@ class BadgerSystem:
             print("RPC Inactive")
             import decouple
 
-            print(load_deployer, load_keeper, load_guardian, load_method)
+            console.print(f"[green]Loading Accounts via {load_method}: [/green]", {
+                "load_deployer": load_deployer,
+                "load_keeper": load_keeper,
+                "load_guardian": load_guardian,
+                "load_root_proposer": load_root_proposer,
+                "load_root_approver": load_root_approver,
+                "load_earner": load_earner,
+                "load_harvester": load_harvester,
+                "load_external_harvester": load_external_harvester,
+                "load_rebaser": load_rebaser
+            })
 
+            # Load Accounts
             if load_deployer and load_method == LoadMethod.SK:
                 deployer_key = decouple.config("DEPLOYER_PRIVATE_KEY")
                 self.deployer = accounts.add(deployer_key)
@@ -325,6 +364,19 @@ class BadgerSystem:
                 self.keeper = accounts.load("badger-keeper")
             if load_guardian and load_method == LoadMethod.KEYSTORE:
                 self.guardian = accounts.load("badger-guardian")
+            if load_root_proposer and load_method == LoadMethod.KEYSTORE:
+                self.root_proposer = accounts.load("root-proposer")
+            if load_root_approver and load_method == LoadMethod.KEYSTORE:
+                self.root_approver = accounts.load("root-approver")
+            if load_earner and load_method == LoadMethod.KEYSTORE:
+                self.earner = accounts.load("earner")
+            if load_harvester and load_method == LoadMethod.KEYSTORE:
+                self.harvester = accounts.load("harvester")
+            if load_external_harvester and load_method == LoadMethod.KEYSTORE:
+                self.external_harvester = accounts.load("external-harvester")
+            if load_rebaser and load_method == LoadMethod.KEYSTORE:
+                self.rebaser = accounts.load("rebaser")
+
             self.publish_source = False  # Publish sources for deployed logic on mainnet
         if deploy:
             self.devProxyAdmin = deploy_proxy_admin(deployer)
