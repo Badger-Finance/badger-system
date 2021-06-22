@@ -30,13 +30,8 @@ class ConvexTriCryptoMiniDeploy(SettMiniDeployBase):
         # Vault uses testMultisig
         testMultisig = accounts.at(self.vault.governance(), force=True)
 
-        # Change governance (current governance is proxy's admin - revert: Cannot call fallback function from the proxy admin)
-        # self.vault.setGovernance(self.governance.address, {"from": self.deployer})
-
         if not (self.vault.controller() == self.strategy.controller()):
             # NB: Not all vaults are pauseable.
-            # if self.vault.paused():
-            #     self.vault.unpause({"from": self.governance})
             try:
                 if self.vault.paused():
                     self.vault.unpause({"from": self.testMultisig})
@@ -66,19 +61,25 @@ class ConvexTriCryptoMiniDeploy(SettMiniDeployBase):
 
         assert self.controller.strategies(self.vault.token()) == self.strategy.address
         assert self.controller.vaults(self.strategy.want()) == self.vault.address
-
-        # No guestlist deployed yet
         
-        # Add actors to guestlist
+        # Add users to guestlist
         guestlist = VipCappedGuestListBbtcUpgradeable.at(self.vault.guestList())
+
+        owner = accounts.at("0xd41f7006bcb2B3d0F9C5873272Ebed67B37F80Dc", force=True)
 
         addresses = []
         for account in accounts:
             addresses.append(account.address)
-            
-        invited = [True]*len(accounts)
 
-        owner = accounts.at("0xd41f7006bcb2B3d0F9C5873272Ebed67B37F80Dc", force=True)
+        # Add actors addresses
+        addresses.append(owner.address)
+        addresses.append(self.governance.address)
+        addresses.append(self.strategist.address)
+        addresses.append(self.keeper.address)
+        addresses.append(self.guardian.address)
+        addresses.append(self.deployer.address)
+            
+        invited = [True]*len(addresses)
 
         guestlist.setGuests(addresses, invited, {"from": owner})
 

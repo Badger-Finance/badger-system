@@ -61,7 +61,15 @@ class ConvexPBtcMiniDeploy(SettMiniDeployBase):
         for account in accounts:
             addresses.append(account.address)
             
-        invited = [True]*len(accounts)
+        # Add actors addresses
+        addresses.append(guestlist.owner())
+        addresses.append(self.governance.address)
+        addresses.append(self.strategist.address)
+        addresses.append(self.keeper.address)
+        addresses.append(self.guardian.address)
+        addresses.append(self.deployer.address)
+            
+        invited = [True]*len(addresses)
 
         guestlist.setGuests(addresses, invited, {"from": self.deployer})
 
