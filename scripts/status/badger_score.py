@@ -1,4 +1,5 @@
 import requests
+import json
 from brownie import *
 from rich.console import Console
 from rich.console import Console
@@ -16,7 +17,9 @@ def unix_time_to_block(time):
     url = "https://api.etherscan.io/api?module=block&action=getblocknobytime&timestamp={}&closest=before".format(
         time
     )
+    console.log(url)
     data = requests.get(url).json()
+    console.log(data)
     return int(data["result"])
 
 def sett_users_above_zero(sett, block):
@@ -35,7 +38,7 @@ def badger_staking_and_lp(block):
 
     bbadger = sett_users_above_zero("native.badger", block)
     badgerUniLp = sett_users_above_zero("native.uniBadgerWbtc", block)
-    badgerSlp = sett_users_above_zero("native.sushiBadgerWbtc")
+    badgerSlp = sett_users_above_zero("native.sushiBadgerWbtc",block)
     return list(set([*bbadger, *badgerUniLp, *badgerSlp])), 1
 
 
@@ -60,7 +63,7 @@ def non_native_sett_user(block):
     users = []
     for sett in NON_NATIVE_SETTS:
         u = sett_users_above_zero(sett, block)
-        users = [*users, u]
+        users = [*users, *u]
 
     return list(set(users)), 1
 
@@ -82,14 +85,10 @@ def add_score(addresses,score,cond):
             
         scores[addr][cond] = score
 
-def main():
-    unix_time = 1623884400
-    block = unix_time_to_block(unix_time_to_block)
+def calc_scores(unix_time):
+    block = unix_time_to_block(unix_time)
     console.log(block)
-    
-    condition_4 = fetch_nfts(block)
-    console.log(condition_4)
-    
+        
     condition_1, score = badger_staking_and_lp(block)
     add_score(condition_1,score,"cond1")
     
@@ -97,16 +96,34 @@ def main():
     add_score(condition_2,score_2,"cond2")
     
     condition_3,score_3 = governance_participant(unix_time)
+    
+    
     add_score(condition_3,score_3,"cond3")
     
-    add_score(condition_4,1,"cond4")
+    nfts = fetch_nfts(block)
+    condition_4 = []
+    
+    for user_data in nfts:
+        if len(user_data["tokens"]) > 0:
+            condition_4.append(user_data["id"])
+            
+    add_score(condition_4,2,"cond4")
     
     condition_5,score_5 = non_native_sett_user(block)
     add_score(condition_5,score_5,"cond5")
     
-    condition_6,score_6 = ibbtc_sett_user(block)
-    add_score(condition_6,score_6,"cond6")
+    condition_6 = sett_users_above_zero("experimental.sushiIBbtcWbtc",block)
+    add_score(condition_6,2,"cond6")
     
+    checksum_scores = {}
+    for addr,data in scores.items():
+        checksum_scores[web3.toChecksumAddress(addr)] = data
+    
+    with open("scores.json","w") as fp:
+        json.dump(checksum_scores,fp)
+    
+def main():
+    calc_scores(1623884400)
     
 
     
