@@ -119,7 +119,6 @@ class StrategyConvexStakingOptimizerResolver(StrategyCoreResolver):
     def add_entity_balances_for_tokens(self, calls, tokenKey, token, entities):
         entities["badgerTree"] = self.manager.strategy.badgerTree()
         entities["strategy"] = self.manager.strategy.address
-        entities["randomUser"] = accounts[6].address
         entities["convexMasterChef"] = self.manager.strategy.convexMasterChef()
         entities["cvxCrvRewardsPool"] = self.manager.strategy.cvxCrvRewardsPool()
         entities["cvxRewardsPool"] = self.manager.strategy.cvxRewardsPool()
