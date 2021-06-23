@@ -82,8 +82,8 @@ setts_to_skip = {
             # "native.obtcCrv",
             # "native.bbtcCrv",
             # "native.tricrypto",
-            "native.cvxCrv",
-            "native.cvx",
+            # "native.cvxCrv",
+            # "native.cvx",
         ],
     },
     "bsc": {
