@@ -319,7 +319,7 @@ eth_registry.whales = DotMap(
         action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT,
     ),
     cvxCrv=DotMap(
-        whale="0x253643bd61950801b94827462bb30d1859b6373d",
+        whale="0xca078cb6eb4b80b4ef84751230c49c8ce076c6ff",
         token="0x62b9c7356a2dc64a1969e19c23e4f579f9810aa7",
         action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT,
     ),

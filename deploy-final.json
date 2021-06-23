@@ -224,8 +224,8 @@
             "native.obtcCrv": "StrategyConvexStakingOptimizer",
             "native.bbtcCrv": "StrategyConvexStakingOptimizer",
             "native.tricrypto": "StrategyConvexStakingOptimizer",
-            "native.cvxCrv": "StrategyConvexStakingOptimizer",
-            "native.cvx": "StrategyConvexStakingOptimizer"
+            "native.cvxCrv": "StrategyCvxCrvHelper",
+            "native.cvx": "StrategyCvxHelper"
         },
         "rewards": {
             "native.badger": "0xBD9c69654B8F3E5978DFd138B00cB0Be29F28cCf",

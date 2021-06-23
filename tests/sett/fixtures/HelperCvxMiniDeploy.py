@@ -18,37 +18,8 @@ class HelperCvxMiniDeploy(SettMiniDeployBase):
             distribute_from_whales(self.deployer, 1)
 
     def post_deploy_setup(self, deploy):
-        # Deploy during simulation while contracts get deployed:
         if deploy:
             return
-
-        (params, want) = self.fetch_params()
-
-        self.controller = interface.IController(self.vault.controller())
-
-        # Deploy strategy
-        contract = StrategyCvxHelper.deploy({"from": self.deployer})
-        self.strategy = deploy_proxy(
-            "StrategyCvxHelper",
-            StrategyCvxHelper.abi,
-            contract.address,
-            web3.toChecksumAddress(self.badger.devProxyAdmin.address),
-            contract.initialize.encode_input(
-                self.governance.address,
-                self.strategist.address,
-                self.controller.address,
-                self.keeper.address,
-                self.guardian.address, 
-                [
-                    params.performanceFeeGovernance,
-                    params.performanceFeeStrategist,
-                    params.withdrawalFee,
-                ],
-            ),
-            self.deployer,
-        )
-
-        self.badger.sett_system.strategies[self.key] = self.strategy
 
         # Vault uses testMultisig
         self.testMultisig = accounts.at(self.vault.governance(), force=True)
@@ -65,7 +36,9 @@ class HelperCvxMiniDeploy(SettMiniDeployBase):
 
         # Check that want is the same for vault and strategy
         assert self.vault.token() == self.strategy.want()
-        
+
+        self.controller = interface.IController(self.vault.controller())
+
         # Add strategy to controller for want
         self.controller.approveStrategy(self.strategy.want(), self.strategy.address, {"from": self.governance})
         self.controller.setStrategy(self.strategy.want(), self.strategy.address, {"from": self.governance})
@@ -73,41 +46,24 @@ class HelperCvxMiniDeploy(SettMiniDeployBase):
         assert self.controller.strategies(self.vault.token()) == self.strategy.address
         assert self.controller.vaults(self.strategy.want()) == self.vault.address
 
-        # (params, want) = self.fetch_params()
+        # Add actors to guestlist
+        guestlist = VipCappedGuestListBbtcUpgradeable.at(self.vault.guestList())
 
-        # self.controller = interface.IController(self.vault.controller())
+        addresses = []
+        for account in accounts:
+            addresses.append(account.address)
+            
+        # Add actors addresses
+        addresses.append(guestlist.owner())
+        addresses.append(self.governance.address)
+        addresses.append(self.strategist.address)
+        addresses.append(self.keeper.address)
+        addresses.append(self.guardian.address)
+        addresses.append(self.deployer.address)
+            
+        invited = [True]*len(addresses)
 
-        # contract = StrategyCvxHelper.deploy({"from": self.deployer})
-        # self.strategy = deploy_proxy(
-        #     "StrategyCvxHelper",
-        #     StrategyCvxHelper.abi,
-        #     contract.address,
-        #     web3.toChecksumAddress(self.badger.devProxyAdmin.address),
-        #     contract.initialize.encode_input(
-        #         self.governance.address,
-        #         self.strategist.address,
-        #         self.controller.address,
-        #         self.keeper.address,
-        #         self.guardian.address, 
-        #         [
-        #             params.performanceFeeGovernance,
-        #             params.performanceFeeStrategist,
-        #             params.withdrawalFee,
-        #         ],
-        #     ),
-        #     self.deployer,
-        # )
+        owner = accounts.at(guestlist.owner(), force=True)
 
-        # self.badger.sett_system.strategies[self.key] = self.strategy
+        guestlist.setGuests(addresses, invited, {"from": owner})
 
-        # assert self.controller.address == self.strategy.controller()
-
-        # timelock = accounts.at("0x21CF9b77F88Adf8F8C98d7E33Fe601DC57bC0893", force=True)
-
-        # self.controller.approveStrategy(self.strategy.want(), self.strategy.address, {"from": timelock})
-        # self.controller.setStrategy(self.strategy.want(), self.strategy.address, {"from": timelock})
-
-        # # Add vault to controller for want
-        # self.controller.setVault(self.vault.token(), self.vault.address, {"from": timelock})
-
-        # assert self.controller.strategies(self.vault.token()) == self.strategy.address
