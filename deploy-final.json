@@ -175,8 +175,8 @@
             "native.obtcCrv": "0x2bb864cdb4856ab2d148c5ca52dd7ccec126d138",
             "native.bbtcCrv": "0x4f3e7a4566320b2709fd1986f2e9f84053d3e2a0",
             "native.tricrypto": "0x05ec4356e1acd89cc2d16adc7415c8c95e736ac1",
-            "native.cvxCrv": "0x4FE836b28ADc7867290764885b24d3992dAeE819",
-            "native.cvx": "0x5e7a939f77E5c441e2Ba1Dc8Be5D42020193376D"
+            "native.cvxCrv": "0x826048381d65a65DAa51342C51d464428d301896",
+            "native.cvx": "0xBCee2c6CfA7A4e29892c3665f464Be5536F16D95"
         },
         "strategies_registry": {
             "native.renCrv": {

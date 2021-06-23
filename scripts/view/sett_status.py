@@ -70,9 +70,9 @@ def main():
             if badger.hasStrategy(key):
                 snap.printPermissions()
                 strategy = badger.getStrategy(key)
-                admin = badger.getProxyAdmin(sett)
-                strategy_impl = admin.getProxyImplementation(sett)
-                strategy_admin = admin.getProxyAdmin(sett)
+                admin = badger.getProxyAdmin(strategy)
+                strategy_impl = admin.getProxyImplementation(strategy)
+                strategy_admin = admin.getProxyAdmin(strategy)
 
                 table = []
                 console.print("[green]=== Admin: {} Strategy ===[green]".format(key))

@@ -1,3 +1,4 @@
+from helpers.constants import MaxUint256
 from tests.sett.fixtures.SettMiniDeployBase import SettMiniDeployBase
 from config.badger_config import sett_config
 from helpers.token_utils import distribute_from_whales
@@ -66,4 +67,6 @@ class HelperCvxMiniDeploy(SettMiniDeployBase):
         owner = accounts.at(guestlist.owner(), force=True)
 
         guestlist.setGuests(addresses, invited, {"from": owner})
+        guestlist.setUserDepositCap(MaxUint256, {"from": owner})
+        guestlist.setTotalDepositCap(MaxUint256, {"from": owner})
 
