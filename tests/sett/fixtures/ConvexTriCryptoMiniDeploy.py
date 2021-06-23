@@ -56,9 +56,6 @@ class ConvexTriCryptoMiniDeploy(SettMiniDeployBase):
         self.controller.approveStrategy(self.strategy.want(), self.strategy.address, {"from": self.governance})
         self.controller.setStrategy(self.strategy.want(), self.strategy.address, {"from": self.governance})
 
-        # Add vault to controller for want
-        self.controller.setVault(self.vault.token(), self.vault.address, {"from": self.governance})
-
         assert self.controller.strategies(self.vault.token()) == self.strategy.address
         assert self.controller.vaults(self.strategy.want()) == self.vault.address
         
