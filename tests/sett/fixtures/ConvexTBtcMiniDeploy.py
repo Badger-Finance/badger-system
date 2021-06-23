@@ -30,7 +30,9 @@ class ConvexTBtcMiniDeploy(SettMiniDeployBase):
 
         # Fetch strategy from strategy_registry
         self.strategy = StrategyConvexStakingOptimizer.at(
-            badger_deploy["sett_system"]["strategies_registry"]["native.tbtcCrv"]["StrategyConvexStakingOptimizer"]
+            badger_deploy["sett_system"]["strategies_registry"]["native.tbtcCrv"][
+                "StrategyConvexStakingOptimizer"
+            ]
         )
         self.badger.sett_system.strategies[self.key] = self.strategy
 
@@ -42,7 +44,9 @@ class ConvexTBtcMiniDeploy(SettMiniDeployBase):
             except exceptions.VirtualMachineError:
                 pass
             # Change vault's conroller to match the strat's
-            self.vault.setController(self.strategy.controller(), {"from": self.governance})
+            self.vault.setController(
+                self.strategy.controller(), {"from": self.governance}
+            )
 
         # Check that vault's and Strat's controller is the same
         assert self.vault.controller() == self.strategy.controller()
@@ -56,8 +60,12 @@ class ConvexTBtcMiniDeploy(SettMiniDeployBase):
         timelock = accounts.at("0x21CF9b77F88Adf8F8C98d7E33Fe601DC57bC0893", force=True)
 
         # Add strategy to controller for want
-        self.controller.approveStrategy(self.strategy.want(), self.strategy.address, {"from": timelock})
-        self.controller.setStrategy(self.strategy.want(), self.strategy.address, {"from": timelock})
+        self.controller.approveStrategy(
+            self.strategy.want(), self.strategy.address, {"from": timelock}
+        )
+        self.controller.setStrategy(
+            self.strategy.want(), self.strategy.address, {"from": timelock}
+        )
 
         assert self.controller.strategies(self.vault.token()) == self.strategy.address
         assert self.controller.vaults(self.strategy.want()) == self.vault.address
@@ -83,7 +91,7 @@ class ConvexTBtcMiniDeploy(SettMiniDeployBase):
     #             self.strategist.address,
     #             self.controller.address,
     #             self.keeper.address,
-    #             self.guardian.address, 
+    #             self.guardian.address,
     #             [params.want, self.badger.badgerTree,],
     #             params.pid,
     #             [

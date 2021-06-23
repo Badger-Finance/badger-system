@@ -31,7 +31,9 @@ class ConvexHBtcMiniDeploy(SettMiniDeployBase):
             except exceptions.VirtualMachineError:
                 pass
             # Change vault's conroller to match the strat's
-            self.vault.setController(self.strategy.controller(), {"from": self.governance})
+            self.vault.setController(
+                self.strategy.controller(), {"from": self.governance}
+            )
 
         # Check that vault's and Strat's controller is the same
         assert self.vault.controller() == self.strategy.controller()
@@ -45,8 +47,12 @@ class ConvexHBtcMiniDeploy(SettMiniDeployBase):
         timelock = accounts.at("0x21CF9b77F88Adf8F8C98d7E33Fe601DC57bC0893", force=True)
 
         # Add strategy to controller for want
-        self.controller.approveStrategy(self.strategy.want(), self.strategy.address, {"from": self.governance})
-        self.controller.setStrategy(self.strategy.want(), self.strategy.address, {"from": self.governance})
+        self.controller.approveStrategy(
+            self.strategy.want(), self.strategy.address, {"from": self.governance}
+        )
+        self.controller.setStrategy(
+            self.strategy.want(), self.strategy.address, {"from": self.governance}
+        )
 
         # Add vault to controller for want
         # self.controller.setVault(self.vault.token(), self.vault.address, {"from": self.governance})
@@ -60,7 +66,7 @@ class ConvexHBtcMiniDeploy(SettMiniDeployBase):
         addresses = []
         for account in accounts:
             addresses.append(account.address)
-            
+
         # Add actors addresses
         addresses.append(guestlist.owner())
         addresses.append(self.governance.address)
@@ -68,11 +74,10 @@ class ConvexHBtcMiniDeploy(SettMiniDeployBase):
         addresses.append(self.keeper.address)
         addresses.append(self.guardian.address)
         addresses.append(self.deployer.address)
-            
-        invited = [True]*len(addresses)
+
+        invited = [True] * len(addresses)
 
         guestlist.setGuests(addresses, invited, {"from": self.deployer})
-
 
     # Setup used for running simulation without deployed strategy:
 
@@ -95,7 +100,7 @@ class ConvexHBtcMiniDeploy(SettMiniDeployBase):
     #             self.strategist.address,
     #             self.controller.address,
     #             self.keeper.address,
-    #             self.guardian.address, 
+    #             self.guardian.address,
     #             [params.want, self.badger.badgerTree,],
     #             params.pid,
     #             [

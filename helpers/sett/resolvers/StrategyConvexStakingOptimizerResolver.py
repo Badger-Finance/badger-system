@@ -7,22 +7,23 @@ from tabulate import tabulate
 
 console = Console()
 
+
 class StrategyConvexStakingOptimizerResolver(StrategyCoreResolver):
 
     # ===== override default =====
     def confirm_harvest_events(self, before, after, tx):
-        key = 'HarvestState'
+        key = "HarvestState"
         assert key in tx.events
         assert len(tx.events[key]) == 1
         event = tx.events[key][0]
         keys = [
-            'xSushiHarvested',
-            'totalxSushi',
-            'toStrategist',
-            'toGovernance',
-            'toBadgerTree',
-            'timestamp',
-            'blockNumber',
+            "xSushiHarvested",
+            "totalxSushi",
+            "toStrategist",
+            "toGovernance",
+            "toBadgerTree",
+            "timestamp",
+            "blockNumber",
         ]
         for key in keys:
             assert key in event
@@ -31,13 +32,13 @@ class StrategyConvexStakingOptimizerResolver(StrategyCoreResolver):
         self.printState(event, keys)
 
     def confirm_tend_events(self, before, after, tx):
-        key = 'Tend'
+        key = "Tend"
         assert key in tx.events
         assert len(tx.events[key]) == 1
 
         event = tx.events[key][0]
         keys = [
-            'tended',
+            "tended",
         ]
         for key in keys:
             assert key in event
@@ -45,15 +46,15 @@ class StrategyConvexStakingOptimizerResolver(StrategyCoreResolver):
         console.print("[blue]== Convex Strat tend() State ==[/blue]")
         self.printState(event, keys)
 
-        key = 'TendState'
+        key = "TendState"
         assert key in tx.events
         assert len(tx.events[key]) == 1
 
         event = tx.events[key][0]
         keys = [
-            'crvTended',
-            'cvxTended',
-            'cvxCrvTended',
+            "crvTended",
+            "cvxTended",
+            "cvxCrvTended",
         ]
         for key in keys:
             assert key in event
@@ -64,7 +65,7 @@ class StrategyConvexStakingOptimizerResolver(StrategyCoreResolver):
         for key in keys:
             table.append([key, val(event[key])])
 
-        print(tabulate(table, headers=["account", "value"]))       
+        print(tabulate(table, headers=["account", "value"]))
 
     # ===== Strategies must implement =====
     def confirm_harvest(self, before, after, tx):
@@ -79,7 +80,9 @@ class StrategyConvexStakingOptimizerResolver(StrategyCoreResolver):
         assert after.get("strategy.balanceOf") >= before.get("strategy.balanceOf")
 
         # PPFS should not decrease
-        assert after.get("sett.pricePerFullShare") >= before.get("sett.pricePerFullShare")
+        assert after.get("sett.pricePerFullShare") >= before.get(
+            "sett.pricePerFullShare"
+        )
 
     def confirm_tend(self, before, after, tx):
         self.confirm_tend_events(before, after, tx)
@@ -119,7 +122,7 @@ class StrategyConvexStakingOptimizerResolver(StrategyCoreResolver):
         """
 
         strategy = self.manager.strategy
-        return {} 
+        return {}
 
     def add_entity_balances_for_tokens(self, calls, tokenKey, token, entities):
         entities["badgerTree"] = self.manager.strategy.badgerTree()
@@ -130,7 +133,6 @@ class StrategyConvexStakingOptimizerResolver(StrategyCoreResolver):
         entities["cvxRewardsPool"] = self.manager.strategy.cvxRewardsPool()
         entities["baseRewardsPool"] = self.manager.strategy.baseRewardsPool()
 
-
         super().add_entity_balances_for_tokens(calls, tokenKey, token, entities)
         return calls
 
@@ -140,9 +142,9 @@ class StrategyConvexStakingOptimizerResolver(StrategyCoreResolver):
 
         crv = interface.IERC20(strategy.crv())
         cvx = interface.IERC20(strategy.cvx())
-        _3Crv = interface.IERC20("0x6c3F90f043a72FA612cbac8115EE7e52BDe6E490") 
-        BOR = interface.IERC20("0x3c9d6c1c73b31c837832c72e04d3152f051fc1a9") 
-        PNT = interface.IERC20("0x89ab32156e46f46d02ade3fecbe5fc4243b9aaed") 
+        _3Crv = interface.IERC20("0x6c3F90f043a72FA612cbac8115EE7e52BDe6E490")
+        BOR = interface.IERC20("0x3c9d6c1c73b31c837832c72e04d3152f051fc1a9")
+        PNT = interface.IERC20("0x89ab32156e46f46d02ade3fecbe5fc4243b9aaed")
         wbtc = interface.IERC20("0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599")
         usdc = interface.IERC20("0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48")
         cvxCrv = interface.IERC20(strategy.cvxCrv())
@@ -157,8 +159,12 @@ class StrategyConvexStakingOptimizerResolver(StrategyCoreResolver):
         calls = self.add_entity_balances_for_tokens(calls, "WBTC", wbtc, entities)
         calls = self.add_entity_balances_for_tokens(calls, "USDC", usdc, entities)
         calls = self.add_entity_balances_for_tokens(calls, "cvxCrv", cvxCrv, entities)
-        calls = self.add_entity_balances_for_tokens(calls, "cvxCRV_CRV_SLP", cvxCRV_CRV_SLP, entities)
-        calls = self.add_entity_balances_for_tokens(calls, "CVX_ETH_SLP", CVX_ETH_SLP, entities)
+        calls = self.add_entity_balances_for_tokens(
+            calls, "cvxCRV_CRV_SLP", cvxCRV_CRV_SLP, entities
+        )
+        calls = self.add_entity_balances_for_tokens(
+            calls, "CVX_ETH_SLP", CVX_ETH_SLP, entities
+        )
 
         return calls
 
@@ -166,7 +172,7 @@ class StrategyConvexStakingOptimizerResolver(StrategyCoreResolver):
         super().add_strategy_snap(calls)
 
         strategy = self.manager.strategy
-    
+
         cvxCRV_CRV_SLP_Pid = strategy.cvxCRV_CRV_SLP_Pid()
         CVX_ETH_SLP_Pid = strategy.CVX_ETH_SLP_Pid()
 
@@ -178,17 +184,27 @@ class StrategyConvexStakingOptimizerResolver(StrategyCoreResolver):
                     Call(
                         convexMasterChef,
                         [func.sushiChef.userInfo, cvxCRV_CRV_SLP_Pid, entity],
-                        [["convexMasterChef.userInfo.cvxCRV_CRV_SLP_Pid." + entityKey, as_wei]],
+                        [
+                            [
+                                "convexMasterChef.userInfo.cvxCRV_CRV_SLP_Pid."
+                                + entityKey,
+                                as_wei,
+                            ]
+                        ],
                     )
                 )
                 calls.append(
                     Call(
                         convexMasterChef,
                         [func.sushiChef.userInfo, CVX_ETH_SLP_Pid, entity],
-                        [["convexMasterChef.userInfo.CVX_ETH_SLP_Pid." + entityKey, as_wei]],
+                        [
+                            [
+                                "convexMasterChef.userInfo.CVX_ETH_SLP_Pid."
+                                + entityKey,
+                                as_wei,
+                            ]
+                        ],
                     )
                 )
 
         return calls
-
-    

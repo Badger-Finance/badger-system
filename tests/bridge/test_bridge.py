@@ -138,8 +138,8 @@ def test_bridge_basic_swap_fail():
         _deploy_swap_mocks(badger, bridge, swap, router_fail=router_fail)
 
         # .1% slippage
-        slippage = .001
-        amount = 1 * 10**8
+        slippage = 0.001
+        amount = 1 * 10 ** 8
 
         for accIdx in range(10, 12):
             account = accounts[accIdx]
@@ -148,7 +148,7 @@ def test_bridge_basic_swap_fail():
                 # Test mints
                 bridge.adapter.mint(
                     wbtc,
-                    slippage * 10**4,
+                    slippage * 10 ** 4,
                     account.address,
                     AddressZero,  # No vault.
                     amount,
@@ -238,9 +238,7 @@ def test_bridge_sweep():
         (registry.whales.wbtc.whale, interface.IERC20(wbtc)),
     ]:
         token.transfer(
-            bridge.adapter,
-            token.balanceOf(whale),
-            {"from": whale},
+            bridge.adapter, token.balanceOf(whale), {"from": whale},
         )
         # Can be called from any account, should always send to governance.
         beforeBalance = token.balanceOf(badger.devMultisig)
@@ -280,9 +278,7 @@ def _upgrade_swap(badger, swap):
     badger.deploy_logic("CurveSwapStrategy", CurveSwapStrategy)
     logic = badger.logic["CurveSwapStrategy"]
     badger.devProxyAdmin.upgrade(
-        swap.strategies.curve,
-        logic,
-        {"from": badger.governanceTimelock},
+        swap.strategies.curve, logic, {"from": badger.governanceTimelock},
     )
 
 
@@ -290,9 +286,7 @@ def _upgrade_bridge(badger, bridge):
     badger.deploy_logic("BadgerBridgeAdapter", BadgerBridgeAdapter)
     logic = badger.logic["BadgerBridgeAdapter"]
     badger.devProxyAdmin.upgrade(
-        bridge.adapter,
-        logic,
-        {"from": badger.governanceTimelock},
+        bridge.adapter, logic, {"from": badger.governanceTimelock},
     )
 
     badger.deploy_logic("CurveTokenWrapper", CurveTokenWrapper)

@@ -18,6 +18,7 @@ from decimal import Decimal
 
 console = Console()
 
+
 def main():
     # Assign accounts
     with open(digg_config.prod_json) as f:
@@ -88,7 +89,7 @@ def main():
             strategist.address,
             controller.address,
             keeper.address,
-            guardian.address, 
+            guardian.address,
             [params.want, badger.badgerTree.address,],
             params.pid,
             [
@@ -102,6 +103,6 @@ def main():
 
     # Finish setup
 
-    return namedtuple(
-        "setup", "badger controller vault strategy namedAccounts"
-    )(badger, controller, vault, strategy, namedAccounts)
+    return namedtuple("setup", "badger controller vault strategy namedAccounts")(
+        badger, controller, vault, strategy, namedAccounts
+    )

@@ -7,16 +7,17 @@ from tabulate import tabulate
 
 console = Console()
 
+
 class StrategyCvxCrvHelperResolver(StrategyCoreResolver):
 
     # ===== override default =====
     def confirm_harvest_events(self, before, after, tx):
-        key = 'Tend'
+        key = "Tend"
         assert key in tx.events
         assert len(tx.events[key]) == 1
         event = tx.events[key][0]
         keys = [
-            'tended',
+            "tended",
         ]
         for key in keys:
             assert key in event
@@ -29,7 +30,7 @@ class StrategyCvxCrvHelperResolver(StrategyCoreResolver):
         for key in keys:
             table.append([key, val(event[key])])
 
-        print(tabulate(table, headers=["account", "value"]))       
+        print(tabulate(table, headers=["account", "value"]))
 
     # ===== Strategies must implement =====
     def confirm_harvest(self, before, after, tx):
@@ -44,7 +45,9 @@ class StrategyCvxCrvHelperResolver(StrategyCoreResolver):
         assert after.get("strategy.balanceOf") >= before.get("strategy.balanceOf")
 
         # PPFS should not decrease
-        assert after.get("sett.pricePerFullShare") >= before.get("sett.pricePerFullShare")
+        assert after.get("sett.pricePerFullShare") >= before.get(
+            "sett.pricePerFullShare"
+        )
 
     def get_strategy_destinations(self):
         """
@@ -53,7 +56,7 @@ class StrategyCvxCrvHelperResolver(StrategyCoreResolver):
         """
 
         strategy = self.manager.strategy
-        return {} 
+        return {}
 
     def add_entity_balances_for_tokens(self, calls, tokenKey, token, entities):
         entities["strategy"] = self.manager.strategy.address
@@ -80,5 +83,3 @@ class StrategyCvxCrvHelperResolver(StrategyCoreResolver):
         calls = self.add_entity_balances_for_tokens(calls, "usdc", usdc, entities)
 
         return calls
-
-    

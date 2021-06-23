@@ -51,7 +51,7 @@ def calc_sett_rewards(badger, periodStartBlock, endBlock, cycle):
             continue
 
         settRewards, apyBoost = calc_snapshot(
-            badger, key, periodStartBlock, endBlock, cycle, boosts, 0
+            badger, key, periodStartBlock, endBlock, cycle, boosts
         )
         if len(apyBoost) > 0:
             minimum = min(apyBoost.values())
@@ -343,7 +343,6 @@ def guardian(badger: BadgerSystem, startBlock, endBlock, pastRewards, test=False
             {"from": badger.guardian, "gas_price": gas_strategy},
         )
         upload(rewards_data["contentFileName"]),
-        
 
 
 def run_action(badger, args, test):

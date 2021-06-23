@@ -22,12 +22,9 @@ setts_to_skip = {
             # "experimental.sushiIBbtcWbtc",
             "native.convexRenCrv",
             "native.convexSbtcCrv",
-            "native.convexTbtcCrv"
+            "native.convexTbtcCrv",
         ],
-        "tend": [
-            "yearn.wbtc",
-            "experimental.digg"
-        ],
+        "tend": ["yearn.wbtc", "experimental.digg"],
         "earn": [
             "native.uniBadgerWbtc",
             "native.badger",

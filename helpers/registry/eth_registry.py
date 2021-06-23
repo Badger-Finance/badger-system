@@ -34,7 +34,7 @@ multisend = "0x8D29bE29923b68abfDD21e541b9374737B49cdAD"
 
 compound_registry = DotMap(
     comptroller=web3.toChecksumAddress("0x3d9819210a31b4961b30ef54be2aed79b9c9cd3b"),
-    cTokens=DotMap(usdc="0x39AA39c021dfbaE8faC545936693aC917d5E7563")
+    cTokens=DotMap(usdc="0x39AA39c021dfbaE8faC545936693aC917d5E7563"),
 )
 
 multichain_registry = DotMap(eth_address="0xC564EE9f21Ed8A2d8E7e76c085740d5e4c5FaFbE")
@@ -125,18 +125,18 @@ curve_registry = DotMap(
         triCrypto=DotMap(
             token="0xca3d75ac011bf5ad07a98d02f18225f9bd9a6bdf",
             swap="0x80466c64868E1ab14a1Ddf27A676C3fcBE638Fe5",
-            gauge=""
-        )
+            gauge="",
+        ),
     ),
     pids=DotMap(
-        renCrv=6, 
-        sbtcCrv=7, 
-        tbtcCrv=16, 
-        hbtcCrv=8, 
-        pbtcCrv=18, 
-        obtcCrv=20, 
+        renCrv=6,
+        sbtcCrv=7,
+        tbtcCrv=16,
+        hbtcCrv=8,
+        pbtcCrv=18,
+        obtcCrv=20,
         bbtcCrv=19,
-        triCrypto=37
+        triCrypto=37,
     ),
 )
 

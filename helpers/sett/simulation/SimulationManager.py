@@ -34,7 +34,7 @@ from .provisioners import (
     WbtcIbBtcLpProvisioner,
     ConvexProvisioner,
     HelperCvxProvisioner,
-    HelperCvxCrvProvisioner
+    HelperCvxCrvProvisioner,
 )
 
 console = Console()
@@ -193,13 +193,23 @@ class SimulationManager:
             return WbtcIbBtcLpProvisioner(self)
         if settId == "native.uniWbtcIbBtc":
             return WbtcIbBtcLpProvisioner(self, isUniswap=True)
-        if settId in ["native.convexRenCrv", "native.convexSbtcCrv", "native.convexTbtcCrv"]:
+        if settId in [
+            "native.convexRenCrv",
+            "native.convexSbtcCrv",
+            "native.convexTbtcCrv",
+        ]:
             return ConvexProvisioner(self)
-        if settId in ["native.hbtcCrv", "native.pbtcCrv", "native.obtcCrv", "native.bbtcCrv", "native.tricrypto"]: 
+        if settId in [
+            "native.hbtcCrv",
+            "native.pbtcCrv",
+            "native.obtcCrv",
+            "native.bbtcCrv",
+            "native.tricrypto",
+        ]:
             return ConvexProvisioner(self)
         if settId == "helper.cvx":
             return HelperCvxProvisioner(self)
-        if settId == "helper.cvxCrv" :
+        if settId == "helper.cvxCrv":
             return HelperCvxCrvProvisioner(self)
         raise Exception(f"invalid strategy settID (no provisioner): {settId}")
 

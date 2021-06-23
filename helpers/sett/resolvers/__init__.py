@@ -13,6 +13,8 @@ from .StrategySushiDiggWbtcLpOptimizerResolver import (
 from .StrategyDiggLpMetaFarmResolver import StrategyDiggLpMetaFarmResolver
 from .StrategyUniGenericLpResolver import StrategyUniGenericLpResolver
 from .StabilizeStrategyDiggV1Resolver import StabilizeStrategyDiggV1Resolver
-from .StrategyConvexStakingOptimizerResolver import StrategyConvexStakingOptimizerResolver
+from .StrategyConvexStakingOptimizerResolver import (
+    StrategyConvexStakingOptimizerResolver,
+)
 from .StrategyCvxHelperResolver import StrategyCvxHelperResolver
 from .StrategyCvxCrvHelperResolver import StrategyCvxCrvHelperResolver

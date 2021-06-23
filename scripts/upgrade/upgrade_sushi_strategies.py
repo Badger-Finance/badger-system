@@ -14,9 +14,7 @@ SUSHI_STRATEGIES_TO_UPGRADE = [
 
 
 def queue_upgrade_strategy(
-    badger: BadgerSystem,
-    strategyID: str,
-    artifactName: str,
+    badger: BadgerSystem, strategyID: str, artifactName: str,
 ) -> str:
     # if rpc.is_active():
     #     badger.deploy_logic(artifactName, name_to_artifact[artifactName])
@@ -26,6 +24,7 @@ def queue_upgrade_strategy(
     logic = badger.getLogic(artifactName)
     console.print("Preparing Upgrade", logic.address, logic.getName())
     return badger.queue_upgrade_strategy(strategyID, logic)
+
 
 def main():
     """

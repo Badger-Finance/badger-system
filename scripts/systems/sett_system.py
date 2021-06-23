@@ -406,7 +406,11 @@ def deploy_strategy(
                     params.performanceFeeStrategist,
                     params.withdrawalFee,
                 ],
-                (params.curvePool.swap, params.curvePool.wbtcPosition, params.curvePool.numElements)
+                (
+                    params.curvePool.swap,
+                    params.curvePool.wbtcPosition,
+                    params.curvePool.numElements,
+                ),
             ),
             badger.deployer,
         )
@@ -421,7 +425,7 @@ def deploy_strategy(
                 strategist,
                 controller,
                 keeper,
-                guardian, 
+                guardian,
                 [
                     params.performanceFeeGovernance,
                     params.performanceFeeStrategist,
@@ -441,7 +445,7 @@ def deploy_strategy(
                 strategist,
                 controller,
                 keeper,
-                guardian, 
+                guardian,
                 [
                     params.performanceFeeGovernance,
                     params.performanceFeeStrategist,

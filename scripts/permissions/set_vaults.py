@@ -37,10 +37,11 @@ function initialize(
 """
 
 params = {
-            "root": "0x17bf188285a653a6c0ccb51a826c35c9f948be7691836e486a1dae56740730cf", 
-            "user_deposit_cap": 2 * 10 ** 18,
-            "total_deposit_cap": 60 * 10 ** 18,
-        }
+    "root": "0x17bf188285a653a6c0ccb51a826c35c9f948be7691836e486a1dae56740730cf",
+    "user_deposit_cap": 2 * 10 ** 18,
+    "total_deposit_cap": 60 * 10 ** 18,
+}
+
 
 def set_strategists(badger):
     """
@@ -48,38 +49,50 @@ def set_strategists(badger):
     """
     assert False
 
+
 def keeper_refresh(badger):
     """
     All vaults should have their keeper set to earn() keeper account
     All strategies should have their keeper set to harvester() keeper account
     """
 
+
 def config_guest_lists(badger):
     for key in vaults_to_add:
         guestList = badger.getGuestList(key)
         sett = badger.getSett(key)
 
-        console.print(f"📝 [yellow]Configuring guest list[/yellow] [blue]{guestList.address}[/blue] for key {key}")
+        console.print(
+            f"📝 [yellow]Configuring guest list[/yellow] [blue]{guestList.address}[/blue] for key {key}"
+        )
 
         console.print(" [purple]Params[/purple]", params)
-        
-        guestList.initialize(sett, {'from': badger.deployer})
-        guestList.setUserDepositCap(params["user_deposit_cap"], {'from': badger.deployer})
-        guestList.setTotalDepositCap(params["total_deposit_cap"], {'from': badger.deployer})
-        guestList.setGuestRoot(params["root"], {'from': badger.deployer})
+
+        guestList.initialize(sett, {"from": badger.deployer})
+        guestList.setUserDepositCap(
+            params["user_deposit_cap"], {"from": badger.deployer}
+        )
+        guestList.setTotalDepositCap(
+            params["total_deposit_cap"], {"from": badger.deployer}
+        )
+        guestList.setGuestRoot(params["root"], {"from": badger.deployer})
+
 
 def set_guest_lists(badger, safe, helper, vaults_to_add):
     for key in vaults_to_add:
         guestList = badger.getGuestList(key)
         sett = safe.contract(badger.getSett(key).address)
 
-        console.print(f"Setting guest list [blue]{guestList.address}[/blue] on vault {key}")
+        console.print(
+            f"Setting guest list [blue]{guestList.address}[/blue] on vault {key}"
+        )
         assert guestList.wrapper() == sett
 
         sett.setGuestList(guestList)
 
         assert sett.guestList() == guestList
     helper.publish()
+
 
 def initialize_strategies(badger):
     """
@@ -137,13 +150,18 @@ def initialize_strategies(badger):
                 params.performanceFeeStrategist,
                 params.withdrawalFee,
             ],
-            (params.curvePool.swap, params.curvePool.wbtcPosition, params.curvePool.numElements),
+            (
+                params.curvePool.swap,
+                params.curvePool.wbtcPosition,
+                params.curvePool.numElements,
+            ),
             {"from": badger.deployer},
         )
 
         vault = badger.getSett(key)
 
         assert vault.token() == strategy.want()
+
 
 def approve_strategies(badger, safe, helper):
     """
@@ -158,16 +176,19 @@ def approve_strategies(badger, safe, helper):
 
         want = interface.IERC20(strategy.want())
 
-        console.print(f"Approving strategy {strategy} for want {want.name()} {want.address}")
+        console.print(
+            f"Approving strategy {strategy} for want {want.name()} {want.address}"
+        )
 
         controller.approveStrategy(strategy.want(), strategy)
         controller.setStrategy(strategy.want(), strategy)
 
         assert controller.approvedStrategies(strategy.want(), strategy) == True
-        assert controller.strategies(strategy.want()) == strategy 
+        assert controller.strategies(strategy.want()) == strategy
         assert controller.vaults(strategy.want()) == vault
 
     helper.publish()
+
 
 def approve_strategies_timelock(badger):
     """
@@ -192,28 +213,30 @@ def approve_strategies_timelock(badger):
         )
 
         timelock_params = {
-            'destination': controller.address,
+            "destination": controller.address,
             "signature": "approveStrategy(address,address)",
-            "data": encode_abi(["address", "address"], [strategy.want(), strategy.address]),
+            "data": encode_abi(
+                ["address", "address"], [strategy.want(), strategy.address]
+            ),
             "expiration": chain.time() + days(2.5),
         }
 
         console.print("timelock_params", timelock_params)
 
         txFilename = badger.governance_queue_transaction(
-            timelock_params['destination'],
-            timelock_params['signature'],
-            timelock_params['data'],
-            timelock_params['expiration']
+            timelock_params["destination"],
+            timelock_params["signature"],
+            timelock_params["data"],
+            timelock_params["expiration"],
         )
 
         chain.sleep(days(2.9))
         chain.mine()
         badger.governance_execute_transaction_from_params(
-            timelock_params['destination'],
-            timelock_params['signature'],
-            timelock_params['data'],
-            timelock_params['expiration']
+            timelock_params["destination"],
+            timelock_params["signature"],
+            timelock_params["data"],
+            timelock_params["expiration"],
         )
         chain.sleep(days(0.5))
         chain.mine()
@@ -248,6 +271,7 @@ def set_controller_on_vaults(badger, safe, helper, vaults_to_add):
 
         print(badger.getProxyAdmin(sett))
 
+
 def unpause_vaults(badger, safe, helper, vaults_to_add):
     for key in vaults_to_add:
         console.print(f"Unpause Vaults {key}")
@@ -257,26 +281,27 @@ def unpause_vaults(badger, safe, helper, vaults_to_add):
         strategy = badger.getStrategy(key)
         assert strategy.paused() == False
 
-        console.print({
-            "vault_gov": vault.governance(),
-            "strat_gov": strategy.governance(),
-        })
+        console.print(
+            {"vault_gov": vault.governance(), "strat_gov": strategy.governance(),}
+        )
 
         vault.unpause()
 
         assert vault.paused() == False
-    
+
 
 def set_strategies_on_controller(badger, safe, helper, vaults_to_add):
     controller_id = "experimental"
     for key in vaults_to_add:
-        
+
         controller = safe.contract(badger.getController(controller_id).address)
 
         vault = safe.contract(badger.getSett(key).address)
         strategy = safe.contract(badger.getStrategy(key).address)
 
-        console.print(f"Approve & Set strategy {strategy.address} ({strategy.getName()}) for {key} controller {controller_id}")
+        console.print(
+            f"Approve & Set strategy {strategy.address} ({strategy.getName()}) for {key} controller {controller_id}"
+        )
 
         want = interface.IERC20(strategy.want())
 
@@ -289,8 +314,9 @@ def set_strategies_on_controller(badger, safe, helper, vaults_to_add):
         assert controller.strategies(want) == strategy.address
         assert vault.paused() == False
         assert strategy.paused() == False
-    
+
     helper.publish()
+
 
 def set_vaults_on_controller(badger, safe, helper, vaults_to_add):
     for settID in vaults_to_add:
@@ -318,9 +344,9 @@ def main():
         a = 1
     else:
         from helpers.gas_utils import gas_strategies
+
         gas_strategies.set_default(gas_strategies.exponentialScalingFast)
-    
-        
+
         # set_guest_lists(badger, dev_multi, helper, vaults_to_add)
     # set_strategies_on_controller(badger, dev_multi, helper, vaults_to_add)
     initialize_strategies(badger)
@@ -331,9 +357,9 @@ def main():
     # approve_strategies(badger, dev_multi, helper)
     # config_guest_lists(badger)
     # unpause_vaults(badger, dev_multi, helper, vaults_to_add))
-    
+
     # helper.publish()
-    
+
     # set_controller_on_vaults(badger, dev_multi, ApeSafeHelper(badger,x dev_multi), vaults_to_add)
 
     # helper.publish()

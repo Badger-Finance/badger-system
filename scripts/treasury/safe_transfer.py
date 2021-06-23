@@ -12,13 +12,16 @@ from rich.console import Console
 from scripts.systems.badger_system import BadgerSystem, connect_badger
 from scripts.systems.uniswap_system import UniswapSystem
 from helpers.token_utils import BalanceSnapshotter
+
 console = Console()
+
 
 class TransferOp:
     def __init__(self, recipient, token, amount):
         self.recipient = recipient
         self.token = token
         self.amount = amount
+
 
 def main():
     """
@@ -48,7 +51,15 @@ def main():
         TransferOp(badger.badgerRewardsManager, diggToken, Wei("2 gwei")),
     ]
 
-    snap = BalanceSnapshotter([badger.token, dfd, badger.digg.token], [badger.badgerTree, badger.badgerRewardsManager, badger.devMultisig, badger.rewardsEscrow])
+    snap = BalanceSnapshotter(
+        [badger.token, dfd, badger.digg.token],
+        [
+            badger.badgerTree,
+            badger.badgerRewardsManager,
+            badger.devMultisig,
+            badger.rewardsEscrow,
+        ],
+    )
     snap.snap()
 
     rewards_escrow_tokens = [badger.token]
@@ -77,4 +88,3 @@ def main():
     snap.diff_last_two()
 
     helper.publish()
-

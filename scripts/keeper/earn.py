@@ -70,7 +70,7 @@ def earn_preconditions(key, vaultBalance, strategyBalance):
                 "has_override": has_override,
                 "override_threshold": override_threshold,
                 "standard_threshold_pct": keeper_config.earn_default_percentage_threshold,
-                "vault_to_strategy_ratio": vaultBalance / strategyBalance
+                "vault_to_strategy_ratio": vaultBalance / strategyBalance,
             }
         )
         return False

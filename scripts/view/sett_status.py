@@ -34,6 +34,7 @@ setts_to_skip = [
     # "native.cvx"
 ]
 
+
 def main():
     badger = connect_badger(badger_config.prod_json)
     console.print("\n[white]===== 🦡 Sett Status 🦡 =====[white]\n")
@@ -59,12 +60,11 @@ def main():
         table.append(["Sett Admin", sett_admin])
 
         print(tabulate(table, ["Key", "Value"]))
-        
 
         if sett_type == "v1":
             snap = SnapshotManager(badger, key)
             # state = snap.snap()
-            
+
             # snap.printTable(state)
 
             if badger.hasStrategy(key):

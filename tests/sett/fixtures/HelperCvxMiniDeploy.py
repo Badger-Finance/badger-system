@@ -18,7 +18,7 @@ class HelperCvxMiniDeploy(SettMiniDeployBase):
         if not deploy:
             self.want = sett_config.helper.cvx.params.want
 
-            self.controller = self.badger.sett_system.controllers['native']
+            self.controller = self.badger.sett_system.controllers["native"]
 
             self.vault = self.badger.deploy_sett(
                 self.key,
@@ -53,7 +53,7 @@ class HelperCvxMiniDeploy(SettMiniDeployBase):
                 self.strategist.address,
                 self.controller.address,
                 self.keeper.address,
-                self.guardian.address, 
+                self.guardian.address,
                 [
                     params.performanceFeeGovernance,
                     params.performanceFeeStrategist,
@@ -69,10 +69,16 @@ class HelperCvxMiniDeploy(SettMiniDeployBase):
 
         timelock = accounts.at("0x21CF9b77F88Adf8F8C98d7E33Fe601DC57bC0893", force=True)
 
-        self.controller.approveStrategy(self.strategy.want(), self.strategy.address, {"from": timelock})
-        self.controller.setStrategy(self.strategy.want(), self.strategy.address, {"from": timelock})
+        self.controller.approveStrategy(
+            self.strategy.want(), self.strategy.address, {"from": timelock}
+        )
+        self.controller.setStrategy(
+            self.strategy.want(), self.strategy.address, {"from": timelock}
+        )
 
         # Add vault to controller for want
-        self.controller.setVault(self.vault.token(), self.vault.address, {"from": timelock})
+        self.controller.setVault(
+            self.vault.token(), self.vault.address, {"from": timelock}
+        )
 
         assert self.controller.strategies(self.vault.token()) == self.strategy.address

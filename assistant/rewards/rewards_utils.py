@@ -1,4 +1,4 @@
-from helpers.constants import NO_GEYSERS,CONVEX_SETTS
+from helpers.constants import NO_GEYSERS, CONVEX_SETTS
 from brownie import *
 from rich.console import Console
 from collections import Counter
@@ -216,9 +216,9 @@ def calculate_sett_balances(badger, name, currentBlock):
     settBalances = fetch_sett_balances(name, underlyingToken.lower(), currentBlock)
     geyserBalances = {}
     creamBalances = {}
-    
+
     if name not in NO_GEYSERS:
-        
+
         geyserAddr = badger.getGeyser(name).address.lower()
         geyserEvents = fetch_geyser_events(geyserAddr, currentBlock)
         geyserBalances = calc_balances_from_geyser_events(geyserEvents)

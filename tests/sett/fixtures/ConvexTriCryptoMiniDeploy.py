@@ -22,7 +22,6 @@ class ConvexTriCryptoMiniDeploy(SettMiniDeployBase):
             return
         distribute_from_whales(self.deployer, 1)
 
-    
     def post_deploy_setup(self, deploy):
         if deploy:
             return
@@ -39,7 +38,9 @@ class ConvexTriCryptoMiniDeploy(SettMiniDeployBase):
                 pass
 
             # Change vault's conroller to match the strat's
-            self.vault.setController(self.strategy.controller(), {"from": self.governance})
+            self.vault.setController(
+                self.strategy.controller(), {"from": self.governance}
+            )
 
         # Check that vault's and Strat's controller is the same
         assert self.vault.controller() == self.strategy.controller()
@@ -53,15 +54,21 @@ class ConvexTriCryptoMiniDeploy(SettMiniDeployBase):
         timelock = accounts.at("0x21CF9b77F88Adf8F8C98d7E33Fe601DC57bC0893", force=True)
 
         # Add strategy to controller for want
-        self.controller.approveStrategy(self.strategy.want(), self.strategy.address, {"from": self.governance})
-        self.controller.setStrategy(self.strategy.want(), self.strategy.address, {"from": self.governance})
+        self.controller.approveStrategy(
+            self.strategy.want(), self.strategy.address, {"from": self.governance}
+        )
+        self.controller.setStrategy(
+            self.strategy.want(), self.strategy.address, {"from": self.governance}
+        )
 
         # Add vault to controller for want
-        self.controller.setVault(self.vault.token(), self.vault.address, {"from": self.governance})
+        self.controller.setVault(
+            self.vault.token(), self.vault.address, {"from": self.governance}
+        )
 
         assert self.controller.strategies(self.vault.token()) == self.strategy.address
         assert self.controller.vaults(self.strategy.want()) == self.vault.address
-        
+
         # Add users to guestlist
         guestlist = VipCappedGuestListBbtcUpgradeable.at(self.vault.guestList())
 
@@ -78,15 +85,14 @@ class ConvexTriCryptoMiniDeploy(SettMiniDeployBase):
         addresses.append(self.keeper.address)
         addresses.append(self.guardian.address)
         addresses.append(self.deployer.address)
-            
-        invited = [True]*len(addresses)
+
+        invited = [True] * len(addresses)
 
         guestlist.setGuests(addresses, invited, {"from": owner})
 
         # Increase gustlist caps since randomly generated amounts tend to be bigger than current caps
         guestlist.setTotalDepositCap("5080189446897250400000", {"from": owner})
         guestlist.setUserDepositCap("5081890446897250400000", {"from": owner})
-        
 
     # Setup used for running simulation without deployed strategy:
 
@@ -109,7 +115,7 @@ class ConvexTriCryptoMiniDeploy(SettMiniDeployBase):
     #             self.strategist.address,
     #             self.controller.address,
     #             self.keeper.address,
-    #             self.guardian.address, 
+    #             self.guardian.address,
     #             [params.want, self.badger.badgerTree,],
     #             params.pid,
     #             [

@@ -15,10 +15,8 @@ TX_HASHES = [
     "0x032a28df32bd4797067b0e7595ae138fc7a274144d6f319d5e46342f693148ee.json",
 ]
 
-setts = [
-    'native.sushiBadgerWbtc',
-    'native.sushiDiggWbtc'
-]
+setts = ["native.sushiBadgerWbtc", "native.sushiDiggWbtc"]
+
 
 def main():
     """
@@ -29,8 +27,8 @@ def main():
 
     for txFilename in TX_HASHES:
         badger.governance_execute_transaction(txFilename, remove_file_on_success=False)
-        
+
     for settID in setts:
         strategy = badger.getStrategy(settID)
         snap = SnapshotManager(badger, settID)
-        snap.settHarvestViaManager(strategy, {'from': badger.keeper})
+        snap.settHarvestViaManager(strategy, {"from": badger.keeper})

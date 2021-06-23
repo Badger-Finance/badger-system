@@ -10,9 +10,8 @@ from rich.console import Console
 
 console = Console()
 
-def calc_snapshot(
-    badger, name, startBlock, endBlock, nextCycle, boosts
-):
+
+def calc_snapshot(badger, name, startBlock, endBlock, nextCycle, boosts):
     digg = interface.IDigg(DIGG)
 
     console.log("==== Processing rewards for {} at {} ====".format(name, endBlock))

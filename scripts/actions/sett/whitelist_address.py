@@ -36,15 +36,17 @@ def main():
     helper = ApeSafeHelper(badger, safe)
 
     setts = [
-        helper.getSett("native.renCrv"), 
-        helper.getSett("native.tbtcCrv"), 
+        helper.getSett("native.renCrv"),
+        helper.getSett("native.tbtcCrv"),
         helper.getSett("native.sbtcCrv"),
-        helper.getSett("native.sushiWbtcEth")
+        helper.getSett("native.sushiWbtcEth"),
     ]
 
     for contract in contracts_to_approve:
         for sett in setts:
-            console.print(f"Approving contract access for: \n {contract} on \n [green]{sett.address}")
+            console.print(
+                f"Approving contract access for: \n {contract} on \n [green]{sett.address}"
+            )
             sett.approveContractAccess(contract)
             assert sett.approved(contract) == True
 

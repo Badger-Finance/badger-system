@@ -67,7 +67,9 @@ def test_claim(badger, user, claim, tokens_to_check):
     amounts = claim["cumulativeAmounts"]
 
     canClaim = tree.isClaimAvailableFor(user, claim["tokens"], parsed_amounts)
-    claimable = tree.getClaimableFor(user, claim["tokens"], claim["cumulativeAmounts"])[1]
+    claimable = tree.getClaimableFor(user, claim["tokens"], claim["cumulativeAmounts"])[
+        1
+    ]
     print(claimable)
     # console.log("canClaim Test", user, tokens, amounts, parsed_amounts)
     console.log("canClaim Test", canClaim)

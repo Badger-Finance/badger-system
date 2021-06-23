@@ -33,15 +33,16 @@ assets = [
     registry.curve.pools.hbtcCrv,
     registry.curve.pools.pbtcCrv,
     registry.curve.pools.obtcCrv,
-    registry.curve.pools.bbtcCrv
+    registry.curve.pools.bbtcCrv,
 ]
 
 vaults = [
     "0x8c76970747afd5398e958bdfada4cf0b9fca16c4",
     "0x55912d0cf83b75c492e761932abc4db4a5cb1b17",
     "0xf349c0faa80fc1870306ac093f75934078e28991",
-    "0x5dce29e92b1b939f8e8c60dcf15bde82a85be4a9"
+    "0x5dce29e92b1b939f8e8c60dcf15bde82a85be4a9",
 ]
+
 
 def test_main():
     """
@@ -60,7 +61,7 @@ def test_main():
     dev = badger.deployer
 
     distribute_from_whales(dev, assets=["digg"])
-    digg.token.transfer(badger.devMultisig, digg.token.balanceOf(dev), {'from':dev})
+    digg.token.transfer(badger.devMultisig, digg.token.balanceOf(dev), {"from": dev})
 
     multi = GnosisSafe(badger.devMultisig)
     safe = ApeSafe(badger.devMultisig.address)
@@ -80,7 +81,7 @@ def test_main():
     string memory _namePrefix,
     string memory _symbolPrefix
     """
-    
+
     for i in range(0, len(assets)):
         asset = interface.IERC20(assets[i])
         vault = interface.ISett(vaults[i])
@@ -93,7 +94,7 @@ def test_main():
             badger.guardian,
             False,
             "",
-            ""
+            "",
         )
 
         controller.setVault(asset, vault)

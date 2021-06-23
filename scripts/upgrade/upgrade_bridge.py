@@ -15,22 +15,18 @@ console = Console()
 
 
 def upgrade_swap_strategy(
-        badger: BadgerSystem,
-        strategy: network.contract.ProjectContract,
-        SwapStrategy: network.contract.ContractContainer) -> str:
-    '''
+    badger: BadgerSystem,
+    strategy: network.contract.ProjectContract,
+    SwapStrategy: network.contract.ContractContainer,
+) -> str:
+    """
     Upgrades swap strategy.
-    '''
+    """
     logic = SwapStrategy.deploy({"from": badger.deployer})
-    return badger.queue_upgrade(
-        strategy.address,
-        logic.address,
-    )
+    return badger.queue_upgrade(strategy.address, logic.address,)
 
 
-def upgrade_bridge(
-        badger: BadgerSystem,
-        bridge: BridgeSystem) -> str:
+def upgrade_bridge(badger: BadgerSystem, bridge: BridgeSystem) -> str:
     """
     Upgrades bridge.
     """

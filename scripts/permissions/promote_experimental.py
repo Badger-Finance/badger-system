@@ -5,7 +5,9 @@ from helpers.constants import MaxUint256
 from helpers.gnosis_safe import ApeSafeHelper
 from scripts.systems.badger_system import connect_badger
 from helpers.gas_utils import gas_strategies
+
 gas_strategies.set_default(gas_strategies.exponentialScalingFast)
+
 
 def main():
     """
@@ -13,12 +15,14 @@ def main():
     """
 
     key = "experimental.sushiIBbtcWbtc"
-    
+
     badger = connect_badger()
     safe = ApeSafe(badger.devMultisig.address)
     ops = ApeSafe(badger.opsMultisig.address)
-    
-    experimental_controller = safe.contract(badger.getController("experimental").address)
+
+    experimental_controller = safe.contract(
+        badger.getController("experimental").address
+    )
     native_controller = ops.contract(badger.getController("native").address)
 
     # Set experimental strategist to ops multisig
@@ -28,7 +32,7 @@ def main():
     admin = ops.contract(badger.opsProxyAdmin.address)
     sett = ops.contract(badger.getSett("experimental.sushiIBbtcWbtc").address)
     strategy = ops.contract(badger.getStrategy("experimental.sushiIBbtcWbtc").address)
-    
+
     assert badger.getProxyAdmin(sett) == badger.opsProxyAdmin
     assert badger.getProxyAdmin(strategy) == badger.opsProxyAdmin
 
