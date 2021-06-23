@@ -309,7 +309,7 @@ eth_registry.whales = DotMap(
         action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT,
     ),
     triCrypto=DotMap(
-        whale="0xb325c1ac788f02ff7997cf53c6ff40dd762897b3",
+        whale="0x9f719e0bc35c46236b3f450852b526d84fed514b",
         token="0xcA3d75aC011BF5aD07a98d02f18225F9bD9A6BDF",
         action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT,
     ),
