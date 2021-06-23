@@ -11,7 +11,7 @@ from rich.console import Console
 console = Console()
 
 def calc_snapshot(
-    badger, name, startBlock, endBlock, nextCycle, boosts, diggAllocation
+    badger, name, startBlock, endBlock, nextCycle, boosts
 ):
     digg = interface.IDigg(DIGG)
 
@@ -96,6 +96,7 @@ def calc_snapshot(
             )
             console.log("Diff {}".format((abs(tokenDistribution - totalRewards))))
 
+    console.log(apyBoosts)
     return rewards, apyBoosts
 
 
