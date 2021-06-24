@@ -135,7 +135,7 @@ contract StrategyUnitProtocolRenbtc is StrategyUnitProtocolMeta {
             path[0] = crv;
             path[1] = weth;
             path[2] = want;
-            _swap(crv, harvestData.crvRecycled, path);
+            _swapExactTokensForTokens(uniswap, crv, harvestData.crvRecycled, path);
         }
 
         // Take fees from want increase, and deposit remaining into Gauge
@@ -248,7 +248,7 @@ contract StrategyUnitProtocolRenbtc is StrategyUnitProtocolMeta {
         require(renbtc_collateral != _asset, "!usdp");
     }
 
-    function getProtectedTokens() external override view returns (address[] memory) {
+    function getProtectedTokens() public override view returns (address[] memory) {
         address[] memory protectedTokens = new address[](3);
         protectedTokens[0] = renbtc_collateral;
         protectedTokens[1] = usdp;

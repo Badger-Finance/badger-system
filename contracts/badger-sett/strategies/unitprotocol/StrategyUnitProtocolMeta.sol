@@ -9,8 +9,9 @@ import "deps/@openzeppelin/contracts-upgradeable/token/ERC20/SafeERC20Upgradeabl
 
 import "../../../../interfaces/unitprotocol/IUnitProtocol.sol";
 import "../../../../interfaces/chainlink/IChainlink.sol";
+import "contracts/badger-sett/libraries/UniswapSwapper.sol";
 
-abstract contract StrategyUnitProtocolMeta is BaseStrategy {
+abstract contract StrategyUnitProtocolMeta is BaseStrategy, UniswapSwapper {
     using SafeERC20Upgradeable for IERC20Upgradeable;
     using AddressUpgradeable for address;
     using SafeMathUpgradeable for uint256;

@@ -24,8 +24,4 @@ interface IController {
     function rewards() external view returns (address);
 
     function vaults(address) external view returns (address);
-	
-    function setVault(address, address) external;
-    function approveStrategy(address, address) external;
-    function setStrategy(address, address) external;
 }
