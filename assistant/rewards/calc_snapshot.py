@@ -4,7 +4,6 @@ from assistant.rewards.classes.RewardsLog import rewardsLog
 from assistant.rewards.classes.Schedule import Schedule
 from helpers.time_utils import to_days, to_hours, to_utc_date
 from helpers.constants import NON_NATIVE_SETTS, NATIVE_DIGG_SETTS, DIGG
-from dotmap import DotMap
 from brownie import *
 from rich.console import Console
 
@@ -95,7 +94,6 @@ def calc_snapshot(badger, name, startBlock, endBlock, nextCycle, boosts):
             )
             console.log("Diff {}".format((abs(tokenDistribution - totalRewards))))
 
-    console.log(apyBoosts)
     return rewards, apyBoosts
 
 

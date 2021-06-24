@@ -17,7 +17,6 @@ from assistant.rewards.calc_snapshot import calc_snapshot
 from assistant.rewards.meta_rewards.harvest import calc_farm_rewards
 from assistant.rewards.meta_rewards.sushi import calc_all_sushi_rewards
 from assistant.rewards.rewards_utils import (
-    sum_rewards,
     keccak,
     process_cumulative_rewards,
     combine_rewards,
@@ -76,7 +75,7 @@ def calc_sett_rewards(badger, periodStartBlock, endBlock, cycle):
     with open("badger-boosts.json", "w") as fp:
         json.dump(boostsMetadata, fp)
 
-    upload_boosts(test=True)
+    upload_boosts(test=False)
 
     return rewards
 
