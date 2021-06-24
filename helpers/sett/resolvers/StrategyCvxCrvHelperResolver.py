@@ -60,7 +60,6 @@ class StrategyCvxCrvHelperResolver(StrategyCoreResolver):
 
     def add_entity_balances_for_tokens(self, calls, tokenKey, token, entities):
         entities["strategy"] = self.manager.strategy.address
-        entities["randomUser"] = accounts[6].address
         entities["cvxCrvRewardsPool"] = self.manager.strategy.cvxCrvRewardsPool()
 
         super().add_entity_balances_for_tokens(calls, tokenKey, token, entities)
