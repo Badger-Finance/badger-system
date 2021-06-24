@@ -17,7 +17,6 @@ from assistant.rewards.calc_snapshot import calc_snapshot
 from assistant.rewards.meta_rewards.harvest import calc_farm_rewards
 from assistant.rewards.meta_rewards.sushi import calc_all_sushi_rewards
 from assistant.rewards.rewards_utils import (
-    sum_rewards,
     keccak,
     process_cumulative_rewards,
     combine_rewards,
@@ -51,7 +50,7 @@ def calc_sett_rewards(badger, periodStartBlock, endBlock, cycle):
             continue
 
         settRewards, apyBoost = calc_snapshot(
-            badger, key, periodStartBlock, endBlock, cycle, boosts, 0
+            badger, key, periodStartBlock, endBlock, cycle, boosts
         )
         if len(apyBoost) > 0:
             minimum = min(apyBoost.values())

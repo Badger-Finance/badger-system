@@ -218,6 +218,8 @@ def connect_badger(
 
     badger.connect_logic(badger_deploy["logic"])
 
+    badger.connect_guest_lists(badger_deploy["guest_lists"])
+
     # badger.connect_dev_multisig(badger_deploy["devMultisig"])
 
     # Connect Vesting / Rewards Infrastructure
@@ -1158,9 +1160,8 @@ class BadgerSystem:
             for key, address in geysers.items():
                 self.connect_geyser(key, address)
 
-        # Connect Guest Lists
-        for key, address in sett_system["guestLists"].items():
-            self.connect_guest_list(key, address)
+    def get_sett_ids(self):
+        return self.sett_system["vaults"].keys()
 
     def connect_strategy(self, id, address, strategyArtifactName):
         Artifact = contract_name_to_artifact(strategyArtifactName)
@@ -1170,9 +1171,10 @@ class BadgerSystem:
         self.track_contract_upgradeable(id + ".strategy", strategy)
 
     def connect_sett(self, id, address, settArtifactName="Sett"):
+        # print(f"connecting sett id {id} to {address}")
         Artifact = contract_name_to_artifact(settArtifactName)
         sett = Artifact.at(address)
-        print(f"connecting sett id {id}")
+
         self.sett_system.vaults[id] = sett
         self.track_contract_upgradeable(id + ".sett", sett)
 
@@ -1217,6 +1219,11 @@ class BadgerSystem:
         for name, address in logic.items():
             Artifact = contract_name_to_artifact(name)
             self.logic[name] = Artifact.at(address)
+
+    def connect_guest_lists(self, guest_lists):
+        self.guestLists = {}
+        for key, address in guest_lists.items():
+            self.guestLists[key] = VipCappedGuestListBbtcUpgradeable.at(address)
 
     def connect_dao_badger_timelock(self, address):
         self.daoBadgerTimelock = SimpleTimelock.at(address)
@@ -1320,6 +1327,8 @@ class BadgerSystem:
     # ===== Getters =====
 
     def getGeyser(self, id):
+        if not id in self.geysers:
+            console.print("[bold red]Geyser not found:[/bold red] {}".format(id))
         return self.geysers[id]
 
     def getController(self, id):
@@ -1343,14 +1352,29 @@ class BadgerSystem:
         return self.sett_system.vaults[id]
 
     def getGuestList(self, id):
-        if not id in self.sett_system.guestLists.keys():
-            console.print("[bold red]Guestlist not found:[/bold red] {}".format(id))
+        if not id in self.guestLists.keys():
+            console.print("[bold red]Guest list not found:[/bold red] {}".format(id))
             raise NameError
 
-        return self.sett_system.guestLists[id]
+        return self.guestLists[id]
 
     def getSettRewards(self, id):
         return self.sett_system.rewards[id]
+
+    def getSettType(self, id):
+        """
+        Look at the artifact type of the sett and determine it's version. Currently hardcoded.
+        """
+        if id == "yearn.wbtc":
+            return "v2"
+        else:
+            return "v1"
+
+    def hasStrategy(self, id):
+        if id in self.sett_system.strategies.keys():
+            return True
+        else:
+            return False
 
     def getStrategy(self, id):
         if not id in self.sett_system.strategies.keys():
@@ -1361,15 +1385,6 @@ class BadgerSystem:
 
     def getStrategyWant(self, id):
         return interface.IERC20(self.sett_system.strategies[id].want())
-
-    def getSettType(self, id):
-        """
-        Look at the artifact type of the sett and determine it's version. Currently hardcoded.
-        """
-        if id == "yearn.wbtc":
-            return "v2"
-        else:
-            return "v1"
 
     def getStrategyArtifact(self, id):
         return self.strategy_artifacts[id].artifact
@@ -1455,24 +1470,24 @@ class BadgerSystem:
 
             digg_shares = s.token == self.digg.token
 
-        if digg_shares:
-            scaled = shares_to_fragments(s.amount)
-        else:
-            scaled = val(amount=s.amount, token=s.token)
+            if digg_shares:
+                scaled = shares_to_fragments(s.amount)
+            else:
+                scaled = val(amount=s.amount, token=s.token)
 
-        table.append(
-            [
-                name,
-                s.beneficiary,
-                s.token,
-                scaled,
-                to_days(s.duration),
-                to_utc_date(s.start),
-                to_utc_date(s.end),
-                "{:.0f}".format(s.start),
-                "{:.0f}".format(s.end),
-            ]
-        )
+            table.append(
+                [
+                    name,
+                    s.beneficiary,
+                    s.token,
+                    scaled,
+                    to_days(s.duration),
+                    to_utc_date(s.start),
+                    to_utc_date(s.end),
+                    "{:.0f}".format(s.start),
+                    "{:.0f}".format(s.end),
+                ]
+            )
 
         print(
             tabulate(

@@ -23,10 +23,7 @@ def upgrade_swap_strategy(
     Upgrades swap strategy.
     """
     logic = SwapStrategy.deploy({"from": badger.deployer})
-    return badger.queue_upgrade(
-        strategy.address,
-        logic.address,
-    )
+    return badger.queue_upgrade(strategy.address, logic.address,)
 
 
 def upgrade_bridge(badger: BadgerSystem, bridge: BridgeSystem) -> str:

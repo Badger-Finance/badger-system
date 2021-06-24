@@ -54,5 +54,5 @@ def deploy_proxy(
 
     tx = deployer.transfer(data=deploy_txn["data"])
 
-    print("Deployng contract:", contractName, "address:", tx.contract_address)
+    print("Deploying contract:", contractName, "address:", tx.contract_address)
     return Contract.from_abi(contractName, tx.contract_address, logicAbi)
