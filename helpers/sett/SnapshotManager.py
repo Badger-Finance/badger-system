@@ -122,7 +122,6 @@ class SnapshotManager:
         return calls
 
     def snap(self, trackedUsers=None):
-        print("snap")
         snapBlock = chain.height
         entities = self.entities
 

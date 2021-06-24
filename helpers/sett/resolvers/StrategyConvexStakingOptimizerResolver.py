@@ -92,11 +92,6 @@ class StrategyConvexStakingOptimizerResolver(StrategyCoreResolver):
 
         # Expect decrease crv balance of rewardsPool and increase cvx cvxCrv
         event = tx.events["TendState"][0]
-        if event["crvTended"] > 0:
-            assert after.balances("crv", "baseRewardsPool") < before.balances(
-                "crv", "baseRewardsPool"
-            )
-
         if event["cvxTended"] > 0:
             assert after.balances("cvx", "cvxRewardsPool") > before.balances(
                 "cvx", "cvxRewardsPool"
@@ -127,7 +122,6 @@ class StrategyConvexStakingOptimizerResolver(StrategyCoreResolver):
     def add_entity_balances_for_tokens(self, calls, tokenKey, token, entities):
         entities["badgerTree"] = self.manager.strategy.badgerTree()
         entities["strategy"] = self.manager.strategy.address
-        entities["randomUser"] = accounts[6].address
         entities["convexMasterChef"] = self.manager.strategy.convexMasterChef()
         entities["cvxCrvRewardsPool"] = self.manager.strategy.cvxCrvRewardsPool()
         entities["cvxRewardsPool"] = self.manager.strategy.cvxRewardsPool()
