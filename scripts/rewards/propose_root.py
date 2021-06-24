@@ -28,5 +28,5 @@ def propose_root(badger: BadgerSystem):
 
 
 def main():
-    badger = connect_badger(badger_config.prod_json, load_keeper=True)
+    badger = connect_badger(load_root_proposer=True)
     propose_root(badger)
