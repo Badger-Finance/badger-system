@@ -45,7 +45,7 @@ def calc_all_sushi_rewards(badger, startBlock, endBlock, nextCycle):
     )
     # Verify all rewards are correct (for extra safety)
     return combine_rewards(
-        [wbtcEthRewards, wbtcBadgerRewards, wbtcDiggRewards],
+        [wbtcEthRewards, wbtcBadgerRewards, wbtcDiggRewards,iBbtcWbtcRewards],
         nextCycle,
         badger.badgerTree,
     )
