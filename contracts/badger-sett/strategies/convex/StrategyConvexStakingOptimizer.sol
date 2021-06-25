@@ -247,6 +247,8 @@ contract StrategyConvexStakingOptimizer is BaseStrategy, CurveSwapper, UniswapSw
         _setTokenSwapPath(cvx, wbtc, path);
 
         _initializeApprovals();
+        autoCompoundingBps = 2000;
+        autoCompoundingPerformanceFeeGovernance = 5000;
     }
 
     /// ===== Permissioned Functions =====
