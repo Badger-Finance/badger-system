@@ -19,6 +19,8 @@ import "interfaces/badger/IController.sol";
 import "interfaces/badger/IMintr.sol";
 import "interfaces/badger/IStrategy.sol";
 
+import "interfaces/badger/ISettV4.sol";
+
 import "interfaces/convex/IBooster.sol";
 import "interfaces/convex/CrvDepositor.sol";
 import "interfaces/convex/IBaseRewardsPool.sol";
@@ -99,8 +101,8 @@ contract StrategyConvexStakingOptimizer is BaseStrategy, CurveSwapper, UniswapSw
 
     uint256 public pid;
     address public badgerTree;
-    address public cvxHelperVault;
-    address public cvxCrvHelperVault;
+    ISettV4 public cvxHelperVault;
+    ISettV4 public cvxCrvHelperVault;
 
     /**
     The default conditions for a rewards token are:
@@ -143,15 +145,9 @@ contract StrategyConvexStakingOptimizer is BaseStrategy, CurveSwapper, UniswapSw
     mapping(address => RewardTokenConfig) public rewardsTokenConfig;
     CurvePoolConfig public curvePool;
 
-    event HarvestState(
-        uint256 xSushiHarvested,
-        uint256 totalxSushi,
-        uint256 toStrategist,
-        uint256 toGovernance,
-        uint256 toBadgerTree,
-        uint256 timestamp,
-        uint256 blockNumber
-    );
+    event TreeDistribution(address indexed token, uint256 amount, uint256 indexed blockNumber, uint256 timestamp);
+    event PerformanceFeeGovernance(address indexed destination, address indexed token, uint256 amount, uint256 indexed blockNumber, uint256 timestamp);
+    event PerformanceFeeStrategist(address indexed destination, address indexed token, uint256 amount, uint256 indexed blockNumber, uint256 timestamp);
 
     event WithdrawState(uint256 toWithdraw, uint256 preWant, uint256 postWant, uint256 withdrawn);
 
@@ -194,8 +190,8 @@ contract StrategyConvexStakingOptimizer is BaseStrategy, CurveSwapper, UniswapSw
         want = _wantConfig[0];
         badgerTree = _wantConfig[1];
 
-        cvxHelperVault = _wantConfig[2];
-        cvxCrvHelperVault = _wantConfig[3];
+        cvxHelperVault = ISettV4(_wantConfig[2]);
+        cvxCrvHelperVault = ISettV4(_wantConfig[3]);
 
         pid = _pid; // Core staking pool ID
 
@@ -464,19 +460,60 @@ contract StrategyConvexStakingOptimizer is BaseStrategy, CurveSwapper, UniswapSw
         // 5. Deposit remaining CVX / cvxCRV rewards into helper vaults and distribute
         if (harvestData.cvxCrvHarvested > 0) {
             uint256 cvxCrvToDistribute = cvxCrvToken.balanceOf(address(this));
-            // uint256 performanceFee = cvxCrvToDistribute.mul(performanceFeeGovernance).div(MAX_FEE);
-
-            // cvxCrvHelperVault.depositFor(controller.rewards(), performanceFee);
-
-            // uint256 cvxCrvToTree = cvxCrvToken.balanceOf(address(this));
-            // cvxCrvHelperVault.depositFor(badgerTree, cvxCrvToTree);
             
-            cvxCrvToken.transfer(badgerTree, cvxCrvToDistribute);
+            if (performanceFeeGovernance > 0) {
+                uint256 cvxCrvToGovernance = cvxCrvToDistribute.mul(performanceFeeGovernance).div(MAX_FEE);
+                cvxCrvHelperVault.depositFor(IController(controller).rewards(), cvxCrvToGovernance);
+                emit PerformanceFeeGovernance(IController(controller).rewards(), cvxCrv, cvxCrvToGovernance, block.number, block.timestamp);
+            }
+
+            if (performanceFeeStrategist > 0) {
+                uint256 cvxCrvToStrategist = cvxCrvToDistribute.mul(performanceFeeStrategist).div(MAX_FEE);
+                cvxCrvHelperVault.depositFor(strategist, cvxCrvToStrategist);
+                emit PerformanceFeeStrategist(strategist, cvxCrv, cvxCrvToStrategist, block.number, block.timestamp);
+            }
+
+            // TODO: [Optimization] Allow contract to circumvent blockLock to dedup deposit operations
+
+            uint256 treeHelperVaultBefore = cvxCrvHelperVault.balanceOf(badgerTree);
+
+            // Deposit remaining to tree after taking fees. 
+            uint256 cvxCrvToTree = cvxCrvToken.balanceOf(address(this));
+            cvxCrvHelperVault.depositFor(badgerTree, cvxCrvToTree);
+
+            uint256 treeHelperVaultAfter = cvxCrvHelperVault.balanceOf(badgerTree);
+            uint256 treeVaultPositionGained = treeHelperVaultAfter.sub(treeHelperVaultBefore);
+
+            emit TreeDistribution(address(cvxCrvHelperVault), treeVaultPositionGained, block.number, block.timestamp);
         }
 
         if (harvestData.cvxHarvsted > 0) {
             uint256 cvxToDistribute = cvxToken.balanceOf(address(this));
-            cvxToken.transfer(badgerTree, cvxToDistribute);
+
+            if (performanceFeeGovernance > 0) {
+                uint256 cvxToGovernance = cvxToDistribute.mul(performanceFeeGovernance).div(MAX_FEE);
+                cvxHelperVault.depositFor(IController(controller).rewards(), cvxToGovernance);
+                emit PerformanceFeeGovernance(IController(controller).rewards(), cvx, cvxToGovernance, block.number, block.timestamp);
+            }
+
+            if (performanceFeeStrategist > 0) {
+                uint256 cvxToStrategist = cvxToDistribute.mul(performanceFeeStrategist).div(MAX_FEE);
+                cvxHelperVault.depositFor(strategist, cvxToStrategist);
+                emit PerformanceFeeStrategist(strategist, cvx, cvxToStrategist, block.number, block.timestamp);
+            }
+
+            // TODO: [Optimization] Allow contract to circumvent blockLock to dedup deposit operations
+
+            uint256 treeHelperVaultBefore = cvxHelperVault.balanceOf(badgerTree);
+
+            // Deposit remaining to tree after taking fees. 
+            uint256 cvxToTree = cvxToken.balanceOf(address(this));
+            cvxHelperVault.depositFor(badgerTree, cvxToTree);
+
+            uint256 treeHelperVaultAfter = cvxHelperVault.balanceOf(badgerTree);
+            uint256 treeVaultPositionGained = treeHelperVaultAfter.sub(treeHelperVaultBefore);
+
+            emit TreeDistribution(address(cvxHelperVault), treeVaultPositionGained, block.number, block.timestamp);
         }
 
         return harvestData;
