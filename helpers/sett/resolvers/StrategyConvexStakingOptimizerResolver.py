@@ -4,6 +4,7 @@ from helpers.multicall import Call, as_wei, func
 from rich.console import Console
 from helpers.utils import val
 from tabulate import tabulate
+from helpers.registry import registry
 
 console = Console()
 
@@ -12,25 +13,43 @@ class StrategyConvexStakingOptimizerResolver(StrategyCoreResolver):
 
     # ===== override default =====
     def confirm_harvest_events(self, before, after, tx):
-        key = "HarvestState"
+        key = "TreeDistribution"
         assert key in tx.events
-        assert len(tx.events[key]) == 1
-        event = tx.events[key][0]
-        keys = [
-            "xSushiHarvested",
-            "totalxSushi",
-            "toStrategist",
-            "toGovernance",
-            "toBadgerTree",
-            "timestamp",
-            "blockNumber",
-        ]
-        for key in keys:
-            assert key in event
+        assert len(tx.events[key]) >= 1
+        for event in tx.events[key]:
+            keys = [
+                "token",
+                "amount",
+                "blockNumber",
+                "timestamp",
+            ]
+            for key in keys:
+                assert key in event
 
-        console.print("[blue]== Convex Strat harvest() State ==[/blue]")
-        self.printState(event, keys)
+            console.print("[blue]== Convex Strat harvest() TreeDistribution State ==[/blue]")
+            self.printState(event, keys)
 
+        key = "PerformanceFeeGovernance"
+        assert key in tx.events
+        assert len(tx.events[key]) >= 1
+        for event in tx.events[key]:
+            keys = [
+                "destination",
+                "token",
+                "amount",
+                "blockNumber",
+                "timestamp",
+            ]
+            for key in keys:
+                assert key in event
+
+            console.print("[blue]== Convex Strat harvest() PerformanceFeeGovernance State ==[/blue]")
+            self.printState(event, keys)
+
+        key = "PerformanceFeeStrategist"
+        assert key not in tx.events
+        # Strategist performance fee is set to 0
+        
     def confirm_tend_events(self, before, after, tx):
         key = "Tend"
         assert key in tx.events
@@ -62,8 +81,12 @@ class StrategyConvexStakingOptimizerResolver(StrategyCoreResolver):
 
     def printState(self, event, keys):
         table = []
+        nonAmounts = ["token", "destination", "blockNumber", "timestamp"]
         for key in keys:
-            table.append([key, val(event[key])])
+            if key in nonAmounts:
+                table.append([key, event[key]])
+            else:
+                table.append([key, val(event[key])])  
 
         print(tabulate(table, headers=["account", "value"]))
 
@@ -72,7 +95,7 @@ class StrategyConvexStakingOptimizerResolver(StrategyCoreResolver):
         console.print("=== Compare Convex Harvest() ===")
 
         # Harvest event emission not yet implemented
-        # self.confirm_harvest_events(before, after, tx)
+        self.confirm_harvest_events(before, after, tx)
 
         super().confirm_harvest(before, after, tx)
 
@@ -126,6 +149,8 @@ class StrategyConvexStakingOptimizerResolver(StrategyCoreResolver):
         entities["cvxCrvRewardsPool"] = self.manager.strategy.cvxCrvRewardsPool()
         entities["cvxRewardsPool"] = self.manager.strategy.cvxRewardsPool()
         entities["baseRewardsPool"] = self.manager.strategy.baseRewardsPool()
+        entities["cvxHelperVault"] = registry.convex.cvxHelperVault
+        entities["cvxCrvHelperVault"] = registry.convex.cvxCrvHelperVault
 
         super().add_entity_balances_for_tokens(calls, tokenKey, token, entities)
         return calls
@@ -142,8 +167,6 @@ class StrategyConvexStakingOptimizerResolver(StrategyCoreResolver):
         wbtc = interface.IERC20("0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599")
         usdc = interface.IERC20("0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48")
         cvxCrv = interface.IERC20(strategy.cvxCrv())
-        cvxCRV_CRV_SLP = interface.IERC20(strategy.cvxCRV_CRV_SLP())
-        CVX_ETH_SLP = interface.IERC20(strategy.CVX_ETH_SLP())
 
         calls = self.add_entity_balances_for_tokens(calls, "crv", crv, entities)
         calls = self.add_entity_balances_for_tokens(calls, "cvx", cvx, entities)
@@ -153,12 +176,6 @@ class StrategyConvexStakingOptimizerResolver(StrategyCoreResolver):
         calls = self.add_entity_balances_for_tokens(calls, "WBTC", wbtc, entities)
         calls = self.add_entity_balances_for_tokens(calls, "USDC", usdc, entities)
         calls = self.add_entity_balances_for_tokens(calls, "cvxCrv", cvxCrv, entities)
-        calls = self.add_entity_balances_for_tokens(
-            calls, "cvxCRV_CRV_SLP", cvxCRV_CRV_SLP, entities
-        )
-        calls = self.add_entity_balances_for_tokens(
-            calls, "CVX_ETH_SLP", CVX_ETH_SLP, entities
-        )
 
         return calls
 
