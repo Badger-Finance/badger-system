@@ -38,9 +38,15 @@ class ConvexTriCryptoMiniDeploy(SettMiniDeployBase):
                 self.strategy.address, {"from": cvxCrvHelperGov}
             )
 
-            # Remove guestlist for Helper vaults
-            cvxHelperVault.setGuestList(AddressZero, {"from": cvxHelperGov})
-            cvxCrvHelperVault.setGuestList(AddressZero, {"from": cvxCrvHelperGov})
+            # Add rewards address to guestlists
+            cvxGuestlist = VipCappedGuestListBbtcUpgradeable.at(cvxHelperVault.guestList())
+            cvxCrvGuestlist = VipCappedGuestListBbtcUpgradeable.at(cvxCrvHelperVault.guestList())
+
+            cvxOwner = accounts.at(cvxGuestlist.owner(), force=True)
+            cvxCrvOwner = accounts.at(cvxCrvGuestlist.owner(), force=True)
+
+            cvxGuestlist.setGuests([self.controller.rewards()], [True], {"from": cvxOwner})
+            cvxCrvGuestlist.setGuests([self.controller.rewards()], [True], {"from": cvxCrvOwner})
 
             return
 
