@@ -149,7 +149,7 @@ def verify_rewards(badger: BadgerSystem, startBlock, endBlock, before_data, afte
     periodStartTime = web3.eth.getBlock(int(startBlock))["timestamp"]
     periodEndTime = web3.eth.getBlock(int(endBlock))["timestamp"]
 
-    spf = diggUtils.initalShares
+    spf = diggUtils.initialShares
 
     expected_totals = get_expected_total_rewards(periodEndTime)
 
