@@ -9,10 +9,12 @@ from dotmap import DotMap
 from scripts.systems.constants import SettType
 
 
-class MStableMiniDeploy(SettMiniDeployBase):
+class MStableFpMbtcHbtcMiniDeploy(SettMiniDeployBase):
     def fetch_params(self):
-        params = sett_config.native.imBtc.params
-        want = sett_config.native.imBtc.params.want
+        params = sett_config.native.fPmBtcHBtc.params
+        want = sett_config.native.fPmBtcHBtc.params.want
+
+        params.badgerTree = self.badger.badgerTree
 
         return (params, want)
 
@@ -35,7 +37,7 @@ class MStableMiniDeploy(SettMiniDeployBase):
 
         self.mstable = MStableSystem(self.deployer, self.badger.devProxyAdmin, mstable_config_test)
         self.mstable.deploy_logic("MStableVoterProxy", MStableVoterProxy)
-        self.mstable.deploy_voterproxy_proxy()
+        self.mstable.deploy_voterproxy()
 
         # required to pass proxy address to strategy upon deployment
         self.badger.mstable = self.mstable
@@ -82,7 +84,7 @@ class MStableMiniDeploy(SettMiniDeployBase):
         # Deploy VoterProxy
         self.mstable.voterproxy.supportStrategy(
             self.strategy.address, 
-            registry.mstable.pools.imBtc.vault,
+            registry.mstable.pools.fPmBtcHBtc.vault,
             {'from': self.dualGovernance}
         ) # Must be dualGovernance
 

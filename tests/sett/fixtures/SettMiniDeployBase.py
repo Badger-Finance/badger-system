@@ -106,6 +106,10 @@ class SettMiniDeployBase:
             guardian=self.guardian,
         )
 
+        print(self.strategy.address)
+        print(self.strategy.want())
+
+
         self.badger.wire_up_sett(self.vault, self.strategy, self.controller)
 
         self.post_deploy_setup(deploy=deploy)

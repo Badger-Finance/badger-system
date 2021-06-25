@@ -13,4 +13,5 @@ from .SushiClawUSDCMiniDeploy import SushiClawUSDCMiniDeploy
 from .YearnMiniDeploy import YearnMiniDeploy
 from .SushiWbtcIbBtcLpOptimizerMiniDeploy import SushiWbtcIbBtcLpOptimizerMiniDeploy
 from .UniGenericLpMiniDeploy import UniGenericLpMiniDeploy
-from .MStableMiniDeploy import MStableMiniDeploy
+from .MStableImBtcMiniDeploy import MStableImBtcMiniDeploy
+from .MStableFpMbtcHbtcMiniDeploy import MStableFpMbtcHbtcMiniDeploy

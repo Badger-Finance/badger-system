@@ -25,7 +25,7 @@ class MStableSystem:
 
     # ===== Deployers =====
 
-    def deploy_voterproxy_proxy(self):
+    def deploy_voterproxy(self):
         config = self.config
         devProxyAdmin = self.devProxyAdmin
         deployer = self.deployer
