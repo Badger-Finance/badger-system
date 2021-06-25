@@ -485,7 +485,9 @@ contract StrategyConvexStakingOptimizer is BaseStrategy, CurveSwapper, UniswapSw
             _add_liquidity_single_coin(curvePool.swap, want, wbtc, wbtcToDeposit, curvePool.wbtcPosition, curvePool.numElements, 0);
             uint256 wantGained = IERC20Upgradeable(want).balanceOf(address(this)).sub(idleWant);
             // Half of gained want (10% of rewards) are auto-compounded, half of gained want is taken as a performance fee
-            IERC20Upgradeable(want).transfer(IController(controller).rewards(), wantGained.mul(autoCompoundingPerformanceFeeGovernance).div(MAX_FEE));
+            uint256 autoCompoundedPerformanceFee = wantGained.mul(autoCompoundingPerformanceFeeGovernance).div(MAX_FEE);
+            IERC20Upgradeable(want).transfer(IController(controller).rewards(), autoCompoundedPerformanceFee);
+            emit PerformanceFeeGovernance(IController(controller).rewards(), want, autoCompoundedPerformanceFee, block.number, block.timestamp);
         }
 
         // 5. Deposit remaining CVX / cvxCRV rewards into helper vaults and distribute
