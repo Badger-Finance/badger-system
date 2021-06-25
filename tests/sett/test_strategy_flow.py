@@ -12,7 +12,7 @@ from tests.sett.generic_strategy_tests.strategy_flow import (
 )
 
 
-@pytest.mark.skip()
+# @pytest.mark.skip()
 @pytest.mark.parametrize(
     "settConfig",
     settTestConfig,
