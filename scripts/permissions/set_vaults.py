@@ -282,7 +282,10 @@ def unpause_vaults(badger, safe, helper, vaults_to_add):
         assert strategy.paused() == False
 
         console.print(
-            {"vault_gov": vault.governance(), "strat_gov": strategy.governance(),}
+            {
+                "vault_gov": vault.governance(),
+                "strat_gov": strategy.governance(),
+            }
         )
 
         vault.unpause()

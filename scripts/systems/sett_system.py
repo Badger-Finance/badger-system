@@ -451,10 +451,10 @@ def deploy_strategy(
                 keeper,
                 guardian,
                 [
-                    params.want, 
-                    params.badgerTree, 
-                    params.cvxHelperVault, 
-                    params.cvxCrvHelperVault
+                    params.want,
+                    params.badgerTree,
+                    params.cvxHelperVault,
+                    params.cvxCrvHelperVault,
                 ],
                 params.pid,
                 [

@@ -41,8 +41,12 @@ class HelperCvxCrvMiniDeploy(SettMiniDeployBase):
         self.controller = interface.IController(self.vault.controller())
 
         # Add strategy to controller for want
-        self.controller.approveStrategy(self.strategy.want(), self.strategy.address, {"from": self.governance})
-        self.controller.setStrategy(self.strategy.want(), self.strategy.address, {"from": self.governance})
+        self.controller.approveStrategy(
+            self.strategy.want(), self.strategy.address, {"from": self.governance}
+        )
+        self.controller.setStrategy(
+            self.strategy.want(), self.strategy.address, {"from": self.governance}
+        )
 
         assert self.controller.strategies(self.vault.token()) == self.strategy.address
         assert self.controller.vaults(self.strategy.want()) == self.vault.address
@@ -53,7 +57,7 @@ class HelperCvxCrvMiniDeploy(SettMiniDeployBase):
         addresses = []
         for account in accounts:
             addresses.append(account.address)
-            
+
         # Add actors addresses
         addresses.append(guestlist.owner())
         addresses.append(self.governance.address)
@@ -61,12 +65,11 @@ class HelperCvxCrvMiniDeploy(SettMiniDeployBase):
         addresses.append(self.keeper.address)
         addresses.append(self.guardian.address)
         addresses.append(self.deployer.address)
-            
-        invited = [True]*len(addresses)
+
+        invited = [True] * len(addresses)
 
         owner = accounts.at(guestlist.owner(), force=True)
 
         guestlist.setGuests(addresses, invited, {"from": owner})
         guestlist.setUserDepositCap(MaxUint256, {"from": owner})
         guestlist.setTotalDepositCap(MaxUint256, {"from": owner})
-

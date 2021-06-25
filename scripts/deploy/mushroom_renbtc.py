@@ -29,7 +29,9 @@ from helpers.time_utils import days, hours
 console = Console()
 limit = Wei("100 gwei")
 from helpers.gas_utils import gas_strategies
+
 gas_strategies.set_default(gas_strategies.exponentialScalingFast)
+
 
 def main():
     """
@@ -82,7 +84,7 @@ def main():
         False,
         "",
         "",
-        {"from": badger.deployer}
+        {"from": badger.deployer},
     )
 
     strat.initialize(
@@ -93,7 +95,7 @@ def main():
         badger.guardian,
         [want],
         [1000, 1000, 50, 0],
-        {"from": badger.deployer}
+        {"from": badger.deployer},
     )
 
     vault.unpause({"from": badger.deployer})
@@ -101,9 +103,9 @@ def main():
     guestList.initialize(vault, {"from": badger.deployer})
     # guestList.setUserDepositCap(1 * 10 ** want.deicmals(), {"from": badger.deployer})
     # guestList.setTotalDepositCap(10 * 10 ** want.deicmals(), {"from": badger.deployer})
-    vault.setGuestList(guestList, {'from': badger.deployer})
+    vault.setGuestList(guestList, {"from": badger.deployer})
 
-    vault.setGovernance(badger.opsMultisig, {'from': badger.deployer})
+    vault.setGovernance(badger.opsMultisig, {"from": badger.deployer})
 
     guestList.transferOwnership(badger.opsMultisig, {"from": badger.deployer})
 

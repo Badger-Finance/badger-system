@@ -149,9 +149,7 @@ curve_registry = DotMap(
     ),
 )
 
-chainlink_registry = DotMap(
-    btc_usd="0xF4030086522a5bEEa4988F8cA5B36dbC97BeE88c"
-)
+chainlink_registry = DotMap(btc_usd="0xF4030086522a5bEEa4988F8cA5B36dbC97BeE88c")
 
 badger_registry = DotMap(token="0x3472a5a71965499acd81997a54bba8d852c6e53d")
 

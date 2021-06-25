@@ -90,7 +90,10 @@ def main():
             controller.address,
             keeper.address,
             guardian.address,
-            [params.want, badger.badgerTree.address,],
+            [
+                params.want,
+                badger.badgerTree.address,
+            ],
             params.pid,
             [
                 params.performanceFeeGovernance,

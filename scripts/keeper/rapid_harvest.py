@@ -45,7 +45,10 @@ def transfer_for_strategy_internal(badger, key, amount):
     manager = badger.badgerRewardsManager
     want = interface.IERC20(strategy.want())
     manager.transferWant(
-        want, strategy, amount, {"from": badger.external_harvester, "gas_limit": 1000000}
+        want,
+        strategy,
+        amount,
+        {"from": badger.external_harvester, "gas_limit": 1000000},
     )
 
 
@@ -105,7 +108,10 @@ def rapid_harvest(badger):
         rewards.getDistributions(key).getToStakingRewardsDaily("digg")
     )
     transfer_for_strategy(
-        badger, key, diggBaseRewards, decimals=9,
+        badger,
+        key,
+        diggBaseRewards,
+        decimals=9,
     )
 
 

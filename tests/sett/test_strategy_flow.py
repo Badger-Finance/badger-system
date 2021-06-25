@@ -11,6 +11,7 @@ from tests.sett.generic_strategy_tests.strategy_flow import (
     assert_single_user_harvest_flow_remove_fees,
 )
 
+
 @pytest.mark.skip()
 @pytest.mark.parametrize(
     "settConfig",

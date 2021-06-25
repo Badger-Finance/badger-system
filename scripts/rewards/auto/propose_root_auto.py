@@ -10,6 +10,7 @@ from assistant.rewards.rewards_assistant import fetch_current_rewards_tree, run_
 
 console = Console()
 
+
 def main():
     badger = connect_badger(load_root_proposer=True)
 

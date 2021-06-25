@@ -20,7 +20,9 @@ console = Console()
 
 
 @pytest.fixture(scope="module", autouse=True)
-def setup(StrategyConvexStakingOptimizer,):
+def setup(
+    StrategyConvexStakingOptimizer,
+):
     # Assign accounts
     with open(digg_config.prod_json) as f:
         badger_deploy = json.load(f)
@@ -91,7 +93,10 @@ def setup(StrategyConvexStakingOptimizer,):
             controller.address,
             keeper.address,
             guardian.address,
-            [params.want, badger.badgerTree.address,],
+            [
+                params.want,
+                badger.badgerTree.address,
+            ],
             params.pid,
             [
                 params.performanceFeeGovernance,
@@ -422,7 +427,9 @@ def test_post_migration_flow(setup):
             assert expectedWithdraw <= startingBalanceOfPool
 
             assert approx(
-                startingBalanceOfPool, strategy.balanceOfPool() + expectedWithdraw, 1,
+                startingBalanceOfPool,
+                strategy.balanceOfPool() + expectedWithdraw,
+                1,
             )
 
     # The total want between the strategy and sett should be less after than before
@@ -501,7 +508,9 @@ def test_post_migration_flow(setup):
             assert expectedWithdraw <= startingBalanceOfPool
 
             assert approx(
-                startingBalanceOfPool, strategy.balanceOfPool() + expectedWithdraw, 1,
+                startingBalanceOfPool,
+                strategy.balanceOfPool() + expectedWithdraw,
+                1,
             )
 
     # The total want between the strategy and sett should be less after than before

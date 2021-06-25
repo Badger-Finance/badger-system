@@ -29,8 +29,12 @@ class ConvexHBtcMiniDeploy(SettMiniDeployBase):
             cvxHelperGov = accounts.at(cvxHelperVault.governance(), force=True)
             cvxCrvHelperGov = accounts.at(cvxCrvHelperVault.governance(), force=True)
 
-            cvxHelperVault.approveContractAccess(self.strategy.address, {"from": cvxHelperGov})
-            cvxCrvHelperVault.approveContractAccess(self.strategy.address, {"from": cvxCrvHelperGov})
+            cvxHelperVault.approveContractAccess(
+                self.strategy.address, {"from": cvxHelperGov}
+            )
+            cvxCrvHelperVault.approveContractAccess(
+                self.strategy.address, {"from": cvxCrvHelperGov}
+            )
 
             # Remove guestlist for Helper vaults
             cvxHelperVault.setGuestList(AddressZero, {"from": cvxHelperGov})

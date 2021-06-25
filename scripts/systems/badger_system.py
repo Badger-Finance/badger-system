@@ -287,7 +287,9 @@ def connect_badger(
 
     return badger
 
+
 default_gas_strategy = GasNowScalingStrategy()
+
 
 class BadgerSystem:
     def __init__(
@@ -327,7 +329,7 @@ class BadgerSystem:
 
         # Unlock accounts in test mode
         if rpc.is_active():
-            
+
             guardian = deployer
             print("RPC Active")
             self.deployer = accounts.at(deployer, force=True)
@@ -353,24 +355,27 @@ class BadgerSystem:
             self.harvester = accounts.at(harvester, force=True)
             self.external_harvester = accounts.at(external_harvester, force=True)
             self.rebaser = accounts.at(rebaser, force=True)
-            
+
             self.publish_source = False
         else:
             print("RPC Inactive")
             import decouple
 
             if not rpc.is_active():
-                console.print(f"[green]Loading Accounts via {load_method}: [/green]", {
-                    "load_deployer": load_deployer,
-                    "load_keeper": load_keeper,
-                    "load_guardian": load_guardian,
-                    "load_root_proposer": load_root_proposer,
-                    "load_root_approver": load_root_approver,
-                    "load_earner": load_earner,
-                    "load_harvester": load_harvester,
-                    "load_external_harvester": load_external_harvester,
-                    "load_rebaser": load_rebaser
-                })
+                console.print(
+                    f"[green]Loading Accounts via {load_method}: [/green]",
+                    {
+                        "load_deployer": load_deployer,
+                        "load_keeper": load_keeper,
+                        "load_guardian": load_guardian,
+                        "load_root_proposer": load_root_proposer,
+                        "load_root_approver": load_root_approver,
+                        "load_earner": load_earner,
+                        "load_harvester": load_harvester,
+                        "load_external_harvester": load_external_harvester,
+                        "load_rebaser": load_rebaser,
+                    },
+                )
 
             # Load Accounts
             if load_deployer and load_method == LoadMethod.SK:
@@ -410,7 +415,11 @@ class BadgerSystem:
         self.strategy_artifacts = DotMap()
         self.logic = DotMap()
         self.sett_system = DotMap(
-            controllers=DotMap(), vaults=DotMap(), strategies=DotMap(), rewards=DotMap(), guestLists=DotMap()
+            controllers=DotMap(),
+            vaults=DotMap(),
+            strategies=DotMap(),
+            rewards=DotMap(),
+            guestLists=DotMap(),
         )
         self.geysers = DotMap()
 
@@ -1254,7 +1263,9 @@ class BadgerSystem:
         self.sett_system.vaults[id] = sett
         self.track_contract_upgradeable(id + ".sett", sett)
 
-    def connect_guest_list(self, id, address, artifactName="VipCappedGuestListBbtcUpgradeable"):
+    def connect_guest_list(
+        self, id, address, artifactName="VipCappedGuestListBbtcUpgradeable"
+    ):
         Artifact = contract_name_to_artifact(artifactName)
         guestList = Artifact.at(address)
         print(f"connecting guest list id {id}")
