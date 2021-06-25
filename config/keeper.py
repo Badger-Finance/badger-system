@@ -94,16 +94,8 @@ setts_to_skip = {
 }
 
 run_intervals = {
-    "eth": {
-        "harvest": days(1),
-        "tend": hours(12),
-        "earn": minutes(10),
-    },
-    "bsc": {
-        "harvest": minutes(10),
-        "tend": minutes(15),
-        "earn": minutes(10),
-    },
+    "eth": {"harvest": days(1), "tend": hours(12), "earn": minutes(60),},
+    "bsc": {"harvest": minutes(10), "tend": minutes(15), "earn": minutes(10),},
 }
 
 earn_default_percentage_threshold = 0.01
@@ -116,6 +108,10 @@ earn_threshold_value_override = {
         "native.tbtcCrv": btc_threshold,
         "harvest.renCrv": btc_threshold,
         "native.sushiWbtcEth": Wei("0.00000202 ether"),
+        "native.hbtcCrv": btc_threshold,
+        "native.pbtcCrv": btc_threshold,
+        "native.obtcCrv": btc_threshold,
+        "native.bbtcCrv": btc_threshold,
     },
     "bsc": {"native.pancakeBnbBtcb": Wei("0.0001 ether")},
 }
