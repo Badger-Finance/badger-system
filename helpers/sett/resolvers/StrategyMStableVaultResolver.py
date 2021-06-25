@@ -44,8 +44,6 @@ class StrategyMStableVaultResolver(StrategyCoreResolver):
 
         self.printMStableState(event, keys)
 
-        assert float(event['mtaSentToVoterProxy']) == float(event['mtaTotal']) * sett_config.native.imBtc.params.govMta/10000
-
         assert approx(
             float(event['mtaSentToVoterProxy']),
             float(event['mtaTotal']) * sett_config.native.imBtc.params.govMta/10000,
