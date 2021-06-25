@@ -245,6 +245,8 @@ contract StrategyConvexStakingOptimizer is BaseStrategy, CurveSwapper, UniswapSw
         path[1] = weth;
         path[2] = wbtc;
         _setTokenSwapPath(cvx, wbtc, path);
+
+        _initializeApprovals();
     }
 
     /// ===== Permissioned Functions =====
@@ -293,6 +295,17 @@ contract StrategyConvexStakingOptimizer is BaseStrategy, CurveSwapper, UniswapSw
     function setAutoCompoundingPerformanceFeeGovernance(uint256 _bps) external {
         _onlyGovernance();
         autoCompoundingPerformanceFeeGovernance = _bps;
+    }
+
+    function initializeApprovals() external {
+        _onlyGovernance();
+        _initializeApprovals();
+
+    }
+
+    function _initializeApprovals() internal {
+        cvxToken.approve(address(cvxHelperVault), MAX_UINT_256);
+        cvxCrvToken.approve(address(cvxCrvHelperVault), MAX_UINT_256);
     }
 
     /// ===== View Functions =====
