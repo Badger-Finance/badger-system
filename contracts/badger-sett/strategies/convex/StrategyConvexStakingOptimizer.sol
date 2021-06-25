@@ -145,6 +145,12 @@ contract StrategyConvexStakingOptimizer is BaseStrategy, CurveSwapper, UniswapSw
     mapping(address => RewardTokenConfig) public rewardsTokenConfig;
     CurvePoolConfig public curvePool;
 
+    uint256 public autoCompoundingBps;
+    uint256 public autoCompoundingPerformanceFeeGovernance;
+
+    uint256 public constant AUTO_COMPOUNDING_BPS = 2000;
+    uint256 public constant AUTO_COMPOUNDING_PERFORMANCE_FEE = 5000; // Proportion of auto-compounded rewards taken as fee
+
     event TreeDistribution(address indexed token, uint256 amount, uint256 indexed blockNumber, uint256 timestamp);
     event PerformanceFeeGovernance(address indexed destination, address indexed token, uint256 amount, uint256 indexed blockNumber, uint256 timestamp);
     event PerformanceFeeStrategist(address indexed destination, address indexed token, uint256 amount, uint256 indexed blockNumber, uint256 timestamp);
@@ -277,6 +283,16 @@ contract StrategyConvexStakingOptimizer is BaseStrategy, CurveSwapper, UniswapSw
     function removeExtraRewardsToken(address _extraToken) external {
         _onlyGovernance();
         extraRewards.remove(_extraToken);
+    }
+
+    function setAutoCompoundingBps(uint256 _bps) external {
+        _onlyGovernance();
+        autoCompoundingBps = _bps;
+    }
+
+    function setAutoCompoundingPerformanceFeeGovernance(uint256 _bps) external {
+        _onlyGovernance();
+        autoCompoundingPerformanceFeeGovernance = _bps;
     }
 
     /// ===== View Functions =====
@@ -421,12 +437,12 @@ contract StrategyConvexStakingOptimizer is BaseStrategy, CurveSwapper, UniswapSw
 
         // 3. Sell 20% of accured rewards for underlying
         if (harvestData.cvxCrvHarvested > 0) {
-            uint256 cvxCrvToSell = harvestData.cvxCrvHarvested.mul(2000).div(MAX_FEE);
+            uint256 cvxCrvToSell = harvestData.cvxCrvHarvested.mul(autoCompoundingBps).div(MAX_FEE);
             _swapExactTokensForTokens(sushiswap, cvxCrv, cvxCrvToSell, getTokenSwapPath(cvxCrv, wbtc));
         }
 
         if (harvestData.cvxHarvsted > 0) {
-            uint256 cvxToSell = harvestData.cvxHarvsted.mul(2000).div(MAX_FEE);
+            uint256 cvxToSell = harvestData.cvxHarvsted.mul(autoCompoundingBps).div(MAX_FEE);
             _swapExactTokensForTokens(sushiswap, cvx, cvxToSell, getTokenSwapPath(cvx, wbtc));
         }
 
@@ -454,7 +470,7 @@ contract StrategyConvexStakingOptimizer is BaseStrategy, CurveSwapper, UniswapSw
             _add_liquidity_single_coin(curvePool.swap, want, wbtc, wbtcToDeposit, curvePool.wbtcPosition, curvePool.numElements, 0);
             uint256 wantGained = IERC20Upgradeable(want).balanceOf(address(this)).sub(idleWant);
             // Half of gained want (10% of rewards) are auto-compounded, half of gained want is taken as a performance fee
-            IERC20Upgradeable(want).transfer(IController(controller).rewards(), wantGained.mul(5000).div(MAX_FEE));
+            IERC20Upgradeable(want).transfer(IController(controller).rewards(), wantGained.mul(autoCompoundingPerformanceFeeGovernance).div(MAX_FEE));
         }
 
         // 5. Deposit remaining CVX / cvxCRV rewards into helper vaults and distribute
