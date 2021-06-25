@@ -50,12 +50,16 @@ class ConvexTriCryptoMiniDeploy(SettMiniDeployBase):
             cvxCrvOwner = accounts.at(cvxCrvGuestlist.owner(), force=True)
 
             cvxGuestlist.setGuests(
-                [self.controller.rewards(), self.strategy], [True, True], {"from": cvxOwner}
+                [self.controller.rewards(), self.strategy],
+                [True, True],
+                {"from": cvxOwner},
             )
             cvxCrvGuestlist.setGuests(
-                [self.controller.rewards(), self.strategy], [True, True], {"from": cvxCrvOwner}
-            ) # Strategy added since SettV4.sol currently checks for the sender 
-                # instead of receipient for authorization on depositFor()
+                [self.controller.rewards(), self.strategy],
+                [True, True],
+                {"from": cvxCrvOwner},
+            )  # Strategy added since SettV4.sol currently checks for the sender
+            # instead of receipient for authorization on depositFor()
 
             return
 
