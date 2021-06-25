@@ -23,6 +23,20 @@ class ConvexTBtcMiniDeploy(SettMiniDeployBase):
 
     def post_deploy_setup(self, deploy):
         if deploy:
+            # Approve strategy to interact with Helper Vaults:
+            cvxHelperVault = SettV4.at(self.params.cvxHelperVault)
+            cvxCrvHelperVault = SettV4.at(self.params.cvxCrvHelperVault)
+
+            cvxHelperGov = accounts.at(cvxHelperVault.governance(), force=True)
+            cvxCrvHelperGov = accounts.at(cvxCrvHelperVault.governance(), force=True)
+
+            cvxHelperVault.approveContractAccess(self.strategy.address, {"from": cvxHelperGov})
+            cvxCrvHelperVault.approveContractAccess(self.strategy.address, {"from": cvxCrvHelperGov})
+
+            # Remove guestlist for Helper vaults
+            cvxHelperVault.setGuestList(AddressZero, {"from": cvxHelperGov})
+            cvxCrvHelperVault.setGuestList(AddressZero, {"from": cvxCrvHelperGov})
+
             return
 
         with open(digg_config.prod_json) as f:

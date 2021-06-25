@@ -86,6 +86,11 @@ yearn_registry = (
     ),
 )
 
+convex_registry = DotMap(
+    cvxHelperVault="0x53c8e199eb2cb7c01543c137078a038937a68e40",
+    cvxCrvHelperVault="0x2B5455aac8d64C14786c3a29858E43b5945819C0",
+)
+
 curve_registry = DotMap(
     minter="0xd061D61a4d941c39E5453435B6345Dc261C2fcE0",
     crvToken="0xD533a949740bb3306d119CC777fa900bA034cd52",
@@ -188,6 +193,7 @@ eth_registry = ChainRegistry(
     chainlink=chainlink_registry,
     compound=compound_registry,
     defidollar=defidollar_registry,
+    convex=convex_registry,
 )
 
 eth_registry.tokens = DotMap(

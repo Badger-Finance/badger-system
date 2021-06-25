@@ -18,6 +18,7 @@ harvest = registry.harvest
 sushi = registry.sushi
 pools = curve.pools
 chainlink = registry.chainlink
+convex = registry.convex
 
 sett_config = DotMap(
     native=DotMap(
@@ -89,7 +90,7 @@ sett_config = DotMap(
                 want=pools.renCrv.token,
                 pid=curve.pids.renCrv,
                 lpComponent=registry.tokens.wbtc,
-                performanceFeeStrategist=1000,
+                performanceFeeStrategist=0,
                 performanceFeeGovernance=1000,
                 withdrawalFee=50,
                 curvePool=DotMap(
@@ -97,6 +98,8 @@ sett_config = DotMap(
                     wbtcPosition=1,
                     numElements=2,
                 ),
+                cvxHelperVault=convex.cvxHelperVault,
+                cvxCrvHelperVault=convex.cvxCrvHelperVault,
             ),
         ),
         convexSbtcCrv=DotMap(
@@ -105,7 +108,7 @@ sett_config = DotMap(
                 want=pools.sbtcCrv.token,
                 pid=curve.pids.sbtcCrv,
                 lpComponent=registry.tokens.wbtc,
-                performanceFeeStrategist=1000,
+                performanceFeeStrategist=0,
                 performanceFeeGovernance=1000,
                 withdrawalFee=50,
                 curvePool=DotMap(
@@ -113,6 +116,8 @@ sett_config = DotMap(
                     wbtcPosition=1,
                     numElements=3,
                 ),
+                cvxHelperVault=convex.cvxHelperVault,
+                cvxCrvHelperVault=convex.cvxCrvHelperVault,
             ),
         ),
         convexTbtcCrv=DotMap(
@@ -121,7 +126,7 @@ sett_config = DotMap(
                 want=pools.tbtcCrv.token,
                 pid=curve.pids.tbtcCrv,
                 lpComponent=registry.tokens.wbtc,
-                performanceFeeStrategist=1000,
+                performanceFeeStrategist=0,
                 performanceFeeGovernance=1000,
                 withdrawalFee=50,
                 curvePool=DotMap(
@@ -129,6 +134,8 @@ sett_config = DotMap(
                     wbtcPosition=2,
                     numElements=4,
                 ),
+                cvxHelperVault=convex.cvxHelperVault,
+                cvxCrvHelperVault=convex.cvxCrvHelperVault,
             ),
         ),
         convexHbtcCrv=DotMap(
@@ -137,7 +144,7 @@ sett_config = DotMap(
                 want=pools.hbtcCrv.token,
                 pid=curve.pids.hbtcCrv,
                 lpComponent=registry.tokens.wbtc,
-                performanceFeeStrategist=1000,
+                performanceFeeStrategist=0,
                 performanceFeeGovernance=1000,
                 withdrawalFee=50,
                 curvePool=DotMap(
@@ -145,6 +152,8 @@ sett_config = DotMap(
                     wbtcPosition=1,
                     numElements=2,
                 ),
+                cvxHelperVault=convex.cvxHelperVault,
+                cvxCrvHelperVault=convex.cvxCrvHelperVault,
             ),
         ),
         convexObtcCrv=DotMap(
@@ -153,7 +162,7 @@ sett_config = DotMap(
                 want=pools.obtcCrv.token,
                 pid=curve.pids.obtcCrv,
                 lpComponent=registry.tokens.wbtc,
-                performanceFeeStrategist=1000,
+                performanceFeeStrategist=0,
                 performanceFeeGovernance=1000,
                 withdrawalFee=50,
                 curvePool=DotMap(
@@ -161,6 +170,8 @@ sett_config = DotMap(
                     wbtcPosition=2,
                     numElements=4,
                 ),
+                cvxHelperVault=convex.cvxHelperVault,
+                cvxCrvHelperVault=convex.cvxCrvHelperVault,
             ),
         ),
         convexPbtcCrv=DotMap(
@@ -169,7 +180,7 @@ sett_config = DotMap(
                 want=pools.pbtcCrv.token,
                 pid=curve.pids.pbtcCrv,
                 lpComponent=registry.tokens.wbtc,
-                performanceFeeStrategist=1000,
+                performanceFeeStrategist=0,
                 performanceFeeGovernance=1000,
                 withdrawalFee=50,
                 curvePool=DotMap(
@@ -177,6 +188,8 @@ sett_config = DotMap(
                     wbtcPosition=2,
                     numElements=4,
                 ),
+                cvxHelperVault=convex.cvxHelperVault,
+                cvxCrvHelperVault=convex.cvxCrvHelperVault,
             ),
         ),
         convexBbtcCrv=DotMap(
@@ -185,7 +198,7 @@ sett_config = DotMap(
                 want=pools.bbtcCrv.token,
                 pid=curve.pids.bbtcCrv,
                 lpComponent=registry.tokens.wbtc,
-                performanceFeeStrategist=1000,
+                performanceFeeStrategist=0,
                 performanceFeeGovernance=1000,
                 withdrawalFee=50,
                 curvePool=DotMap(
@@ -193,6 +206,8 @@ sett_config = DotMap(
                     wbtcPosition=2,
                     numElements=4,
                 ),
+                cvxHelperVault=convex.cvxHelperVault,
+                cvxCrvHelperVault=convex.cvxCrvHelperVault,
             ),
         ),
         convexTriCrypto=DotMap(
@@ -201,7 +216,7 @@ sett_config = DotMap(
                 want=pools.triCrypto.token,
                 pid=curve.pids.triCrypto,
                 lpComponent=registry.tokens.wbtc,
-                performanceFeeStrategist=1000,
+                performanceFeeStrategist=0,
                 performanceFeeGovernance=1000,
                 withdrawalFee=50,
                 curvePool=DotMap(
@@ -209,6 +224,8 @@ sett_config = DotMap(
                     wbtcPosition=1,
                     numElements=3,
                 ),
+                cvxHelperVault=convex.cvxHelperVault,
+                cvxCrvHelperVault=convex.cvxCrvHelperVault,
             ),
         ),
     ),

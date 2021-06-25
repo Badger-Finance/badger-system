@@ -3,6 +3,7 @@ from config.badger_config import sett_config
 from helpers.token_utils import distribute_from_whales
 from brownie import *
 from helpers.proxy_utils import deploy_proxy
+from helpers.constants import AddressZero
 
 
 class ConvexHBtcMiniDeploy(SettMiniDeployBase):
@@ -21,6 +22,20 @@ class ConvexHBtcMiniDeploy(SettMiniDeployBase):
 
     def post_deploy_setup(self, deploy):
         if deploy:
+            # Approve strategy to interact with Helper Vaults:
+            cvxHelperVault = SettV4.at(self.params.cvxHelperVault)
+            cvxCrvHelperVault = SettV4.at(self.params.cvxCrvHelperVault)
+
+            cvxHelperGov = accounts.at(cvxHelperVault.governance(), force=True)
+            cvxCrvHelperGov = accounts.at(cvxCrvHelperVault.governance(), force=True)
+
+            cvxHelperVault.approveContractAccess(self.strategy.address, {"from": cvxHelperGov})
+            cvxCrvHelperVault.approveContractAccess(self.strategy.address, {"from": cvxCrvHelperGov})
+
+            # Remove guestlist for Helper vaults
+            cvxHelperVault.setGuestList(AddressZero, {"from": cvxHelperGov})
+            cvxCrvHelperVault.setGuestList(AddressZero, {"from": cvxCrvHelperGov})
+
             return
 
         if not (self.vault.controller() == self.strategy.controller()):
