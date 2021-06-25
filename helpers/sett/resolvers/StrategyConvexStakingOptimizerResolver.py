@@ -112,15 +112,29 @@ class StrategyConvexStakingOptimizerResolver(StrategyCoreResolver):
         )
         # 80% of collected cvx is deposited on helper vaults
         assert approx(
-            (after.balances("cvx", "cvxHelperVault")-before.balances("cvx", "cvxHelperVault")),
-            abs(before.balances("cvx", "cvxRewardsPool")-after.balances("cvx", "cvxRewardsPool"))*0.8,
-            1
+            (
+                after.balances("cvx", "cvxHelperVault")
+                - before.balances("cvx", "cvxHelperVault")
+            ),
+            abs(
+                before.balances("cvx", "cvxRewardsPool")
+                - after.balances("cvx", "cvxRewardsPool")
+            )
+            * 0.8,
+            1,
         )
         # 80% of collected cvxCrv is deposited on helper vaults
         assert approx(
-            (after.balances("cvxCrv", "cvxCrvHelperVault")-before.balances("cvxCrv", "cvxCrvHelperVault")),
-            abs(before.balances("cvxCrv", "cvxCrvRewardsPool")-after.balances("cvxCrv", "cvxCrvRewardsPool"))*0.8,
-            1
+            (
+                after.balances("cvxCrv", "cvxCrvHelperVault")
+                - before.balances("cvxCrv", "cvxCrvHelperVault")
+            ),
+            abs(
+                before.balances("cvxCrv", "cvxCrvRewardsPool")
+                - after.balances("cvxCrv", "cvxCrvRewardsPool")
+            )
+            * 0.8,
+            1,
         )
         # Check that helper vault shares were distributed correctly:
         cvxHelperVault = SettV4.at(registry.convex.cvxHelperVault)
@@ -128,29 +142,52 @@ class StrategyConvexStakingOptimizerResolver(StrategyCoreResolver):
 
         # 80% of cvxHelperVault shares were distributed through the tree
         assert approx(
-            (after.balances("cvx", "cvxHelperVault")-before.balances("cvx", "cvxHelperVault"))*(cvxHelperVault.getPricePerFullShare()/1E18)*0.8,
-            after.balances("bCvx", "badgerTree")-before.balances("bCvx", "badgerTree"),
-            1
+            (
+                after.balances("cvx", "cvxHelperVault")
+                - before.balances("cvx", "cvxHelperVault")
+            )
+            * (cvxHelperVault.getPricePerFullShare() / 1e18)
+            * 0.8,
+            after.balances("bCvx", "badgerTree")
+            - before.balances("bCvx", "badgerTree"),
+            1,
         )
         # 20% of cvxHelperVault shares were distributed through the tree
         assert approx(
-            (after.balances("cvx", "cvxHelperVault")-before.balances("cvx", "cvxHelperVault"))*(cvxHelperVault.getPricePerFullShare()/1E18)*0.2,
-            after.balances("bCvx", "governanceRewards")-before.balances("bCvx", "governanceRewards"),
-            1
+            (
+                after.balances("cvx", "cvxHelperVault")
+                - before.balances("cvx", "cvxHelperVault")
+            )
+            * (cvxHelperVault.getPricePerFullShare() / 1e18)
+            * 0.2,
+            after.balances("bCvx", "governanceRewards")
+            - before.balances("bCvx", "governanceRewards"),
+            1,
         )
         # 80% of cvxCrvHelperVault shares were distributed through the tree
         assert approx(
-            (after.balances("cvxCrv", "cvxCrvHelperVault")-before.balances("cvxCrv", "cvxCrvHelperVault"))*(cvxHelperVault.getPricePerFullShare()/1E18)*0.8,
-            after.balances("bCvxCrv", "badgerTree")-before.balances("bCvxCrv", "badgerTree"),
-            1
+            (
+                after.balances("cvxCrv", "cvxCrvHelperVault")
+                - before.balances("cvxCrv", "cvxCrvHelperVault")
+            )
+            * (cvxHelperVault.getPricePerFullShare() / 1e18)
+            * 0.8,
+            after.balances("bCvxCrv", "badgerTree")
+            - before.balances("bCvxCrv", "badgerTree"),
+            1,
         )
         # 20% of cvxCrvHelperVault shares were distributed through the tree
         assert approx(
-             (after.balances("cvxCrv", "cvxCrvHelperVault")-before.balances("cvxCrv", "cvxCrvHelperVault"))*(cvxHelperVault.getPricePerFullShare()/1E18)*0.2,
-            after.balances("bCvxCrv", "governanceRewards")-before.balances("bCvxCrv", "governanceRewards"),
-            1
+            (
+                after.balances("cvxCrv", "cvxCrvHelperVault")
+                - before.balances("cvxCrv", "cvxCrvHelperVault")
+            )
+            * (cvxHelperVault.getPricePerFullShare() / 1e18)
+            * 0.2,
+            after.balances("bCvxCrv", "governanceRewards")
+            - before.balances("bCvxCrv", "governanceRewards"),
+            1,
         )
-
 
     def confirm_tend(self, before, after, tx):
         self.confirm_tend_events(before, after, tx)
