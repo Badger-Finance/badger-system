@@ -40,6 +40,7 @@ def fetch_sett_balances(key, settId, startBlock):
     balances = {}
     while True:
         variables["lastBalanceId"] = {"id_gt": lastBalanceId}
+
         results = sett_client.execute(query, variable_values=variables)
         if len(results["vaults"]) == 0:
             return {}

@@ -15,7 +15,7 @@ console = Console()
 
 
 def main():
-    badger = connect_badger(load_keeper=True)
+    badger = connect_badger(load_keeper=True, load_harvester=True)
 
     if rpc.is_active():
         """

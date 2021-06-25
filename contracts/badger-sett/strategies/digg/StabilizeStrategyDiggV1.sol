@@ -8,7 +8,7 @@ import "deps/@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 import "deps/@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "deps/@openzeppelin/contracts-upgradeable/token/ERC20/SafeERC20Upgradeable.sol";
 import "interfaces/badger/IController.sol";
-import "../BaseStrategy.sol";
+import "../BaseStrategySwapper.sol";
 
 /*
     This is a strategy to stabilize Digg with wBTC. It takes advantage of market momentum and accumulated collateral to
@@ -62,7 +62,7 @@ interface DiggTreasury {
     ) external;
 }
 
-contract StabilizeStrategyDiggV1 is BaseStrategy {
+contract StabilizeStrategyDiggV1 is BaseStrategyMultiSwapper {
     using SafeERC20Upgradeable for ERC20Upgradeable;
     using AddressUpgradeable for address;
     using SafeMathUpgradeable for uint256;
@@ -199,7 +199,7 @@ contract StabilizeStrategyDiggV1 is BaseStrategy {
         return address(tokenList[_id].token);
     }
 
-    function getName() external pure override returns (string memory) {
+    function getName() external override pure returns (string memory) {
         return "StabilizeStrategyDiggV1";
     }
 
@@ -207,7 +207,7 @@ contract StabilizeStrategyDiggV1 is BaseStrategy {
         return "1.0";
     }
 
-    function balanceOf() public view override returns (uint256) {
+    function balanceOf() public override view returns (uint256) {
         // This will return the DIGG and DIGG equivalent of WBTC in Digg decimals
         uint256 _diggAmount = tokenList[0].token.balanceOf(address(this));
         uint256 _wBTCAmount = tokenList[1].token.balanceOf(address(this));
@@ -238,11 +238,11 @@ contract StabilizeStrategyDiggV1 is BaseStrategy {
     }
 
     /// @dev Not used
-    function balanceOfPool() public view override returns (uint256) {
+    function balanceOfPool() public override view returns (uint256) {
         return 0;
     }
 
-    function getProtectedTokens() external view override returns (address[] memory) {
+    function getProtectedTokens() public override view returns (address[] memory) {
         address[] memory protectedTokens = new address[](2);
         protectedTokens[0] = address(tokenList[0].token);
         protectedTokens[1] = address(tokenList[1].token);
@@ -275,20 +275,19 @@ contract StabilizeStrategyDiggV1 is BaseStrategy {
         // Amount sold is split between these two biggest liquidity providers to decrease the chance of price inequities between the exchanges
         // This also helps reduce slippage and creates a higher return than using one exchange
         // Look at the total balance of the pooled tokens in Uniswap compared to the total for both exchanges
-        uint256 uniPercent =
+        uint256 uniPercent = tokenList[0]
+            .token
+            .balanceOf(address(UNISWAP_DIGG_LP))
+            .add(tokenList[1].token.balanceOf(address(UNISWAP_DIGG_LP)))
+            .mul(DIVISION_FACTOR)
+            .div(
             tokenList[0]
                 .token
                 .balanceOf(address(UNISWAP_DIGG_LP))
+                .add(tokenList[0].token.balanceOf(address(SUSHISWAP_DIGG_LP)))
                 .add(tokenList[1].token.balanceOf(address(UNISWAP_DIGG_LP)))
-                .mul(DIVISION_FACTOR)
-                .div(
-                tokenList[0]
-                    .token
-                    .balanceOf(address(UNISWAP_DIGG_LP))
-                    .add(tokenList[0].token.balanceOf(address(SUSHISWAP_DIGG_LP)))
-                    .add(tokenList[1].token.balanceOf(address(UNISWAP_DIGG_LP)))
-                    .add(tokenList[1].token.balanceOf(address(SUSHISWAP_DIGG_LP)))
-            );
+                .add(tokenList[1].token.balanceOf(address(SUSHISWAP_DIGG_LP)))
+        );
         uint256 uniAmount = _amount.mul(uniPercent).div(DIVISION_FACTOR);
         _amount = _amount.sub(uniAmount);
 
@@ -529,10 +528,9 @@ contract StabilizeStrategyDiggV1 is BaseStrategy {
                     uint256 changedDiggPercent = lastDiggTotalSupply.sub(currentTotalSupply).mul(DIVISION_FACTOR).div(lastDiggTotalSupply);
 
                     // The faster the rise and the larger the negative rebase, the more that is bought
-                    uint256 sellPercent =
-                        changedDiggPercent.mul(wbtcSupplyChangeFactor.add(uint256(percentChange).mul(wbtcSellAmplificationFactor))).div(
-                            DIVISION_FACTOR
-                        );
+                    uint256 sellPercent = changedDiggPercent
+                        .mul(wbtcSupplyChangeFactor.add(uint256(percentChange).mul(wbtcSellAmplificationFactor)))
+                        .div(DIVISION_FACTOR);
                     if (sellPercent > maxWBTCSellPercent) {
                         sellPercent = maxWBTCSellPercent;
                     }

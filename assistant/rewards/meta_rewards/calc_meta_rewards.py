@@ -10,6 +10,7 @@ console = Console()
 def calc_rewards(badger, start, end, nextCycle, events, name, token):
     def filter_events(e):
         return int(e["blockNumber"]) > start and int(e["blockNumber"]) < end
+
     filteredEvents = list(filter(filter_events, events))
     rewards = RewardsList(nextCycle, badger.badgerTree)
     if len(filteredEvents) > 0:
