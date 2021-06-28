@@ -227,6 +227,7 @@ def connect_badger(
 
     badger.connect_multisig(badger_deploy["devMultisig"])
     badger.connect_ops_multisig(badger_deploy["opsMultisig"])
+    badger.connect_test_multisig(badger_deploy["testMultisig"])
 
     if "dao" in badger_deploy:
         badger.connect_dao()
@@ -504,6 +505,9 @@ class BadgerSystem:
 
     def connect_ops_multisig(self, address):
         self.opsMultisig = connect_gnosis_safe(address)
+
+    def connect_test_multisig(self, address):
+        self.testMultisig = connect_gnosis_safe(address)
 
     def connect_uniswap(self):
         self.uniswap = UniswapSystem()
