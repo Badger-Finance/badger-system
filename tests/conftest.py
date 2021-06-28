@@ -61,7 +61,7 @@ settsToRun = [
     # "native.sushiWbtcEth",
     # "native.sushiWbtcIbBtc",
     # "native.uniWbtcIbBtc",
-    # "native.mstableImBtc",
+    "native.mstableImBtc",
     "native.mstableFpMbtcHbtc",
 ]
 
