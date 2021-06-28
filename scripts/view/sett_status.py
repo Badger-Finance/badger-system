@@ -54,11 +54,18 @@ def main():
         table = []
 
         console.print("[green]=== Admin: {} Sett ===[green]".format(key))
+        
         table.append(["Sett Key", key])
+        
         table.append(["Sett Type", sett_type])
         table.append(["Sett Logic", sett_impl])
         table.append(["Sett Admin", sett_admin])
+        print(tabulate(table, ["Key", "Value"]))
 
+        table = []
+        table.append(["PPFS", sett.getPricePerFullShare()])
+        table.append(["totalSupply", sett.totalSupply()])
+        table.append(["balance", sett.balance()])
         print(tabulate(table, ["Key", "Value"]))
 
         if sett_type == "v1":
