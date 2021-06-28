@@ -21,9 +21,7 @@ class SushiDiggWbtcLpOptimizerMiniDeploy(DiggSettMiniDeployBase):
             params.want = sushiswap.getPair(self.digg.token, registry.tokens.wbtc)
         else:
             params.want = sushiswap.createPair(
-                self.digg.token,
-                registry.tokens.wbtc,
-                self.deployer,
+                self.digg.token, registry.tokens.wbtc, self.deployer,
             )
         want = params.want
         params.token = self.digg.token
@@ -79,9 +77,7 @@ class SushiDiggWbtcLpOptimizerMiniDeploy(DiggSettMiniDeployBase):
         pid = sushiswap.add_chef_rewards(self.want)
         # Generate lp tokens.
         sushiswap.addMaxLiquidity(
-            self.digg.token,
-            registry.tokens.wbtc,
-            self.deployer,
+            self.digg.token, registry.tokens.wbtc, self.deployer,
         )
 
         # Pass in LP token pool id to underlying strategy.

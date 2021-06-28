@@ -24,7 +24,7 @@ def harvest_all(badger: BadgerSystem, skip):
 
         snap = SnapshotManager(badger, key)
         strategy = badger.getStrategy(key)
-        
+
         before = snap.snap()
         if strategy.keeper() == badger.badgerRewardsManager:
             snap.settHarvestViaManager(

@@ -202,11 +202,7 @@ def setup_badger(badger: BadgerSystem, settConfig):
             controller,
             badger.keeper,
             badger.guardian,
-            [
-                config["want"],
-                config["token0"],
-                config["token1"],
-            ],
+            [config["want"], config["token0"], config["token1"],],
             [
                 config["performanceFeeStrategist"],
                 config["performanceFeeGovernance"],

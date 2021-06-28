@@ -50,11 +50,15 @@ def lp_for_strategy_internal(badger, key):
     manager = badger.badgerRewardsManager
     if key == "native.uniBadgerWbtc":
         manager.addLiquidityUniswap(
-            badger.token, wbtc, {"from": badger.external_harvester, "gas_limit": 2000000}
+            badger.token,
+            wbtc,
+            {"from": badger.external_harvester, "gas_limit": 2000000},
         )
     if key == "native.sushiBadgerWbtc":
         manager.addLiquiditySushiswap(
-            badger.token, wbtc, {"from": badger.external_harvester, "gas_limit": 2000000}
+            badger.token,
+            wbtc,
+            {"from": badger.external_harvester, "gas_limit": 2000000},
         )
     if key == "native.uniDiggWbtc":
         manager.addLiquidityUniswap(
