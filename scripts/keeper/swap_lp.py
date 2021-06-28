@@ -15,7 +15,7 @@ from scripts.systems.sushiswap_system import SushiswapSystem
 from scripts.systems.uniswap_system import UniswapSystem
 from tabulate import tabulate
 
-gas_strategies.set_default_for_active_chain()
+gas_strategies.set_default(gas_strategies.exponentialScalingFast)
 
 uniswap = UniswapSystem()
 sushiswap = SushiswapSystem()
@@ -50,19 +50,19 @@ def lp_for_strategy_internal(badger, key):
     manager = badger.badgerRewardsManager
     if key == "native.uniBadgerWbtc":
         manager.addLiquidityUniswap(
-            badger.token, wbtc, {"from": badger.keeper, "gas_limit": 2000000}
+            badger.token, wbtc, {"from": badger.external_harvester, "gas_limit": 2000000}
         )
     if key == "native.sushiBadgerWbtc":
         manager.addLiquiditySushiswap(
-            badger.token, wbtc, {"from": badger.keeper, "gas_limit": 2000000}
+            badger.token, wbtc, {"from": badger.external_harvester, "gas_limit": 2000000}
         )
     if key == "native.uniDiggWbtc":
         manager.addLiquidityUniswap(
-            digg.token, wbtc, {"from": badger.keeper, "gas_limit": 2000000}
+            digg.token, wbtc, {"from": badger.external_harvester, "gas_limit": 2000000}
         )
     if key == "native.sushiDiggWbtc":
         manager.addLiquiditySushiswap(
-            digg.token, wbtc, {"from": badger.keeper, "gas_limit": 2000000}
+            digg.token, wbtc, {"from": badger.external_harvester, "gas_limit": 2000000}
         )
 
 
@@ -93,7 +93,7 @@ def swap_for_strategy_internal(badger, key, amount):
             badger.token,
             amount,
             [badger.token, registry.tokens.wbtc],
-            {"from": badger.keeper, "gas_limit": 1000000},
+            {"from": badger.external_harvester, "gas_limit": 1000000},
         )
         return True
     if key == "native.sushiBadgerWbtc":
@@ -101,7 +101,7 @@ def swap_for_strategy_internal(badger, key, amount):
             badger.token,
             amount,
             [badger.token, registry.tokens.wbtc],
-            {"from": badger.keeper, "gas_limit": 1000000},
+            {"from": badger.external_harvester, "gas_limit": 1000000},
         )
         return True
     if key == "native.uniDiggWbtc":
@@ -109,14 +109,14 @@ def swap_for_strategy_internal(badger, key, amount):
             digg.token,
             amount,
             [digg.token, registry.tokens.wbtc],
-            {"from": badger.keeper, "gas_limit": 1000000},
+            {"from": badger.external_harvester, "gas_limit": 1000000},
         )
     if key == "native.sushiDiggWbtc":
         manager.swapExactTokensForTokensSushiswap(
             digg.token,
             amount,
             [digg.token, registry.tokens.wbtc],
-            {"from": badger.keeper, "gas_limit": 1000000},
+            {"from": badger.external_harvester, "gas_limit": 1000000},
         )
         return True
 
@@ -149,7 +149,7 @@ def main():
     Swap daily allowance for LP tokens & run injection harvest
     """
 
-    badger = connect_badger(load_keeper=True, load_external_harvester=True)
+    badger = connect_badger(load_external_harvester=True)
     rewards = get_active_rewards_schedule(badger)
 
     if rpc.is_active():
@@ -157,7 +157,7 @@ def main():
         Test: Load up sending accounts with ETH and whale tokens
         """
         accounts[0].transfer(badger.deployer, Wei("5 ether"))
-        accounts[0].transfer(badger.keeper, Wei("5 ether"))
+        accounts[0].transfer(badger.external_harvester, Wei("5 ether"))
         accounts[0].transfer(badger.guardian, Wei("5 ether"))
 
     # swap one day of tokens

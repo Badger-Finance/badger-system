@@ -1445,7 +1445,6 @@ class BadgerSystem:
         if len(schedules) == 0:
             return
         for schedule in schedules:
-            print(schedule)
             s = LoggerUnlockSchedule(schedule)
 
             digg_shares = s.token == self.digg.token
