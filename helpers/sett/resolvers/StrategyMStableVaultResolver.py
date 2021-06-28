@@ -55,6 +55,46 @@ class StrategyMStableVaultResolver(StrategyCoreResolver):
             float(event['mtaTotal']) * sett_config.native.imBtc.params.govMta/10000,
             1,
         )
+        
+        # After 6 months
+        if float(event['mtaPostVesting']) > 0:
+            assert float(event['mtaPostVestingSentToBadgerTree']) > 0
+            assert approx(
+                float(event['mtaPostVestingSentToBadgerTree']),
+                float(event['mtaPostVesting']) - float(event['mtaFees'][0]) - float(event['mtaFees'][1]),
+                1,
+            )
+            assert approx(
+                (
+                    after.balances("mta", "badgerTree")
+                    - before.balances("mta", "badgerTree")
+                ),
+                float(event['mtaPostVestingSentToBadgerTree']),
+                1,
+            )
+        
+        assert approx(
+            (
+                after.balances("want", "mStableVault")
+                - before.balances("want", "mStableVault")
+            ),
+            float(event['wantDeposited']),
+            1,
+        )
+        assert approx(
+            float(event['wantDeposited']),
+            float(event['wantProcessed']) - float(event['wantFees'][0]) - float(event['wantFees'][1]),
+            1,
+        )
+
+        # mtaRecycledToWant = mtaTotal - govFee - mtaPostVesting
+        assert approx(
+            (
+                float(event['mtaRecycledToWant'])
+            ),
+            float(event['mtaTotal']) - float(event['mtaSentToVoterProxy']) - float(event['mtaPostVesting']),
+            1,
+        )
 
     def printMStableState(self, event, keys):
         table = []
