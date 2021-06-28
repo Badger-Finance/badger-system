@@ -50,6 +50,12 @@ class StrategyMStableVaultResolver(StrategyCoreResolver):
             1,
         )
 
+        assert approx(
+            float(event['mtaSentToVoterProxy']),
+            float(event['mtaTotal']) * sett_config.native.imBtc.params.govMta/10000,
+            1,
+        )
+
     def printMStableState(self, event, keys):
         table = []
         console.print("[blue]== MStable Strat harvest() State ==[/blue]")

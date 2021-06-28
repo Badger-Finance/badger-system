@@ -11,7 +11,7 @@ from rich.console import Console
 
 console = Console()
 
-@pytest.mark.skip()
+# @pytest.mark.skip()
 @pytest.mark.parametrize(
     "settConfig", settTestConfig,
 )
@@ -120,7 +120,8 @@ def test_single_user_harvest_flow(settConfig):
 
     snap.settWithdraw(depositAmount // 2, {"from": deployer})
 
-    chain.sleep(days(3))
+    # Chain sleeps for more than 6 months to allow for a mta full vesting cycle
+    chain.sleep(days(66))
     chain.mine()
 
     snap.settHarvest({"from": strategyKeeper})
