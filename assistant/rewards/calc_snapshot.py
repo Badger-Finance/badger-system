@@ -66,12 +66,18 @@ def calc_snapshot(badger, name, startBlock, endBlock, nextCycle, boosts):
                     digg.sharesToFragments(tokenDistribution) / 1e18
                 )
             )
+            rewardsLog.add_total_token_dist(
+                sett, token, digg.sharesToFragments(tokenDistribution) / 9
+            )
+
         elif token == "0x20c36f062a31865bED8a5B1e512D9a1A20AA333A":
             console.log("{} DFD tokens distributed".format(tokenDistribution / 1e18))
+            rewardsLog.add_total_token_dist(sett, token, tokenDistribution / 1e18)
+
         else:
             badgerAmount = tokenDistribution / 1e18
-            rewardsLog.add_total_token_dist(name, token, badgerAmount)
             console.log("{} Badger tokens distributed".format(badgerAmount))
+            rewardsLog.add_total_token_dist(sett, token, badgerAmount)
 
         if tokenDistribution > 0:
             console.print(len(userBalances))

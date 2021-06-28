@@ -189,7 +189,7 @@ def fetch_current_rewards_tree(badger, print_output=False):
     return currentTree
 
 
-def generate_rewards_in_range(badger, startBlock, endBlock, pastRewards):
+def generate_rewards_in_range(badger, startBlock, endBlock, pastRewards, saveLocalFile):
     endBlock = endBlock
     blockDuration = endBlock - startBlock
 
@@ -216,7 +216,6 @@ def generate_rewards_in_range(badger, startBlock, endBlock, pastRewards):
 
     # Publish data
     rootHash = keccak(merkleTree["merkleRoot"])
-    rewardsLog.set_merkle_root(rootHash)
 
     contentFileName = content_hash_to_filename(rootHash)
 
@@ -230,24 +229,22 @@ def generate_rewards_in_range(badger, startBlock, endBlock, pastRewards):
             "currentContentHash": currentMerkleData["contentHash"],
         }
     )
+    rewardsLog.set_merkle_root(merkleTree["merkleRoot"])
+    rewardsLog.set_content_hash(rootHash)
+    rewardsLog.set_start_block(startBlock)
+    rewardsLog.set_end_block(endBlock)
     print("Uploading to file " + contentFileName)
 
-    rewardsLog.save("rewards-{}".format(nextCycle))
+    rewardsLog.save(nextCycle)
     # TODO: Upload file to AWS & serve from server
-    with open(contentFileName, "w") as outfile:
-        json.dump(merkleTree, outfile, indent=4)
-
-    with open(contentFileName) as f:
-        after_file = json.load(f)
+    if saveLocalFile:
+        with open(contentFileName, "w") as outfile:
+            json.dump(merkleTree, outfile, indent=4)
 
     # Sanity check new rewards file
 
     verify_rewards(
-        badger,
-        startBlock,
-        endBlock,
-        pastRewards,
-        after_file,
+        badger, startBlock, endBlock, pastRewards, merkleTree,
     )
 
     return {
@@ -257,7 +254,7 @@ def generate_rewards_in_range(badger, startBlock, endBlock, pastRewards):
     }
 
 
-def rootUpdater(badger, startBlock, endBlock, pastRewards, test=False):
+def rootUpdater(badger, startBlock, endBlock, pastRewards, saveLocalFile, test=False):
     """
     Root Updater Role
     - Check how much time has passed since the last published update
@@ -290,7 +287,9 @@ def rootUpdater(badger, startBlock, endBlock, pastRewards, test=False):
         )
         return False
 
-    rewards_data = generate_rewards_in_range(badger, startBlock, endBlock, pastRewards)
+    rewards_data = generate_rewards_in_range(
+        badger, startBlock, endBlock, pastRewards, saveLocalFile
+    )
 
     console.print("===== Root Updater Complete =====")
     if not test:
@@ -303,12 +302,16 @@ def rootUpdater(badger, startBlock, endBlock, pastRewards, test=False):
             rewards_data["merkleTree"]["endBlock"],
             {"from": badger.root_proposer, "gas_price": gas_strategy},
         )
-        upload(rewards_data["contentFileName"], publish=False)
+        upload(
+            rewards_data["contentFileName"], rewards_data["merkleTree"], publish=False
+        )
 
     return rewards_data
 
 
-def guardian(badger: BadgerSystem, startBlock, endBlock, pastRewards, test=False):
+def guardian(
+    badger: BadgerSystem, startBlock, endBlock, pastRewards, saveLocalFile, test=False
+):
     """
     Guardian Role
     - Check if there is a new proposed root
@@ -332,7 +335,9 @@ def guardian(badger: BadgerSystem, startBlock, endBlock, pastRewards, test=False
         console.print("[bold yellow]===== Result: No Pending Root =====[/bold yellow]")
         return False
 
-    rewards_data = generate_rewards_in_range(badger, startBlock, endBlock, pastRewards)
+    rewards_data = generate_rewards_in_range(
+        badger, startBlock, endBlock, pastRewards, saveLocalFile
+    )
 
     console.print("===== Guardian Complete =====")
 
@@ -345,17 +350,27 @@ def guardian(badger: BadgerSystem, startBlock, endBlock, pastRewards, test=False
             rewards_data["merkleTree"]["endBlock"],
             {"from": badger.guardian, "gas_price": gas_strategy},
         )
-        upload(rewards_data["contentFileName"]),
+        upload(rewards_data["contentFileName"], rewards_data["merkleTree"]),
 
 
-def run_action(badger, args, test):
+def run_action(badger, args, test, saveLocalFile=False):
     if args["action"] == "rootUpdater":
         return rootUpdater(
-            badger, args["startBlock"], args["endBlock"], args["pastRewards"], test
+            badger,
+            args["startBlock"],
+            args["endBlock"],
+            args["pastRewards"],
+            saveLocalFile,
+            test,
         )
     if args["action"] == "guardian":
         return guardian(
-            badger, args["startBlock"], args["endBlock"], args["pastRewards"], test
+            badger,
+            args["startBlock"],
+            args["endBlock"],
+            args["pastRewards"],
+            saveLocalFile,
+            test,
         )
     return False
 
