@@ -54,11 +54,18 @@ def main():
         table = []
 
         console.print("[green]=== Admin: {} Sett ===[green]".format(key))
+        
         table.append(["Sett Key", key])
+        
         table.append(["Sett Type", sett_type])
         table.append(["Sett Logic", sett_impl])
         table.append(["Sett Admin", sett_admin])
+        print(tabulate(table, ["Key", "Value"]))
 
+        table = []
+        table.append(["PPFS", sett.getPricePerFullShare()])
+        table.append(["totalSupply", sett.totalSupply()])
+        table.append(["balance", sett.balance()])
         print(tabulate(table, ["Key", "Value"]))
 
         if sett_type == "v1":
@@ -70,9 +77,9 @@ def main():
             if badger.hasStrategy(key):
                 snap.printPermissions()
                 strategy = badger.getStrategy(key)
-                admin = badger.getProxyAdmin(sett)
-                strategy_impl = admin.getProxyImplementation(sett)
-                strategy_admin = admin.getProxyAdmin(sett)
+                admin = badger.getProxyAdmin(strategy)
+                strategy_impl = admin.getProxyImplementation(strategy)
+                strategy_admin = admin.getProxyAdmin(strategy)
 
                 table = []
                 console.print("[green]=== Admin: {} Strategy ===[green]".format(key))

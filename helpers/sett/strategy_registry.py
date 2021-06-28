@@ -30,6 +30,7 @@ name_to_artifact = {
     "StrategyDiggLpMetaFarm": StrategyDiggLpMetaFarm,
     "StrategySushiDiggWbtcLpOptimizer": StrategySushiDiggWbtcLpOptimizer,
     "StrategyPancakeLpOptimizer": StrategyPancakeLpOptimizer,
+    "StrategyUnitProtocolRenbtc": StrategyUnitProtocolRenbtc,
     "StrategyUniGenericLp": StrategyUniGenericLp,
     "StrategyConvexLpOptimizer": StrategyConvexLpOptimizer,
     "StrategyConvexStakingOptimizer": StrategyConvexStakingOptimizer,

@@ -11,6 +11,7 @@ from .StrategySushiDiggWbtcLpOptimizerResolver import (
     StrategySushiDiggWbtcLpOptimizerResolver,
 )
 from .StrategyDiggLpMetaFarmResolver import StrategyDiggLpMetaFarmResolver
+from .StrategyUnitProtocolRenbtcResolver import StrategyUnitProtocolRenbtcResolver
 from .StrategyUniGenericLpResolver import StrategyUniGenericLpResolver
 from .StabilizeStrategyDiggV1Resolver import StabilizeStrategyDiggV1Resolver
 from .StrategyConvexStakingOptimizerResolver import (

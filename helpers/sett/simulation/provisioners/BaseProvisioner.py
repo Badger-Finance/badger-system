@@ -20,7 +20,9 @@ class BaseProvisioner:
             percentage = random.random() * remaining
             for whale in self.whales:
                 distribute_from_whale(
-                    whale, user, percentage=percentage,
+                    whale,
+                    user,
+                    percentage=percentage,
                 )
 
             if self.manager.badger.digg is not None:
@@ -28,7 +30,9 @@ class BaseProvisioner:
                 digg = self.manager.badger.digg
                 balance = digg.token.balanceOf(digg.daoDiggTimelock)
                 digg.token.transfer(
-                    user, balance * percentage, {"from": digg.daoDiggTimelock},
+                    user,
+                    balance * percentage,
+                    {"from": digg.daoDiggTimelock},
                 )
 
     def _distributeWant(self, users) -> None:

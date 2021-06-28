@@ -144,6 +144,12 @@ def connect_badger(
     load_deployer=False,
     load_keeper=False,
     load_guardian=False,
+    load_root_proposer=False,
+    load_root_approver=False,
+    load_earner=False,
+    load_harvester=False,
+    load_external_harvester=False,
+    load_rebaser=False,
     load_method=LoadMethod.KEYSTORE,
 ):
     """
@@ -178,10 +184,22 @@ def connect_badger(
         badger_deploy["deployer"],
         badger_deploy["keeper"],
         badger_deploy["guardian"],
+        badger_deploy["root_proposer"],
+        badger_deploy["root_approver"],
+        badger_deploy["earner"],
+        badger_deploy["harvester"],
+        badger_deploy["external_harvester"],
+        badger_deploy["rebaser"],
         deploy=False,
         load_deployer=load_deployer,
         load_keeper=load_keeper,
         load_guardian=load_guardian,
+        load_root_proposer=load_root_proposer,
+        load_root_approver=load_root_approver,
+        load_earner=load_earner,
+        load_harvester=load_harvester,
+        load_external_harvester=load_external_harvester,
+        load_rebaser=load_rebaser,
         load_method=load_method,
     )
 
@@ -269,9 +287,7 @@ def connect_badger(
 
     return badger
 
-
 default_gas_strategy = GasNowScalingStrategy()
-
 
 class BadgerSystem:
     def __init__(
@@ -280,10 +296,22 @@ class BadgerSystem:
         deployer,
         keeper,
         guardian,
+        root_proposer=None,
+        root_approver=None,
+        earner=None,
+        harvester=None,
+        external_harvester=None,
+        rebaser=None,
         deploy=True,
         load_deployer=False,
         load_keeper=False,
         load_guardian=False,
+        load_root_proposer=False,
+        load_root_approver=False,
+        load_earner=False,
+        load_harvester=False,
+        load_external_harvester=False,
+        load_rebaser=False,
         load_method=LoadMethod.KEYSTORE,
     ):
         self.config = config
@@ -299,17 +327,52 @@ class BadgerSystem:
 
         # Unlock accounts in test mode
         if rpc.is_active():
+            
+            guardian = deployer
             print("RPC Active")
             self.deployer = accounts.at(deployer, force=True)
             self.keeper = accounts.at(keeper, force=True)
             self.guardian = accounts.at(guardian, force=True)
+
+            if not root_proposer:
+                root_proposer = deployer
+            if not root_approver:
+                root_approver = deployer
+            if not earner:
+                earner = deployer
+            if not harvester:
+                harvester = deployer
+            if not external_harvester:
+                external_harvester = deployer
+            if not rebaser:
+                rebaser = deployer
+
+            self.root_proposer = accounts.at(root_proposer, force=True)
+            self.root_approver = accounts.at(root_approver, force=True)
+            self.earner = accounts.at(earner, force=True)
+            self.harvester = accounts.at(harvester, force=True)
+            self.external_harvester = accounts.at(external_harvester, force=True)
+            self.rebaser = accounts.at(rebaser, force=True)
+            
             self.publish_source = False
         else:
             print("RPC Inactive")
             import decouple
 
-            print(load_deployer, load_keeper, load_guardian, load_method)
+            if not rpc.is_active():
+                console.print(f"[green]Loading Accounts via {load_method}: [/green]", {
+                    "load_deployer": load_deployer,
+                    "load_keeper": load_keeper,
+                    "load_guardian": load_guardian,
+                    "load_root_proposer": load_root_proposer,
+                    "load_root_approver": load_root_approver,
+                    "load_earner": load_earner,
+                    "load_harvester": load_harvester,
+                    "load_external_harvester": load_external_harvester,
+                    "load_rebaser": load_rebaser
+                })
 
+            # Load Accounts
             if load_deployer and load_method == LoadMethod.SK:
                 deployer_key = decouple.config("DEPLOYER_PRIVATE_KEY")
                 self.deployer = accounts.add(deployer_key)
@@ -325,6 +388,19 @@ class BadgerSystem:
                 self.keeper = accounts.load("badger-keeper")
             if load_guardian and load_method == LoadMethod.KEYSTORE:
                 self.guardian = accounts.load("badger-guardian")
+            if load_root_proposer and load_method == LoadMethod.KEYSTORE:
+                self.root_proposer = accounts.load("root-proposer")
+            if load_root_approver and load_method == LoadMethod.KEYSTORE:
+                self.root_approver = accounts.load("root-approver")
+            if load_earner and load_method == LoadMethod.KEYSTORE:
+                self.earner = accounts.load("earner")
+            if load_harvester and load_method == LoadMethod.KEYSTORE:
+                self.harvester = accounts.load("harvester")
+            if load_external_harvester and load_method == LoadMethod.KEYSTORE:
+                self.external_harvester = accounts.load("external-harvester")
+            if load_rebaser and load_method == LoadMethod.KEYSTORE:
+                self.rebaser = accounts.load("rebaser")
+
             self.publish_source = False  # Publish sources for deployed logic on mainnet
         if deploy:
             self.devProxyAdmin = deploy_proxy_admin(deployer)
@@ -334,7 +410,7 @@ class BadgerSystem:
         self.strategy_artifacts = DotMap()
         self.logic = DotMap()
         self.sett_system = DotMap(
-            controllers=DotMap(), vaults=DotMap(), strategies=DotMap(), rewards=DotMap()
+            controllers=DotMap(), vaults=DotMap(), strategies=DotMap(), rewards=DotMap(), guestLists=DotMap()
         )
         self.geysers = DotMap()
 
@@ -400,7 +476,9 @@ class BadgerSystem:
                 artifacts.aragon.MiniMeToken["abi"],
             ),
             kernel=Contract.from_abi(
-                "Agent", badger_config.dao.kernel, artifacts.aragon.Agent["abi"],
+                "Agent",
+                badger_config.dao.kernel,
+                artifacts.aragon.Agent["abi"],
             ),
             agent=Contract.from_abi(
                 "Agent", badger_config.dao.agent, artifacts.aragon.Agent["abi"]
@@ -782,11 +860,15 @@ class BadgerSystem:
         controller.setVault(want, vault, {"from": deployer})
 
         controller.approveStrategy(
-            want, strategy, {"from": deployer},
+            want,
+            strategy,
+            {"from": deployer},
         )
 
         controller.setStrategy(
-            want, strategy, {"from": deployer},
+            want,
+            strategy,
+            {"from": deployer},
         )
 
     def wire_up_sett_multisig(self, vault, strategy, controller):
@@ -839,7 +921,9 @@ class BadgerSystem:
         assert rewardsToken.balanceOf(deployer) >= amount
 
         rewardsToken.transfer(
-            rewards, amount, {"from": deployer},
+            rewards,
+            amount,
+            {"from": deployer},
         )
 
         ## uint256 startTimestamp, uint256 _rewardsDuration, uint256 reward
@@ -856,10 +940,60 @@ class BadgerSystem:
         self.rewardsEscrow.approveRecipient(geyser, {"from": deployer})
 
         self.rewardsEscrow.signalTokenLock(
-            self.token, params.amount, params.duration, startTime, {"from": deployer},
+            self.token,
+            params.amount,
+            params.duration,
+            startTime,
+            {"from": deployer},
         )
 
     # ===== Strategy Macros =====
+    def deploy_new_strat(self, controllerName, name, fullName):
+        """
+        Given a ControllerName, a name and a full Strategy Name, deploy the strat and wire it up to the sett
+        NOTICE: This is an idea of how to generalize strategy deployment
+
+        Parameters
+        ----------
+        controllerName: str
+            The name of the controller (for getController)
+        name: str
+            The name of the strategy (short name)
+        fullName: str
+            The LongName of the strategy (for display purposes)
+        """
+        settName = controllerName + "." + name
+        sett = self.getSett(settName)
+        controller = self.getController(controllerName)
+        params = sett_config[controllerName][name].params
+
+        strategy = self.deploy_strategy(settName, fullName, controller, params)
+
+        self.wire_up_sett(sett, strategy, controller)
+
+    def upgrade_strat(self, controllerName, name, fullName):
+        """
+        Given a ControllerName, a name and a full Strategy Name, deploy the strat and replace the previous one in the sett
+        NOTICE: This is an idea of how to generalize strategy upgrades
+
+        Parameters
+        ----------
+        controllerName: str
+            The name of the controller (for getController)
+        name: str
+            The name of the strategy (short name)
+        fullName: str
+            The LongName of the strategy (for display purposes)
+        """
+        settName = controllerName + "." + name
+        sett = self.getSett(settName)
+        controller = self.getController(controllerName)
+        params = sett_config[controllerName][name].params
+
+        strategy = self.deploy_strategy(settName, fullName, controller, params)
+
+        self.queue_upgrade_sett(settName, strategy, delay=2 * days(2))
+
     def deploy_strategy_native_badger(self):
         sett = self.getSett("native.badger")
         controller = self.getController("native")
@@ -873,6 +1007,18 @@ class BadgerSystem:
 
         self.wire_up_sett(sett, strategy, controller)
 
+    def upgrade_strategy_native_rencrv(self):
+        controller = self.getController("native")
+        params = sett_config.native.renCrv.params
+
+        strategy = self.deploy_strategy(
+            "native.renCrv", "StrategyCurveGaugeRenBtcCrv", controller, params
+        )
+
+        return self.queue_upgrade_sett_strategy(
+            "native.renCrv", strategy, delay=2 * days(2)
+        )
+
     def deploy_strategy_native_rencrv(self):
         sett = self.getSett("native.renCrv")
         controller = self.getController("native")
@@ -884,6 +1030,18 @@ class BadgerSystem:
 
         self.wire_up_sett(sett, strategy, controller)
 
+    def upgrade_strategy_native_sbtccrv(self):
+        controller = self.getController("native")
+        params = sett_config.native.sbtcCrv.params
+
+        strategy = self.deploy_strategy(
+            "native.sbtcCrv", "StrategyCurveGaugeSbtcCrv", controller, params
+        )
+
+        return self.queue_upgrade_sett_strategy(
+            "native.sbtcCrv", strategy, delay=2 * days(2)
+        )
+
     def deploy_strategy_native_sbtccrv(self):
         sett = self.getSett("native.sbtcCrv")
         controller = self.getController("native")
@@ -894,6 +1052,18 @@ class BadgerSystem:
         )
 
         self.wire_up_sett(sett, strategy, controller)
+
+    def upgrade_strategy_native_tbtccrv(self):
+        controller = self.getController("native")
+        params = sett_config.native.tbtcCrv.params
+
+        strategy = self.deploy_strategy(
+            "native.tbtcCrv", "StrategyCurveGaugeTbtcCrv", controller, params
+        )
+
+        return self.queue_upgrade_sett_strategy(
+            "native.tbtcCrv", strategy, delay=2 * days(2)
+        )
 
     def deploy_strategy_native_tbtccrv(self):
         sett = self.getSett("native.tbtcCrv")
@@ -947,6 +1117,13 @@ class BadgerSystem:
         sett = self.getSett(id)
         return self.queue_upgrade(sett.address, newLogic.address)
 
+    def queue_upgrade_sett_strategy(self, id, newLogic, delay=2 * days(2)) -> str:
+        """
+        Given new logic, and an id, upgrade the new strategy
+        """
+        sett = self.getStrategy(id)
+        return self.queue_upgrade(sett.address, newLogic.address)
+
     def queue_upgrade(self, proxyAddress, newLogicAddress, delay=2 * days(2)) -> str:
         target = self.devProxyAdmin.address
         signature = "upgrade(address,address)"
@@ -971,15 +1148,31 @@ class BadgerSystem:
             {
                 "to": self.governanceTimelock.address,
                 "data": self.governanceTimelock.queueTransaction.encode_input(
-                    target, eth, signature, data, eta,
+                    target,
+                    eth,
+                    signature,
+                    data,
+                    eta,
                 ),
             },
         )
         multi.executeTx(id)
 
         txHash = Web3.solidityKeccak(
-            ["address", "uint256", "string", "bytes", "uint256",],
-            [target, eth, signature, data, eta,],
+            [
+                "address",
+                "uint256",
+                "string",
+                "bytes",
+                "uint256",
+            ],
+            [
+                target,
+                eth,
+                signature,
+                data,
+                eta,
+            ],
         ).hex()
 
         txFilename = "{}.json".format(txHash)
@@ -1060,6 +1253,13 @@ class BadgerSystem:
 
         self.sett_system.vaults[id] = sett
         self.track_contract_upgradeable(id + ".sett", sett)
+
+    def connect_guest_list(self, id, address, artifactName="VipCappedGuestListBbtcUpgradeable"):
+        Artifact = contract_name_to_artifact(artifactName)
+        guestList = Artifact.at(address)
+        print(f"connecting guest list id {id}")
+        self.sett_system.guestLists[id] = guestList
+        self.track_contract_upgradeable(id + ".guestList", guestList)
 
     def connect_controller(self, id, address):
         controller = Controller.at(address)
@@ -1341,7 +1541,6 @@ class BadgerSystem:
         if len(schedules) == 0:
             return
         for schedule in schedules:
-            print(schedule)
             s = LoggerUnlockSchedule(schedule)
 
             digg_shares = s.token == self.digg.token

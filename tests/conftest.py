@@ -31,6 +31,7 @@ from tests.sett.fixtures import (
     SushiClawUSDCMiniDeploy,
     PancakeMiniDeploy,
     SushiWbtcIbBtcLpOptimizerMiniDeploy,
+    UnitProtocolRenBtcMiniDeploy,
     UniGenericLpMiniDeploy,
     DiggStabilizeMiniDeploy,
     ConvexRenBtcMiniDeploy,
@@ -59,6 +60,7 @@ def generate_sett_test_config(settsToRun, runTestSetts, runProdSetts=False):
 # ===== Sett + Strategy Test Configuration =====
 
 settsToRun = [
+    "native.unitRenBtc",
     # "native.badger",
     # "native.renCrv",
     # "native.sbtcCrv",
@@ -76,9 +78,9 @@ settsToRun = [
     # "native.pbtcCrv",
     # "native.obtcCrv",
     # "native.bbtcCrv",
-    "native.tricrypto",
-    # "helper.cvx",
-    # "helper.cvxCrv",
+    # "native.tricrypto",
+    "native.cvx",
+    "native.cvxCrv",
 ]
 
 yearnSettsToRun = [
@@ -216,6 +218,16 @@ def badger_single_sett(settConfig, deploy=True):
                 keeper=keeper,
                 governance=governance,
             ).deploy(deploy=deploy)
+        if settId == "native.unitRenBtc":
+            return UnitProtocolRenBtcMiniDeploy(
+                "native.unitRenBtc",
+                "StrategyUnitProtocolRenbtc",
+                deployer,
+                strategist=strategist,
+                guardian=guardian,
+                keeper=keeper,
+                governance=governance,
+            ).deploy(deploy=deploy)
         if settId == "native.sushiBadgerWbtc":
             return SushiBadgerWBtcMiniDeploy(
                 "native.sushiBadgerWbtc",
@@ -298,7 +310,10 @@ def badger_single_sett(settConfig, deploy=True):
                 # Base strategy params (perf/withdrawal fees)
                 sett_config.pancake.pancakeBnbBtcb,
                 # Lp pair tokens (bnb/btcb) for this strategy.
-                [registry.tokens.btcb, registry.tokens.bnb,],
+                [
+                    registry.tokens.btcb,
+                    registry.tokens.bnb,
+                ],
                 # Both want/pid are optional params and used for validation.
                 # In this case, both the lp token and pid (pool id) exist so we can pass them in.
                 want=registry.pancake.chefPairs.bnbBtcb,
@@ -433,9 +448,9 @@ def badger_single_sett(settConfig, deploy=True):
                 keeper=keeper,
                 governance=governance,
             ).deploy(deploy=deploy)
-        if settId == "helper.cvx":
+        if settId == "native.cvx":
             return HelperCvxMiniDeploy(
-                "helper.cvx",
+                "native.cvx",
                 "StrategyCvxHelper",
                 deployer,
                 strategist=strategist,
@@ -443,9 +458,9 @@ def badger_single_sett(settConfig, deploy=True):
                 keeper=keeper,
                 governance=governance,
             ).deploy(deploy=deploy)
-        if settId == "helper.cvxCrv":
+        if settId == "native.cvxCrv":
             return HelperCvxCrvMiniDeploy(
-                "helper.cvxCrv",
+                "native.cvxCrv",
                 "StrategyCvxCrvHelper",
                 deployer,
                 strategist=strategist,

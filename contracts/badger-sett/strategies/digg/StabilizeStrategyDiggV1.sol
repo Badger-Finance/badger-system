@@ -199,7 +199,7 @@ contract StabilizeStrategyDiggV1 is BaseStrategyMultiSwapper {
         return address(tokenList[_id].token);
     }
 
-    function getName() external pure override returns (string memory) {
+    function getName() external override pure returns (string memory) {
         return "StabilizeStrategyDiggV1";
     }
 
@@ -207,7 +207,7 @@ contract StabilizeStrategyDiggV1 is BaseStrategyMultiSwapper {
         return "1.0";
     }
 
-    function balanceOf() public view override returns (uint256) {
+    function balanceOf() public override view returns (uint256) {
         // This will return the DIGG and DIGG equivalent of WBTC in Digg decimals
         uint256 _diggAmount = tokenList[0].token.balanceOf(address(this));
         uint256 _wBTCAmount = tokenList[1].token.balanceOf(address(this));
@@ -238,7 +238,7 @@ contract StabilizeStrategyDiggV1 is BaseStrategyMultiSwapper {
     }
 
     /// @dev Not used
-    function balanceOfPool() public view override returns (uint256) {
+    function balanceOfPool() public override view returns (uint256) {
         return 0;
     }
 
@@ -275,20 +275,19 @@ contract StabilizeStrategyDiggV1 is BaseStrategyMultiSwapper {
         // Amount sold is split between these two biggest liquidity providers to decrease the chance of price inequities between the exchanges
         // This also helps reduce slippage and creates a higher return than using one exchange
         // Look at the total balance of the pooled tokens in Uniswap compared to the total for both exchanges
-        uint256 uniPercent =
+        uint256 uniPercent = tokenList[0]
+            .token
+            .balanceOf(address(UNISWAP_DIGG_LP))
+            .add(tokenList[1].token.balanceOf(address(UNISWAP_DIGG_LP)))
+            .mul(DIVISION_FACTOR)
+            .div(
             tokenList[0]
                 .token
                 .balanceOf(address(UNISWAP_DIGG_LP))
+                .add(tokenList[0].token.balanceOf(address(SUSHISWAP_DIGG_LP)))
                 .add(tokenList[1].token.balanceOf(address(UNISWAP_DIGG_LP)))
-                .mul(DIVISION_FACTOR)
-                .div(
-                tokenList[0]
-                    .token
-                    .balanceOf(address(UNISWAP_DIGG_LP))
-                    .add(tokenList[0].token.balanceOf(address(SUSHISWAP_DIGG_LP)))
-                    .add(tokenList[1].token.balanceOf(address(UNISWAP_DIGG_LP)))
-                    .add(tokenList[1].token.balanceOf(address(SUSHISWAP_DIGG_LP)))
-            );
+                .add(tokenList[1].token.balanceOf(address(SUSHISWAP_DIGG_LP)))
+        );
         uint256 uniAmount = _amount.mul(uniPercent).div(DIVISION_FACTOR);
         _amount = _amount.sub(uniAmount);
 
@@ -529,10 +528,9 @@ contract StabilizeStrategyDiggV1 is BaseStrategyMultiSwapper {
                     uint256 changedDiggPercent = lastDiggTotalSupply.sub(currentTotalSupply).mul(DIVISION_FACTOR).div(lastDiggTotalSupply);
 
                     // The faster the rise and the larger the negative rebase, the more that is bought
-                    uint256 sellPercent =
-                        changedDiggPercent.mul(wbtcSupplyChangeFactor.add(uint256(percentChange).mul(wbtcSellAmplificationFactor))).div(
-                            DIVISION_FACTOR
-                        );
+                    uint256 sellPercent = changedDiggPercent
+                        .mul(wbtcSupplyChangeFactor.add(uint256(percentChange).mul(wbtcSellAmplificationFactor)))
+                        .div(DIVISION_FACTOR);
                     if (sellPercent > maxWBTCSellPercent) {
                         sellPercent = maxWBTCSellPercent;
                     }

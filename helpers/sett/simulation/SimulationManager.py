@@ -207,9 +207,9 @@ class SimulationManager:
             "native.tricrypto",
         ]:
             return ConvexProvisioner(self)
-        if settId == "helper.cvx":
+        if settId == "native.cvx":
             return HelperCvxProvisioner(self)
-        if settId == "helper.cvxCrv":
+        if settId == "native.cvxCrv" :
             return HelperCvxCrvProvisioner(self)
         raise Exception(f"invalid strategy settID (no provisioner): {settId}")
 

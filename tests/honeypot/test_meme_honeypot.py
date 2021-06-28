@@ -38,7 +38,9 @@ def setup():
         honeypotLogic.address,
         badger.devProxyAdmin.address,
         honeypotLogic.initialize.encode_input(
-            honeypot_params.token, honeypot_params.amount, honeypot_params.nftIndicies,
+            honeypot_params.token,
+            honeypot_params.amount,
+            honeypot_params.nftIndicies,
         ),
         deployer,
     )
@@ -180,7 +182,12 @@ def test_claim(setup):
 
     # Try to claim with all NFTs
     memeLtd.safeTransferFrom(
-        partialA, deployer, 97, 1, "0x", {"from": partialA},
+        partialA,
+        deployer,
+        97,
+        1,
+        "0x",
+        {"from": partialA},
     )
 
     for index in honeypot_params.nftIndicies:

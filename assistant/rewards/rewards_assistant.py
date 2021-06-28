@@ -243,7 +243,11 @@ def generate_rewards_in_range(badger, startBlock, endBlock, pastRewards):
     # Sanity check new rewards file
 
     verify_rewards(
-        badger, startBlock, endBlock, pastRewards, after_file,
+        badger,
+        startBlock,
+        endBlock,
+        pastRewards,
+        after_file,
     )
 
     return {
@@ -297,7 +301,7 @@ def rootUpdater(badger, startBlock, endBlock, pastRewards, test=False):
             rewards_data["merkleTree"]["cycle"],
             rewards_data["merkleTree"]["startBlock"],
             rewards_data["merkleTree"]["endBlock"],
-            {"from": badger.keeper, "gas_price": gas_strategy},
+            {"from": badger.root_proposer, "gas_price": gas_strategy},
         )
         upload(rewards_data["contentFileName"], publish=False)
 

@@ -3,6 +3,12 @@
     "deployer": "0xDA25ee226E534d868f0Dd8a459536b03fEE9079b",
     "guardian": "0x29F7F8896Fb913CF7f9949C623F896a154727919",
     "keeper": "0x872213E29C85d7e30F1C8202FC47eD1Ec124BB1D",
+    "root_proposer": "0x68de9E2b015904530593426d934CE608e117Fa7A",
+    "root_approver": "0x626f69162ea1556a75dd4443d87d2fe38dd25901",
+    "earner": "0x46099Ffa86aAeC689D11F5D5130044Ff7082C2AD",
+    "harvester": "0x73433896620E71f7b1C72405b8D2898e951Ca4d5",
+    "external_harvester": "0x64E2286148Fbeba8BEb4613Ede74bAc7646B2A2B",
+    "rebaser": "0x10DC486A5c0d7e0315637ee5A22E54b6ECFCf676",
     "devProxyAdmin": "0x20Dce41Acca85E8222D6861Aa6D23B6C941777bF",
     "devUngatedProxyAdmin": "0x9215cBDCDe25629d0e3D69ee5562d1b444Cf69F9",
     "opsProxyAdmin": "0x4599f2913a3db4e73aa77a304ccc21516dd7270d",
@@ -83,7 +89,9 @@
         "StabilizeDiggSett": "0x3ee8ECEF1c5D6B924a03A32eFF4233d3dE5190E5",
         "DiggTreasury": "0x132069EA2E57b44C53C60697FD37453Afcae2708",
         "StrategyConvexLpOptimizer": "0xAB10f878bD27ae01DF36Ba645E458f7dbca7AA46",
-        "StrategyConvexStakingOptimizer" :"0xa0FC97f346f61e955c5E6Bdaa442c14333968aa4"
+        "StrategyConvexStakingOptimizer" :"0xa0FC97f346f61e955c5E6Bdaa442c14333968aa4",
+        "StrategyCvxHelper": "0xf923e3f19350F27dD935442E9a2020e5De088072",
+        "StrategyCvxCrvHelper": "0x0A91870062286382f45527b5577dA0F3546120D4"
     },
     "dao": {
         "token": "0x3472A5A71965499acd81997a54BBA8D852C6E53d",
@@ -163,7 +171,9 @@
             "native.pbtcCrv": "0x1c1fd689103bbfd701b3b7d41a3807f12814033d",
             "native.obtcCrv": "0x2bb864cdb4856ab2d148c5ca52dd7ccec126d138",
             "native.bbtcCrv": "0x4f3e7a4566320b2709fd1986f2e9f84053d3e2a0",
-            "native.tricrypto": "0x05ec4356e1acd89cc2d16adc7415c8c95e736ac1"
+            "native.tricrypto": "0x05ec4356e1acd89cc2d16adc7415c8c95e736ac1",
+            "native.cvxCrv": "0x826048381d65a65DAa51342C51d464428d301896",
+            "native.cvx": "0xBCee2c6CfA7A4e29892c3665f464Be5536F16D95"
         },
         "strategies_registry": {
             "native.renCrv": {
@@ -210,7 +220,9 @@
             "native.pbtcCrv": "StrategyConvexStakingOptimizer",
             "native.obtcCrv": "StrategyConvexStakingOptimizer",
             "native.bbtcCrv": "StrategyConvexStakingOptimizer",
-            "native.tricrypto": "StrategyConvexStakingOptimizer"
+            "native.tricrypto": "StrategyConvexStakingOptimizer",
+            "native.cvxCrv": "StrategyCvxCrvHelper",
+            "native.cvx": "StrategyCvxHelper"
         },
         "rewards": {
             "native.badger": "0xBD9c69654B8F3E5978DFd138B00cB0Be29F28cCf",
@@ -219,6 +231,10 @@
             "native.digg": "0xec48D3eD49432FFE64f39b6EB559d0fa7AC9cc90",
             "native.uniDiggWbtc": "0xB45e51485ff078E85D9fF29c3AC0CbD9351cEBb1",
             "native.sushiDiggWbtc": "0xF2E434772FC12705E823B2683703ee6cd8d19744"
+        },
+        "guestLists": {
+            "experimental.digg": "0x28E07714500Bc44f3F324e4Cfcffb0E9358EC41C",
+            "experimental.renBtc": "0x9FC48e61B6a75eE263ca160aCF3288A99238719E"
         }
     },
     "uniBadgerWbtcLp": "0xcD7989894bc033581532D2cd88Da5db0A4b12859",
@@ -256,7 +272,9 @@
         "native.pbtcCrv": "0xbde7bd6a4da5c972532ad8a973deb67d36be8d35",
         "native.obtcCrv": "0x2999537a71db9d79587ca35033cd0fa08c3c49dd",
         "native.bbtcCrv": "0x62cc514824b080707ffc0b0f64f992f38b974f9d",
-        "native.tricrypto": "0xeaeA3712DC74d9166365004aF85e7F65f942E316"
+        "native.tricrypto": "0xeaeA3712DC74d9166365004aF85e7F65f942E316",
+        "native.cvxCrv": "0x4b10351cD95A65c98a95B84729de6Af7DeC913Dd",
+        "native.cvx": "0xBcD8bA681881650c1A10471227892Ed223FFB276"
     },
     "digg_system": {
         "owner": "0xDA25ee226E534d868f0Dd8a459536b03fEE9079b",

@@ -338,7 +338,6 @@ contract StrategyConvexStakingOptimizer is BaseStrategy, CurveSwapper, UniswapSw
         if (_preWant < _amount) {
             uint256 _toWithdraw = _amount.sub(_preWant);
             baseRewardsPool.withdrawAndUnwrap(_toWithdraw, false);
-            // Note: Withdrawl process will earn sushi, this will be deposited into SushiBar on next tend()
         }
 
         // Confirm how much want we actually end up with
@@ -393,7 +392,6 @@ contract StrategyConvexStakingOptimizer is BaseStrategy, CurveSwapper, UniswapSw
         
         // 4. Stake all CVX
         if (tendData.cvxTended > 0) {
-            cvxToken.approve(address(cvxRewardsPool), MAX_UINT_256);
             cvxRewardsPool.stake(cvxToken.balanceOf(address(this)));
         }
 

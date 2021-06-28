@@ -44,6 +44,30 @@ def deploy_strategy(
     console.print("Deploy Strategy " + strategyName)
     console.log(params)
 
+    if strategyName == "StrategyUnitProtocolRenbtc":
+        return deploy_proxy(
+            "StrategyUnitProtocolRenbtc",
+            StrategyUnitProtocolRenbtc.abi,
+            badger.logic.StrategyUnitProtocolRenbtc.address,
+            proxyAdmin.address,
+            badger.logic.StrategyUnitProtocolRenbtc.initialize.encode_input(
+                governance,
+                strategist,
+                controller,
+                keeper,
+                guardian,
+                [
+                    params.want,
+                ],
+                [
+                    params.performanceFeeGovernance,
+                    params.performanceFeeStrategist,
+                    params.withdrawalFee,
+                    params.keepCRV,
+                ],
+            ),
+            deployer,
+        )
     if strategyName == "StrategyCurveGaugeRenBtcCrv":
         return deploy_proxy(
             "StrategyCurveGaugeRenBtcCrv",
@@ -140,7 +164,10 @@ def deploy_strategy(
                 controller,
                 keeper,
                 guardian,
-                [params.want, params.geyser,],
+                [
+                    params.want,
+                    params.geyser,
+                ],
                 [
                     params.performanceFeeGovernance,
                     params.performanceFeeStrategist,
@@ -161,7 +188,10 @@ def deploy_strategy(
                 controller,
                 keeper,
                 guardian,
-                [params.want, params.badgerTree,],
+                [
+                    params.want,
+                    params.badgerTree,
+                ],
                 params.pid,
                 [
                     params.performanceFeeGovernance,
@@ -295,7 +325,12 @@ def deploy_strategy(
                 controller,
                 keeper,
                 guardian,
-                [params.want, params.geyser, params.token, params.badgerTree,],
+                [
+                    params.want,
+                    params.geyser,
+                    params.token,
+                    params.badgerTree,
+                ],
                 params.pid,
                 [
                     params.performanceFeeGovernance,
@@ -317,7 +352,11 @@ def deploy_strategy(
                 controller,
                 keeper,
                 guardian,
-                [params.want, params.geyser, params.token,],
+                [
+                    params.want,
+                    params.geyser,
+                    params.token,
+                ],
                 [
                     params.performanceFeeGovernance,
                     params.performanceFeeStrategist,
@@ -338,7 +377,11 @@ def deploy_strategy(
                 controller,
                 badger.keeper,
                 badger.guardian,
-                [params.want, params.token0, params.token1,],
+                [
+                    params.want,
+                    params.token0,
+                    params.token1,
+                ],
                 [
                     params.performanceFeeGovernance,
                     params.performanceFeeStrategist,
@@ -360,8 +403,12 @@ def deploy_strategy(
                 controller,
                 badger.keeper,
                 badger.guardian,
-                [params.want,],
-                [params.withdrawalFee,],
+                [
+                    params.want,
+                ],
+                [
+                    params.withdrawalFee,
+                ],
             ),
             badger.deployer,
         )
@@ -377,7 +424,11 @@ def deploy_strategy(
                 controller,
                 badger.keeper,
                 badger.guardian,
-                [params.want, params.token0, params.token1,],
+                [
+                    params.want,
+                    params.token0,
+                    params.token1,
+                ],
                 [
                     params.performanceFeeGovernance,
                     params.performanceFeeStrategist,
@@ -475,7 +526,7 @@ def deploy_controller(
     if not keeper:
         keeper = badger.keeper
     if not rewards:
-        rewards = badger.dao.agent
+        rewards = badger.keeper
     if not proxyAdmin:
         proxyAdmin = badger.devProxyAdmin
 
