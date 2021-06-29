@@ -8,6 +8,7 @@ from tests.conftest import badger_single_sett, settTestConfig
 from tests.helpers import distribute_from_whales, getTokenMetadata
 from tests.test_recorder import EventRecord, TestRecorder
 from rich.console import Console
+import time
 
 console = Console()
 
@@ -144,6 +145,8 @@ def test_voterproxy_loan(settConfig):
     voterproxy = badger.mstable.voterproxy
 
     badgerGovernance = accounts.at(badger.mstable.voterproxy.badgerGovernance(), force=True)
+    dualGovernance = accounts.at(badger.mstable.voterproxy.governance(), force=True)
+    proxyKeeper = accounts.at(badger.mstable.voterproxy.keeper(), force=True)
     settKeeper = accounts.at(sett.keeper(), force=True)
     strategyKeeper = accounts.at(strategy.keeper(), force=True)
 
@@ -171,6 +174,23 @@ def test_voterproxy_loan(settConfig):
 
     chain.sleep(days(1))
     chain.mine()
+
+    # == Lock is created on the VoterProxy == #
+    # Set unlock time to current time + 3 months
+    unlockTime = int(time.time()) + 7549264
+    print("unlockTime: ", unlockTime)
+    tx = voterproxy.createLock(unlockTime, {"from": dualGovernance})
+
+    assert tx.events["LockCreated"][0]["amt"] == mtaBalance
+    assert tx.events["LockCreated"][0]["unlockTime"] == unlockTime
+
+    # == harvestMta == #
+    tx = voterproxy.harvestMta({"from": proxyKeeper})
+    print(tx.events["MtaHarvested"][0])
+
+    chain.sleep(days(2))
+    chain.mine()
+
 
     # == Deposit -> Earn -> Harvest -> Withdraw flow == #
 
@@ -201,9 +221,31 @@ def test_voterproxy_loan(settConfig):
     # Withdraw
     snap.settWithdraw(depositAmount // 2, {"from": deployer})
 
+    chain.sleep(days(186))
+    chain.mine()
+
+    # Harvest
+    snap.settHarvest({"from": strategyKeeper})
+
     chain.sleep(days(2))
     chain.mine()
 
+    # Withdraw
+    snap.settWithdraw(depositAmount // 2, {"from": deployer})
+
+    chain.sleep(days(2))
+    chain.mine()
+
+    # == Exit lock == #
+    voterproxy.exitLock({"from": badgerGovernance})
+    print("mta balance post lock: ", mta.balanceOf(voterproxy.address))
+
+    # == harvestMta == #
+    tx = voterproxy.harvestMta({"from": proxyKeeper})
+    print(tx.events["MtaHarvested"][0])
+
+    chain.sleep(days(2))
+    chain.mine()
 
     # == Full loan is repayed to Deployer == #
     voterproxy.repayLoan(deployer.address, {"from": badgerGovernance})
