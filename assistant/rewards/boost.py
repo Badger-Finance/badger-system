@@ -95,6 +95,10 @@ def filter_dust(balances):
     return UserBalances(list(filter(lambda user: user.balance > 1, balances)))
 
 
+def chunk(l,n):
+    n = max(1, n)
+    return (l[i:i+n] for i in range(0, len(l), n))
+
 def badger_boost(badger, pastRewards, currentBlock):
 
     console.log("Calculating boost ...")
@@ -124,11 +128,16 @@ def badger_boost(badger, pastRewards, currentBlock):
         prices[BADGER], prices[DIGG], badger.digg, currentBlock
     )
     console.log("Fetching Claimable Balances")
-    console.log(len(nonNativeSetts))
-    for index,user in enumerate(nonNativeSetts):
-        addr = user.address
-        console.log(index,addr)
-        claimableBalances = fetch_claimable_balances(addr)
+    chunked_addresses = chunk(list(nonNativeSetts.userBalances.keys()) , 200)
+    claimableData = {}
+    for addr_list in chunked_addresses:
+        console.log("{} claims fetched".format(len(addr_list)))
+        claimableData = {**claimableData,**fetch_claimable_balances(addr_list)}
+    
+    claimableData = {k:v for k,v in claimableData.items() if len(v) > 0}
+    console.log(len(claimableData))
+
+    for addr, claimableBalances in claimableData.items():
         claimableBadger = 0
         claimableDigg = 0
 
@@ -141,14 +150,11 @@ def badger_boost(badger, pastRewards, currentBlock):
         claimableBadger *= prices[BADGER]
         claimableDigg *= prices[DIGG]
 
-        if claimableBadger > 0 or claimableDigg > 0:
-            console.log("{} {} {}".format(addr, claimableBadger, claimableDigg))
+        currentBadger = badger_wallet_balances.get(addr.lower(), 0)
+        currentDigg = digg_wallet_balances.get(addr.lower(), 0)
 
-            currentBadger = badger_wallet_balances.get(addr.lower(), 0)
-            currentDigg = digg_wallet_balances.get(addr.lower(), 0)
-
-            badger_wallet_balances[addr] = currentBadger + claimableBadger
-            digg_wallet_balances[addr] = currentDigg + claimableDigg
+        badger_wallet_balances[addr] = currentBadger + claimableBadger
+        digg_wallet_balances[addr] = currentDigg + claimableDigg
 
     console.log(
         "{} Badger balances fetched, {} Digg balances fetched".format(
