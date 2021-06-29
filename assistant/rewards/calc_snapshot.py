@@ -49,12 +49,18 @@ def calc_snapshot(
             
             boostAmount = boosts.get(user.address, 1)
             if 1 <= boostAmount < 1.5:
-                boostPower = 1
+                boostPower = 1.0
             elif 1.5 <= boostAmount < 2:
-                boostPower = 2
+                boostPower = 2.1
             elif 2 <= boostAmount < 2.5:
+                boostPower = 2.4
+            elif 2.5 <= boostAmount < 2.70:
+                boostPower = 2.7
+            elif 2.70 <= boostAmount < 2.90:
                 boostPower = 3
-            elif 2.5 <= boostAmount < 3:
+            elif 2.90 <= boostAmount < 2.98:
+                boostPower = 3.3
+            elif 2.98 <= boostAmount <= 3:
                 boostPower = 4
                 
             user.boost_balance(math.pow(boostAmount,boostPower))
