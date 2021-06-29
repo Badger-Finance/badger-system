@@ -387,7 +387,7 @@ contract StrategyConvexStakingOptimizer is BaseStrategy, CurveSwapper, UniswapSw
         }
         
         if (cvxRewardsPool.earned(address(this)) > 0) {
-            cvxRewardsPool.getReward(true);
+            cvxRewardsPool.getReward(false);
         }
     }
 
@@ -433,10 +433,12 @@ contract StrategyConvexStakingOptimizer is BaseStrategy, CurveSwapper, UniswapSw
         HarvestData memory harvestData;
 
         uint256 idleWant = IERC20Upgradeable(want).balanceOf(address(this));
+        uint256 totalWantBefore = balanceOf();
         
         // TODO: Harvest details still under constructuion. It's being designed to optimize yield while still allowing on-demand access to profits for users.
 
         // 1. Withdraw accrued rewards from staking positions (claim unclaimed positions as well)
+        baseRewardsPool.getReward(address(this), true);
         cvxCrvRewardsPool.withdraw(cvxCrvRewardsPool.balanceOf(address(this)), true);
         cvxRewardsPool.withdraw(cvxRewardsPool.balanceOf(address(this)), true);
 
@@ -548,6 +550,9 @@ contract StrategyConvexStakingOptimizer is BaseStrategy, CurveSwapper, UniswapSw
 
             emit TreeDistribution(address(cvxHelperVault), treeVaultPositionGained, block.number, block.timestamp);
         }
+
+        uint256 totalWantAfter = balanceOf();
+        require(totalWantAfter >= totalWantBefore, "harvest-total-want-must-not-decrease");
 
         return harvestData;
     }
