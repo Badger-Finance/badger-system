@@ -174,7 +174,6 @@ contract MStableVoterProxy is IMStableVoterProxy, PausableUpgradeable, SettAcces
     /// @param _newRate Scaled pct of earnings to redistribute to strategies, where 100% = 10000
     function changeRedistributionRate(uint256 _newRate) external override {
         _onlyGovernors();
-        
         require(_newRate < MAX_RATE, "Invalid rate");
 
         redistributionRate = _newRate;

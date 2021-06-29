@@ -11,4 +11,4 @@ from .CurveGaugeProvisioner import CurveGaugeProvisioner
 from .SushiClawUSDCProvisioner import SushiClawUSDCProvisioner
 from .PancakeBnbBtcbProvisioner import PancakeBnbBtcbProvisioner
 from .WbtcIbBtcLpProvisioner import WbtcIbBtcLpProvisioner
-from .MStableVaultImbtcProvisioner import MStableVaultImbtcProvisioner
+from .StrategyMStableVaultProvisioner import StrategyMStableVaultProvisioner

@@ -4,9 +4,10 @@ from config.badger_config import badger_config, sett_config
 from scripts.systems.mstable_system import MStableSystem
 from helpers.constants import AddressZero
 from helpers.registry import registry
-from brownie import MStableVoterProxy, Wei, accounts
+from brownie import *
 from dotmap import DotMap
 from scripts.systems.constants import SettType
+from helpers.proxy_utils import deploy_proxy
 
 
 class MStableFpMbtcHbtcMiniDeploy(SettMiniDeployBase):
@@ -67,21 +68,40 @@ class MStableFpMbtcHbtcMiniDeploy(SettMiniDeployBase):
                 guardian=self.guardian,
                 sett_type=SettType.DEFAULT,
             )
-            print("Deploying Strategy with key: ", self.key)
-            self.strategy = self.badger.deploy_strategy(
-                self.key,
-                self.strategyName,
-                self.controller,
-                self.params,
-                governance=self.governance,
-                strategist=self.strategist,
-                keeper=self.keeper,
-                guardian=self.guardian,
+            contract = StrategyMStableVaultFpMbtcHbtc.deploy({"from": self.deployer})
+            self.strategy = deploy_proxy(
+                "StrategyMStableVaultFpMbtcHbtc",
+                StrategyMStableVaultFpMbtcHbtc.abi,
+                contract.address,
+                web3.toChecksumAddress(self.badger.devProxyAdmin.address),
+                contract.initialize.encode_input(
+                    self.governance.address,
+                    self.strategist.address,
+                    self.controller.address,
+                    self.keeper.address,
+                    self.guardian.address,
+                    [
+                        params.want,
+                        params.vault,
+                        self.badger.mstable.voterproxy.address,
+                        params.lpComponent,
+                        params.badgerTree,
+                    ],
+                    [
+                        params.performanceFeeGovernance,
+                        params.performanceFeeStrategist,
+                        params.withdrawalFee,
+                        params.govMta,
+                    ],
+                ),
+                self.deployer,
             )
+
+            self.badger.sett_system.strategies[self.key] = self.strategy
 
             self.badger.wire_up_sett(self.vault, self.strategy, self.controller)
 
-        # Deploy VoterProxy
+        # Add strat to voterproxy
         self.mstable.voterproxy.supportStrategy(
             self.strategy.address, 
             registry.mstable.pools.fPmBtcHBtc.vault,
@@ -91,5 +111,7 @@ class MStableFpMbtcHbtcMiniDeploy(SettMiniDeployBase):
         # Add final state of mstable system to badger system
         self.badger.mstable = self.mstable
 
-        # Distribute tokens from whales to deployer (including mBtcHBtc, imbtc & mta)
-        distribute_from_whales(self.deployer, 1)
+        # Only for local testing
+        if deploy:
+            # Distribute tokens from whales to deployer (including fPmBtcHBtc, imbtc & mta)
+            distribute_from_whales(self.deployer, 1)
