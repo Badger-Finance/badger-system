@@ -8,9 +8,8 @@ from helpers.constants import BADGER, DIGG
 from helpers.digg_utils import diggUtils
 from collections import OrderedDict
 from assistant.rewards.rewards_utils import combine_balances, calculate_sett_balances
-from assistant.badger_api.prices import (
-    fetch_token_prices,
-)
+from assistant.badger_api.prices import fetch_token_prices
+from assistant.badger_api.account import fetch_claimable_balances
 
 from assistant.rewards.classes.UserBalance import UserBalance, UserBalances
 from assistant.rewards.nfts import calc_nft_multipliers
@@ -19,9 +18,6 @@ boostInfo = {}
 prices = fetch_token_prices()
 console = Console()
 MAX_MULTIPLIER = 3
-
-
-#badgerTree = Contract.from_explorer("0x660802Fc641b154aBA66a62137e71f331B6d787A")
 
 
 def add_boost_info(balances, name):
@@ -127,31 +123,32 @@ def badger_boost(badger, pastRewards, currentBlock):
     badger_wallet_balances, digg_wallet_balances = fetch_wallet_balances(
         prices[BADGER], prices[DIGG], badger.digg, currentBlock
     )
-    # for addr, claimData in pastRewards["claims"].items():
-    #     tokens = claimData["tokens"]
-    #     amounts = claimData["cumulativeAmounts"]
+    console.log("Fetching Claimable Balances")
+    console.log(len(nonNativeSetts))
+    for index,user in enumerate(nonNativeSetts):
+        addr = user.address
+        console.log(index,addr)
+        claimableBalances = fetch_claimable_balances(addr)
+        claimableBadger = 0
+        claimableDigg = 0
 
-    #     claimableBadger = 0
-    #     claimableDigg = 0
+        for cb in claimableBalances:
+            if cb["address"] == BADGER:
+                claimableBadger = cb["balance"]/1e18
+            if cb["address"] == DIGG:
+                claimableDigg = diggUtils.sharesToFragments(cb["balance"])/1e9
 
-    #     tokens, amounts = badgerTree.getClaimableFor(addr, tokens, amounts)
-    #     if BADGER in tokens:
-    #         badgerAmount = float(amounts[tokens.index(BADGER)])
-    #         claimableBadger = float(badgerAmount) / 1e18
-    #     if DIGG in tokens:
-    #         diggAmount = float(amounts[tokens.index(DIGG)])
-    #         claimableDigg = diggUtils.sharesToFragments(diggAmount) / 1e9
+        claimableBadger *= prices[BADGER]
+        claimableDigg *= prices[DIGG]
 
-    #     claimableBadger *= prices[BADGER]
-    #     claimableDigg *= prices[DIGG]
+        if claimableBadger > 0 or claimableDigg > 0:
+            console.log("{} {} {}".format(addr, claimableBadger, claimableDigg))
 
-    #     console.log("{} {} {}".format(addr, claimableBadger, claimableDigg))
+            currentBadger = badger_wallet_balances.get(addr.lower(), 0)
+            currentDigg = digg_wallet_balances.get(addr.lower(), 0)
 
-    #     currentBadger = badger_wallet_balances.get(addr.lower(), 0)
-    #     currentDigg = digg_wallet_balances.get(addr.lower(), 0)
-
-    #     badger_wallet_balances[addr] = currentBadger + claimableBadger
-    #     digg_wallet_balances[addr] = currentDigg + claimableDigg
+            badger_wallet_balances[addr] = currentBadger + claimableBadger
+            digg_wallet_balances[addr] = currentDigg + claimableDigg
 
     console.log(
         "{} Badger balances fetched, {} Digg balances fetched".format(
@@ -222,4 +219,4 @@ def badger_boost(badger, pastRewards, currentBlock):
         if stakeRatios[addr] == 0:
             badgerBoost[addr] = 1
 
-    return badgerBoost, stakeRatios, nftMultipliers,boostInfo
+    return badgerBoost, stakeRatios, nftMultipliers, boostInfo
