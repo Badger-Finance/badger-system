@@ -9,6 +9,7 @@ from tests.helpers import distribute_from_whales, getTokenMetadata
 from tests.test_recorder import EventRecord, TestRecorder
 from rich.console import Console
 import time
+from helpers.utils import approx
 
 console = Console()
 
@@ -229,8 +230,22 @@ def test_voterproxy_loan(settConfig):
 
 
     # == harvestMta == #
+    stratBalanceBefore = mta.balanceOf(strategy.address)
     tx = voterproxy.harvestMta({"from": proxyKeeper})
     print(tx.events["MtaHarvested"][0])
+
+    # Redistribution rate set to 80%
+    assert approx(
+        int(tx.events["MtaHarvested"][0]["distributed"]), 
+        int(tx.events["MtaHarvested"][0]["harvested"])*0.8, 
+        1
+    )
+    # Full amount transfer to strategy as it is the only strategy set on VoterProxy
+    assert approx(
+        mta.balanceOf(strategy.address),
+        stratBalanceBefore + int(tx.events["MtaHarvested"][0]["distributed"]),
+        1
+    )
 
     # Chain sleeps for 3 months
     chain.sleep(days(93))
