@@ -137,19 +137,23 @@ def badger_boost(badger, currentBlock):
     )
 
     for addr in allAddresses:
-        boostInfo[addr] = {"nativeBalance": 0, "nonNativeBalance": 0, "stakeRatio": 0}
+        boostInfo[addr.lower()] = {
+            "nativeBalance": 0,
+            "nonNativeBalance": 0,
+            "stakeRatio": 0,
+        }
 
     for user in badgerSetts:
-        boostInfo[user.address]["nativeBalance"] += user.balance
+        boostInfo[user.address.lower()]["nativeBalance"] += user.balance
 
     for user in diggSetts:
-        boostInfo[user.address]["nativeBalance"] += user.balance
+        boostInfo[user.address.lower()]["nativeBalance"] += user.balance
 
     for user in nonNativeSetts:
-        boostInfo[user.address]["nonNativeBalance"] += user.balance
+        boostInfo[user.address.lower()]["nonNativeBalance"] += user.balance
 
     for addr, ratio in stakeRatios.items():
-        boostInfo[addr]["stakeRatio"] = ratio
+        boostInfo[addr.lower()]["stakeRatio"] = ratio
 
     sortedNonNative = UserBalances(
         sorted(

@@ -71,9 +71,9 @@ def calc_sett_rewards(badger, periodStartBlock, endBlock, cycle):
         boostsMetadata["userData"][addr] = {
             "boost": boosts.get(addr, 1),
             "multipliers": multipliers,
-            "nonNativeBalance": boostInfo.get("nonNativeBalance", 0),
-            "nativeBalance": boostInfo.get("nativeBalance", 0),
-            "stakeRatio": boostInfo.get("stakeRatio", 0),
+            "nonNativeBalance": boostInfo.get(addr, {}).get("nonNativeBalance", 0),
+            "nativeBalance": boostInfo.get(addr, {}).get("nativeBalance", 0),
+            "stakeRatio": boostInfo.get(addr, {}).get("stakeRatio", 0),
         }
 
     with open("badger-boosts.json", "w") as fp:
