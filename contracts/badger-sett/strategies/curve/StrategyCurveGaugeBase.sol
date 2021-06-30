@@ -15,9 +15,9 @@ import "interfaces/uniswap/IUniswapRouterV2.sol";
 import "interfaces/badger/IController.sol";
 import "interfaces/badger/IMintr.sol";
 import "interfaces/badger/IStrategy.sol";
-import "../BaseStrategy.sol";
+import "../BaseStrategySwapper.sol";
 
-contract StrategyCurveGaugeBase is BaseStrategy {
+contract StrategyCurveGaugeBase is BaseStrategyMultiSwapper {
     using SafeERC20Upgradeable for IERC20Upgradeable;
     using AddressUpgradeable for address;
     using SafeMathUpgradeable for uint256;
@@ -94,7 +94,7 @@ contract StrategyCurveGaugeBase is BaseStrategy {
         return ICurveGauge(gauge).balanceOf(address(this));
     }
 
-    function getProtectedTokens() external override view returns (address[] memory) {
+    function getProtectedTokens() public override view returns (address[] memory) {
         address[] memory protectedTokens = new address[](3);
         protectedTokens[0] = want;
         protectedTokens[1] = lpComponent;
@@ -204,7 +204,6 @@ contract StrategyCurveGaugeBase is BaseStrategy {
 
     function _processPerformanceFees(uint256 _amount) internal returns (uint256 governancePerformanceFee, uint256 strategistPerformanceFee) {
         governancePerformanceFee = _processFee(want, _amount, performanceFeeGovernance, IController(controller).rewards());
-
         strategistPerformanceFee = _processFee(want, _amount, performanceFeeStrategist, strategist);
     }
 }

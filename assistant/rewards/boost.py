@@ -17,7 +17,7 @@ prices = fetch_token_prices()
 console = Console()
 
 
-def convert_balances_to_usd(sett,name, userBalances):
+def convert_balances_to_usd(sett, name, userBalances):
     tokenAddress = sett.address
     price = prices[tokenAddress]
     decimals = interface.IERC20(tokenAddress).decimals()

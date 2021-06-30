@@ -28,6 +28,7 @@ MAX_BOOST = 3
 DIGG_SETTS = ["native.uniDiggWbtc", "native.sushiDiggWbtc", "native.digg"]
 BADGER_SETTS = ["native.badger", "native.uniBadgerWbtc", "native.sushiBadgerWbtc"]
 NATIVE_DIGG_SETTS = ["native.uniDiggWbtc", "native.sushiDiggWbtc"]
+
 NON_NATIVE_SETTS = [
     "native.renCrv",
     "native.sbtcCrv",
@@ -36,6 +37,26 @@ NON_NATIVE_SETTS = [
     "harvest.renCrv",
     "yearn.wbtc",
     "experimental.sushiIBbtcWbtc",
+    "native.hbtcCrv",
+    "native.pbtcCrv",
+    "native.obtcCrv",
+    "native.bbtcCrv",
+    "native.tricrypto",
+    "native.crvCvx",
+    "native.cvx",
+]
+
+NO_GEYSERS = [
+    "native.digg",
+    "experimental.sushiIBbtcWbtc",
+    "experimental.digg",
+    "native.hbtcCrv",
+    "native.pbtcCrv",
+    "native.obtcCrv",
+    "native.bbtcCrv",
+    "native.tricrypto",
+    "native.cvxCrv",
+    "native.cvx",
 ]
 
 SETT_BOOST_RATIOS = {
@@ -51,5 +72,14 @@ SETT_BOOST_RATIOS = {
     "harvest.renCrv": 1,
     "native.sushiWbtcEth": 1,
     "yearn.wbtc": 1,
-    "experimental.sushiIBbtcWbtc": 1
+    "experimental.sushiIBbtcWbtc": 1,
+    "native.hbtcCrv": 1,
+    "native.pbtcCrv": 1,
+    "native.obtcCrv": 1,
+    "native.bbtcCrv": 1,
+    "native.tricrypto": 1,
+    "native.cvxCrv": 0.5,
+    "native.cvx": 0.5,
 }
+
+CONVEX_SETTS = ["native.hbtcCrv", "native.pbtcCrv", "native.obtcCrv", "native.bbtcCrv"]

@@ -26,6 +26,7 @@ class ChainRegistry:
         yearn=None,
         aave=None,
         compound=None,
+        chainlink=None,
         defidollar=None,
         mstable=None,
         digg=None
@@ -52,6 +53,8 @@ class ChainRegistry:
         self.defidollar = defidollar
         self.mstable=mstable
         self.digg = digg
+        self.chainlink = chainlink
+
     def yearn_system(self) -> YearnSystem:
         if self.yearn == None:
             raise Exception("No yearn system registered")

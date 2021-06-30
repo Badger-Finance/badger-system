@@ -33,7 +33,6 @@ def harvest_all(badger: BadgerSystem, skip, min_profit=0):
 
         snap = SnapshotManager(badger, key)
         strategy = badger.getStrategy(key)
-        keeper = accounts.at(badger.keeper)
 
         before = snap.snap()
         if strategy.keeper() == badger.badgerRewardsManager:
@@ -51,6 +50,10 @@ def harvest_all(badger: BadgerSystem, skip, min_profit=0):
         else:
             estimated_profit = snap.estimateProfitHarvest(
                 key, {"from": keeper, "gas_limit": 2000000, "allow_revert": True}
+            keeper = accounts.at(strategy.keeper())
+            snap.settHarvest(
+                {"from": keeper, "gas_limit": 2000000, "allow_revert": True},
+                confirm=False,
             )
             if estimated_profit >= min_profit:
                 snap.settHarvest(

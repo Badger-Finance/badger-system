@@ -52,11 +52,7 @@ def get_average_daily_price(file):
         wbtcPerDigg = wbtcBal / diggBal
         locals()
         console.print(
-            {
-                "wbtcBal": wbtcBal,
-                "diggBal": diggBal,
-                "wbtcPerDigg": wbtcPerDigg,
-            }
+            {"wbtcBal": wbtcBal, "diggBal": diggBal, "wbtcPerDigg": wbtcPerDigg,}
         )
         price_points.append(wbtcPerDigg)
 

@@ -17,9 +17,7 @@ def deploy_proxy_admin(deployer):
     tx = deployer.transfer(data=deploy_txn["data"])
 
     return Contract.from_abi(
-        "ProxyAdmin",
-        web3.toChecksumAddress(tx.contract_address),
-        abi,
+        "ProxyAdmin", web3.toChecksumAddress(tx.contract_address), abi,
     )
 
 
@@ -54,5 +52,5 @@ def deploy_proxy(
 
     tx = deployer.transfer(data=deploy_txn["data"])
 
-    print("Deployng contract:", contractName, "address:", tx.contract_address)
+    print("Deploying contract:", contractName, "address:", tx.contract_address)
     return Contract.from_abi(contractName, tx.contract_address, logicAbi)

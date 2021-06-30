@@ -1,4 +1,5 @@
 from assistant.subgraph.config import subgraph_config
+from helpers.constants import CONVEX_SETTS
 from brownie import interface
 from rich.console import Console
 from gql import gql, Client
@@ -41,6 +42,7 @@ def fetch_sett_balances(key, settId, startBlock):
     balances = {}
     while True:
         variables["lastBalanceId"] = {"id_gt": lastBalanceId}
+
         results = sett_client.execute(query, variable_values=variables)
         if len(results["vaults"]) == 0:
             return {}
@@ -178,8 +180,7 @@ def fetch_sett_transfers(settID, startBlock, endBlock):
 
     deposits = map(convert_amount, results["vaults"][0]["deposits"])
     withdrawals = map(
-        negate_withdrawals,
-        map(convert_amount, results["vaults"][0]["withdrawals"]),
+        negate_withdrawals, map(convert_amount, results["vaults"][0]["withdrawals"]),
     )
 
     deposits = list(filter(filter_by_startBlock, list(deposits)))
@@ -188,8 +189,7 @@ def fetch_sett_transfers(settID, startBlock, endBlock):
     console.log("Processing {} withdrawals".format(len((withdrawals))))
 
     return sorted(
-        [*deposits, *withdrawals],
-        key=lambda t: t["transaction"]["timestamp"],
+        [*deposits, *withdrawals], key=lambda t: t["transaction"]["timestamp"],
     )
 
 
