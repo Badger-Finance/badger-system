@@ -108,7 +108,10 @@ def rapid_harvest(badger):
         rewards.getDistributions(key).getToStakingRewardsDaily("digg")
     )
     transfer_for_strategy(
-        badger, key, diggBaseRewards, decimals=9,
+        badger,
+        key,
+        diggBaseRewards,
+        decimals=9,
     )
 
 

@@ -60,7 +60,7 @@ def generate_sett_test_config(settsToRun, runTestSetts, runProdSetts=False):
 # ===== Sett + Strategy Test Configuration =====
 
 settsToRun = [
-    "native.unitRenBtc",
+    # "native.unitRenBtc",
     # "native.badger",
     # "native.renCrv",
     # "native.sbtcCrv",
@@ -74,13 +74,13 @@ settsToRun = [
     # "native.convexRenCrv",
     # "native.convexSbtcCrv",
     # "native.convexTbtcCrv",
-    # "native.hbtcCrv",
+    "native.hbtcCrv",
     # "native.pbtcCrv",
     # "native.obtcCrv",
     # "native.bbtcCrv",
     # "native.tricrypto",
-    "native.cvx",
-    "native.cvxCrv",
+    # "native.cvx",
+    # "native.cvxCrv",
 ]
 
 yearnSettsToRun = [

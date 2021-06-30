@@ -89,8 +89,8 @@
         "StabilizeDiggSett": "0x3ee8ECEF1c5D6B924a03A32eFF4233d3dE5190E5",
         "DiggTreasury": "0x132069EA2E57b44C53C60697FD37453Afcae2708",
         "StrategyConvexLpOptimizer": "0xAB10f878bD27ae01DF36Ba645E458f7dbca7AA46",
-        "StrategyConvexStakingOptimizer": "0xa0FC97f346f61e955c5E6Bdaa442c14333968aa4",
-        "StrategyCvxHelper": "0xf923e3f19350F27dD935442E9a2020e5De088072",
+        "StrategyConvexStakingOptimizer" :"0xAF0B504BD20626d1fd57F8903898168FCE7ecbc8",
+        "StrategyCvxHelper": "0x831BeEaDfC5F4e7D9ecEa045066588824be6EbAa",
         "StrategyCvxCrvHelper": "0x0A91870062286382f45527b5577dA0F3546120D4"
     },
     "dao": {
@@ -155,9 +155,9 @@
         },
         "strategies": {
             "native.badger": "0x75b8E21BD623012Efb3b69E1B562465A68944eE6",
-            "native.renCrv": "0x444B860128B7Bf8C0e864bDc3b7a36a940db7D88",
-            "native.sbtcCrv": "0x3Efc97A8e23f463e71Bf28Eb19690d097797eb17",
-            "native.tbtcCrv": "0xE2fA197eAA5C726426003074147a08beaA59403B",
+            "native.renCrv": "0x6582a5b139fc1c6360846efdc4440d51aad4df7b",
+            "native.sbtcCrv": "0xf1ded284e891943b3e9c657d7fc376b86164ffc2",
+            "native.tbtcCrv": "0x522bb024c339a12be1a47229546f288c40b62d29",
             "native.uniBadgerWbtc": "0x95826C65EB1f2d2F0EDBb7EcB176563B61C60bBf",
             "harvest.renCrv": "0xaaE82E3c89e15E6F26F60724f115d5012363e030",
             "native.sushiWbtcEth": "0x7A56d65254705B4Def63c68488C0182968C452ce",
@@ -177,13 +177,19 @@
         },
         "strategies_registry": {
             "native.renCrv": {
-                "StrategyConvexLpOptimizer": "0x8cbb86a7e0780a6fbefeec108f9b4b0aa8193e24"
+                "Curve": "0x444B860128B7Bf8C0e864bDc3b7a36a940db7D88",
+                "StrategyConvexLpOptimizer": "0x8cbb86a7e0780a6fbefeec108f9b4b0aa8193e24",
+                "StrategyConvexStakingOptimizer": "0x6582a5b139fc1c6360846efdc4440d51aad4df7b"
             },
             "native.sbtcCrv": {
-                "StrategyConvexLpOptimizer": "0xaa9b716ccd717761f40479cd81f8e3a5a7b4cad7"
+                "Curve": "0x3Efc97A8e23f463e71Bf28Eb19690d097797eb17",
+                "StrategyConvexLpOptimizer": "0xaa9b716ccd717761f40479cd81f8e3a5a7b4cad7",
+                "StrategyConvexStakingOptimizer": "0xf1ded284e891943b3e9c657d7fc376b86164ffc2"
             },
             "native.tbtcCrv": {
-                "StrategyConvexLpOptimizer": "0x1ac31c470b90e366c70efc1ac28d5d7fa2f1dbe1"
+                "Curve": "0xE2fA197eAA5C726426003074147a08beaA59403B",
+                "StrategyConvexLpOptimizer": "0x1ac31c470b90e366c70efc1ac28d5d7fa2f1dbe1",
+                "StrategyConvexStakingOptimizer": "0x522bb024c339a12be1a47229546f288c40b62d29"
             },
             "native.hbtcCrv": {
                 "Test": "0xca4b98ca964713287a36224364dbed15c9b7abc3",
@@ -204,9 +210,9 @@
         },
         "strategy_artifacts": {
             "native.badger": "StrategyBadgerRewards",
-            "native.renCrv": "StrategyCurveGaugeRenBtcCrv",
-            "native.sbtcCrv": "StrategyCurveGaugeSbtcCrv",
-            "native.tbtcCrv": "StrategyCurveGaugeTbtcCrv",
+            "native.renCrv": "StrategyConvexStakingOptimizer",
+            "native.sbtcCrv": "StrategyConvexStakingOptimizer",
+            "native.tbtcCrv": "StrategyConvexStakingOptimizer",
             "native.uniBadgerWbtc": "StrategyBadgerLpMetaFarm",
             "harvest.renCrv": "StrategyHarvestMetaFarm",
             "native.sushiWbtcEth": "StrategySushiLpOptimizer",
@@ -273,8 +279,8 @@
         "native.obtcCrv": "0x2999537a71db9d79587ca35033cd0fa08c3c49dd",
         "native.bbtcCrv": "0x62cc514824b080707ffc0b0f64f992f38b974f9d",
         "native.tricrypto": "0xeaeA3712DC74d9166365004aF85e7F65f942E316",
-        "native.cvxCrv": "0x4b10351cD95A65c98a95B84729de6Af7DeC913Dd",
-        "native.cvx": "0xBcD8bA681881650c1A10471227892Ed223FFB276"
+        "native.cvxCrv": "0x844bE1f096894D3bFC44640dC2875cA3c7F20827",
+        "native.cvx": "0x5Db74532743006b82b3515115Ca46f506534BC27"
     },
     "digg_system": {
         "owner": "0xDA25ee226E534d868f0Dd8a459536b03fEE9079b",

@@ -227,6 +227,7 @@ def connect_badger(
 
     badger.connect_multisig(badger_deploy["devMultisig"])
     badger.connect_ops_multisig(badger_deploy["opsMultisig"])
+    badger.connect_test_multisig(badger_deploy["testMultisig"])
 
     if "dao" in badger_deploy:
         badger.connect_dao()
@@ -502,6 +503,9 @@ class BadgerSystem:
 
     def connect_ops_multisig(self, address):
         self.opsMultisig = connect_gnosis_safe(address)
+
+    def connect_test_multisig(self, address):
+        self.testMultisig = connect_gnosis_safe(address)
 
     def connect_uniswap(self):
         self.uniswap = UniswapSystem()
@@ -1169,6 +1173,26 @@ class BadgerSystem:
             f.write(json.dumps(txData, indent=4, sort_keys=True))
         return txFilename
 
+    def governance_execute_transaction_from_params(self, params):
+        multi = GnosisSafe(self.devMultisig)
+
+        id = multi.addTx(
+                MultisigTxMetadata(description="Execute timelock transaction"),
+                {
+                    "to": self.governanceTimelock.address,
+                    "data": self.governanceTimelock.executeTransaction.encode_input(
+                        params["target"],
+                        0,
+                        params["signature"],
+                        params["data"],
+                        params["eta"],
+                    ),
+                },
+            )
+
+        if multisig_success(multi.executeTx(id)):
+            console.print(f"[yellow]⏰ Successfully Executed Timelock TX ✓[/yellow]", params)
+
     def governance_execute_transaction(self, txFilename):
         multi = GnosisSafe(self.devMultisig)
 
@@ -1524,7 +1548,6 @@ class BadgerSystem:
         if len(schedules) == 0:
             return
         for schedule in schedules:
-            print(schedule)
             s = LoggerUnlockSchedule(schedule)
 
             digg_shares = s.token == self.digg.token

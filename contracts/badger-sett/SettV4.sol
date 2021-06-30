@@ -330,7 +330,7 @@ contract SettV4 is ERC20Upgradeable, SettAccessControlDefended, PausableUpgradea
         bytes32[] memory proof
     ) internal virtual {
         if (address(guestList) != address(0)) {
-            require(guestList.authorized(msg.sender, _amount, proof), "guest-list-authorization");
+            require(guestList.authorized(_recipient, _amount, proof), "guest-list-authorization");
         }
         _depositFor(_recipient, _amount);
     }

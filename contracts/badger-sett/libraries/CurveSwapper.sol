@@ -32,18 +32,18 @@ contract CurveSwapper is BaseSwapper {
         _safeApproveHelper(inputToken, swap, inputAmount);
         if (numPoolElements == 2) {
             uint256[2] memory convertedAmounts;
-            convertedAmounts[inputPosition] = inputPosition;
+            convertedAmounts[inputPosition] = inputAmount;
             ICurveFi(swap).add_liquidity(convertedAmounts, min_mint_amount);
         } else if (numPoolElements == 3) {
             uint256[3] memory convertedAmounts;
-            convertedAmounts[inputPosition] = inputPosition;
+            convertedAmounts[inputPosition] = inputAmount;
             ICurveFi(swap).add_liquidity(convertedAmounts, min_mint_amount);
         } else if (numPoolElements == 4) {
             uint256[4] memory convertedAmounts;
-            convertedAmounts[inputPosition] = inputPosition;
+            convertedAmounts[inputPosition] = inputAmount;
             ICurveFi(swap).add_liquidity(convertedAmounts, min_mint_amount);
         } else {
-            revert("Invalidf number of amount elements");
+            revert("Invalid number of amount elements");
         }
     }
 

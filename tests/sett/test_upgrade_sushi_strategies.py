@@ -13,7 +13,8 @@ from config.badger_config import badger_config
 
 
 @pytest.mark.parametrize(
-    "args", SUSHI_STRATEGIES_TO_UPGRADE,
+    "args",
+    SUSHI_STRATEGIES_TO_UPGRADE,
 )
 def test_simulation_after_upgrade_sushi_strategies(args):
     (strategyID, artifactName) = args
