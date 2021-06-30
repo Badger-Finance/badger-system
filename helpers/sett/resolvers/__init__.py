@@ -13,3 +13,4 @@ from .StrategySushiDiggWbtcLpOptimizerResolver import (
 from .StrategyDiggLpMetaFarmResolver import StrategyDiggLpMetaFarmResolver
 from .StrategyUniGenericLpResolver import StrategyUniGenericLpResolver
 from .StabilizeStrategyDiggV1Resolver import StabilizeStrategyDiggV1Resolver
+from .StrategyMStableVaultResolver import StrategyMStableVaultResolver

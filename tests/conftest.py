@@ -32,7 +32,9 @@ from tests.sett.fixtures import (
     PancakeMiniDeploy,
     SushiWbtcIbBtcLpOptimizerMiniDeploy,
     UniGenericLpMiniDeploy,
-    DiggStabilizeMiniDeploy
+    DiggStabilizeMiniDeploy,
+    MStableImBtcMiniDeploy,
+    MStableFpMbtcHbtcMiniDeploy
 )
 
 
@@ -57,8 +59,10 @@ settsToRun = [
     # "native.uniBadgerWbtc",
     # "native.sushiBadgerWbtc",
     # "native.sushiWbtcEth",
-    "native.sushiWbtcIbBtc",
+    # "native.sushiWbtcIbBtc",
     # "native.uniWbtcIbBtc",
+    "native.mstableImBtc",
+    "native.mstableFpMbtcHbtc",
 ]
 
 yearnSettsToRun = [
@@ -313,6 +317,26 @@ def badger_single_sett(settConfig, deploy=True):
             return YearnMiniDeploy(
                 "yearn.bvyWBTC",
                 "AffiliateTokenGatedUpgradable",
+                deployer,
+                strategist=strategist,
+                guardian=guardian,
+                keeper=keeper,
+                governance=governance,
+            ).deploy(deploy=deploy)
+        if settId == "native.mstableImBtc":
+            return MStableImBtcMiniDeploy(
+                "native.mstableImBtc",
+                "StrategyMStableVaultImbtc",
+                deployer,
+                strategist=strategist,
+                guardian=guardian,
+                keeper=keeper,
+                governance=governance,
+            ).deploy(deploy=deploy)
+        if settId == "native.mstableFpMbtcHbtc":
+            return MStableFpMbtcHbtcMiniDeploy(
+                "native.mstableFpMbtcHbtc",
+                "StrategyMStableVaultFpMbtcHbtc",
                 deployer,
                 strategist=strategist,
                 guardian=guardian,

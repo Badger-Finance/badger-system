@@ -129,7 +129,7 @@ mstable_registry = DotMap(
             token="0x17d8CBB6Bce8cEE970a4027d1198F6700A7a6c24",
             vault="0xF38522f63f40f9Dd81aBAfD2B8EFc2EC958a3016",
         ),
-        mBtcHBtc=DotMap(
+        fPmBtcHBtc=DotMap(
             token="0x48c59199Da51B7E30Ea200a74Ea07974e62C4bA7",
             vault="0xF65D53AA6e2E4A5f4F026e73cb3e22C22D75E35C",
         ),
@@ -268,6 +268,21 @@ eth_registry.whales = DotMap(
     renbtc=DotMap(
         whale="0x35ffd6e268610e764ff6944d07760d0efe5e40e5",
         token="0xeb4c2781e4eba804ce9a9803c67d0893436bb27d",
+        action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT,
+    ),
+    imbtc=DotMap(
+        whale="0x6e57ff9cec63c54dfa6380f07396917844540468",
+        token="0x17d8cbb6bce8cee970a4027d1198f6700a7a6c24",
+        action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT,
+    ),
+    fPmBtcHBtc=DotMap(
+        whale="0xf65d53aa6e2e4a5f4f026e73cb3e22c22d75e35c",
+        token="0x48c59199Da51B7E30Ea200a74Ea07974e62C4bA7",
+        action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT,
+    ),
+    mta=DotMap(
+        whale="0xf65d53aa6e2e4a5f4f026e73cb3e22c22d75e35c",
+        token="0xa3bed4e1c75d00fa6f4e5e6922db7261b5e9acd2",
         action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT,
     ),
 )

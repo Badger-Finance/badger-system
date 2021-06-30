@@ -40,7 +40,7 @@ contract MStableVoterProxy is IMStableVoterProxy, PausableUpgradeable, SettAcces
     mapping(address => uint256) public loans; // Outstanding loans made to this contract
     IERC20Upgradeable public constant mta = IERC20Upgradeable(0xa3BeD4E1c75D00fa6f4E5E6922DB7261B5E9AcD2);
 
-    uint256 public MAX_RATE = 10000;
+    uint256 public constant MAX_RATE = 10000;
     uint256 public redistributionRate;
 
     event LockCreated(uint256 amt, uint256 unlockTime);
@@ -174,7 +174,6 @@ contract MStableVoterProxy is IMStableVoterProxy, PausableUpgradeable, SettAcces
     /// @param _newRate Scaled pct of earnings to redistribute to strategies, where 100% = 10000
     function changeRedistributionRate(uint256 _newRate) external override {
         _onlyGovernors();
-
         require(_newRate < MAX_RATE, "Invalid rate");
 
         redistributionRate = _newRate;
