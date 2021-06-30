@@ -95,22 +95,22 @@ contract StrategyCvxHelper is BaseStrategy, CurveSwapper, UniswapSwapper, TokenS
         return "1.0";
     }
 
-    function getName() external pure override returns (string memory) {
+    function getName() external override pure returns (string memory) {
         return "StrategyCvxHelper";
     }
 
-    function balanceOfPool() public view override returns (uint256) {
+    function balanceOfPool() public override view returns (uint256) {
         return cvxRewardsPool.balanceOf(address(this));
     }
 
-    function getProtectedTokens() public view override returns (address[] memory) {
+    function getProtectedTokens() public override view returns (address[] memory) {
         address[] memory protectedTokens = new address[](2);
         protectedTokens[0] = want;
         protectedTokens[1] = cvx;
         return protectedTokens;
     }
 
-    function isTendable() public view override returns (bool) {
+    function isTendable() public override view returns (bool) {
         return false;
     }
 
@@ -140,7 +140,7 @@ contract StrategyCvxHelper is BaseStrategy, CurveSwapper, UniswapSwapper, TokenS
         if (_preWant < _amount) {
             uint256 _toWithdraw = _amount.sub(_preWant);
             cvxRewardsPool.withdraw(_toWithdraw, false);
-            
+
             // Note: Withdrawl process will earn sushi, this will be deposited into SushiBar on next tend()
         }
 

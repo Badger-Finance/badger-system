@@ -29,7 +29,7 @@ contract ConvexMigrationVerifier {
     using SafeERC20Upgradeable for IERC20Upgradeable;
     using AddressUpgradeable for address;
     using SafeMathUpgradeable for uint256;
-    
+
     // ===== Token Registry =====
     address public constant wbtc = 0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599; // WBTC Token
     address public constant weth = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2; // WETH token
@@ -64,7 +64,11 @@ contract ConvexMigrationVerifier {
 
     uint256 public constant MAX_UINT_256 = uint256(-1);
 
-    function runAndVerifyMigration(address want, address strategy, uint256 pid) external view returns (bool) {
+    function runAndVerifyMigration(
+        address want,
+        address strategy,
+        uint256 pid
+    ) external view returns (bool) {
         IBooster.PoolInfo memory poolInfo = booster.poolInfo(pid);
         IBaseRewardsPool baseRewardsPool = IBaseRewardsPool(poolInfo.crvRewards);
 

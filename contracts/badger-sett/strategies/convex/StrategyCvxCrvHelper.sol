@@ -8,7 +8,7 @@ import "deps/@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 import "deps/@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "deps/@openzeppelin/contracts-upgradeable/token/ERC20/SafeERC20Upgradeable.sol";
 import "deps/@openzeppelin/contracts-upgradeable/utils/EnumerableSetUpgradeable.sol";
-        
+
 import "interfaces/convex/IBooster.sol";
 import "interfaces/convex/CrvDepositor.sol";
 import "interfaces/convex/IBaseRewardsPool.sol";
@@ -103,22 +103,22 @@ contract StrategyCvxCrvHelper is BaseStrategy, CurveSwapper, UniswapSwapper, Tok
         return "1.0";
     }
 
-    function getName() external pure override returns (string memory) {
+    function getName() external override pure returns (string memory) {
         return "StrategyCvxCrvHelper";
     }
 
-    function balanceOfPool() public view override returns (uint256) {
+    function balanceOfPool() public override view returns (uint256) {
         return cvxCrvRewardsPool.balanceOf(address(this));
     }
 
-    function getProtectedTokens() public view override returns (address[] memory) {
+    function getProtectedTokens() public override view returns (address[] memory) {
         address[] memory protectedTokens = new address[](2);
         protectedTokens[0] = want;
         protectedTokens[1] = cvxCrv;
         return protectedTokens;
     }
 
-    function isTendable() public view override returns (bool) {
+    function isTendable() public override view returns (bool) {
         return false;
     }
 
@@ -175,14 +175,13 @@ contract StrategyCvxCrvHelper is BaseStrategy, CurveSwapper, UniswapSwapper, Tok
         // 2. Sell 3Crv (withdraw to USDC -> swap to CRV)
         uint256 threeCrvBalance = threeCrvToken.balanceOf(address(this));
 
-        if (threeCrvBalance > 0) {      
+        if (threeCrvBalance > 0) {
             _remove_liquidity_one_coin(threeCrvSwap, threeCrvBalance, 1, 0);
             uint256 usdcBalance = usdcToken.balanceOf(address(this));
             require(usdcBalance > 0, "window-tint");
             if (usdcBalance > 0) {
                 _swapExactTokensForTokens(sushiswap, usdc, usdcBalance, getTokenSwapPath(usdc, cvxCrv));
             }
-            
         }
 
         // 3. Sell CVX
@@ -190,7 +189,7 @@ contract StrategyCvxCrvHelper is BaseStrategy, CurveSwapper, UniswapSwapper, Tok
         if (cvxTokenBalance > 0) {
             _swapExactTokensForTokens(sushiswap, cvx, cvxTokenBalance, getTokenSwapPath(cvx, cvxCrv));
         }
-        
+
         // Track harvested + converted coin balance of want
         cvxCrvHarvested = cvxCrvToken.balanceOf(address(this));
 

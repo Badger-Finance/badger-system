@@ -13,12 +13,13 @@ import "deps/@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable
 import "./BaseSwapper.sol";
 import "interfaces/uniswap/IUniswapRouterV2.sol";
 import "interfaces/uniswap/IUniswapV2Factory.sol";
+
 /*
     Expands swapping functionality over base strategy
     - ETH in and ETH out Variants
     - Sushiswap support in addition to Uniswap
 */
-contract UniswapSwapper is BaseSwapper{
+contract UniswapSwapper is BaseSwapper {
     using SafeERC20Upgradeable for IERC20Upgradeable;
     using AddressUpgradeable for address;
     using SafeMathUpgradeable for uint256;
@@ -36,7 +37,11 @@ contract UniswapSwapper is BaseSwapper{
         IUniswapRouterV2(router).swapExactTokensForTokens(balance, 0, path, address(this), now);
     }
 
-    function _swapExactETHForTokens(address router, uint256 balance, address[] memory path) internal {
+    function _swapExactETHForTokens(
+        address router,
+        uint256 balance,
+        address[] memory path
+    ) internal {
         IUniswapRouterV2(uniswap).swapExactETHForTokens{value: balance}(0, path, address(this), now);
     }
 
@@ -50,13 +55,21 @@ contract UniswapSwapper is BaseSwapper{
         IUniswapRouterV2(router).swapExactTokensForETH(balance, 0, path, address(this), now);
     }
 
-    function _getPair(address router, address token0, address token1) internal view returns (address) {
+    function _getPair(
+        address router,
+        address token0,
+        address token1
+    ) internal view returns (address) {
         address factory = IUniswapRouterV2(router).factory();
         return IUniswapV2Factory(factory).getPair(token0, token1);
     }
 
     /// @notice Add liquidity to uniswap for specified token pair, utilizing the maximum balance possible
-    function _addMaxLiquidity(address router, address token0, address token1) internal {
+    function _addMaxLiquidity(
+        address router,
+        address token0,
+        address token1
+    ) internal {
         uint256 _token0Balance = IERC20Upgradeable(token0).balanceOf(address(this));
         uint256 _token1Balance = IERC20Upgradeable(token1).balanceOf(address(this));
 
@@ -71,6 +84,6 @@ contract UniswapSwapper is BaseSwapper{
         uint256 _ethBalance = address(this).balance;
 
         _safeApproveHelper(token0, router, _token0Balance);
-        IUniswapRouterV2(router).addLiquidityETH{ value: address(this).balance }(token0, _token0Balance, 0, 0, address(this), block.timestamp);
+        IUniswapRouterV2(router).addLiquidityETH{value: address(this).balance}(token0, _token0Balance, 0, 0, address(this), block.timestamp);
     }
 }

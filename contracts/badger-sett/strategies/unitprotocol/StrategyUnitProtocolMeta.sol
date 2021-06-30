@@ -92,7 +92,7 @@ abstract contract StrategyUnitProtocolMeta is BaseStrategy, UniswapSwapper {
     // if borrow is true (for addCollateralAndBorrow): return (maxDebt - currentDebt) if positive value, otherwise return 0
     // if borrow is false (for repayAndRedeemCollateral): return (currentDebt - maxDebt) if positive value, otherwise return 0
     function calculateDebtFor(uint256 collateralAmt, bool borrow) public view returns (uint256) {
-        uint256 maxDebt = collateralAmt > 0? collateralValue(collateralAmt).mul(ratioBuffMax).div(_getBufferedMinRatio(ratioBuffMax)) : 0;
+        uint256 maxDebt = collateralAmt > 0 ? collateralValue(collateralAmt).mul(ratioBuffMax).div(_getBufferedMinRatio(ratioBuffMax)) : 0;
 
         uint256 debtAmt = getDebtBalance();
 
@@ -120,7 +120,7 @@ abstract contract StrategyUnitProtocolMeta is BaseStrategy, UniswapSwapper {
 
     function requiredPaidDebt(uint256 _redeemCollateralAmt) public view returns (uint256) {
         uint256 totalCollateral = getCollateralBalance();
-        uint256 collateralAmt = _redeemCollateralAmt >= totalCollateral? 0 : totalCollateral.sub(_redeemCollateralAmt);
+        uint256 collateralAmt = _redeemCollateralAmt >= totalCollateral ? 0 : totalCollateral.sub(_redeemCollateralAmt);
         return calculateDebtFor(collateralAmt, false);
     }
 
@@ -132,13 +132,13 @@ abstract contract StrategyUnitProtocolMeta is BaseStrategy, UniswapSwapper {
     // **** Oracle (using chainlink) ****
 
     function getLatestCollateralPrice() public view returns (uint256) {
-        if (useUnitUsdOracle){
+        if (useUnitUsdOracle) {
             address unitOracleRegistry = IUnitCDPManager(cdpMgr01).oracleRegistry();
             address unitUsdOracle = IUnitOracleRegistry(unitOracleRegistry).oracleByAsset(collateral);
-            uint usdPriceInQ122 = IUnitUsdOracle(unitUsdOracle).assetToUsd(collateral, collateralDecimal);
-            return uint256(usdPriceInQ122 / Q112).mul(collateralPriceDecimal).div(1e18);// usd price from unit protocol oracle in 1e18 decimal		
+            uint256 usdPriceInQ122 = IUnitUsdOracle(unitUsdOracle).assetToUsd(collateral, collateralDecimal);
+            return uint256(usdPriceInQ122 / Q112).mul(collateralPriceDecimal).div(1e18); // usd price from unit protocol oracle in 1e18 decimal
         }
-	
+
         require(unitOracle != address(0), "!_collateralOracle");
 
         (, int256 price, , , ) = IChainlinkAggregator(unitOracle).latestRoundData();
@@ -147,7 +147,7 @@ abstract contract StrategyUnitProtocolMeta is BaseStrategy, UniswapSwapper {
             if (collateralPriceEth) {
                 (, int256 ethPrice, , , ) = IChainlinkAggregator(eth_usd).latestRoundData(); // eth price from chainlink in 1e8 decimal
                 return uint256(price).mul(collateralPriceDecimal).mul(uint256(ethPrice)).div(1e8).div(collateralPriceEth ? 1e18 : 1);
-            } else{
+            } else {
                 return uint256(price).mul(collateralPriceDecimal).div(1e8);
             }
         } else {

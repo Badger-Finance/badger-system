@@ -1,5 +1,5 @@
 from assistant.subgraph.config import subgraph_config
-from helpers.constants import CONVEX_SETTS
+from assistant.subgraph.utils import make_gql_client
 from brownie import interface
 from rich.console import Console
 from gql import gql, Client
@@ -11,13 +11,11 @@ from functools import lru_cache
 getcontext().prec = 20
 console = Console()
 
-tokens_subgraph_url = subgraph_config["tokens"]
-tokens_transport = AIOHTTPTransport(url=tokens_subgraph_url)
-tokens_client = Client(transport=tokens_transport, fetch_schema_from_transport=True)
+tokens_client = make_gql_client("tokens")
+sett_client = make_gql_client("setts")
+harvests_client = make_gql_client("harvests")
 
-sett_subgraph_url = subgraph_config["setts"]
-sett_transport = AIOHTTPTransport(url=sett_subgraph_url)
-sett_client = Client(transport=sett_transport, fetch_schema_from_transport=True)
+## TODO: seperate files by chain/subgraph
 
 
 @lru_cache(maxsize=None)
@@ -208,7 +206,7 @@ def fetch_farm_harvest_events():
 
     """
     )
-    results = sett_client.execute(query)
+    results = harvests_client.execute(query)
     for event in results["farmHarvestEvents"]:
         event["rewardAmount"] = event.pop("farmToRewards")
 
@@ -232,10 +230,11 @@ def fetch_sushi_harvest_events():
         }
     """
     )
-    results = sett_client.execute(query)
+    results = harvests_client.execute(query)
     wbtcEthEvents = []
     wbtcBadgerEvents = []
     wbtcDiggEvents = []
+    iBbtcWbtcEvents = []
     for event in results["sushiHarvestEvents"]:
         event["rewardAmount"] = event.pop("toBadgerTree")
         strategy = event["id"].split("-")[0]
@@ -245,11 +244,14 @@ def fetch_sushi_harvest_events():
             wbtcBadgerEvents.append(event)
         elif strategy == "0xaa8dddfe7dfa3c3269f1910d89e4413dd006d08a":
             wbtcDiggEvents.append(event)
+        elif strategy == "0xf4146a176b09c664978e03d28d07db4431525dad":
+            iBbtcWbtcEvents.append(event)
 
     return {
         "wbtcEth": wbtcEthEvents,
         "wbtcBadger": wbtcBadgerEvents,
         "wbtcDigg": wbtcDiggEvents,
+        "iBbtcWbtc": iBbtcWbtcEvents,
     }
 
 

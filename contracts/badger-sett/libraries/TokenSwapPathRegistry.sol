@@ -8,6 +8,7 @@ import "deps/@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "deps/@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 import "deps/@openzeppelin/contracts-upgradeable/token/ERC20/SafeERC20Upgradeable.sol";
 import "interfaces/curve/ICurveFi.sol";
+
 /*
     Expands swapping functionality over base strategy
     - ETH in and ETH out Variants
@@ -21,6 +22,7 @@ contract TokenSwapPathRegistry {
     function getTokenSwapPath(address tokenIn, address tokenOut) public view returns (address[] memory) {
         return tokenSwapPaths[tokenIn][tokenOut];
     }
+
     function _setTokenSwapPath(
         address tokenIn,
         address tokenOut,
@@ -29,5 +31,4 @@ contract TokenSwapPathRegistry {
         tokenSwapPaths[tokenIn][tokenOut] = path;
         emit TokenSwapPathSet(tokenIn, tokenOut, path);
     }
-
 }

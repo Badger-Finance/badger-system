@@ -66,7 +66,7 @@ contract StrategyConvexStakingOptimizer is BaseStrategy, CurveSwapper, UniswapSw
     using AddressUpgradeable for address;
     using SafeMathUpgradeable for uint256;
     using EnumerableSetUpgradeable for EnumerableSetUpgradeable.AddressSet;
-    
+
     // ===== Token Registry =====
     address public constant wbtc = 0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599;
     address public constant weth = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
@@ -133,7 +133,7 @@ contract StrategyConvexStakingOptimizer is BaseStrategy, CurveSwapper, UniswapSw
     }
 
     event ExtraRewardsTokenSet(
-        address indexed token, 
+        address indexed token,
         uint256 autoCompoundingBps,
         uint256 autoCompoundingPerfFee,
         uint256 treeDistributionPerfFee,
@@ -174,11 +174,7 @@ contract StrategyConvexStakingOptimizer is BaseStrategy, CurveSwapper, UniswapSw
         uint256 wantGained;
     }
 
-    event TendState(
-        uint256 crvTended,
-        uint256 cvxTended,
-        uint256 cvxCrvTended
-    );
+    event TendState(uint256 crvTended, uint256 cvxTended, uint256 cvxCrvTended);
 
     function initialize(
         address _governance,
@@ -216,11 +212,7 @@ contract StrategyConvexStakingOptimizer is BaseStrategy, CurveSwapper, UniswapSw
         // Approvals: CRV -> cvxCRV converter
         crvToken.approve(address(crvDepositor), MAX_UINT_256);
 
-        curvePool = CurvePoolConfig(
-            _curvePool.swap,
-            _curvePool.wbtcPosition,
-            _curvePool.numElements
-        );
+        curvePool = CurvePoolConfig(_curvePool.swap, _curvePool.wbtcPosition, _curvePool.numElements);
 
         // Set Swap Paths
         address[] memory path = new address[](3);
@@ -257,11 +249,15 @@ contract StrategyConvexStakingOptimizer is BaseStrategy, CurveSwapper, UniswapSw
         pid = _pid; // LP token pool ID
     }
 
-    function addExtraRewardsToken(address _extraToken, RewardTokenConfig memory _rewardsConfig, address[] memory _swapPathToWant) external {
+    function addExtraRewardsToken(
+        address _extraToken,
+        RewardTokenConfig memory _rewardsConfig,
+        address[] memory _swapPathToWant
+    ) external {
         _onlyGovernance();
 
         require(!isProtectedToken(_extraToken)); // We can't process tokens that are part of special strategy logic as extra rewards
-        require(isProtectedToken(_rewardsConfig.tendConvertTo));  // We should only convert to tokens the strategy handles natively for security reasons
+        require(isProtectedToken(_rewardsConfig.tendConvertTo)); // We should only convert to tokens the strategy handles natively for security reasons
 
         /**
         === tendConvertTo Attack Vector: Rug rewards via swap ===
@@ -275,7 +271,7 @@ contract StrategyConvexStakingOptimizer is BaseStrategy, CurveSwapper, UniswapSw
         rewardsTokenConfig[_extraToken] = _rewardsConfig;
 
         emit ExtraRewardsTokenSet(
-            _extraToken, 
+            _extraToken,
             _rewardsConfig.autoCompoundingBps,
             _rewardsConfig.autoCompoundingPerfFee,
             _rewardsConfig.treeDistributionPerfFee,
@@ -389,7 +385,7 @@ contract StrategyConvexStakingOptimizer is BaseStrategy, CurveSwapper, UniswapSw
         if (cvxCrvRewardsPool.earned(address(this)) > 0) {
             cvxCrvRewardsPool.getReward(address(this), true);
         }
-        
+
         if (cvxRewardsPool.earned(address(this)) > 0) {
             cvxRewardsPool.getReward(false);
         }
@@ -403,12 +399,12 @@ contract StrategyConvexStakingOptimizer is BaseStrategy, CurveSwapper, UniswapSw
 
         // 1. Harvest gains from positions
         _tendGainsFromPositions();
-        
+
         // Track harvested coins, before conversion
         tendData.crvTended = crvToken.balanceOf(address(this));
 
         // 2. Convert CRV -> cvxCRV
-        if ( tendData.crvTended > 0 ) {
+        if (tendData.crvTended > 0) {
             _swapExactTokensForTokens(sushiswap, crv, tendData.crvTended, getTokenSwapPath(crv, cvxCrv));
         }
 
@@ -420,7 +416,7 @@ contract StrategyConvexStakingOptimizer is BaseStrategy, CurveSwapper, UniswapSw
         if (tendData.cvxCrvTended > 0) {
             cvxCrvRewardsPool.stake(tendData.cvxCrvTended);
         }
-        
+
         // 4. Stake all CVX
         if (tendData.cvxTended > 0) {
             cvxRewardsPool.stake(cvxToken.balanceOf(address(this)));
@@ -430,7 +426,7 @@ contract StrategyConvexStakingOptimizer is BaseStrategy, CurveSwapper, UniswapSw
         emit TendState(tendData.crvTended, tendData.cvxTended, tendData.cvxCrvTended);
         return tendData;
     }
-    
+
     // No-op until we optimize harvesting strategy. Auto-compouding is key.
     function harvest() external whenNotPaused returns (HarvestData memory) {
         _onlyAuthorizedActors();
