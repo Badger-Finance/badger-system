@@ -9,6 +9,7 @@ from config.badger_config import badger_config, digg_config, sett_config
 from helpers.registry import artifacts
 from scripts.systems.badger_system import connect_badger
 from helpers.console_utils import console
+from helpers.registry import registry
 
 # from helpers.gas_utils import gas_strategies
 # gas_strategies.set_default(gas_strategies.exponentialScalingFast)
@@ -431,6 +432,19 @@ def allow_strategies_on_rewards_manager(badger, safe, helper, vaults_to_add):
     
     helper.publish()
 
+def modify_curve_swap_addresses(badger, helper):
+    strategy_address = badger.getStrategy("native.pbtcCrv").address
+    strategy = helper.contract_from_abi(strategy_address, "StrategyConvexStakingOptimizer", StrategyConvexStakingOptimizer.abi)
+    strategy.setCurvePoolSwap(registry.curve.pools.pbtcCrv.swap)
+
+    strategy_address = badger.getStrategy("native.obtcCrv").address
+    strategy = helper.contract_from_abi(strategy_address, "StrategyConvexStakingOptimizer", StrategyConvexStakingOptimizer.abi)
+    strategy.setCurvePoolSwap(registry.curve.pools.obtcCrv.swap)
+
+    strategy_address = badger.getStrategy("native.bbtcCrv").address
+    strategy = helper.contract_from_abi(strategy_address, "StrategyConvexStakingOptimizer", StrategyConvexStakingOptimizer.abi)
+    strategy.setCurvePoolSwap(registry.curve.pools.bbtcCrv.swap)
+    helper.publish()
 
 def set_withdrawal_fee(badger, safe, helper, vaults_to_add):
     vaults_to_add = ["experimental.sushiIBbtcWbtc"]
@@ -528,7 +542,8 @@ def main():
     # approve_strategies_timelock(badger)
     # initialize_strategies(badger)
     # set_strategy_fees(badger, helper, 20, 0, 2000, new_core_vaults)
-    upgrade_strategies(badger, dev_multi, helper, badger.testProxyAdmin, "0xAF0B504BD20626d1fd57F8903898168FCE7ecbc8", new_core_vaults)
+    # upgrade_strategies(badger, dev_multi, helper, badger.testProxyAdmin, "0x01d10fdc6b484BE380144dF12EB6C75387EfC49B", new_core_vaults)
+    modify_curve_swap_addresses(badger, helper)
 
     # upgrade_vault_proxy_admins(badger, vaults_to_add)
     # initialize_strategies(badger)

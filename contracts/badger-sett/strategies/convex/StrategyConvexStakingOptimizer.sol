@@ -304,6 +304,10 @@ contract StrategyConvexStakingOptimizer is BaseStrategy, CurveSwapper, UniswapSw
         _initializeApprovals();
 
     }
+    function setCurvePoolSwap(address _swap) external {
+        _onlyGovernance();
+        curvePool.swap = _swap;
+    }
 
     function _initializeApprovals() internal {
         cvxToken.approve(address(cvxHelperVault), MAX_UINT_256);
@@ -490,6 +494,13 @@ contract StrategyConvexStakingOptimizer is BaseStrategy, CurveSwapper, UniswapSw
             uint256 autoCompoundedPerformanceFee = wantGained.mul(autoCompoundingPerformanceFeeGovernance).div(MAX_FEE);
             IERC20Upgradeable(want).transfer(IController(controller).rewards(), autoCompoundedPerformanceFee);
             emit PerformanceFeeGovernance(IController(controller).rewards(), want, autoCompoundedPerformanceFee, block.number, block.timestamp);
+        }
+
+        // Deposit remaining want (including idle want) into strategy position
+        uint256 wantToDeposited = IERC20Upgradeable(want).balanceOf(address(this));
+
+        if (wantToDeposited > 0) {
+            _deposit(wantToDeposited);
         }
 
         // 5. Deposit remaining CVX / cvxCRV rewards into helper vaults and distribute
