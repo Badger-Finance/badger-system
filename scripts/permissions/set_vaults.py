@@ -6,9 +6,10 @@ from eth_abi import encode_abi
 from helpers.constants import MaxUint256
 from helpers.gnosis_safe import ApeSafeHelper
 from config.badger_config import badger_config, digg_config, sett_config
-
+from helpers.registry import artifacts
 from scripts.systems.badger_system import connect_badger
 from helpers.console_utils import console
+from helpers.registry import registry
 
 # from helpers.gas_utils import gas_strategies
 # gas_strategies.set_default(gas_strategies.exponentialScalingFast)
@@ -16,27 +17,9 @@ from helpers.console_utils import console
 
 vaults_to_add = ["native.hbtcCrv", "native.pbtcCrv", "native.obtcCrv", "native.bbtcCrv", "native.tricrypto", "native.cvxCrv", "native.cvx"]
 new_core_vaults = ["native.hbtcCrv", "native.pbtcCrv", "native.obtcCrv", "native.bbtcCrv", "native.tricrypto"]
-helper_vaults = ["native.cvxCrv", "native.cvx"]
-# new_strategies = {
-#     "native.renCrv": "0x8cbb86a7e0780a6fbefeec108f9b4b0aa8193e24",
-#     "native.sbtcCrv": "0xaa9b716ccd717761f40479cd81f8e3a5a7b4cad7",
-#     "native.tbtcCrv": "0x1ac31c470b90e366c70efc1ac28d5d7fa2f1dbe1",
-# }
-
+# helper_vaults = ["native.cvxCrv", "native.cvx"]
+strategies_to_initialize = ["native.renCrv", "native.sbtcCrv", "native.tbtcCrv"]
 controller_id = "experimental"
-
-"""
-function initialize(
-        address _governance,
-        address _strategist,
-        address _controller,
-        address _keeper,
-        address _guardian,
-        address[3] memory _wantConfig,
-        uint256 _pid,
-        uint256[3] memory _feeConfig
-    ) public initializer whenNotPaused {
-"""
 
 params = {
             "root": "0x17bf188285a653a6c0ccb51a826c35c9f948be7691836e486a1dae56740730cf", 
@@ -87,7 +70,7 @@ def initialize_strategies(badger):
     """
     Approve and set strategies on the controller
     """
-    for key in vaults_to_add:
+    for key in strategies_to_initialize:
         console.print(f"Initializing strat {key})")
         # Deploy and initialize the strategy
         print("Find Params")
@@ -121,6 +104,18 @@ def initialize_strategies(badger):
         badger.keeper = "0x73433896620E71f7b1C72405b8D2898e951Ca4d5"
         badger.guardian = "0x29F7F8896Fb913CF7f9949C623F896a154727919"
 
+        """
+        address _governance,
+        address _strategist,
+        address _controller,
+        address _keeper,
+        address _guardian,
+        address[4] memory _wantConfig,
+        uint256 _pid,
+        uint256[3] memory _feeConfig,
+        CurvePoolConfig memory _curvePool
+        """
+
         strategy = badger.getStrategy(key)
         print(strategy, strategy.getName())
         console.print(f"Admin: {badger.getProxyAdmin(strategy)}")
@@ -131,13 +126,23 @@ def initialize_strategies(badger):
             badger.getController("experimental"),
             badger.keeper,
             badger.guardian,
-            [params.want, badger.badgerTree.address],
+            [
+                params.want, 
+                badger.badgerTree.address, 
+                params.cvxHelperVault,
+                params.cvxCrvHelperVault
+            ],
             params.pid,
             [
                 params.performanceFeeGovernance,
                 params.performanceFeeStrategist,
                 params.withdrawalFee,
             ],
+            (
+                params.curvePool.swap,
+                params.curvePool.wbtcPosition,
+                params.curvePool.numElements,
+            ),
             {"from": badger.deployer},
         )
 
@@ -152,11 +157,12 @@ def upgrade_strategies(badger, safe, helper, admin, new_logic, strategies):
     for key in strategies:
         console.print(f"Upgrading strat {key} to new logic at {new_logic}")
 
-        admin = safe.contract(admin.address)
-
-        strategy = safe.contract(badger.getStrategy(key).address)
-        vault = safe.contract(badger.getSett(key).address)
-        controller = safe.contract(strategy.controller())
+        admin = helper.contract_from_abi(admin.address, "ProxyAdmin", artifacts.open_zeppelin["ProxyAdmin"]["abi"])
+        console.print(Controller)
+        strategy = helper.contract_from_abi(badger.getStrategy(key).address, "StrategyConvexStakingOptimizer", StrategyConvexStakingOptimizer.abi)
+        vault = helper.contract_from_abi(badger.getSett(key).address, "Sett", Sett.abi)
+        controller = helper.contract_from_abi(strategy.controller(), "Controller", Controller.abi)
+        
         want = interface.IERC20(strategy.want())
 
         old_logic = admin.getProxyImplementation(strategy)
@@ -182,9 +188,44 @@ def upgrade_strategies(badger, safe, helper, admin, new_logic, strategies):
             new_value = new_state[key]
             assert new_value == old_value
 
-        strategy.initializeApprovals()
-        strategy.setAutoCompoundingBps(2000)
-        strategy.setAutoCompoundingPerformanceFeeGovernance(5000)
+        # Extra Initialization Steps
+        # strategy.initializeApprovals()
+        # strategy.setAutoCompoundingBps(2000)
+        # strategy.setAutoCompoundingPerformanceFeeGovernance(5000)
+
+    helper.publish()
+
+def set_strategy_fees(badger, helper, withdrawalFee, performanceFeeStrategist, performanceFeeGovernance, strategies):
+    for key in strategies:
+        console.print(f"Setting strategy fees on {key} to {withdrawalFee} / {performanceFeeStrategist} / {performanceFeeGovernance}")
+
+        strategy = helper.contract_from_abi(badger.getStrategy(key).address, "StrategyConvexStakingOptimizer", StrategyConvexStakingOptimizer.abi)
+        vault = helper.contract_from_abi(badger.getSett(key).address, "Sett", Sett.abi)
+        controller = helper.contract_from_abi(strategy.controller(), "Controller", Controller.abi)
+        want = interface.IERC20(strategy.want())
+
+        old_state = {
+            'withdrawalFee': strategy.withdrawalFee(),
+            'performanceFeeStrategist': strategy.performanceFeeStrategist(),
+            'performanceFeeGovernance': strategy.performanceFeeGovernance(),
+        }
+
+        if old_state['withdrawalFee'] != withdrawalFee:
+            strategy.setWithdrawalFee(withdrawalFee)
+        if old_state['performanceFeeStrategist'] != performanceFeeStrategist:
+            strategy.setPerformanceFeeStrategist(performanceFeeStrategist)
+        if old_state['performanceFeeGovernance'] != performanceFeeGovernance:
+            strategy.setPerformanceFeeGovernance(performanceFeeGovernance)
+
+        new_state = {
+            'withdrawalFee': strategy.withdrawalFee(),
+            'performanceFeeStrategist': strategy.performanceFeeStrategist(),
+            'performanceFeeGovernance': strategy.performanceFeeGovernance(),
+        }
+
+        assert new_state['withdrawalFee'] == withdrawalFee
+        assert new_state['performanceFeeStrategist'] == performanceFeeStrategist
+        assert new_state['performanceFeeGovernance'] == performanceFeeGovernance
 
     helper.publish()
 
@@ -216,14 +257,16 @@ def approve_strategies_timelock(badger):
     """
     Approve and set strategies on the controller
     """
-    for key, value in new_strategies.items():
-        console.print(f"Initializing strat {key} ({value})")
+    all_timelock_params = {}
+
+    for key in strategies_to_initialize:
+        strategy = badger.getStrategy(key)
+
+        console.print(f"Initializing strat {key} ({strategy.address})")
         controller = badger.getController("native")
 
         print(controller.governance(), controller.strategist())
         assert controller.governance() == badger.governanceTimelock
-
-        strategy = StrategyConvexLpOptimizer.at(value)
 
         console.print(
             {
@@ -235,30 +278,34 @@ def approve_strategies_timelock(badger):
         )
 
         timelock_params = {
-            'destination': controller.address,
+            'target': controller.address,
             "signature": "approveStrategy(address,address)",
             "data": encode_abi(["address", "address"], [strategy.want(), strategy.address]),
-            "expiration": chain.time() + days(2.5),
+            "eta": chain.time() + days(2.9),
         }
+
+        all_timelock_params[key] = timelock_params
 
         console.print("timelock_params", timelock_params)
 
         txFilename = badger.governance_queue_transaction(
-            timelock_params['destination'],
+            timelock_params['target'],
             timelock_params['signature'],
             timelock_params['data'],
-            timelock_params['expiration']
+            timelock_params['eta']
         )
 
-        chain.sleep(days(2.9))
-        chain.mine()
+    chain.sleep(days(3.5))
+    chain.mine()
+
+    for key in strategies_to_initialize:
+        strategy = badger.getStrategy(key)
+        timelock_params = all_timelock_params[key]
+
         badger.governance_execute_transaction_from_params(
-            timelock_params['destination'],
-            timelock_params['signature'],
-            timelock_params['data'],
-            timelock_params['expiration']
+            timelock_params
         )
-        chain.sleep(days(0.5))
+
         chain.mine()
 
         console.print(
@@ -385,6 +432,19 @@ def allow_strategies_on_rewards_manager(badger, safe, helper, vaults_to_add):
     
     helper.publish()
 
+def modify_curve_swap_addresses(badger, helper):
+    strategy_address = badger.getStrategy("native.pbtcCrv").address
+    strategy = helper.contract_from_abi(strategy_address, "StrategyConvexStakingOptimizer", StrategyConvexStakingOptimizer.abi)
+    strategy.setCurvePoolSwap(registry.curve.pools.pbtcCrv.swap)
+
+    strategy_address = badger.getStrategy("native.obtcCrv").address
+    strategy = helper.contract_from_abi(strategy_address, "StrategyConvexStakingOptimizer", StrategyConvexStakingOptimizer.abi)
+    strategy.setCurvePoolSwap(registry.curve.pools.obtcCrv.swap)
+
+    strategy_address = badger.getStrategy("native.bbtcCrv").address
+    strategy = helper.contract_from_abi(strategy_address, "StrategyConvexStakingOptimizer", StrategyConvexStakingOptimizer.abi)
+    strategy.setCurvePoolSwap(registry.curve.pools.bbtcCrv.swap)
+    helper.publish()
 
 def set_withdrawal_fee(badger, safe, helper, vaults_to_add):
     vaults_to_add = ["experimental.sushiIBbtcWbtc"]
@@ -403,25 +463,6 @@ def set_withdrawal_fee(badger, safe, helper, vaults_to_add):
 
         strategy.setWithdrawalFee(20)
         assert strategy.withdrawalFee() == 20
-    helper.publish()
-
-def set_strategy_fees(badger, safe, helper, strategy_keys):
-    withdrawal_fee = 10
-    performance_fee_gov = 500
-    performance_fee_strat = 500
-
-    for key in strategy_keys:
-        vault = safe.contract(badger.getSett(key).address)
-        strategy = safe.contract(badger.getStrategy(key).address)
-
-        strategy.setWithdrawalFee(withdrawal_fee)
-        assert strategy.withdrawalFee() == withdrawal_fee
-
-        strategy.setPerformanceFeeGovernance(performance_fee_gov)
-        strategy.setPerformanceFeeStrategist(performance_fee_strat)
-        assert strategy.performanceFeeGovernance() == performance_fee_gov
-        assert strategy.performanceFeeStrategist() == performance_fee_strat
-
     helper.publish()
 
 def set_strategies_on_controller(badger, safe, helper, vaults_to_add):
@@ -498,8 +539,11 @@ def main():
     # set_strategies_on_controller(badger, dev_multi, helper, vaults_to_add)
 
     # set_strategy_fees(badger, dev_multi, helper, helper_vaults)
-
-    upgrade_strategies(badger, dev_multi, helper, badger.testProxyAdmin, "0xDA2339C0d2b3fba2F31E5bF748fc7a23751fb622", new_core_vaults)
+    # approve_strategies_timelock(badger)
+    # initialize_strategies(badger)
+    # set_strategy_fees(badger, helper, 20, 0, 2000, new_core_vaults)
+    # upgrade_strategies(badger, dev_multi, helper, badger.testProxyAdmin, "0x01d10fdc6b484BE380144dF12EB6C75387EfC49B", new_core_vaults)
+    modify_curve_swap_addresses(badger, helper)
 
     # upgrade_vault_proxy_admins(badger, vaults_to_add)
     # initialize_strategies(badger)

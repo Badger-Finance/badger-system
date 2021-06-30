@@ -119,22 +119,22 @@ curve_registry = DotMap(
         pbtcCrv=DotMap(
             token="0xDE5331AC4B3630f94853Ff322B66407e0D6331E8",
             gauge="0xd7d147c6Bb90A718c3De8C0568F9B560C79fa416",
-            swap="0x7F55DDe206dbAD629C080068923b36fe9D6bDBeF",
+            swap="0x11F419AdAbbFF8d595E7d5b223eee3863Bb3902C",
         ),
         obtcCrv=DotMap(
             token="0x2fE94ea3d5d4a175184081439753DE15AeF9d614",
             gauge="0x11137B10C210b579405c21A07489e28F3c040AB1",
-            swap="0xd81dA8D904b52208541Bade1bD6595D8a251F8dd",
+            swap="0xd5BCf53e2C81e1991570f33Fa881c49EEa570C8D",
         ),
         bbtcCrv=DotMap(
             token="0x410e3E86ef427e30B9235497143881f717d93c2A",
             gauge="0xdFc7AdFa664b08767b735dE28f9E84cd30492aeE",
-            swap="0x071c661B4DeefB59E2a3DdB20Db036821eeE8F4b",
+            swap="0xC45b2EEe6e09cA176Ca3bB5f7eEe7C47bF93c756",
         ),
         triCrypto=DotMap(
             token="0xca3d75ac011bf5ad07a98d02f18225f9bd9a6bdf",
             swap="0x80466c64868E1ab14a1Ddf27A676C3fcBE638Fe5",
-            gauge="",
+            gauge="0x331aF2E331bd619DefAa5DAc6c038f53FCF9F785",
         ),
     ),
     pids=DotMap(

@@ -304,6 +304,10 @@ contract StrategyConvexStakingOptimizer is BaseStrategy, CurveSwapper, UniswapSw
         _initializeApprovals();
 
     }
+    function setCurvePoolSwap(address _swap) external {
+        _onlyGovernance();
+        curvePool.swap = _swap;
+    }
 
     function _initializeApprovals() internal {
         cvxToken.approve(address(cvxHelperVault), MAX_UINT_256);
@@ -387,7 +391,7 @@ contract StrategyConvexStakingOptimizer is BaseStrategy, CurveSwapper, UniswapSw
         }
         
         if (cvxRewardsPool.earned(address(this)) > 0) {
-            cvxRewardsPool.getReward(true);
+            cvxRewardsPool.getReward(false);
         }
     }
 
@@ -433,10 +437,12 @@ contract StrategyConvexStakingOptimizer is BaseStrategy, CurveSwapper, UniswapSw
         HarvestData memory harvestData;
 
         uint256 idleWant = IERC20Upgradeable(want).balanceOf(address(this));
+        uint256 totalWantBefore = balanceOf();
         
         // TODO: Harvest details still under constructuion. It's being designed to optimize yield while still allowing on-demand access to profits for users.
 
         // 1. Withdraw accrued rewards from staking positions (claim unclaimed positions as well)
+        baseRewardsPool.getReward(address(this), true);
         cvxCrvRewardsPool.withdraw(cvxCrvRewardsPool.balanceOf(address(this)), true);
         cvxRewardsPool.withdraw(cvxRewardsPool.balanceOf(address(this)), true);
 
@@ -488,6 +494,13 @@ contract StrategyConvexStakingOptimizer is BaseStrategy, CurveSwapper, UniswapSw
             uint256 autoCompoundedPerformanceFee = wantGained.mul(autoCompoundingPerformanceFeeGovernance).div(MAX_FEE);
             IERC20Upgradeable(want).transfer(IController(controller).rewards(), autoCompoundedPerformanceFee);
             emit PerformanceFeeGovernance(IController(controller).rewards(), want, autoCompoundedPerformanceFee, block.number, block.timestamp);
+        }
+
+        // Deposit remaining want (including idle want) into strategy position
+        uint256 wantToDeposited = IERC20Upgradeable(want).balanceOf(address(this));
+
+        if (wantToDeposited > 0) {
+            _deposit(wantToDeposited);
         }
 
         // 5. Deposit remaining CVX / cvxCRV rewards into helper vaults and distribute
@@ -548,6 +561,9 @@ contract StrategyConvexStakingOptimizer is BaseStrategy, CurveSwapper, UniswapSw
 
             emit TreeDistribution(address(cvxHelperVault), treeVaultPositionGained, block.number, block.timestamp);
         }
+
+        uint256 totalWantAfter = balanceOf();
+        require(totalWantAfter >= totalWantBefore, "harvest-total-want-must-not-decrease");
 
         return harvestData;
     }

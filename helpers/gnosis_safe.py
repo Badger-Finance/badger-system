@@ -40,7 +40,7 @@ class ApeSafeHelper:
 
     def publish(self):
         safe_tx = self.safe.multisend_from_receipts()
-        self.safe.preview(safe_tx)
+        # self.safe.preview(safe_tx)
         data = self.safe.print_transaction(safe_tx)
         self.safe.post_transaction(safe_tx)
 
