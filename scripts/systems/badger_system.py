@@ -1410,13 +1410,13 @@ class BadgerSystem:
 
         return self.sett_system.vaults[id]
 
-    def getSettFromStrategy(self,strategy):
+    def getSettFromStrategy(self, strategy):
         settName = ""
         for name, strat in self.sett_system.strategies.items():
             if strat.address.lower() == strategy.lower():
                 settName = name
         if not settName:
-            raise NameError        
+            raise NameError
         return settName
 
     def getGuestList(self, id):
