@@ -95,9 +95,10 @@ def filter_dust(balances):
     return UserBalances(list(filter(lambda user: user.balance > 1, balances)))
 
 
-def chunk(l,n):
+def chunk(l, n):
     n = max(1, n)
-    return (l[i:i+n] for i in range(0, len(l), n))
+    return (l[i : i + n] for i in range(0, len(l), n))
+
 
 def badger_boost(badger, pastRewards, currentBlock):
 
@@ -127,14 +128,16 @@ def badger_boost(badger, pastRewards, currentBlock):
     badger_wallet_balances, digg_wallet_balances = fetch_wallet_balances(
         prices[BADGER], prices[DIGG], badger.digg, currentBlock
     )
-    console.log("Fetching Claimable Balances")
-    chunked_addresses = chunk(list(nonNativeSetts.userBalances.keys()) , 200)
+    console.log("Fetching Claimable Balances...")
+    nonNativeAddresses = list(nonNativeSetts.userBalances.keys())
+
+    console.log(len(nonNativeAddresses))
+    chunked_addresses = chunk(nonNativeAddresses, 100)
     claimableData = {}
     for addr_list in chunked_addresses:
         console.log("{} claims fetched".format(len(addr_list)))
-        claimableData = {**claimableData,**fetch_claimable_balances(addr_list)}
-    
-    claimableData = {k:v for k,v in claimableData.items() if len(v) > 0}
+        claimableData = {**claimableData, **fetch_claimable_balances(addr_list)}
+
     console.log(len(claimableData))
 
     for addr, claimableBalances in claimableData.items():
@@ -143,9 +146,9 @@ def badger_boost(badger, pastRewards, currentBlock):
 
         for cb in claimableBalances:
             if cb["address"] == BADGER:
-                claimableBadger = cb["balance"]/1e18
+                claimableBadger = cb["balance"] / 1e18
             if cb["address"] == DIGG:
-                claimableDigg = diggUtils.sharesToFragments(cb["balance"])/1e9
+                claimableDigg = diggUtils.sharesToFragments(cb["balance"]) / 1e9
 
         claimableBadger *= prices[BADGER]
         claimableDigg *= prices[DIGG]
