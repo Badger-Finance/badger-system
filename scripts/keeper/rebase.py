@@ -29,6 +29,7 @@ from scripts.systems.digg_system import connect_digg
 from scripts.systems.sushiswap_system import SushiswapSystem
 from scripts.systems.uniswap_system import UniswapSystem
 from tabulate import tabulate
+from helpers.tx_timer import tx_timer
 
 console = Console()
 
@@ -51,28 +52,31 @@ def rebase(badger: BadgerSystem, account):
     uniPair = uni.getPair(digg.token, registry.tokens.wbtc)
 
     last_rebase_time = digg.uFragmentsPolicy.lastRebaseTimestampSec()
+    min_rebase_time = digg.uFragmentsPolicy.minRebaseTimeIntervalSec()
     in_rebase_window = digg.uFragmentsPolicy.inRebaseWindow()
     now = chain.time()
 
     time_since_last_rebase = now - last_rebase_time
+    min_time_passed = (last_rebase_time + min_rebase_time) < now
 
-    console.print(
-        {
-            "last_rebase_time": last_rebase_time,
-            "in_rebase_window": in_rebase_window,
-            "now": now,
-            "time_since_last_rebase": time_since_last_rebase,
-        }
-    )
+    console.print({
+        "last_rebase_time": last_rebase_time,
+        "in_rebase_window": in_rebase_window,
+        "now": now,
+        "time_since_last_rebase": time_since_last_rebase,
+        "min_time_passed": min_time_passed,
+    })
 
     # Rebase if sufficient time has passed since last rebase and we are in the window.
     # Give adequate time between TX attempts
-    if time_since_last_rebase > hours(2) and in_rebase_window:
+    if (time_since_last_rebase > hours(2) and in_rebase_window and min_time_passed):
         console.print("[bold yellow]===== 📈 Rebase! 📉=====[/bold yellow]")
         print("pair before", pair.getReserves())
         print("uniPair before", uniPair.getReserves())
 
+        tx_timer.start_timer(account, 'Rebase')
         tx = digg.orchestrator.rebase({"from": account})
+        tx_timer.end_timer()
 
         if rpc.is_active():
             chain.mine()

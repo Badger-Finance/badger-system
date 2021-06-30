@@ -5,6 +5,7 @@ from helpers.registry.YearnRegistry import YearnRegistry
 from brownie.network import web3
 from dotmap import DotMap
 from helpers.registry.WhaleRegistryAction import WhaleRegistryAction
+import json
 
 aragon_registry = DotMap(
     addresses=DotMap(
@@ -34,12 +35,13 @@ multisend = "0x8D29bE29923b68abfDD21e541b9374737B49cdAD"
 
 compound_registry = DotMap(
     comptroller=web3.toChecksumAddress("0x3d9819210a31b4961b30ef54be2aed79b9c9cd3b"),
-    cTokens=DotMap(usdc="0x39AA39c021dfbaE8faC545936693aC917d5E7563")
+    cTokens=DotMap(usdc="0x39AA39c021dfbaE8faC545936693aC917d5E7563"),
 )
 
 multichain_registry = DotMap(eth_address="0xC564EE9f21Ed8A2d8E7e76c085740d5e4c5FaFbE")
 
 harvest_registry = DotMap(
+    symbol="FARM",
     badgerTree="0x06466a741094f51b45FB150c6D1e857B3E879967",
     farmToken="0xa0246c9032bC3A600820415aE600c6388619A14D",
     depositHelper="0xf8ce90c2710713552fb564869694b2505bfc0846",
@@ -63,6 +65,8 @@ pickle_registry = DotMap(
 sushi_registry = DotMap(
     sushiToken="0x6b3595068778dd592e39a122f4f5a5cf09c90fe2",
     xsushiToken="0x8798249c2E607446EfB7Ad49eC89dD1865Ff4272",
+    symbol="SUSHI",
+    symbol_xsushi="XSUSHI",
     sushiChef="0xc2EdaD668740f1aA35E4D8f227fB8E17dcA888Cd",
     router="0xd9e1cE17f2641f24aE83637ab66a2cca9C378B9F",
     factory="0xC0AEe478e3658e2610c5F7A4A2E1777cE9e4f2Ac",
@@ -80,11 +84,16 @@ yearn_registry = YearnRegistry(
 
 aave_registry = DotMap(lendingPoolV2="0x7d2768de32b0b80b7a3454c06bdac94a69ddc7a9")
 
-yearn_registry = (DotMap(yvWBTC="0xcB550A6D4C8e3517A939BC79d0c7093eb7cF56B5",),)
+yearn_registry = (
+    DotMap(
+        yvWBTC="0xcB550A6D4C8e3517A939BC79d0c7093eb7cF56B5",
+    ),
+)
 
 curve_registry = DotMap(
     minter="0xd061D61a4d941c39E5453435B6345Dc261C2fcE0",
     crvToken="0xD533a949740bb3306d119CC777fa900bA034cd52",
+    symbol="CRV",
     pools=DotMap(
         sbtcCrv=DotMap(
             swap="0x7fC77b5c7614E1533320Ea6DDc2Eb61fa00A9714",
@@ -113,10 +122,28 @@ defidollar_registry = DotMap(
         core="0x2A8facc9D49fBc3ecFf569847833C380A13418a8",
     ),
     pools=[
-        DotMap(id=0, sett="0x6dEf55d2e18486B9dDfaA075bc4e4EE0B28c1545",),
-        DotMap(id=1, sett="0xd04c48A53c111300aD41190D63681ed3dAd998eC",),
-        DotMap(id=2, sett="0xb9D076fDe463dbc9f915E5392F807315Bf940334",),
+        DotMap(
+            id=0,
+            sett="0x6dEf55d2e18486B9dDfaA075bc4e4EE0B28c1545",
+        ),
+        DotMap(
+            id=1,
+            sett="0xd04c48A53c111300aD41190D63681ed3dAd998eC",
+        ),
+        DotMap(
+            id=2,
+            sett="0xb9D076fDe463dbc9f915E5392F807315Bf940334",
+        ),
     ],
+)
+badger_registry = DotMap(
+    token="0x3472a5a71965499acd81997a54bba8d852c6e53d",
+    symbol="BADGER"
+)
+
+digg_registry = DotMap(
+    token="0x798D1bE841a82a273720CE31c822C61a67a601C3",
+    symbol="DIGG"
 )
 
 mstable_registry = DotMap(
@@ -153,6 +180,7 @@ eth_registry = ChainRegistry(
     compound=compound_registry,
     defidollar=defidollar_registry,
     mstable=mstable_registry
+    digg=digg_registry
 )
 
 eth_registry.tokens = DotMap(
@@ -171,7 +199,7 @@ eth_registry.tokens = DotMap(
     mta=web3.toChecksumAddress("0xa3BeD4E1c75D00fa6f4E5E6922DB7261B5E9AcD2"),
     ibbtc=web3.toChecksumAddress("0xc4E15973E6fF2A35cC804c2CF9D2a1b817a8b40F"),
     dfd=web3.toChecksumAddress("0x20c36f062a31865bed8a5b1e512d9a1a20aa333a"),
-    ausdc="0xBcca60bB61934080951369a648Fb03DF4F96263C"
+    ausdc="0xBcca60bB61934080951369a648Fb03DF4F96263C",
 )
 
 eth_registry.whales = DotMap(

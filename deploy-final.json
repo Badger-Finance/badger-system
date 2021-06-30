@@ -4,6 +4,7 @@
     "guardian": "0x29F7F8896Fb913CF7f9949C623F896a154727919",
     "keeper": "0x872213E29C85d7e30F1C8202FC47eD1Ec124BB1D",
     "devProxyAdmin": "0x20Dce41Acca85E8222D6861Aa6D23B6C941777bF",
+    "devUngatedProxyAdmin": "0x9215cBDCDe25629d0e3D69ee5562d1b444Cf69F9",
     "opsProxyAdmin": "0x4599f2913a3db4e73aa77a304ccc21516dd7270d",
     "daoProxyAdmin": "0x11A9D034B1bbfbbDCaC9cB3b86ca7D5Df05140F2",
     "testProxyAdmin": "0xB10b3Af646Afadd9C62D663dd5d226B15C25CdFA",
@@ -19,6 +20,11 @@
         "ops": "0x576cD258835C529B54722F84Bb7d4170aA932C64",
         "dfd": "0x5b5cF8620292249669e1DCC73B753d01543D6Ac7",
         "dfdBadgerShared": "0xCF7346A5E41b0821b80D5B3fdc385EEB6Dc59F44"
+    },
+    "keepers": {
+        "legacy": "0x872213E29C85d7e30F1C8202FC47eD1Ec124BB1D",
+        "rootProposer": "0x68de9E2b015904530593426d934CE608e117Fa7A",
+        "autoCompounding": "0xE6C15f7f1e1AFD6bB19D5De395173bB76a7997f5"
     },
     "logic-2": {
         "StrategySushiLpOptimizer": "0x5a954c6871978b29E27894B6Ce5a3729465eD14e"
@@ -164,6 +170,7 @@
     "badgerRewardsManager": "0x5B60952481Eb42B66bdfFC3E049025AC5b91c127",
     "unlockScheduler": "0x1AADc00011939499a4d263d657Dd74b0E1176cF9",
     "badgerNfts": "0xe1e546e25A5eD890DFf8b8D005537c0d373497F8",
+    "autoCompoundingLogger": "0x70e8D2994EE23353633405f3771d105119cC662d",
     "rewardsLogger": "0x0A4F4e92C3334821EbB523324D09E321a6B0d8ec",
     "unifiedLogger": "0x01ebd1fbbe06be7d0936282da12fae2cde9c700d",
     "geysers": {
@@ -214,12 +221,12 @@
         }
     },
     "swap_system": {
-        "router": "0x0e831bE5ED39fA9CaC685006d673A5e731967846",
+        "router": "0x618591aa0e9a29bEc845D841735Ce3aFAD8fa645",
         "strategies": {
-            "curve": "0xFaE8bd34190615f3388f38191DC332B44C53e10B"
+            "curve": "0x1a6BC004fCDd57F1f55Ba3a3807FAE71F8d89e8D"
         },
         "logic": {
-            "SwapStrategyRouter": "0x2cb501d371ba2248BB48455D3293d47cE773E0F7",
+            "SwapStrategyRouter": "0x338cdC5D9c8Bb428fDA4C47e66841DEA954fDEDE",
             "CurveSwapStrategy": "0x4f594f1C067177587617b964632a3CC164C29cE8"
         }
     },

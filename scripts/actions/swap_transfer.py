@@ -72,7 +72,9 @@ def swap_transfer(recipient, params):
         params={
             "to": badger.rewardsEscrow.address,
             "data": badger.rewardsEscrow.call.encode_input(
-                badger.token, 0, badger.token.approve.encode_input(uniswap.router, 0),
+                badger.token,
+                0,
+                badger.token.approve.encode_input(uniswap.router, 0),
             ),
         },
     )
@@ -123,7 +125,9 @@ def swap_transfer(recipient, params):
 
     id = multi.addTx(
         MultisigTxMetadata(
-            description="Trade Badger for output token", operation="call", callInfo={},
+            description="Trade Badger for output token",
+            operation="call",
+            callInfo={},
         ),
         params={
             "to": badger.rewardsEscrow.address,

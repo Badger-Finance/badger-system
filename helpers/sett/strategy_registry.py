@@ -1,7 +1,6 @@
 from brownie import *
 
 name_to_artifact = {
-    "SmartVesting": SmartVesting,
     "SmartTimelock": SmartTimelock,
     "RewardsEscrow": RewardsEscrow,
     "BadgerGeyser": BadgerGeyser,
@@ -55,7 +54,7 @@ name_to_artifact = {
     "StabilizeStrategyDiggV1": StabilizeStrategyDiggV1,
     "VipCappedGuestListBbtcUpgradeable": VipCappedGuestListBbtcUpgradeable,
     "Disperse": Disperse,
-    "DiggTreasury": DiggTreasury
+    "DiggTreasury": DiggTreasury,
 }
 
 

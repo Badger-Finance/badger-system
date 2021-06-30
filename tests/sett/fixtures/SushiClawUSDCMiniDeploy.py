@@ -55,7 +55,9 @@ class SushiClawUSDCMiniDeploy(SettMiniDeployBase):
             params.want = sushiswap.getPair(token, registry.tokens.usdc)
         else:
             params.want = sushiswap.createPair(
-                token, registry.tokens.usdc, self.deployer,
+                token,
+                registry.tokens.usdc,
+                self.deployer,
             )
         want = params.want
         params.badgerTree = self.badger.badgerTree

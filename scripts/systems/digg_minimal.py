@@ -27,7 +27,8 @@ def deploy_digg_minimal(deployer, devProxyAdmin, daoProxyAdmin, owner=None):
 
     # Setup constant oracle as provider to cpi median oracle.
     digg.cpiMedianOracle.addProvider(
-        digg.constantOracle, {"from": deployer},
+        digg.constantOracle,
+        {"from": deployer},
     )
     # DO NOT FORGET: Push initial constant value to cpi median oracle.
     # Median oracles will not return valid data on `getData()` and rebase
@@ -39,19 +40,24 @@ def deploy_digg_minimal(deployer, devProxyAdmin, daoProxyAdmin, owner=None):
 
     # Setup frag policy & frag (required for ALL deploys).
     digg.uFragmentsPolicy.setCpiOracle(
-        digg.cpiMedianOracle, {"from": deployer},
+        digg.cpiMedianOracle,
+        {"from": deployer},
     )
     digg.uFragmentsPolicy.setMarketOracle(
-        digg.marketMedianOracle, {"from": deployer},
+        digg.marketMedianOracle,
+        {"from": deployer},
     )
     digg.uFragmentsPolicy.setOrchestrator(
-        digg.orchestrator, {"from": deployer},
+        digg.orchestrator,
+        {"from": deployer},
     )
     digg.uFragmentsPolicy.setOrchestrator(
-        digg.orchestrator, {"from": deployer},
+        digg.orchestrator,
+        {"from": deployer},
     )
     digg.uFragments.setMonetaryPolicy(
-        digg.uFragmentsPolicy, {"from": deployer},
+        digg.uFragmentsPolicy,
+        {"from": deployer},
     )
 
     return digg

@@ -282,7 +282,10 @@ def badger_single_sett(settConfig, deploy=True):
                 # Base strategy params (perf/withdrawal fees)
                 sett_config.pancake.pancakeBnbBtcb,
                 # Lp pair tokens (bnb/btcb) for this strategy.
-                [registry.tokens.btcb, registry.tokens.bnb,],
+                [
+                    registry.tokens.btcb,
+                    registry.tokens.bnb,
+                ],
                 # Both want/pid are optional params and used for validation.
                 # In this case, both the lp token and pid (pool id) exist so we can pass them in.
                 want=registry.pancake.chefPairs.bnbBtcb,
@@ -301,7 +304,9 @@ def badger_single_sett(settConfig, deploy=True):
                 guardian=guardian,
                 keeper=keeper,
                 governance=governance,
-            ).deploy(deploy=True)  # Deploy for now since not already deployed.
+            ).deploy(
+                deploy=True
+            )  # Deploy for now since not already deployed.
         if settId == "native.uniWbtcIbBtc":
             return UniGenericLpMiniDeploy(
                 "native.uniWbtcIbBtc",
@@ -312,7 +317,9 @@ def badger_single_sett(settConfig, deploy=True):
                 guardian=guardian,
                 keeper=keeper,
                 governance=governance,
-            ).deploy(deploy=True)  # Deploy for now since not already deployed.
+            ).deploy(
+                deploy=True
+            )  # Deploy for now since not already deployed.
         if settId == "yearn.bvyWBTC":
             return YearnMiniDeploy(
                 "yearn.bvyWBTC",
@@ -345,7 +352,7 @@ def badger_single_sett(settConfig, deploy=True):
             ).deploy(deploy=deploy)
         if settId == "experimental.digg":
             return DiggStabilizeMiniDeploy().deploy(deploy=deploy)
-    if settConfig['mode'] == 'prod':
+    if settConfig["mode"] == "prod":
         """
         Run vs prod contracts, transferring assets to the test user
         (WIP)
