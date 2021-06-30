@@ -62,7 +62,7 @@ def generate_sett_test_config(settsToRun, runTestSetts, runProdSetts=False):
 # ===== Sett + Strategy Test Configuration =====
 
 settsToRun = [
-    "native.unitRenBtc",
+    # "native.unitRenBtc",
     # "native.badger",
     # "native.renCrv",
     # "native.sbtcCrv",
@@ -83,8 +83,8 @@ settsToRun = [
     # "native.obtcCrv",
     # "native.bbtcCrv",
     # "native.tricrypto",
-    "native.cvx",
-    "native.cvxCrv",
+    # "native.cvx",
+    # "native.cvxCrv",
 ]
 
 yearnSettsToRun = [
@@ -363,16 +363,6 @@ def badger_single_sett(settConfig, deploy=True):
             return MStableImBtcMiniDeploy(
                 "native.mstableImBtc",
                 "StrategyMStableVaultImbtc",
-                deployer,
-                strategist=strategist,
-                guardian=guardian,
-                keeper=keeper,
-                governance=governance,
-            ).deploy(deploy=deploy)
-        if settId == "native.convexRenCrv":
-            return ConvexRenBtcMiniDeploy(
-                "native.convexRenCrv",
-                "StrategyConvexStakingOptimizer",
                 deployer,
                 strategist=strategist,
                 guardian=guardian,
