@@ -209,7 +209,7 @@ class SimulationManager:
             return ConvexProvisioner(self)
         if settId == "native.cvx":
             return HelperCvxProvisioner(self)
-        if settId == "native.cvxCrv" :
+        if settId == "native.cvxCrv":
             return HelperCvxCrvProvisioner(self)
         raise Exception(f"invalid strategy settID (no provisioner): {settId}")
 

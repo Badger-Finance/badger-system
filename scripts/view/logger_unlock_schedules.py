@@ -20,7 +20,7 @@ skip = [
     "native.uniDiggWbtc",
     "native.sushiDiggWbtc",
     "yearn.wbtc",
-    "experimental.sushiIBbtcWbtc"
+    "experimental.sushiIBbtcWbtc",
 ]
 
 

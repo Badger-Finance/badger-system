@@ -14,8 +14,7 @@ console = Console()
 
 
 @pytest.mark.parametrize(
-    "settConfig",
-    clawSettSyntheticTestConfig,
+    "settConfig", clawSettSyntheticTestConfig,
 )
 def test_claw(settConfig):
     badger = badger_single_sett(settConfig, deploy=False)

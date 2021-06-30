@@ -29,7 +29,7 @@ def main():
     """
     badger = connect_badger()
     safe = ApeSafe(badger.devMultisig.address)
-    
+
     controller = safe.contract(badger.getController("experimental").address)
     controller.setStrategist(badger.opsMultisig)
 

@@ -64,32 +64,12 @@ def connect_digg(badger_deploy_file):
     )
     # arguments: (attr name, brownie artifact, address, upgradeable (default=True))
     connectable = [
-        (
-            "daoDiggTimelock",
-            SimpleTimelock,
-            digg_deploy["daoDiggTimelock"],
-        ),
-        (
-            "diggTeamVesting",
-            SmartVesting,
-            digg_deploy["diggTeamVesting"],
-        ),
-        (
-            "diggDistributor",
-            DiggDistributor,
-            digg_deploy["diggDistributor"],
-        ),
+        ("daoDiggTimelock", SimpleTimelock, digg_deploy["daoDiggTimelock"],),
+        ("diggTeamVesting", SmartVesting, digg_deploy["diggTeamVesting"],),
+        ("diggDistributor", DiggDistributor, digg_deploy["diggDistributor"],),
         # ("diggDistributor", DiggDistributor, digg_deploy["diggDistributor"],),
-        (
-            "uFragments",
-            UFragments,
-            digg_deploy["uFragments"],
-        ),
-        (
-            "uFragmentsPolicy",
-            UFragmentsPolicy,
-            digg_deploy["uFragmentsPolicy"],
-        ),
+        ("uFragments", UFragments, digg_deploy["uFragments"],),
+        ("uFragmentsPolicy", UFragmentsPolicy, digg_deploy["uFragmentsPolicy"],),
         ("constantOracle", ConstantOracle, digg_deploy["constantOracle"], False),
         ("cpiMedianOracle", MedianOracle, digg_deploy["cpiMedianOracle"], False),
         ("marketMedianOracle", MedianOracle, digg_deploy["marketMedianOracle"], False),
@@ -168,14 +148,10 @@ class DiggSystem:
         abi = artifacts.open_zeppelin["ProxyAdmin"]["abi"]
 
         self.devProxyAdmin = Contract.from_abi(
-            "ProxyAdmin",
-            web3.toChecksumAddress(devProxyAdmin),
-            abi,
+            "ProxyAdmin", web3.toChecksumAddress(devProxyAdmin), abi,
         )
         self.daoProxyAdmin = Contract.from_abi(
-            "ProxyAdmin",
-            web3.toChecksumAddress(daoProxyAdmin),
-            abi,
+            "ProxyAdmin", web3.toChecksumAddress(daoProxyAdmin), abi,
         )
 
     def connect_centralized_oracle(self, address):
@@ -257,9 +233,7 @@ class DiggSystem:
             self.logic.UFragmentsPolicy.address,
             self.devProxyAdmin.address,
             self.logic.UFragmentsPolicy.initialize.encode_input(
-                self.owner,
-                self.uFragments,
-                self.config.baseCpi,
+                self.owner, self.uFragments, self.config.baseCpi,
             ),
             deployer,
         )
@@ -287,9 +261,7 @@ class DiggSystem:
             UFragments.abi,
             self.logic.UFragments.address,
             self.devProxyAdmin.address,
-            self.logic.UFragments.initialize.encode_input(
-                self.owner,
-            ),
+            self.logic.UFragments.initialize.encode_input(self.owner,),
             deployer,
         )
         self.track_contract_upgradeable("uFragments", self.uFragments)
@@ -302,8 +274,7 @@ class DiggSystem:
     def deploy_constant_oracle(self):
         deployer = self.deployer
         self.constantOracle = ConstantOracle.deploy(
-            self.cpiMedianOracle,
-            {"from": deployer},
+            self.cpiMedianOracle, {"from": deployer},
         )
         # self.constantOracle = ConstantOracle.deploy(
         #     self.cpiMedianOracle, {"from": deployer}, publish_source=True,
@@ -453,7 +424,6 @@ class DiggSystem:
     def deploy_dynamic_oracle(self):
         deployer = self.deployer
         self.dynamicOracle = DynamicOracle.deploy(
-            self.marketMedianOracle,
-            {"from": deployer},
+            self.marketMedianOracle, {"from": deployer},
         )
         self.track_contract_static(self.dynamicOracle)

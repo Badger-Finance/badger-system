@@ -29,7 +29,9 @@ from helpers.time_utils import days, hours
 console = Console()
 limit = Wei("100 gwei")
 from helpers.gas_utils import gas_strategies
+
 gas_strategies.set_default(gas_strategies.exponentialScalingFast)
+
 
 def main():
     """
@@ -48,7 +50,7 @@ def main():
     dev = badger.deployer
 
     distribute_from_whales(dev, assets=["digg"])
-    digg.token.transfer(badger.devMultisig, digg.token.balanceOf(dev), {'from':dev})
+    digg.token.transfer(badger.devMultisig, digg.token.balanceOf(dev), {"from": dev})
 
     multi = GnosisSafe(badger.devMultisig)
     safe = ApeSafe(badger.devMultisig.address)

@@ -24,7 +24,5 @@ class SushiClawUSDCProvisioner(BaseProvisioner):
             sushiswap = SushiswapSystem()
             # Generate lp tokens.
             sushiswap.addMaxLiquidity(
-                claw.emp.tokenCurrency(),
-                registry.tokens.usdc,
-                user,
+                claw.emp.tokenCurrency(), registry.tokens.usdc, user,
             )

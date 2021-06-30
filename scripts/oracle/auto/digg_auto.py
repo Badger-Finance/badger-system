@@ -5,6 +5,7 @@ from helpers.gas_utils import gas_strategies
 
 gas_strategies.set_default(gas_strategies.exponentialScalingFast)
 
+
 def main():
     """
     Ping the hardcoded Chainlink oracle contract to format & forward latest data to Digg MedianOracle.
@@ -13,4 +14,4 @@ def main():
     badger.deployer = accounts.load("badger-utility")
 
     oracle = interface.IChainlinkForwarder("")
-    oracle.getThePrice({'from': badger.deployer})
+    oracle.getThePrice({"from": badger.deployer})
