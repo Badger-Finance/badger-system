@@ -206,6 +206,9 @@ def test_voterproxy_loan(settConfig):
 
     assert want.balanceOf(sett) > 0
 
+    chain.sleep(days(2))
+    chain.mine()
+
     # Earn
     snap.settEarn({"from": settKeeper})
 
@@ -221,28 +224,21 @@ def test_voterproxy_loan(settConfig):
     # Withdraw
     snap.settWithdraw(depositAmount // 2, {"from": deployer})
 
-    chain.sleep(days(186))
-    chain.mine()
-
-    # Harvest
-    snap.settHarvest({"from": strategyKeeper})
-
     chain.sleep(days(2))
     chain.mine()
 
-    # Withdraw
-    snap.settWithdraw(depositAmount // 2, {"from": deployer})
-
-    chain.sleep(days(2))
-    chain.mine()
-
-    # == Exit lock == #
-    voterproxy.exitLock({"from": badgerGovernance})
-    print("mta balance post lock: ", mta.balanceOf(voterproxy.address))
 
     # == harvestMta == #
     tx = voterproxy.harvestMta({"from": proxyKeeper})
     print(tx.events["MtaHarvested"][0])
+
+    # Chain sleeps for 3 months
+    chain.sleep(days(93))
+    chain.mine()
+
+
+    # == Exit lock == #
+    voterproxy.exitLock({"from": badgerGovernance})
 
     chain.sleep(days(2))
     chain.mine()
