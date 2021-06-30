@@ -38,7 +38,12 @@ def main():
     usdc_to_swap = 35000 * 10 ** 6  ## 1.5 * 10^6 (Million) * 10^6 (Decimals)
 
     # TODO: Track the balances of the tokens representing your position here: AAVE USDC (aUSDC), Compound USDC (cUSDC), y3Crv Vault Position (y3Crv)
-    snap = BalanceSnapshotter([usdc, dai, yDai, yUsdc], [badger.treasuryMultisig,],)
+    snap = BalanceSnapshotter(
+        [usdc, dai, yDai, yUsdc],
+        [
+            badger.treasuryMultisig,
+        ],
+    )
     snap.snap()
 
     current_dai_balance = dai.balanceOf(badger.devMultisig.address)

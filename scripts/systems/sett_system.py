@@ -421,7 +421,12 @@ def deploy_strategy(
                 controller,
                 keeper,
                 guardian,
-                [params.want, params.badgerTree, AddressZero, AddressZero],
+                [
+                    params.want,
+                    params.badgerTree,
+                    params.cvxHelperVault,
+                    params.cvxCrvHelperVault,
+                ],
                 params.pid,
                 [
                     params.performanceFeeGovernance,
