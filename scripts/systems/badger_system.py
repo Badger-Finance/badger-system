@@ -1410,6 +1410,15 @@ class BadgerSystem:
 
         return self.sett_system.vaults[id]
 
+    def getSettFromStrategy(self,strategy):
+        settName = ""
+        for name, strat in self.sett_system.strategies.items():
+            if strat.address.lower() == strategy.lower():
+                settName = name
+        if not settName:
+            raise NameError        
+        return settName
+
     def getGuestList(self, id):
         if not id in self.guestLists.keys():
             console.print("[bold red]Guest list not found:[/bold red] {}".format(id))

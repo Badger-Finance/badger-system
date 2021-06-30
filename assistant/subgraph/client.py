@@ -19,6 +19,45 @@ sett_subgraph_url = subgraph_config["setts"]
 sett_transport = AIOHTTPTransport(url=sett_subgraph_url)
 sett_client = Client(transport=sett_transport, fetch_schema_from_transport=True)
 
+harvest_subgraph_url = subgraph_config["harvests"]
+harvests_transport = AIOHTTPTransport(url=harvest_subgraph_url)
+harvests_client = Client(transport=harvests_transport)
+
+
+def fetch_tree_distributions(startBlock, endBlock):
+    query = gql(
+        """
+        query tree_distributions(
+            $blockHeight: Block_height
+            $lastDistId: TreeDistribution_filter
+            ) {
+            treeDistributions(block: $blockHeight, where: $lastDistId) {
+                id
+                token {
+                    address
+                    symbol
+                }
+                amount
+                blockNumber
+                }
+            }
+        """
+    )
+    lastDistId = "0x0000000000000000000000000000000000000000"
+    variables = {"blockHeight": {"number": endBlock}}
+    treeDistributions = []
+    while True:
+        variables["lastDistId"] = {"id_gt": lastDistId}
+        results = harvests_client.execute(query, variable_values=variables)
+        distData = results["treeDistributions"]
+        if len(distData) == 0:
+            break
+        else:
+            treeDistributions = [*treeDistributions, *distData]
+        if len(distData) > 0:
+            lastDistId = distData[-1]["id"]
+    return [td for td in treeDistributions if td["blockNumber"] > startBlock]
+
 
 @lru_cache(maxsize=None)
 def fetch_sett_balances(key, settId, startBlock):

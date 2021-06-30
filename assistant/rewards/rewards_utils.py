@@ -203,7 +203,6 @@ def calculate_sett_balances(badger, name, currentBlock):
     sett = badger.getSett(name)
     underlyingToken = sett.address
     settType = ["", ""]
-    console.log(name)
     if "uni" in name or "sushi" in name:
         settType[0] = "halfLP"
     if "crv" in name.lower() or name == "experimental.sushiIBbtcWbtc":

@@ -16,6 +16,7 @@ from assistant.rewards.aws_utils import (
 from assistant.rewards.calc_snapshot import calc_snapshot
 from assistant.rewards.meta_rewards.harvest import calc_farm_rewards
 from assistant.rewards.meta_rewards.sushi import calc_all_sushi_rewards
+from assistant.rewards.meta_rewards.tree_rewards import calc_tree_rewards
 from assistant.rewards.rewards_utils import (
     keccak,
     process_cumulative_rewards,
@@ -198,6 +199,7 @@ def generate_rewards_in_range(badger, startBlock, endBlock, pastRewards):
     currentMerkleData = fetchCurrentMerkleData(badger)
     # sushiRewards = calc_sushi_rewards(badger,startBlock,endBlock,nextCycle,retroactive=False)
     # farmRewards = fetch_current_harvest_rewards(badger,startBlock, endBlock,nextCycle)
+    treeRewards = calc_tree_rewards(badger,startBlock,endBlock,nextCycle)
     settRewards = calc_sett_rewards(badger, startBlock, endBlock, nextCycle)
 
     # farmRewards = calc_farm_rewards(
