@@ -78,8 +78,8 @@ SETT_BOOST_RATIOS = {
     "native.obtcCrv": 1,
     "native.bbtcCrv": 1,
     "native.tricrypto": 1,
-    "native.cvxCrv": 0.5,
-    "native.cvx": 0.5,
+    "native.cvxCrv": 0.1,
+    "native.cvx": 0.1,
 }
 
 CONVEX_SETTS = ["native.hbtcCrv", "native.pbtcCrv", "native.obtcCrv", "native.bbtcCrv"]

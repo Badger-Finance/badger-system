@@ -85,7 +85,6 @@ def calc_snapshot(badger, name, startBlock, endBlock, nextCycle, boosts):
                 rewardAmount = user.balance * rewardsUnit
                 totalRewards += rewardAmount
                 rewards.increase_user_rewards(addr, token, int(rewardAmount))
-                rewardsLog.add_user_token(addr, name, token, int(rewardAmount))
 
             console.log(
                 "Token Distribution: {}\nRewards Released: {}".format(
