@@ -17,7 +17,7 @@ from helpers.registry import registry
 
 vaults_to_add = ["native.hbtcCrv", "native.pbtcCrv", "native.obtcCrv", "native.bbtcCrv", "native.tricrypto", "native.cvxCrv", "native.cvx"]
 new_core_vaults = ["native.hbtcCrv", "native.pbtcCrv", "native.obtcCrv", "native.bbtcCrv", "native.tricrypto"]
-# helper_vaults = ["native.cvxCrv", "native.cvx"]
+helper_vaults = ["native.cvxCrv", "native.cvx"]
 strategies_to_initialize = ["native.renCrv", "native.sbtcCrv", "native.tbtcCrv"]
 controller_id = "experimental"
 
@@ -150,9 +150,49 @@ def initialize_strategies(badger):
 
         assert vault.token() == strategy.want()
 
+def upgrade_setts(badger, helper, admin, new_logic, setts):
+    """
+    Upgrade setts
+    """
+    for key in setts:
+        console.print(f"Upgrading strat {key} to new logic at {new_logic}")
+
+        admin = helper.contract_from_abi(admin.address, "ProxyAdmin", artifacts.open_zeppelin["ProxyAdmin"]["abi"])
+        vault = helper.contract_from_abi(badger.getSett(key).address, "SettV4", SettV4.abi)
+        
+        want = interface.IERC20(vault.token())
+        old_logic = admin.getProxyImplementation(vault)
+
+        old_state = {
+            'version': vault.version(),
+            'governance': vault.governance(),
+            'balance': vault.balance()
+        }
+
+        console.print(old_state)
+
+        admin.upgrade(vault, new_logic)
+        assert admin.getProxyImplementation(vault) == new_logic
+
+        new_state = {
+            'version': vault.version(),
+            'governance': vault.governance(),
+            'balance': vault.balance()
+        }
+
+        console.print(new_state)
+
+        # Ensure selected state values stay consistent across upgrade
+        for key, old_value in old_state.items():
+            new_value = new_state[key]
+            assert new_value == old_value
+
+    helper.publish()
+
+
 def upgrade_strategies(badger, safe, helper, admin, new_logic, strategies):
     """
-    Approve and set strategies on the controller
+    Upgrade strategies
     """
     for key in strategies:
         console.print(f"Upgrading strat {key} to new logic at {new_logic}")
@@ -542,8 +582,9 @@ def main():
     # approve_strategies_timelock(badger)
     # initialize_strategies(badger)
     # set_strategy_fees(badger, helper, 20, 0, 2000, new_core_vaults)
-    # upgrade_strategies(badger, dev_multi, helper, badger.testProxyAdmin, "0x01d10fdc6b484BE380144dF12EB6C75387EfC49B", new_core_vaults)
-    modify_curve_swap_addresses(badger, helper)
+    upgrade_setts(badger, helper, badger.testProxyAdmin, "0xBabAE0E133cd5a6836a63820284cCD8B14D9272a", helper_vaults)
+    # upgrade_strategies(badger, dev_multi, helper, badger.testProxyAdmin, "0xBabAE0E133cd5a6836a63820284cCD8B14D9272a", new_core_vaults)
+    # modify_curve_swap_addresses(badger, helper)
 
     # upgrade_vault_proxy_admins(badger, vaults_to_add)
     # initialize_strategies(badger)

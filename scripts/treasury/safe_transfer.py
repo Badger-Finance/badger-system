@@ -39,20 +39,20 @@ def main():
     safe = ApeSafe(multisig.address)
     helper = ApeSafeHelper(badger, safe)
 
-    rewardsEscrow = safe.contract(badger.rewardsEscrow.address)
-    vesting = safe.contract(badger.digg.daoDiggTimelock.address)
-    dfd = safe.contract(registry.token_address_by_key("dfd"))
-    diggToken = safe.contract(badger.digg.token.address)
+    rewardsEscrow = helper.contract_from_abi(badger.rewardsEscrow.address, "RewardsEscrow", RewardsEscrow.abi)
+    vesting = helper.contract_from_abi(badger.digg.daoDiggTimelock.address, "SimpleTimelock", SimpleTimelock.abi)
+    # dfd = helper.contract_from_abi(registry.token_address_by_key("dfd"), "IERC20", interface.IERC20.abi)
+    diggToken = helper.contract_from_abi(badger.digg.token.address, "IERC20", interface.IERC20.abi)
 
     transfers = [
-        TransferOp(badger.badgerTree, badger.token, Wei("40000 ether")),
-        TransferOp(badger.badgerTree, dfd, Wei("200000 ether")),
+        TransferOp(badger.badgerTree, badger.token, Wei("20000 ether")),
+        # TransferOp(badger.badgerTree, dfd, Wei("200000 ether")),
         TransferOp(badger.badgerRewardsManager, badger.token, Wei("10000 ether")),
         TransferOp(badger.badgerRewardsManager, diggToken, Wei("2 gwei")),
     ]
 
     snap = BalanceSnapshotter(
-        [badger.token, dfd, badger.digg.token],
+        [badger.token, badger.digg.token],
         [
             badger.badgerTree,
             badger.badgerRewardsManager,
