@@ -12,7 +12,9 @@ from assistant.rewards.classes.RewardsList import RewardsList
 from config.rewards_config import rewards_config
 from brownie.network.gas.strategies import GasNowStrategy
 from assistant.rewards.classes.MerkleTree import rewards_to_merkle_tree
-
+from assistant.rewards.aws_utils import (
+    upload,
+)
 gas_strategy = GasNowStrategy("fast")
 console = Console()
 
@@ -22,7 +24,7 @@ def hash(value):
 
 
 def main():
-    test = True
+    test = False
     badger = connect_badger(load_root_proposer=True)
     nextCycle = badger.badgerTree.currentCycle() + 1
 
@@ -50,16 +52,11 @@ def main():
             merkleTree["merkleRoot"],
             rootHash,
             nextCycle,
+            currentRewards["startBlock"],
+            currentRewards["endBlock"],
             {"from": badger.root_proposer, "gas_price": gas_strategy},
-            currentRewards["startBlock"],
-            currentRewards["endBlock"],
         )
-
-        badger.badgerTree.approveRoot(
-            merkleTree["merkleRoot"],
-            rootHash,
-            nextCycle,
-            {"from": badger.root_approver, "gas_price": gas_strategy},
-            currentRewards["startBlock"],
-            currentRewards["endBlock"],
+        
+        upload(
+            contentFileName, merkleTree, publish=False
         )
