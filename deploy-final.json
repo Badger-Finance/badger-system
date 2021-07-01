@@ -54,7 +54,7 @@
         "Sett": "0x175586ac3f8A7463499D1019A30120aa6fC67C5f",
         "SettV1": "0x5c7AdB3Fd0DF2D1822a36922dd941e16D2bF4E51",
         "SettV3": "0x889d5036f2EA5784161090082F3327bb3e433102",
-        "SettV4": "0xBabAE0E133cd5a6836a63820284cCD8B14D9272a",
+        "SettV4": "0xA762292A6A7fD944Db1Fe9389921e6F639B4C9E8",
         "StakingRewards": "0x6daCCed8D6d80b0e93a51A4303961678e8A46Fa5",
         "StakingRewardsSignalOnly": "0x752F5C9e91721dc7a7513106fbf249C46439A5EE",
         "StrategyBadgerRewards": "0x38b9344fFB931ABA6476198095e088024CdAC527",
@@ -89,9 +89,9 @@
         "StabilizeDiggSett": "0x3ee8ECEF1c5D6B924a03A32eFF4233d3dE5190E5",
         "DiggTreasury": "0x132069EA2E57b44C53C60697FD37453Afcae2708",
         "StrategyConvexLpOptimizer": "0xAB10f878bD27ae01DF36Ba645E458f7dbca7AA46",
-        "StrategyConvexStakingOptimizer" :"0xAF0B504BD20626d1fd57F8903898168FCE7ecbc8",
+        "StrategyConvexStakingOptimizer" :"0x01d10fdc6b484BE380144dF12EB6C75387EfC49B",
         "StrategyCvxHelper": "0x831BeEaDfC5F4e7D9ecEa045066588824be6EbAa",
-        "StrategyCvxCrvHelper": "0x0A91870062286382f45527b5577dA0F3546120D4"
+        "StrategyCvxCrvHelper": "0x8cea9A8360f78dE508E01C6B082279Fe34c75f77"
     },
     "dao": {
         "token": "0x3472A5A71965499acd81997a54BBA8D852C6E53d",
@@ -155,9 +155,9 @@
         },
         "strategies": {
             "native.badger": "0x75b8E21BD623012Efb3b69E1B562465A68944eE6",
-            "native.renCrv": "0x6582a5b139fc1c6360846efdc4440d51aad4df7b",
-            "native.sbtcCrv": "0xf1ded284e891943b3e9c657d7fc376b86164ffc2",
-            "native.tbtcCrv": "0x522bb024c339a12be1a47229546f288c40b62d29",
+            "native.renCrv": "0x444B860128B7Bf8C0e864bDc3b7a36a940db7D88",
+            "native.sbtcCrv": "0x3Efc97A8e23f463e71Bf28Eb19690d097797eb17",
+            "native.tbtcCrv": "0xE2fA197eAA5C726426003074147a08beaA59403B",
             "native.uniBadgerWbtc": "0x95826C65EB1f2d2F0EDBb7EcB176563B61C60bBf",
             "harvest.renCrv": "0xaaE82E3c89e15E6F26F60724f115d5012363e030",
             "native.sushiWbtcEth": "0x7A56d65254705B4Def63c68488C0182968C452ce",
@@ -168,7 +168,7 @@
             "experimental.sushiIBbtcWbtc": "0xf4146A176b09C664978e03d28d07Db4431525dAd",
             "experimental.digg": "0xA6af1B913E205B8E9B95D3B30768c0989e942316",
             "native.hbtcCrv": "0xff26f400e57bf726822eacbb64fa1c52f1f27988",
-            "native.pbtcCrv": "0x1c1fd689103bbfd701b3b7d41a3807f12814033d",
+            "native.pbtcCrv": "0x1C1fD689103bbFD701b3B7D41A3807F12814033D",
             "native.obtcCrv": "0x2bb864cdb4856ab2d148c5ca52dd7ccec126d138",
             "native.bbtcCrv": "0x4f3e7a4566320b2709fd1986f2e9f84053d3e2a0",
             "native.tricrypto": "0x05ec4356e1acd89cc2d16adc7415c8c95e736ac1",
