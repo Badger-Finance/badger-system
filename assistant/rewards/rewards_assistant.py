@@ -17,6 +17,7 @@ from assistant.rewards.calc_snapshot import calc_snapshot
 from assistant.rewards.meta_rewards.harvest import calc_farm_rewards
 from assistant.rewards.meta_rewards.sushi import calc_all_sushi_rewards
 from assistant.rewards.meta_rewards.tree_rewards import calc_tree_rewards
+from assistant.rewards.meta_rewards.unclaimed_rewards import get_unclaimed_rewards
 from assistant.rewards.rewards_utils import (
     keccak,
     process_cumulative_rewards,
@@ -29,13 +30,14 @@ from assistant.rewards.classes.RewardsLog import rewardsLog
 from assistant.rewards.rewards_checker import compare_rewards, verify_rewards
 from scripts.systems.badger_system import BadgerSystem
 from helpers.gas_utils import gas_strategies
+from helpers.constants import BCVX, BCVXCRV
 
 gas_strategies.set_default(gas_strategies.exponentialScalingFast)
 gas_strategy = gas_strategies.exponentialScalingFast
 console = Console()
 
 
-def calc_sett_rewards(badger, periodStartBlock, endBlock, cycle):
+def calc_sett_rewards(badger, periodStartBlock, endBlock, cycle, unclaimedRewards):
     """
     Calculate rewards for each sett, and sum them
     """
@@ -51,7 +53,7 @@ def calc_sett_rewards(badger, periodStartBlock, endBlock, cycle):
             continue
 
         settRewards, apyBoost = calc_snapshot(
-            badger, key, periodStartBlock, endBlock, cycle, boosts
+            badger, key, periodStartBlock, endBlock, cycle, boosts, unclaimedRewards
         )
         if len(apyBoost) > 0:
             minimum = min(apyBoost.values())
@@ -202,8 +204,22 @@ def generate_rewards_in_range(badger, startBlock, endBlock, pastRewards, saveLoc
     currentMerkleData = fetchCurrentMerkleData(badger)
     # sushiRewards = calc_sushi_rewards(badger,startBlock,endBlock,nextCycle,retroactive=False)
     # farmRewards = fetch_current_harvest_rewards(badger,startBlock, endBlock,nextCycle)
+    unclaimedAddresses = []
+    for addr, data in pastRewards["claims"].items():
+        tokens = data["tokens"]
+        if BCVX in tokens or BCVXCRV in tokens:
+            unclaimedAddresses.append(addr)
+
     treeRewards = calc_tree_rewards(badger, startBlock, endBlock, nextCycle)
-    settRewards = calc_sett_rewards(badger, startBlock, endBlock, nextCycle)
+    settRewards = calc_sett_rewards(
+        badger,
+        startBlock,
+        endBlock,
+        nextCycle,
+        get_unclaimed_rewards(unclaimedAddresses),
+    )
+
+    ## Check all claimable bcvx and bcrvCvx
 
     # farmRewards = calc_farm_rewards(
     #    badger, startBlock, endBlock, nextCycle, retroactive=False

@@ -3,14 +3,16 @@ from assistant.rewards.classes.RewardsList import RewardsList
 from assistant.rewards.classes.RewardsLog import rewardsLog
 from assistant.rewards.classes.Schedule import Schedule
 from helpers.time_utils import to_days, to_hours, to_utc_date
-from helpers.constants import NON_NATIVE_SETTS, NATIVE_DIGG_SETTS, DIGG
+from helpers.constants import NON_NATIVE_SETTS, NATIVE_DIGG_SETTS, DIGG, BADGER_TREE
 from brownie import *
 from rich.console import Console
 
 console = Console()
 
 
-def calc_snapshot(badger, name, startBlock, endBlock, nextCycle, boosts):
+def calc_snapshot(
+    badger, name, startBlock, endBlock, nextCycle, boosts, unclaimedBalances
+):
     digg = interface.IDigg(DIGG)
 
     console.log("==== Processing rewards for {} at {} ====".format(name, endBlock))
@@ -76,17 +78,39 @@ def calc_snapshot(badger, name, startBlock, endBlock, nextCycle, boosts):
             rewardsLog.add_total_token_dist(name, token, tokenDistribution / 1e18)
 
         if tokenDistribution > 0:
-            console.print(len(userBalances))
             sumBalances = sum([b.balance for b in userBalances])
             rewardsUnit = tokenDistribution / sumBalances
             totalRewards = 0
             console.log("Processing rewards for {} addresses".format(len(userBalances)))
             for user in userBalances:
                 addr = web3.toChecksumAddress(user.address)
+
                 token = web3.toChecksumAddress(token)
                 rewardAmount = user.balance * rewardsUnit
                 totalRewards += rewardAmount
-                rewards.increase_user_rewards(addr, token, int(rewardAmount))
+                ## If giving rewards to tree , distribute them to users with unlcaimed bals
+                if addr == BADGER_TREE:
+                    if name == "native.cvx":
+                        totalbCvxBal = sum(unclaimedBalances["bCvx"].values())
+                        cvxRewardsUnit = rewardAmount / totalbCvxBal
+                        for addr, bal in unclaimedBalances["bCvx"].items():
+                            rewards.increase_user_rewards(
+                                web3.toChecksumAddress(addr),
+                                token,
+                                int(cvxRewardsUnit * bal),
+                            )
+                    if name == "native.cvxCrv":
+                        totalbCvxCrvBal = sum(unclaimedBalances["bCvxCrv"].values())
+                        bCvxCrvRewardsUnit = rewardAmount / totalbCvxCrvBal
+                        for addr, bal in unclaimedBalances["bCvxCrv"].items():
+                            rewards.increase_user_rewards(
+                                web3.toChecksumAddress(addr),
+                                token,
+                                int(bCvxCrvRewardsUnit * bal),
+                            )
+
+                else:
+                    rewards.increase_user_rewards(addr, token, int(rewardAmount))
 
             console.log(
                 "Token Distribution: {}\nRewards Released: {}".format(
