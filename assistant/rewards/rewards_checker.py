@@ -19,6 +19,10 @@ farm_token = "0xa0246c9032bC3A600820415aE600c6388619A14D"
 xSushi_token = "0x8798249c2E607446EfB7Ad49eC89dD1865Ff4272"
 dfd_token = "0x20c36f062a31865bED8a5B1e512D9a1A20AA333A"
 
+bcvxCrv = "0x2B5455aac8d64C14786c3a29858E43b5945819C0"
+bcvx = "0x53c8e199eb2cb7c01543c137078a038937a68e40"
+
+
 tokens_to_check = [BADGER, DIGG, FARM, XSUSHI]
 
 gas_strategy = GasNowStrategy("rapid")
@@ -167,6 +171,8 @@ def verify_rewards(badger: BadgerSystem, startBlock, endBlock, before_data, afte
     total_before_farm = int(before_data["tokenTotals"][farm_token])
     total_before_xsushi = int(before_data["tokenTotals"][xSushi_token])
     total_before_dfd = int(before_data["tokenTotals"].get(dfd_token, 0))
+    total_before_bcvx = int(before_data["tokenTotals"].get(bcvx, 0))
+    total_before_bcvxCrv = int(before_data["tokenTotals"].get(bcvxCrv, 0))
 
     total_after_badger = after_data["tokenTotals"][BADGER]
     total_after_digg = after_data["tokenTotals"][DIGG]
@@ -174,6 +180,8 @@ def verify_rewards(badger: BadgerSystem, startBlock, endBlock, before_data, afte
     total_after_farm = int(after_data["tokenTotals"][farm_token])
     total_after_xsushi = int(after_data["tokenTotals"][xSushi_token])
     total_after_dfd = int(after_data["tokenTotals"].get(dfd_token, 0))
+    total_after_bcvx = int(after_data["tokenTotals"].get(bcvx, 0))
+    total_after_bcvxCrv = int(after_data["tokenTotals"].get(bcvxCrv, 0))
 
     digg_badger = total_after_badger - total_before_badger
     diff_digg = total_after_digg - total_before_digg
@@ -196,6 +204,10 @@ def verify_rewards(badger: BadgerSystem, startBlock, endBlock, before_data, afte
     print_token_diff_table("Farm", total_before_farm, total_after_farm, 0)
     print_token_diff_table("xSushi", total_before_xsushi, total_after_xsushi, 0)
     print_token_diff_table("dfd", total_before_dfd, total_after_dfd, 40000 * 1e18)
+    print_token_diff_table("bcvx", total_before_bcvx, total_after_bcvx, 1000 * 1e18)
+    print_token_diff_table(
+        "bcvxCrv", total_after_bcvxCrv, total_after_bcvxCrv, 1000 * 1e18
+    )
 
     assert total_after_digg < sanity_digg
     assert total_after_badger < sanity_badger

@@ -56,7 +56,7 @@ def fetch_tree_distributions(startBlock, endBlock):
             treeDistributions = [*treeDistributions, *distData]
         if len(distData) > 0:
             lastDistId = distData[-1]["id"]
-    return [td for td in treeDistributions if td["blockNumber"] > startBlock]
+    return [td for td in treeDistributions if int(td["blockNumber"]) > int(startBlock)]
 
 
 @lru_cache(maxsize=None)

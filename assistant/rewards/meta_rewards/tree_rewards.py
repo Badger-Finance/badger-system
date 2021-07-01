@@ -2,6 +2,7 @@ from assistant.subgraph.client import fetch_tree_distributions
 from assistant.rewards.rewards_utils import calculate_sett_balances
 from rich.console import Console
 from assistant.rewards.classes.RewardsList import RewardsList
+from brownie import web3
 
 console = Console()
 
@@ -29,19 +30,19 @@ def calc_tree_rewards(badger, startBlock, endBlock, nextCycle):
         if symbol not in rewardsData:
             rewardsData[symbol] = 0
 
-        rewardsData[symbol] += amountToDistribute
+        rewardsData[symbol] += amountToDistribute / 1e18
         settName = badger.getSettFromStrategy(strategy)
         balances = calculate_sett_balances(badger, settName, int(blockNumber))
         totalBalance = sum([u.balance for u in balances])
         rewardsUnit = amountToDistribute / totalBalance
         for user in balances:
             userReward = rewardsUnit * user.balance
-            rewards.increase_user_rewards(user.address, token, int(userReward))
+            rewards.increase_user_rewards(
+                web3.toChecksumAddress(user.address),
+                web3.toChecksumAddress(token),
+                int(userReward),
+            )
 
     console.log(rewardsData)
 
     return rewards
-
-    # match to vaults
-    # query vaults at endblock
-    # calc rewards
