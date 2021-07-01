@@ -212,7 +212,9 @@ def generate_rewards_in_range(badger, startBlock, endBlock, pastRewards, saveLoc
     #    badger, startBlock, endBlock, nextCycle, retroactive=False
     # )
 
-    newRewards = combine_rewards([settRewards], nextCycle, badger.badgerTree)
+    newRewards = combine_rewards(
+        [settRewards, treeRewards], nextCycle, badger.badgerTree
+    )
     cumulativeRewards = process_cumulative_rewards(pastRewards, newRewards)
 
     # Take metadata from geyserRewards

@@ -20,7 +20,7 @@ xSushi_token = "0x8798249c2E607446EfB7Ad49eC89dD1865Ff4272"
 dfd_token = "0x20c36f062a31865bED8a5B1e512D9a1A20AA333A"
 
 bcvxCrv = "0x2B5455aac8d64C14786c3a29858E43b5945819C0"
-bcvx = "0x53c8e199eb2cb7c01543c137078a038937a68e40"
+bcvx = "0x53C8E199eb2Cb7c01543C137078a038937a68E40"
 
 
 tokens_to_check = [BADGER, DIGG, FARM, XSUSHI]
@@ -204,9 +204,9 @@ def verify_rewards(badger: BadgerSystem, startBlock, endBlock, before_data, afte
     print_token_diff_table("Farm", total_before_farm, total_after_farm, 0)
     print_token_diff_table("xSushi", total_before_xsushi, total_after_xsushi, 0)
     print_token_diff_table("dfd", total_before_dfd, total_after_dfd, 40000 * 1e18)
-    print_token_diff_table("bcvx", total_before_bcvx, total_after_bcvx, 1000 * 1e18)
+    print_token_diff_table("bcvx", total_before_bcvx, total_after_bcvx, 100000 * 1e18)
     print_token_diff_table(
-        "bcvxCrv", total_after_bcvxCrv, total_after_bcvxCrv, 1000 * 1e18
+        "bcvxCrv", total_after_bcvxCrv, total_after_bcvxCrv, 100000 * 1e18
     )
 
     assert total_after_digg < sanity_digg
