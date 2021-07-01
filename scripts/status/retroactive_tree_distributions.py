@@ -23,7 +23,7 @@ def hash(value):
 
 def main():
     test = True
-    badger = connect_badger(badger_config.prod_json, load_deployer=False)
+    badger = connect_badger(load_root_proposer=True)
     nextCycle = badger.badgerTree.currentCycle() + 1
 
     startBlock = 0
@@ -50,7 +50,7 @@ def main():
             merkleTree["merkleRoot"],
             rootHash,
             nextCycle,
-            {"from": badger.keeper, "gas_price": gas_strategy},
+            {"from": badger.root_proposer, "gas_price": gas_strategy},
             currentRewards["startBlock"],
             currentRewards["endBlock"],
         )
@@ -59,7 +59,7 @@ def main():
             merkleTree["merkleRoot"],
             rootHash,
             nextCycle,
-            {"from": badger.keeper, "gas_price": gas_strategy},
+            {"from": badger.root_approver, "gas_price": gas_strategy},
             currentRewards["startBlock"],
             currentRewards["endBlock"],
         )
