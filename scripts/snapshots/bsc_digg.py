@@ -22,6 +22,8 @@ def get_bsc_data(block):
     bDiggLpHolders = fetch_sett_balances("", bDiggLpAddress, block, chain="bsc")
 
     bDiggHolders = fetch_wallet_balances(1, 1, None, block, chain="bsc")[1]
+    for addr,value in bDiggHolders.items():
+        bDiggHolders[addr] = value * 1.39
 
     return bDiggHolders, bDiggLpHolders
 
@@ -29,7 +31,7 @@ def get_bsc_data(block):
 def main():
 
     block0Bsc = 7192108
-    block1Bsc = 8381879
+    block1Bsc = 8782882
     bdiggBsc0, bdiggLpBsc0 = get_bsc_data(block0Bsc)
     bdiggBsc1, bdiggLpBsc1 = get_bsc_data(block1Bsc)
 
