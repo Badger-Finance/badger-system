@@ -190,7 +190,7 @@ def upgrade_setts(badger, helper, admin, new_logic, setts):
     helper.publish()
 
 
-def upgrade_strategies(badger, safe, helper, admin, new_logic, strategies):
+def upgrade_strategies(badger, helper, admin, new_logic, strategies):
     """
     Upgrade strategies
     """
@@ -582,9 +582,13 @@ def main():
     # approve_strategies_timelock(badger)
     # initialize_strategies(badger)
     # set_strategy_fees(badger, helper, 20, 0, 2000, new_core_vaults)
-    upgrade_setts(badger, helper, badger.testProxyAdmin, "0xBabAE0E133cd5a6836a63820284cCD8B14D9272a", helper_vaults)
+    # upgrade_strategies(badger, helper, badger.testProxyAdmin, "0x8cea9A8360f78dE508E01C6B082279Fe34c75f77", ['native.cvxCrv'])
     # upgrade_strategies(badger, dev_multi, helper, badger.testProxyAdmin, "0xBabAE0E133cd5a6836a63820284cCD8B14D9272a", new_core_vaults)
     # modify_curve_swap_addresses(badger, helper)
+    strategy = helper.contract_from_abi(badger.getStrategy("native.cvxCrv").address, "StrategyCvxCrvHelper", StrategyCvxCrvHelper.abi)
+    strategy.setCrvCvxCrvPath()
+
+    helper.publish()
 
     # upgrade_vault_proxy_admins(badger, vaults_to_add)
     # initialize_strategies(badger)
