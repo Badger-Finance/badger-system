@@ -12,9 +12,8 @@ from assistant.rewards.classes.RewardsList import RewardsList
 from config.rewards_config import rewards_config
 from brownie.network.gas.strategies import GasNowStrategy
 from assistant.rewards.classes.MerkleTree import rewards_to_merkle_tree
-from assistant.rewards.aws_utils import (
-    upload,
-)
+from assistant.rewards.aws_utils import upload
+
 gas_strategy = GasNowStrategy("fast")
 console = Console()
 
@@ -56,7 +55,5 @@ def main():
             currentRewards["endBlock"],
             {"from": badger.root_proposer, "gas_price": gas_strategy},
         )
-        
-        upload(
-            contentFileName, merkleTree, publish=False
-        )
+
+        upload(contentFileName, merkleTree, publish=False)

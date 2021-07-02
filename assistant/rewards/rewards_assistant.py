@@ -81,7 +81,7 @@ def calc_sett_rewards(badger, periodStartBlock, endBlock, cycle, unclaimedReward
     with open("badger-boosts.json", "w") as fp:
         json.dump(boostsMetadata, fp)
 
-    upload_boosts(test=True)
+    upload_boosts(test=False)
 
     return rewards
 

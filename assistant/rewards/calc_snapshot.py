@@ -91,6 +91,10 @@ def calc_snapshot(
                 ## If giving rewards to tree , distribute them to users with unlcaimed bals
                 if addr == BADGER_TREE:
                     if name == "native.cvx":
+                        console.log("Distributing {} rewards to {} unclaimed bCvx holders".format(
+                            rewardAmount/1e18,
+                            len(unclaimedBalances["bCvx"])
+                        ))
                         totalbCvxBal = sum(unclaimedBalances["bCvx"].values())
                         cvxRewardsUnit = rewardAmount / totalbCvxBal
                         for addr, bal in unclaimedBalances["bCvx"].items():
@@ -100,6 +104,12 @@ def calc_snapshot(
                                 int(cvxRewardsUnit * bal),
                             )
                     if name == "native.cvxCrv":
+
+                        console.log("Distributing {} rewards to {} unclaimed bCvxCrv holders".format(
+                            rewardAmount/1e18,
+                            len(unclaimedBalances["bCvxCrv"])
+                        ))
+
                         totalbCvxCrvBal = sum(unclaimedBalances["bCvxCrv"].values())
                         bCvxCrvRewardsUnit = rewardAmount / totalbCvxCrvBal
                         for addr, bal in unclaimedBalances["bCvxCrv"].items():
@@ -108,7 +118,6 @@ def calc_snapshot(
                                 token,
                                 int(bCvxCrvRewardsUnit * bal),
                             )
-
                 else:
                     rewards.increase_user_rewards(addr, token, int(rewardAmount))
 
@@ -117,7 +126,7 @@ def calc_snapshot(
                     tokenDistribution / 1e18, totalRewards / 1e18
                 )
             )
-            console.log("Diff {}".format((abs(tokenDistribution - totalRewards))))
+            console.log("Diff {}\n\n".format((abs(tokenDistribution - totalRewards))))
 
     return rewards, apyBoosts
 
