@@ -11,6 +11,7 @@ from scripts.systems.badger_system import connect_badger
 from helpers.console_utils import console
 from helpers.registry import registry
 
+
 def main():
     badger = connect_badger()
 
@@ -19,6 +20,7 @@ def main():
         helper = ApeSafeHelper(badger, dev_multi)
     else:
         from helpers.gas_utils import gas_strategies
+
         gas_strategies.set_default(gas_strategies.exponentialScalingFast)
 
     # Deploy logic

@@ -65,7 +65,7 @@ def main():
             badger.badgerRewardsManager,
             badger.devMultisig,
             badger.rewardsEscrow,
-            badger.paymentsMultisig
+            badger.paymentsMultisig,
         ],
     )
     snap.snap()

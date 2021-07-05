@@ -106,4 +106,3 @@ def main():
     snap.diff_last_two()
 
     helper.publish()
-    
