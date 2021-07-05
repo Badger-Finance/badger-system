@@ -8,19 +8,19 @@ from tabulate import tabulate
 from helpers.registry import registry
 
 skip = [
-    "native.badger",
-    "native.renCrv",
-    "native.sbtcCrv",
-    "native.tbtcCrv",
-    "native.uniBadgerWbtc",
-    "harvest.renCrv",
-    "native.sushiWbtcEth",
-    "native.sushiBadgerWbtc",
-    "native.digg",
-    "native.uniDiggWbtc",
-    "native.sushiDiggWbtc",
-    "yearn.wbtc",
-    "experimental.sushiIBbtcWbtc",
+    # "native.badger",
+    # "native.renCrv",
+    # "native.sbtcCrv",
+    # "native.tbtcCrv",
+    # "native.uniBadgerWbtc",
+    # "harvest.renCrv",
+    # "native.sushiWbtcEth",
+    # "native.sushiBadgerWbtc",
+    # "native.digg",
+    # "native.uniDiggWbtc",
+    # "native.sushiDiggWbtc",
+    # "yearn.wbtc",
+    # "experimental.sushiIBbtcWbtc",
 ]
 
 

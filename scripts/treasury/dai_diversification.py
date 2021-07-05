@@ -26,7 +26,7 @@ def main():
 
     badger = connect_badger()
 
-    safe = ApeSafe(badger.treasuryMultisig.address)
+    safe = ApeSafe(badger.paymentsMultisig.address)
     helper = ApeSafeHelper(badger, safe)
 
     # Fetch tokens for snap + interactions
@@ -41,7 +41,7 @@ def main():
     snap = BalanceSnapshotter(
         [usdc, dai, yDai, yUsdc],
         [
-            badger.treasuryMultisig,
+            badger.paymentsMultisig,
         ],
     )
     snap.snap()

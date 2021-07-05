@@ -1,4 +1,4 @@
-from helpers.time_utils import days
+from helpers.time_utils import days, to_utc_date
 from ape_safe import ApeSafe
 from brownie import *
 from helpers.constants import *
@@ -66,16 +66,39 @@ def config_guest_lists(badger):
         )
 
         console.print(" [purple]Params[/purple]", params)
+        
+        old_cap = guestList.totalDepositCap()
+        new_cap = old_cap * 4
 
-        guestList.initialize(sett, {"from": badger.deployer})
-        guestList.setUserDepositCap(
-            params["user_deposit_cap"], {"from": badger.deployer}
-        )
-        guestList.setTotalDepositCap(
-            params["total_deposit_cap"], {"from": badger.deployer}
-        )
-        guestList.setGuestRoot(params["root"], {"from": badger.deployer})
+        console.print({
+            "old cap": old_cap,
+            "new_cap": new_cap
+        })
 
+        guestList.initialize(sett, {'from': badger.deployer})
+        guestList.setUserDepositCap(params["user_deposit_cap"], {'from': badger.deployer})
+        guestList.setTotalDepositCap(params["total_deposit_cap"], {'from': badger.deployer})
+        guestList.setGuestRoot(params["root"], {'from': badger.deployer})
+
+def modify_guest_lists(badger, helper, vault_keys):
+    for key in vault_keys:
+        guestList = helper.contract_from_abi(badger.getGuestList(key).address, "VipCappedGuestListBbtcUpgradeable", VipCappedGuestListBbtcUpgradeable.abi)
+
+        console.print(f"📝 [yellow]Modifying guest list[/yellow] [blue]{guestList.address}[/blue] for key {key}")
+        console.print(" [purple]Params[/purple]", params)
+        
+        old_cap = guestList.totalDepositCap()
+        new_cap = old_cap * 4
+
+        console.print({
+            "old cap": old_cap,
+            "new_cap": new_cap
+        })
+
+        guestList.setUserDepositCap(new_cap)
+        guestList.setTotalDepositCap(new_cap)
+        assert guestList.guestRoot() == EmptyBytes32
+    helper.publish()
 
 def set_guest_lists(badger, safe, helper, vaults_to_add):
     for key in vaults_to_add:
@@ -361,30 +384,25 @@ def approve_strategies_timelock(badger):
 
     for key in strategies_to_initialize:
         strategy = badger.getStrategy(key)
+        vault = badger.getSett(key)
 
         console.print(f"Initializing strat {key} ({strategy.address})")
         controller = badger.getController("native")
 
         print(controller.governance(), controller.strategist())
         assert controller.governance() == badger.governanceTimelock
-
-        console.print(
-            {
-                "want": strategy.want(),
-                "strat": strategy,
-                "chaintime": chain.time(),
-                "executable_at": chain.time() + days(2.5),
-            }
-        )
+        assert strategy.getName() == "StrategyConvexStakingOptimizer"
+        assert vault.token() == strategy.want()
 
         timelock_params = {
             "target": controller.address,
             "signature": "approveStrategy(address,address)",
-            "data": encode_abi(
-                ["address", "address"], [strategy.want(), strategy.address]
-            ),
-            "eta": chain.time() + days(2.9),
+            "data": encode_abi(["address", "address"], [strategy.want(), strategy.address]),
+            "eta": chain.time() + days(3.1),
         }
+
+        console.print(timelock_params)
+        console.print(f"TX Executable at {to_utc_date(timelock_params['eta'])}")
 
         all_timelock_params[key] = timelock_params
 
@@ -397,7 +415,7 @@ def approve_strategies_timelock(badger):
             timelock_params["eta"],
         )
 
-    chain.sleep(days(3.5))
+    chain.sleep(days(3.2))
     chain.mine()
 
     for key in strategies_to_initialize:
@@ -570,6 +588,7 @@ def modify_curve_swap_addresses(badger, helper):
     strategy.setCurvePoolSwap(registry.curve.pools.bbtcCrv.swap)
     helper.publish()
 
+def experimental_earn(badger, vaults_to_earn):
 
 def set_withdrawal_fee(badger, safe, helper, vaults_to_add):
     vaults_to_add = ["experimental.sushiIBbtcWbtc"]
@@ -672,21 +691,18 @@ def main():
     # set_vaults_on_controller(badger, dev_multi, helper, vaults_to_add)
     # set_strategies_on_controller(badger, dev_multi, helper, vaults_to_add)
 
+    # modify_guest_lists(badger, helper, ['native.cvx', 'native.cvxCrv'])
+
     # set_strategy_fees(badger, dev_multi, helper, helper_vaults)
     # approve_strategies_timelock(badger)
     # initialize_strategies(badger)
     # set_strategy_fees(badger, helper, 20, 0, 2000, new_core_vaults)
-    # upgrade_strategies(badger, helper, badger.testProxyAdmin, "0x8cea9A8360f78dE508E01C6B082279Fe34c75f77", ['native.cvxCrv'])
-    # upgrade_strategies(badger, dev_multi, helper, badger.testProxyAdmin, "0xBabAE0E133cd5a6836a63820284cCD8B14D9272a", new_core_vaults)
+    # upgrade_strategies(badger, helper, badger.testProxyAdmin, web3.toChecksumAddress("0x01d10fdc6b484be380144df12eb6c75387efc49b"), ["native.renCrv", "native.sbtcCrv", "native.tbtcCrv"])
     # modify_curve_swap_addresses(badger, helper)
-    strategy = helper.contract_from_abi(
-        badger.getStrategy("native.cvxCrv").address,
-        "StrategyCvxCrvHelper",
-        StrategyCvxCrvHelper.abi,
-    )
-    strategy.setCrvCvxCrvPath()
+    # strategy = helper.contract_from_abi(badger.getStrategy("native.cvxCrv").address, "StrategyCvxCrvHelper", StrategyCvxCrvHelper.abi)
+    # strategy.setCrvCvxCrvPath()
 
-    helper.publish()
+    # helper.publish()
 
     # upgrade_vault_proxy_admins(badger, vaults_to_add)
     # initialize_strategies(badger)

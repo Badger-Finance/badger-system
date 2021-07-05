@@ -34,7 +34,7 @@ pretty.install()
 def main():
     badger = connect_badger()
     digg = badger.digg
-    safe = ApeSafe(badger.treasuryMultisig.address)
+    safe = ApeSafe(badger.paymentsMultisig.address)
 
     abi = Sett.abi
 
@@ -83,7 +83,7 @@ def main():
         bBadgerAfter - bBadgerBefore,
         val(bBadgerAfter - bBadgerBefore),
     )
-    # bBadger.transfer(badger.treasuryMultisig, bBadgerAfter - bBadgerBefore)
+    # bBadger.transfer(badger.paymentsMultisig, bBadgerAfter - bBadgerBefore)
     print(tx.events)
 
     snap.snap(name="After Deposits")

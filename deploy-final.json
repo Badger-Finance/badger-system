@@ -89,7 +89,7 @@
         "StabilizeDiggSett": "0x3ee8ECEF1c5D6B924a03A32eFF4233d3dE5190E5",
         "DiggTreasury": "0x132069EA2E57b44C53C60697FD37453Afcae2708",
         "StrategyConvexLpOptimizer": "0xAB10f878bD27ae01DF36Ba645E458f7dbca7AA46",
-        "StrategyConvexStakingOptimizer" :"0x01d10fdc6b484BE380144dF12EB6C75387EfC49B",
+        "StrategyConvexStakingOptimizer": "0x01d10fdc6b484BE380144dF12EB6C75387EfC49B",
         "StrategyCvxHelper": "0x831BeEaDfC5F4e7D9ecEa045066588824be6EbAa",
         "StrategyCvxCrvHelper": "0x8cea9A8360f78dE508E01C6B082279Fe34c75f77"
     },
@@ -210,9 +210,9 @@
         },
         "strategy_artifacts": {
             "native.badger": "StrategyBadgerRewards",
-            "native.renCrv": "StrategyConvexStakingOptimizer",
-            "native.sbtcCrv": "StrategyConvexStakingOptimizer",
-            "native.tbtcCrv": "StrategyConvexStakingOptimizer",
+            "native.renCrv": "StrategyCurveGaugeRenBtcCrv",
+            "native.sbtcCrv": "StrategyCurveGaugeSbtcCrv",
+            "native.tbtcCrv": "StrategyCurveGaugeTbtcCrv",
             "native.uniBadgerWbtc": "StrategyBadgerLpMetaFarm",
             "harvest.renCrv": "StrategyHarvestMetaFarm",
             "native.sushiWbtcEth": "StrategySushiLpOptimizer",
