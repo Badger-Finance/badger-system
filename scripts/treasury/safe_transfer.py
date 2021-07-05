@@ -45,10 +45,11 @@ def main():
     diggToken = helper.contract_from_abi(badger.digg.token.address, "IERC20", interface.IERC20.abi)
 
     transfers = [
-        TransferOp(badger.badgerTree, badger.token, Wei("20000 ether")),
+        TransferOp(badger.paymentsMultisig, badger.token, Wei("51222 ether")),
+        # TransferOp(badger.badgerTree, badger.token, Wei("20000 ether")),
         # TransferOp(badger.badgerTree, dfd, Wei("200000 ether")),
-        TransferOp(badger.badgerRewardsManager, badger.token, Wei("10000 ether")),
-        TransferOp(badger.badgerRewardsManager, diggToken, Wei("2 gwei")),
+        # TransferOp(badger.badgerRewardsManager, badger.token, Wei("10000 ether")),
+        # TransferOp(badger.badgerRewardsManager, diggToken, Wei("2 gwei")),
     ]
 
     snap = BalanceSnapshotter(
@@ -58,6 +59,7 @@ def main():
             badger.badgerRewardsManager,
             badger.devMultisig,
             badger.rewardsEscrow,
+            badger.paymentsMultisig
         ],
     )
     snap.snap()

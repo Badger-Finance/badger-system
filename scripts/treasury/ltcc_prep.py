@@ -43,7 +43,7 @@ pretty.install()
 
 def main():
     badger = connect_badger()
-    multisig = badger.treasuryMultisig
+    multisig = badger.paymentsMultisig
 
     safe = ApeSafe(multisig.address)
 

@@ -232,8 +232,8 @@ def connect_badger(
     if "dao" in badger_deploy:
         badger.connect_dao()
 
-    if "treasuryMultisig" in badger_deploy:
-        badger.connect_treasury_multisig(badger_deploy["treasuryMultisig"])
+    if "paymentsMultisig" in badger_deploy:
+        badger.connect_treasury_multisig(badger_deploy["paymentsMultisig"])
 
     badger.connect_logic(badger_deploy["logic"])
 
@@ -499,7 +499,7 @@ class BadgerSystem:
         self.devMultisig = connect_gnosis_safe(address)
 
     def connect_treasury_multisig(self, address):
-        self.treasuryMultisig = connect_gnosis_safe(address)
+        self.paymentsMultisig = connect_gnosis_safe(address)
 
     def connect_ops_multisig(self, address):
         self.opsMultisig = connect_gnosis_safe(address)

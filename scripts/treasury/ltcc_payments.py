@@ -14,6 +14,7 @@ from brownie import Wei, accounts, interface, rpc
 from config.badger_config import badger_config
 from helpers.constants import *
 from helpers.gnosis_safe import (
+    ApeSafeHelper,
     GnosisSafe,
     MultisigTx,
     MultisigTxMetadata,
@@ -42,9 +43,10 @@ pretty.install()
 
 def main():
     badger = connect_badger()
-    multisig = badger.treasuryMultisig
+    multisig = badger.paymentsMultisig
 
     safe = ApeSafe(multisig.address)
+    helper = ApeSafeHelper(badger, safe)
 
     payments = load_ltcc_recipients("data/ltcc_recipients.csv")
     payments.calc_totals()
@@ -62,14 +64,24 @@ def main():
         badger.token.address, "IERC20", interface.IERC20.abi
     )
 
-    # TODO: Do this in bBadger going forward - this is the way.
-    # Approve treasury multi to stake
-    # Deposit badger -> bBadger
-
     snap = BalanceSnapshotter(
         [badgerToken, bBadger, usdcToken],
         [multisig, badger.deployer, badger.rewardsEscrow],
     )
+    snap.snap()
+    # TODO: Do this in bBadger going forward - this is the way.
+    # Approve treasury multi to stake
+    # Deposit badger -> bBadger
+    # console.print(f"Converting total of {val(payments.totals['badger'])} badger into bBadger")
+
+    # badgerToken.approve(bBadger, payments.totals['badger'])
+    # bBadger.deposit(payments.totals['badger'])
+
+    # snap.snap()
+    # snap.diff_last_two()
+
+    # helper.publish()
+    # return True
 
     for recipient in payments.recipients:
         snap.add_account(recipient.address)
@@ -93,7 +105,5 @@ def main():
     snap.snap(name="After Transfers")
     snap.diff_last_two()
 
-    safe_tx = safe.multisend_from_receipts()
-    safe.preview(safe_tx)
-    data = safe.print_transaction(safe_tx)
-    safe.post_transaction(safe_tx)
+    helper.publish()
+    
