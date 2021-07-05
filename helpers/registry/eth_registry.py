@@ -200,6 +200,8 @@ eth_registry.tokens = DotMap(
     ausdc="0xBcca60bB61934080951369a648Fb03DF4F96263C",
     cvx="0x4e3FBD56CD56c3e72c1403e103b45Db9da5B9D2B",
     cvxCrv="0x62B9c7356A2Dc64a1969e19C23e4f579F9810Aa7",
+    pnt="0x89Ab32156e46F46D02ade3FEcbe5Fc4243B9AAeD",
+    bor="0x3c9d6c1C73b31c837832c72E04D3152f051fc1A9",
 )
 
 eth_registry.whales = DotMap(
