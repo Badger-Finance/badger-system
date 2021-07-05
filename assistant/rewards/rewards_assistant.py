@@ -239,7 +239,11 @@ def generate_rewards_in_range(badger, startBlock, endBlock, pastRewards):
     # Sanity check new rewards file
 
     verify_rewards(
-        badger, startBlock, endBlock, pastRewards, after_file,
+        badger,
+        startBlock,
+        endBlock,
+        pastRewards,
+        after_file,
     )
 
     return {

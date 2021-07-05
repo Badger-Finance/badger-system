@@ -7,7 +7,9 @@ from .BaseAction import BaseAction
 
 class RebaseAction(BaseAction):
     def __init__(
-        self, snap: SnapshotManager, user: Any,
+        self,
+        snap: SnapshotManager,
+        user: Any,
     ):
         self.snap = snap
         self.user = user

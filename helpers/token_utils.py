@@ -28,7 +28,11 @@ class BalanceSnapshotter:
         self.snaps.append({"name": name, "balances": balances})
         if print:
             if name != "":
-                console.print("[green]== Balances: {} ==[/green]".format(name,))
+                console.print(
+                    "[green]== Balances: {} ==[/green]".format(
+                        name,
+                    )
+                )
             balances.print()
 
     def diff_last_two(self):

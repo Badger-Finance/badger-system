@@ -39,10 +39,16 @@ def main():
     safe = ApeSafe(multisig.address)
     helper = ApeSafeHelper(badger, safe)
 
-    rewardsEscrow = helper.contract_from_abi(badger.rewardsEscrow.address, "RewardsEscrow", RewardsEscrow.abi)
-    vesting = helper.contract_from_abi(badger.digg.daoDiggTimelock.address, "SimpleTimelock", SimpleTimelock.abi)
+    rewardsEscrow = helper.contract_from_abi(
+        badger.rewardsEscrow.address, "RewardsEscrow", RewardsEscrow.abi
+    )
+    vesting = helper.contract_from_abi(
+        badger.digg.daoDiggTimelock.address, "SimpleTimelock", SimpleTimelock.abi
+    )
     # dfd = helper.contract_from_abi(registry.token_address_by_key("dfd"), "IERC20", interface.IERC20.abi)
-    diggToken = helper.contract_from_abi(badger.digg.token.address, "IERC20", interface.IERC20.abi)
+    diggToken = helper.contract_from_abi(
+        badger.digg.token.address, "IERC20", interface.IERC20.abi
+    )
 
     transfers = [
         TransferOp(badger.badgerTree, badger.token, Wei("20000 ether")),

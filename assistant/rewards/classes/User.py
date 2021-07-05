@@ -5,7 +5,10 @@ console = Console()
 
 class User:
     def __init__(
-        self, address, currentDeposited, lastUpdated,
+        self,
+        address,
+        currentDeposited,
+        lastUpdated,
     ):
         self.address = address
         self.currentDeposited = currentDeposited
@@ -14,7 +17,10 @@ class User:
 
     def __repr__(self):
         return "User({},{},{},{})".format(
-            self.address, self.currentDeposited, self.lastUpdated, self.shareSeconds,
+            self.address,
+            self.currentDeposited,
+            self.lastUpdated,
+            self.shareSeconds,
         )
 
     def process_transfer(self, transfer):
