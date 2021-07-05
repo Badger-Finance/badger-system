@@ -32,7 +32,10 @@ class RewardsLog:
     def add_total_token_dist(self, name, token, amount):
         if name not in self._totalTokenDist:
             self._totalTokenDist[name] = {}
-        self._totalTokenDist[name][token] = amount
+        if token not in self._totalTokenDist[name]:
+            self._totalTokenDist[name][token] = 0
+
+        self._totalTokenDist[name][token] += amount
 
     def save(self, cycle):
 

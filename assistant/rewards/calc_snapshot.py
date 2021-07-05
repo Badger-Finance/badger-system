@@ -91,10 +91,11 @@ def calc_snapshot(
                 ## If giving rewards to tree , distribute them to users with unlcaimed bals
                 if addr == BADGER_TREE:
                     if name == "native.cvx":
-                        console.log("Distributing {} rewards to {} unclaimed bCvx holders".format(
-                            rewardAmount/1e18,
-                            len(unclaimedBalances["bCvx"])
-                        ))
+                        console.log(
+                            "Distributing {} rewards to {} unclaimed bCvx holders".format(
+                                rewardAmount / 1e18, len(unclaimedBalances["bCvx"])
+                            )
+                        )
                         totalbCvxBal = sum(unclaimedBalances["bCvx"].values())
                         cvxRewardsUnit = rewardAmount / totalbCvxBal
                         for addr, bal in unclaimedBalances["bCvx"].items():
@@ -105,10 +106,11 @@ def calc_snapshot(
                             )
                     if name == "native.cvxCrv":
 
-                        console.log("Distributing {} rewards to {} unclaimed bCvxCrv holders".format(
-                            rewardAmount/1e18,
-                            len(unclaimedBalances["bCvxCrv"])
-                        ))
+                        console.log(
+                            "Distributing {} rewards to {} unclaimed bCvxCrv holders".format(
+                                rewardAmount / 1e18, len(unclaimedBalances["bCvxCrv"])
+                            )
+                        )
 
                         totalbCvxCrvBal = sum(unclaimedBalances["bCvxCrv"].values())
                         bCvxCrvRewardsUnit = rewardAmount / totalbCvxCrvBal

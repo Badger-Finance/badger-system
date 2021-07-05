@@ -2,6 +2,7 @@ from assistant.subgraph.client import fetch_tree_distributions
 from assistant.rewards.rewards_utils import calculate_sett_balances
 from rich.console import Console
 from assistant.rewards.classes.RewardsList import RewardsList
+from assistant.rewards.classes.RewardsLog import rewardsLog
 from brownie import web3
 
 console = Console()
@@ -35,6 +36,9 @@ def calc_tree_rewards(badger, startBlock, endBlock, nextCycle):
         balances = calculate_sett_balances(badger, settName, int(blockNumber))
         totalBalance = sum([u.balance for u in balances])
         rewardsUnit = amountToDistribute / totalBalance
+        rewardsLog.add_total_token_dist(
+            settName, web3.toChecksumAddress(token), amountToDistribute
+        )
         for user in balances:
             userReward = rewardsUnit * user.balance
             rewards.increase_user_rewards(

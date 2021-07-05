@@ -67,10 +67,9 @@ def process_rewards(badger, startBlock, endBlock, events, name, nextCycle, token
             totalFromRewards, totalFromEvents, rewardsDiff
         )
     )
+
+    rewardsLog.add_total_token_dist(name, token, totalFromRewards)
     if abs(totalFromEvents - totalFromRewards) > 100000:
         assert False, "Incorrect total rewards"
 
-    distr = {}
-    distr[token] = totalFromRewards
-    rewardsLog.add_distribution_info(name, distr)
     return rewards

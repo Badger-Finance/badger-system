@@ -83,7 +83,7 @@ def badger_boost(badger, currentBlock):
     nonNativeSetts = UserBalances()
     boostInfo = {}
     for name, sett in allSetts.items():
-        if name in ["experimental.digg", "native.cvxCrv"]:
+        if name in ["experimental.digg"]:
             continue
         balances = calculate_sett_balances(badger, name, currentBlock)
         balances = convert_balances_to_usd(sett, name, balances)
