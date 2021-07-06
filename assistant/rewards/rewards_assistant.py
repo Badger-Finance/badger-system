@@ -210,6 +210,9 @@ def generate_rewards_in_range(badger, startBlock, endBlock, pastRewards, saveLoc
         if BCVX in tokens or BCVXCRV in tokens:
             unclaimedAddresses.append(addr)
 
+    sushiRewards = calc_all_sushi_rewards(
+        badger, startBlock, endBlock, nextCycle, retroactive=False
+    )
     treeRewards = calc_tree_rewards(badger, startBlock, endBlock, nextCycle)
     settRewards = calc_sett_rewards(
         badger,
@@ -219,17 +222,8 @@ def generate_rewards_in_range(badger, startBlock, endBlock, pastRewards, saveLoc
         get_unclaimed_rewards(unclaimedAddresses),
     )
 
-    ## Check all claimable bcvx and bcrvCvx
-
-    # farmRewards = calc_farm_rewards(
-    #    badger, startBlock, endBlock, nextCycle, retroactive=False
-    # )
-    # sushiRewards = calc_all_sushi_rewards(
-    #    badger, startBlock, endBlock, nextCycle, retroactive=False
-    # )
-
     newRewards = combine_rewards(
-        [settRewards, treeRewards], nextCycle, badger.badgerTree
+        [settRewards, treeRewards, sushiRewards], nextCycle, badger.badgerTree
     )
     cumulativeRewards = process_cumulative_rewards(pastRewards, newRewards)
 
