@@ -24,6 +24,7 @@ from helpers.sett.resolvers import (
     StrategyConvexStakingOptimizerResolver,
     StrategyCvxHelperResolver,
     StrategyCvxCrvHelperResolver,
+    StabilizeStrategyDiggV1Resolver
 )
 from helpers.utils import digg_shares_to_initial_fragments, val
 from scripts.systems.badger_system import BadgerSystem
