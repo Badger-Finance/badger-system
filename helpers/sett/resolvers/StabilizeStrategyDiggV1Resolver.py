@@ -16,9 +16,11 @@ console = Console()
 
 class StabilizeStrategyDiggV1Resolver(StrategyCoreResolver):
     def confirm_rebalance(self, before, after, tx):
-        # No-op, nothing to harvest - rewards are handled externally.
+        console.print("=== Compare Rebalance ===")
+        self.manager.printCompare(before, after)
         pass
 
+    # Override: Need to adjust for Digg decimals difference
     def confirm_deposit(self, before, after, params):
         """
         Deposit Should;
@@ -63,6 +65,30 @@ class StabilizeStrategyDiggV1Resolver(StrategyCoreResolver):
             before.balances("sett", "user") + expected_shares,
             1,
         )
+
+    def add_entity_balances_for_tokens(self, calls, tokenKey, token, entities):
+        entities["sushiswap_router"] = "0xd9e1cE17f2641f24aE83637ab66a2cca9C378B9F"
+        entities["uniswap_router"] = "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D"
+        entities["stabilizeVault"] = self.manager.strategy.stabilizeVault()
+        entities["diggExchangeTreasury"] = self.manager.strategy.diggExchangeTreasury()
+
+        super().add_entity_balances_for_tokens(calls, tokenKey, token, entities)
+        return calls
+
+    def add_balances_snap(self, calls, entities):
+        super().add_balances_snap(calls, entities)
+        strategy = self.manager.strategy
+
+        diggSLP = interface.IERC20("0x9a13867048e01c663ce8Ce2fE0cDAE69Ff9F35E3")
+        diggUniLP = interface.IERC20("0xE86204c4eDDd2f70eE00EAd6805f917671F56c52")
+        wbtc = interface.IERC20("0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599")
+
+
+        calls = self.add_entity_balances_for_tokens(calls, "diggSLP", diggSLP, entities)
+        calls = self.add_entity_balances_for_tokens(calls, "diggUniLP", diggUniLP, entities)
+        calls = self.add_entity_balances_for_tokens(calls, "wbtc", wbtc, entities)
+
+        return calls
 
     def get_strategy_destinations(self):
         return {}

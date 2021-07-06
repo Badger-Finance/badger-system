@@ -9,7 +9,7 @@ from helpers.token_utils import distribute_from_whales
 @pytest.mark.parametrize(
     "settConfig", stabilizeTestConfig,
 )
-def test_single_user_flow(settConfig):
+def test_single_user_rebalance_flow(settConfig):
     badger = badger_single_sett(settConfig)
 
     sett = badger.vault
