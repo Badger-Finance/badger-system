@@ -6,6 +6,7 @@ from scripts.systems.badger_system import BadgerSystem, connect_badger
 from config.badger_config import badger_config, sett_config, digg_config
 from brownie import *
 import json
+from helpers.constants import AddressZero
 
 class DiggStabilizeMiniDeploy:
     def deploy(self, sett_type=SettType.DEFAULT, deploy=True) -> BadgerSystem:
@@ -13,6 +14,8 @@ class DiggStabilizeMiniDeploy:
 
         digg = badger.digg
         dev = badger.deployer
+
+        id = "experimental.digg"
 
         timelock = badger.digg.daoDiggTimelock
 
@@ -42,6 +45,8 @@ class DiggStabilizeMiniDeploy:
             {"from": dev},
         )
 
+        badger.sett_system.strategies[id] = strategy
+
         diggTreasury.initialize(strategy, {"from": dev})
 
         """
@@ -62,6 +67,8 @@ class DiggStabilizeMiniDeploy:
             badger_deploy["sett_system"]["vaults"]["experimental.digg"]
         )
 
+        badger.sett_system.vaults[id] = vault
+
         # Used to deploy vault locally:
 
         # vault = StabilizeDiggSett.deploy({"from": dev})
@@ -78,16 +85,30 @@ class DiggStabilizeMiniDeploy:
 
         print("governance", controller.governance())
 
+        # Wire up strategy:
         controller.approveStrategy(digg.token, strategy.address, {"from": governance})
         controller.setStrategy(digg.token, strategy.address, {"from": governance})
         # controller.setVault(digg.token, vault.address, {"from": governance})
 
+        assert controller.strategies(vault.token()) == strategy.address
+        assert controller.vaults(strategy.want()) == vault.address
+
+        # Add actors to guestList if existing:
+        if vault.guestList() != AddressZero:
+            guestlist = VipCappedGuestListBbtcUpgradeable.at(
+                vault.guestList()
+            )
+            owner = accounts.at(guestlist.owner(), force=True)
+
+            guestlist.setGuests(
+                [badger.deployer.address, accounts[6].address],
+                [True, True],
+                {"from": owner},
+            )
+        
         badger.controller = controller
         badger.strategy = strategy
         badger.vault = vault
 
-        assert controller.strategies(vault.token()) == strategy.address
-        assert controller.vaults(strategy.want()) == vault.address
-        
         self.badger = badger
         return self.badger
