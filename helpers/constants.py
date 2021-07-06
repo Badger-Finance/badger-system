@@ -61,7 +61,7 @@ NON_NATIVE_SETTS = [
     "native.obtcCrv",
     "native.bbtcCrv",
     "native.tricrypto",
-    "native.crvCvx",
+    "native.cvxCrv",
     "native.cvx",
 ]
 
