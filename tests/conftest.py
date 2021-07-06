@@ -119,7 +119,7 @@ baseSettsToRun = networkSettsMap[network_manager.get_active_network()]
 
 stabilizeSett = ["experimental.digg"]
 
-stabilizeTestConfig = generate_sett_test_config(stabilizeSett, False)
+stabilizeTestConfig = generate_sett_test_config(stabilizeSett, runTestSetts)
 settTestConfig = generate_sett_test_config(baseSettsToRun, runTestSetts)
 diggSettTestConfig = generate_sett_test_config(diggSettsToRun, runTestSetts)
 yearnSettTestConfig = generate_sett_test_config(yearnSettsToRun, runTestSetts)
