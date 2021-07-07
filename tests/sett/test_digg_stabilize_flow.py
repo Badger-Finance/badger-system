@@ -62,14 +62,8 @@ def test_single_user_rebalance_flow(settConfig):
     # Push/rebase on an exchange rate of 1.2 (DIGG trading at 1.2x BTC)
     rebase(badger, deployer)
 
-    print("Strat ts:", strategy.lastDiggTotalSupply())
-    print("Digg ts:", want.totalSupply())
-
     chain.sleep(days(1))
     chain.mine()
-
-    print("Strat ts:", strategy.lastDiggTotalSupply())
-    print("Digg ts:", want.totalSupply())
 
     # Rebalance
     snap.rebalance({"from": settKeeper})

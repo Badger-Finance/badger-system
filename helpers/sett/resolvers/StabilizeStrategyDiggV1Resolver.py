@@ -10,12 +10,52 @@ from helpers.utils import (
 from helpers.constants import *
 from helpers.multicall import Call, as_wei, func
 from rich.console import Console
+from tabulate import tabulate
 
 console = Console()
 
 
 class StabilizeStrategyDiggV1Resolver(StrategyCoreResolver):
+    def confirm_rebalance_events(self, before, after, tx):
+        console.print("[blue]== Convex Strat rebalance() State ==[/blue]")
+        key = "NoTrade"
+        if key in tx.events: 
+            event = tx.events[key][0]
+            keys = [
+                "blocknumber",
+            ]
+            for key in keys:
+                assert key in event
+            self.printState(event, keys)
+
+        key = "TradeState"
+        if key in tx.events: 
+            event = tx.events[key][0]
+            keys = [
+                "soldAmountNormalized",
+                "percentPriceChange",
+                "soldPercent",
+                "oldSupply",
+                "newSupply",
+                "blocknumber",
+            ]
+            for key in keys:
+                assert key in event
+            self.printState(event, keys)
+
+    def printState(self, event, keys):
+        table = []
+        nonAmounts = ["blocknumber", "soldPercent"]
+        for key in keys:
+            if key in nonAmounts:
+                table.append([key, event[key]])
+            else:
+                table.append([key, val(event[key])])
+
+        print(tabulate(table, headers=["account", "value"]))
+    
     def confirm_rebalance(self, before, after, tx):
+        self.confirm_rebalance_events(before, after, tx)
         console.print("=== Compare Rebalance ===")
         self.manager.printCompare(before, after)
         pass
