@@ -98,8 +98,9 @@ def badger_boost(badger, currentBlock):
         else:
             nonNativeSetts = combine_balances([nonNativeSetts, balances])
 
-    badger_wallet_balances, digg_wallet_balances = fetch_wallet_balances(
-        prices[BADGER], prices[DIGG], badger.digg, currentBlock
+    sharesPerFragment = badger.digg.logic.UFragments._sharesPerFragment()
+    badger_wallet_balances, digg_wallet_balances, _ = fetch_wallet_balances(
+        sharesPerFragment, currentBlock
     )
 
     console.log(
@@ -108,11 +109,17 @@ def badger_boost(badger, currentBlock):
         )
     )
     badger_wallet_balances = UserBalances(
-        [UserBalance(addr, bal, BADGER) for addr, bal in badger_wallet_balances.items()]
+        [
+            UserBalance(addr, bal * prices[BADGER], BADGER)
+            for addr, bal in badger_wallet_balances.items()
+        ]
     )
 
     digg_wallet_balances = UserBalances(
-        [UserBalance(addr, bal, DIGG) for addr, bal in digg_wallet_balances.items()]
+        [
+            UserBalance(addr, bal * prices[DIGG], DIGG)
+            for addr, bal in digg_wallet_balances.items()
+        ]
     )
     badgerSetts = filter_dust(combine_balances([badgerSetts, badger_wallet_balances]))
     diggSetts = filter_dust(combine_balances([diggSetts, digg_wallet_balances]))

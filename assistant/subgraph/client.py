@@ -292,7 +292,8 @@ def fetch_sushi_harvest_events():
     }
 
 
-def fetch_wallet_balances(badger_price, digg_price, digg, blockNumber):
+@lru_cache(maxsize=None)
+def fetch_wallet_balances(sharesPerFragment, blockNumber):
     increment = 1000
     query = gql(
         """
@@ -314,7 +315,7 @@ def fetch_wallet_balances(badger_price, digg_price, digg, blockNumber):
 
     badger_balances = {}
     digg_balances = {}
-    sharesPerFragment = digg.logic.UFragments._sharesPerFragment()
+    ibbtc_balances = {}
     console.log(sharesPerFragment)
     while continueFetching:
         variables = {
@@ -332,20 +333,21 @@ def fetch_wallet_balances(badger_price, digg_price, digg, blockNumber):
             )
             for entry in nextPage["tokenBalances"]:
                 address = entry["id"].split("-")[0]
-                if entry["token"]["symbol"] == "BADGER" and int(entry["balance"]) > 0:
-                    badger_balances[address] = (
-                        float(entry["balance"]) / 1e18
-                    ) * badger_price
-                if entry["token"]["symbol"] == "DIGG" and int(entry["balance"]) > 0:
-                    # Speed this up
-                    if entry["balance"] == 0:
-                        fragmentBalance = 0
-                    else:
-                        fragmentBalance = sharesPerFragment / int(entry["balance"])
+                amount = float(entry["balance"])
+                if amount > 0:
+                    if entry["token"]["symbol"] == "BADGER":
+                        badger_balances[address] = amount / 1e18
+                    if entry["token"]["symbol"] == "DIGG":
+                        # Speed this up
+                        if entry["balance"] == 0:
+                            fragmentBalance = 0
+                        else:
+                            fragmentBalance = sharesPerFragment / amount
+                        digg_balances[address] = float(fragmentBalance) / 1e9
+                    if entry["token"]["symbol"] == "ibBTC":
+                        ibbtc_balances[address] = amount / 1e18
 
-                    digg_balances[address] = (float(fragmentBalance) / 1e9) * digg_price
-
-    return badger_balances, digg_balances
+    return badger_balances, digg_balances, ibbtc_balances
 
 
 def fetch_cream_balances(tokenSymbol, blockNumber):
