@@ -3,6 +3,7 @@ from helpers.gnosis_safe import GnosisSafe
 from helpers.token_utils import distribute_test_ether
 from scripts.systems.constants import SettType
 from scripts.systems.badger_system import BadgerSystem, connect_badger
+from scripts.systems.digg_system import connect_digg
 from config.badger_config import badger_config, sett_config, digg_config
 from brownie import *
 import json
@@ -83,6 +84,10 @@ class DiggStabilizeMiniDeploy:
         #     "",
         # ),
 
+        digg = connect_digg(digg_config.prod_json)
+        self.digg = digg
+        self._deploy_dynamic_oracle(self.digg.devMultisig)
+
         print("governance", controller.governance())
 
         # Wire up strategy:
@@ -109,6 +114,15 @@ class DiggStabilizeMiniDeploy:
         badger.controller = controller
         badger.strategy = strategy
         badger.vault = vault
+        badger.digg = self.digg
 
         self.badger = badger
         return self.badger
+
+    def _deploy_dynamic_oracle(self, owner):
+        # Deploy dynamic oracle (used for testing ONLY).
+        self.digg.deploy_dynamic_oracle()
+        # Authorize dynamic oracle as a data provider to median oracle.
+        self.digg.marketMedianOracle.addProvider(
+            self.digg.dynamicOracle, {"from": owner},
+        )
