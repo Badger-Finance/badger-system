@@ -107,6 +107,7 @@ contract StabilizeStrategyDiggV1 is BaseStrategyMultiSwapper {
         uint256 soldPercent,
         uint256 oldSupply,
         uint256 newSupply,
+        bool diggInExpansion,
         uint256 blocknumber
     );
 
@@ -515,7 +516,7 @@ contract StabilizeStrategyDiggV1 is BaseStrategyMultiSwapper {
                 tradeAmountLeft = _amount;
                 executeTradeBatch(); // This will start to trade in batches
 
-                emit TradeState(_amount, percentChange, sellPercent, lastDiggTotalSupply, currentTotalSupply, block.number);
+                emit TradeState(_amount, percentChange, sellPercent, lastDiggTotalSupply, currentTotalSupply, diggInExpansion, block.number);
             } else {
                 diggInExpansion = false;
                 // Price is now negative
@@ -543,7 +544,7 @@ contract StabilizeStrategyDiggV1 is BaseStrategyMultiSwapper {
                     tradeAmountLeft = _amount;
                     executeTradeBatch();
 
-                    emit TradeState(_amount, percentChange, sellPercent, lastDiggTotalSupply, currentTotalSupply, block.number);
+                    emit TradeState(_amount, percentChange, sellPercent, lastDiggTotalSupply, currentTotalSupply, diggInExpansion, block.number);
                 } else {
                     tradeAmountLeft = 0; // Do not trade
                     emit NoTrade(block.number);

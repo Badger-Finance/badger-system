@@ -51,6 +51,10 @@ strategy = DotMap(
     sharesOfWant="sharesOfWant()(uint256)",
     sharesOf="sharesOf()(uint256)",
 )
+StabilizeStrategyDiggV1 = DotMap(
+    getDiggUSDPrice="getDiggUSDPrice()(uint256)",
+    getWBTCUSDPrice="getWBTCUSDPrice()(uint256)"
+)
 harvestFarm = DotMap(earned="earned()(uint256)")
 rewardPool = DotMap(
     # claimable rewards
@@ -80,4 +84,5 @@ func = DotMap(
     digg=digg,
     pancakeChef=pancakeChef,
     sushiChef=sushiChef,
+    StabilizeStrategyDiggV1=StabilizeStrategyDiggV1,
 )

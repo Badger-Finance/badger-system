@@ -286,6 +286,8 @@ class SnapshotManager:
             # TODO: Handle based on token decimals
             if ".digg" in key and "shares" not in key:
                 return val(value, decimals=9)
+            if ".wbtc" in key:
+                return val(value, decimals=8)
             if (
                 "balance" in key
                 or key == "sett.available"

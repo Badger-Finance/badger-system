@@ -17,10 +17,7 @@ console = Console()
 # Rebase constants pulled directly from `UFragmentsPolicy.sol`.
 # 15 minute rebase window at 8pm UTC everyday.
 REBASE_WINDOW_OFFSET_SEC = digg_config.rebaseWindowOffsetSec
-REBASE_WINDOW_LENGTH_SEC = digg_config.rebaseWindowLengthSec
 MIN_REBASE_TIME_INTERVAL_SEC = digg_config.minRebaseTimeIntervalSec
-# Pad shifts into rebase winudow by 1 minute.
-REBASE_SHIFT_PADDING_SECONDS = 60
 DAY = 24 * 60 * 60
 
 @pytest.mark.parametrize(
@@ -73,11 +70,27 @@ def test_single_user_rebalance_flow(settConfig):
     _shift_into_next_rebase_window(badger)
     rebase(badger, deployer)
 
-    chain.sleep(days(1))
+    # Rebalance
+    snap.rebalance({"from": settKeeper})
+
+    chain.sleep(days(0.25))
     chain.mine()
+
+    # Earn
+    snap.settEarn({"from": settKeeper})
+
+    chain.sleep(days(0.25))
+    chain.mine()
+
+    # Rebase
+    _shift_into_next_rebase_window(badger)
+    rebase(badger, deployer)
 
     # Rebalance
     snap.rebalance({"from": settKeeper})
+
+    chain.sleep(days(0.25))
+    chain.mine()
 
     assert False
 
@@ -122,8 +135,6 @@ def rebase(badger: BadgerSystem, account):
 
         if rpc.is_active():
             chain.mine()
-            print(tx.call_trace())
-            print(tx.events)
 
         supplyAfter = digg.token.totalSupply()
 
