@@ -37,8 +37,7 @@ def calc_tree_rewards(badger, startBlock, endBlock, nextCycle):
         totalBalance = sum([u.balance for u in balances])
         rewardsUnit = amountToDistribute / totalBalance
         rewardsLog.add_total_token_dist(
-            settName, web3.toChecksumAddress(token), amountToDistribute/1e18
-            
+            settName, web3.toChecksumAddress(token), amountToDistribute / 1e18
         )
         for user in balances:
             userReward = rewardsUnit * user.balance

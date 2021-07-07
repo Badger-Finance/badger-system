@@ -34,7 +34,7 @@ class RewardsLog:
             self._totalTokenDist[name] = {}
         if token not in self._totalTokenDist[name]:
             self._totalTokenDist[name][token] = 0
-
+        console.log("Adding {} of {} to {} ".format(amount, token, name))
         self._totalTokenDist[name][token] += amount
 
     def save(self, cycle):
@@ -47,7 +47,7 @@ class RewardsLog:
             "endBlock": self._endBlock,
             "totalTokenDist": self._totalTokenDist,
         }
-
+        console.log(data)
         upload_analytics(cycle, data)
 
 
