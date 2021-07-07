@@ -207,10 +207,11 @@ contract StrategyCvxCrvHelper is BaseStrategy, CurveSwapper, UniswapSwapper, Tok
 
         // Track harvested + converted coin balance of want
         cvxCrvHarvested = cvxCrvToken.balanceOf(address(this));
+        _processFee(cvxCrv, cvxCrvHarvested, performanceFeeGovernance, IController(controller).rewards());
 
         // 5. Stake all cvxCRV
         if (cvxCrvHarvested > 0) {
-            cvxCrvRewardsPool.stake(cvxCrvHarvested);
+            cvxCrvRewardsPool.stake(cvxCrvToken.balanceOf(address(this)));
         }
 
         emit Tend(cvxCrvHarvested);

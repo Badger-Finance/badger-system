@@ -3,6 +3,7 @@ from config.badger_config import sett_config
 from helpers.token_utils import distribute_from_whales
 from brownie import *
 from helpers.proxy_utils import deploy_proxy
+from helpers.registry import registry
 
 
 class ConvexPBtcMiniDeploy(SettMiniDeployBase):
@@ -115,6 +116,16 @@ class ConvexPBtcMiniDeploy(SettMiniDeployBase):
         invited = [True] * len(addresses)
 
         guestlist.setGuests(addresses, invited, {"from": self.deployer})
+
+        # Configure extra rewards tokens
+        # function addExtraRewardsToken(
+        #     address _extraToken,
+        #     RewardTokenConfig memory _rewardsConfig,
+        #     address[] memory _swapPathToWbtc
+        # )
+        self.strategy.addExtraRewardsToken(
+            registry.tokens.pnt, (3000, 10000, 0, 0, 0), [registry.tokens.pnt, registry.tokens.weth, registry.tokens.wbtc], {"from": self.governance}
+        )
 
     # Setup used for running simulation without deployed strategy:
 

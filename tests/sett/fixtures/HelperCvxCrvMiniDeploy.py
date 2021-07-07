@@ -51,6 +51,8 @@ class HelperCvxCrvMiniDeploy(SettMiniDeployBase):
         assert self.controller.strategies(self.vault.token()) == self.strategy.address
         assert self.controller.vaults(self.strategy.want()) == self.vault.address
 
+        self.strategy.setCrvCvxCrvPath({"from": self.governance})
+
         # Add actors to guestlist
         guestlist = VipCappedGuestListBbtcUpgradeable.at(self.vault.guestList())
 
