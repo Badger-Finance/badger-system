@@ -43,6 +43,11 @@ TOKENS_TO_CHECK = {
 
 BADGER_TREE = "0x660802Fc641b154aBA66a62137e71f331B6d787A"
 
+PEAK_ADDRESSES = [
+    "0x825218beD8BE0B30be39475755AceE0250C50627",
+    "0x41671BA1abcbA387b9b2B752c205e22e916BE6e3"
+]
+
 MAX_BOOST = 3
 DIGG_SETTS = ["native.uniDiggWbtc", "native.sushiDiggWbtc", "native.digg"]
 BADGER_SETTS = ["native.badger", "native.uniBadgerWbtc", "native.sushiBadgerWbtc"]

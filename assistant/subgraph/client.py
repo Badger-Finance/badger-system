@@ -345,7 +345,14 @@ def fetch_wallet_balances(sharesPerFragment, blockNumber):
                             fragmentBalance = sharesPerFragment / amount
                         digg_balances[address] = float(fragmentBalance) / 1e9
                     if entry["token"]["symbol"] == "ibBTC":
-                        ibbtc_balances[address] = amount / 1e18
+                        if (
+                            address
+                            == "0x18d98D452072Ac2EB7b74ce3DB723374360539f1".lower()
+                        ):
+                            # Ignore sushiswap pool
+                            ibbtc_balances[address] = 0
+                        else:
+                            ibbtc_balances[address] = amount / 1e18
 
     return badger_balances, digg_balances, ibbtc_balances
 

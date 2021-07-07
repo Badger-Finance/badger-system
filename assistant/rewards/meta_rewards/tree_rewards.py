@@ -1,4 +1,6 @@
+from helpers.constants import PEAK_ADDRESSES
 from assistant.subgraph.client import fetch_tree_distributions
+from assistant.subgraph.client import fetch_wallet_balances
 from assistant.rewards.rewards_utils import calculate_sett_balances
 from rich.console import Console
 from assistant.rewards.classes.RewardsList import RewardsList
@@ -9,7 +11,11 @@ console = Console()
 
 
 def calc_tree_rewards(badger, startBlock, endBlock, nextCycle):
-    treeDists = fetch_tree_distributions(startBlock, endBlock)
+
+    sharesPerFragment = badger.digg.logic.UFragments._sharesPerFragment()
+    _, _2, ibbtc_balances = fetch_wallet_balances(sharesPerFragment, endBlock)
+
+    treeDists = fetch_tree_distributions(0, endBlock)
     console.log(
         "Calculating rewards for {} harvests between {} and {}".format(
             len(treeDists), startBlock, endBlock
@@ -39,13 +45,29 @@ def calc_tree_rewards(badger, startBlock, endBlock, nextCycle):
         rewardsLog.add_total_token_dist(
             settName, web3.toChecksumAddress(token), amountToDistribute / 1e18
         )
+        totalIbbtcBalance = sum(ibbtc_balances.values())
+        ibbtcRewardsUnit = amountToDistribute / totalIbbtcBalance
         for user in balances:
-            userReward = rewardsUnit * user.balance
-            rewards.increase_user_rewards(
-                web3.toChecksumAddress(user.address),
-                web3.toChecksumAddress(token),
-                int(userReward),
-            )
+            if user.address in [a.lower() for a in PEAK_ADDRESSES]:
+                # Redistribute peak addresses rewards to ibbtc users
+                for addr, balance in ibbtc_balances.items():
+                    console.log(
+                        "Distributing {} rewards to {} ibbtc holders".format(
+                            amountToDistribute / 1e18, len(ibbtc_balances)
+                        )
+                    )
+                    rewards.increase_user_rewards(
+                        web3.toChecksumAddress(addr),
+                        token,
+                        int(ibbtcRewardsUnit * balance),
+                    )
+            else:
+                userReward = rewardsUnit * user.balance
+                rewards.increase_user_rewards(
+                    web3.toChecksumAddress(user.address),
+                    web3.toChecksumAddress(token),
+                    int(userReward),
+                )
 
     console.log(rewardsData)
 

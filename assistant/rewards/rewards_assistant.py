@@ -1,3 +1,4 @@
+from assistant.subgraph.client import fetch_wallet_balances
 import json
 from brownie import *
 from brownie.network.gas.strategies import GasNowStrategy
@@ -210,9 +211,7 @@ def generate_rewards_in_range(badger, startBlock, endBlock, pastRewards, saveLoc
         if BCVX in tokens or BCVXCRV in tokens:
             unclaimedAddresses.append(addr)
 
-    sushiRewards = calc_all_sushi_rewards(
-        badger, startBlock, endBlock, nextCycle, retroactive=False
-    )
+    sushiRewards = calc_all_sushi_rewards(badger, startBlock, endBlock, nextCycle)
     treeRewards = calc_tree_rewards(badger, startBlock, endBlock, nextCycle)
     settRewards = calc_sett_rewards(
         badger,
