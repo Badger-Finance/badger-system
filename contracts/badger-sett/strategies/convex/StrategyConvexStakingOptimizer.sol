@@ -252,7 +252,6 @@ contract StrategyConvexStakingOptimizer is BaseStrategy, CurveSwapper, UniswapSw
     function addExtraRewardsToken(
         address _extraToken,
         RewardTokenConfig memory _rewardsConfig,
-        address[] memory _swapPathToWant,
         address[] memory _swapPathToWbtc
     ) external {
         _onlyGovernance();
@@ -476,46 +475,46 @@ contract StrategyConvexStakingOptimizer is BaseStrategy, CurveSwapper, UniswapSw
 
         // Process extra rewards tokens
         // Note: Assumes asset is ultimately swappable on Uniswap for underlying
-        // {
-        //     for (uint256 i = 0; i < extraRewards.length(); i=i+1) {
-        //         address token = extraRewards.at(i);
-        //         RewardTokenConfig memory rewardsConfig = rewardsTokenConfig[token];
+        {
+            for (uint256 i = 0; i < extraRewards.length(); i=i+1) {
+                address token = extraRewards.at(i);
+                RewardTokenConfig memory rewardsConfig = rewardsTokenConfig[token];
 
-        //         /*
-        //         autoCompoundingBps = 30
-        //         autoCompoundingPerfFee = 10000
-        //         treeDistributionPerfFee = 0
-        //         */
+                /*
+                autoCompoundingBps = 30
+                autoCompoundingPerfFee = 10000
+                treeDistributionPerfFee = 0
+                */
 
-        //         IERC20Upgradeable tokenContract = IERC20Upgradeable(token);
-        //         uint256 tokenBalance = tokenContract.balanceOf(address(this));
+                IERC20Upgradeable tokenContract = IERC20Upgradeable(token);
+                uint256 tokenBalance = tokenContract.balanceOf(address(this));
 
-        //         // Sell compounding proportion to wbtc
-        //         uint256 amountToSell = tokenBalance.mul(rewardsConfig.autoCompoundingBps).div(MAX_FEE);
-        //         _swapExactTokensForTokens(uniswap, token, amountToSell, getTokenSwapPath(token, wbtc));
+                // Sell compounding proportion to wbtc
+                uint256 amountToSell = tokenBalance.mul(rewardsConfig.autoCompoundingBps).div(MAX_FEE);
+                _swapExactTokensForTokens(uniswap, token, amountToSell, getTokenSwapPath(token, wbtc));
 
-        //         uint256 wbtcToDeposit = wbtcToken.balanceOf(address(this));
+                uint256 wbtcToDeposit = wbtcToken.balanceOf(address(this));
 
-        //         // TODO: Significant optimization by batching this will other curve deposit
-        //         _add_liquidity_single_coin(curvePool.swap, want, wbtc, wbtcToDeposit, curvePool.wbtcPosition, curvePool.numElements, 0);
-        //         uint256 wantGained = IERC20Upgradeable(want).balanceOf(address(this)).sub(idleWant);
+                // TODO: Significant optimization by batching this will other curve deposit
+                _add_liquidity_single_coin(curvePool.swap, want, wbtc, wbtcToDeposit, curvePool.wbtcPosition, curvePool.numElements, 0);
+                uint256 wantGained = IERC20Upgradeable(want).balanceOf(address(this)).sub(idleWant);
 
-        //         uint256 autoCompoundedPerformanceFee = wantGained.mul(rewardsConfig.autoCompoundingPerfFee).div(MAX_FEE);
-        //         IERC20Upgradeable(want).transfer(IController(controller).rewards(), autoCompoundedPerformanceFee);
-        //         emit PerformanceFeeGovernance(IController(controller).rewards(), want, autoCompoundedPerformanceFee, block.number, block.timestamp);
+                uint256 autoCompoundedPerformanceFee = wantGained.mul(rewardsConfig.autoCompoundingPerfFee).div(MAX_FEE);
+                IERC20Upgradeable(want).transfer(IController(controller).rewards(), autoCompoundedPerformanceFee);
+                emit PerformanceFeeGovernance(IController(controller).rewards(), want, autoCompoundedPerformanceFee, block.number, block.timestamp);
 
-        //         // Distribute remainder to users
-        //         uint256 treeRewardBalanceBefore = tokenContract.balanceOf(badgerTree);
+                // Distribute remainder to users
+                uint256 treeRewardBalanceBefore = tokenContract.balanceOf(badgerTree);
 
-        //         uint256 remainingRewardBalance = tokenContract.balanceOf(address(this));
-        //         tokenContract.safeTransfer(badgerTree, remainingRewardBalance);
+                uint256 remainingRewardBalance = tokenContract.balanceOf(address(this));
+                tokenContract.safeTransfer(badgerTree, remainingRewardBalance);
 
-        //         uint256 treeRewardBalanceAfter = tokenContract.balanceOf(badgerTree);
-        //         uint256 treeRewardBalanceGained = treeRewardBalanceAfter.sub(treeRewardBalanceBefore);
+                uint256 treeRewardBalanceAfter = tokenContract.balanceOf(badgerTree);
+                uint256 treeRewardBalanceGained = treeRewardBalanceAfter.sub(treeRewardBalanceBefore);
 
-        //         emit TreeDistribution(token, treeRewardBalanceGained, block.number, block.timestamp);
-        //     }
-        // }
+                emit TreeDistribution(token, treeRewardBalanceGained, block.number, block.timestamp);
+            }
+        }
 
         // 4. Roll WBTC gained into want position
         uint256 wbtcToDeposit = wbtcToken.balanceOf(address(this));
