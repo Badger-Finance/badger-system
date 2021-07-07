@@ -46,7 +46,6 @@ from tests.sett.fixtures import (
     HelperCvxCrvMiniDeploy,
 )
 
-
 def generate_sett_test_config(settsToRun, runTestSetts, runProdSetts=False):
     setts = []
     for settId in settsToRun:
@@ -74,13 +73,13 @@ settsToRun = [
     # "native.convexRenCrv",
     # "native.convexSbtcCrv",
     # "native.convexTbtcCrv",
-    "native.hbtcCrv",
+    # "native.hbtcCrv",
     # "native.pbtcCrv",
     # "native.obtcCrv",
     # "native.bbtcCrv",
     # "native.tricrypto",
     # "native.cvx",
-    # "native.cvxCrv",
+    "native.cvxCrv",
 ]
 
 yearnSettsToRun = [
