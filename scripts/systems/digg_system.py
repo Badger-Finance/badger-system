@@ -70,6 +70,7 @@ def connect_digg(badger_deploy_file):
         # ("diggDistributor", DiggDistributor, digg_deploy["diggDistributor"],),
         ("uFragments", UFragments, digg_deploy["uFragments"],),
         ("uFragmentsPolicy", UFragmentsPolicy, digg_deploy["uFragmentsPolicy"],),
+        ("chainlinkForwarder", ChainlinkOracle, digg_deploy["chainlinkForwarder"],),
         ("constantOracle", ConstantOracle, digg_deploy["constantOracle"], False),
         ("cpiMedianOracle", MedianOracle, digg_deploy["cpiMedianOracle"], False),
         ("marketMedianOracle", MedianOracle, digg_deploy["marketMedianOracle"], False),

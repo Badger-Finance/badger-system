@@ -10,8 +10,18 @@ from scripts.systems.uniswap_system import UniswapSystem
 from scripts.systems.badger_system import BadgerSystem
 from helpers.registry import registry
 from rich.console import Console
+from config.badger_config import digg_config
 
 console = Console()
+
+# Rebase constants pulled directly from `UFragmentsPolicy.sol`.
+# 15 minute rebase window at 8pm UTC everyday.
+REBASE_WINDOW_OFFSET_SEC = digg_config.rebaseWindowOffsetSec
+REBASE_WINDOW_LENGTH_SEC = digg_config.rebaseWindowLengthSec
+MIN_REBASE_TIME_INTERVAL_SEC = digg_config.minRebaseTimeIntervalSec
+# Pad shifts into rebase winudow by 1 minute.
+REBASE_SHIFT_PADDING_SECONDS = 60
+DAY = 24 * 60 * 60
 
 @pytest.mark.parametrize(
     "settConfig", stabilizeTestConfig,
@@ -59,7 +69,8 @@ def test_single_user_rebalance_flow(settConfig):
     chain.sleep(days(1))
     chain.mine()
 
-    # Push/rebase on an exchange rate of 1.2 (DIGG trading at 1.2x BTC)
+    # Rebase
+    _shift_into_next_rebase_window(badger)
     rebase(badger, deployer)
 
     chain.sleep(days(1))
@@ -125,3 +136,42 @@ def rebase(badger: BadgerSystem, account):
         print("uniPair after", uniPair.getReserves())
     else:
         console.print("[white]===== No Rebase =====[/white]")
+
+
+def _shift_into_next_rebase_window(badger: BadgerSystem):
+    digg = badger.digg
+
+    utcnow_unix_offset_secs = chain.time() % MIN_REBASE_TIME_INTERVAL_SEC
+
+    if utcnow_unix_offset_secs < REBASE_WINDOW_OFFSET_SEC:
+        # Shift to 1hr before rebase window and fetch Oracle's data
+        chain.sleep(REBASE_WINDOW_OFFSET_SEC - utcnow_unix_offset_secs - hours(1))
+        badger.digg.chainlinkForwarder.getThePrice({"from": badger.deployer})
+
+        # Shift to rebase window
+        chain.sleep(hours(1))
+
+        chain.mine()
+
+        return digg.uFragmentsPolicy.inRebaseWindow()
+
+    else:
+        # Shift to the end of the day
+        secs_remaining_in_day = DAY - utcnow_unix_offset_secs
+        chain.sleep(secs_remaining_in_day)
+
+        # Repeat process
+        utcnow_unix_offset_secs = chain.time() % MIN_REBASE_TIME_INTERVAL_SEC
+        
+        # Shift to 1hr before rebase window and fetch Oracle's data
+        chain.sleep(REBASE_WINDOW_OFFSET_SEC - utcnow_unix_offset_secs - hours(1))
+        badger.digg.chainlinkForwarder.getThePrice({"from": badger.deployer})
+
+        # Shift to rebase window
+        chain.sleep(hours(1))
+
+        chain.mine()
+
+        return digg.uFragmentsPolicy.inRebaseWindow()
+
+
