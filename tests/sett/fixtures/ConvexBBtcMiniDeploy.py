@@ -115,6 +115,7 @@ class ConvexBBtcMiniDeploy(SettMiniDeployBase):
         invited = [True] * len(addresses)
 
         guestlist.setGuests(addresses, invited, {"from": self.deployer})
+        
 
     # Setup used for running simulation without deployed strategy:
 

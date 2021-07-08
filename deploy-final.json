@@ -16,8 +16,9 @@
     "testProxyAdmin": "0xB10b3Af646Afadd9C62D663dd5d226B15C25CdFA",
     "dfdBadgerProxyAdmin": "0xbf0e27fdf5ef7519a9540df401cce0a7a4cd75bc",
     "devMultisig": "0xB65cef03b9B89f99517643226d76e286ee999e77",
+    "techMultisig": "0x68bf59ef26f57b9ae9fb08ae849a95a87790b187",
     "opsMultisig": "0x576cD258835C529B54722F84Bb7d4170aA932C64",
-    "treasuryMultisig": "0xD4868d98849a58F743787c77738D808376210292",
+    "paymentsMultisig": "0xD4868d98849a58F743787c77738D808376210292",
     "testMultisig": "0x55949f769d0af7453881435612561d109fff07b8",
     "testGatedProxy": "0x375C48a3A3685d7e28EB45e612da6Dd51c7E38E0",
     "timelock": "0x21CF9b77F88Adf8F8C98d7E33Fe601DC57bC0893",
@@ -27,6 +28,7 @@
         "ops": "0x576cD258835C529B54722F84Bb7d4170aA932C64",
         "dfd": "0x5b5cF8620292249669e1DCC73B753d01543D6Ac7",
         "test": "0x55949f769d0af7453881435612561d109fff07b8",
+        "tech": "0x68bf59ef26f57b9ae9fb08ae849a95a87790b187",
         "dfdBadgerShared": "0xCF7346A5E41b0821b80D5B3fdc385EEB6Dc59F44"
     },
     "keepers": {
@@ -89,9 +91,9 @@
         "StabilizeDiggSett": "0x3ee8ECEF1c5D6B924a03A32eFF4233d3dE5190E5",
         "DiggTreasury": "0x132069EA2E57b44C53C60697FD37453Afcae2708",
         "StrategyConvexLpOptimizer": "0xAB10f878bD27ae01DF36Ba645E458f7dbca7AA46",
-        "StrategyConvexStakingOptimizer": "0x01d10fdc6b484BE380144dF12EB6C75387EfC49B",
-        "StrategyCvxHelper": "0x831BeEaDfC5F4e7D9ecEa045066588824be6EbAa",
-        "StrategyCvxCrvHelper": "0x8cea9A8360f78dE508E01C6B082279Fe34c75f77"
+        "StrategyConvexStakingOptimizer" :"0x01d10fdc6b484BE380144dF12EB6C75387EfC49B",
+        "StrategyCvxHelper": "0x0172B8110b47448E32Ea9e4f291dB461Ee82D1d9",
+        "StrategyCvxCrvHelper": "0x440E52dA3623203b0bc76FCae62429F2D4521173"
     },
     "dao": {
         "token": "0x3472A5A71965499acd81997a54BBA8D852C6E53d",
@@ -155,9 +157,9 @@
         },
         "strategies": {
             "native.badger": "0x75b8E21BD623012Efb3b69E1B562465A68944eE6",
-            "native.renCrv": "0x444B860128B7Bf8C0e864bDc3b7a36a940db7D88",
-            "native.sbtcCrv": "0x3Efc97A8e23f463e71Bf28Eb19690d097797eb17",
-            "native.tbtcCrv": "0xE2fA197eAA5C726426003074147a08beaA59403B",
+            "native.renCrv": "0x6582a5b139fc1c6360846efdc4440d51aad4df7b",
+            "native.sbtcCrv": "0xf1ded284e891943b3e9c657d7fc376b86164ffc2",
+            "native.tbtcCrv": "0x522bb024c339a12be1a47229546f288c40b62d29",
             "native.uniBadgerWbtc": "0x95826C65EB1f2d2F0EDBb7EcB176563B61C60bBf",
             "harvest.renCrv": "0xaaE82E3c89e15E6F26F60724f115d5012363e030",
             "native.sushiWbtcEth": "0x7A56d65254705B4Def63c68488C0182968C452ce",

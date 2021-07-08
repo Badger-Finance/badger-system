@@ -179,10 +179,11 @@ contract StrategyCvxHelper is BaseStrategy, CurveSwapper, UniswapSwapper, TokenS
 
         // Track harvested + converted coin balance of want
         cvxHarvested = cvxToken.balanceOf(address(this));
+        _processFee(cvx, cvxHarvested, performanceFeeGovernance, IController(controller).rewards());
 
         // 3. Stake all CVX
         if (cvxHarvested > 0) {
-            cvxRewardsPool.stake(cvxHarvested);
+            cvxRewardsPool.stake(cvxToken.balanceOf(address(this)));
         }
 
         emit Tend(cvxHarvested);

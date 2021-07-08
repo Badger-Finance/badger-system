@@ -1,4 +1,5 @@
-from scripts.actions.helpers.RewardsSchedule import RewardsSchedule
+from helpers.rewards.LoggerUnlockSchedule import LoggerUnlockSchedule
+from scripts.actions.helpers.RewardsSchedule import RewardsSchedule, asset_to_address
 from scripts.systems.badger_system import BadgerSystem
 from brownie import *
 from helpers.utils import shares_to_fragments, to_digg_shares
@@ -86,7 +87,6 @@ weekly_schedule = {
     "native.cvx": {"badger": Wei("360.00 ether"), "digg": to_digg_shares(0)},
 }
 
-
 class Emissions:
     def __init__(self, active_emissions):
         self.active = active_emissions
@@ -94,10 +94,23 @@ class Emissions:
 
 emissions = Emissions(active_emissions=weekly_schedule)
 
+def build_weekly_schedules(badger: BadgerSystem, start, duration):
+    end = start + duration
+    schedules = []
+    for key, value in weekly_schedule.items():
+        sett = badger.getSett(key)
+
+        for asset, amount in value.items():
+            if amount == 0:
+                continue
+            schedules.append(
+                LoggerUnlockSchedule([sett.address, asset_to_address(asset), amount, start, end, duration])
+            )
+    return schedules
 
 def get_active_rewards_schedule(badger: BadgerSystem):
     rest = RewardsSchedule(badger)
-    rest.setStart(to_timestamp(datetime.datetime(2021, 7, 1, 12, 00)))
+    rest.setStart(to_timestamp(datetime.datetime(2021, 7, 7, 12, 00)))
     rest.setDuration(days(7))
 
     # TODO: Set to read from config emissions. Emit auto-compounding events & on-chain readable data in Unified Rewards Logger.
