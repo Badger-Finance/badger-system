@@ -2,8 +2,8 @@ from assistant.subgraph.config import subgraph_config
 from helpers.constants import CONVEX_SETTS
 from brownie import interface
 from rich.console import Console
-from gql import gql, Client
-from gql.transport.aiohttp import AIOHTTPTransport
+from assistant.subgraph.utils import make_client
+from gql import gql
 from decimal import *
 import json
 from functools import lru_cache
@@ -11,17 +11,11 @@ from functools import lru_cache
 getcontext().prec = 20
 console = Console()
 
-tokens_subgraph_url = subgraph_config["tokens"]
-tokens_transport = AIOHTTPTransport(url=tokens_subgraph_url)
-tokens_client = Client(transport=tokens_transport, fetch_schema_from_transport=True)
+tokens_client = make_client("tokens")
+sett_client = make_client("setts")
+harvests_client = make_client("harvests")
+nft_client = make_client("nfts")
 
-sett_subgraph_url = subgraph_config["setts"]
-sett_transport = AIOHTTPTransport(url=sett_subgraph_url)
-sett_client = Client(transport=sett_transport, fetch_schema_from_transport=True)
-
-harvest_subgraph_url = subgraph_config["harvests"]
-harvests_transport = AIOHTTPTransport(url=harvest_subgraph_url)
-harvests_client = Client(transport=harvests_transport)
 
 def fetch_nfts(block):
     console.log("Fetching Nfts at block {}".format(block))
@@ -65,6 +59,7 @@ def fetch_nfts(block):
         )
 
     return users
+
 
 def fetch_tree_distributions(startBlock, endBlock):
     query = gql(

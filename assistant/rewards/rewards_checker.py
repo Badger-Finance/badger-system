@@ -9,6 +9,7 @@ from rich.console import Console
 from assistant.rewards.aws_utils import upload
 import json
 from helpers.utils import val
+from helpers.digg_utils import diggUtils
 from helpers.constants import TOKENS_TO_CHECK, DIGG, BADGER
 
 console = Console()

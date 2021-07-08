@@ -153,7 +153,6 @@ def badger_boost(badger, currentBlock):
             for addr, bal in badger_wallet_balances.items()
         ]
     )
-    add_boost_info(badger_wallet_balances, "Badger")
 
     digg_wallet_balances = UserBalances(
         [
@@ -161,8 +160,6 @@ def badger_boost(badger, currentBlock):
             for addr, bal in digg_wallet_balances.items()
         ]
     )
-
-    add_boost_info(digg_wallet_balances, "Digg")
 
     badgerSetts = filter_dust(combine_balances([badgerSetts, badger_wallet_balances]))
     diggSetts = filter_dust(combine_balances([diggSetts, digg_wallet_balances]))
@@ -236,5 +233,7 @@ def badger_boost(badger, currentBlock):
             badgerBoost[addr] = 1
 
     console.log(len(badgerBoost))
+    with open("nfts.json", "w") as fp:
+        json.dump(nftMultipliers, fp)
 
     return badgerBoost, boostInfo

@@ -120,6 +120,17 @@ def upload_boosts(test=False):
     console.log("✅ Uploaded file to s3://" + bucket + "/" + fileName)
 
 
+def upload_nfts(test=False):
+    fileName = "nft_data.json"
+    if test:
+        bucket = "badger-staging-merkle-proofs"
+    else:
+        bucket = "badger-merkle-proofs"
+    console.log("Uploading file to s3://" + bucket + "/" + fileName)
+    s3.upload_file(fileName, bucket, fileName)
+    console.log("✅ Uploaded file to s3://" + bucket + "/" + fileName)
+
+
 def upload_analytics(cycle, data):
     jsonKey = "logs/{}.json".format(cycle)
     console.log("Uploading file to s3://" + analytics_bucket + "/" + jsonKey)
