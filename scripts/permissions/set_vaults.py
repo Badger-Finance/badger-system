@@ -186,7 +186,7 @@ def change_proxy_admin(badger, helper, admin, new_admin, setts):
     new_admin = helper.contract_from_abi(new_admin.address, "ProxyAdmin", artifacts.open_zeppelin["ProxyAdmin"]["abi"])
 
     for key in setts:
-        sett = badger.getStrategy(key)
+        sett = badger.getSett(key)
         console.print(f"Change proxy admin of {key} {sett.address} to {new_admin}")
         admin.changeProxyAdmin(sett, new_admin)
         assert new_admin.getProxyAdmin(sett) == new_admin
@@ -756,6 +756,12 @@ def set_keeper(badger, helper, keeper, setts):
         sett.setKeeper(keeper)
     helper.publish()
 
+def set_governance(badger, helper, new, setts):
+    for key in setts:
+        sett = helper.contract_from_abi(badger.getSett(key).address, "SettV3", SettV3.abi)
+        sett.setGovernance(new)
+    helper.publish()
+
 def switch_proxy_admin(badger, helper, keeper, strategies):
     testProxyAdmin = helper.contract_from_abi(badger.testProxyAdmin)
 
@@ -810,7 +816,10 @@ def main():
     # migrate_strategies_via_migrator(badger)
     # set_strategies_on_controller(badger, dev_multi, helper, "native", ['native.renCrv', 'native.sbtcCrv', 'native.tbtcCrv'])
 
-    change_proxy_admin(badger, helper, badger.testProxyAdmin, badger.opsProxyAdmin, to_migrate)
+    # change_proxy_admin(badger, helper, badger.testProxyAdmin, badger.opsProxyAdmin, helper_vaults)
+
+    # set_governance(badger, helper, badger.devMultisig, helper_vaults)
+    # set_governance(badger, helper, badger.devMultisig, vaults_to_add)
 
     # modify_guest_lists(badger, helper, ['native.cvx', 'native.cvxCrv'])
 

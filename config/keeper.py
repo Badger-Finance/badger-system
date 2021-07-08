@@ -9,11 +9,11 @@ setts_to_skip = {
     "eth": {
         "harvest": [
             "native.badger",
-            "native.renCrv",
+            # "native.renCrv",
             "native.convexRenCrv",
             # "native.sbtcCrv",
             "native.convexSbtcCrv",
-            "native.tbtcCrv",
+            # "native.tbtcCrv",
             "native.convexTbtcCrv",
             "native.uniBadgerWbtc",
             "harvest.renCrv",
