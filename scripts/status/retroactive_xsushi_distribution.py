@@ -52,16 +52,16 @@ def main():
             merkleTree["merkleRoot"],
             rootHash,
             nextCycle,
-            {"from": badger.keeper, "gas_price": gas_strategy},
             currentRewards["startBlock"],
-            currentRewards["endBlock"]
+            currentRewards["endBlock"],
+            {"from": badger.keeper, "gas_price": gas_strategy},
         )
 
         badger.badgerTree.approveRoot(
             merkleTree["merkleRoot"],
             rootHash,
             nextCycle,
-            {"from": badger.keeper, "gas_price": gas_strategy},
             currentRewards["startBlock"],
-            currentRewards["endBlock"]
+            currentRewards["endBlock"],
+            {"from": badger.keeper, "gas_price": gas_strategy},
         )
