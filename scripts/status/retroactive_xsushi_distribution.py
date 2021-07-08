@@ -21,7 +21,7 @@ def hash(value):
 
 def main():
     test = True
-    badger = connect_badger()
+    badger = connect_badger(badger_config.prod_json)
     nextCycle = badger.badgerTree.currentCycle() + 1
 
     root_proposer = accounts.load("root-proposer")
