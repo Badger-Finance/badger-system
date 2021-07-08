@@ -39,13 +39,13 @@ def calc_snapshot(
             preBoost[user.address] = userBalances.percentage_of_total(user.address)
 
         for user in userBalances:
-            
+
             # So we have our standard 3x multiplier, except:
-            #- in 2.5-3 range it gets Quartic
-            #- in 2-2.5 range it gets Cubic
-            #- in 1.5-2 range is gets Quadratic
-            #- in 1-1.5 range it gets Linear
-            
+            # - in 2.5-3 range it gets Quartic
+            # - in 2-2.5 range it gets Cubic
+            # - in 1.5-2 range is gets Quadratic
+            # - in 1-1.5 range it gets Linear
+
             boostAmount = boosts.get(user.address, 1)
             if 1 <= boostAmount < 1.5:
                 boostPower = 1.0
@@ -61,8 +61,8 @@ def calc_snapshot(
                 boostPower = 3.3
             elif 2.98 <= boostAmount <= 3:
                 boostPower = 4
-                
-            user.boost_balance(math.pow(boostAmount,boostPower))
+
+            user.boost_balance(math.pow(boostAmount, boostPower))
 
         for user in userBalances:
             postBoost = userBalances.percentage_of_total(user.address)
