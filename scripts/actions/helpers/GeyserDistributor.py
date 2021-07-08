@@ -80,8 +80,7 @@ class GeyserDistributor:
 
             numSchedules = geyser.unlockScheduleCount(token)
             console.print(
-                "Geyser Distribution for {}: {}".format(key, val(dist)),
-                style="yellow",
+                "Geyser Distribution for {}: {}".format(key, val(dist)), style="yellow",
             )
 
             dists.append((geyser, asset_to_address(asset), dist, duration, start))

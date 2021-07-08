@@ -29,7 +29,9 @@ from helpers.time_utils import days, hours
 console = Console()
 limit = Wei("100 gwei")
 from helpers.gas_utils import gas_strategies
+
 gas_strategies.set_default(gas_strategies.exponentialScalingFast)
+
 
 def main():
     """
@@ -43,77 +45,27 @@ def main():
     Mushroom fee address
     All that good stuff
     """
-    badger = connect_badger(load_deployer=True)
+    badger = connect_badger()
     digg = badger.digg
     dev = badger.deployer
 
-    key = "experimental.renBtc"
+    distribute_from_whales(dev, assets=["digg"])
+    digg.token.transfer(badger.devMultisig, digg.token.balanceOf(dev), {"from": dev})
 
-    # Distribute Test Tokens
-    # distribute_from_whales(dev, assets=["digg"])
-    # digg.token.transfer(badger.devMultisig, digg.token.balanceOf(dev), {'from':dev})
+    multi = GnosisSafe(badger.devMultisig)
+    safe = ApeSafe(badger.devMultisig.address)
+    ops = ApeSafe(badger.opsMultisig.address)
+    helper = ApeSafeHelper(badger, safe)
 
-    # Connect Contracts
-    vault = badger.getSett(key)
-    strat = badger.getStrategy(key)
-    guestList = badger.getGuestList(key)
-
-    controller = badger.getController("experimental")
-
-    badger.keeper = "0x872213E29C85d7e30F1C8202FC47eD1Ec124BB1D"
-    badger.guardian = "0x29F7F8896Fb913CF7f9949C623F896a154727919"
-
-    # Connect Governance
-    # multi = GnosisSafe(badger.devMultisig)
-    # safe = ApeSafe(badger.devMultisig.address)
-    # ops = ApeSafe(badger.opsMultisig.address)
-    # helper = ApeSafeHelper(badger, safe)
-
-    # Initialize Contracts
-
-    want = interface.IERC20(registry.tokens.renbtc)
-
-    vault.initialize(
-        want,
-        controller,
-        badger.deployer,
-        badger.keeper,
-        badger.guardian,
-        False,
-        "",
-        "",
-        {"from": badger.deployer}
+    vault = (
+        badger.getSett("experimental.digg").address,
+        "StabilizeDiggSett",
+        StabilizeDiggSett.abi,
     )
+    controller = safe.contract("0x9b4efA18c0c6b4822225b81D150f3518160f8609")
+    guestList = VipCappedGuestListBbtcUpgradeable.at(vault.guestList())
 
-    strat.initialize(
-        badger.opsMultisig,
-        badger.opsMultisig,
-        controller,
-        badger.keeper,
-        badger.guardian,
-        [want],
-        [1000, 1000, 50, 0],
-        {"from": badger.deployer}
-    )
-
-    vault.unpause({"from": badger.deployer})
-
-    guestList.initialize(vault, {"from": badger.deployer})
-    # guestList.setUserDepositCap(1 * 10 ** want.deicmals(), {"from": badger.deployer})
-    # guestList.setTotalDepositCap(10 * 10 ** want.deicmals(), {"from": badger.deployer})
-    vault.setGuestList(guestList, {'from': badger.deployer})
-
-    vault.setGovernance(badger.opsMultisig, {'from': badger.deployer})
-
-    guestList.transferOwnership(badger.opsMultisig, {"from": badger.deployer})
-
-    # Connect Contracts [Safe owned]
-    # controller.setVault(want, vault)
-    # controller.approveStrategy(want, vault)
-
-    # guestList = VipCappedGuestListBbtcUpgradeable.at(vault.guestList())
-
-    # strategy = StabilizeStrategyDiggV1.at("0xA6af1B913E205B8E9B95D3B30768c0989e942316")
+    strategy = StabilizeStrategyDiggV1.at("0xA6af1B913E205B8E9B95D3B30768c0989e942316")
 
     # strategy = StabilizeStrategyDiggV1.deploy({"from": dev})
     # strategy.initialize(
@@ -163,3 +115,16 @@ def main():
     # assert vault.guestList() == AddressZero
     # vault.setGuestList(guestList)
     # assert vault.guestList() == guestList
+
+    # === Test Actions ===
+    assert digg.token.balanceOf(badger.devMultisig) > 1000000
+    assert digg.token.allowance(badger.devMultisig, vault) == MaxUint256
+    vault.setKeeper(badger.keeper)
+
+    assert vault.keeper() == badger.keeper
+    vault.deposit(a // 2)
+    tx = vault.earn()
+
+    # vault.earn({"from": badger.keeper})
+    strategy.rebalance({"from": badger.keeper})
+    vault.withdrawAll()

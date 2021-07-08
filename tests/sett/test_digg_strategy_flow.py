@@ -16,8 +16,7 @@ console = Console()
 
 # @pytest.mark.skip()
 @pytest.mark.parametrize(
-    "settConfig",
-    diggSettTestConfig,
+    "settConfig", diggSettTestConfig,
 )
 def test_single_user_harvest_flow(settConfig):
     badger = badger_single_sett(settConfig)

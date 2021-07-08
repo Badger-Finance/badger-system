@@ -37,9 +37,7 @@ def main():
         honeypotLogic.address,
         badger.devProxyAdmin.address,
         honeypotLogic.initialize.encode_input(
-            honeypot_params.token,
-            honeypot_params.amount,
-            honeypot_params.nftIndicies,
+            honeypot_params.token, honeypot_params.amount, honeypot_params.nftIndicies,
         ),
         deployer,
     )

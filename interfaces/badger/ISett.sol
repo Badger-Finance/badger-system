@@ -3,6 +3,7 @@ pragma solidity >=0.5.0 <0.8.0;
 
 interface ISett {
     function token() external view returns (address);
+    function keeper() external view returns (address);
 
     function deposit(uint256) external;
 

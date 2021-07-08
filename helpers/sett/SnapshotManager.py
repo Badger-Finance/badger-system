@@ -21,6 +21,9 @@ from helpers.sett.resolvers import (
     StrategyDiggLpMetaFarmResolver,
     StrategyUnitProtocolRenbtcResolver,
     StrategyUniGenericLpResolver,
+    StrategyConvexStakingOptimizerResolver,
+    StrategyCvxHelperResolver,
+    StrategyCvxCrvHelperResolver,
 )
 from helpers.utils import digg_shares_to_initial_fragments, val
 from scripts.systems.badger_system import BadgerSystem
@@ -119,7 +122,6 @@ class SnapshotManager:
         return calls
 
     def snap(self, trackedUsers=None):
-        print("snap")
         snapBlock = chain.height
         entities = self.entities
 
@@ -133,11 +135,7 @@ class SnapshotManager:
         # multi.printCalls()
 
         data = multi()
-        self.snaps[snapBlock] = Snap(
-            data,
-            snapBlock,
-            [x[0] for x in entities.items()],
-        )
+        self.snaps[snapBlock] = Snap(data, snapBlock, [x[0] for x in entities.items()],)
 
         return self.snaps[snapBlock]
 
@@ -179,6 +177,12 @@ class SnapshotManager:
             return StrategyUniGenericLpResolver(self)
         if name == "StabilizeStrategyDiggV1":
             return StabilizeStrategyDiggV1Resolver(self)
+        if name == "StrategyConvexStakingOptimizer":
+            return StrategyConvexStakingOptimizerResolver(self)
+        if name == "StrategyCvxHelper":
+            return StrategyCvxHelperResolver(self)
+        if name == "StrategyCvxCrvHelper":
+            return StrategyCvxCrvHelperResolver(self)
 
     def settTend(self, overrides, confirm=True):
         user = overrides["from"].address

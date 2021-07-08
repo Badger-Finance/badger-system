@@ -1,3 +1,4 @@
+from helpers.constants import NO_GEYSERS, CONVEX_SETTS
 from brownie import *
 from rich.console import Console
 from collections import Counter
@@ -7,6 +8,7 @@ from assistant.subgraph.client import (
 )
 from assistant.rewards.classes.RewardsList import RewardsList
 from assistant.rewards.classes.UserBalance import UserBalance, UserBalances
+from helpers.constants import NO_GEYSERS
 from functools import lru_cache
 
 blacklist = [
@@ -203,7 +205,7 @@ def calculate_sett_balances(badger, name, currentBlock):
     settType = ["", ""]
     if "uni" in name or "sushi" in name:
         settType[0] = "halfLP"
-    if "crv" in name or name == "experimental.sushiIBbtcWbtc":
+    if "crv" in name.lower() or name == "experimental.sushiIBbtcWbtc":
         settType[0] = "fullLP"
     if "badger" in name.lower() or "digg" in name.lower() or "eth" in name.lower():
         settType[1] = "nonNative"
@@ -213,9 +215,9 @@ def calculate_sett_balances(badger, name, currentBlock):
     settBalances = fetch_sett_balances(name, underlyingToken.lower(), currentBlock)
     geyserBalances = {}
     creamBalances = {}
-    # Digg doesn't have a geyser so we have to ignore it
-    noGeysers = ["native.digg", "experimental.sushiIBbtcWbtc", "experimental.digg","experimental.renBtc"]
-    if name not in noGeysers:
+
+    if name not in NO_GEYSERS:
+
         geyserAddr = badger.getGeyser(name).address.lower()
         geyserEvents = fetch_geyser_events(geyserAddr, currentBlock)
         geyserBalances = calc_balances_from_geyser_events(geyserEvents)
@@ -229,6 +231,8 @@ def calculate_sett_balances(badger, name, currentBlock):
         if addr in blacklist or balance < 0:
             del balances[addr]
 
+    # Testing for peak address
+    # balances["0x41671BA1abcbA387b9b2B752c205e22e916BE6e3".lower()] = 10000
     userBalances = [
         UserBalance(addr, bal, underlyingToken, settType)
         for addr, bal in balances.items()

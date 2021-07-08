@@ -16,9 +16,7 @@ console = Console()
 
 def print_to_file(claw, path):
     system = {
-        "claw_system": {
-            "emps": {},
-        },
+        "claw_system": {"emps": {},},
     }
 
     for key, value in claw.emps.items():
@@ -43,21 +41,12 @@ def connect_claw(badger_deploy_file):
 
     claw_deploy = badger_deploy["claw_system"]
 
-    claw = ClawSystem(
-        claw_config,
-        badger_deploy["deployer"],
-    )
+    claw = ClawSystem(claw_config, badger_deploy["deployer"],)
     # arguments: (attr name, address)
     emps = claw_deploy["emps"]
     connectable = [
-        (
-            "sCLAW",
-            emps["sCLAW"],
-        ),
-        (
-            "bCLAW",
-            emps["bCLAW"],
-        ),
+        ("sCLAW", emps["sCLAW"],),
+        ("bCLAW", emps["bCLAW"],),
     ]
     for args in connectable:
         print(args)

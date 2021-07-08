@@ -67,12 +67,7 @@ pancakeChef = DotMap(
     pendingCake="pendingCake(uint256,uint256)(uint256)",
     userInfo="userInfo(uint256,address)(uint256,uint256)",
 )
-unitprotocol = DotMap(
-    collaterals="collaterals(address,address)(uint)",
-    getTotalDebt="getTotalDebt(address,address)(uint)",
-    debts="debts(address,address)(uint)",
-    usdpOfPool="usdpOfPool()(uint256)",
-)
+sushiChef = DotMap(userInfo="userInfo(uint256,address)(uint256,uint256)",)
 
 func = DotMap(
     erc20=erc20,
@@ -82,5 +77,5 @@ func = DotMap(
     diggFaucet=diggFaucet,
     digg=digg,
     pancakeChef=pancakeChef,
-    unitprotocol=unitprotocol,
+    sushiChef=sushiChef,
 )
