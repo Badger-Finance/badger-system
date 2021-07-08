@@ -3,6 +3,7 @@ from config.badger_config import sett_config
 from helpers.token_utils import distribute_from_whales
 from brownie import *
 from helpers.proxy_utils import deploy_proxy
+from helpers.registry import registry
 
 
 class ConvexOBtcMiniDeploy(SettMiniDeployBase):
@@ -21,6 +22,43 @@ class ConvexOBtcMiniDeploy(SettMiniDeployBase):
 
     def post_deploy_setup(self, deploy):
         if deploy:
+            # Approve strategy to interact with Helper Vaults:
+            cvxHelperVault = SettV4.at(self.params.cvxHelperVault)
+            cvxCrvHelperVault = SettV4.at(self.params.cvxCrvHelperVault)
+
+            cvxHelperGov = accounts.at(cvxHelperVault.governance(), force=True)
+            cvxCrvHelperGov = accounts.at(cvxCrvHelperVault.governance(), force=True)
+
+            cvxHelperVault.approveContractAccess(
+                self.strategy.address, {"from": cvxHelperGov}
+            )
+            cvxCrvHelperVault.approveContractAccess(
+                self.strategy.address, {"from": cvxCrvHelperGov}
+            )
+
+            # Add rewards address to guestlists
+            cvxGuestlist = VipCappedGuestListBbtcUpgradeable.at(
+                cvxHelperVault.guestList()
+            )
+            cvxCrvGuestlist = VipCappedGuestListBbtcUpgradeable.at(
+                cvxCrvHelperVault.guestList()
+            )
+
+            cvxOwner = accounts.at(cvxGuestlist.owner(), force=True)
+            cvxCrvOwner = accounts.at(cvxCrvGuestlist.owner(), force=True)
+
+            cvxGuestlist.setGuests(
+                [self.controller.rewards(), self.strategy],
+                [True, True],
+                {"from": cvxOwner},
+            )
+            cvxCrvGuestlist.setGuests(
+                [self.controller.rewards(), self.strategy],
+                [True, True],
+                {"from": cvxCrvOwner},
+            )  # Strategy added since SettV4.sol currently checks for the sender
+            # instead of receipient for authorization on depositFor()
+
             return
 
         if not (self.vault.controller() == self.strategy.controller()):
@@ -78,6 +116,10 @@ class ConvexOBtcMiniDeploy(SettMiniDeployBase):
         invited = [True] * len(addresses)
 
         guestlist.setGuests(addresses, invited, {"from": self.deployer})
+
+        self.strategy.addExtraRewardsToken(
+            registry.tokens.bor, (3000, 10000, 0, 0, 0), [registry.tokens.bor, registry.tokens.weth, registry.tokens.wbtc], {"from": self.governance}
+        )
 
     # Setup used for running simulation without deployed strategy:
 

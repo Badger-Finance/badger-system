@@ -19,6 +19,8 @@ import "interfaces/badger/IController.sol";
 import "interfaces/badger/IMintr.sol";
 import "interfaces/badger/IStrategy.sol";
 
+import "interfaces/badger/ISettV4.sol";
+
 import "interfaces/convex/IBooster.sol";
 import "interfaces/convex/CrvDepositor.sol";
 import "interfaces/convex/IBaseRewardsPool.sol";
@@ -64,7 +66,7 @@ contract StrategyConvexStakingOptimizer is BaseStrategy, CurveSwapper, UniswapSw
     using AddressUpgradeable for address;
     using SafeMathUpgradeable for uint256;
     using EnumerableSetUpgradeable for EnumerableSetUpgradeable.AddressSet;
-    
+
     // ===== Token Registry =====
     address public constant wbtc = 0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599;
     address public constant weth = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
@@ -99,8 +101,8 @@ contract StrategyConvexStakingOptimizer is BaseStrategy, CurveSwapper, UniswapSw
 
     uint256 public pid;
     address public badgerTree;
-    address public cvxHelperVault;
-    address public cvxCrvHelperVault;
+    ISettV4 public cvxHelperVault;
+    ISettV4 public cvxCrvHelperVault;
 
     /**
     The default conditions for a rewards token are:
@@ -131,7 +133,7 @@ contract StrategyConvexStakingOptimizer is BaseStrategy, CurveSwapper, UniswapSw
     }
 
     event ExtraRewardsTokenSet(
-        address indexed token, 
+        address indexed token,
         uint256 autoCompoundingBps,
         uint256 autoCompoundingPerfFee,
         uint256 treeDistributionPerfFee,
@@ -143,14 +145,26 @@ contract StrategyConvexStakingOptimizer is BaseStrategy, CurveSwapper, UniswapSw
     mapping(address => RewardTokenConfig) public rewardsTokenConfig;
     CurvePoolConfig public curvePool;
 
-    event HarvestState(
-        uint256 xSushiHarvested,
-        uint256 totalxSushi,
-        uint256 toStrategist,
-        uint256 toGovernance,
-        uint256 toBadgerTree,
-        uint256 timestamp,
-        uint256 blockNumber
+    uint256 public autoCompoundingBps;
+    uint256 public autoCompoundingPerformanceFeeGovernance;
+
+    uint256 public constant AUTO_COMPOUNDING_BPS = 2000;
+    uint256 public constant AUTO_COMPOUNDING_PERFORMANCE_FEE = 5000; // Proportion of auto-compounded rewards taken as fee
+
+    event TreeDistribution(address indexed token, uint256 amount, uint256 indexed blockNumber, uint256 timestamp);
+    event PerformanceFeeGovernance(
+        address indexed destination,
+        address indexed token,
+        uint256 amount,
+        uint256 indexed blockNumber,
+        uint256 timestamp
+    );
+    event PerformanceFeeStrategist(
+        address indexed destination,
+        address indexed token,
+        uint256 amount,
+        uint256 indexed blockNumber,
+        uint256 timestamp
     );
 
     event WithdrawState(uint256 toWithdraw, uint256 preWant, uint256 postWant, uint256 withdrawn);
@@ -172,11 +186,7 @@ contract StrategyConvexStakingOptimizer is BaseStrategy, CurveSwapper, UniswapSw
         uint256 wantGained;
     }
 
-    event TendState(
-        uint256 crvTended,
-        uint256 cvxTended,
-        uint256 cvxCrvTended
-    );
+    event TendState(uint256 crvTended, uint256 cvxTended, uint256 cvxCrvTended);
 
     function initialize(
         address _governance,
@@ -194,8 +204,8 @@ contract StrategyConvexStakingOptimizer is BaseStrategy, CurveSwapper, UniswapSw
         want = _wantConfig[0];
         badgerTree = _wantConfig[1];
 
-        cvxHelperVault = _wantConfig[2];
-        cvxCrvHelperVault = _wantConfig[3];
+        cvxHelperVault = ISettV4(_wantConfig[2]);
+        cvxCrvHelperVault = ISettV4(_wantConfig[3]);
 
         pid = _pid; // Core staking pool ID
 
@@ -214,11 +224,7 @@ contract StrategyConvexStakingOptimizer is BaseStrategy, CurveSwapper, UniswapSw
         // Approvals: CRV -> cvxCRV converter
         crvToken.approve(address(crvDepositor), MAX_UINT_256);
 
-        curvePool = CurvePoolConfig(
-            _curvePool.swap,
-            _curvePool.wbtcPosition,
-            _curvePool.numElements
-        );
+        curvePool = CurvePoolConfig(_curvePool.swap, _curvePool.wbtcPosition, _curvePool.numElements);
 
         // Set Swap Paths
         address[] memory path = new address[](3);
@@ -243,6 +249,10 @@ contract StrategyConvexStakingOptimizer is BaseStrategy, CurveSwapper, UniswapSw
         path[1] = weth;
         path[2] = wbtc;
         _setTokenSwapPath(cvx, wbtc, path);
+
+        _initializeApprovals();
+        autoCompoundingBps = 2000;
+        autoCompoundingPerformanceFeeGovernance = 5000;
     }
 
     /// ===== Permissioned Functions =====
@@ -251,11 +261,15 @@ contract StrategyConvexStakingOptimizer is BaseStrategy, CurveSwapper, UniswapSw
         pid = _pid; // LP token pool ID
     }
 
-    function addExtraRewardsToken(address _extraToken, RewardTokenConfig memory _rewardsConfig, address[] memory _swapPathToWant) external {
+    function addExtraRewardsToken(
+        address _extraToken,
+        RewardTokenConfig memory _rewardsConfig,
+        address[] memory _swapPathToWbtc
+    ) external {
         _onlyGovernance();
 
         require(!isProtectedToken(_extraToken)); // We can't process tokens that are part of special strategy logic as extra rewards
-        require(isProtectedToken(_rewardsConfig.tendConvertTo));  // We should only convert to tokens the strategy handles natively for security reasons
+        require(isProtectedToken(_rewardsConfig.tendConvertTo)); // We should only convert to tokens the strategy handles natively for security reasons
 
         /**
         === tendConvertTo Attack Vector: Rug rewards via swap ===
@@ -269,18 +283,45 @@ contract StrategyConvexStakingOptimizer is BaseStrategy, CurveSwapper, UniswapSw
         rewardsTokenConfig[_extraToken] = _rewardsConfig;
 
         emit ExtraRewardsTokenSet(
-            _extraToken, 
+            _extraToken,
             _rewardsConfig.autoCompoundingBps,
             _rewardsConfig.autoCompoundingPerfFee,
             _rewardsConfig.treeDistributionPerfFee,
             _rewardsConfig.tendConvertTo,
             _rewardsConfig.tendConvertBps
         );
+
+        _setTokenSwapPath(_extraToken, wbtc, _swapPathToWbtc);
     }
 
     function removeExtraRewardsToken(address _extraToken) external {
         _onlyGovernance();
         extraRewards.remove(_extraToken);
+    }
+
+    function setAutoCompoundingBps(uint256 _bps) external {
+        _onlyGovernance();
+        autoCompoundingBps = _bps;
+    }
+
+    function setAutoCompoundingPerformanceFeeGovernance(uint256 _bps) external {
+        _onlyGovernance();
+        autoCompoundingPerformanceFeeGovernance = _bps;
+    }
+
+    function initializeApprovals() external {
+        _onlyGovernance();
+        _initializeApprovals();
+    }
+
+    function setCurvePoolSwap(address _swap) external {
+        _onlyGovernance();
+        curvePool.swap = _swap;
+    }
+
+    function _initializeApprovals() internal {
+        cvxToken.approve(address(cvxHelperVault), MAX_UINT_256);
+        cvxCrvToken.approve(address(cvxCrvHelperVault), MAX_UINT_256);
     }
 
     /// ===== View Functions =====
@@ -358,9 +399,9 @@ contract StrategyConvexStakingOptimizer is BaseStrategy, CurveSwapper, UniswapSw
         if (cvxCrvRewardsPool.earned(address(this)) > 0) {
             cvxCrvRewardsPool.getReward(address(this), true);
         }
-        
+
         if (cvxRewardsPool.earned(address(this)) > 0) {
-            cvxRewardsPool.getReward(true);
+            cvxRewardsPool.getReward(false);
         }
     }
 
@@ -372,12 +413,12 @@ contract StrategyConvexStakingOptimizer is BaseStrategy, CurveSwapper, UniswapSw
 
         // 1. Harvest gains from positions
         _tendGainsFromPositions();
-        
+
         // Track harvested coins, before conversion
         tendData.crvTended = crvToken.balanceOf(address(this));
 
         // 2. Convert CRV -> cvxCRV
-        if ( tendData.crvTended > 0 ) {
+        if (tendData.crvTended > 0) {
             _swapExactTokensForTokens(sushiswap, crv, tendData.crvTended, getTokenSwapPath(crv, cvxCrv));
         }
 
@@ -389,7 +430,7 @@ contract StrategyConvexStakingOptimizer is BaseStrategy, CurveSwapper, UniswapSw
         if (tendData.cvxCrvTended > 0) {
             cvxCrvRewardsPool.stake(tendData.cvxCrvTended);
         }
-        
+
         // 4. Stake all CVX
         if (tendData.cvxTended > 0) {
             cvxRewardsPool.stake(cvxToken.balanceOf(address(this)));
@@ -399,19 +440,29 @@ contract StrategyConvexStakingOptimizer is BaseStrategy, CurveSwapper, UniswapSw
         emit TendState(tendData.crvTended, tendData.cvxTended, tendData.cvxCrvTended);
         return tendData;
     }
-    
+
     // No-op until we optimize harvesting strategy. Auto-compouding is key.
     function harvest() external whenNotPaused returns (HarvestData memory) {
         _onlyAuthorizedActors();
         HarvestData memory harvestData;
 
         uint256 idleWant = IERC20Upgradeable(want).balanceOf(address(this));
-        
+        uint256 totalWantBefore = balanceOf();
+
         // TODO: Harvest details still under constructuion. It's being designed to optimize yield while still allowing on-demand access to profits for users.
 
         // 1. Withdraw accrued rewards from staking positions (claim unclaimed positions as well)
-        cvxCrvRewardsPool.withdraw(cvxCrvRewardsPool.balanceOf(address(this)), true);
-        cvxRewardsPool.withdraw(cvxRewardsPool.balanceOf(address(this)), true);
+        baseRewardsPool.getReward(address(this), true);
+
+        uint256 cvxCrvRewardsPoolBalance = cvxCrvRewardsPool.balanceOf(address(this));
+        if (cvxCrvRewardsPoolBalance > 0) {
+            cvxCrvRewardsPool.withdraw(cvxCrvRewardsPoolBalance, true);
+        }
+
+        uint256 cvxRewardsPoolBalance = cvxRewardsPool.balanceOf(address(this));
+        if (cvxRewardsPoolBalance > 0) {
+            cvxRewardsPool.withdraw(cvxRewardsPoolBalance, true);
+        }
 
         harvestData.cvxCrvHarvested = cvxCrvToken.balanceOf(address(this));
         harvestData.cvxHarvsted = cvxToken.balanceOf(address(this));
@@ -425,29 +476,55 @@ contract StrategyConvexStakingOptimizer is BaseStrategy, CurveSwapper, UniswapSw
 
         // 3. Sell 20% of accured rewards for underlying
         if (harvestData.cvxCrvHarvested > 0) {
-            uint256 cvxCrvToSell = harvestData.cvxCrvHarvested.mul(2000).div(MAX_FEE);
+            uint256 cvxCrvToSell = harvestData.cvxCrvHarvested.mul(autoCompoundingBps).div(MAX_FEE);
             _swapExactTokensForTokens(sushiswap, cvxCrv, cvxCrvToSell, getTokenSwapPath(cvxCrv, wbtc));
         }
 
         if (harvestData.cvxHarvsted > 0) {
-            uint256 cvxToSell = harvestData.cvxHarvsted.mul(2000).div(MAX_FEE);
+            uint256 cvxToSell = harvestData.cvxHarvsted.mul(autoCompoundingBps).div(MAX_FEE);
             _swapExactTokensForTokens(sushiswap, cvx, cvxToSell, getTokenSwapPath(cvx, wbtc));
         }
 
-        // // Process extra rewards tokens
+        // Process extra rewards tokens
+        // Note: Assumes asset is ultimately swappable on Uniswap for underlying
         // {
         //     for (uint256 i = 0; i < extraRewards.length(); i=i+1) {
         //         address token = extraRewards.at(i);
+        //         RewardTokenConfig memory rewardsConfig = rewardsTokenConfig[token];
+
+        //         /*
+        //         autoCompoundingBps = 30
+        //         autoCompoundingPerfFee = 10000
+        //         treeDistributionPerfFee = 0
+        //         */
+
         //         IERC20Upgradeable tokenContract = IERC20Upgradeable(token);
         //         uint256 tokenBalance = tokenContract.balanceOf(address(this));
 
-        //         // Sell performance fee (as wbtc) proportion
-        //         uint256 sellBps = getTokenSellBps(token);
-        //         _swap_uniswap(token, sellBps, getTokenSwapPath(token, wbtc));
-        //         // TODO: Distribute performance fee
+        //         // Sell compounding proportion to wbtc
+        //         uint256 amountToSell = tokenBalance.mul(rewardsConfig.autoCompoundingBps).div(MAX_FEE);
+        //         _swapExactTokensForTokens(uniswap, token, amountToSell, getTokenSwapPath(token, wbtc));
+
+        //         uint256 wbtcToDeposit = wbtcToken.balanceOf(address(this));
+
+        //         // TODO: Significant optimization by batching this will other curve deposit
+        //         _add_liquidity_single_coin(curvePool.swap, want, wbtc, wbtcToDeposit, curvePool.wbtcPosition, curvePool.numElements, 0);
+        //         uint256 wantGained = IERC20Upgradeable(want).balanceOf(address(this)).sub(idleWant);
+
+        //         uint256 autoCompoundedPerformanceFee = wantGained.mul(rewardsConfig.autoCompoundingPerfFee).div(MAX_FEE);
+        //         IERC20Upgradeable(want).transfer(IController(controller).rewards(), autoCompoundedPerformanceFee);
+        //         emit PerformanceFeeGovernance(IController(controller).rewards(), want, autoCompoundedPerformanceFee, block.number, block.timestamp);
 
         //         // Distribute remainder to users
-        //         // token.transfer(tokenBalance.mul(sellBps).div(MAX_BPS));
+        //         uint256 treeRewardBalanceBefore = tokenContract.balanceOf(badgerTree);
+
+        //         uint256 remainingRewardBalance = tokenContract.balanceOf(address(this));
+        //         tokenContract.safeTransfer(badgerTree, remainingRewardBalance);
+
+        //         uint256 treeRewardBalanceAfter = tokenContract.balanceOf(badgerTree);
+        //         uint256 treeRewardBalanceGained = treeRewardBalanceAfter.sub(treeRewardBalanceBefore);
+
+        //         emit TreeDistribution(token, treeRewardBalanceGained, block.number, block.timestamp);
         //     }
         // }
 
@@ -458,26 +535,79 @@ contract StrategyConvexStakingOptimizer is BaseStrategy, CurveSwapper, UniswapSw
             _add_liquidity_single_coin(curvePool.swap, want, wbtc, wbtcToDeposit, curvePool.wbtcPosition, curvePool.numElements, 0);
             uint256 wantGained = IERC20Upgradeable(want).balanceOf(address(this)).sub(idleWant);
             // Half of gained want (10% of rewards) are auto-compounded, half of gained want is taken as a performance fee
-            IERC20Upgradeable(want).transfer(IController(controller).rewards(), wantGained.mul(5000).div(MAX_FEE));
+            uint256 autoCompoundedPerformanceFee = wantGained.mul(autoCompoundingPerformanceFeeGovernance).div(MAX_FEE);
+            IERC20Upgradeable(want).transfer(IController(controller).rewards(), autoCompoundedPerformanceFee);
+            emit PerformanceFeeGovernance(IController(controller).rewards(), want, autoCompoundedPerformanceFee, block.number, block.timestamp);
+        }
+
+        // Deposit remaining want (including idle want) into strategy position
+        uint256 wantToDeposited = IERC20Upgradeable(want).balanceOf(address(this));
+
+        if (wantToDeposited > 0) {
+            _deposit(wantToDeposited);
         }
 
         // 5. Deposit remaining CVX / cvxCRV rewards into helper vaults and distribute
         if (harvestData.cvxCrvHarvested > 0) {
             uint256 cvxCrvToDistribute = cvxCrvToken.balanceOf(address(this));
-            // uint256 performanceFee = cvxCrvToDistribute.mul(performanceFeeGovernance).div(MAX_FEE);
 
-            // cvxCrvHelperVault.depositFor(controller.rewards(), performanceFee);
+            if (performanceFeeGovernance > 0) {
+                uint256 cvxCrvToGovernance = cvxCrvToDistribute.mul(performanceFeeGovernance).div(MAX_FEE);
+                cvxCrvHelperVault.depositFor(IController(controller).rewards(), cvxCrvToGovernance);
+                emit PerformanceFeeGovernance(IController(controller).rewards(), cvxCrv, cvxCrvToGovernance, block.number, block.timestamp);
+            }
 
-            // uint256 cvxCrvToTree = cvxCrvToken.balanceOf(address(this));
-            // cvxCrvHelperVault.depositFor(badgerTree, cvxCrvToTree);
-            
-            cvxCrvToken.transfer(badgerTree, cvxCrvToDistribute);
+            if (performanceFeeStrategist > 0) {
+                uint256 cvxCrvToStrategist = cvxCrvToDistribute.mul(performanceFeeStrategist).div(MAX_FEE);
+                cvxCrvHelperVault.depositFor(strategist, cvxCrvToStrategist);
+                emit PerformanceFeeStrategist(strategist, cvxCrv, cvxCrvToStrategist, block.number, block.timestamp);
+            }
+
+            // TODO: [Optimization] Allow contract to circumvent blockLock to dedup deposit operations
+
+            uint256 treeHelperVaultBefore = cvxCrvHelperVault.balanceOf(badgerTree);
+
+            // Deposit remaining to tree after taking fees.
+            uint256 cvxCrvToTree = cvxCrvToken.balanceOf(address(this));
+            cvxCrvHelperVault.depositFor(badgerTree, cvxCrvToTree);
+
+            uint256 treeHelperVaultAfter = cvxCrvHelperVault.balanceOf(badgerTree);
+            uint256 treeVaultPositionGained = treeHelperVaultAfter.sub(treeHelperVaultBefore);
+
+            emit TreeDistribution(address(cvxCrvHelperVault), treeVaultPositionGained, block.number, block.timestamp);
         }
 
         if (harvestData.cvxHarvsted > 0) {
             uint256 cvxToDistribute = cvxToken.balanceOf(address(this));
-            cvxToken.transfer(badgerTree, cvxToDistribute);
+
+            if (performanceFeeGovernance > 0) {
+                uint256 cvxToGovernance = cvxToDistribute.mul(performanceFeeGovernance).div(MAX_FEE);
+                cvxHelperVault.depositFor(IController(controller).rewards(), cvxToGovernance);
+                emit PerformanceFeeGovernance(IController(controller).rewards(), cvx, cvxToGovernance, block.number, block.timestamp);
+            }
+
+            if (performanceFeeStrategist > 0) {
+                uint256 cvxToStrategist = cvxToDistribute.mul(performanceFeeStrategist).div(MAX_FEE);
+                cvxHelperVault.depositFor(strategist, cvxToStrategist);
+                emit PerformanceFeeStrategist(strategist, cvx, cvxToStrategist, block.number, block.timestamp);
+            }
+
+            // TODO: [Optimization] Allow contract to circumvent blockLock to dedup deposit operations
+
+            uint256 treeHelperVaultBefore = cvxHelperVault.balanceOf(badgerTree);
+
+            // Deposit remaining to tree after taking fees.
+            uint256 cvxToTree = cvxToken.balanceOf(address(this));
+            cvxHelperVault.depositFor(badgerTree, cvxToTree);
+
+            uint256 treeHelperVaultAfter = cvxHelperVault.balanceOf(badgerTree);
+            uint256 treeVaultPositionGained = treeHelperVaultAfter.sub(treeHelperVaultBefore);
+
+            emit TreeDistribution(address(cvxHelperVault), treeVaultPositionGained, block.number, block.timestamp);
         }
+
+        uint256 totalWantAfter = balanceOf();
+        require(totalWantAfter >= totalWantBefore, "harvest-total-want-must-not-decrease");
 
         return harvestData;
     }

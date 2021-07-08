@@ -8,6 +8,7 @@ import "deps/@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "deps/@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 import "deps/@openzeppelin/contracts-upgradeable/token/ERC20/SafeERC20Upgradeable.sol";
 import "interfaces/curve/ICurveFi.sol";
+
 /*
     Expands swapping functionality over base strategy
     - ETH in and ETH out Variants
@@ -20,7 +21,7 @@ contract CurveLibraryExternal {
 
     bytes32 public constant UNI_V2_LIKE_ROUTER_ROLE = keccak256("UNI_LIKE_ROUTER_ROLE");
     uint256 public constant MAX_FEE = 10000;
-    
+
     IBadgerAccessControl public constant badgerAccessControl = 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D;
     address public constant uniswap = 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D; // Uniswap router
     address public constant sushiswap = 0xd9e1cE17f2641f24aE83637ab66a2cca9C378B9F; // Sushiswap router

@@ -45,5 +45,6 @@ class DiggSettMiniDeployBase(SettMiniDeployBase):
         self.digg.deploy_dynamic_oracle()
         # Authorize dynamic oracle as a data provider to median oracle.
         self.digg.marketMedianOracle.addProvider(
-            self.digg.dynamicOracle, {"from": owner},
+            self.digg.dynamicOracle,
+            {"from": owner},
         )

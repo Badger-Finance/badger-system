@@ -86,7 +86,6 @@ contract StrategyBadgerRewards is BaseStrategy {
         IStakingRewards(geyser).stake(_want);
     }
 
-
     /// @dev Reset approval and approve exact amount
     function _safeApproveHelper(
         address token,

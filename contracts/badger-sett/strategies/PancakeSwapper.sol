@@ -44,7 +44,6 @@ abstract contract PancakeSwapper is BaseStrategy {
         return IUniswapV2Factory(factory).getPair(token0, token1);
     }
 
-
     /// @dev Reset approval and approve exact amount
     function _safeApproveHelper(
         address token,

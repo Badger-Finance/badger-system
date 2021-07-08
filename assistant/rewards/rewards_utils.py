@@ -161,20 +161,6 @@ def get_latest_event_block(firstEvent, events):
         return -1
 
 
-def calc_meta_farm_rewards(badger, name, startBlock, endBlock):
-    console.log("Calculating rewards between {} and {}".format(startBlock, endBlock))
-    startBlock = int(startBlock)
-    endBlock = int(endBlock)
-    startBlockTime = web3.eth.getBlock(startBlock)["timestamp"]
-    endBlockTime = web3.eth.getBlock(endBlock)["timestamp"]
-    sett = badger.getSett(name)
-
-    balances = calculate_sett_balances(badger, name, endBlock)
-    # TODO: Do we want to use  multiple snapshots
-    # here or just the end?
-    return balances
-
-
 def calc_balances_from_geyser_events(geyserEvents):
     balances = {}
     events = [*geyserEvents["stakes"], *geyserEvents["unstakes"]]

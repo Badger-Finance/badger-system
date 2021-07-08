@@ -124,7 +124,7 @@ contract SettV4 is ERC20Upgradeable, SettAccessControlDefended, PausableUpgradea
         return "1.4";
     }
 
-    function getPricePerFullShare() public view virtual returns (uint256) {
+    function getPricePerFullShare() public virtual view returns (uint256) {
         if (totalSupply() == 0) {
             return 1e18;
         }
@@ -133,14 +133,14 @@ contract SettV4 is ERC20Upgradeable, SettAccessControlDefended, PausableUpgradea
 
     /// @notice Return the total balance of the underlying token within the system
     /// @notice Sums the balance in the Sett, the Controller, and the Strategy
-    function balance() public view virtual returns (uint256) {
+    function balance() public virtual view returns (uint256) {
         return token.balanceOf(address(this)).add(IController(controller).balanceOf(address(token)));
     }
 
     /// @notice Defines how much of the Setts' underlying can be borrowed by the Strategy for use
     /// @notice Custom logic in here for how much the vault allows to be borrowed
     /// @notice Sets minimum required on-hand to keep small withdrawals cheap
-    function available() public view virtual returns (uint256) {
+    function available() public virtual view returns (uint256) {
         return token.balanceOf(address(this)).mul(min).div(max);
     }
 
@@ -195,7 +195,11 @@ contract SettV4 is ERC20Upgradeable, SettAccessControlDefended, PausableUpgradea
     }
 
     /// @notice Deposit variant with proof for merkle guest list
-    function depositFor(address _recipient, uint256 _amount, bytes32[] memory proof) public whenNotPaused {
+    function depositFor(
+        address _recipient,
+        uint256 _amount,
+        bytes32[] memory proof
+    ) public whenNotPaused {
         _defend();
         _blockLocked();
 
@@ -320,9 +324,13 @@ contract SettV4 is ERC20Upgradeable, SettAccessControlDefended, PausableUpgradea
         _deposit(_amount);
     }
 
-    function _depositForWithAuthorization(address _recipient, uint256 _amount, bytes32[] memory proof) internal virtual {
+    function _depositForWithAuthorization(
+        address _recipient,
+        uint256 _amount,
+        bytes32[] memory proof
+    ) internal virtual {
         if (address(guestList) != address(0)) {
-            require(guestList.authorized(msg.sender, _amount, proof), "guest-list-authorization");
+            require(guestList.authorized(_recipient, _amount, proof), "guest-list-authorization");
         }
         _depositFor(_recipient, _amount);
     }

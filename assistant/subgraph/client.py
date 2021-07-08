@@ -1,5 +1,5 @@
 from assistant.subgraph.config import subgraph_config
-from helpers.constants import CONVEX_SETTS
+from assistant.subgraph.utils import make_gql_client
 from brownie import interface
 from rich.console import Console
 from gql import gql, Client
@@ -11,13 +11,11 @@ from functools import lru_cache
 getcontext().prec = 20
 console = Console()
 
-tokens_subgraph_url = subgraph_config["tokens"]
-tokens_transport = AIOHTTPTransport(url=tokens_subgraph_url)
-tokens_client = Client(transport=tokens_transport, fetch_schema_from_transport=True)
+tokens_client = make_gql_client("tokens")
+sett_client = make_gql_client("setts")
+harvests_client = make_gql_client("harvests")
 
-sett_subgraph_url = subgraph_config["setts"]
-sett_transport = AIOHTTPTransport(url=sett_subgraph_url)
-sett_client = Client(transport=sett_transport, fetch_schema_from_transport=True)
+## TODO: seperate files by chain/subgraph
 
 harvest_subgraph_url = subgraph_config["harvests"]
 harvests_transport = AIOHTTPTransport(url=harvest_subgraph_url)
@@ -219,7 +217,8 @@ def fetch_sett_transfers(settID, startBlock, endBlock):
 
     deposits = map(convert_amount, results["vaults"][0]["deposits"])
     withdrawals = map(
-        negate_withdrawals, map(convert_amount, results["vaults"][0]["withdrawals"]),
+        negate_withdrawals,
+        map(convert_amount, results["vaults"][0]["withdrawals"]),
     )
 
     deposits = list(filter(filter_by_startBlock, list(deposits)))
@@ -228,7 +227,8 @@ def fetch_sett_transfers(settID, startBlock, endBlock):
     console.log("Processing {} withdrawals".format(len((withdrawals))))
 
     return sorted(
-        [*deposits, *withdrawals], key=lambda t: t["transaction"]["timestamp"],
+        [*deposits, *withdrawals],
+        key=lambda t: t["transaction"]["timestamp"],
     )
 
 
@@ -247,7 +247,7 @@ def fetch_farm_harvest_events():
 
     """
     )
-    results = sett_client.execute(query)
+    results = harvests_client.execute(query)
     for event in results["farmHarvestEvents"]:
         event["rewardAmount"] = event.pop("farmToRewards")
 
@@ -271,12 +271,11 @@ def fetch_sushi_harvest_events():
         }
     """
     )
-    results = sett_client.execute(query)
+    results = harvests_client.execute(query)
     wbtcEthEvents = []
     wbtcBadgerEvents = []
     wbtcDiggEvents = []
     iBbtcWbtcEvents = []
-
     for event in results["sushiHarvestEvents"]:
         strategy = event["id"].split("-")[0]
         if strategy == "0x7a56d65254705b4def63c68488c0182968c452ce":
@@ -289,10 +288,10 @@ def fetch_sushi_harvest_events():
             iBbtcWbtcEvents.append(event)
 
     return {
-        "native.sushiWbtcEth": wbtcEthEvents,
-        "native.sushiBadgerWbtc": wbtcBadgerEvents,
-        "native.sushiDiggWbtc": wbtcDiggEvents,
-        "experimental.sushiIBbtcWbtc": iBbtcWbtcEvents,
+        "wbtcEth": wbtcEthEvents,
+        "wbtcBadger": wbtcBadgerEvents,
+        "wbtcDigg": wbtcDiggEvents,
+        "iBbtcWbtc": iBbtcWbtcEvents,
     }
 
 

@@ -95,5 +95,5 @@ def rebase(badger: BadgerSystem, account):
 def main():
     console.print("[white]===== Checking Parameters for rebase =====[/white]")
     # Connect badger system from file
-    badger = connect_badger(load_deployer=True)
-    rebase(badger, badger.deployer)
+    badger = connect_badger(load_rebaser=True)
+    rebase(badger, badger.rebaser)

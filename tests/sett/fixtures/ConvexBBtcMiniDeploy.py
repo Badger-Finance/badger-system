@@ -21,6 +21,43 @@ class ConvexBBtcMiniDeploy(SettMiniDeployBase):
 
     def post_deploy_setup(self, deploy):
         if deploy:
+            # Approve strategy to interact with Helper Vaults:
+            cvxHelperVault = SettV4.at(self.params.cvxHelperVault)
+            cvxCrvHelperVault = SettV4.at(self.params.cvxCrvHelperVault)
+
+            cvxHelperGov = accounts.at(cvxHelperVault.governance(), force=True)
+            cvxCrvHelperGov = accounts.at(cvxCrvHelperVault.governance(), force=True)
+
+            cvxHelperVault.approveContractAccess(
+                self.strategy.address, {"from": cvxHelperGov}
+            )
+            cvxCrvHelperVault.approveContractAccess(
+                self.strategy.address, {"from": cvxCrvHelperGov}
+            )
+
+            # Add rewards address to guestlists
+            cvxGuestlist = VipCappedGuestListBbtcUpgradeable.at(
+                cvxHelperVault.guestList()
+            )
+            cvxCrvGuestlist = VipCappedGuestListBbtcUpgradeable.at(
+                cvxCrvHelperVault.guestList()
+            )
+
+            cvxOwner = accounts.at(cvxGuestlist.owner(), force=True)
+            cvxCrvOwner = accounts.at(cvxCrvGuestlist.owner(), force=True)
+
+            cvxGuestlist.setGuests(
+                [self.controller.rewards(), self.strategy],
+                [True, True],
+                {"from": cvxOwner},
+            )
+            cvxCrvGuestlist.setGuests(
+                [self.controller.rewards(), self.strategy],
+                [True, True],
+                {"from": cvxCrvOwner},
+            )  # Strategy added since SettV4.sol currently checks for the sender
+            # instead of receipient for authorization on depositFor()
+
             return
 
         if not (self.vault.controller() == self.strategy.controller()):
@@ -78,6 +115,7 @@ class ConvexBBtcMiniDeploy(SettMiniDeployBase):
         invited = [True] * len(addresses)
 
         guestlist.setGuests(addresses, invited, {"from": self.deployer})
+        
 
     # Setup used for running simulation without deployed strategy:
 

@@ -203,7 +203,6 @@ def generate_rewards_in_range(badger, startBlock, endBlock, pastRewards, saveLoc
     nextCycle = getNextCycle(badger)
 
     currentMerkleData = fetchCurrentMerkleData(badger)
-    # sushiRewards = calc_sushi_rewards(badger,startBlock,endBlock,nextCycle,retroactive=False)
     # farmRewards = fetch_current_harvest_rewards(badger,startBlock, endBlock,nextCycle)
     unclaimedAddresses = []
     for addr, data in pastRewards["claims"].items():
@@ -260,7 +259,8 @@ def generate_rewards_in_range(badger, startBlock, endBlock, pastRewards, saveLoc
     # Sanity check new rewards file
 
     verify_rewards(
-        badger, startBlock, endBlock, pastRewards, merkleTree,
+        badger, startBlock, endBlock, pastRewards, 
+   
     )
 
     return {

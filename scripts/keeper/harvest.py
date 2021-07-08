@@ -27,15 +27,15 @@ def harvest_all(badger: BadgerSystem, skip):
 
         before = snap.snap()
         if strategy.keeper() == badger.badgerRewardsManager:
-            snap.settHarvestViaManager(
+            tx = snap.settHarvestViaManager(
                 strategy,
-                {"from": keeper, "gas_limit": 2000000, "allow_revert": True},
+                {"from": keeper, "gas_limit": 6000000, "allow_revert": True},
                 confirm=False,
             )
         else:
             keeper = accounts.at(strategy.keeper())
-            snap.settHarvest(
-                {"from": keeper, "gas_limit": 2000000, "allow_revert": True},
+            tx = snap.settHarvest(
+                {"from": keeper, "gas_limit": 6000000, "allow_revert": True},
                 confirm=False,
             )
 
@@ -49,7 +49,7 @@ def harvest_all(badger: BadgerSystem, skip):
 
 
 def main():
-    badger = connect_badger(load_keeper=True)
+    badger = connect_badger(load_keeper=True, load_harvester=True)
 
     if rpc.is_active():
         """

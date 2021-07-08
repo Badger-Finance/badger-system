@@ -242,7 +242,7 @@ contract StabilizeStrategyDiggV1 is BaseStrategyMultiSwapper {
         return 0;
     }
 
-    function getProtectedTokens() public view override returns (address[] memory) {
+    function getProtectedTokens() public override view returns (address[] memory) {
         address[] memory protectedTokens = new address[](2);
         protectedTokens[0] = address(tokenList[0].token);
         protectedTokens[1] = address(tokenList[1].token);

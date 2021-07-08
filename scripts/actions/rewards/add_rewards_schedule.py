@@ -57,7 +57,7 @@ def main():
     recipient = accounts.at(expectedMultisig, force=True)
 
     # rest.transfer(badger.token, 33038371371007690000000, recipient)
-    # rest.transfer(badger.digg.token, Wei("3 gwei"), badger.treasuryMultisig)
+    # rest.transfer(badger.digg.token, Wei("3 gwei"), badger.paymentsMultisig)
 
     rest.testTransactions()
     console.print(rest.totals)
