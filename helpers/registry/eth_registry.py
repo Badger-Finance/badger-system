@@ -80,7 +80,11 @@ yearn_registry = YearnRegistry(
 
 aave_registry = DotMap(lendingPoolV2="0x7d2768de32b0b80b7a3454c06bdac94a69ddc7a9")
 
-yearn_registry = (DotMap(yvWBTC="0xcB550A6D4C8e3517A939BC79d0c7093eb7cF56B5",),)
+yearn_registry = (
+    DotMap(
+        yvWBTC="0xcB550A6D4C8e3517A939BC79d0c7093eb7cF56B5",
+    ),
+)
 
 convex_registry = DotMap(
     cvxHelperVault="0x53c8e199eb2cb7c01543c137078a038937a68e40",
@@ -155,9 +159,18 @@ defidollar_registry = DotMap(
         core="0x2A8facc9D49fBc3ecFf569847833C380A13418a8",
     ),
     pools=[
-        DotMap(id=0, sett="0x6dEf55d2e18486B9dDfaA075bc4e4EE0B28c1545",),
-        DotMap(id=1, sett="0xd04c48A53c111300aD41190D63681ed3dAd998eC",),
-        DotMap(id=2, sett="0xb9D076fDe463dbc9f915E5392F807315Bf940334",),
+        DotMap(
+            id=0,
+            sett="0x6dEf55d2e18486B9dDfaA075bc4e4EE0B28c1545",
+        ),
+        DotMap(
+            id=1,
+            sett="0xd04c48A53c111300aD41190D63681ed3dAd998eC",
+        ),
+        DotMap(
+            id=2,
+            sett="0xb9D076fDe463dbc9f915E5392F807315Bf940334",
+        ),
     ],
 )
 

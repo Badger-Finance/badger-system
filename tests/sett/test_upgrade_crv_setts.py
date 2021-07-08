@@ -35,7 +35,8 @@ console = Console()
 
 
 @pytest.mark.parametrize(
-    "settID", CRV_SETTS_TO_UPGRADE,
+    "settID",
+    CRV_SETTS_TO_UPGRADE,
 )
 def test_simulation_after_upgrade_crv_setts(settID):
     # Upgrade crv strategy

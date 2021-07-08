@@ -35,7 +35,10 @@ def upgrade_bridge(badger: BadgerSystem, bridge: BridgeSystem) -> str:
     """
     adapterLogic = BadgerBridgeAdapter.deploy({"from": badger.deployer})
 
-    return badger.queue_upgrade(bridge.adapter.address, adapterLogic.address,)
+    return badger.queue_upgrade(
+        bridge.adapter.address,
+        adapterLogic.address,
+    )
 
 
 def configure_bridge(badger: BadgerSystem, bridge: BridgeSystem):
@@ -45,7 +48,9 @@ def configure_bridge(badger: BadgerSystem, bridge: BridgeSystem):
 
     multi = GnosisSafe(badger.devMultisig)
     id = multi.addTx(
-        MultisigTxMetadata(description="Set curve token wrapper on adapter",),
+        MultisigTxMetadata(
+            description="Set curve token wrapper on adapter",
+        ),
         {
             "to": bridge.adapter.address,
             "data": bridge.adapter.setCurveTokenWrapper.encode_input(

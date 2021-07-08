@@ -52,7 +52,9 @@ def main():
 
     safe = ApeSafe(badger.opsMultisig.address)
     helper = ApeSafeHelper(badger, safe)
-    logger = helper.contract_from_abi(badger.rewardsLogger.address, "RewardsLogger", RewardsLogger.abi)
+    logger = helper.contract_from_abi(
+        badger.rewardsLogger.address, "RewardsLogger", RewardsLogger.abi
+    )
 
     experimental_vault = "0x8a8ffec8f4a0c8c9585da95d9d97e8cd6de273de"
 

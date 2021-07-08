@@ -42,16 +42,25 @@ from ape_safe import ApeSafe
 console = Console()
 pretty.install()
 
-new_core_vaults = ["native.hbtcCrv", "native.pbtcCrv", "native.obtcCrv", "native.bbtcCrv", "native.tricrypto"]
+new_core_vaults = [
+    "native.hbtcCrv",
+    "native.pbtcCrv",
+    "native.obtcCrv",
+    "native.bbtcCrv",
+    "native.tricrypto",
+]
 helper_vaults = ["native.cvxCrv", "native.cvx"]
 vaults_to_run = helper_vaults
+
 
 def main():
     badger = connect_badger(load_deployer=True)
 
     safe = ApeSafe(badger.opsMultisig.address)
     helper = ApeSafeHelper(badger, safe)
-    logger = helper.contract_from_abi(badger.rewardsLogger.address, "RewardsLogger", RewardsLogger.abi)
+    logger = helper.contract_from_abi(
+        badger.rewardsLogger.address, "RewardsLogger", RewardsLogger.abi
+    )
 
     schedules = []
 
@@ -93,8 +102,6 @@ def main():
     # Print
     for key in vaults_to_run:
         vault = badger.getSett(key)
-        badger.print_logger_unlock_schedules(
-            vault, name=vault.name()
-        )
+        badger.print_logger_unlock_schedules(vault, name=vault.name())
 
     helper.publish()

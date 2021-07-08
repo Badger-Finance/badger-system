@@ -70,9 +70,9 @@ settsToRun = [
     # "native.sushiWbtcEth",
     # "native.sushiWbtcIbBtc",
     # "native.uniWbtcIbBtc",
-    # "native.convexRenCrv",
-    # "native.convexSbtcCrv",
-    # "native.convexTbtcCrv",
+    # "native.renCrv",
+    # "native.sbtcCrv",
+    # "native.tbtcCrv",
     # "native.hbtcCrv",
     # "native.pbtcCrv",
     # "native.obtcCrv",
@@ -161,36 +161,6 @@ def badger_single_sett(settConfig, deploy=True):
             return BadgerRewardsMiniDeploy(
                 "native.badger",
                 "StrategyBadgerRewards",
-                deployer,
-                strategist=strategist,
-                guardian=guardian,
-                keeper=keeper,
-                governance=governance,
-            ).deploy(deploy=deploy)
-        if settId == "native.renCrv":
-            return CurveGaugeRenBtcMiniDeploy(
-                "native.renCrv",
-                "StrategyCurveGaugeRenBtcCrv",
-                deployer,
-                strategist=strategist,
-                guardian=guardian,
-                keeper=keeper,
-                governance=governance,
-            ).deploy(deploy=deploy)
-        if settId == "native.sbtcCrv":
-            return CurveGaugeSBtcMiniDeploy(
-                "native.sbtcCrv",
-                "StrategyCurveGaugeSbtcCrv",
-                deployer,
-                strategist=strategist,
-                guardian=guardian,
-                keeper=keeper,
-                governance=governance,
-            ).deploy(deploy=deploy)
-        if settId == "native.tbtcCrv":
-            return CurveGaugeTBtcMiniDeploy(
-                "native.tbtcCrv",
-                "StrategyCurveGaugeTbtcCrv",
                 deployer,
                 strategist=strategist,
                 guardian=guardian,
@@ -309,7 +279,10 @@ def badger_single_sett(settConfig, deploy=True):
                 # Base strategy params (perf/withdrawal fees)
                 sett_config.pancake.pancakeBnbBtcb,
                 # Lp pair tokens (bnb/btcb) for this strategy.
-                [registry.tokens.btcb, registry.tokens.bnb,],
+                [
+                    registry.tokens.btcb,
+                    registry.tokens.bnb,
+                ],
                 # Both want/pid are optional params and used for validation.
                 # In this case, both the lp token and pid (pool id) exist so we can pass them in.
                 want=registry.pancake.chefPairs.bnbBtcb,
@@ -364,9 +337,9 @@ def badger_single_sett(settConfig, deploy=True):
                 keeper=keeper,
                 governance=governance,
             ).deploy(deploy=deploy)
-        if settId == "native.convexRenCrv":
+        if settId == "native.renCrv":
             return ConvexRenBtcMiniDeploy(
-                "native.convexRenCrv",
+                "native.renCrv",
                 "StrategyConvexStakingOptimizer",
                 deployer,
                 strategist=strategist,
@@ -374,9 +347,9 @@ def badger_single_sett(settConfig, deploy=True):
                 keeper=keeper,
                 governance=governance,
             ).deploy(deploy=deploy)
-        if settId == "native.convexSbtcCrv":
+        if settId == "native.sbtcCrv":
             return ConvexSBtcMiniDeploy(
-                "native.convexSbtcCrv",
+                "native.sbtcCrv",
                 "StrategyConvexStakingOptimizer",
                 deployer,
                 strategist=strategist,
@@ -384,9 +357,9 @@ def badger_single_sett(settConfig, deploy=True):
                 keeper=keeper,
                 governance=governance,
             ).deploy(deploy=deploy)
-        if settId == "native.convexTbtcCrv":
+        if settId == "native.tbtcCrv":
             return ConvexTBtcMiniDeploy(
-                "native.convexTbtcCrv",
+                "native.tbtcCrv",
                 "StrategyConvexStakingOptimizer",
                 deployer,
                 strategist=strategist,

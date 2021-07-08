@@ -96,6 +96,8 @@ def setup(
             [
                 params.want,
                 badger.badgerTree.address,
+                params.cvxHelperVault,
+                params.cvxCrvHelperVault,
             ],
             params.pid,
             [
@@ -103,6 +105,11 @@ def setup(
                 params.performanceFeeStrategist,
                 params.withdrawalFee,
             ],
+            (
+                params.curvePool.swap,
+                params.curvePool.wbtcPosition,
+                params.curvePool.numElements,
+            ),
         ),
         deployer,
     )
@@ -119,7 +126,7 @@ def isolation(fn_isolation):
     pass
 
 
-# @pytest.mark.skip()
+@pytest.mark.skip()
 def test_strategy_migration(setup):
     # Get Actors:
     user1 = setup.namedAccounts["user1"]
@@ -224,19 +231,17 @@ def test_post_migration_flow(setup):
     vault = setup.vault
     strategy = setup.strategy
 
+    # Get strategy's actors
+    stratGov = accounts.at(strategy.governance(), force=True)
+    stratKeeper = accounts.at(strategy.keeper(), force=True)
+
     # Get current strategy, want and tokens of interest
     want = interface.IERC20(vault.token())
-    xsushi = interface.IERC20(strategy.xsushi())
     crv = interface.IERC20(strategy.crv())
     cvx = interface.IERC20(strategy.cvx())
     cvxCrv = interface.IERC20(strategy.cvxCrv())
-    cvxCRV_CRV_SLP = interface.IERC20(strategy.cvxCRV_CRV_SLP())
-    CVX_ETH_SLP = interface.IERC20(strategy.CVX_ETH_SLP())
 
     currentStrategy = interface.IStrategy(controller.strategies(want.address))
-
-    # Connect to convexMasterChef
-    convexMasterChef = interface.ISushiChef(strategy.convexMasterChef())
 
     def print_want_balances(event):
         print("=== Want Balances: " + event + " ===")
@@ -252,22 +257,6 @@ def test_post_migration_flow(setup):
         print("Strat_crv: ", crv.balanceOf(strategy.address) / Wei("1 ether"))
         print("Strat_cvx: ", cvx.balanceOf(strategy.address) / Wei("1 ether"))
         print("Strat_cvxCrv: ", cvxCrv.balanceOf(strategy.address) / Wei("1 ether"))
-        print(
-            "Strat_cvxCRV_CRV_SLP: ",
-            cvxCRV_CRV_SLP.balanceOf(strategy.address) / Wei("1 ether"),
-        )
-        print(
-            "Strat_CVX_ETH_SLP: ",
-            CVX_ETH_SLP.balanceOf(strategy.address) / Wei("1 ether"),
-        )
-        print(
-            "convexMasterChef_cvxCRV_CRV_SLP: ",
-            cvxCRV_CRV_SLP.balanceOf(convexMasterChef.address) / Wei("1 ether"),
-        )
-        print(
-            "convexMasterChef_CVX_ETH_SLP: ",
-            CVX_ETH_SLP.balanceOf(convexMasterChef.address) / Wei("1 ether"),
-        )
 
     # === Migration === #
 
@@ -278,6 +267,10 @@ def test_post_migration_flow(setup):
     # Set new strategy for want on Controller
     controller.setStrategy(strategy.want(), strategy.address, {"from": governance})
     assert controller.strategies(vault.token()) == strategy.address
+
+    # Match vault and strategy's controller if needed
+    if vault.controller() != strategy.controller():
+        strategy.setController(vault.controller(), {"from": stratGov})
 
     print("=== Migration Successful ===")
 
@@ -322,7 +315,8 @@ def test_post_migration_flow(setup):
     prevBalanceOfWant = strategy.balanceOfWant()
     prevTotalBalance = strategy.balanceOf()
 
-    vault.earn({"from": deployer})  # deployer set as keeper for this Sett
+    tx = vault.earn({"from": deployer})  # deployer set as keeper for this Sett
+    print("Earn Event:", tx)
 
     # All want should be in pool OR sitting in strategy, not a mix
     assert (
@@ -343,29 +337,25 @@ def test_post_migration_flow(setup):
     chain.mine()
 
     # Tend 1
-    prevXSushiBalance = xsushi.balanceOf(strategy.address)
-    prevCrvBalance = crv.balanceOf(strategy.address)
     prevCvxBalance = cvx.balanceOf(strategy.address)
-    prevcvxCRV_CRV_SLPBalance = cvxCRV_CRV_SLP.balanceOf(strategy.address)
-    prevCVX_ETH_SLPBalance = CVX_ETH_SLP.balanceOf(strategy.address)
+    prevCvxCrvBalance = cvxCrv.balanceOf(strategy.address)
+    prevCvxRwrdsBalance = cvx.balanceOf(strategy.cvxRewardsPool())
+    prevCvxCrvRwrdsBalance = cvxCrv.balanceOf(strategy.cvxCrvRewardsPool())
 
-    # Get stake pool ids
-    cvxCRV_CRV_SLP_Pid = strategy.cvxCRV_CRV_SLP_Pid()
-    CVX_ETH_SLP_Pid = strategy.CVX_ETH_SLP_Pid()
+    tx = strategy.tend({"from": stratKeeper})
+    event = tx.events["TendState"][0]
+    print("Tend Event:", event)
 
-    # Check that LP balances are 0 before tend
-    assert prevcvxCRV_CRV_SLPBalance == 0
-    assert prevCVX_ETH_SLPBalance == 0
+    # Check that cvxCrv and Cvx balances increase
+    if event["cvxTended"] > 0:
+        assert cvx.balanceOf(strategy.cvxRewardsPool()) > prevCvxRwrdsBalance
+        assert prevCvxBalance == 0
+        assert cvx.balanceOf(strategy.address) == 0
 
-    strategy.tend({"from": keeper})
-
-    # Check that Crv and Cvx balances increase
-    assert crv.balanceOf(strategy.address) > prevCrvBalance
-    assert cvx.balanceOf(strategy.address) > prevCvxBalance
-
-    # Check that LP balances remain the same (zero)
-    assert cvxCRV_CRV_SLP.balanceOf(strategy.address) == prevcvxCRV_CRV_SLPBalance
-    assert CVX_ETH_SLP.balanceOf(strategy.address) == prevCVX_ETH_SLPBalance
+    if event["cvxCrvTended"] > 0:
+        assert cvxCrv.balanceOf(strategy.cvxCrvRewardsPool()) > prevCvxCrvRwrdsBalance
+        assert prevCvxCrvBalance == 0
+        assert cvxCrv.balanceOf(strategy.address) == 0
 
     print_want_balances("After tend() is called 1st time")
     print_rewards_lp_balances("After tend() is called 1st time")
@@ -374,27 +364,33 @@ def test_post_migration_flow(setup):
     chain.mine()
 
     # Harvest
-    # Harvest not yet implemented so it is skipped for now
+    strategy.harvest({"from": stratKeeper})
+
+    print_want_balances("After harvest() is called")
+    print_rewards_lp_balances("After harvest() is called")
 
     chain.sleep(days(1))
     chain.mine()
 
     # Tend 2
-    prevXSushiBalance = xsushi.balanceOf(strategy.address)
-    prevCrvBalance = crv.balanceOf(strategy.address)
     prevCvxBalance = cvx.balanceOf(strategy.address)
-    prevcvxCRV_CRV_SLPBalance = cvxCRV_CRV_SLP.balanceOf(strategy.address)
-    prevCVX_ETH_SLPBalance = CVX_ETH_SLP.balanceOf(strategy.address)
+    prevCvxCrvBalance = cvxCrv.balanceOf(strategy.address)
+    prevCvxRwrdsBalance = cvx.balanceOf(strategy.cvxRewardsPool())
+    prevCvxCrvRwrdsBalance = cvxCrv.balanceOf(strategy.cvxCrvRewardsPool())
 
-    # Check that LP balances are 0 before tend
-    assert prevcvxCRV_CRV_SLPBalance == 0
-    assert prevCVX_ETH_SLPBalance == 0
+    tx = strategy.tend({"from": stratKeeper})
+    event = tx.events["TendState"][0]
 
-    strategy.tend({"from": keeper})
+    # Check that cvxCrv and Cvx balances increase
+    if event["cvxTended"] > 0:
+        assert cvx.balanceOf(strategy.cvxRewardsPool()) > prevCvxRwrdsBalance
+        assert prevCvxBalance == 0
+        assert cvx.balanceOf(strategy.address) == 0
 
-    # Check that LP balances remain the same (zero)
-    assert cvxCRV_CRV_SLP.balanceOf(strategy.address) == prevcvxCRV_CRV_SLPBalance
-    assert CVX_ETH_SLP.balanceOf(strategy.address) == prevCVX_ETH_SLPBalance
+    if event["cvxCrvTended"] > 0:
+        assert cvxCrv.balanceOf(strategy.cvxCrvRewardsPool()) > prevCvxCrvRwrdsBalance
+        assert prevCvxCrvBalance == 0
+        assert cvxCrv.balanceOf(strategy.address) == 0
 
     print_want_balances("After tend() is called 2nd time")
     print_rewards_lp_balances("After tend() is called 2nd time")

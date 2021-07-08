@@ -152,8 +152,20 @@ contract StrategyConvexStakingOptimizer is BaseStrategy, CurveSwapper, UniswapSw
     uint256 public constant AUTO_COMPOUNDING_PERFORMANCE_FEE = 5000; // Proportion of auto-compounded rewards taken as fee
 
     event TreeDistribution(address indexed token, uint256 amount, uint256 indexed blockNumber, uint256 timestamp);
-    event PerformanceFeeGovernance(address indexed destination, address indexed token, uint256 amount, uint256 indexed blockNumber, uint256 timestamp);
-    event PerformanceFeeStrategist(address indexed destination, address indexed token, uint256 amount, uint256 indexed blockNumber, uint256 timestamp);
+    event PerformanceFeeGovernance(
+        address indexed destination,
+        address indexed token,
+        uint256 amount,
+        uint256 indexed blockNumber,
+        uint256 timestamp
+    );
+    event PerformanceFeeStrategist(
+        address indexed destination,
+        address indexed token,
+        uint256 amount,
+        uint256 indexed blockNumber,
+        uint256 timestamp
+    );
 
     event WithdrawState(uint256 toWithdraw, uint256 preWant, uint256 postWant, uint256 withdrawn);
 
@@ -300,8 +312,8 @@ contract StrategyConvexStakingOptimizer is BaseStrategy, CurveSwapper, UniswapSw
     function initializeApprovals() external {
         _onlyGovernance();
         _initializeApprovals();
-
     }
+
     function setCurvePoolSwap(address _swap) external {
         _onlyGovernance();
         curvePool.swap = _swap;
@@ -436,7 +448,7 @@ contract StrategyConvexStakingOptimizer is BaseStrategy, CurveSwapper, UniswapSw
 
         uint256 idleWant = IERC20Upgradeable(want).balanceOf(address(this));
         uint256 totalWantBefore = balanceOf();
-        
+
         // TODO: Harvest details still under constructuion. It's being designed to optimize yield while still allowing on-demand access to profits for users.
 
         // 1. Withdraw accrued rewards from staking positions (claim unclaimed positions as well)
@@ -538,7 +550,7 @@ contract StrategyConvexStakingOptimizer is BaseStrategy, CurveSwapper, UniswapSw
         // 5. Deposit remaining CVX / cvxCRV rewards into helper vaults and distribute
         if (harvestData.cvxCrvHarvested > 0) {
             uint256 cvxCrvToDistribute = cvxCrvToken.balanceOf(address(this));
-            
+
             if (performanceFeeGovernance > 0) {
                 uint256 cvxCrvToGovernance = cvxCrvToDistribute.mul(performanceFeeGovernance).div(MAX_FEE);
                 cvxCrvHelperVault.depositFor(IController(controller).rewards(), cvxCrvToGovernance);
@@ -555,7 +567,7 @@ contract StrategyConvexStakingOptimizer is BaseStrategy, CurveSwapper, UniswapSw
 
             uint256 treeHelperVaultBefore = cvxCrvHelperVault.balanceOf(badgerTree);
 
-            // Deposit remaining to tree after taking fees. 
+            // Deposit remaining to tree after taking fees.
             uint256 cvxCrvToTree = cvxCrvToken.balanceOf(address(this));
             cvxCrvHelperVault.depositFor(badgerTree, cvxCrvToTree);
 
@@ -584,7 +596,7 @@ contract StrategyConvexStakingOptimizer is BaseStrategy, CurveSwapper, UniswapSw
 
             uint256 treeHelperVaultBefore = cvxHelperVault.balanceOf(badgerTree);
 
-            // Deposit remaining to tree after taking fees. 
+            // Deposit remaining to tree after taking fees.
             uint256 cvxToTree = cvxToken.balanceOf(address(this));
             cvxHelperVault.depositFor(badgerTree, cvxToTree);
 
