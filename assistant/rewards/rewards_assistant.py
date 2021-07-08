@@ -258,10 +258,7 @@ def generate_rewards_in_range(badger, startBlock, endBlock, pastRewards, saveLoc
 
     # Sanity check new rewards file
 
-    verify_rewards(
-        badger, startBlock, endBlock, pastRewards, 
-   
-    )
+    verify_rewards(badger, startBlock, endBlock, pastRewards, merkleTree)
 
     return {
         "contentFileName": contentFileName,

@@ -217,8 +217,7 @@ def fetch_sett_transfers(settID, startBlock, endBlock):
 
     deposits = map(convert_amount, results["vaults"][0]["deposits"])
     withdrawals = map(
-        negate_withdrawals,
-        map(convert_amount, results["vaults"][0]["withdrawals"]),
+        negate_withdrawals, map(convert_amount, results["vaults"][0]["withdrawals"]),
     )
 
     deposits = list(filter(filter_by_startBlock, list(deposits)))
@@ -227,8 +226,7 @@ def fetch_sett_transfers(settID, startBlock, endBlock):
     console.log("Processing {} withdrawals".format(len((withdrawals))))
 
     return sorted(
-        [*deposits, *withdrawals],
-        key=lambda t: t["transaction"]["timestamp"],
+        [*deposits, *withdrawals], key=lambda t: t["transaction"]["timestamp"],
     )
 
 
@@ -277,6 +275,7 @@ def fetch_sushi_harvest_events():
     wbtcDiggEvents = []
     iBbtcWbtcEvents = []
     for event in results["sushiHarvestEvents"]:
+        event["rewardAmount"] = event.pop("toBadgerTree")
         strategy = event["id"].split("-")[0]
         if strategy == "0x7a56d65254705b4def63c68488c0182968c452ce":
             wbtcEthEvents.append(event)
