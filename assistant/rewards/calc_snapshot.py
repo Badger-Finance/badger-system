@@ -3,7 +3,13 @@ from assistant.rewards.classes.RewardsList import RewardsList
 from assistant.rewards.classes.RewardsLog import rewardsLog
 from assistant.rewards.classes.Schedule import Schedule
 from helpers.time_utils import to_days, to_hours, to_utc_date
-from helpers.constants import NON_NATIVE_SETTS, NATIVE_DIGG_SETTS, DIGG, DFD
+from helpers.constants import (
+    NON_NATIVE_SETTS,
+    NATIVE_DIGG_SETTS,
+    DIGG,
+    DFD,
+    BADGER_TREE,
+)
 from helpers.digg_utils import diggUtils
 from dotmap import DotMap
 from brownie import *
@@ -12,7 +18,11 @@ from rich.console import Console
 console = Console()
 
 
-def calc_snapshot(badger, name, startBlock, endBlock, nextCycle, boosts):
+def calc_snapshot(
+    badger, name, startBlock, endBlock, nextCycle, boosts, unclaimedBalances
+):
+    digg = interface.IDigg(DIGG)
+
     console.log("==== Processing rewards for {} at {} ====".format(name, endBlock))
     rewards = RewardsList(nextCycle, badger.badgerTree)
     sett = badger.getSett(name)
@@ -26,7 +36,7 @@ def calc_snapshot(badger, name, startBlock, endBlock, nextCycle, boosts):
     if name in NON_NATIVE_SETTS:
         console.log(
             "{} users out of {} boosted in {}".format(
-                len(boosts), len(userBalances), name
+                len(userBalances), len(boosts), name
             )
         )
         preBoost = {}
@@ -53,16 +63,25 @@ def calc_snapshot(badger, name, startBlock, endBlock, nextCycle, boosts):
         # Make sure there are tokens to distribute (some setts only
         # distribute one token)
         if token == DIGG:
+
+            # if name in NATIVE_DIGG_SETTS:
+            #    tokenDistribution = tokenDistribution * diggAllocation
+            # else:
+            #    tokenDistribution = tokenDistribution * (1 - diggAllocation)
+            fragments = digg.sharesToFragments(tokenDistribution) / 1e9
             console.log(
                 "{} DIGG tokens distributed".format(
-                    diggUtils.sharesToFragments(tokenDistribution) / 1e18
+                    digg.sharesToFragments(tokenDistribution) / 1e9
                 )
             )
+            rewardsLog.add_total_token_dist(name, token, fragments)
         elif token == DFD:
             console.log("{} DFD tokens distributed".format(tokenDistribution / 1e18))
+            rewardsLog.add_total_token_dist(name, token, tokenDistribution / 1e18)
         else:
             badgerAmount = tokenDistribution / 1e18
-            console.log("{} Badger tokens distributed".format(badgerAmount))
+            console.log("{} Badger token distributed".format(badgerAmount))
+            rewardsLog.add_total_token_dist(name, token, tokenDistribution / 1e18)
 
         if tokenDistribution > 0:
             sumBalances = sum([b.balance for b in userBalances])
@@ -71,18 +90,51 @@ def calc_snapshot(badger, name, startBlock, endBlock, nextCycle, boosts):
             console.log("Processing rewards for {} addresses".format(len(userBalances)))
             for user in userBalances:
                 addr = web3.toChecksumAddress(user.address)
+
                 token = web3.toChecksumAddress(token)
                 rewardAmount = user.balance * rewardsUnit
                 totalRewards += rewardAmount
-                rewards.increase_user_rewards(addr, token, int(rewardAmount))
-                rewardsLog.add_user_token(addr, name, token, int(rewardAmount))
+                ## If giving rewards to tree , distribute them to users with unlcaimed bals
+                if addr == BADGER_TREE:
+                    if name == "native.cvx":
+                        console.log(
+                            "Distributing {} rewards to {} unclaimed bCvx holders".format(
+                                rewardAmount / 1e18, len(unclaimedBalances["bCvx"])
+                            )
+                        )
+                        totalbCvxBal = sum(unclaimedBalances["bCvx"].values())
+                        cvxRewardsUnit = rewardAmount / totalbCvxBal
+                        for addr, bal in unclaimedBalances["bCvx"].items():
+                            rewards.increase_user_rewards(
+                                web3.toChecksumAddress(addr),
+                                token,
+                                int(cvxRewardsUnit * bal),
+                            )
+                    if name == "native.cvxCrv":
+
+                        console.log(
+                            "Distributing {} rewards to {} unclaimed bCvxCrv holders".format(
+                                rewardAmount / 1e18, len(unclaimedBalances["bCvxCrv"])
+                            )
+                        )
+
+                        totalbCvxCrvBal = sum(unclaimedBalances["bCvxCrv"].values())
+                        bCvxCrvRewardsUnit = rewardAmount / totalbCvxCrvBal
+                        for addr, bal in unclaimedBalances["bCvxCrv"].items():
+                            rewards.increase_user_rewards(
+                                web3.toChecksumAddress(addr),
+                                token,
+                                int(bCvxCrvRewardsUnit * bal),
+                            )
+                else:
+                    rewards.increase_user_rewards(addr, token, int(rewardAmount))
 
             console.log(
                 "Token Distribution: {}\nRewards Released: {}".format(
                     tokenDistribution / 1e18, totalRewards / 1e18
                 )
             )
-            console.log("Diff {}".format((abs(tokenDistribution - totalRewards))))
+            console.log("Diff {}\n\n".format((abs(tokenDistribution - totalRewards))))
 
     return rewards, apyBoosts
 

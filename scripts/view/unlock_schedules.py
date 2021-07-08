@@ -17,9 +17,28 @@ class UnlockSchedule:
         self.start = raw_schedule[3]
 
 
+skip = [
+    # "native.badger",
+    # "native.renCrv",
+    # "native.sbtcCrv",
+    # "native.tbtcCrv",
+    # "native.uniBadgerWbtc",
+    # "harvest.renCrv",
+    # "native.sushiWbtcEth",
+    # "native.sushiBadgerWbtc",
+    # "native.digg",
+    # "native.uniDiggWbtc",
+    # "native.sushiDiggWbtc",
+    # "yearn.wbtc",
+    # "experimental.sushiIBbtcWbtc"
+]
+
+
 def main():
     badger = connect_badger()
     table = []
 
     for key, geyser in badger.geysers.items():
+        if key in skip:
+            continue
         badger.print_latest_unlock_schedules(geyser, name=key)

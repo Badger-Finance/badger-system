@@ -7,11 +7,40 @@ from tabulate import tabulate
 
 console = Console()
 
+setts_to_skip = [
+    "native.badger",
+    "native.renCrv",
+    "native.sbtcCrv",
+    "native.tbtcCrv",
+    "native.uniBadgerWbtc",
+    "harvest.renCrv",
+    "native.sushiWbtcEth",
+    "native.sushiBadgerWbtc",
+    "native.digg",
+    "native.uniDiggWbtc",
+    "native.sushiDiggWbtc",
+    "yearn.wbtc",
+    "experimental.sushiIBbtcWbtc",
+    "experimental.digg",
+    "native.convexRenCrv",
+    "native.convexSbtcCrv",
+    "native.convexTbtcCrv",
+    # "native.hbtcCrv",
+    # "native.pbtcCrv",
+    # "native.obtcCrv",
+    # "native.bbtcCrv",
+    # "native.tricrypto",
+    # "native.cvxCrv",
+    # "native.cvx"
+]
+
 
 def main():
     badger = connect_badger(badger_config.prod_json)
     console.print("\n[white]===== 🦡 Sett Status 🦡 =====[white]\n")
     for key in badger.sett_system.vaults.keys():
+        if key in setts_to_skip:
+            continue
         sett = badger.getSett(key)
 
         admin = badger.getProxyAdmin(sett)
@@ -24,20 +53,37 @@ def main():
 
         table = []
 
+        console.print("[green]=== Admin: {} Sett ===[green]".format(key))
+
         table.append(["Sett Key", key])
+
         table.append(["Sett Type", sett_type])
         table.append(["Sett Logic", sett_impl])
         table.append(["Sett Admin", sett_admin])
+        print(tabulate(table, ["Key", "Value"]))
+
+        table = []
+        table.append(["PPFS", sett.getPricePerFullShare()])
+        table.append(["totalSupply", sett.totalSupply()])
+        table.append(["balance", sett.balance()])
+        print(tabulate(table, ["Key", "Value"]))
 
         if sett_type == "v1":
             snap = SnapshotManager(badger, key)
-            state = snap.snap()
-            snap.printPermissions()
+            # state = snap.snap()
+
             # snap.printTable(state)
-            strategy = badger.getStrategy(key)
-            strategy_impl = badger.devProxyAdmin.getProxyImplementation(strategy)
-            strategy_admin = admin.getProxyAdmin(strategy)
-            table.append(["Strategy Logic", strategy_impl])
-            table.append(["Strategy Admin", strategy_admin])
+
+            if badger.hasStrategy(key):
+                snap.printPermissions()
+                strategy = badger.getStrategy(key)
+                admin = badger.getProxyAdmin(strategy)
+                strategy_impl = admin.getProxyImplementation(strategy)
+                strategy_admin = admin.getProxyAdmin(strategy)
+
+                table = []
+                console.print("[green]=== Admin: {} Strategy ===[green]".format(key))
+                table.append(["Strategy Logic", strategy_impl])
+                table.append(["Strategy Admin", strategy_admin])
 
         print(tabulate(table, ["Key", "Value"]))

@@ -55,6 +55,8 @@ def test_claim(badger, user, claim, tokens_to_check):
 
     table = []
 
+    assert tree.merkleRoot() == root
+
     pre = get_token_balances(tokens_to_check, [userAccount])
 
     parsed_amounts = []
@@ -65,6 +67,10 @@ def test_claim(badger, user, claim, tokens_to_check):
     amounts = claim["cumulativeAmounts"]
 
     canClaim = tree.isClaimAvailableFor(user, claim["tokens"], parsed_amounts)
+    claimable = tree.getClaimableFor(user, claim["tokens"], claim["cumulativeAmounts"])[
+        1
+    ]
+    print(claimable)
     # console.log("canClaim Test", user, tokens, amounts, parsed_amounts)
     console.log("canClaim Test", canClaim)
 
@@ -77,6 +83,7 @@ def test_claim(badger, user, claim, tokens_to_check):
             claim["index"],
             claim["cycle"],
             claim["proof"],
+            claimable,
             {"from": userAccount},
         )
         # with brownie.reverts("excessive claim"):
@@ -88,6 +95,7 @@ def test_claim(badger, user, claim, tokens_to_check):
                 claim["index"],
                 claim["cycle"],
                 claim["proof"],
+                claimable,
                 {"from": user, "allow_revert": True},
             )
         except Exception as e:
@@ -103,6 +111,7 @@ def test_claim(badger, user, claim, tokens_to_check):
                 claim["index"],
                 claim["cycle"],
                 claim["proof"],
+                claimable,
                 {"from": user, "allow_revert": True},
             )
         except Exception as e:
@@ -111,7 +120,6 @@ def test_claim(badger, user, claim, tokens_to_check):
     # Test double claim on same data set
 
     post = get_token_balances(tokens_to_check, [userAccount])
-
     claimed_totals_after = tree.getClaimedFor(user, tokens_to_check)
 
     for token in post.balances.keys():
@@ -186,18 +194,18 @@ def test_rewards_flow():
     # Test claimable amounts
 
     # ===== Test VS Existing List =====
-    active_claims = fetch_current_rewards_tree(badger)
-    claims = active_claims["claims"]
+    # active_claims = fetch_current_rewards_tree(badger)
+    # claims = active_claims["claims"]
 
-    users_to_verify = []
+    # users_to_verify = []
 
-    # Test claims with latest root
-    for user, claim in claims.items():
-        roll = random.random()
-        if roll < pct_claims_to_verify:
-            console.print(roll, pct_claims_to_verify)
-            users_to_verify.append(user)
-            test_claim(badger, user, claim, tokens_to_check)
+    # # Test claims with latest root
+    # for user, claim in claims.items():
+    #     roll = random.random()
+    #     if roll < pct_claims_to_verify:
+    #         console.print(roll, pct_claims_to_verify)
+    #         users_to_verify.append(user)
+    #         test_claim(badger, user, claim, tokens_to_check)
 
     retroactive_content_hash = (
         "0x346ec98585b52d981d43584477e1b831ce32165cb8e0a06d14d236241b36328e"
@@ -243,6 +251,16 @@ def test_rewards_flow():
     console.print("[blue]===== After Retroactive Root =====[/blue]")
     console.print(rewards["merkleRoot"], rewards["cycle"])
     retroactive_claims = rewards["claims"]
+
+    users_to_verify = []
+
+    # Test claims with latest root
+    for user, claim in retroactive_claims.items():
+        roll = random.random()
+        if roll < pct_claims_to_verify:
+            console.print(roll, pct_claims_to_verify)
+            users_to_verify.append(user)
+            test_claim(badger, user, claim, tokens_to_check)
 
     # Claim as same set of users from previous test with updated root
     for user, claim in retroactive_claims.items():

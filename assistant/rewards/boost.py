@@ -4,8 +4,9 @@ import csv
 from rich.console import Console
 from assistant.rewards.aws_utils import upload_nft_scores
 from assistant.subgraph.client import fetch_wallet_balances
-from helpers.constants import BADGER, DIGG
+from helpers.constants import BADGER, DIGG, SETT_BOOST_RATIOS, MAX_BOOST
 from helpers.digg_utils import diggUtils
+
 from collections import OrderedDict
 from assistant.rewards.rewards_utils import combine_balances, calculate_sett_balances
 from assistant.badger_api.prices import fetch_token_prices
@@ -17,30 +18,18 @@ from assistant.rewards.nfts import calc_nft_multipliers
 boostInfo = {}
 prices = fetch_token_prices()
 console = Console()
-MAX_MULTIPLIER = 3
+
+boostInfo = {}
 
 
-def add_boost_info(balances, name):
-    for user in balances:
-        if user.address not in boostInfo:
-            boostInfo[user.address] = {}
-        boostInfo[user.address][name] = user.balance
-
-
-def convert_balances_to_usd(sett, userBalances):
+def convert_balances_to_usd(sett, name, userBalances):
     tokenAddress = sett.address
     price = prices[tokenAddress]
     decimals = interface.IERC20(tokenAddress).decimals()
-
-    price_ratio = 1
-    # Weight native lp by half
+    price_ratio = SETT_BOOST_RATIOS[name]
 
     for user in userBalances:
-        if user.type[0] == "halfLP":
-            price_ratio = 0.5
-        else:
-            price_ratio = 1
-        user.balance = price_ratio * (price * user.balance) / (pow(10, decimals))
+        user.balance = (price_ratio * price * user.balance) / (pow(10, decimals))
 
     return userBalances
 
@@ -57,7 +46,7 @@ def calc_cumulative(l):
 def calc_boost(percentages):
     boosts = []
     for p in percentages:
-        boost = MAX_MULTIPLIER - (p * (MAX_MULTIPLIER - 1))
+        boost = MAX_BOOST - (p * (MAX_BOOST - 1))
         if boost < 1:
             boost = 1
         boosts.append(boost)
@@ -71,12 +60,6 @@ def calc_stake_ratio(address, diggSetts, badgerSetts, nonNativeSetts, nftBoosts)
     nonNativeBalance = getattr(nonNativeSetts[address], "balance", 0)
     if nonNativeBalance == 0:
         return 0
-
-    if nonNativeBalance > 0:
-        if address not in boostInfo:
-            boostInfo[address] = {}
-        boostInfo[address]["nativeBalance"] = diggBalance + badgerBalance
-        boostInfo[address]["nonNativeBalance"] = nonNativeBalance
 
     return (nftBoost * diggBalance + badgerBalance) / nonNativeBalance
 
@@ -100,20 +83,20 @@ def chunk(l, n):
     return (l[i : i + n] for i in range(0, len(l), n))
 
 
-def badger_boost(badger, pastRewards, currentBlock):
+def badger_boost(badger, currentBlock):
 
     console.log("Calculating boost ...")
-    console.log(len(pastRewards["claims"]))
 
     allSetts = badger.sett_system.vaults
     diggSetts = UserBalances()
     badgerSetts = UserBalances()
     nonNativeSetts = UserBalances()
+    boostInfo = {}
     for name, sett in allSetts.items():
+        if name in ["experimental.digg"]:
+            continue
         balances = calculate_sett_balances(badger, name, currentBlock)
-        balances = convert_balances_to_usd(sett, balances)
-        add_boost_info(balances, name)
-
+        balances = convert_balances_to_usd(sett, name, balances)
         if name in ["native.uniDiggWbtc", "native.sushiDiggWbtc", "native.digg"]:
             diggSetts = combine_balances([diggSetts, balances])
         elif name in [
@@ -125,8 +108,9 @@ def badger_boost(badger, pastRewards, currentBlock):
         else:
             nonNativeSetts = combine_balances([nonNativeSetts, balances])
 
-    badger_wallet_balances, digg_wallet_balances = fetch_wallet_balances(
-        prices[BADGER], prices[DIGG], badger.digg, currentBlock
+    sharesPerFragment = badger.digg.logic.UFragments._sharesPerFragment()
+    badger_wallet_balances, digg_wallet_balances, _ = fetch_wallet_balances(
+        sharesPerFragment, currentBlock
     )
     console.log("Fetching Claimable Balances...")
     nonNativeAddresses = list(nonNativeSetts.userBalances.keys())
@@ -165,19 +149,25 @@ def badger_boost(badger, pastRewards, currentBlock):
         )
     )
     badger_wallet_balances = UserBalances(
-        [UserBalance(addr, bal, BADGER) for addr, bal in badger_wallet_balances.items()]
+        [
+            UserBalance(addr, bal * prices[BADGER], BADGER)
+            for addr, bal in badger_wallet_balances.items()
+        ]
     )
     add_boost_info(badger_wallet_balances, "Badger")
 
     digg_wallet_balances = UserBalances(
-        [UserBalance(addr, bal, DIGG) for addr, bal in digg_wallet_balances.items()]
+        [
+            UserBalance(addr, bal * prices[DIGG], DIGG)
+            for addr, bal in digg_wallet_balances.items()
+        ]
     )
 
     add_boost_info(digg_wallet_balances, "Digg")
 
     badgerSetts = filter_dust(combine_balances([badgerSetts, badger_wallet_balances]))
-
     diggSetts = filter_dust(combine_balances([diggSetts, digg_wallet_balances]))
+    allAddresses = calc_union_addresses(diggSetts, badgerSetts, nonNativeSetts)
 
     console.log("Non native Setts before filter {}".format(len(nonNativeSetts)))
     nonNativeSetts = filter_dust(nonNativeSetts)
@@ -185,7 +175,6 @@ def badger_boost(badger, pastRewards, currentBlock):
 
     console.log("Filtered balances < $1")
 
-    allAddresses = calc_union_addresses(diggSetts, badgerSetts, nonNativeSetts)
     console.log(
         "{} addresses collected for boost calculation".format(len(allAddresses))
     )
@@ -203,6 +192,25 @@ def badger_boost(badger, pastRewards, currentBlock):
     stakeRatios = OrderedDict(
         sorted(stakeRatios.items(), key=lambda t: t[1], reverse=True)
     )
+
+    for addr in allAddresses:
+        boostInfo[addr.lower()] = {
+            "nativeBalance": 0,
+            "nonNativeBalance": 0,
+            "stakeRatio": 0,
+        }
+
+    for user in badgerSetts:
+        boostInfo[user.address.lower()]["nativeBalance"] += user.balance
+
+    for user in diggSetts:
+        boostInfo[user.address.lower()]["nativeBalance"] += user.balance
+
+    for user in nonNativeSetts:
+        boostInfo[user.address.lower()]["nonNativeBalance"] += user.balance
+
+    for addr, ratio in stakeRatios.items():
+        boostInfo[addr.lower()]["stakeRatio"] = ratio
 
     sortedNonNative = UserBalances(
         sorted(
@@ -228,4 +236,6 @@ def badger_boost(badger, pastRewards, currentBlock):
         if stakeRatios[addr] == 0:
             badgerBoost[addr] = 1
 
-    return badgerBoost, stakeRatios, nftMultipliers, boostInfo
+    console.log(len(badgerBoost))
+
+    return badgerBoost, boostInfo

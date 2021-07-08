@@ -9,7 +9,7 @@ import "deps/@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.so
 import "interfaces/badger/IController.sol";
 import "interfaces/digg/IDigg.sol";
 import "interfaces/digg/IDiggStrategy.sol";
-import "contracts/badger-sett/Sett.sol";
+import "contracts/badger-sett/SettV3.sol";
 
 /* 
     bDIGG is denominated in scaledShares.
@@ -43,10 +43,14 @@ interface StabilizeDiggStrategy {
     function getTokenAddress(uint256) external view returns (address); // Get the token addresses involved in the strategy
 }
 
-contract StabilizeDiggSett is Sett {
+contract StabilizeDiggSett is SettV3 {
     using SafeERC20Upgradeable for IERC20Upgradeable;
     using AddressUpgradeable for address;
     using SafeMathUpgradeable for uint256;
+
+    function balance() public override view returns (uint256) {
+        return balanceOfDiggEquivalentInSettAndStrategy();
+    }
 
     function balanceOfDiggEquivalentInSettAndStrategy() public view returns (uint256) {
         // This will take our strategy and calculate how much digg equivalent we have in wBTC value, normalized to 1e18

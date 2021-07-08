@@ -9,20 +9,17 @@ from rich.console import Console
 from assistant.rewards.aws_utils import upload
 import json
 from helpers.utils import val
-from helpers.constants import BADGER, DIGG, FARM, XSUSHI
-from helpers.digg_utils import diggUtils
+from helpers.constants import TOKENS_TO_CHECK, DIGG, BADGER
 
 console = Console()
 
-badger_token = "0x3472A5A71965499acd81997a54BBA8D852C6E53d"
-digg_token = "0x798D1bE841a82a273720CE31c822C61a67a601C3"
-farm_token = "0xa0246c9032bC3A600820415aE600c6388619A14D"
-xSushi_token = "0x8798249c2E607446EfB7Ad49eC89dD1865Ff4272"
-dfd_token = "0x20c36f062a31865bED8a5B1e512D9a1A20AA333A"
-
-tokens_to_check = [BADGER, DIGG, FARM, XSUSHI]
 
 gas_strategy = GasNowStrategy("rapid")
+
+
+def get_digg_contract():
+    digg_contract = interface.IDigg(DIGG)
+    return digg_contract
 
 
 def sec(amount):
@@ -154,23 +151,13 @@ def verify_rewards(badger: BadgerSystem, startBlock, endBlock, before_data, afte
     expected_totals = get_expected_total_rewards(periodEndTime)
 
     sanity_badger = expected_totals["badger"]
-    sanity_digg = expected_totals["digg"] * diggUtils.initialShares
+    sanity_digg = expected_totals["digg"] * digg_contract._initialSharesPerFragment()
+    total_before_badger = int(before_data["tokenTotals"].get(BADGER, 0))
+    total_after_badger = int(after_data["tokenTotals"].get(BADGER, 0))
+    total_before_digg = int(before_data["tokenTotals"].get(DIGG, 0))
+    total_after_digg = int(after_data["tokenTotals"].get(DIGG, 0))
 
-    total_before_badger = before_data["tokenTotals"][badger_token]
-    total_before_digg = before_data["tokenTotals"][digg_token]
-
-    total_before_farm = int(before_data["tokenTotals"][farm_token])
-    total_before_xsushi = int(before_data["tokenTotals"][xSushi_token])
-    total_before_dfd = int(before_data["tokenTotals"].get(dfd_token, 0))
-
-    total_after_badger = after_data["tokenTotals"][BADGER]
-    total_after_digg = after_data["tokenTotals"][DIGG]
-
-    total_after_farm = int(after_data["tokenTotals"][farm_token])
-    total_after_xsushi = int(after_data["tokenTotals"][xSushi_token])
-    total_after_dfd = int(after_data["tokenTotals"].get(dfd_token, 0))
-
-    digg_badger = total_after_badger - total_before_badger
+    diff_badger = total_after_badger - total_before_badger
     diff_digg = total_after_digg - total_before_digg
 
     table = []
@@ -179,7 +166,7 @@ def verify_rewards(badger: BadgerSystem, startBlock, endBlock, before_data, afte
     table.append(["duration", hours(periodEndTime - periodStartTime), "-"])
     table.append(["badger before", val(total_before_badger), "-"])
     table.append(["badger after", val(total_after_badger), "-"])
-    table.append(["badger diff", val(digg_badger), "-"])
+    table.append(["badger diff", val(diff_badger), "-"])
     table.append(["badger sanity ", val(sanity_badger), "-"])
     table.append(["digg before", val(total_before_digg // spf, decimals=9), "-"])
     table.append(["digg after", val(total_after_digg // spf, decimals=9), "-"])
@@ -188,9 +175,14 @@ def verify_rewards(badger: BadgerSystem, startBlock, endBlock, before_data, afte
 
     print(tabulate(table, headers=["key", "value", "scaled"]))
 
-    print_token_diff_table("Farm", total_before_farm, total_after_farm, 0)
-    print_token_diff_table("xSushi", total_before_xsushi, total_after_xsushi, 0)
-    print_token_diff_table("dfd", total_before_dfd, total_after_dfd, 40000 * 1e18)
+    for name, token in TOKENS_TO_CHECK.items():
+        if name in ["Badger", "Digg"]:
+            continue
+        total_before_token = int(before_data["tokenTotals"].get(token, 0))
+        total_after_token = int(after_data["tokenTotals"].get(token, 0))
+        print_token_diff_table(
+            name, total_before_token, total_after_token, 20000 * 1e18
+        )
 
     assert total_after_digg < sanity_digg
     assert total_after_badger < sanity_badger

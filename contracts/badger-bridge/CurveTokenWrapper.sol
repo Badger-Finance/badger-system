@@ -40,6 +40,8 @@ contract CurveTokenWrapper {
     ICurveFi sbtcPool = ICurveFi(0x7fC77b5c7614E1533320Ea6DDc2Eb61fa00A9714);
     ICurveFi tbtcPool = ICurveFi(0xC25099792E9349C7DD09759744ea681C7de2cb66);
 
+    address governance = 0xB65cef03b9B89f99517643226d76e286ee999e77;
+
     constructor() public {}
 
     function wrap(address _vault) external returns (uint256) {
@@ -128,5 +130,23 @@ contract CurveTokenWrapper {
         _pool.remove_liquidity_one_coin(amount, _i, 0);
 
         return _token.balanceOf(address(this)).sub(beforeBalance);
+    }
+
+    // NB: This is a safety measure, failed wraps/unwraps should revert.
+    // Sweep all tokens and send to governance.
+    function sweep() external {
+        address[] memory sweepableTokens = new address[](4);
+        sweepableTokens[0] = address(renbtc);
+        sweepableTokens[1] = address(renbtcLpToken);
+        sweepableTokens[2] = address(sbtcLpToken);
+        sweepableTokens[3] = address(tbtcLpToken);
+
+        for (uint256 i = 0; i < 4; i++) {
+            IERC20 token = IERC20(sweepableTokens[i]);
+            uint256 balance = token.balanceOf(address(this));
+            if (balance > 0) {
+                token.safeTransfer(governance, balance);
+            }
+        }
     }
 }

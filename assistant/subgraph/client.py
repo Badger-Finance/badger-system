@@ -1,5 +1,5 @@
 from assistant.subgraph.config import subgraph_config
-from helpers.digg_utils import diggUtils
+from helpers.constants import CONVEX_SETTS
 from brownie import interface
 from rich.console import Console
 from gql import gql, Client
@@ -19,53 +19,44 @@ sett_subgraph_url = subgraph_config["setts"]
 sett_transport = AIOHTTPTransport(url=sett_subgraph_url)
 sett_client = Client(transport=sett_transport, fetch_schema_from_transport=True)
 
-nft_subgraph_url = subgraph_config["nfts"]
-nft_transport = AIOHTTPTransport(url=nft_subgraph_url)
-nft_client = Client(transport=nft_transport, fetch_schema_from_transport=True)
+harvest_subgraph_url = subgraph_config["harvests"]
+harvests_transport = AIOHTTPTransport(url=harvest_subgraph_url)
+harvests_client = Client(transport=harvests_transport)
 
 
-def fetch_nfts(block):
-    console.log("Fetching Nfts at block {}".format(block))
+def fetch_tree_distributions(startBlock, endBlock):
     query = gql(
         """
-    query fetch_nfts($blockHeight: Block_height, $lastUserId:User_filter) {
-        users(first:1000,where: $lastUserId,block: $blockHeight) {
-            id
-            tokens {
-              token {
+        query tree_distributions(
+            $blockHeight: Block_height
+            $lastDistId: TreeDistribution_filter
+            ) {
+            treeDistributions(block: $blockHeight, where: $lastDistId) {
                 id
-                tokenId
-              }
-              amount
+                token {
+                    address
+                    symbol
+                }
+                amount
+                blockNumber
+                }
             }
-        }
-    }
-    """
+        """
     )
-    lastUserId = ""
-    variables = {"blockHeight": {"number": block}}
-    users = []
+    lastDistId = "0x0000000000000000000000000000000000000000"
+    variables = {"blockHeight": {"number": endBlock}}
+    treeDistributions = []
     while True:
-        variables["lastUserId"] = {"id_gt": lastUserId}
-        results = nft_client.execute(query, variable_values=variables)
-        new_users = results["users"]
-        console.log("Fetching {} users nfts".format(len(new_users)))
-
-        if len(new_users) == 0:
+        variables["lastDistId"] = {"id_gt": lastDistId}
+        results = harvests_client.execute(query, variable_values=variables)
+        distData = results["treeDistributions"]
+        if len(distData) == 0:
             break
-        if len(new_users) > 0:
-            lastUserId = new_users[-1]["id"]
-
-        users = [*new_users, *users]
-
-    tokenIds = [97, 98, 99, 100, 101, 102, 205, 206, 208, 1]
-    for user in users:
-        user["tokens"] = filter(lambda t: int(t["amount"]) > 0, user["tokens"])
-        user["tokens"] = list(
-            filter(lambda t: int(t["token"]["tokenId"]) in tokenIds, user["tokens"])
-        )
-
-    return users
+        else:
+            treeDistributions = [*treeDistributions, *distData]
+        if len(distData) > 0:
+            lastDistId = distData[-1]["id"]
+    return [td for td in treeDistributions if int(td["blockNumber"]) > int(startBlock)]
 
 
 @lru_cache(maxsize=None)
@@ -90,6 +81,7 @@ def fetch_sett_balances(key, settId, startBlock):
     balances = {}
     while True:
         variables["lastBalanceId"] = {"id_gt": lastBalanceId}
+
         results = sett_client.execute(query, variable_values=variables)
         if len(results["vaults"]) == 0:
             return {}
@@ -300,7 +292,8 @@ def fetch_sushi_harvest_events():
     }
 
 
-def fetch_wallet_balances(badger_price, digg_price, digg, blockNumber):
+@lru_cache(maxsize=None)
+def fetch_wallet_balances(sharesPerFragment, blockNumber):
     increment = 1000
     console.log("Fetching Badger and Digg token balances at {}".format(blockNumber))
     query = gql(
@@ -323,6 +316,8 @@ def fetch_wallet_balances(badger_price, digg_price, digg, blockNumber):
 
     badger_balances = {}
     digg_balances = {}
+    ibbtc_balances = {}
+    console.log(sharesPerFragment)
     while continueFetching:
         variables = {
             "firstAmount": increment,
@@ -339,21 +334,28 @@ def fetch_wallet_balances(badger_price, digg_price, digg, blockNumber):
             )
             for entry in nextPage["tokenBalances"]:
                 address = entry["id"].split("-")[0]
-                if entry["token"]["symbol"] == "BADGER" and int(entry["balance"]) > 0:
-                    badger_balances[address] = (
-                        float(entry["balance"]) / 1e18
-                    ) * badger_price
-                if entry["token"]["symbol"] == "DIGG" and int(entry["balance"]) > 0:
-                    if entry["balance"] == 0:
-                        fragmentBalance = 0
-                    else:
-                        fragmentBalance = diggUtils.sharesToFragments(
-                            int(entry["balance"])
-                        )
+                amount = float(entry["balance"])
+                if amount > 0:
+                    if entry["token"]["symbol"] == "BADGER":
+                        badger_balances[address] = amount / 1e18
+                    if entry["token"]["symbol"] == "DIGG":
+                        # Speed this up
+                        if entry["balance"] == 0:
+                            fragmentBalance = 0
+                        else:
+                            fragmentBalance = sharesPerFragment / amount
+                        digg_balances[address] = float(fragmentBalance) / 1e9
+                    if entry["token"]["symbol"] == "ibBTC":
+                        if (
+                            address
+                            == "0x18d98D452072Ac2EB7b74ce3DB723374360539f1".lower()
+                        ):
+                            # Ignore sushiswap pool
+                            ibbtc_balances[address] = 0
+                        else:
+                            ibbtc_balances[address] = amount / 1e18
 
-                    digg_balances[address] = (float(fragmentBalance) / 1e9) * digg_price
-
-    return badger_balances, digg_balances
+    return badger_balances, digg_balances, ibbtc_balances
 
 
 def fetch_cream_balances(tokenSymbol, blockNumber):

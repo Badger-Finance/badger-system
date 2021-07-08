@@ -3,4 +3,6 @@ subgraph_config = {
     "setts": "https://api.thegraph.com/subgraphs/name/darruma/badger-setts",
     "nfts": "https://api.thegraph.com/subgraphs/name/darruma/badger-nfts",
     "cream_url": "https://api.thegraph.com/subgraphs/name/creamfinancedev/cream-lending",
+    "convex": "https://api.thegraph.com/subgraphs/name/darruma/badger-setts-convex",
+    "harvests": "https://api.thegraph.com/subgraphs/name/darruma/badger-harvests",
 }

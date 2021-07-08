@@ -14,7 +14,7 @@ def fetch_account_data(address):
 
 def fetch_claimable_balances(addresses):
     results = {}
-    with concurrent.futures.ThreadPoolExecutor() as executor:
+    with concurrent.futures.ThreadPoolExecutor(max_workers=100) as executor:
         futures_to_addr = {
             executor.submit(fetch_account_data, address=addr): addr
             for addr in addresses

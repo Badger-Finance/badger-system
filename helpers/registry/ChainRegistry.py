@@ -1,3 +1,4 @@
+from scripts.systems.CompoundSystem import CompoundSystem
 from scripts.systems.AaveSystem import AaveSystem
 from scripts.systems.YearnSystem import YearnSystem
 from scripts.systems.TokenSystem import TokenSystem
@@ -25,6 +26,7 @@ class ChainRegistry:
         yearn=None,
         aave=None,
         compound=None,
+        chainlink=None,
         defidollar=None,
     ):
         self.curve = curve
@@ -47,6 +49,7 @@ class ChainRegistry:
         self.aave = aave
         self.compound = compound
         self.defidollar = defidollar
+        self.chainlink = chainlink
 
     def yearn_system(self) -> YearnSystem:
         if self.yearn == None:
@@ -62,3 +65,8 @@ class ChainRegistry:
         if self.aave == None:
             raise Exception("No aave system registered")
         return AaveSystem(self)
+
+    def compound_system(self) -> CompoundSystem:
+        if self.aave == None:
+            raise Exception("No aave system registered")
+        return CompoundSystem(self)

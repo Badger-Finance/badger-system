@@ -7,7 +7,7 @@ from assistant.rewards.rewards_utils import combine_rewards
 xSushiTokenAddress = "0x8798249c2e607446efb7ad49ec89dd1865ff4272"
 
 
-def calc_all_sushi_rewards(badger, startBlock, endBlock, nextCycle, retroactive):
+def calc_all_sushi_rewards(badger, startBlock, endBlock, nextCycle):
     allSushiEvents = fetch_sushi_harvest_events()
 
     wbtcEthRewards = calc_sushi_rewards(
@@ -17,8 +17,6 @@ def calc_all_sushi_rewards(badger, startBlock, endBlock, nextCycle, retroactive)
         nextCycle,
         allSushiEvents["wbtcEth"],
         "native.sushiWbtcEth",
-        retroactive=retroactive,
-        retroactiveStart=11537600,
     )
     wbtcBadgerRewards = calc_sushi_rewards(
         badger,
@@ -27,8 +25,6 @@ def calc_all_sushi_rewards(badger, startBlock, endBlock, nextCycle, retroactive)
         nextCycle,
         allSushiEvents["wbtcBadger"],
         "native.sushiBadgerWbtc",
-        retroactive=retroactive,
-        retroactiveStart=11539529,
     )
     wbtcDiggRewards = calc_sushi_rewards(
         badger,
@@ -37,8 +33,6 @@ def calc_all_sushi_rewards(badger, startBlock, endBlock, nextCycle, retroactive)
         nextCycle,
         allSushiEvents["wbtcDigg"],
         "native.sushiDiggWbtc",
-        retroactive=retroactive,
-        retroactiveStart=11676338,
     )
     # Verify all rewards are correct (for extra safety)
     return combine_rewards(
@@ -48,17 +42,7 @@ def calc_all_sushi_rewards(badger, startBlock, endBlock, nextCycle, retroactive)
     )
 
 
-def calc_sushi_rewards(
-    badger, startBlock, endBlock, nextCycle, events, name, retroactive, retroactiveStart
-):
+def calc_sushi_rewards(badger, startBlock, endBlock, nextCycle, events, name):
     return calc_rewards(
-        badger,
-        startBlock,
-        endBlock,
-        nextCycle,
-        events,
-        name,
-        xSushiTokenAddress,
-        retroactive=retroactive,
-        retroactiveStart=retroactiveStart,
+        badger, startBlock, endBlock, nextCycle, events, name, xSushiTokenAddress,
     )

@@ -19,14 +19,14 @@ import "interfaces/badger/IController.sol";
 import "interfaces/badger/IMintr.sol";
 import "interfaces/badger/IStrategy.sol";
 
-import "../BaseStrategy.sol";
+import "../BaseStrategySwapper.sol";
 import "interfaces/uniswap/IStakingRewards.sol";
 
 /*
     Strategy to compound badger rewards
     - Deposit Badger into the vault to receive more from a special rewards pool
 */
-contract StrategyBadgerLpMetaFarm is BaseStrategy {
+contract StrategyBadgerLpMetaFarm is BaseStrategyMultiSwapper {
     using SafeERC20Upgradeable for IERC20Upgradeable;
     using AddressUpgradeable for address;
     using SafeMathUpgradeable for uint256;
@@ -85,7 +85,7 @@ contract StrategyBadgerLpMetaFarm is BaseStrategy {
         return IStakingRewards(geyser).balanceOf(address(this));
     }
 
-    function getProtectedTokens() external override view returns (address[] memory) {
+    function getProtectedTokens() public override view returns (address[] memory) {
         address[] memory protectedTokens = new address[](3);
         protectedTokens[0] = want;
         protectedTokens[1] = geyser;
