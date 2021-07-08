@@ -277,7 +277,6 @@ def fetch_sushi_harvest_events():
     wbtcDiggEvents = []
     iBbtcWbtcEvents = []
     for event in results["sushiHarvestEvents"]:
-        event["rewardAmount"] = event.pop("toBadgerTree")
         strategy = event["id"].split("-")[0]
         if strategy == "0x7a56d65254705b4def63c68488c0182968c452ce":
             wbtcEthEvents.append(event)
