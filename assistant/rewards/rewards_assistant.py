@@ -118,18 +118,18 @@ def calc_sushi_rewards(badger, startBlock, endBlock, nextCycle):
         sushi_harvest_events,
         nextCycle
     )
-    #ibbtcWbtcRewards, ibbtcWbtcXSushi = calc_sett_sushi_rewards(
-    #    "experimental.sushiIBbtcWbtc",
-    #    badger,
-    #    startBlock,
-     #   endBlock,
-     #   sushi_harvest_events,
-     #   nextCycle
-    #)
-    totalxSushi = wbtcEthXSushi + diggWbtcXSushi + badgerWbtcXSushi
+    ibbtcWbtcRewards, ibbtcWbtcXSushi = calc_sett_sushi_rewards(
+       "experimental.sushiIBbtcWbtc",
+       badger,
+       startBlock,
+       endBlock,
+       sushi_harvest_events,
+       nextCycle
+    )
+    totalxSushi = wbtcEthXSushi + diggWbtcXSushi + badgerWbtcXSushi + ibbtcWbtcXSushi
 
     finalRewards = combine_rewards(
-        [wbtcBadgerRewards,wbtcEthRewards,wbtcDiggRewards], nextCycle, badger.badgerTree)
+        [wbtcBadgerRewards,wbtcEthRewards,wbtcDiggRewards,ibbtcWbtcRewards], nextCycle, badger.badgerTree)
     xSushiFromRewards = 0
 
     for user, claimData in finalRewards.claims.items():
