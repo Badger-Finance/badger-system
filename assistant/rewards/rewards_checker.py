@@ -190,8 +190,6 @@ def verify_rewards(badger: BadgerSystem, startBlock, endBlock, before_data, afte
     print(tabulate(table, headers=["key", "value", "scaled"]))
 
     for name, token in TOKENS_TO_CHECK.items():
-        if name in ["Badger", "Digg"]:
-            continue
         total_before_token = int(before_data["tokenTotals"].get(token, 0))
         total_after_token = int(after_data["tokenTotals"].get(token, 0))
         print_token_diff_table(
