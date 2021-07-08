@@ -1,0 +1,26 @@
+{
+    "MAX_NFT_BOOST": 0.5,
+    "score_multipliers": {
+        "Partner": "1",
+        "Collab": "2",
+        "Badger": "5"
+    },
+    "honeypot_rarity": {
+        "97": "500",
+        "98": "500",
+        "99": "100",
+        "100": "100",
+        "101": "10",
+        "102": "10"
+    },
+    "diamond_hands_rarity": {
+        "205": "200",
+        "206": "50",
+        "208": "10"
+    },
+    "jersey_rarity": {
+        "1": "200"
+    },
+    "memeAddress": "0xe4605d46fd0b3f8329d936a8b258d69276cba264",
+    "badgerNftAddress": "0xe1e546e25a5ed890dff8b8d005537c0d373497f8"
+}

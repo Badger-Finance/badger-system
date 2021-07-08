@@ -23,6 +23,48 @@ harvest_subgraph_url = subgraph_config["harvests"]
 harvests_transport = AIOHTTPTransport(url=harvest_subgraph_url)
 harvests_client = Client(transport=harvests_transport)
 
+def fetch_nfts(block):
+    console.log("Fetching Nfts at block {}".format(block))
+    query = gql(
+        """
+    query fetch_nfts($blockHeight: Block_height, $lastUserId:User_filter) {
+        users(first:1000,where: $lastUserId,block: $blockHeight) {
+            id
+            tokens {
+              token {
+                id
+                tokenId
+              }
+              amount
+            }
+        }
+    }
+    """
+    )
+    lastUserId = ""
+    variables = {"blockHeight": {"number": block}}
+    users = []
+    while True:
+        variables["lastUserId"] = {"id_gt": lastUserId}
+        results = nft_client.execute(query, variable_values=variables)
+        new_users = results["users"]
+        console.log("Fetching {} users nfts".format(len(new_users)))
+
+        if len(new_users) == 0:
+            break
+        if len(new_users) > 0:
+            lastUserId = new_users[-1]["id"]
+
+        users = [*new_users, *users]
+
+    tokenIds = [97, 98, 99, 100, 101, 102, 205, 206, 208, 1]
+    for user in users:
+        user["tokens"] = filter(lambda t: int(t["amount"]) > 0, user["tokens"])
+        user["tokens"] = list(
+            filter(lambda t: int(t["token"]["tokenId"]) in tokenIds, user["tokens"])
+        )
+
+    return users
 
 def fetch_tree_distributions(startBlock, endBlock):
     query = gql(

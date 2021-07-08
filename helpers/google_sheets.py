@@ -95,7 +95,8 @@ def build_dict(
     :param key_idx: each entry in the dictionary will have the value at this column index as its key
     :param data_idx: each entry in the dictionary will have the value at this row index as its value
     """
-    filtered_data = [row for row in data if name in row[0]]
+    print(data)
+    filtered_data = [row for row in data if (len(row) > 0 and name in row[0]) ]
     dict = {}
     for row in filtered_data:
         dict[row[key_idx]] = row[data_idx]
@@ -179,5 +180,5 @@ def get_json_data(name: str):
         return json.load(json_file)
 
 
-fetch_all_user_data()
-fetch_all_nft_data()
+#fetch_all_user_data()
+#fetch_all_nft_data()
