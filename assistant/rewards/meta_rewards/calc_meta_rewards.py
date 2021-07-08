@@ -1,6 +1,7 @@
 from tqdm import tqdm
 from brownie import *
 from assistant.rewards.classes.RewardsList import RewardsList
+from assistant.rewards.classes.RewardsLog import rewardsLog
 from assistant.rewards.rewards_utils import calculate_sett_balances
 from rich.console import Console
 
@@ -42,7 +43,7 @@ def process_rewards(badger, events, name, nextCycle, token):
     totalFromRewards = sum(
         [list(v.values())[0] / 1e18 for v in list(rewards.claims.values())]
     )
-
+    rewardsLog.add_total_token_dist(name, token, totalFromRewards)
     # Calc diff of rewardsTotal and add assertion for checking rewards
     rewardsDiff = abs(totalFromRewards - totalFromRewards) * 1e18
     console.log(

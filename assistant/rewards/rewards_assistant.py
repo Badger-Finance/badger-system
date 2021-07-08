@@ -1,3 +1,4 @@
+from assistant.subgraph.client import fetch_wallet_balances
 import json
 from brownie import *
 from brownie.network.gas.strategies import GasNowStrategy
@@ -16,6 +17,8 @@ from assistant.rewards.aws_utils import (
 from assistant.rewards.calc_snapshot import calc_snapshot
 from assistant.rewards.meta_rewards.harvest import calc_farm_rewards
 from assistant.rewards.meta_rewards.sushi import calc_all_sushi_rewards
+from assistant.rewards.meta_rewards.tree_rewards import calc_tree_rewards
+from assistant.rewards.meta_rewards.unclaimed_rewards import get_unclaimed_rewards
 from assistant.rewards.rewards_utils import (
     keccak,
     process_cumulative_rewards,
@@ -28,13 +31,14 @@ from assistant.rewards.classes.RewardsLog import rewardsLog
 from assistant.rewards.rewards_checker import compare_rewards, verify_rewards
 from scripts.systems.badger_system import BadgerSystem
 from helpers.gas_utils import gas_strategies
+from helpers.constants import BCVX, BCVXCRV
 
 gas_strategies.set_default(gas_strategies.exponentialScalingFast)
 gas_strategy = gas_strategies.exponentialScalingFast
 console = Console()
 
 
-def calc_sett_rewards(badger, periodStartBlock, endBlock, cycle):
+def calc_sett_rewards(badger, periodStartBlock, endBlock, cycle, unclaimedRewards):
     """
     Calculate rewards for each sett, and sum them
     """
@@ -42,7 +46,7 @@ def calc_sett_rewards(badger, periodStartBlock, endBlock, cycle):
     # diggAllocation = calculate_digg_allocation(ratio)
     rewardsBySett = {}
     noRewards = ["native.digg", "experimental.digg"]
-    boosts = badger_boost(badger, endBlock)
+    boosts, boostInfo = badger_boost(badger, endBlock)
     apyBoosts = {}
     multiplierData = {}
     for key, sett in badger.sett_system.vaults.items():
@@ -50,7 +54,7 @@ def calc_sett_rewards(badger, periodStartBlock, endBlock, cycle):
             continue
 
         settRewards, apyBoost = calc_snapshot(
-            badger, key, periodStartBlock, endBlock, cycle, boosts
+            badger, key, periodStartBlock, endBlock, cycle, boosts, unclaimedRewards
         )
         if len(apyBoost) > 0:
             minimum = min(apyBoost.values())
@@ -70,6 +74,9 @@ def calc_sett_rewards(badger, periodStartBlock, endBlock, cycle):
         boostsMetadata["userData"][addr] = {
             "boost": boosts.get(addr, 1),
             "multipliers": multipliers,
+            "nonNativeBalance": boostInfo.get(addr, {}).get("nonNativeBalance", 0),
+            "nativeBalance": boostInfo.get(addr, {}).get("nativeBalance", 0),
+            "stakeRatio": boostInfo.get(addr, {}).get("stakeRatio", 0),
         }
 
     with open("badger-boosts.json", "w") as fp:
@@ -189,7 +196,7 @@ def fetch_current_rewards_tree(badger, print_output=False):
     return currentTree
 
 
-def generate_rewards_in_range(badger, startBlock, endBlock, pastRewards):
+def generate_rewards_in_range(badger, startBlock, endBlock, pastRewards, saveLocalFile):
     endBlock = endBlock
     blockDuration = endBlock - startBlock
 
@@ -197,12 +204,24 @@ def generate_rewards_in_range(badger, startBlock, endBlock, pastRewards):
 
     currentMerkleData = fetchCurrentMerkleData(badger)
     # farmRewards = fetch_current_harvest_rewards(badger,startBlock, endBlock,nextCycle)
+    unclaimedAddresses = []
+    for addr, data in pastRewards["claims"].items():
+        tokens = data["tokens"]
+        if BCVX in tokens or BCVXCRV in tokens:
+            unclaimedAddresses.append(addr)
 
     sushiRewards = calc_all_sushi_rewards(badger, startBlock, endBlock, nextCycle)
-    settRewards = calc_sett_rewards(badger, startBlock, endBlock, nextCycle)
+    treeRewards = calc_tree_rewards(badger, startBlock, endBlock, nextCycle)
+    settRewards = calc_sett_rewards(
+        badger,
+        startBlock,
+        endBlock,
+        nextCycle,
+        get_unclaimed_rewards(unclaimedAddresses),
+    )
 
     newRewards = combine_rewards(
-        [settRewards, sushiRewards], nextCycle, badger.badgerTree
+        [settRewards, treeRewards, sushiRewards], nextCycle, badger.badgerTree
     )
     cumulativeRewards = process_cumulative_rewards(pastRewards, newRewards)
 
@@ -212,7 +231,6 @@ def generate_rewards_in_range(badger, startBlock, endBlock, pastRewards):
 
     # Publish data
     rootHash = keccak(merkleTree["merkleRoot"])
-    rewardsLog.set_merkle_root(rootHash)
 
     contentFileName = content_hash_to_filename(rootHash)
 
@@ -226,24 +244,22 @@ def generate_rewards_in_range(badger, startBlock, endBlock, pastRewards):
             "currentContentHash": currentMerkleData["contentHash"],
         }
     )
+    rewardsLog.set_merkle_root(merkleTree["merkleRoot"])
+    rewardsLog.set_content_hash(str(rootHash))
+    rewardsLog.set_start_block(startBlock)
+    rewardsLog.set_end_block(endBlock)
     print("Uploading to file " + contentFileName)
 
-    rewardsLog.save("rewards-{}".format(nextCycle))
+    rewardsLog.save(nextCycle)
     # TODO: Upload file to AWS & serve from server
-    with open(contentFileName, "w") as outfile:
-        json.dump(merkleTree, outfile, indent=4)
-
-    with open(contentFileName) as f:
-        after_file = json.load(f)
+    if saveLocalFile:
+        with open(contentFileName, "w") as outfile:
+            json.dump(merkleTree, outfile, indent=4)
 
     # Sanity check new rewards file
 
     verify_rewards(
-        badger,
-        startBlock,
-        endBlock,
-        pastRewards,
-        after_file,
+        badger, startBlock, endBlock, pastRewards, merkleTree,
     )
 
     return {
@@ -253,7 +269,7 @@ def generate_rewards_in_range(badger, startBlock, endBlock, pastRewards):
     }
 
 
-def rootUpdater(badger, startBlock, endBlock, pastRewards, test=False):
+def rootUpdater(badger, startBlock, endBlock, pastRewards, saveLocalFile, test=False):
     """
     Root Updater Role
     - Check how much time has passed since the last published update
@@ -286,7 +302,9 @@ def rootUpdater(badger, startBlock, endBlock, pastRewards, test=False):
         )
         return False
 
-    rewards_data = generate_rewards_in_range(badger, startBlock, endBlock, pastRewards)
+    rewards_data = generate_rewards_in_range(
+        badger, startBlock, endBlock, pastRewards, saveLocalFile
+    )
 
     console.print("===== Root Updater Complete =====")
     if not test:
@@ -299,12 +317,16 @@ def rootUpdater(badger, startBlock, endBlock, pastRewards, test=False):
             rewards_data["merkleTree"]["endBlock"],
             {"from": badger.root_proposer, "gas_price": gas_strategy},
         )
-        upload(rewards_data["contentFileName"], publish=False)
+        upload(
+            rewards_data["contentFileName"], rewards_data["merkleTree"], publish=False
+        )
 
     return rewards_data
 
 
-def guardian(badger: BadgerSystem, startBlock, endBlock, pastRewards, test=False):
+def guardian(
+    badger: BadgerSystem, startBlock, endBlock, pastRewards, saveLocalFile, test=False
+):
     """
     Guardian Role
     - Check if there is a new proposed root
@@ -328,7 +350,9 @@ def guardian(badger: BadgerSystem, startBlock, endBlock, pastRewards, test=False
         console.print("[bold yellow]===== Result: No Pending Root =====[/bold yellow]")
         return False
 
-    rewards_data = generate_rewards_in_range(badger, startBlock, endBlock, pastRewards)
+    rewards_data = generate_rewards_in_range(
+        badger, startBlock, endBlock, pastRewards, saveLocalFile
+    )
 
     console.print("===== Guardian Complete =====")
 
@@ -341,17 +365,27 @@ def guardian(badger: BadgerSystem, startBlock, endBlock, pastRewards, test=False
             rewards_data["merkleTree"]["endBlock"],
             {"from": badger.guardian, "gas_price": gas_strategy},
         )
-        upload(rewards_data["contentFileName"]),
+        upload(rewards_data["contentFileName"], rewards_data["merkleTree"]),
 
 
-def run_action(badger, args, test):
+def run_action(badger, args, test, saveLocalFile=True):
     if args["action"] == "rootUpdater":
         return rootUpdater(
-            badger, args["startBlock"], args["endBlock"], args["pastRewards"], test
+            badger,
+            args["startBlock"],
+            args["endBlock"],
+            args["pastRewards"],
+            saveLocalFile,
+            test,
         )
     if args["action"] == "guardian":
         return guardian(
-            badger, args["startBlock"], args["endBlock"], args["pastRewards"], test
+            badger,
+            args["startBlock"],
+            args["endBlock"],
+            args["pastRewards"],
+            saveLocalFile,
+            test,
         )
     return False
 
