@@ -4,12 +4,13 @@ from brownie import *
 from helpers.constants import *
 from eth_abi import encode_abi
 from helpers.constants import MaxUint256
-from helpers.gnosis_safe import ApeSafeHelper
+from helpers.gnosis_safe import ApeSafeHelper, GnosisSafe, MultisigTxMetadata
 from config.badger_config import badger_config, digg_config, sett_config
 from helpers.registry import artifacts
 from scripts.systems.badger_system import connect_badger
 from helpers.console_utils import console
 from helpers.registry import registry
+from tabulate import tabulate
 
 # from helpers.gas_utils import gas_strategies
 # gas_strategies.set_default(gas_strategies.exponentialScalingFast)
@@ -17,8 +18,8 @@ from helpers.registry import registry
 
 vaults_to_add = ["native.hbtcCrv", "native.pbtcCrv", "native.obtcCrv", "native.bbtcCrv", "native.tricrypto", "native.cvxCrv", "native.cvx"]
 new_core_vaults = ["native.hbtcCrv", "native.pbtcCrv", "native.obtcCrv", "native.bbtcCrv", "native.tricrypto"]
-helper_vaults = ["native.cvxCrv", "native.cvx"]
-strategies_to_initialize = ["native.renCrv", "native.sbtcCrv", "native.tbtcCrv"]
+helper_vaults = ["native.tricrypto", "native.cvxCrv", "native.cvx"]
+to_migrate = ["native.renCrv", "native.sbtcCrv", "native.tbtcCrv"]
 controller_id = "experimental"
 
 params = {
@@ -83,11 +84,13 @@ def modify_guest_lists(badger, helper, vault_keys):
 
 def set_guest_lists(badger, safe, helper, vaults_to_add):
     for key in vaults_to_add:
-        guestList = badger.getGuestList(key)
-        sett = safe.contract(badger.getSett(key).address)
+        guestList = AddressZero
+        sett = helper.contract_from_abi(badger.getSett(key).address, "SettV3", SettV3.abi)
+        print(sett.governance())
 
-        console.print(f"Setting guest list [blue]{guestList.address}[/blue] on vault {key}")
-        assert guestList.wrapper() == sett
+        console.print(f"Setting guest list [blue]{guestList}[/blue] on vault {key}")
+        if guestList != AddressZero:
+            assert guestList.wrapper() == sett
 
         sett.setGuestList(guestList)
 
@@ -178,6 +181,18 @@ def initialize_strategies(badger):
 
         assert vault.token() == strategy.want()
 
+def change_proxy_admin(badger, helper, admin, new_admin, setts):
+    admin = helper.contract_from_abi(admin.address, "ProxyAdmin", artifacts.open_zeppelin["ProxyAdmin"]["abi"])
+    new_admin = helper.contract_from_abi(new_admin.address, "ProxyAdmin", artifacts.open_zeppelin["ProxyAdmin"]["abi"])
+
+    for key in setts:
+        sett = badger.getStrategy(key)
+        console.print(f"Change proxy admin of {key} {sett.address} to {new_admin}")
+        admin.changeProxyAdmin(sett, new_admin)
+        assert new_admin.getProxyAdmin(sett) == new_admin
+    helper.publish()
+
+    
 def upgrade_setts(badger, helper, admin, new_logic, setts):
     """
     Upgrade setts
@@ -545,6 +560,117 @@ def set_withdrawal_fee(badger, safe, helper, vaults_to_add):
         assert strategy.withdrawalFee() == 20
     helper.publish()
 
+def migrate_strategies_via_migrator(badger):
+    migrator = MigrationAssistant.at("0x8b459f4d8949f3748dc34430bc91441c954dc391")
+
+    data = migrator.migrate.encode_input(badger.getController("native").address, [
+        (registry.curve.pools.renCrv.token, "0x444B860128B7Bf8C0e864bDc3b7a36a940db7D88", badger.getStrategy("native.renCrv").address),
+        (registry.curve.pools.sbtcCrv.token, "0x3Efc97A8e23f463e71Bf28Eb19690d097797eb17", badger.getStrategy("native.sbtcCrv").address),
+        (registry.curve.pools.tbtcCrv.token, "0xE2fA197eAA5C726426003074147a08beaA59403B", badger.getStrategy("native.tbtcCrv").address)
+    ])
+
+    a = badger.getSett("native.renCrv")
+    b = badger.getSett("native.sbtcCrv")
+    c = badger.getSett("native.tbtcCrv")
+
+    d = badger.getStrategy("native.renCrv")
+    e = badger.getStrategy("native.sbtcCrv")
+    f = badger.getStrategy("native.tbtcCrv")
+
+    old_ren = interface.IStrategy("0x444B860128B7Bf8C0e864bDc3b7a36a940db7D88")
+    old_sbtc = interface.IStrategy("0x3Efc97A8e23f463e71Bf28Eb19690d097797eb17")
+    old_tbtc = interface.IStrategy("0xE2fA197eAA5C726426003074147a08beaA59403B")
+
+    console.print({
+        "ren": a.balance(),
+        "sbtc": b.balance(),
+        "tbtc": c.balance(),
+        "ren_ppfs": a.getPricePerFullShare(),
+        "sbtc_ppfs": b.getPricePerFullShare(),
+        "tbtc_ppfs": c.getPricePerFullShare(),
+        "ren_strat_pool": d.balanceOfPool(),
+        "ren_strat_want": d.balanceOfWant(),
+        "sbtc_strat_pool": e.balanceOfPool(),
+        "sbtc_strat_want": e.balanceOfWant(),
+        "tbtc_strat_pool": f.balanceOfPool(),
+        "tbtc_strat_want": f.balanceOfWant(),
+
+        "old_ren_strat_pool": old_ren.balanceOfPool(),
+        "old_ren_strat_want": old_ren.balanceOfWant(),
+        "old_sbtc_strat_pool": old_sbtc.balanceOfPool(),
+        "old_sbtc_strat_want": old_sbtc.balanceOfWant(),
+        "old_tbtc_strat_pool": old_tbtc.balanceOfPool(),
+        "old_tbtc_strat_want": old_tbtc.balanceOfWant(),
+    })
+
+    tokens = [
+        interface.IERC20(registry.curve.pools.renCrv.token),
+        interface.IERC20(registry.curve.pools.sbtcCrv.token),
+        interface.IERC20(registry.curve.pools.tbtcCrv.token)
+    ]
+
+    
+
+    entities = [
+        a, b, c, d, e, f, badger.getController("native"),
+        "0x444B860128B7Bf8C0e864bDc3b7a36a940db7D88",
+        "0x3Efc97A8e23f463e71Bf28Eb19690d097797eb17",
+        "0xE2fA197eAA5C726426003074147a08beaA59403B",
+    ]
+    
+    table = []
+    for entity in entities:
+        for token in tokens:
+            table.append([entity, token.name(), token.balanceOf(entity)])
+    print(tabulate(table, ["entity", "asset", "value"]))
+
+    multi = GnosisSafe(badger.opsMultisig)
+
+    # 'to': badger.getController("native").address,
+
+    tx = multi.execute(MultisigTxMetadata(description="CRV Migration"), {
+        'to': migrator.address,
+        "data": data,
+        "operation": 1
+    })
+
+    a.earn({'from': badger.deployer})
+    b.earn({'from': badger.deployer})
+    c.earn({'from': badger.deployer})
+
+    console.print({
+        "ren": a.balance(),
+        "sbtc": b.balance(),
+        "tbtc": c.balance(),
+        "ren_ppfs": a.getPricePerFullShare(),
+        "sbtc_ppfs": b.getPricePerFullShare(),
+        "tbtc_ppfs": c.getPricePerFullShare(),
+        "ren_strat_pool": d.balanceOfPool(),
+        "ren_strat_want": d.balanceOfWant(),
+        "sbtc_strat_pool": e.balanceOfPool(),
+        "sbtc_strat_want": e.balanceOfWant(),
+        "tbtc_strat_pool": f.balanceOfPool(),
+        "tbtc_strat_want": f.balanceOfWant(),
+
+        "old_ren_strat_pool": old_ren.balanceOfPool(),
+        "old_ren_strat_want": old_ren.balanceOfWant(),
+        "old_sbtc_strat_pool": old_sbtc.balanceOfPool(),
+        "old_sbtc_strat_want": old_sbtc.balanceOfWant(),
+        "old_tbtc_strat_pool": old_tbtc.balanceOfPool(),
+        "old_tbtc_strat_want": old_tbtc.balanceOfWant(),
+    })
+
+def set_controller_on_strategies(badger, helper, controller_id, strategies):
+    controller = helper.contract_from_abi(badger.getController(controller_id).address, "Controller", Controller.abi)
+    for key in strategies:
+        strategy = helper.contract_from_abi(badger.getStrategy(key).address, "StrategyConvexStakingOptimizer", StrategyConvexStakingOptimizer.abi)
+        strategy.setController(controller)
+        strategy.setGovernance(badger.opsMultisig)
+
+        assert strategy.controller() == controller
+    
+    helper.publish()
+
 def set_strategies_on_controller(badger, safe, helper, controller_id, vaults_to_add):
     for key in vaults_to_add:
         
@@ -553,14 +679,41 @@ def set_strategies_on_controller(badger, safe, helper, controller_id, vaults_to_
         strategy = safe.contract_from_abi(badger.getStrategy(key).address, "StrategyConvexStakingOptimizer", StrategyConvexStakingOptimizer.abi)
 
         console.print(f"Approve & Set strategy {strategy.address} ({strategy.getName()}) for {key} controller {controller_id}")
-
         want = interface.IERC20(strategy.want())
-        controller.setStrategy(want, strategy)
+
+        before_ppfs = vault.getPricePerFullShare()
+        before_balance = vault.balance()
+        before_strategy = controller.strategies(want)
+        before_name = interface.IStrategy(before_strategy).getName()
+
+        controller.setStrategy(want, strategy)        
+
+        after_ppfs = vault.getPricePerFullShare()
+        after_balance = vault.balance()
+        after_strategy = controller.strategies(want)
+        after_name = strategy.getName()
+
+        after_balance == before_balance
+        before_ppfs == after_ppfs
+
+        console.print({
+            "before_name": before_name,
+            "before_strategy": before_strategy,
+            "balance": before_balance,
+            "ppfs": before_ppfs
+        })
+
+        console.print({
+            "after_name": after_name,
+            "after_strategy": after_strategy,
+            "balance": after_balance,
+            "ppfs": after_ppfs
+        })
 
         assert vault.controller() == controller
+        print(strategy.controller())
         # assert strategy.controller() == controller
-        # print(controller.approvedStrategies(want, strategy))
-        # assert controller.approvedStrategies(want, strategy) == True
+        assert controller.approvedStrategies(want, strategy) == True
         assert controller.strategies(want) == strategy.address
         assert strategy.paused() == False
     
@@ -591,6 +744,43 @@ def update_rm(badger, safe, helper):
     assert rm.getRoleMember(DEFAULT_ADMIN_ROLE, 0) == badger.devMultisig
     helper.publish()
 
+def set_min(badger, helper, min, setts):
+    for key in setts:
+        sett = helper.contract_from_abi(badger.getSett(key).address, "SettV3", SettV3.abi)
+        sett.setMin(min)
+    helper.publish()
+
+def set_keeper(badger, helper, keeper, setts):
+    for key in setts:
+        sett = helper.contract_from_abi(badger.getSett(key).address, "SettV3", SettV3.abi)
+        sett.setKeeper(keeper)
+    helper.publish()
+
+def switch_proxy_admin(badger, helper, keeper, strategies):
+    testProxyAdmin = helper.contract_from_abi(badger.testProxyAdmin)
+
+    for key in strategies:
+        strategy = badger.getStrategy(key)
+        testProxyAdmin.changeAdmin(strategy, badger.opsProxyAdmin)
+
+        assert badger.opsProxyAdmin.getProxyAdmin(strategy) == badger.opsProxyAdmin
+        print(badger.opsProxyAdmin)
+        
+    helper.publish()
+
+def approve_on_helper_vaults(badger, helper, strategies):
+    cvxHelper = helper.contract_from_abi(badger.getSett("native.cvx").address, "SettV4", SettV4.abi)
+    cvxCrvHelper = helper.contract_from_abi(badger.getSett("native.cvxCrv").address, "SettV4", SettV4.abi)
+
+    for key in strategies:
+        strategy = badger.getStrategy(key)
+
+        cvxHelper.approveContractAccess(strategy)
+        cvxCrvHelper.approveContractAccess(strategy)
+
+    helper.publish()
+
+
 def main():
     """
     Promote an experimental vault to official status
@@ -598,13 +788,14 @@ def main():
     badger = connect_badger(load_deployer=True)
 
     if rpc.is_active():
-        dev_multi = ApeSafe(badger.opsMultisig.address)
+        dev_multi = ApeSafe(badger.testMultisig.address)
         helper = ApeSafeHelper(badger, dev_multi)
+        assert True
     else:
         from helpers.gas_utils import gas_strategies
         gas_strategies.set_default(gas_strategies.exponentialScalingFast)
                 
-    # set_guest_lists(badger, dev_multi, helper, vaults_to_add)
+    # set_guest_lists(badger, dev_multi, helper, helper_vaults)
     # set_withdrawal_fee(badger, dev_multi, helper, vaults_to_add)
     # initialize_strategies(badger)
     # set_performance_fees(badger, helper, 1000, 0, ["native.cvxCrv", "native.cvx"])
@@ -612,8 +803,14 @@ def main():
     # update_rm(badger, dev_multi, helper)
     # set_vaults_on_controller(badger, dev_multi, helper, vaults_to_add)
     # set_strategies_on_controller(badger, dev_multi, helper, vaults_to_add)
-    
-    set_strategies_on_controller(badger, dev_multi, helper, "native", ['native.renCrv', 'native.sbtcCrv', 'native.tbtcCrv'])
+    # set_controller_on_strategies(badger, helper, "native", to_migrate)
+    # set_keeper(badger, helper, badger.earner, to_migrate)
+    # approve_on_helper_vaults(badger, helper, to_migrate)
+    # set_min(badger, helper, 10000, to_migrate)
+    # migrate_strategies_via_migrator(badger)
+    # set_strategies_on_controller(badger, dev_multi, helper, "native", ['native.renCrv', 'native.sbtcCrv', 'native.tbtcCrv'])
+
+    change_proxy_admin(badger, helper, badger.testProxyAdmin, badger.opsProxyAdmin, to_migrate)
 
     # modify_guest_lists(badger, helper, ['native.cvx', 'native.cvxCrv'])
 

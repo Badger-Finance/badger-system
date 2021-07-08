@@ -42,7 +42,7 @@ from ape_safe import ApeSafe
 console = Console()
 pretty.install()
 
-start = to_timestamp(datetime.datetime(2021, 7, 8, 12, 00))
+start = to_timestamp(datetime.datetime(2021, 7, 8, 13, 00))
 duration = days(7)
 
 def set_schedules(logger, schedules):

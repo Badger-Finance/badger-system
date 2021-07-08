@@ -231,9 +231,19 @@ def test_post_migration_flow(setup):
     vault = setup.vault
     strategy = setup.strategy
 
+    cvxHelper = badger.getSett("native.cvx")
+    cvxCrvHelper = badger.getSett("native.cvxCrv")
+
+    helper_governance = accounts.at(cvxHelper.governance(), force=True)
+    
+    # Approve Strategy to deposit in Helpers
+    cvxHelper.approveContractAccess(strategy, {"from": helper_governance})
+    cvxCrvHelper.approveContractAccess(strategy, {"from": helper_governance})
+
     # Get strategy's actors
     stratGov = accounts.at(strategy.governance(), force=True)
     stratKeeper = accounts.at(strategy.keeper(), force=True)
+    console.print("Actors", stratGov, stratKeeper)
 
     # Get current strategy, want and tokens of interest
     want = interface.IERC20(vault.token())

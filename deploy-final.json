@@ -212,9 +212,9 @@
         },
         "strategy_artifacts": {
             "native.badger": "StrategyBadgerRewards",
-            "native.renCrv": "StrategyCurveGaugeRenBtcCrv",
-            "native.sbtcCrv": "StrategyCurveGaugeSbtcCrv",
-            "native.tbtcCrv": "StrategyCurveGaugeTbtcCrv",
+            "native.renCrv": "StrategyConvexStakingOptimizer",
+            "native.sbtcCrv": "StrategyConvexStakingOptimizer",
+            "native.tbtcCrv": "StrategyConvexStakingOptimizer",
             "native.uniBadgerWbtc": "StrategyBadgerLpMetaFarm",
             "harvest.renCrv": "StrategyHarvestMetaFarm",
             "native.sushiWbtcEth": "StrategySushiLpOptimizer",
