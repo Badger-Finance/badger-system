@@ -15,7 +15,7 @@ def calc_tree_rewards(badger, startBlock, endBlock, nextCycle):
     sharesPerFragment = badger.digg.logic.UFragments._sharesPerFragment()
     _, _2, ibbtc_balances = fetch_wallet_balances(sharesPerFragment, endBlock)
 
-    treeDists = fetch_tree_distributions(0, endBlock)
+    treeDists = fetch_tree_distributions(startBlock, endBlock)
     console.log(
         "Calculating rewards for {} harvests between {} and {}".format(
             len(treeDists), startBlock, endBlock
@@ -46,16 +46,20 @@ def calc_tree_rewards(badger, startBlock, endBlock, nextCycle):
             settName, web3.toChecksumAddress(token), amountToDistribute / 1e18
         )
         totalIbbtcBalance = sum(ibbtc_balances.values())
-        ibbtcRewardsUnit = amountToDistribute / totalIbbtcBalance
         for user in balances:
+            userReward = rewardsUnit * user.balance
             if user.address in [a.lower() for a in PEAK_ADDRESSES]:
+                ibbtcRewardsUnit = userReward / totalIbbtcBalance
+
+                console.log(
+                    "Distributing {} {} to {} ibbtc holders from {}".format(
+                        userReward / 1e18, symbol, len(ibbtc_balances), settName
+                    )
+                )
+
                 # Redistribute peak addresses rewards to ibbtc users
                 for addr, balance in ibbtc_balances.items():
-                    console.log(
-                        "Distributing {} rewards to {} ibbtc holders".format(
-                            amountToDistribute / 1e18, len(ibbtc_balances)
-                        )
-                    )
+
                     rewards.increase_user_rewards(
                         web3.toChecksumAddress(addr),
                         token,

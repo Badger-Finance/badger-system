@@ -231,6 +231,8 @@ def calculate_sett_balances(badger, name, currentBlock):
         if addr in blacklist or balance < 0:
             del balances[addr]
 
+    # Testing for peak address
+    # balances["0x41671BA1abcbA387b9b2B752c205e22e916BE6e3".lower()] = 10000
     userBalances = [
         UserBalance(addr, bal, underlyingToken, settType)
         for addr, bal in balances.items()

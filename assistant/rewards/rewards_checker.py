@@ -182,7 +182,7 @@ def verify_rewards(badger: BadgerSystem, startBlock, endBlock, before_data, afte
         total_before_token = int(before_data["tokenTotals"].get(token, 0))
         total_after_token = int(after_data["tokenTotals"].get(token, 0))
         print_token_diff_table(
-            name, total_before_token, total_after_token, 10000 * 1e18
+            name, total_before_token, total_after_token, 20000 * 1e18
         )
 
     assert total_after_digg < sanity_digg
