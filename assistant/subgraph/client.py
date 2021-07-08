@@ -275,8 +275,9 @@ def fetch_sushi_harvest_events():
     wbtcEthEvents = []
     wbtcBadgerEvents = []
     wbtcDiggEvents = []
+    iBbtcWbtcEvents = []
+
     for event in results["sushiHarvestEvents"]:
-        event["rewardAmount"] = event.pop("toBadgerTree")
         strategy = event["id"].split("-")[0]
         if strategy == "0x7a56d65254705b4def63c68488c0182968c452ce":
             wbtcEthEvents.append(event)
@@ -284,11 +285,14 @@ def fetch_sushi_harvest_events():
             wbtcBadgerEvents.append(event)
         elif strategy == "0xaa8dddfe7dfa3c3269f1910d89e4413dd006d08a":
             wbtcDiggEvents.append(event)
+        elif strategy == "0xf4146a176b09c664978e03d28d07db4431525dad":
+            iBbtcWbtcEvents.append(event)
 
     return {
-        "wbtcEth": wbtcEthEvents,
-        "wbtcBadger": wbtcBadgerEvents,
-        "wbtcDigg": wbtcDiggEvents,
+        "native.sushiWbtcEth": wbtcEthEvents,
+        "native.sushiBadgerWbtc": wbtcBadgerEvents,
+        "native.sushiDiggWbtc": wbtcDiggEvents,
+        "experimental.sushiIBbtcWbtc": iBbtcWbtcEvents,
     }
 
 
