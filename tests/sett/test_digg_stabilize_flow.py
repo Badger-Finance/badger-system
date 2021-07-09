@@ -57,7 +57,7 @@ def test_single_user_rebalance_flow(settConfig):
     want.approve(sett, MaxUint256, {"from": randomUser})
     snap.settDeposit(depositAmount, {"from": randomUser})
 
-    chain.sleep(days(1))
+    chain.sleep(days(1.5))
     chain.mine()
 
     # Earn
@@ -91,6 +91,10 @@ def test_single_user_rebalance_flow(settConfig):
 
     chain.sleep(days(0.25))
     chain.mine()
+
+    # Withdraw
+    amount = sett.balanceOf(randomUser.address)
+    snap.settWithdraw(amount // 2, {"from": randomUser})
 
     assert False
 

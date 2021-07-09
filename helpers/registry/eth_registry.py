@@ -309,7 +309,7 @@ eth_registry.whales = DotMap(
         action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT,
     ),
     digg=DotMap(
-        whale="0x5b60952481eb42b66bdffc3e049025ac5b91c127",
+        whale="0x03387d5015f88aea995e790f18ef7ff9dfa0943c",
         token="0x798D1bE841a82a273720CE31c822C61a67a601C3",
         action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT,
     ),

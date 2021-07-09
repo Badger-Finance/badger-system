@@ -186,6 +186,80 @@ class StabilizeStrategyDiggV1Resolver(StrategyCoreResolver):
             1,
         )
 
+    # Override as withdraw process works differently
+    def confirm_withdraw(self, before, after, params, tx):
+        """
+        Withdraw Should;
+        - Decrease the totalSupply() of Sett tokens
+        - Decrease the balanceOf() Sett tokens for the user based on withdrawAmount and pricePerFullShare
+        - Decrease the balanceOf() want in the Strategy
+        - Decrease the balance() tracked for want in the Strategy
+        - Decrease the available() if it is not zero
+        """
+        ppfs = before.get("sett.pricePerFullShare")
+
+        console.print("=== Compare Withdraw ===")
+        self.manager.printCompare(before, after)
+
+        if params["amount"] == 0:
+            assert after.get("sett.totalSupply") == before.get("sett.totalSupply")
+            # Decrease the Sett tokens for the user based on withdrawAmount and pricePerFullShare
+            assert after.balances("sett", "user") == before.balances("sett", "user")
+            return
+
+        # Decrease the totalSupply of Sett tokens
+        assert after.get("sett.totalSupply") < before.get("sett.totalSupply")
+
+        # Decrease the Sett tokens for the user based on withdrawAmount and pricePerFullShare
+        assert after.balances("sett", "user") < before.balances("sett", "user")
+
+        # Decrease the want in the Sett, if there was idle want
+        if before.balances("want", "sett") > 0:
+            assert after.balances("want", "sett") < before.balances("want", "sett")
+
+            # Available in the sett should decrease if want decreased
+            assert after.get("sett.available") <= before.get("sett.available")
+
+        # Must review this logic:
+
+        """ # Want in the strategy should be decreased, if idle in sett is insufficient to cover withdrawal
+        if params["amount"] > before.balances("want", "sett"):
+            # Adjust amount based on total balance x total supply
+            # Division in python is not accurate, use Decimal package to ensure division is consistent w/ division inside of EVM
+            expectedWithdraw = Decimal(
+                params["amount"] * before.get("sett.balance")
+            ) / Decimal(before.get("sett.totalSupply"))
+            # Withdraw from idle in sett first
+            expectedWithdraw -= before.balances("want", "sett")
+            # First we attempt to withdraw from idle want in strategy
+            if expectedWithdraw > before.balances("want", "strategy"):
+                # If insufficient, we then attempt to withdraw from activities (balance of pool)
+                # Just ensure that we have enough in the strategy to satisfy the request
+                expectedWithdraw -= before.balances("want", "strategy")
+                assert expectedWithdraw <= before.get("strategy.balanceOf") """
+
+        # The total want between the strategy and sett should be less after than before
+        # if there was previous want in strategy or sett (sometimes we withdraw entire
+        # balance from the strategy pool) which we check above.
+        if (
+            before.balances("want", "strategy") > 0
+            or before.balances("want", "sett") > 0
+        ):
+            assert after.balances("want", "strategy") + after.balances(
+                "want", "sett"
+            ) < before.balances("want", "strategy") + before.balances("want", "sett")
+
+        # Controller rewards should earn
+        if (
+            before.get("strategy.withdrawalFee") > 0
+            and
+            # Fees are only processed when withdrawing from the strategy.
+            before.balances("want", "strategy") > after.balances("want", "strategy")
+        ):
+            assert after.balances("want", "governanceRewards") > before.balances(
+                "want", "governanceRewards"
+            )
+
     def add_entity_balances_for_tokens(self, calls, tokenKey, token, entities):
         entities["sushiswap_router"] = "0xd9e1cE17f2641f24aE83637ab66a2cca9C378B9F"
         entities["uniswap_router"] = "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D"
@@ -208,7 +282,6 @@ class StabilizeStrategyDiggV1Resolver(StrategyCoreResolver):
         calls = self.add_entity_balances_for_tokens(calls, "diggSLP", diggSLP, entities)
         calls = self.add_entity_balances_for_tokens(calls, "diggUniLP", diggUniLP, entities)
         calls = self.add_entity_balances_for_tokens(calls, "wbtc", wbtc, entities)
-        calls = self.add_entity_balances_for_tokens(calls, "digg", digg, entities)
 
         return calls
 
