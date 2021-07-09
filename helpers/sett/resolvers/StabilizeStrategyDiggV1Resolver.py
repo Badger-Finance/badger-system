@@ -91,21 +91,6 @@ class StabilizeStrategyDiggV1Resolver(StrategyCoreResolver):
 
         strategy = self.manager.strategy
 
-        # Check currently not possible since getDiggUSDPrice reverts because call is done outside
-        # of 24hr threshold. Uncomment once price feed updates are done manually:
-
-        # if strategy.getDiggUSDPrice() > strategy.getWBTCUSDPrice():
-        #     # Check that we sold some want (digg)
-        #     assert after.balances("want", "strategy") < before.balances("want", "strategy")
-        #     # Check that we bought some wBTC
-        #     assert after.balances("wbtc", "strategy") > before.balances("wbtc", "strategy")
-
-        # if strategy.getDiggUSDPrice() < strategy.getWBTCUSDPrice():
-        #     # Check that we bought some want (digg)
-        #     assert after.balances("want", "strategy") > before.balances("want", "strategy")
-        #     # Check that we sold some wBTC
-        #     assert after.balances("wbtc", "strategy") < before.balances("wbtc", "strategy")
-
         if "TradeState" in tx.events:
             event = tx.events["TradeState"][0]
 
@@ -128,6 +113,11 @@ class StabilizeStrategyDiggV1Resolver(StrategyCoreResolver):
                     soldAmountNormalized/1e9,
                     1,
                 )
+                # Check that we sold some want (digg)
+                assert after.balances("want", "strategy") < before.balances("want", "strategy")
+                # Check that we bought some wBTC
+                assert after.balances("wbtc", "strategy") > before.balances("wbtc", "strategy")
+
             # Sold wBTC
             else:
                 assert approx(
@@ -140,6 +130,10 @@ class StabilizeStrategyDiggV1Resolver(StrategyCoreResolver):
                     soldAmountNormalized/1e8,
                     1,
                 )
+                # Check that we bought some want (digg)
+                assert after.balances("want", "strategy") > before.balances("want", "strategy")
+                # Check that we sold some wBTC
+                assert after.balances("wbtc", "strategy") < before.balances("wbtc", "strategy")
 
         pass
 
