@@ -57,13 +57,14 @@ def test_single_user_rebalance_flow(settConfig):
     want.approve(sett, MaxUint256, {"from": randomUser})
     snap.settDeposit(depositAmount, {"from": randomUser})
 
-    chain.sleep(days(1.5))
+    # Chain sleeps for a very small time to stay within Oracle price feed threshold
+    chain.sleep(hours(0.25))
     chain.mine()
 
     # Earn
     snap.settEarn({"from": settKeeper})
 
-    chain.sleep(days(1))
+    chain.sleep(hours(0.25))
     chain.mine()
 
     # Rebase
@@ -73,13 +74,13 @@ def test_single_user_rebalance_flow(settConfig):
     # Rebalance
     snap.rebalance({"from": settKeeper})
 
-    chain.sleep(days(0.25))
+    chain.sleep(hours(0.25))
     chain.mine()
 
     # Earn
     snap.settEarn({"from": settKeeper})
 
-    chain.sleep(days(0.25))
+    chain.sleep(hours(0.25))
     chain.mine()
 
     # Rebase
@@ -89,7 +90,7 @@ def test_single_user_rebalance_flow(settConfig):
     # Rebalance
     snap.rebalance({"from": settKeeper})
 
-    chain.sleep(days(0.25))
+    chain.sleep(hours(0.25))
     chain.mine()
 
     # Withdraw

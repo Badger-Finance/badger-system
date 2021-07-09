@@ -91,17 +91,20 @@ class StabilizeStrategyDiggV1Resolver(StrategyCoreResolver):
 
         strategy = self.manager.strategy
 
-        if strategy.getDiggUSDPrice() > strategy.getDiggUSDPrice():
-            # Check that we sold some want (digg)
-            assert after.balances("want", "strategy") < before.balances("want", "strategy")
-            # Check that we bought some wBTC
-            assert after.balances("wbtc", "strategy") > before.balances("wbtc", "strategy")
+        # Check currently not possible since getDiggUSDPrice reverts because call is done outside
+        # of 24hr threshold. Uncomment once price feed updates are done manually:
 
-        if strategy.getDiggUSDPrice() < strategy.getDiggUSDPrice():
-            # Check that we bought some want (digg)
-            assert after.balances("want", "strategy") > before.balances("want", "strategy")
-            # Check that we sold some wBTC
-            assert after.balances("wbtc", "strategy") < before.balances("wbtc", "strategy")
+        # if strategy.getDiggUSDPrice() > strategy.getWBTCUSDPrice():
+        #     # Check that we sold some want (digg)
+        #     assert after.balances("want", "strategy") < before.balances("want", "strategy")
+        #     # Check that we bought some wBTC
+        #     assert after.balances("wbtc", "strategy") > before.balances("wbtc", "strategy")
+
+        # if strategy.getDiggUSDPrice() < strategy.getWBTCUSDPrice():
+        #     # Check that we bought some want (digg)
+        #     assert after.balances("want", "strategy") > before.balances("want", "strategy")
+        #     # Check that we sold some wBTC
+        #     assert after.balances("wbtc", "strategy") < before.balances("wbtc", "strategy")
 
         if "TradeState" in tx.events:
             event = tx.events["TradeState"][0]
@@ -282,28 +285,6 @@ class StabilizeStrategyDiggV1Resolver(StrategyCoreResolver):
         calls = self.add_entity_balances_for_tokens(calls, "diggSLP", diggSLP, entities)
         calls = self.add_entity_balances_for_tokens(calls, "diggUniLP", diggUniLP, entities)
         calls = self.add_entity_balances_for_tokens(calls, "wbtc", wbtc, entities)
-
-        return calls
-
-    def add_strategy_snap(self, calls, entities=None):
-        super().add_strategy_snap(calls)
-
-        strategy = self.manager.strategy
-
-        calls.append(
-            Call(
-                strategy.address,
-                [func.StabilizeStrategyDiggV1.getWBTCUSDPrice],
-                [["strategy.getWBTCUSDPrice", as_wei]],
-            )
-        )
-        calls.append(
-            Call(
-                strategy.address,
-                [func.StabilizeStrategyDiggV1.getDiggUSDPrice],
-                [["strategy.getDiggUSDPrice", as_wei]],
-            )
-        )
 
         return calls
 
