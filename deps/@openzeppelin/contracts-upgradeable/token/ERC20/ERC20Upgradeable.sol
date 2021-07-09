@@ -94,7 +94,7 @@ contract ERC20Upgradeable is Initializable, ContextUpgradeable, IERC20Upgradeabl
      * no way affects any of the arithmetic of the contract, including
      * {IERC20-balanceOf} and {IERC20-transfer}.
      */
-    function decimals() public view returns (uint8) {
+    function decimals() public view override returns (uint8) {
         return _decimals;
     }
 

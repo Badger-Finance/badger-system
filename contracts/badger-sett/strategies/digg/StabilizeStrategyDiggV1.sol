@@ -3,7 +3,7 @@
 pragma solidity ^0.6.11;
 pragma experimental ABIEncoderV2;
 
-import "deps/@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
+import "deps/@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import "deps/@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 import "deps/@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "deps/@openzeppelin/contracts-upgradeable/token/ERC20/SafeERC20Upgradeable.sol";
@@ -14,40 +14,18 @@ import "../BaseStrategySwapper.sol";
     This is a strategy to stabilize Digg with wBTC. It takes advantage of market momentum and accumulated collateral to
     track Digg price with BTC price after rebase events. Users exposed in this strategy are somewhat protected from
     a loss of value due to a negative rebase
-    
+
     Authorized parties include many different parties that can modify trade parameters and fees
 */
 
 interface AggregatorV3Interface {
-    function latestRoundData()
-        external
-        view
-        returns (
-            uint80 roundId,
-            int256 answer,
-            uint256 startedAt,
-            uint256 updatedAt,
-            uint80 answeredInRound
-        );
+  function latestRoundData() external view returns (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound);
 }
 
 interface TradeRouter {
-    function swapExactETHForTokens(
-        uint256,
-        address[] calldata,
-        address,
-        uint256
-    ) external payable returns (uint256[] memory);
-
-    function swapExactTokensForTokens(
-        uint256,
-        uint256,
-        address[] calldata,
-        address,
-        uint256
-    ) external returns (uint256[] memory);
-
-    function getAmountsOut(uint256, address[] calldata) external view returns (uint256[] memory); // For a value in, it calculates value out
+    function swapExactETHForTokens(uint, address[] calldata, address, uint) external payable returns (uint[] memory);
+    function swapExactTokensForTokens(uint, uint, address[] calldata, address, uint) external returns (uint[] memory);
+    function getAmountsOut(uint, address[] calldata) external view returns (uint[] memory); // For a value in, it calculates value out
 }
 
 interface UniswapLikeLPToken {
@@ -59,11 +37,11 @@ interface DiggTreasury {
         uint256, // wBTC that we are sending to the treasury exchange
         uint256, // digg that we are requesting from the treasury exchange
         address // address to send the digg to, which is this address
-    ) external;
+        ) external;
 }
 
 contract StabilizeStrategyDiggV1 is BaseStrategyMultiSwapper {
-    using SafeERC20Upgradeable for ERC20Upgradeable;
+    using SafeERC20Upgradeable for IERC20Upgradeable;
     using AddressUpgradeable for address;
     using SafeMathUpgradeable for uint256;
 
@@ -76,14 +54,14 @@ contract StabilizeStrategyDiggV1 is BaseStrategyMultiSwapper {
     bool public diggInExpansion;
     uint256 public lastDiggTotalSupply; // The last recorded total supply of the digg token
     uint256 public lastDiggPrice; // The price of Digg at last trade in BTC units
-    uint256 public diggSupplyChangeFactor; // This is a factor used by the strategy to determine how much digg to sell in expansion
-    uint256 public wbtcSupplyChangeFactor; // This is a factor used by the strategy to determine how much wbtc to sell in contraction
-    uint256 public wbtcSellAmplificationFactor; // The higher this number the more aggressive the buyback in contraction
-    uint256 public maxGainedDiggSellPercent; // The maximum percent of sellable Digg gains through rebase
-    uint256 public maxWBTCSellPercent; // The maximum percent of sellable wBTC;
-    uint256 public tradeBatchSize; // The normalized size of the trade batches, can be adjusted
-    uint256 public tradeAmountLeft; // The amount left to trade
-    uint256 public maxOracleLag; // Maximum amount of lag the oracle can have before reverting the price
+    uint256 public diggSupplyChangeFactor = 50000; // This is a factor used by the strategy to determine how much digg to sell in expansion
+    uint256 public wbtcSupplyChangeFactor = 20000; // This is a factor used by the strategy to determine how much wbtc to sell in contraction
+    uint256 public wbtcSellAmplificationFactor = 2; // The higher this number the more aggressive the buyback in contraction
+    uint256 public maxGainedDiggSellPercent = 100000; // The maximum percent of sellable Digg gains through rebase
+    uint256 public maxWBTCSellPercent = 50000; // The maximum percent of sellable wBTC;
+    uint256 public tradeBatchSize = 10e18; // The normalized size of the trade batches, can be adjusted
+    uint256 public tradeAmountLeft = 0; // The amount left to trade
+    uint256 private _maxOracleLag = 24 hours; // Maximum amount of lag the oracle can have before reverting the price
 
     // Constants
     uint256 constant DIVISION_FACTOR = 100000;
@@ -95,13 +73,13 @@ contract StabilizeStrategyDiggV1 is BaseStrategyMultiSwapper {
     address constant DIGG_ORACLE_ADDRESS = address(0x418a6C98CD5B8275955f08F0b8C1c6838c8b1685); // Chainlink DIGG Oracle
 
     struct TokenInfo {
-        ERC20Upgradeable token; // Reference of token
+        IERC20Upgradeable token; // Reference of token
         uint256 decimals; // Decimals of token
     }
 
     TokenInfo[] private tokenList; // An array of tokens accepted as deposits
 
-    event TradeState(
+    event TradeState (
         uint256 soldAmountNormalized,
         int256 percentPriceChange,
         uint256 soldPercent,
@@ -128,15 +106,6 @@ contract StabilizeStrategyDiggV1 is BaseStrategyMultiSwapper {
         stabilizeVault = _vaultConfig[0];
         diggExchangeTreasury = _vaultConfig[1];
 
-        diggSupplyChangeFactor = 50000; // This is a factor used by the strategy to determine how much digg to sell in expansion
-        wbtcSupplyChangeFactor = 20000; // This is a factor used by the strategy to determine how much wbtc to sell in contraction
-        wbtcSellAmplificationFactor = 2; // The higher this number the more aggressive the buyback in contraction
-        maxGainedDiggSellPercent = 100000; // The maximum percent of sellable Digg gains through rebase
-        maxWBTCSellPercent = 50000; // The maximum percent of sellable wBTC;
-        tradeBatchSize = 10e18; // The normalized size of the trade batches, can be adjusted
-        tradeAmountLeft = 0; // The amount left to trade
-        maxOracleLag = 365 days; // Maximum amount of lag the oracle can have before reverting the price
-
         performanceFeeGovernance = _feeConfig[0];
         performanceFeeStrategist = _feeConfig[1];
         withdrawalFee = _feeConfig[2];
@@ -151,12 +120,22 @@ contract StabilizeStrategyDiggV1 is BaseStrategyMultiSwapper {
 
     function setupTradeTokens() internal {
         // Start with DIGG
-        ERC20Upgradeable _token = ERC20Upgradeable(address(0x798D1bE841a82a273720CE31c822C61a67a601C3));
-        tokenList.push(TokenInfo({token: _token, decimals: _token.decimals()}));
+        IERC20Upgradeable _token = IERC20Upgradeable(address(0x798D1bE841a82a273720CE31c822C61a67a601C3));
+        tokenList.push(
+            TokenInfo({
+                token: _token,
+                decimals: _token.decimals()
+            })
+        );
 
         // WBTC
-        _token = ERC20Upgradeable(address(0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599));
-        tokenList.push(TokenInfo({token: _token, decimals: _token.decimals()}));
+        _token = IERC20Upgradeable(address(0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599));
+        tokenList.push(
+            TokenInfo({
+                token: _token,
+                decimals: _token.decimals()
+            })
+        );
     }
 
     function _onlyAnyAuthorizedParties() internal view {
@@ -172,11 +151,11 @@ contract StabilizeStrategyDiggV1 is BaseStrategyMultiSwapper {
     function getDiggUSDPrice() public view returns (uint256) {
         AggregatorV3Interface priceOracle = AggregatorV3Interface(DIGG_ORACLE_ADDRESS);
         (, int256 intPrice, , uint256 lastUpdateTime, ) = priceOracle.latestRoundData(); // We only want the answer
-        require(block.timestamp.sub(lastUpdateTime) < maxOracleLag, "Price data is too old to use");
+        require(block.timestamp.sub(lastUpdateTime) < _maxOracleLag, "Price data is too old to use");
         uint256 usdPrice = uint256(intPrice);
         priceOracle = AggregatorV3Interface(BTC_ORACLE_ADDRESS);
         (, intPrice, , lastUpdateTime, ) = priceOracle.latestRoundData(); // We only want the answer
-        require(block.timestamp.sub(lastUpdateTime) < maxOracleLag, "Price data is too old to use");
+        require(block.timestamp.sub(lastUpdateTime) < _maxOracleLag, "Price data is too old to use");
         usdPrice = usdPrice.mul(uint256(intPrice)).mul(10**2);
         return usdPrice; // Digg Price in USD
     }
@@ -184,14 +163,14 @@ contract StabilizeStrategyDiggV1 is BaseStrategyMultiSwapper {
     function getDiggPrice() public view returns (uint256) {
         AggregatorV3Interface priceOracle = AggregatorV3Interface(DIGG_ORACLE_ADDRESS);
         (, int256 intPrice, , uint256 lastUpdateTime, ) = priceOracle.latestRoundData(); // We only want the answer
-        require(block.timestamp.sub(lastUpdateTime) < maxOracleLag, "Price data is too old to use");
+        require(block.timestamp.sub(lastUpdateTime) < _maxOracleLag, "Price data is too old to use");
         return uint256(intPrice).mul(10**10);
     }
 
     function getWBTCUSDPrice() public view returns (uint256) {
         AggregatorV3Interface priceOracle = AggregatorV3Interface(BTC_ORACLE_ADDRESS);
         (, int256 intPrice, , uint256 lastUpdateTime, ) = priceOracle.latestRoundData(); // We only want the answer
-        require(block.timestamp.sub(lastUpdateTime) < maxOracleLag, "Price data is too old to use");
+        require(block.timestamp.sub(lastUpdateTime) < _maxOracleLag, "Price data is too old to use");
         return uint256(intPrice).mul(10**10);
     }
 
@@ -253,11 +232,7 @@ contract StabilizeStrategyDiggV1 is BaseStrategyMultiSwapper {
     // Customer active Strategy functions
 
     // This function will sell one token for another on Sushiswap and Uniswap
-    function exchange(
-        uint256 _inID,
-        uint256 _outID,
-        uint256 _amount
-    ) internal {
+    function exchange(uint256 _inID, uint256 _outID, uint256 _amount) internal {
         address _inputToken = address(tokenList[_inID].token);
         address _outputToken = address(tokenList[_outID].token);
         // One route, between DIGG and WBTC on Sushiswap and Uniswap, split based on liquidity of LPs
@@ -276,15 +251,11 @@ contract StabilizeStrategyDiggV1 is BaseStrategyMultiSwapper {
         // Amount sold is split between these two biggest liquidity providers to decrease the chance of price inequities between the exchanges
         // This also helps reduce slippage and creates a higher return than using one exchange
         // Look at the total balance of the pooled tokens in Uniswap compared to the total for both exchanges
-        uint256 uniPercent = tokenList[0]
-            .token
-            .balanceOf(address(UNISWAP_DIGG_LP))
+        uint256 uniPercent = tokenList[0].token.balanceOf(address(UNISWAP_DIGG_LP))
             .add(tokenList[1].token.balanceOf(address(UNISWAP_DIGG_LP)))
             .mul(DIVISION_FACTOR)
             .div(
-            tokenList[0]
-                .token
-                .balanceOf(address(UNISWAP_DIGG_LP))
+                tokenList[0].token.balanceOf(address(UNISWAP_DIGG_LP))
                 .add(tokenList[0].token.balanceOf(address(SUSHISWAP_DIGG_LP)))
                 .add(tokenList[1].token.balanceOf(address(UNISWAP_DIGG_LP)))
                 .add(tokenList[1].token.balanceOf(address(SUSHISWAP_DIGG_LP)))
@@ -319,7 +290,7 @@ contract StabilizeStrategyDiggV1 is BaseStrategyMultiSwapper {
     function governancePullSomeCollateral(uint256 _amount) external {
         // This will pull wBTC from the contract by governance
         _onlyGovernance();
-        ERC20Upgradeable wbtc = tokenList[1].token;
+        IERC20Upgradeable wbtc = tokenList[1].token;
         uint256 _balance = wbtc.balanceOf(address(this));
         if (_amount <= _balance) {
             wbtc.safeTransfer(governance, _amount);
@@ -334,7 +305,7 @@ contract StabilizeStrategyDiggV1 is BaseStrategyMultiSwapper {
 
     function setOracleLagTime(uint256 _time) external {
         _onlyAnyAuthorizedParties();
-        maxOracleLag = _time;
+        _maxOracleLag = _time;
     }
 
     function setStabilizeFee(uint256 _fee) external {
@@ -395,8 +366,12 @@ contract StabilizeStrategyDiggV1 is BaseStrategyMultiSwapper {
         // We only have idle DIGG, withdraw from the strategy directly
         // Note: This value is in DIGG fragments
 
-        // Make sure that when the user withdraws, the vaults try to maintain a 1:1 ratio in value
-        uint256 _diggEquivalent = wbtcInDiggUnits(tokenList[1].token.balanceOf(address(this)));
+        // Make sure that when the user withdraws, the vaults try to maintain a 1:1 ratio in value if wbtc in vault
+        uint256 _wbtcBalance = tokenList[1].token.balanceOf(address(this));
+        if (_wbtcBalance == 0) {
+            return _amount;
+        }
+        uint256 _diggEquivalent = wbtcInDiggUnits(_wbtcBalance);
         uint256 _diggBalance = tokenList[0].token.balanceOf(address(this));
         uint256 _extraDiggNeeded = 0;
         if (_amount > _diggBalance) {
@@ -416,8 +391,8 @@ contract StabilizeStrategyDiggV1 is BaseStrategyMultiSwapper {
             _extraDiggNeeded = _extraDiggNeeded.add(_diggEquivalent.sub(_diggBalance).div(2));
             // Exchange with the digg treasury to keep this balanced
             uint256 wbtcAmount = diggInWBTCUnits(_extraDiggNeeded);
-            if (wbtcAmount > tokenList[1].token.balanceOf(address(this))) {
-                wbtcAmount = tokenList[1].token.balanceOf(address(this)); // Make sure we can actual spend it
+            if (wbtcAmount > _wbtcBalance) {
+                wbtcAmount = _wbtcBalance; // Make sure we can actual spend it
                 _extraDiggNeeded = wbtcInDiggUnits(wbtcAmount);
             }
             _safeApproveHelper(address(tokenList[1].token), diggExchangeTreasury, wbtcAmount);
@@ -477,13 +452,9 @@ contract StabilizeStrategyDiggV1 is BaseStrategyMultiSwapper {
         if (currentTotalSupply != lastDiggTotalSupply) {
             // Rebase has taken place, act on it
             int256 currentPrice = int256(getDiggPrice());
-            int256 percentChange = ((currentPrice - int256(lastDiggPrice)) * int256(DIVISION_FACTOR)) / int256(lastDiggPrice);
-            if (percentChange > 100000) {
-                percentChange = 100000;
-            } // We only act on at most 100% change
-            if (percentChange < -100000) {
-                percentChange = -100000;
-            }
+            int256 percentChange = (currentPrice - int256(lastDiggPrice)) * int256(DIVISION_FACTOR) / int256(lastDiggPrice);
+            if (percentChange > 100000) {percentChange = 100000;} // We only act on at most 100% change
+            if (percentChange < -100000) {percentChange = -100000;}
             if (currentTotalSupply > lastDiggTotalSupply) {
                 diggInExpansion = true;
                 // Price is still positive
@@ -506,7 +477,9 @@ contract StabilizeStrategyDiggV1 is BaseStrategyMultiSwapper {
 
                 // Get the percentage amount the supply increased by
                 uint256 changedDigg = currentTotalSupply.sub(lastDiggTotalSupply).mul(DIVISION_FACTOR).div(lastDiggTotalSupply);
-                changedDigg = tokenList[0].token.balanceOf(address(this)).mul(changedDigg).div(DIVISION_FACTOR);
+                // formula: new tokens = token_balance - token_balance / (1 + percent_change)
+                changedDigg = tokenList[0].token.balanceOf(address(this)).mul(1e18).mul(DIVISION_FACTOR).div(DIVISION_FACTOR.add(changedDigg));
+                changedDigg = tokenList[0].token.balanceOf(address(this)).mul(1e18).sub(changedDigg).div(1e18);
                 // This is the amount of Digg gain from the rebase returned
 
                 uint256 _amount = changedDigg.mul(sellPercent).div(DIVISION_FACTOR); // This the amount to sell
@@ -522,6 +495,7 @@ contract StabilizeStrategyDiggV1 is BaseStrategyMultiSwapper {
                 // Price is now negative
                 // We will sell wbtc for digg only if price begins to rise again
                 if (percentChange > 0) {
+
                     // Our formula to calculate the percentage of wbtc sold is below
                     // -digg_supply_change_percent * (wbtc_supply_change_factor + price_change_percent * amplication_factor)
 
@@ -529,9 +503,7 @@ contract StabilizeStrategyDiggV1 is BaseStrategyMultiSwapper {
                     uint256 changedDiggPercent = lastDiggTotalSupply.sub(currentTotalSupply).mul(DIVISION_FACTOR).div(lastDiggTotalSupply);
 
                     // The faster the rise and the larger the negative rebase, the more that is bought
-                    uint256 sellPercent = changedDiggPercent
-                        .mul(wbtcSupplyChangeFactor.add(uint256(percentChange).mul(wbtcSellAmplificationFactor)))
-                        .div(DIVISION_FACTOR);
+                    uint256 sellPercent = changedDiggPercent.mul(wbtcSupplyChangeFactor.add(uint256(percentChange).mul(wbtcSellAmplificationFactor))).div(DIVISION_FACTOR);
                     if (sellPercent > maxWBTCSellPercent) {
                         sellPercent = maxWBTCSellPercent;
                     }
