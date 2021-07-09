@@ -49,6 +49,7 @@ PEAK_ADDRESSES = [
 ]
 
 MAX_BOOST = 3
+MAX_NFT_MULTIPLIER = 0.5
 DIGG_SETTS = ["native.uniDiggWbtc", "native.sushiDiggWbtc", "native.digg"]
 BADGER_SETTS = ["native.badger", "native.uniBadgerWbtc", "native.sushiBadgerWbtc"]
 NATIVE_DIGG_SETTS = ["native.uniDiggWbtc", "native.sushiDiggWbtc"]

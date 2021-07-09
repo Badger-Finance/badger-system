@@ -121,7 +121,7 @@ def upload_boosts(test=False):
 
 
 def upload_nfts(test=False):
-    fileName = "nft_data.json"
+    fileName = "nft_scores.json"
     if test:
         bucket = "badger-staging-merkle-proofs"
     else:
