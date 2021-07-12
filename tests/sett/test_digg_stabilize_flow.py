@@ -2,7 +2,7 @@ import pytest
 from brownie import *
 from helpers.time_utils import days, hours
 from helpers.constants import MaxUint256
-from helpers.sett.DiggStabilizerSnapshotManager import DiggStabilizerSnapshotManager
+from helpers.sett.DiggSnapshotManager import DiggSnapshotManager
 from tests.conftest import badger_single_sett, stabilizeTestConfig
 from helpers.token_utils import distribute_from_whales
 from scripts.systems.sushiswap_system import SushiswapSystem
@@ -32,15 +32,14 @@ def test_single_user_rebalance_flow(settConfig):
 
     want = interface.IDigg(strategy.want())
 
-    print("Sett", sett.address)
-    print("strategy", strategy.address)
-    print("controller", controller.address)
-    print("want", want.address)
+    # Oracles
+    diggOracle = interface.AggregatorV3Interface("0x418a6C98CD5B8275955f08F0b8C1c6838c8b1685")
+    btcOracle = interface.AggregatorV3Interface("0xF4030086522a5bEEa4988F8cA5B36dbC97BeE88c")
 
     settKeeper = accounts.at(sett.keeper(), force=True)
     strategyKeeper = accounts.at(strategy.keeper(), force=True)
 
-    snap = DiggStabilizerSnapshotManager(badger, settConfig["id"])
+    snap = DiggSnapshotManager(badger, settConfig["id"])
 
     deployer = badger.deployer
     randomUser = accounts[6]
@@ -53,6 +52,7 @@ def test_single_user_rebalance_flow(settConfig):
     assert startingBalance >= depositAmount
     assert startingBalance >= 0
 
+    print("Time Start: ", chain.time())
     # Deposit
     want.approve(sett, MaxUint256, {"from": randomUser})
     snap.settDeposit(depositAmount, {"from": randomUser})
@@ -68,8 +68,11 @@ def test_single_user_rebalance_flow(settConfig):
     chain.mine()
 
     # Rebase
-    _shift_into_next_rebase_window(badger)
-    rebase(badger, deployer)
+    # Push/rebase on an exchange rate of 1.2
+    snap.rebase(1.2 * 10 ** 18, {"from": deployer})
+    print("Time After First Rebase: ", chain.time())
+
+    print(diggOracle.latestRoundData())
 
     # Rebalance
     snap.rebalance({"from": settKeeper})
@@ -84,8 +87,11 @@ def test_single_user_rebalance_flow(settConfig):
     chain.mine()
 
     # Rebase
-    _shift_into_next_rebase_window(badger)
-    rebase(badger, deployer)
+    # Push/rebase on an exchange rate of 0.6
+    snap.rebase(0.6 * 10 ** 18, {"from": deployer})
+    print("Time After First Rebase: ", chain.time())
+
+    print(diggOracle.latestRoundData())
 
     # Rebalance
     snap.rebalance({"from": settKeeper})
@@ -169,8 +175,6 @@ def _shift_into_next_rebase_window(badger: BadgerSystem):
 
         chain.mine()
 
-        return digg.uFragmentsPolicy.inRebaseWindow()
-
     else:
         # Shift to the end of the day
         secs_remaining_in_day = DAY - utcnow_unix_offset_secs
@@ -187,7 +191,4 @@ def _shift_into_next_rebase_window(badger: BadgerSystem):
         chain.sleep(hours(1))
 
         chain.mine()
-
-        return digg.uFragmentsPolicy.inRebaseWindow()
-
 

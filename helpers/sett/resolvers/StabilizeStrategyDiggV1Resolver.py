@@ -257,6 +257,24 @@ class StabilizeStrategyDiggV1Resolver(StrategyCoreResolver):
                 "want", "governanceRewards"
             )
 
+    def confirm_rebase(self, before, after, value):
+        """
+        Check for proper rebases.
+
+        All share values should stay the same.
+        All DIGG balances should change in proportion to the rebase. (10% towards the new target)
+        """
+        console.print("=== Compare Rebase ===")
+        self.manager.printCompare(before, after)
+
+        # TODO: Impl more accurate rebase checks.
+        # If rebase value is within configured deviation threshold the supply delta is 0.
+        if value > 10 ** 18:
+            assert after.balances("want", "user") >= before.balances("want", "user")
+        elif value < 10 ** 18:
+            assert after.balances("want", "user") <= before.balances("want", "user")
+
+
     def add_entity_balances_for_tokens(self, calls, tokenKey, token, entities):
         entities["sushiswap_router"] = "0xd9e1cE17f2641f24aE83637ab66a2cca9C378B9F"
         entities["uniswap_router"] = "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D"

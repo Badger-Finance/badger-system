@@ -51,7 +51,7 @@ class DiggSnapshotManager(SnapshotManager):
         chain.sleep(shift_secs - reportDelaySec)
 
         # Update market value and rebase.
-        tx = digg.dynamicOracle.setValueAndPush(value)
+        tx = digg.dynamicOracle.pushReport(value)
         assert tx.return_value == value
         # NB: Guarantee the configured report delay has passed. Otherwise,
         # the median oracle will attempt to use the last report.
@@ -60,3 +60,13 @@ class DiggSnapshotManager(SnapshotManager):
         chain.sleep(reportDelaySec)
 
         chain.mine()
+
+    # Digg Stabilizer Strategy's function
+    def rebalance(self, overrides, confirm=True):
+        user = overrides["from"].address
+        trackedUsers = {"user": user}
+        before = self.snap(trackedUsers)
+        tx = self.strategy.rebalance(overrides)
+        after = self.snap(trackedUsers)
+        if confirm:
+            self.resolver.confirm_rebalance(before, after, tx)
