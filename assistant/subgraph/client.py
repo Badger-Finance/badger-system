@@ -21,7 +21,7 @@ sett_client = Client(transport=sett_transport, fetch_schema_from_transport=True)
 
 harvest_subgraph_url = subgraph_config["harvests"]
 harvests_transport = AIOHTTPTransport(url=harvest_subgraph_url)
-harvests_client = Client(transport=harvests_transport)
+harvests_client = Client(transport=harvests_transport, fetch_schema_from_transport=True)
 
 
 def fetch_tree_distributions(startBlock, endBlock):
@@ -271,7 +271,7 @@ def fetch_sushi_harvest_events():
         }
     """
     )
-    results = sett_client.execute(query)
+    results = harvests_client.execute(query)
     wbtcEthEvents = []
     wbtcBadgerEvents = []
     wbtcDiggEvents = []
