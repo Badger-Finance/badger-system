@@ -37,9 +37,41 @@ class ApeSafeHelper:
     
     def publish(self):
         safe_tx = self.safe.multisend_from_receipts()
-        self.safe.preview(safe_tx)
+        # self.safe.preview(safe_tx)
         data = self.safe.print_transaction(safe_tx)
         self.safe.post_transaction(safe_tx)
+
+    def contract_from_abi(self, address, name, abi) -> Contract:
+        """
+        Instantiate a Brownie Contract owned by Safe account.
+        """
+        if not web3.isChecksumAddress(address):
+            address = web3.ens.resolve(address)
+        return Contract.from_abi(
+            address=address, owner=self.safe.account, name=name, abi=abi
+        )
+
+    def print_transaction(self, safe_tx):
+        safe_tx.safe_tx_gas = 7000000
+        safe_tx.base_gas = 8000000
+        data = {
+            "to": safe_tx.to,
+            "value": safe_tx.value,
+            "data": safe_tx.data.hex() if safe_tx.data else None,
+            "operation": safe_tx.operation,
+            "gasToken": safe_tx.gas_token,
+            "safeTxGas": safe_tx.safe_tx_gas,
+            "baseGas": safe_tx.base_gas,
+            "gasPrice": safe_tx.gas_price,
+            "refundReceiver": safe_tx.refund_receiver,
+            "nonce": safe_tx.safe_nonce,
+            "contractTransactionHash": safe_tx.safe_tx_hash.hex(),
+            "signature": safe_tx.signatures.hex() if safe_tx.signatures else None,
+            "origin": "github.com/banteg/ape-safe",
+        }
+        print(data)
+        return data
+
 
 class OPERATION(Enum):
     CREATE = 0
@@ -164,6 +196,7 @@ class GnosisSafe:
             tx = exec_direct(self.contract, tx.params)
             if print_output:
                 print(tx.call_trace())
+                print(tx.events)
             # try:
             #     failEvents = tx.events['ExecutionFailure']
             #     if len(failEvents) > 0:
@@ -279,7 +312,7 @@ def exec_transaction(contract, params, signer):
         nonce,
     )
 
-    console.log("Transaction Data", params)
+    console.print("Transaction Data", params)
     console.print("Encoded TX", encoded)
     console.print("Tx Hash", hash)
 

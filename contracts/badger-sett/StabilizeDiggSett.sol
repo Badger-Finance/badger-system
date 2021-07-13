@@ -47,9 +47,11 @@ contract StabilizeDiggSett is SettV3 {
     using SafeERC20Upgradeable for IERC20Upgradeable;
     using AddressUpgradeable for address;
     using SafeMathUpgradeable for uint256;
-    function balance() public view override returns (uint256) {
+
+    function balance() public override view returns (uint256) {
         return balanceOfDiggEquivalentInSettAndStrategy();
     }
+
     function balanceOfDiggEquivalentInSettAndStrategy() public view returns (uint256) {
         // This will take our strategy and calculate how much digg equivalent we have in wBTC value, normalized to 1e18
         uint256 _diggAmount = 0; // This will be normalized to 1e18
@@ -69,7 +71,7 @@ contract StabilizeDiggSett is SettV3 {
 
     function getPricePerFullShare() public override view returns (uint256) {
         if (totalSupply() == 0) {
-            return 1e18;    
+            return 1e18;
         }
         return balanceOfDiggEquivalentInSettAndStrategy().mul(1e18).div(totalSupply());
     }

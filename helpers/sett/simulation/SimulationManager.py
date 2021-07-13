@@ -32,6 +32,9 @@ from .provisioners import (
     SushiDiggWbtcLpOptimizerProvisioner,
     SushiLpOptimizerProvisioner,
     WbtcIbBtcLpProvisioner,
+    ConvexProvisioner,
+    HelperCvxProvisioner,
+    HelperCvxCrvProvisioner,
 )
 
 console = Console()
@@ -176,8 +179,6 @@ class SimulationManager:
             return SushiLpOptimizerProvisioner(self)
         if settId == "native.uniBadgerWbtc":
             return BadgerLpMetaFarmProvisioner(self)
-        if settId in ["native.renCrv", "native.sbtcCrv", "native.tbtcCrv"]:
-            return CurveGaugeProvisioner(self)
         if settId in ["native.sushiSClawUSDC", "native.sushiBClawUSDC"]:
             return SushiClawUSDCProvisioner(self)
         if settId == "native.pancakeBnbBtcb":
@@ -190,6 +191,21 @@ class SimulationManager:
             return WbtcIbBtcLpProvisioner(self)
         if settId == "native.uniWbtcIbBtc":
             return WbtcIbBtcLpProvisioner(self, isUniswap=True)
+        if settId in [
+            "native.renCrv",
+            "native.sbtcCrv",
+            "native.tbtcCrv",
+            "native.hbtcCrv",
+            "native.pbtcCrv",
+            "native.obtcCrv",
+            "native.bbtcCrv",
+            "native.tricrypto",
+        ]:
+            return ConvexProvisioner(self)
+        if settId == "native.cvx":
+            return HelperCvxProvisioner(self)
+        if settId == "native.cvxCrv":
+            return HelperCvxCrvProvisioner(self)
         raise Exception(f"invalid strategy settID (no provisioner): {settId}")
 
     def _provisionUserActors(self) -> None:

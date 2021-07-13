@@ -44,7 +44,7 @@ contract StrategyDiggRewards is BaseStrategy {
         uint256 scaledSharesIncrease;
     }
 
-    event HarvestState (
+    event HarvestState(
         uint256 totalDigg,
         uint256 totalShares,
         uint256 totalScaledShares,
@@ -99,7 +99,7 @@ contract StrategyDiggRewards is BaseStrategy {
         return sharesOfWant().add(sharesOfPool());
     }
 
-    function getProtectedTokens() external override view returns (address[] memory) {
+    function getProtectedTokens() public override view returns (address[] memory) {
         address[] memory protectedTokens = new address[](1);
         protectedTokens[0] = want;
         return protectedTokens;
@@ -112,8 +112,7 @@ contract StrategyDiggRewards is BaseStrategy {
     }
 
     /// @notice No active position
-    function _deposit(uint256 _want) internal override {
-    }
+    function _deposit(uint256 _want) internal override {}
 
     /// @dev No active position to exit, just send all want to controller as per wrapper withdrawAll() function
     /// @dev Do harvest all pending DIGG rewards before, will be sent with want transfer
@@ -138,7 +137,7 @@ contract StrategyDiggRewards is BaseStrategy {
 
         // ===== Harvest rewards from Geyser =====
         IStakingRewards(diggFaucet).getReward();
-        
+
         harvestData.totalDigg = IDigg(want).balanceOf(address(this));
         harvestData.totalShares = IDigg(want).sharesOf(address(this));
         harvestData.totalScaledShares = IDigg(want).sharesToScaledShares(harvestData.totalShares);

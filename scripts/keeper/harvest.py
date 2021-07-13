@@ -33,10 +33,10 @@ def harvest_all(badger: BadgerSystem, skip, min_profit=0):
 
         snap = SnapshotManager(badger, key)
         strategy = badger.getStrategy(key)
-        keeper = accounts.at(badger.keeper)
 
         before = snap.snap()
         if strategy.keeper() == badger.badgerRewardsManager:
+            keeper = accounts.at(strategy.keeper())
             estimated_profit = snap.estimateProfitHarvestViaManager(
                 key,
                 strategy,
@@ -68,7 +68,7 @@ def harvest_all(badger: BadgerSystem, skip, min_profit=0):
 
 
 def main():
-    badger = connect_badger(load_keeper=True)
+    badger = connect_badger(load_keeper=True, load_harvester=True)
     skip = keeper_config.get_active_chain_skipped_setts("harvest")
 
     if rpc.is_active():

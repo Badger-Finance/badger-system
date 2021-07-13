@@ -44,6 +44,16 @@ abstract contract PancakeSwapper is BaseStrategy {
         return IUniswapV2Factory(factory).getPair(token0, token1);
     }
 
+    /// @dev Reset approval and approve exact amount
+    function _safeApproveHelper(
+        address token,
+        address recipient,
+        uint256 amount
+    ) internal {
+        IERC20Upgradeable(token).safeApprove(recipient, 0);
+        IERC20Upgradeable(token).safeApprove(recipient, amount);
+    }
+
     /// @notice Add liquidity to uniswap for specified token pair, utilizing the maximum balance possible
     function _add_max_liquidity_pancakeswap(address token0, address token1) internal {
         uint256 _token0Balance = IERC20Upgradeable(token0).balanceOf(address(this));

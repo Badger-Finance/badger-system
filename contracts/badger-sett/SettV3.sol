@@ -121,7 +121,7 @@ contract SettV3 is ERC20Upgradeable, SettAccessControlDefended, PausableUpgradea
         return "1.3";
     }
 
-    function getPricePerFullShare() public view virtual returns (uint256) {
+    function getPricePerFullShare() public virtual view returns (uint256) {
         if (totalSupply() == 0) {
             return 1e18;
         }
@@ -130,14 +130,14 @@ contract SettV3 is ERC20Upgradeable, SettAccessControlDefended, PausableUpgradea
 
     /// @notice Return the total balance of the underlying token within the system
     /// @notice Sums the balance in the Sett, the Controller, and the Strategy
-    function balance() public view virtual returns (uint256) {
+    function balance() public virtual view returns (uint256) {
         return token.balanceOf(address(this)).add(IController(controller).balanceOf(address(token)));
     }
 
     /// @notice Defines how much of the Setts' underlying can be borrowed by the Strategy for use
     /// @notice Custom logic in here for how much the vault allows to be borrowed
     /// @notice Sets minimum required on-hand to keep small withdrawals cheap
-    function available() public view virtual returns (uint256) {
+    function available() public virtual view returns (uint256) {
         return token.balanceOf(address(this)).mul(min).div(max);
     }
 

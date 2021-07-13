@@ -35,7 +35,6 @@ def tend_all(badger: BadgerSystem, skip, min_profit=0):
 
         snap = SnapshotManager(badger, key)
         strategy = badger.getStrategy(key)
-        keeper = accounts.at(badger.keeper)
 
         before = snap.snap()
 
@@ -48,6 +47,7 @@ def tend_all(badger: BadgerSystem, skip, min_profit=0):
                     strategy, {"from": keeper, "gas_limit": 1000000}, confirm=False,
                 )
         else:
+            keeper = accounts.at(strategy.keeper())
             estimated_profit = snap.estimateProfitTend(
                 key, {"from": keeper, "gas_limit": 1000000}
             )
@@ -66,7 +66,7 @@ def tend_all(badger: BadgerSystem, skip, min_profit=0):
 
 
 def main():
-    badger = connect_badger(load_keeper=True)
+    badger = connect_badger(load_keeper=True, load_harvester=True)
     skip = keeper_config.get_active_chain_skipped_setts("tend")
     console.print(badger.getAllSettIds())
 

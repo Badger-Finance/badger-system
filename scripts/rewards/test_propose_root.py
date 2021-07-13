@@ -24,4 +24,5 @@ def main():
             "pastRewards": currentRewards,
         },
         test=True,
+        saveLocalFile=False,
     )
