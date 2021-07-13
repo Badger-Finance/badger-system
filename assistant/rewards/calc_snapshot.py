@@ -49,7 +49,9 @@ def calc_snapshot(
         badger.rewardsLogger.getAllUnlockSchedulesFor(sett)
     )
 
-    rewardsLog.add_schedules_in_range(name, schedulesByToken, startTime, endTime)
+    rewardsLog.add_schedules_in_range(
+        sett.address, schedulesByToken, startTime, endTime
+    )
 
     for token, schedules in schedulesByToken.items():
         endDist = get_distributed_for_token_at(token, endTime, schedules, name)

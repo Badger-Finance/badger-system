@@ -47,7 +47,6 @@ class RewardsLog:
         for token, schedules in schedulesByToken.items():
             for s in schedules:
                 if s.endTime > startTime:
-                    console.log(s, token)
                     self.add_unlock_schedules(name, asdict(s))
 
     def save(self, cycle):
