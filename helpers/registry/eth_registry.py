@@ -91,6 +91,7 @@ yearn_registry = (
 convex_registry = DotMap(
     cvxHelperVault="0x53c8e199eb2cb7c01543c137078a038937a68e40",
     cvxCrvHelperVault="0x2B5455aac8d64C14786c3a29858E43b5945819C0",
+    IBooster="0xF403C135812408BFbE8713b5A23a04b3D48AAE31)",
 )
 
 curve_registry = DotMap(
