@@ -1,11 +1,9 @@
 import json
-
 from helpers.registry.ChainRegistry import ChainRegistry
 from helpers.registry.YearnRegistry import YearnRegistry
 from brownie.network import web3
 from dotmap import DotMap
 from helpers.registry.WhaleRegistryAction import WhaleRegistryAction
-import json
 
 aragon_registry = DotMap(
     addresses=DotMap(
@@ -99,47 +97,65 @@ curve_registry = DotMap(
     minter="0xd061D61a4d941c39E5453435B6345Dc261C2fcE0",
     crvToken="0xD533a949740bb3306d119CC777fa900bA034cd52",
     symbol="CRV",
+
     pools=DotMap(
         sbtcCrv=DotMap(
             swap="0x7fC77b5c7614E1533320Ea6DDc2Eb61fa00A9714",
             token="0x075b1bb99792c9E1041bA13afEf80C91a1e70fB3",
             gauge="0x705350c4BcD35c9441419DdD5d2f097d7a55410F",
+            convex_pid=7,
+            badger_sett="0xd04c48A53c111300aD41190D63681ed3dAd998eC",
         ),
         renCrv=DotMap(
             swap="0x93054188d876f558f4a66B2EF1d97d16eDf0895B",
             token="0x49849C98ae39Fff122806C06791Fa73784FB3675",
             gauge="0xB1F2cdeC61db658F091671F5f199635aEF202CAC",
+            convex_pid=6,
+            badger_sett="0x6dEf55d2e18486B9dDfaA075bc4e4EE0B28c1545",
         ),
         tbtcCrv=DotMap(
             swap="0xaa82ca713d94bba7a89ceab55314f9effeddc78c",
             # swap="0xC25099792E9349C7DD09759744ea681C7de2cb66",
             token="0x64eda51d3Ad40D56b9dFc5554E06F94e1Dd786Fd",
             gauge="0x6828bcF74279eE32f2723eC536c22c51Eed383C6",
+            convex_pid=16,
+            badger_sett="0xb9D076fDe463dbc9f915E5392F807315Bf940334",
         ),
         hbtcCrv=DotMap(
             token="0xb19059ebb43466C323583928285a49f558E572Fd",
             gauge="0x4c18E409Dc8619bFb6a1cB56D114C3f592E0aE79",
             swap="0x4CA9b3063Ec5866A4B82E437059D2C43d1be596F",
+            convex_pid=8,
+            badger_sett=web3.toChecksumAddress("0x8c76970747afd5398e958bdfada4cf0b9fca16c4"),
         ),
         pbtcCrv=DotMap(
             token="0xDE5331AC4B3630f94853Ff322B66407e0D6331E8",
             gauge="0xd7d147c6Bb90A718c3De8C0568F9B560C79fa416",
             swap="0x11F419AdAbbFF8d595E7d5b223eee3863Bb3902C",
+            convex_pid=18,
+            badger_sett="0x55912d0cf83b75c492e761932abc4db4a5cb1b17"
         ),
+
         obtcCrv=DotMap(
             token="0x2fE94ea3d5d4a175184081439753DE15AeF9d614",
             gauge="0x11137B10C210b579405c21A07489e28F3c040AB1",
             swap="0xd5BCf53e2C81e1991570f33Fa881c49EEa570C8D",
+            convex_pid=20,
+            badger_sett=web3.toChecksumAddress("0xf349c0faa80fc1870306ac093f75934078e28991"),
         ),
         bbtcCrv=DotMap(
             token="0x410e3E86ef427e30B9235497143881f717d93c2A",
             gauge="0xdFc7AdFa664b08767b735dE28f9E84cd30492aeE",
             swap="0xC45b2EEe6e09cA176Ca3bB5f7eEe7C47bF93c756",
+            convex_pid=19,
+            badger_sett=web3.toChecksumAddress("0x5dce29e92b1b939f8e8c60dcf15bde82a85be4a9"),
         ),
         triCrypto=DotMap(
             token="0xca3d75ac011bf5ad07a98d02f18225f9bd9a6bdf",
             swap="0x80466c64868E1ab14a1Ddf27A676C3fcBE638Fe5",
             gauge="0x331aF2E331bd619DefAa5DAc6c038f53FCF9F785",
+            convex_pid=37,
+            badger_sett="0xBE08Ef12e4a553666291E9fFC24fCCFd354F2Dd2"
         ),
     ),
     pids=DotMap(
