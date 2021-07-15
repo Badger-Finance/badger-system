@@ -126,26 +126,15 @@ def swap_for_strategy_internal(badger, key, amount):
 
 
 def is_lp_sett(key):
-    if "uni" in key:
-        return True
-    if "sushi" in key:
-        return True
-    else:
-        return False
+    return "uni" in key or "sushi" in key
 
 
 def is_uni_sett(key):
-    if "uni" in key:
-        return True
-    else:
-        return False
+    return "uni" in key
 
 
 def is_sushi_sett(key):
-    if "sushi" in key:
-        return True
-    else:
-        return False
+    return "sushi" in key
 
 
 def main():
