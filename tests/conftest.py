@@ -46,6 +46,7 @@ from tests.sett.fixtures import (
     HelperCvxCrvMiniDeploy,
 )
 
+
 def generate_sett_test_config(settsToRun, runTestSetts, runProdSetts=False):
     setts = []
     for settId in settsToRun:

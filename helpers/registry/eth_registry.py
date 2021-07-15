@@ -179,13 +179,11 @@ defidollar_registry = DotMap(
     ],
 )
 badger_registry = DotMap(
-    token="0x3472a5a71965499acd81997a54bba8d852c6e53d",
-    symbol="BADGER"
+    token="0x3472a5a71965499acd81997a54bba8d852c6e53d", symbol="BADGER"
 )
 
 digg_registry = DotMap(
-    token="0x798D1bE841a82a273720CE31c822C61a67a601C3",
-    symbol="DIGG"
+    token="0x798D1bE841a82a273720CE31c822C61a67a601C3", symbol="DIGG"
 )
 
 eth_registry = ChainRegistry(
