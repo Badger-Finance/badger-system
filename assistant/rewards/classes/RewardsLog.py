@@ -1,5 +1,6 @@
 from rich.console import Console
-from assistant.rewards.aws_utils import upload_analytics
+from assistant.rewards.aws_utils import upload_analytics, upload_schedules
+from dataclasses import asdict
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 from helpers.constants import BADGER, DIGG
@@ -16,6 +17,7 @@ class RewardsLog:
         self._contentHash = ""
         self._startBlock = 0
         self._endBlock = 0
+        self._unlockSchedules = {}
 
     def set_merkle_root(self, root):
         self._merkleRoot = root
@@ -36,6 +38,17 @@ class RewardsLog:
             self._totalTokenDist[name][token] = 0
         self._totalTokenDist[name][token] += amount
 
+    def add_unlock_schedules(self, name, schedule):
+        if name not in self._unlockSchedules:
+            self._unlockSchedules[name] = []
+        self._unlockSchedules[name].append(schedule)
+
+    def add_schedules_in_range(self, name, schedulesByToken, startTime, endTime):
+        for token, schedules in schedulesByToken.items():
+            for s in schedules:
+                if s.endTime > startTime:
+                    self.add_unlock_schedules(name, asdict(s))
+
     def save(self, cycle):
 
         data = {
@@ -47,7 +60,9 @@ class RewardsLog:
             "totalTokenDist": self._totalTokenDist,
         }
         console.log(data)
+        console.log(self._unlockSchedules)
         upload_analytics(cycle, data)
+        upload_schedules(self._unlockSchedules)
 
 
 rewardsLog = RewardsLog()

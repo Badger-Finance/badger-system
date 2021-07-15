@@ -125,3 +125,10 @@ def upload_analytics(cycle, data):
     console.log("Uploading file to s3://" + analytics_bucket + "/" + jsonKey)
     s3.put_object(Body=str(json.dumps(data)), Bucket=analytics_bucket, Key=jsonKey)
     console.log("✅ Uploaded file to s3://" + analytics_bucket + "/" + jsonKey)
+
+
+def upload_schedules(data):
+    jsonKey = "schedules.json"
+    console.log("Uploading file to s3://" + analytics_bucket + "/" + jsonKey)
+    s3.put_object(Body=str(json.dumps(data)), Bucket=analytics_bucket, Key=jsonKey)
+    console.log("✅ Uploaded file to s3://" + analytics_bucket + "/" + jsonKey)
