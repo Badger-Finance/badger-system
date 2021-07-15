@@ -1,6 +1,6 @@
 from helpers.rewards.LoggerUnlockSchedule import LoggerUnlockSchedule
 from scripts.actions.helpers.RewardsSchedule import RewardsSchedule
-from config.active_emissions import build_weekly_schedules, emissions, get_active_rewards_schedule
+from config.active_emissions import build_weekly_schedules, emissions, get_active_rewards_schedule, get_total_weekly_emissions
 import datetime
 import json
 import os
@@ -42,7 +42,11 @@ from ape_safe import ApeSafe
 console = Console()
 pretty.install()
 
-start = to_timestamp(datetime.datetime(2021, 7, 8, 13, 00))
+"""
+=== Steps to run ===
+Check WeeklyEmissions.md in this directory
+"""
+start = to_timestamp(datetime.datetime(2021, 7, 15, 13, 00))
 duration = days(7)
 
 def set_schedules(logger, schedules):
@@ -63,7 +67,8 @@ def main():
     safe = ApeSafe(badger.opsMultisig.address)
     helper = ApeSafeHelper(badger, safe)
     logger = helper.contract_from_abi(badger.rewardsLogger.address, "RewardsLogger", RewardsLogger.abi)
-
+    total_emissions = get_total_weekly_emissions()
+    console.print(total_emissions)
     schedules = build_weekly_schedules(badger, start, duration)
     console.print(schedules)
     set_schedules(logger, schedules)
