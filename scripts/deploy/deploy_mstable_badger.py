@@ -3,11 +3,11 @@ import time
 from brownie import (
     accounts,
     network,
-    web3,
     MStableVoterProxy, 
-    SettV3, 
+    SettV4, 
     StrategyMStableVaultImbtc, 
-    StrategyMStableVaultFpMbtcHbtc, 
+    StrategyMStableVaultFpMbtcHbtc,
+    AdminUpgradeabilityProxy,
 )
 
 from scripts.systems.mstable_system import MStableSystem
@@ -53,6 +53,8 @@ def main():
         devProxyAdmin, 
         dev
     )
+
+    print("Balance of Dev: ", dev.balance())
     
 
 def deploy_vaults_and_strategies(
@@ -63,15 +65,10 @@ def deploy_vaults_and_strategies(
     guardian, 
     voterproxy, 
     badgerTree, 
-    proxyAdmin, 
+    devProxyAdmin, 
     dev
 ):
-    # Deploy Vaults and Strategies
-    abi = artifacts.open_zeppelin["AdminUpgradeabilityProxy"]["abi"]
-    bytecode = artifacts.open_zeppelin["AdminUpgradeabilityProxy"]["bytecode"]
-
-    AdminUpgradeabilityProxy = web3.eth.contract(abi=abi, bytecode=bytecode)
-    
+    # Deploy Vaults and Strategies    
     for (key, artifact) in [
         ("native.mstableImBtc", StrategyMStableVaultImbtc),
         ("native.mstableFpMbtcHbtc", StrategyMStableVaultFpMbtcHbtc),
@@ -84,8 +81,6 @@ def deploy_vaults_and_strategies(
             want = sett_config.native.fPmBtcHBtc.params.want
 
         print("Deploying Vault and Strategy for " + key)
-
-        print("Vault Arguments: ", args)
 
         # Deploy Vault
 
@@ -100,12 +95,14 @@ def deploy_vaults_and_strategies(
             '',
         ]
 
-        vault_logic = SettV3.at("0x889d5036f2EA5784161090082F3327bb3e433102") # SettV3 Logic
+        print("Vault Arguments: ", args)
+
+        vault_logic = SettV4.at("0xA762292A6A7fD944Db1Fe9389921e6F639B4C9E8") # SettV4 Logic
         time.sleep(sleep_between_tx)
 
         vault_proxy = AdminUpgradeabilityProxy.deploy(
             vault_logic, 
-            proxyAdmin, 
+            devProxyAdmin, 
             vault_logic.initialize.encode_input(*args), 
             {'from': dev}
         )
@@ -113,7 +110,7 @@ def deploy_vaults_and_strategies(
 
         ## We delete from deploy and then fetch again so we can interact
         AdminUpgradeabilityProxy.remove(vault_proxy)
-        vault_proxy = SettV3.at(vault_proxy.address)
+        vault_proxy = SettV4.at(vault_proxy.address)
 
         console.print(
             "[green]Vault was deployed at: [/green]", vault_proxy.address
@@ -149,12 +146,11 @@ def deploy_vaults_and_strategies(
         strat_logic = artifact.deploy({"from": dev})
         time.sleep(sleep_between_tx)
         # Verify on Etherscan
-        strat_logic.publish_source(artifact)
-        time.sleep(sleep_between_tx)
+        # strat_logic.publish_source(artifact)
 
         strat_proxy = AdminUpgradeabilityProxy.deploy(
-            vault_logic, 
-            proxyAdmin, 
+            strat_logic, 
+            devProxyAdmin, 
             strat_logic.initialize.encode_input(*args), 
             {'from': dev}
         )
@@ -162,7 +158,7 @@ def deploy_vaults_and_strategies(
 
         ## We delete from deploy and then fetch again so we can interact
         AdminUpgradeabilityProxy.remove(strat_proxy)
-        strat_proxy = SettV3.at(strat_proxy.address)
+        strat_proxy = artifact.at(strat_proxy.address)
 
         console.print(
             "[green]Strategy was deployed at: [/green]", strat_proxy.address
@@ -173,32 +169,41 @@ def deploy_vaults_and_strategies(
 def deploy_voterProxy(devProxyAdmin, dev, dualGovernance, governance, strategist, keeper):
     # Deploy VoterProxy
 
-    mstable_config = DotMap(
-        dualGovernance=dualGovernance,
-        badgerGovernance=governance,
-        strategist=strategist,
-        keeper=keeper,
-        configAddress1=registry.mstable.nexus,
-        configAddress2=registry.mstable.votingLockup,
-        rates=8000,
-    )
+    args = [
+        dualGovernance.address,
+        governance.address,
+        strategist.address,
+        keeper.address,
+        [
+            registry.mstable.nexus,
+            registry.mstable.votingLockup,
+        ],
+        [8000],
+    ]
 
-    mstable = MStableSystem(dev, devProxyAdmin, mstable_config)
-
-    mstable.deploy_logic("MStableVoterProxy", MStableVoterProxy)
+    voterproxy_logic = MStableVoterProxy.deploy({"from": dev})
     time.sleep(sleep_between_tx)
 
     # Verify Contract
-    mstable.logic["MStableVoterProxy"].publish_source(MStableVoterProxy)
+    # mstable.logic["MStableVoterProxy"].publish_source(MStableVoterProxy)
 
-    mstable.deploy_voterproxy()
+    voterproxy_proxy = AdminUpgradeabilityProxy.deploy(
+            voterproxy_logic, 
+            devProxyAdmin, 
+            voterproxy_logic.initialize.encode_input(*args), 
+            {'from': dev}
+        )
     time.sleep(sleep_between_tx)
 
+    ## We delete from deploy and then fetch again so we can interact
+    AdminUpgradeabilityProxy.remove(voterproxy_proxy)
+    voterproxy_proxy = MStableVoterProxy.at(voterproxy_proxy.address)
+
     console.print(
-        "[green]VoterProxy was deployed at: [/green]", mstable.voterproxy.address
+        "[green]VoterProxy was deployed at: [/green]", voterproxy_proxy.address
     )
 
-    return mstable.voterproxy
+    return voterproxy_proxy
 
 
 def connect_account():
