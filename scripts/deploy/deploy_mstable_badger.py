@@ -53,8 +53,6 @@ def main():
         devProxyAdmin, 
         dev
     )
-
-
     
 
 def deploy_vaults_and_strategies(
@@ -102,7 +100,7 @@ def deploy_vaults_and_strategies(
             '',
         ]
 
-        vault_logic = SettV3.deploy({"from": dev})
+        vault_logic = SettV3.at("0x889d5036f2EA5784161090082F3327bb3e433102") # SettV3 Logic
         time.sleep(sleep_between_tx)
 
         vault_proxy = AdminUpgradeabilityProxy.deploy(
