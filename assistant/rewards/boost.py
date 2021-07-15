@@ -4,6 +4,7 @@ from rich.console import Console
 from assistant.rewards.aws_utils import upload_boosts
 from assistant.subgraph.client import fetch_wallet_balances
 from helpers.constants import BADGER, DIGG, SETT_BOOST_RATIOS, MAX_BOOST
+from helpers.digg_utils import diggUtils
 from collections import OrderedDict
 from assistant.rewards.rewards_utils import combine_balances, calculate_sett_balances
 from assistant.badger_api.prices import (
@@ -98,7 +99,7 @@ def badger_boost(badger, currentBlock):
         else:
             nonNativeSetts = combine_balances([nonNativeSetts, balances])
 
-    sharesPerFragment = badger.digg.logic.UFragments._sharesPerFragment()
+    sharesPerFragment = diggUtils.sharesPerFragment()
     badger_wallet_balances, digg_wallet_balances, _ = fetch_wallet_balances(
         sharesPerFragment, currentBlock
     )

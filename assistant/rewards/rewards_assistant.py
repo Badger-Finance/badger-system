@@ -32,13 +32,14 @@ from assistant.rewards.rewards_checker import compare_rewards, verify_rewards
 from scripts.systems.badger_system import BadgerSystem
 from helpers.gas_utils import gas_strategies
 from helpers.constants import BCVX, BCVXCRV
+from helpers.digg_utils import diggUtils
 
 gas_strategies.set_default(gas_strategies.exponentialScalingFast)
 gas_strategy = gas_strategies.exponentialScalingFast
 console = Console()
 
 
-def calc_sett_rewards(badger, periodStartBlock, endBlock, cycle, unclaimedRewards):
+def calc_sett_rewards(badger, periodStartBlock, endBlock, cycle, unclaimedRewards, ibbtcBalances):
     """
     Calculate rewards for each sett, and sum them
     """
@@ -54,7 +55,7 @@ def calc_sett_rewards(badger, periodStartBlock, endBlock, cycle, unclaimedReward
             continue
 
         settRewards, apyBoost = calc_snapshot(
-            badger, key, periodStartBlock, endBlock, cycle, boosts, unclaimedRewards
+            badger, key, periodStartBlock, endBlock, cycle, boosts, unclaimedRewards, ibbtcBalances
         )
         if len(apyBoost) > 0:
             minimum = min(apyBoost.values())
@@ -210,14 +211,17 @@ def generate_rewards_in_range(badger, startBlock, endBlock, pastRewards, saveLoc
         if BCVX in tokens or BCVXCRV in tokens:
             unclaimedAddresses.append(addr)
 
+    sharesPerFragment = diggUtils.sharesPerFragment()
+     _, _2, ibbtc_balances = fetch_wallet_balances(sharesPerFragment, endBlock)
     sushiRewards = calc_all_sushi_rewards(badger, startBlock, endBlock, nextCycle)
-    treeRewards = calc_tree_rewards(badger, startBlock, endBlock, nextCycle)
+    treeRewards = calc_tree_rewards(badger, startBlock, endBlock, nextCycle,ibbtc_balances)
     settRewards = calc_sett_rewards(
         badger,
         startBlock,
         endBlock,
         nextCycle,
         get_unclaimed_rewards(unclaimedAddresses),
+        ibbtc_balances
     )
 
     newRewards = combine_rewards(

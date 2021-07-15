@@ -124,6 +124,14 @@ def calc_snapshot(
                                 token,
                                 int(bCvxCrvRewardsUnit * bal),
                             )
+                if addr in [a.lower() for a in PEAK_ADDRESSES]:
+                    totalIbbtcBal = sum(ibbtcBalances.values())
+                    ibbtcRewardsUnit = rewardAmount / totalIbbtcBal
+                    for addr, balance in ibbtcBalances.items():
+                        rewards.increase_user_rewards(
+                            addr, token, int(ibbtcRewardsUnit * balance)
+                        )
+
                 else:
                     rewards.increase_user_rewards(addr, token, int(rewardAmount))
 
