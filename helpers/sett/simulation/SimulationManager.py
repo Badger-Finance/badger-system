@@ -33,6 +33,9 @@ from .provisioners import (
     SushiLpOptimizerProvisioner,
     WbtcIbBtcLpProvisioner,
     StrategyMStableVaultProvisioner,
+    ConvexProvisioner,
+    HelperCvxProvisioner,
+    HelperCvxCrvProvisioner,
 )
 
 console = Console()
@@ -193,6 +196,24 @@ class SimulationManager:
             return StrategyMStableVaultProvisioner(self)
         if settId == "native.uniWbtcIbBtc":
             return WbtcIbBtcLpProvisioner(self, isUniswap=True)
+        if settId in [
+            "native.convexRenCrv",
+            "native.convexSbtcCrv",
+            "native.convexTbtcCrv",
+        ]:
+            return ConvexProvisioner(self)
+        if settId in [
+            "native.hbtcCrv",
+            "native.pbtcCrv",
+            "native.obtcCrv",
+            "native.bbtcCrv",
+            "native.tricrypto",
+        ]:
+            return ConvexProvisioner(self)
+        if settId == "native.cvx":
+            return HelperCvxProvisioner(self)
+        if settId == "native.cvxCrv":
+            return HelperCvxCrvProvisioner(self)
         raise Exception(f"invalid strategy settID (no provisioner): {settId}")
 
     def _provisionUserActors(self) -> None:

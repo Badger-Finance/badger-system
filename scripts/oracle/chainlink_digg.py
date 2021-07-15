@@ -6,7 +6,7 @@ def main():
     badger = connect_badger()
     digg = badger.digg
     raw = 0.9566301
-    scaled = raw * 10**18
+    scaled = raw * 10 ** 18
 
     centralizedOracle = GnosisSafe(digg.centralizedOracle)
 

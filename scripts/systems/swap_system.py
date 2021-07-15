@@ -191,9 +191,7 @@ class SwapSystem:
         deployer = self.deployer
         strategy = MockSwapStrategy.deploy({"from": deployer})
         router = MockSwapStrategyRouter.deploy(
-            strategy,
-            router_fail,
-            {"from": deployer},
+            strategy, router_fail, {"from": deployer},
         )
 
         self.mocks.router = router

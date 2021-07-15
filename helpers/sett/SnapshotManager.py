@@ -1,8 +1,10 @@
+import decimal
 from brownie import (
     Controller,
     interface,
     chain,
 )
+from brownie.network import web3
 from tabulate import tabulate
 from rich.console import Console
 from helpers.multicall import Multicall
@@ -19,11 +21,23 @@ from helpers.sett.resolvers import (
     StrategyDiggRewardsResolver,
     StrategySushiDiggWbtcLpOptimizerResolver,
     StrategyDiggLpMetaFarmResolver,
+    StrategyUnitProtocolRenbtcResolver,
     StrategyUniGenericLpResolver,
     StrategyMStableVaultResolver,
+    StabilizeStrategyDiggV1Resolver,
+    StrategyConvexStakingOptimizerResolver,
+    StrategyCvxHelperResolver,
+    StrategyCvxCrvHelperResolver,
 )
 from helpers.utils import digg_shares_to_initial_fragments, val
 from scripts.systems.badger_system import BadgerSystem
+from helpers.sett.strategy_earnings import (
+    get_harvest_earnings,
+    get_tend_earnings,
+    get_tend_earnings_manager,
+)
+from helpers.tx_timer import tx_timer
+from helpers.gas_utils import gas_strategies
 
 console = Console()
 
@@ -119,7 +133,6 @@ class SnapshotManager:
         return calls
 
     def snap(self, trackedUsers=None):
-        print("snap")
         snapBlock = chain.height
         entities = self.entities
 
@@ -169,18 +182,30 @@ class SnapshotManager:
             return StrategyDiggLpMetaFarmResolver(self)
         if name == "StrategyPancakeLpOptimizer":
             return StrategyBasePancakeResolver(self)
+        if name == "StrategyUnitProtocolRenbtc":
+            return StrategyUnitProtocolRenbtcResolver(self)
         if name == "StrategyUniGenericLp":
             return StrategyUniGenericLpResolver(self)
         if name == "StabilizeStrategyDiggV1":
             return StabilizeStrategyDiggV1Resolver(self)
         if name == "StrategyMStableVault":
             return StrategyMStableVaultResolver(self)
+        if name == "StrategyConvexStakingOptimizer":
+            return StrategyConvexStakingOptimizerResolver(self)
+        if name == "StrategyCvxHelper":
+            return StrategyCvxHelperResolver(self)
+        if name == "StrategyCvxCrvHelper":
+            return StrategyCvxCrvHelperResolver(self)
 
     def settTend(self, overrides, confirm=True):
         user = overrides["from"].address
         trackedUsers = {"user": user}
         before = self.snap(trackedUsers)
+
+        tx_timer.start_timer(overrides["from"], "Tend")
         tx = self.strategy.tend(overrides)
+        tx_timer.end_timer()
+
         after = self.snap(trackedUsers)
         if confirm:
             self.resolver.confirm_tend(before, after, tx)
@@ -189,7 +214,11 @@ class SnapshotManager:
         user = overrides["from"].address
         trackedUsers = {"user": user}
         before = self.snap(trackedUsers)
+
+        tx_timer.start_timer(overrides["from"], "Tend")
         tx = self.badger.badgerRewardsManager.tend(strategy, overrides)
+        tx_timer.end_timer()
+
         after = self.snap(trackedUsers)
         if confirm:
             self.resolver.confirm_tend(before, after, tx)
@@ -198,7 +227,11 @@ class SnapshotManager:
         user = overrides["from"].address
         trackedUsers = {"user": user}
         before = self.snap(trackedUsers)
+
+        tx_timer.start_timer(overrides["from"], "Harvest")
         tx = self.badger.badgerRewardsManager.harvest(strategy, overrides)
+        tx_timer.end_timer()
+
         after = self.snap(trackedUsers)
         if confirm:
             self.resolver.confirm_harvest(before, after, tx)
@@ -207,7 +240,11 @@ class SnapshotManager:
         user = overrides["from"].address
         trackedUsers = {"user": user}
         before = self.snap(trackedUsers)
+
+        tx_timer.start_timer(overrides["from"], "Harvest")
         tx = self.strategy.harvest(overrides)
+        tx_timer.end_timer()
+
         after = self.snap(trackedUsers)
         if confirm:
             self.resolver.confirm_harvest(before, after, tx)
@@ -268,6 +305,82 @@ class SnapshotManager:
             self.resolver.confirm_withdraw(
                 before, after, {"user": user, "amount": userBalance}, tx
             )
+
+    def estimateProfitTendViaManager(self, key, strategy, overrides):
+        gas_estimate = self.badger.badgerRewardsManager.tend.estimate_gas(
+            strategy, overrides
+        )
+        gas_cost = web3.fromWei(gas_strategies.gas_cost(gas_estimate), "ether")
+        earnings = get_tend_earnings_manager(self.badger, self.strategy, key, overrides)
+        if earnings == "skip":
+            return 0
+
+        profit = decimal.Decimal(earnings) - gas_cost
+        console.log(
+            "expected gas cost:",
+            gas_cost,
+            "expected earnings:",
+            earnings,
+            "expected profits",
+            profit,
+        )
+        return profit
+
+    def estimateProfitTend(self, key, overrides):
+        gas_estimate = self.strategy.tend.estimate_gas(overrides)
+        gas_cost = web3.fromWei(gas_strategies.gas_cost(gas_estimate), "ether")
+        earnings = get_tend_earnings(self.strategy, key, overrides)
+        if earnings == "skip":
+            return 0
+
+        profit = decimal.Decimal(earnings) - gas_cost
+        console.log(
+            "expected gas cost:",
+            gas_cost,
+            "expected earnings:",
+            earnings,
+            "expected profits",
+            profit,
+        )
+        return profit
+
+    def estimateProfitHarvestViaManager(self, key, strategy, overrides):
+        gas_estimate = self.badger.badgerRewardsManager.harvest.estimate_gas(
+            strategy, overrides
+        )
+        gas_cost = web3.fromWei(gas_strategies.gas_cost(gas_estimate), "ether")
+        earnings = get_harvest_earnings(self.strategy, key, overrides)
+        if earnings == "skip":
+            return 0
+
+        profit = decimal.Decimal(earnings) - gas_cost
+        console.log(
+            "expected gas cost:",
+            gas_cost,
+            "expected earnings:",
+            earnings,
+            "expected profits",
+            profit,
+        )
+        return profit
+
+    def estimateProfitHarvest(self, key, overrides):
+        gas_estimate = self.strategy.harvest.estimate_gas(overrides)
+        gas_cost = web3.fromWei(gas_strategies.gas_cost(gas_estimate), "ether")
+        earnings = get_harvest_earnings(self.strategy, key, overrides)
+        if earnings == "skip":
+            return 0
+
+        profit = decimal.Decimal(earnings) - gas_cost
+        console.log(
+            "expected gas cost:",
+            gas_cost,
+            "expected earnings:",
+            earnings,
+            "expected profits",
+            profit,
+        )
+        return profit
 
     def format(self, key, value):
         if type(value) is int:

@@ -1,4 +1,5 @@
 from assistant.subgraph.config import subgraph_config
+from helpers.constants import CONVEX_SETTS
 from brownie import interface
 from rich.console import Console
 from gql import gql, Client
@@ -41,6 +42,7 @@ def fetch_sett_balances(key, settId, startBlock):
     balances = {}
     while True:
         variables["lastBalanceId"] = {"id_gt": lastBalanceId}
+
         results = sett_client.execute(query, variable_values=variables)
         if len(results["vaults"]) == 0:
             return {}

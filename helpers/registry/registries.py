@@ -21,6 +21,7 @@ class ContractSystems(Enum):
     HARVEST = ("harvest",)
     CURVE = ("curve",)
     MSTABLE = ("mstable",)
+    CHAINLINK = ("chainlink",)
     TOKENS = "tokens"
 
 

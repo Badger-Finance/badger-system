@@ -15,7 +15,7 @@ console = Console()
 
 
 def main():
-    badger = connect_badger(load_keeper=True)
+    badger = connect_badger(load_keeper=True, load_harvester=True)
     skip = keeper_config.get_active_chain_skipped_setts("tend")
     run_interval = keeper_config.get_active_chain_run_interval("tend")
 

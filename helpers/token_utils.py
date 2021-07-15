@@ -123,6 +123,7 @@ def print_balances(tokens_by_name, account):
     print("\nToken Balances for {}".format(account))
     print(tabulate(table, headers=["asset", "balance"]))
 
+
 def badger_to_bBadger(badger, amount):
     bBadger = badger.getSett("native.badger")
     ppfs = bBadger.getPricePerFullShare()

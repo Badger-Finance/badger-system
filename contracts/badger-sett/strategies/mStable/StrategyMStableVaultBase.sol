@@ -46,6 +46,8 @@ abstract contract StrategyMStableVaultBase is BaseStrategy {
 
     event GovMtaSet(uint256 govMta);
 
+    event TokenDistribution(address indexed token, address indexed destination, uint256 amount, uint256 indexed blockNumber, uint256 timestamp);
+
     event MStableHarvest(
         uint256 mtaTotal,
         uint256 mtaSentToVoterProxy,
@@ -192,6 +194,7 @@ abstract contract StrategyMStableVaultBase is BaseStrategy {
             (harvestData.mtaFees[0], harvestData.mtaFees[1]) = _processPerformanceFees(mta, harvestData.mtaPostVesting);
             harvestData.mtaPostVestingSentToBadgerTree = harvestData.mtaPostVesting.sub(harvestData.mtaFees[0]).sub(harvestData.mtaFees[1]);
             IERC20Upgradeable(mta).safeTransfer(badgerTree, harvestData.mtaPostVestingSentToBadgerTree);
+            emit TokenDistribution(mta, badgerTree, harvestData.mtaPostVestingSentToBadgerTree, block.number, block.timestamp);
         }
 
         // Step 4: convert remainder to LP and reinvest

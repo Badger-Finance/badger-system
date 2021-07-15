@@ -31,10 +31,21 @@ from tests.sett.fixtures import (
     SushiClawUSDCMiniDeploy,
     PancakeMiniDeploy,
     SushiWbtcIbBtcLpOptimizerMiniDeploy,
+    UnitProtocolRenBtcMiniDeploy,
     UniGenericLpMiniDeploy,
     DiggStabilizeMiniDeploy,
     MStableImBtcMiniDeploy,
-    MStableFpMbtcHbtcMiniDeploy
+    MStableFpMbtcHbtcMiniDeploy,
+    ConvexRenBtcMiniDeploy,
+    ConvexSBtcMiniDeploy,
+    ConvexTBtcMiniDeploy,
+    ConvexHBtcMiniDeploy,
+    ConvexPBtcMiniDeploy,
+    ConvexOBtcMiniDeploy,
+    ConvexBBtcMiniDeploy,
+    ConvexTriCryptoMiniDeploy,
+    HelperCvxMiniDeploy,
+    HelperCvxCrvMiniDeploy,
 )
 
 
@@ -51,6 +62,7 @@ def generate_sett_test_config(settsToRun, runTestSetts, runProdSetts=False):
 # ===== Sett + Strategy Test Configuration =====
 
 settsToRun = [
+    # "native.unitRenBtc",
     # "native.badger",
     # "native.renCrv",
     # "native.sbtcCrv",
@@ -63,6 +75,16 @@ settsToRun = [
     # "native.uniWbtcIbBtc",
     "native.mstableImBtc",
     "native.mstableFpMbtcHbtc",
+    # "native.convexRenCrv",
+    # "native.convexSbtcCrv",
+    # "native.convexTbtcCrv",
+    # "native.hbtcCrv",
+    # "native.pbtcCrv",
+    # "native.obtcCrv",
+    # "native.bbtcCrv",
+    # "native.tricrypto",
+    # "native.cvx",
+    # "native.cvxCrv",
 ]
 
 yearnSettsToRun = [
@@ -200,6 +222,16 @@ def badger_single_sett(settConfig, deploy=True):
                 keeper=keeper,
                 governance=governance,
             ).deploy(deploy=deploy)
+        if settId == "native.unitRenBtc":
+            return UnitProtocolRenBtcMiniDeploy(
+                "native.unitRenBtc",
+                "StrategyUnitProtocolRenbtc",
+                deployer,
+                strategist=strategist,
+                guardian=guardian,
+                keeper=keeper,
+                governance=governance,
+            ).deploy(deploy=deploy)
         if settId == "native.sushiBadgerWbtc":
             return SushiBadgerWBtcMiniDeploy(
                 "native.sushiBadgerWbtc",
@@ -301,7 +333,9 @@ def badger_single_sett(settConfig, deploy=True):
                 guardian=guardian,
                 keeper=keeper,
                 governance=governance,
-            ).deploy(deploy=True)  # Deploy for now since not already deployed.
+            ).deploy(
+                deploy=True
+            )  # Deploy for now since not already deployed.
         if settId == "native.uniWbtcIbBtc":
             return UniGenericLpMiniDeploy(
                 "native.uniWbtcIbBtc",
@@ -312,7 +346,9 @@ def badger_single_sett(settConfig, deploy=True):
                 guardian=guardian,
                 keeper=keeper,
                 governance=governance,
-            ).deploy(deploy=True)  # Deploy for now since not already deployed.
+            ).deploy(
+                deploy=True
+            )  # Deploy for now since not already deployed.
         if settId == "yearn.bvyWBTC":
             return YearnMiniDeploy(
                 "yearn.bvyWBTC",
@@ -343,9 +379,109 @@ def badger_single_sett(settConfig, deploy=True):
                 keeper=keeper,
                 governance=governance,
             ).deploy(deploy=deploy)
+        if settId == "native.convexRenCrv":
+            return ConvexRenBtcMiniDeploy(
+                "native.convexRenCrv",
+                "StrategyConvexStakingOptimizer",
+                deployer,
+                strategist=strategist,
+                guardian=guardian,
+                keeper=keeper,
+                governance=governance,
+            ).deploy(deploy=deploy)
+        if settId == "native.convexSbtcCrv":
+            return ConvexSBtcMiniDeploy(
+                "native.convexSbtcCrv",
+                "StrategyConvexStakingOptimizer",
+                deployer,
+                strategist=strategist,
+                guardian=guardian,
+                keeper=keeper,
+                governance=governance,
+            ).deploy(deploy=deploy)
+        if settId == "native.convexTbtcCrv":
+            return ConvexTBtcMiniDeploy(
+                "native.convexTbtcCrv",
+                "StrategyConvexStakingOptimizer",
+                deployer,
+                strategist=strategist,
+                guardian=guardian,
+                keeper=keeper,
+                governance=governance,
+            ).deploy(deploy=deploy)
+        if settId == "native.hbtcCrv":
+            return ConvexHBtcMiniDeploy(
+                "native.hbtcCrv",
+                "StrategyConvexStakingOptimizer",
+                deployer,
+                strategist=strategist,
+                guardian=guardian,
+                keeper=keeper,
+                governance=governance,
+            ).deploy(deploy=deploy)
+        if settId == "native.pbtcCrv":
+            return ConvexPBtcMiniDeploy(
+                "native.pbtcCrv",
+                "StrategyConvexStakingOptimizer",
+                deployer,
+                strategist=strategist,
+                guardian=guardian,
+                keeper=keeper,
+                governance=governance,
+            ).deploy(deploy=deploy)
+        if settId == "native.obtcCrv":
+            return ConvexOBtcMiniDeploy(
+                "native.obtcCrv",
+                "StrategyConvexStakingOptimizer",
+                deployer,
+                strategist=strategist,
+                guardian=guardian,
+                keeper=keeper,
+                governance=governance,
+            ).deploy(deploy=deploy)
+        if settId == "native.bbtcCrv":
+            return ConvexBBtcMiniDeploy(
+                "native.bbtcCrv",
+                "StrategyConvexStakingOptimizer",
+                deployer,
+                strategist=strategist,
+                guardian=guardian,
+                keeper=keeper,
+                governance=governance,
+            ).deploy(deploy=deploy)
+        if settId == "native.tricrypto":
+            return ConvexTriCryptoMiniDeploy(
+                "native.tricrypto",
+                "StrategyConvexStakingOptimizer",
+                deployer,
+                strategist=strategist,
+                guardian=guardian,
+                keeper=keeper,
+                governance=governance,
+            ).deploy(deploy=deploy)
+        if settId == "native.cvx":
+            return HelperCvxMiniDeploy(
+                "native.cvx",
+                "StrategyCvxHelper",
+                deployer,
+                strategist=strategist,
+                guardian=guardian,
+                keeper=keeper,
+                governance=governance,
+            ).deploy(deploy=deploy)
+        if settId == "native.cvxCrv":
+            return HelperCvxCrvMiniDeploy(
+                "native.cvxCrv",
+                "StrategyCvxCrvHelper",
+                deployer,
+                strategist=strategist,
+                guardian=guardian,
+                keeper=keeper,
+                governance=governance,
+            ).deploy(deploy=deploy)
         if settId == "experimental.digg":
             return DiggStabilizeMiniDeploy().deploy(deploy=deploy)
-    if settConfig['mode'] == 'prod':
+    if settConfig["mode"] == "prod":
         """
         Run vs prod contracts, transferring assets to the test user
         (WIP)

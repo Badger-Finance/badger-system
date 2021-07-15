@@ -14,6 +14,7 @@ from scripts.systems.uniswap_system import UniswapSystem
 
 console = Console()
 
+
 def main():
     """
     Transfer badger to recipient, ensuring they are approved as recipient first
@@ -43,4 +44,3 @@ def main():
     rewardsEscrow.transfer(token, recipient, amount)
 
     helper.publish()
-

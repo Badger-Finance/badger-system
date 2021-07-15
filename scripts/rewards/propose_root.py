@@ -28,12 +28,5 @@ def propose_root(badger: BadgerSystem):
 
 
 def main():
-    badger = connect_badger(badger_config.prod_json, load_keeper=True)
-
-    while True:
-        try:
-            propose_root(badger)
-        except Exception as e:
-            console.print("[red]Error[/red]", e)
-        finally:
-            time.sleep(10 * 60)
+    badger = connect_badger(load_root_proposer=True)
+    propose_root(badger)

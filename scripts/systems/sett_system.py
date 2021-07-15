@@ -1,3 +1,4 @@
+from helpers.constants import AddressZero
 from brownie import *
 from rich.console import Console
 
@@ -40,8 +41,31 @@ def deploy_strategy(
 
     proxyAdmin = badger.devProxyAdmin
 
-    console.print("Deploy Strategy " + strategyName, params)
+    console.print("Deploy Strategy " + strategyName)
+    console.log(params)
 
+    if strategyName == "StrategyUnitProtocolRenbtc":
+        return deploy_proxy(
+            "StrategyUnitProtocolRenbtc",
+            StrategyUnitProtocolRenbtc.abi,
+            badger.logic.StrategyUnitProtocolRenbtc.address,
+            proxyAdmin.address,
+            badger.logic.StrategyUnitProtocolRenbtc.initialize.encode_input(
+                governance,
+                strategist,
+                controller,
+                keeper,
+                guardian,
+                [params.want,],
+                [
+                    params.performanceFeeGovernance,
+                    params.performanceFeeStrategist,
+                    params.withdrawalFee,
+                    params.keepCRV,
+                ],
+            ),
+            deployer,
+        )
     if strategyName == "StrategyCurveGaugeRenBtcCrv":
         return deploy_proxy(
             "StrategyCurveGaugeRenBtcCrv",
@@ -385,6 +409,73 @@ def deploy_strategy(
             ),
             badger.deployer,
         )
+    if strategyName == "StrategyConvexStakingOptimizer":
+        return deploy_proxy(
+            "StrategyConvexStakingOptimizer",
+            StrategyConvexStakingOptimizer.abi,
+            badger.logic.StrategyConvexStakingOptimizer.address,
+            badger.devProxyAdmin.address,
+            badger.logic.StrategyConvexStakingOptimizer.initialize.encode_input(
+                governance,
+                strategist,
+                controller,
+                keeper,
+                guardian,
+                [params.want, params.badgerTree, AddressZero, AddressZero],
+                params.pid,
+                [
+                    params.performanceFeeGovernance,
+                    params.performanceFeeStrategist,
+                    params.withdrawalFee,
+                ],
+                (
+                    params.curvePool.swap,
+                    params.curvePool.wbtcPosition,
+                    params.curvePool.numElements,
+                ),
+            ),
+            badger.deployer,
+        )
+    if strategyName == "StrategyCvxHelper":
+        return deploy_proxy(
+            "StrategyCvxHelper",
+            StrategyCvxHelper.abi,
+            badger.logic.StrategyCvxHelper.address,
+            badger.devProxyAdmin.address,
+            badger.logic.StrategyCvxHelper.initialize.encode_input(
+                governance,
+                strategist,
+                controller,
+                keeper,
+                guardian,
+                [
+                    params.performanceFeeGovernance,
+                    params.performanceFeeStrategist,
+                    params.withdrawalFee,
+                ],
+            ),
+            badger.deployer,
+        )
+    if strategyName == "StrategyCvxCrvHelper":
+        return deploy_proxy(
+            "StrategyCvxCrvHelper",
+            StrategyCvxCrvHelper.abi,
+            badger.logic.StrategyCvxCrvHelper.address,
+            badger.devProxyAdmin.address,
+            badger.logic.StrategyCvxCrvHelper.initialize.encode_input(
+                governance,
+                strategist,
+                controller,
+                keeper,
+                guardian,
+                [
+                    params.performanceFeeGovernance,
+                    params.performanceFeeStrategist,
+                    params.withdrawalFee,
+                ],
+            ),
+            badger.deployer,
+        )
     if strategyName == "StrategyMStableVaultImbtc":
         return deploy_proxy(
             "StrategyMStableVaultImbtc",
@@ -462,7 +553,7 @@ def deploy_controller(
     if not keeper:
         keeper = badger.keeper
     if not rewards:
-        rewards = badger.dao.agent
+        rewards = badger.keeper
     if not proxyAdmin:
         proxyAdmin = badger.devProxyAdmin
 

@@ -17,7 +17,6 @@ from assistant.rewards.calc_snapshot import calc_snapshot
 from assistant.rewards.meta_rewards.harvest import calc_farm_rewards
 from assistant.rewards.meta_rewards.sushi import calc_all_sushi_rewards
 from assistant.rewards.rewards_utils import (
-    sum_rewards,
     keccak,
     process_cumulative_rewards,
     combine_rewards,
@@ -51,7 +50,7 @@ def calc_sett_rewards(badger, periodStartBlock, endBlock, cycle):
             continue
 
         settRewards, apyBoost = calc_snapshot(
-            badger, key, periodStartBlock, endBlock, cycle, boosts, 0
+            badger, key, periodStartBlock, endBlock, cycle, boosts
         )
         if len(apyBoost) > 0:
             minimum = min(apyBoost.values())
@@ -298,7 +297,7 @@ def rootUpdater(badger, startBlock, endBlock, pastRewards, test=False):
             rewards_data["merkleTree"]["cycle"],
             rewards_data["merkleTree"]["startBlock"],
             rewards_data["merkleTree"]["endBlock"],
-            {"from": badger.keeper, "gas_price": gas_strategy},
+            {"from": badger.root_proposer, "gas_price": gas_strategy},
         )
         upload(rewards_data["contentFileName"], publish=False)
 
@@ -343,7 +342,6 @@ def guardian(badger: BadgerSystem, startBlock, endBlock, pastRewards, test=False
             {"from": badger.guardian, "gas_price": gas_strategy},
         )
         upload(rewards_data["contentFileName"]),
-        
 
 
 def run_action(badger, args, test):

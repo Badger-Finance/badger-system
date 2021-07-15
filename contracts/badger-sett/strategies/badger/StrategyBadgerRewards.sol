@@ -66,7 +66,7 @@ contract StrategyBadgerRewards is BaseStrategy {
         return IStakingRewards(geyser).balanceOf(address(this));
     }
 
-    function getProtectedTokens() external override view returns (address[] memory) {
+    function getProtectedTokens() public override view returns (address[] memory) {
         address[] memory protectedTokens = new address[](2);
         protectedTokens[0] = want;
         protectedTokens[1] = geyser;
@@ -84,6 +84,17 @@ contract StrategyBadgerRewards is BaseStrategy {
     function _deposit(uint256 _want) internal override {
         _safeApproveHelper(want, geyser, _want);
         IStakingRewards(geyser).stake(_want);
+    }
+
+
+    /// @dev Reset approval and approve exact amount
+    function _safeApproveHelper(
+        address token,
+        address recipient,
+        uint256 amount
+    ) internal {
+        IERC20Upgradeable(token).safeApprove(recipient, 0);
+        IERC20Upgradeable(token).safeApprove(recipient, amount);
     }
 
     /// @dev Exit staking rewards

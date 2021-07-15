@@ -52,6 +52,10 @@ contract SwapStrategyRouter is AccessControlUpgradeable, ReentrancyGuardUpgradea
         strategies.add(_strategy);
     }
 
+    function removeSwapStrategy(address _strategy) external onlyAdmin {
+        strategies.remove(_strategy);
+    }
+
     /* ========== MODIFIERS ========== */
     modifier onlyAdmin {
         require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "onlyAdmin");

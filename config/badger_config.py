@@ -18,6 +18,7 @@ pickle = registry.pickle
 harvest = registry.harvest
 sushi = registry.sushi
 pools = curve.pools
+chainlink = registry.chainlink
 
 sett_config = DotMap(
     native=DotMap(
@@ -51,7 +52,7 @@ sett_config = DotMap(
                 lpComponent=registry.tokens.wbtc,
                 performanceFeeStrategist=1000,
                 performanceFeeGovernance=1000,
-                withdrawalFee=75,
+                withdrawalFee=50,
                 keepCRV=0,
             ),
         ),
@@ -65,7 +66,7 @@ sett_config = DotMap(
                 lpComponent=registry.tokens.wbtc,
                 performanceFeeStrategist=1000,
                 performanceFeeGovernance=1000,
-                withdrawalFee=75,
+                withdrawalFee=50,
                 keepCRV=0,
             ),
         ),
@@ -79,7 +80,7 @@ sett_config = DotMap(
                 lpComponent=registry.tokens.wbtc,
                 performanceFeeStrategist=1000,
                 performanceFeeGovernance=1000,
-                withdrawalFee=75,
+                withdrawalFee=50,
                 keepCRV=0,
             ),
         ),
@@ -107,7 +108,155 @@ sett_config = DotMap(
                 withdrawalFee=75,
                 govMta=1000,
             ),
-        )
+        ),
+        convexRenCrv=DotMap(
+            strategyName="StrategyConvexStakingOptimizer",
+            params=DotMap(
+                want=pools.renCrv.token,
+                pid=curve.pids.renCrv,
+                lpComponent=registry.tokens.wbtc,
+                performanceFeeStrategist=1000,
+                performanceFeeGovernance=1000,
+                withdrawalFee=50,
+                curvePool=DotMap(
+                    swap=registry.curve.pools.renCrv.swap,
+                    wbtcPosition=1,
+                    numElements=2,
+                ),
+            ),
+        ),
+        convexSbtcCrv=DotMap(
+            strategyName="StrategyConvexStakingOptimizer",
+            params=DotMap(
+                want=pools.sbtcCrv.token,
+                pid=curve.pids.sbtcCrv,
+                lpComponent=registry.tokens.wbtc,
+                performanceFeeStrategist=1000,
+                performanceFeeGovernance=1000,
+                withdrawalFee=50,
+                curvePool=DotMap(
+                    swap=registry.curve.pools.sbtcCrv.swap,
+                    wbtcPosition=1,
+                    numElements=3,
+                ),
+            ),
+        ),
+        convexTbtcCrv=DotMap(
+            strategyName="StrategyConvexStakingOptimizer",
+            params=DotMap(
+                want=pools.tbtcCrv.token,
+                pid=curve.pids.tbtcCrv,
+                lpComponent=registry.tokens.wbtc,
+                performanceFeeStrategist=1000,
+                performanceFeeGovernance=1000,
+                withdrawalFee=50,
+                curvePool=DotMap(
+                    swap=registry.curve.pools.tbtcCrv.swap,
+                    wbtcPosition=2,
+                    numElements=4,
+                ),
+            ),
+        ),
+        convexHbtcCrv=DotMap(
+            strategyName="StrategyConvexStakingOptimizer",
+            params=DotMap(
+                want=pools.hbtcCrv.token,
+                pid=curve.pids.hbtcCrv,
+                lpComponent=registry.tokens.wbtc,
+                performanceFeeStrategist=1000,
+                performanceFeeGovernance=1000,
+                withdrawalFee=50,
+                curvePool=DotMap(
+                    swap=registry.curve.pools.hbtcCrv.swap,
+                    wbtcPosition=1,
+                    numElements=2,
+                ),
+            ),
+        ),
+        convexObtcCrv=DotMap(
+            strategyName="StrategyConvexStakingOptimizer",
+            params=DotMap(
+                want=pools.obtcCrv.token,
+                pid=curve.pids.obtcCrv,
+                lpComponent=registry.tokens.wbtc,
+                performanceFeeStrategist=1000,
+                performanceFeeGovernance=1000,
+                withdrawalFee=50,
+                curvePool=DotMap(
+                    swap=registry.curve.pools.obtcCrv.swap,
+                    wbtcPosition=2,
+                    numElements=4,
+                ),
+            ),
+        ),
+        convexPbtcCrv=DotMap(
+            strategyName="StrategyConvexStakingOptimizer",
+            params=DotMap(
+                want=pools.pbtcCrv.token,
+                pid=curve.pids.pbtcCrv,
+                lpComponent=registry.tokens.wbtc,
+                performanceFeeStrategist=1000,
+                performanceFeeGovernance=1000,
+                withdrawalFee=50,
+                curvePool=DotMap(
+                    swap=registry.curve.pools.pbtcCrv.swap,
+                    wbtcPosition=2,
+                    numElements=4,
+                ),
+            ),
+        ),
+        convexBbtcCrv=DotMap(
+            strategyName="StrategyConvexStakingOptimizer",
+            params=DotMap(
+                want=pools.bbtcCrv.token,
+                pid=curve.pids.bbtcCrv,
+                lpComponent=registry.tokens.wbtc,
+                performanceFeeStrategist=1000,
+                performanceFeeGovernance=1000,
+                withdrawalFee=50,
+                curvePool=DotMap(
+                    swap=registry.curve.pools.bbtcCrv.swap,
+                    wbtcPosition=2,
+                    numElements=4,
+                ),
+            ),
+        ),
+        convexTriCrypto=DotMap(
+            strategyName="StrategyConvexStakingOptimizer",
+            params=DotMap(
+                want=pools.triCrypto.token,
+                pid=curve.pids.triCrypto,
+                lpComponent=registry.tokens.wbtc,
+                performanceFeeStrategist=1000,
+                performanceFeeGovernance=1000,
+                withdrawalFee=50,
+                curvePool=DotMap(
+                    swap=registry.curve.pools.triCrypto.swap,
+                    wbtcPosition=1,
+                    numElements=3,
+                ),
+            ),
+        ),
+    ),
+    helper=DotMap(
+        cvx=DotMap(
+            strategyName="StrategyCvxHelper",
+            params=DotMap(
+                want=registry.tokens.cvx,
+                performanceFeeStrategist=1000,
+                performanceFeeGovernance=1000,
+                withdrawalFee=50,
+            ),
+        ),
+        cvxCrv=DotMap(
+            strategyName="StrategyCvxCrvHelper",
+            params=DotMap(
+                want=registry.tokens.cvxCrv,
+                performanceFeeStrategist=1000,
+                performanceFeeGovernance=1000,
+                withdrawalFee=50,
+            ),
+        ),
     ),
     pickle=DotMap(
         renCrv=DotMap(
@@ -120,7 +269,7 @@ sett_config = DotMap(
                 pid=pickle.pids.pRenCrv,
                 performanceFeeStrategist=1000,
                 performanceFeeGovernance=1000,
-                withdrawalFee=75,
+                withdrawalFee=50,
             ),
         ),
     ),
@@ -136,7 +285,7 @@ sett_config = DotMap(
                 badgerTree=registry.harvest.badgerTree,
                 performanceFeeStrategist=1000,
                 performanceFeeGovernance=1000,
-                withdrawalFee=75,
+                withdrawalFee=50,
             ),
         ),
     ),
