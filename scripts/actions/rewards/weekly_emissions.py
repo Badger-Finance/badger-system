@@ -49,6 +49,7 @@ Check WeeklyEmissions.md in this directory
 start = to_timestamp(datetime.datetime(2021, 7, 15, 13, 00))
 duration = days(7)
 
+
 def set_schedules(logger, schedules):
     for i in range(0, len(schedules)):
         schedule = schedules[i]
@@ -60,6 +61,7 @@ def set_schedules(logger, schedules):
             schedule.end,
             schedule.duration,
         )
+
 
 def main():
     badger = connect_badger(load_deployer=True)
@@ -75,8 +77,6 @@ def main():
 
     for key in badger.getAllSettIds():
         sett = badger.getSett(key)
-        badger.print_logger_unlock_schedules(
-            sett.address, name=sett.name()
-        )
+        badger.print_logger_unlock_schedules(sett.address, name=sett.name())
 
     helper.publish()

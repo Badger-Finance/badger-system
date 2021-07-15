@@ -5,6 +5,7 @@ from helpers.registry.YearnRegistry import YearnRegistry
 from brownie.network import web3
 from dotmap import DotMap
 from helpers.registry.WhaleRegistryAction import WhaleRegistryAction
+import json
 
 aragon_registry = DotMap(
     addresses=DotMap(
@@ -40,6 +41,7 @@ compound_registry = DotMap(
 multichain_registry = DotMap(eth_address="0xC564EE9f21Ed8A2d8E7e76c085740d5e4c5FaFbE")
 
 harvest_registry = DotMap(
+    symbol="FARM",
     badgerTree="0x06466a741094f51b45FB150c6D1e857B3E879967",
     farmToken="0xa0246c9032bC3A600820415aE600c6388619A14D",
     depositHelper="0xf8ce90c2710713552fb564869694b2505bfc0846",
@@ -63,6 +65,8 @@ pickle_registry = DotMap(
 sushi_registry = DotMap(
     sushiToken="0x6b3595068778dd592e39a122f4f5a5cf09c90fe2",
     xsushiToken="0x8798249c2E607446EfB7Ad49eC89dD1865Ff4272",
+    symbol="SUSHI",
+    symbol_xsushi="XSUSHI",
     sushiChef="0xc2EdaD668740f1aA35E4D8f227fB8E17dcA888Cd",
     router="0xd9e1cE17f2641f24aE83637ab66a2cca9C378B9F",
     factory="0xC0AEe478e3658e2610c5F7A4A2E1777cE9e4f2Ac",
@@ -94,6 +98,7 @@ convex_registry = DotMap(
 curve_registry = DotMap(
     minter="0xd061D61a4d941c39E5453435B6345Dc261C2fcE0",
     crvToken="0xD533a949740bb3306d119CC777fa900bA034cd52",
+    symbol="CRV",
     pools=DotMap(
         sbtcCrv=DotMap(
             swap="0x7fC77b5c7614E1533320Ea6DDc2Eb61fa00A9714",
@@ -173,6 +178,13 @@ defidollar_registry = DotMap(
         ),
     ],
 )
+badger_registry = DotMap(
+    token="0x3472a5a71965499acd81997a54bba8d852c6e53d", symbol="BADGER"
+)
+
+digg_registry = DotMap(
+    token="0x798D1bE841a82a273720CE31c822C61a67a601C3", symbol="DIGG"
+)
 
 eth_registry = ChainRegistry(
     curve=curve_registry,
@@ -191,6 +203,7 @@ eth_registry = ChainRegistry(
     chainlink=chainlink_registry,
     compound=compound_registry,
     defidollar=defidollar_registry,
+    digg=digg_registry,
     convex=convex_registry,
 )
 

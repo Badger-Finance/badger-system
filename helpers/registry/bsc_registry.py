@@ -11,32 +11,21 @@ gnosis_safe_registry = DotMap(
 )
 pancake_registry = DotMap(
     cake="0x0e09fabb73bd3ade0a17ecc321fd13a19e81ce82",
+    symbol="Cake",
     syrup="0x009cF7bC57584b7998236eff51b98A168DceA9B0",
     masterChef="0x73feaa1eE314F8c655E354234017bE2193C9E24E",
-    factoryV1="0xBCfCcbde45cE874adCB698cC183deBcF17952812",
-    routerV1="0x05fF2B0DB69458A0750badebc4f9e13aDd608C7F",
-    factoryV2="0xca143ce32fe78f1f7019d7d551a6402fc5350c73",
-    routerV2="0x10ED43C718714eb63d5aA57B78B54704E256024E",
+    factoryV2="0xBCfCcbde45cE874adCB698cC183deBcF17952812",
+    routerV2="0x05fF2B0DB69458A0750badebc4f9e13aDd608C7F",
     smartChefs="0xe4dD0C50fb314A8B2e84D211546F5B57eDd7c2b9",
     chefPairs=DotMap(
         bnbBtcb="0x7561EEe90e24F3b348E1087A005F78B4c8453524",
         bBadgerBtcb="0x10f461ceac7a17f59e249954db0784d42eff5db5",
         bDiggBtcb="0xE1E33459505bB3763843a426F7Fd9933418184ae",
     ),
-    pairsV2=DotMap(
-        bnbBtcb="0x61EB789d75A95CAa3fF50ed7E47b96c132fEc082",
-        bBadgerBtcb="0x5A58609dA96469E9dEf3fE344bC39B00d18eb9A5",
-        bDiggBtcb="0x81d776C90c89B8d51E9497D58338933127e2fA80",
-    ),
     chefPids=DotMap(
         bnbBtcb=15,
         bBadgerBtcb=0,
         bDiggBtcb=104,
-    ),
-    pidsV2=DotMap(
-        bnbBtcb=262,
-        bBadgerBtcb=332,
-        bDiggBtcb=331,
     ),
 )
 multicall_registry = DotMap(

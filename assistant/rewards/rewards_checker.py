@@ -83,7 +83,9 @@ def sum_digg_claims(claims):
 
 
 def diff_rewards(
-    badger: BadgerSystem, before_file, after_file,
+    badger: BadgerSystem,
+    before_file,
+    after_file,
 ):
     a = before_file["claims"]
     b = after_file["claims"]
@@ -102,9 +104,20 @@ def diff_rewards(
         assert proportionGained < 1.25
 
         table.append(
-            [user, val(beforeClaim), val(afterClaim), val(diff), proportionGained,]
+            [
+                user,
+                val(beforeClaim),
+                val(afterClaim),
+                val(diff),
+                proportionGained,
+            ]
         )
-    print(tabulate(table, headers=["user", "a", "b", "diff", "% gained"],))
+    print(
+        tabulate(
+            table,
+            headers=["user", "a", "b", "diff", "% gained"],
+        )
+    )
 
 
 def get_expected_total_rewards(periodEndTime):
@@ -245,10 +258,18 @@ def compare_rewards(
         ]
     )
     table.append(
-        ["From last period", sum_after - sum_before, val(sum_after - sum_before),]
+        [
+            "From last period",
+            sum_after - sum_before,
+            val(sum_after - sum_before),
+        ]
     )
     table.append(
-        ["Sanity Sum", sanitySum, "-",]
+        [
+            "Sanity Sum",
+            sanitySum,
+            "-",
+        ]
     )
     print(tabulate(table, headers=["key", "value", "scaled"]))
 
@@ -287,7 +308,13 @@ def compare_rewards(
             # proportionInRange = 0
 
         table.append(
-            [user, val(beforeClaim), val(afterClaim), val(diff), proportionGained,]
+            [
+                user,
+                val(beforeClaim),
+                val(afterClaim),
+                val(diff),
+                proportionGained,
+            ]
         )
         assert afterClaim >= beforeClaim
     # print(
