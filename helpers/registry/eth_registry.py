@@ -204,8 +204,8 @@ eth_registry = ChainRegistry(
     chainlink=chainlink_registry,
     compound=compound_registry,
     defidollar=defidollar_registry,
-    mstable=mstable_registry
-    digg=digg_registry
+    mstable=mstable_registry,
+    digg=digg_registry,
 )
 
 eth_registry.tokens = DotMap(

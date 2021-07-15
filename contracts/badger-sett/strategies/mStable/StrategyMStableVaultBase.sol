@@ -11,7 +11,7 @@ import "interfaces/mStable/IMStableBoostedVault.sol";
 import "interfaces/mStable/IMStableVoterProxy.sol";
 
 import "interfaces/badger/IController.sol";
-import "../BaseStrategy.sol";
+import "../BaseStrategySwapper.sol";
 
 /// @title  StrategyMStableVaultBase
 /// @author mStable
@@ -29,7 +29,7 @@ import "../BaseStrategy.sol";
 ///          - earns APY on staked MTA
 ///          - boost rewards in vault deposits
 ///          - vote on proposals on the mStableDAO (after the next version of staking comes that allows vote delegation)
-abstract contract StrategyMStableVaultBase is BaseStrategy {
+abstract contract StrategyMStableVaultBase is BaseStrategyMultiSwapper {
     using SafeERC20Upgradeable for IERC20Upgradeable;
     using SafeMathUpgradeable for uint256;
 
@@ -120,7 +120,7 @@ abstract contract StrategyMStableVaultBase is BaseStrategy {
         return IMStableBoostedVault(vault).rawBalanceOf(voterProxy);
     }
 
-    function getProtectedTokens() external override view returns (address[] memory) {
+    function getProtectedTokens() public override view returns (address[] memory) {
         address[] memory protectedTokens = new address[](3);
         protectedTokens[0] = want;
         protectedTokens[1] = lpComponent;
