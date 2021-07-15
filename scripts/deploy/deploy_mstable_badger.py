@@ -10,7 +10,6 @@ from brownie import (
     StrategyMStableVaultFpMbtcHbtc, 
 )
 
-from scripts.systems.badger_system import connect_badger
 from scripts.systems.mstable_system import MStableSystem
 from config.badger_config import sett_config
 from helpers.registry import registry
@@ -25,27 +24,50 @@ console = Console()
 sleep_between_tx = 1
 
 def main():
-    badger = connect_badger("deploy-final.json")
 
     dev = connect_account()
 
     dualGovernance = accounts.at("0xFa333CC67ac84e687133Ec707D1948E6F4b2b7c5", force=True)
-    controller = badger.getController("experimental")
-    governance = badger.devMultisig
-    strategist = badger.deployer
-    keeper = badger.keeper
-    guardian = badger.guardian
+    governance = accounts.at("0xB65cef03b9B89f99517643226d76e286ee999e77", force=True) # devMultisig
+    strategist = accounts.at("0xDA25ee226E534d868f0Dd8a459536b03fEE9079b", force=True) # deployer
+    keeper = accounts.at("0x872213E29C85d7e30F1C8202FC47eD1Ec124BB1D", force=True)
+    guardian = accounts.at("0x29F7F8896Fb913CF7f9949C623F896a154727919", force=True)
+    devProxyAdmin = accounts.at("0x20Dce41Acca85E8222D6861Aa6D23B6C941777bF", force=True)
+
+    controller = "0x9b4efA18c0c6b4822225b81D150f3518160f8609" # Experimental
+    badgerTree = "0x660802Fc641b154aBA66a62137e71f331B6d787A"
+
 
     # Deploy voterProxy
-    voterproxy = deploy_voterProxy(badger, dev, dualGovernance, governance, strategist, keeper)
+    voterproxy = deploy_voterProxy(devProxyAdmin, dev, dualGovernance, governance, strategist, keeper)
 
     # Deploy Vaults and Strategies
-    deploy_vaults_and_strategies(controller, governance, strategist, keeper, guardian, voterproxy, badger, dev)
+    deploy_vaults_and_strategies(
+        controller, 
+        governance, 
+        strategist, 
+        keeper, 
+        guardian, 
+        voterproxy, 
+        badgerTree, 
+        devProxyAdmin, 
+        dev
+    )
 
 
     
 
-def deploy_vaults_and_strategies(controller, governance, strategist, keeper, guardian, voterproxy, badger, dev):
+def deploy_vaults_and_strategies(
+    controller, 
+    governance, 
+    strategist, 
+    keeper, 
+    guardian, 
+    voterproxy, 
+    badgerTree, 
+    proxyAdmin, 
+    dev
+):
     # Deploy Vaults and Strategies
     abi = artifacts.open_zeppelin["AdminUpgradeabilityProxy"]["abi"]
     bytecode = artifacts.open_zeppelin["AdminUpgradeabilityProxy"]["bytecode"]
@@ -62,8 +84,6 @@ def deploy_vaults_and_strategies(controller, governance, strategist, keeper, gua
         else:
             params = sett_config.native.fPmBtcHBtc.params
             want = sett_config.native.fPmBtcHBtc.params.want
-        
-        params.badgerTree = badger.badgerTree
 
         print("Deploying Vault and Strategy for " + key)
 
@@ -74,16 +94,24 @@ def deploy_vaults_and_strategies(controller, governance, strategist, keeper, gua
         args = [
             want,
             controller,
-            governance,
-            keeper,
-            guardian,
+            governance.address,
+            keeper.address,
+            guardian.address,
             False,
             '',
             '',
         ]
 
         vault_logic = SettV3.deploy({"from": dev})
-        vault_proxy = AdminUpgradeabilityProxy.deploy(vault_logic, badger.proxyAdmin, vault_logic.initialize.encode_input(*args), {'from': dev})
+        time.sleep(sleep_between_tx)
+
+        vault_proxy = AdminUpgradeabilityProxy.deploy(
+            vault_logic, 
+            proxyAdmin, 
+            vault_logic.initialize.encode_input(*args), 
+            {'from': dev}
+        )
+        time.sleep(sleep_between_tx)
 
         ## We delete from deploy and then fetch again so we can interact
         AdminUpgradeabilityProxy.remove(vault_proxy)
@@ -92,24 +120,23 @@ def deploy_vaults_and_strategies(controller, governance, strategist, keeper, gua
         console.print(
             "[green]Vault was deployed at: [/green]", vault_proxy.address
         )
-        time.sleep(sleep_between_tx)
 
         assert vault_proxy.paused()
 
         # Deploy Strategy
 
         args = [
-            governance,
-            strategist,
+            governance.address,
+            strategist.address,
             controller,
-            keeper,
-            guardian,
+            keeper.address,
+            guardian.address,
             [
                 params.want,
                 params.vault,
                 voterproxy.address,
                 params.lpComponent,
-                params.badgerTree,
+                badgerTree,
             ],
             [
                 params.performanceFeeGovernance,
@@ -122,9 +149,18 @@ def deploy_vaults_and_strategies(controller, governance, strategist, keeper, gua
         print("Strategy Arguments: ", args)
 
         strat_logic = artifact.deploy({"from": dev})
+        time.sleep(sleep_between_tx)
         # Verify on Etherscan
         strat_logic.publish_source(artifact)
-        strat_proxy = AdminUpgradeabilityProxy.deploy(vault_logic, badger.proxyAdmin, strat_logic.initialize.encode_input(*args), {'from': dev})
+        time.sleep(sleep_between_tx)
+
+        strat_proxy = AdminUpgradeabilityProxy.deploy(
+            vault_logic, 
+            proxyAdmin, 
+            strat_logic.initialize.encode_input(*args), 
+            {'from': dev}
+        )
+        time.sleep(sleep_between_tx)
 
         ## We delete from deploy and then fetch again so we can interact
         AdminUpgradeabilityProxy.remove(strat_proxy)
@@ -136,7 +172,7 @@ def deploy_vaults_and_strategies(controller, governance, strategist, keeper, gua
 
 
 
-def deploy_voterProxy(badger, dev, dualGovernance, governance, strategist, keeper):
+def deploy_voterProxy(devProxyAdmin, dev, dualGovernance, governance, strategist, keeper):
     # Deploy VoterProxy
 
     mstable_config = DotMap(
@@ -149,7 +185,7 @@ def deploy_voterProxy(badger, dev, dualGovernance, governance, strategist, keepe
         rates=8000,
     )
 
-    mstable = MStableSystem(dev, badger.devProxyAdmin, mstable_config)
+    mstable = MStableSystem(dev, devProxyAdmin, mstable_config)
 
     mstable.deploy_logic("MStableVoterProxy", MStableVoterProxy)
     time.sleep(sleep_between_tx)
