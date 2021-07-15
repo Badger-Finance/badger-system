@@ -51,11 +51,11 @@ def main():
     )
 
     transfers = [
-        TransferOp(badger.paymentsMultisig, badger.token, Wei("51222 ether")),
-        # TransferOp(badger.badgerTree, badger.token, Wei("20000 ether")),
+        # TransferOp(badger.paymentsMultisig, badger.token, Wei("51222 ether")),
+        TransferOp(badger.badgerTree, badger.token, Wei("40000 ether")),
         # TransferOp(badger.badgerTree, dfd, Wei("200000 ether")),
-        # TransferOp(badger.badgerRewardsManager, badger.token, Wei("10000 ether")),
-        # TransferOp(badger.badgerRewardsManager, diggToken, Wei("2 gwei")),
+        TransferOp(badger.badgerRewardsManager, badger.token, Wei("15000 ether")),
+        TransferOp(badger.badgerRewardsManager, diggToken, Wei("2 gwei")),
     ]
 
     snap = BalanceSnapshotter(
