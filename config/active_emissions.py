@@ -35,14 +35,11 @@ weekly_schedule = {
         "badger": Wei("4600 ether"),
         "digg": to_digg_shares(0),
     },
-
     # Yearn Partner
     "yearn.wbtc": {"badger": Wei("2300 ether"), "digg": to_digg_shares(0)},
-
     # Convex Helper
     "native.cvx": {"badger": Wei("230 ether"), "digg": to_digg_shares(0)},
     "native.cvxCrv": {"badger": Wei("230 ether"), "digg": to_digg_shares(0)},
-
     # Native Setts
     "native.badger": {
         "badger": Wei("2300 ether"),
@@ -56,9 +53,8 @@ weekly_schedule = {
         "badger": Wei("4600 ether"),
         "digg": to_digg_shares(0),
     },
-
     # Digg Setts
-     "native.digg": {"badger": Wei("0 ether"), "digg": to_digg_shares(4.990)},
+    "native.digg": {"badger": Wei("0 ether"), "digg": to_digg_shares(4.990)},
     "native.uniDiggWbtc": {
         "badger": Wei("0 ether"),
         "digg": to_digg_shares(9.990),
@@ -69,12 +65,14 @@ weekly_schedule = {
     },
 }
 
+
 class Emissions:
     def __init__(self, active_emissions):
         self.active = active_emissions
 
 
 emissions = Emissions(active_emissions=weekly_schedule)
+
 
 def build_weekly_schedules(badger: BadgerSystem, start, duration):
     end = start + duration
@@ -86,9 +84,19 @@ def build_weekly_schedules(badger: BadgerSystem, start, duration):
             if amount == 0:
                 continue
             schedules.append(
-                LoggerUnlockSchedule([sett.address, asset_to_address(asset), amount, start, end, duration])
+                LoggerUnlockSchedule(
+                    [
+                        sett.address,
+                        asset_to_address(asset),
+                        amount,
+                        start,
+                        end,
+                        duration,
+                    ]
+                )
             )
     return schedules
+
 
 def get_active_rewards_schedule(badger: BadgerSystem):
     rest = RewardsSchedule(badger)

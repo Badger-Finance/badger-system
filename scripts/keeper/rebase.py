@@ -59,22 +59,24 @@ def rebase(badger: BadgerSystem, account):
     time_since_last_rebase = now - last_rebase_time
     min_time_passed = (last_rebase_time + min_rebase_time) < now
 
-    console.print({
-        "last_rebase_time": last_rebase_time,
-        "in_rebase_window": in_rebase_window,
-        "now": now,
-        "time_since_last_rebase": time_since_last_rebase,
-        "min_time_passed": min_time_passed,
-    })
+    console.print(
+        {
+            "last_rebase_time": last_rebase_time,
+            "in_rebase_window": in_rebase_window,
+            "now": now,
+            "time_since_last_rebase": time_since_last_rebase,
+            "min_time_passed": min_time_passed,
+        }
+    )
 
     # Rebase if sufficient time has passed since last rebase and we are in the window.
     # Give adequate time between TX attempts
-    if (time_since_last_rebase > hours(2) and in_rebase_window and min_time_passed):
+    if time_since_last_rebase > hours(2) and in_rebase_window and min_time_passed:
         console.print("[bold yellow]===== 📈 Rebase! 📉=====[/bold yellow]")
         print("pair before", pair.getReserves())
         print("uniPair before", uniPair.getReserves())
 
-        tx_timer.start_timer(account, 'Rebase')
+        tx_timer.start_timer(account, "Rebase")
         tx = digg.orchestrator.rebase({"from": account})
         tx_timer.end_timer()
 
