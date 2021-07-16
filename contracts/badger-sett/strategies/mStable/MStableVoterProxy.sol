@@ -46,6 +46,7 @@ contract MStableVoterProxy is IMStableVoterProxy, PausableUpgradeable, SettAcces
     event LockCreated(uint256 amt, uint256 unlockTime);
     event MtaHarvested(uint256 existing, uint256 harvested, uint256 distributed, uint256 invested);
     event LockExtended(uint256 unlockTime);
+    event LockIncreased(uint256 amount);
     event LockExited();
     event LockChanged(address newLock);
     event RedistributionRateChanged(uint256 newRate);
@@ -143,6 +144,17 @@ contract MStableVoterProxy is IMStableVoterProxy, PausableUpgradeable, SettAcces
         votingLockup.increaseLockLength(_unlockTime);
 
         emit LockExtended(_unlockTime);
+    }
+
+    /// @dev Simply extends the lock period in staking
+    /// @param _unlockTime New time at which the stake will unlock
+    function increaseLock() external override {
+        _onlyGovernance();
+
+        uint256 bal = mta.balanceOf(address(this));
+        votingLockup.increaseLockAmount(bal);
+
+        emit LockIncreased(bal);
     }
 
     /// @dev Exits the lock and keeps MTA in contract
