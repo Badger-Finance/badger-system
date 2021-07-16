@@ -23,6 +23,7 @@ blacklist = [
     "0xC17078FDd324CC473F8175Dc5290fae5f2E84714",
     "0x88128580ACdD9c04Ce47AFcE196875747bF2A9f6",
     "0x7e7E112A68d8D2E221E11047a72fFC1065c38e1a",
+    "0xb65cef03b9b89f99517643226d76e286ee999e77",
 ]
 
 cream_addresses = {"native.badger": "0x8b950f43fcac4931d408f1fcda55c6cb6cbf3096"}
