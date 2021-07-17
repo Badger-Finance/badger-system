@@ -1,8 +1,6 @@
-subgraph_config = {
-    "tokens": "https://api.thegraph.com/subgraphs/name/darruma/badger-tokens",
-    "setts": "https://api.thegraph.com/subgraphs/name/darruma/badger-setts",
-    "harvests": "https://api.thegraph.com/subgraphs/name/darruma/badger-harvests",
-    "cream_url": "https://api.thegraph.com/subgraphs/name/creamfinancedev/cream-lending",
-    "convex": "https://api.thegraph.com/subgraphs/name/darruma/badger-setts-convex",
-    "harvests": "https://api.thegraph.com/subgraphs/name/darruma/badger-harvests",
+subgraph_ids = {
+    "tokens": "0xba5edb751ccf93770796e273d8bce83e1e81e2d4-4",
+    "setts": "0xba5edb751ccf93770796e273d8bce83e1e81e2d4-5",
+    "harvests": "0xba5edb751ccf93770796e273d8bce83e1e81e2d4-2",
+    "tokens": "0xba5edb751ccf93770796e273d8bce83e1e81e2d4-4",
 }
