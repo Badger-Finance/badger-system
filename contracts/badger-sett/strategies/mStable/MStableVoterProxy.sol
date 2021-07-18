@@ -146,9 +146,8 @@ contract MStableVoterProxy is IMStableVoterProxy, PausableUpgradeable, SettAcces
         emit LockExtended(_unlockTime);
     }
 
-    /// @dev Simply extends the lock period in staking
-    /// @param _unlockTime New time at which the stake will unlock
-    function increaseLock() external override {
+    /// @dev Simply extends the lock amount in staking
+    function increaseLock() external {
         _onlyGovernance();
 
         uint256 bal = mta.balanceOf(address(this));
