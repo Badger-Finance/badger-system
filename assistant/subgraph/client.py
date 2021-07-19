@@ -14,6 +14,7 @@ tokens_client = make_gql_client("tokens")
 sett_client = make_gql_client("setts")
 harvests_client = make_gql_client("harvests")
 
+
 def fetch_tree_distributions(startBlock, endBlock):
     query = gql(
         """
