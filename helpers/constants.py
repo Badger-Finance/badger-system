@@ -158,4 +158,10 @@ SETT_BOOST_RATIOS = {
 }
 
 CONVEX_SETTS = ["native.hbtcCrv", "native.pbtcCrv", "native.obtcCrv", "native.bbtcCrv"]
-STAKE_RATIO_RANGES = list(reversed([(i / 100, i * 20) for i in range(100, 0, -10)]))
+STAKE_RATIO_RANGES = list(
+    reversed(
+        [(i / 100, i * 20) for i in range(100, 0, -10)]
+        + [(i / 1000, i * 2) for i in range(75, 0, -25)]
+        + [(0.01, 2)]
+    )
+)
