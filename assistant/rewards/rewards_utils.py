@@ -214,7 +214,7 @@ def calculate_sett_balances(badger, name, currentBlock):
     for b in [settBalances, geyserBalances, creamBalances]:
         balances = dict(Counter(balances) + Counter(b))
     # Get rid of blacklisted and negative balances
-    for addr, balance in balances.items():
+    for addr, balance in list(balances.items()):
         if addr in blacklist or balance < 0:
             del balances[addr]
 

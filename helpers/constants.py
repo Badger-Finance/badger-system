@@ -8,9 +8,11 @@ DEFAULT_ADMIN_ROLE = (
     "0x0000000000000000000000000000000000000000000000000000000000000000"
 )
 
-class RoleRegistry():
+
+class RoleRegistry:
     def __init__(self):
         self.roles = {}
+
     def add_role(self, name):
         encoded = web3.keccak(text=name).hex()
         self.roles[name] = encoded
@@ -156,3 +158,4 @@ SETT_BOOST_RATIOS = {
 }
 
 CONVEX_SETTS = ["native.hbtcCrv", "native.pbtcCrv", "native.obtcCrv", "native.bbtcCrv"]
+STAKE_RATIO_RANGES = list(reversed([(i / 100, i * 20) for i in range(100, 0, -10)]))

@@ -17,10 +17,6 @@ harvests_client = make_gql_client("harvests")
 
 ## TODO: seperate files by chain/subgraph
 
-harvest_subgraph_url = subgraph_config["harvests"]
-harvests_transport = AIOHTTPTransport(url=harvest_subgraph_url)
-harvests_client = Client(transport=harvests_transport)
-
 
 def fetch_tree_distributions(startBlock, endBlock):
     query = gql(
