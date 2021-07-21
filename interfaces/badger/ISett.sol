@@ -16,7 +16,16 @@ interface ISett {
 
     function earn() external;
 
+    function balanceOf(address account) external view returns (uint256);
+
+    function totalSupply() external view returns (uint256);
+
     function claimInsurance() external; // NOTE: Only yDelegatedVault implements this
 
     function getPricePerFullShare() external view returns (uint256);
+
+    function withdrawalFee() external view returns (uint256);
+
+    function pricePerShare() external view returns (uint256);
 }
+
