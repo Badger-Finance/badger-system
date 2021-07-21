@@ -1,4 +1,3 @@
-from assistant.subgraph.config import subgraph_config
 from assistant.subgraph.utils import make_gql_client
 from brownie import interface
 from rich.console import Console
@@ -14,12 +13,6 @@ console = Console()
 tokens_client = make_gql_client("tokens")
 sett_client = make_gql_client("setts")
 harvests_client = make_gql_client("harvests")
-
-## TODO: seperate files by chain/subgraph
-
-harvest_subgraph_url = subgraph_config["harvests"]
-harvests_transport = AIOHTTPTransport(url=harvest_subgraph_url)
-harvests_client = Client(transport=harvests_transport)
 
 
 def fetch_tree_distributions(startBlock, endBlock):
