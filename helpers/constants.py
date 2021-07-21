@@ -8,9 +8,11 @@ DEFAULT_ADMIN_ROLE = (
     "0x0000000000000000000000000000000000000000000000000000000000000000"
 )
 
-class RoleRegistry():
+
+class RoleRegistry:
     def __init__(self):
         self.roles = {}
+
     def add_role(self, name):
         encoded = web3.keccak(text=name).hex()
         self.roles[name] = encoded
@@ -155,4 +157,9 @@ SETT_BOOST_RATIOS = {
     "native.cvx": 0.1,
 }
 
-CONVEX_SETTS = ["native.hbtcCrv", "native.pbtcCrv", "native.obtcCrv", "native.bbtcCrv"]
+REWARDS_BLACKLIST = {
+    "0x19D97D8fA813EE2f51aD4B4e04EA08bAf4DFfC28": "Badger Vault",
+    "0xB65cef03b9B89f99517643226d76e286ee999e77": "Badger Dev Multisig",
+    "0x8b950f43fcac4931d408f1fcda55c6cb6cbf3096": "Cream bBadger",
+    "0x0a54d4b378C8dBfC7bC93BE50C85DebAFdb87439": "Sushiswap bBadger/Weth",
+}
