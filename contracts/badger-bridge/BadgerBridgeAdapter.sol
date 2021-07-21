@@ -13,8 +13,8 @@ import "interfaces/bridge/IBridgeVault.sol";
 import "interfaces/bridge/ICurveTokenWrapper.sol";
 import "interfaces/curve/ICurveFi.sol";
 
-import "interfaces/bridge/IBadgerSettPeak.sol";
-import "interfaces/bridge/IBadgerYearnWbtcPeak.sol";
+import "interfaces/defidollar/IBadgerSettPeak.sol";
+import "interfaces/defidollar/IBadgerYearnWbtcPeak.sol";
 
 contract BadgerBridgeAdapter is OwnableUpgradeable, ReentrancyGuardUpgradeable {
     using SafeMathUpgradeable for uint256;
@@ -132,11 +132,11 @@ contract BadgerBridgeAdapter is OwnableUpgradeable, ReentrancyGuardUpgradeable {
         uint256 _slippage,
         address _user,
         address _vault,
+        bool _mintIbbtc,
         // darknode args
         uint256 _amount,
         bytes32 _nHash,
-        bytes calldata _sig,
-        bool _mintIbbtc
+        bytes calldata _sig
     ) external nonReentrant {
         require(_token == address(renBTC) || _token == address(wBTC), "invalid token address");
 
