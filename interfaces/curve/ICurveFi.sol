@@ -131,4 +131,8 @@ interface ICurveFi {
     function future_owner() external returns (address out);
 
     function calc_withdraw_one_coin(uint256 _token_amount, int128 _i) external view returns (uint256 out);
+    
+    function calc_token_amount(uint[2] calldata amounts, bool isDeposit) external view returns(uint);
+    function calc_token_amount(uint[3] calldata amounts, bool isDeposit) external view returns(uint);
+    function calc_token_amount(uint[4] calldata amounts, bool isDeposit) external view returns(uint);
 }
