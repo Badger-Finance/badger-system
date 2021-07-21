@@ -42,8 +42,6 @@ def calc_sett_rewards(badger, periodStartBlock, endBlock, cycle, unclaimedReward
     """
     Calculate rewards for each sett, and sum them
     """
-    # ratio = digg_btc_twap(periodStartBlock,endBlock)
-    # diggAllocation = calculate_digg_allocation(ratio)
     rewardsBySett = {}
     noRewards = ["native.digg", "experimental.digg"]
     boosts, boostInfo = badger_boost(badger, endBlock)
