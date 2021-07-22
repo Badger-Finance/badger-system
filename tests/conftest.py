@@ -71,7 +71,7 @@ settsToRun = [
     # "native.sushiWbtcEth",
     # "native.sushiWbtcIbBtc",
     # "native.uniWbtcIbBtc",
-    # "native.renCrv",
+    "native.renCrv",
     # "native.sbtcCrv",
     # "native.tbtcCrv",
     # "native.hbtcCrv",
@@ -80,7 +80,7 @@ settsToRun = [
     # "native.bbtcCrv",
     # "native.tricrypto",
     # "native.cvx",
-    "native.cvxCrv",
+    # "native.cvxCrv",
 ]
 
 yearnSettsToRun = [
