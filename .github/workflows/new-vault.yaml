@@ -1,0 +1,19 @@
+name: Auto Assign to Sett Vault Project
+
+on:
+  issues:
+    types: [labeled]
+env:
+  MY_GITHUB_TOKEN: ${{ secrets.MY_GITHUB_TOKEN }}
+
+jobs:
+  assign_one_project:
+    runs-on: ubuntu-latest
+    name: Assign to Sett Vault
+    steps:
+    - name: Assign NEW VAULT LABELED issues to New Vault column in Sett Vaults project
+      uses: srggrs/assign-one-project-github-action@1.2.1
+       if: contains(github.event.issue.labels.*.name, 'new vault')
+      with:
+        project: 'https://github.com/orgs/Badger-Finance/projects/9'
+        column_name: 'New Vault'
