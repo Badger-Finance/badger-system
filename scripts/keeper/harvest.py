@@ -41,6 +41,7 @@ def harvest_all(badger: BadgerSystem, skip, min_profit=0):
                 key,
                 strategy,
                 {"from": keeper, "gas_limit": 2000000, "allow_revert": True},
+                min_profit,
             )
             if estimated_profit >= min_profit:
                 snap.settHarvestViaManager(
@@ -50,7 +51,9 @@ def harvest_all(badger: BadgerSystem, skip, min_profit=0):
                 )
         else:
             estimated_profit = snap.estimateProfitHarvest(
-                key, {"from": keeper, "gas_limit": 2000000, "allow_revert": True}
+                key,
+                {"from": keeper, "gas_limit": 2000000, "allow_revert": True},
+                min_profit,
             )
             if estimated_profit >= min_profit:
                 snap.settHarvest(

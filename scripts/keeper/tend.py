@@ -40,20 +40,23 @@ def tend_all(badger: BadgerSystem, skip, min_profit=0):
 
         if strategy.keeper() == badger.badgerRewardsManager:
             estimated_profit = snap.estimateProfitTendViaManager(
-                key, strategy, {"from": keeper, "gas_limit": 1000000}
+                key, strategy, {"from": keeper, "gas_limit": 1000000}, min_profit
             )
             if estimated_profit >= min_profit:
                 snap.settTendViaManager(
-                    strategy, {"from": keeper, "gas_limit": 1000000}, confirm=False,
+                    strategy,
+                    {"from": keeper, "gas_limit": 1000000},
+                    confirm=False,
                 )
         else:
             keeper = accounts.at(strategy.keeper())
             estimated_profit = snap.estimateProfitTend(
-                key, {"from": keeper, "gas_limit": 1000000}
+                key, {"from": keeper, "gas_limit": 1000000}, min_profit
             )
             if estimated_profit >= min_profit:
                 snap.settTend(
-                    {"from": keeper, "gas_limit": 1000000}, confirm=False,
+                    {"from": keeper, "gas_limit": 1000000},
+                    confirm=False,
                 )
 
         tx_wait()
