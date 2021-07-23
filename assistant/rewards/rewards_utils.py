@@ -188,12 +188,7 @@ def calculate_sett_balances(badger, name, currentBlock):
 
     # Get rid of blacklisted and negative balances
     for addr, balance in list(balances.items()):
-        if addr in map(REWARDS_BLACKLIST.keys(), lambda a: a.lower()):
-            console.log(
-                "Removing {} from balances".format(REWARDS_BLACKLIST[addr.lower()])
-            )
-            del balances[addr]
-        if balance < 0:
+        if addr in blacklist or balance < 0:
             del balances[addr]
 
     # Testing for peak address
