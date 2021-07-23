@@ -21,6 +21,12 @@ boostInfo = {}
 
 
 def calc_stake_ratio(address, nativeSetts, nonNativeSetts):
+    """
+    Calculate the stake ratio for an address
+    :param address: address to find stake ratio for
+    :param nativeSetts: native balances
+    :param nonNativeSetts: non native balances
+    """
     nativeBalance = getattr(nativeBalance[address], "balance", 0)
     nonNativeBalance = getattr(nonNativeSetts[address], "balance", 0)
     if nonNativeBalance == 0:

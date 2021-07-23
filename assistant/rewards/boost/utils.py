@@ -7,7 +7,12 @@ from assistant.badger_api.prices import (
 prices = fetch_token_prices()
 
 
-def calc_union_addresses(nativeSetts, nonNativeSetts):
+def calc_union_addresses(nativeSetts: UserBalances, nonNativeSetts: UserBalances):
+    """
+    Combine addresses from native setts and non native setts
+    :param nativeSetts: native setts
+    :param nonNativeSetts: non native setts
+    """
     return set.union(
         *[
             {user.address for user in nativeSetts},
@@ -16,9 +21,11 @@ def calc_union_addresses(nativeSetts, nonNativeSetts):
     )
 
 
-def filter_dust(balances, dustAmount):
+def filter_dust(balances: UserBalances, dustAmount: int):
     """
     Filter out dust values from user balances
+    :param balances: balances to filter
+    :param dustAmount: dollar amount to filter by
     """
     return UserBalances(
         list(filter(lambda user: user.balance > dustAmount, balances)),
@@ -27,16 +34,25 @@ def filter_dust(balances, dustAmount):
     )
 
 
-def convert_balances_to_usd(userBalances):
+def convert_balances_to_usd(balances: userBalances):
+    """
+    Convert sett balance to usd and multiply by correct ratio
+    :param balances: balances to convert to usd
+    """
     price = prices[tokenAddress]
-    priceRatio = userBalances.settRatio
-    for user in userBalances:
+    priceRatio = balances.settRatio
+    for user in balances:
         user.balance = settRatio * price * user.balance
 
     return userBalances
 
 
-def calc_boost_data(badger, block):
+def calc_boost_data(badger: BadgerSystem, block: int):
+    """
+    Calculate boost data required for boost calculation
+    :param badger: badger system
+    :param block: block to collect the boost data from
+    """
     chains = ["eth", "bsc", "polygon", "xdai"]
     ethSnapshot = chain_snapshot("eth", badger, block)
     bscSnapshot = chain_snapshot("eth", badger, block)
@@ -55,5 +71,5 @@ def calc_boost_data(badger, block):
             elif balances.settType == "nonNative":
                 nonNative = dict(Counter(balances) + Counter(nonNative))
 
-    return filter_dust(UserBalances(native, "", ""), 1),
+    return (filter_dust(UserBalances(native, "", ""), 1),)
     filter_dust(UserBalances(nonNative, "", ""), 1)
