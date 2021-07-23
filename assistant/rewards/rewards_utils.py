@@ -134,19 +134,6 @@ def sum_rewards(sources, cycle, badgerTree):
     return totals
 
 
-def get_latest_event_block(firstEvent, events):
-    try:
-        event_index = events.index(firstEvent)
-    except ValueError:
-        return -1
-    if event_index - 1 >= 0 and event_index - 1 < len(events):
-        # startBlock starts with the last harvest that happened
-        latestEvent = events[event_index - 1]
-        return latestEvent["blockNumber"]
-    else:
-        return -1
-
-
 def calc_balances_from_geyser_events(geyserEvents):
     balances = {}
     events = [*geyserEvents["stakes"], *geyserEvents["unstakes"]]

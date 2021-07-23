@@ -7,7 +7,6 @@ class UserBalance:
     address: str
     balance: int
     token: str
-    type: List[str] = field(default_factory=lambda: [])
 
     def boost_balance(self, boost):
         self.balance = self.balance * boost
@@ -16,6 +15,8 @@ class UserBalance:
 @dataclass
 class UserBalances:
     userBalances: Dict[str, UserBalance] = field(default_factory=lambda: [])
+    settType: str
+    settRatio: int
 
     def __post_init__(self):
         if len(self.userBalances) > 0:

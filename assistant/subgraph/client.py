@@ -155,76 +155,6 @@ def fetch_geyser_events(geyserId, startBlock):
     return {"stakes": stakes, "unstakes": unstakes, "totalStaked": totalStaked}
 
 
-@lru_cache(maxsize=None)
-def fetch_sett_transfers(settID, startBlock, endBlock):
-    console.print(
-        "[bold green] Fetching Sett Deposits/Withdrawals {}[/bold green]".format(settID)
-    )
-    query = gql(
-        """
-        query sett_transfers($vaultID: Vault_filter, $blockHeight: Block_height) {
-            vaults(block: $blockHeight, where: $vaultID) {
-                deposits(first:1000) {
-                    id
-                    pricePerFullShare
-                    account {
-                     id
-                    }
-                    amount
-                    transaction {
-                        timestamp
-                        blockNumber
-                    }
-                }
-                withdrawals(first:1000) {
-                    id
-                    pricePerFullShare
-                    account {
-                     id
-                    }
-                    amount
-                    transaction {
-                        timestamp
-                        blockNumber
-                    }
-                }
-            }
-        }
-    """
-    )
-    variables = {"vaultID": {"id": settID}, "blockHeight": {"number": endBlock}}
-
-    results = sett_client.execute(query, variable_values=variables)
-
-    def filter_by_startBlock(transfer):
-        return int(transfer["transaction"]["blockNumber"]) > startBlock
-
-    def convert_amount(transfer):
-        ppfs = Decimal(transfer["pricePerFullShare"]) / Decimal(1e18)
-        transfer["amount"] = round(Decimal(transfer["amount"]) / Decimal(ppfs))
-        return transfer
-
-    def negate_withdrawals(withdrawal):
-        withdrawal["amount"] = -withdrawal["amount"]
-        return withdrawal
-
-    deposits = map(convert_amount, results["vaults"][0]["deposits"])
-    withdrawals = map(
-        negate_withdrawals,
-        map(convert_amount, results["vaults"][0]["withdrawals"]),
-    )
-
-    deposits = list(filter(filter_by_startBlock, list(deposits)))
-    withdrawals = list(filter(filter_by_startBlock, list(withdrawals)))
-    console.log("Processing {} deposits".format(len(deposits)))
-    console.log("Processing {} withdrawals".format(len((withdrawals))))
-
-    return sorted(
-        [*deposits, *withdrawals],
-        key=lambda t: t["transaction"]["timestamp"],
-    )
-
-
 def fetch_farm_harvest_events():
     query = gql(
         """
@@ -418,3 +348,48 @@ def fetch_cream_balances(tokenSymbol, blockNumber):
             float(entry["totalUnderlyingSupplied"]) * 1e18 / (1 + float(exchangeRate))
         )
     return retVal
+
+
+def fetch_chain_balances(chain,block):
+    client = make_gql_client(chain).execute
+    query = gql(
+        """
+        query balances($blockHeight: Block_height,$lastId:UserSettBalance_filter) {
+            userSettBalances(block: $blockHeight, where:$lastId) {
+                user {
+                    id
+                }
+                sett {
+                    id
+                    token{
+                        decimals
+                    }
+                }
+                netDeposit
+            }
+        }
+        """
+    )
+    lastId = ""
+    variables = {"blockHeight": {"number": block }}
+    balances = {}
+    while True:
+        variables["lastId"] = {"id_gt": lastId}
+        client.execute(query,variable_values=variables)
+        if len(results["userSettBalances"]) == 0:
+            return {}
+        newBalances = {}
+        balance_data = results["userSettBalances"]
+        for result in balance_data:
+            account = result["user"]["id"]
+            newBalances[account] = {
+                "amount":  result["netDeposit"]/ math.pow(10,result["sett"]["token"]["decimals"])
+                "settAddress": result["sett"]["id"]
+            }
+        if len(balance_data) == 0:
+            break
+        else:
+            lastId = balance_Data[-1]["id"]
+            balances = {**newBalances,**balances}
+
+    sreturn balances

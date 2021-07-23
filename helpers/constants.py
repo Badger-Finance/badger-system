@@ -163,3 +163,5 @@ REWARDS_BLACKLIST = {
     "0x8b950f43fcac4931d408f1fcda55c6cb6cbf3096": "Cream bBadger",
     "0x0a54d4b378C8dBfC7bC93BE50C85DebAFdb87439": "Sushiswap bBadger/Weth",
 }
+
+SETT_INFO = {}
