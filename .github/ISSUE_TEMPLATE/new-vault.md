@@ -1,7 +1,7 @@
 ---
 name: New Vault
 about: Intent to create a new vault strategy
-title: ''
+title: 'NEW VAULT: [description]'
 labels: new vault
 assignees: axejintao, GalloDaSballo
 
@@ -9,8 +9,10 @@ assignees: axejintao, GalloDaSballo
 
 ### Network
 
-## Strategy Description
+### Vault / Strategy Description
 
-## Deposit Token
+### Deposit Token
 
-## Rewards
+### Rewards
+
+### Version (V1 [single strategy], V2 [multi strategy])
