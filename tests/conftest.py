@@ -34,6 +34,8 @@ from tests.sett.fixtures import (
     UnitProtocolRenBtcMiniDeploy,
     UniGenericLpMiniDeploy,
     DiggStabilizeMiniDeploy,
+    MStableImBtcMiniDeploy,
+    MStableFpMbtcHbtcMiniDeploy,
     ConvexRenBtcMiniDeploy,
     ConvexSBtcMiniDeploy,
     ConvexTBtcMiniDeploy,
@@ -71,6 +73,11 @@ settsToRun = [
     # "native.sushiWbtcEth",
     # "native.sushiWbtcIbBtc",
     # "native.uniWbtcIbBtc",
+    "native.mstableImBtc",
+    "native.mstableFpMbtcHbtc",
+    # "native.convexRenCrv",
+    # "native.convexSbtcCrv",
+    # "native.convexTbtcCrv",
     # "native.renCrv",
     # "native.sbtcCrv",
     # "native.tbtcCrv",
@@ -80,7 +87,7 @@ settsToRun = [
     # "native.bbtcCrv",
     # "native.tricrypto",
     # "native.cvx",
-    "native.cvxCrv",
+    # "native.cvxCrv",
 ]
 
 yearnSettsToRun = [
@@ -328,10 +335,20 @@ def badger_single_sett(settConfig, deploy=True):
                 keeper=keeper,
                 governance=governance,
             ).deploy(deploy=deploy)
-        if settId == "native.convexRenCrv":
-            return ConvexRenBtcMiniDeploy(
-                "native.convexRenCrv",
-                "StrategyConvexStakingOptimizer",
+        if settId == "native.mstableImBtc":
+            return MStableImBtcMiniDeploy(
+                "native.mstableImBtc",
+                "StrategyMStableVaultImbtc",
+                deployer,
+                strategist=strategist,
+                guardian=guardian,
+                keeper=keeper,
+                governance=governance,
+            ).deploy(deploy=deploy)
+        if settId == "native.mstableFpMbtcHbtc":
+            return MStableFpMbtcHbtcMiniDeploy(
+                "native.mstableFpMbtcHbtc",
+                "StrategyMStableVaultFpMbtcHbtc",
                 deployer,
                 strategist=strategist,
                 guardian=guardian,

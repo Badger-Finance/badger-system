@@ -11,6 +11,7 @@ from .CurveGaugeProvisioner import CurveGaugeProvisioner
 from .SushiClawUSDCProvisioner import SushiClawUSDCProvisioner
 from .PancakeBnbBtcbProvisioner import PancakeBnbBtcbProvisioner
 from .WbtcIbBtcLpProvisioner import WbtcIbBtcLpProvisioner
+from .StrategyMStableVaultProvisioner import StrategyMStableVaultProvisioner
 from .ConvexProvisioner import ConvexProvisioner
 from .HelperCvxProvisioner import HelperCvxProvisioner
 from .HelperCvxCrvProvisioner import HelperCvxCrvProvisioner

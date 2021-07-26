@@ -1,7 +1,6 @@
 from brownie import *
 
 name_to_artifact = {
-    "SmartVesting": SmartVesting,
     "SmartTimelock": SmartTimelock,
     "RewardsEscrow": RewardsEscrow,
     "BadgerGeyser": BadgerGeyser,
@@ -32,6 +31,8 @@ name_to_artifact = {
     "StrategyPancakeLpOptimizer": StrategyPancakeLpOptimizer,
     "StrategyUnitProtocolRenbtc": StrategyUnitProtocolRenbtc,
     "StrategyUniGenericLp": StrategyUniGenericLp,
+    "StrategyMStableVaultImbtc": StrategyMStableVaultImbtc,
+    "StrategyMStableVaultFpMbtcHbtc": StrategyMStableVaultFpMbtcHbtc,
     "StrategyConvexLpOptimizer": StrategyConvexLpOptimizer,
     "StrategyConvexStakingOptimizer": StrategyConvexStakingOptimizer,
     "StrategyConvexLpOptimizer": StrategyConvexLpOptimizer,
