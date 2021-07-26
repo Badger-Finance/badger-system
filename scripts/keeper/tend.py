@@ -16,7 +16,6 @@ def tend_all(badger: BadgerSystem, skip, min_profit=0):
     """
     Runs tend function for strategies if they are expected to be profitable.
     If a profit estimate fails for any reason the default behavior is to treat it as having a profit of zero.
-
     :param badger: badger system
     :param skip: strategies to skip checking
     :param min_profit: minimum estimated profit (in ETH or BNB) required for harvest to be executed on chain
@@ -40,24 +39,23 @@ def tend_all(badger: BadgerSystem, skip, min_profit=0):
 
         if strategy.keeper() == badger.badgerRewardsManager:
             estimated_profit = snap.estimateProfitTendViaManager(
-                key, strategy, {"from": keeper, "gas_limit": 1000000}
-            snap.settTendViaManager(
-                strategy, {"from": keeper, "gas_limit": 1000000}, confirm=False,
+                key, strategy, {"from": keeper, "gas_limit": 1000000}, min_profit
             )
             if estimated_profit >= min_profit:
                 snap.settTendViaManager(
-                    strategy, {"from": keeper, "gas_limit": 1000000}, confirm=False,
+                    strategy,
+                    {"from": keeper, "gas_limit": 1000000},
+                    confirm=False,
                 )
         else:
-            estimated_profit = snap.estimateProfitTend(
-                key, {"from": keeper, "gas_limit": 1000000}
             keeper = accounts.at(strategy.keeper())
-            snap.settTend(
-                {"from": keeper, "gas_limit": 1000000}, confirm=False,
+            estimated_profit = snap.estimateProfitTend(
+                key, {"from": keeper, "gas_limit": 1000000}, min_profit
             )
             if estimated_profit >= min_profit:
                 snap.settTend(
-                    {"from": keeper, "gas_limit": 1000000}, confirm=False,
+                    {"from": keeper, "gas_limit": 1000000},
+                    confirm=False,
                 )
 
         tx_wait()
@@ -70,7 +68,7 @@ def tend_all(badger: BadgerSystem, skip, min_profit=0):
 
 
 def main():
-    badger = connect_badger(load_keeper=True)
+    badger = connect_badger(load_keeper=True, load_harvester=True)
     skip = keeper_config.get_active_chain_skipped_setts("tend")
     console.print(badger.getAllSettIds())
 

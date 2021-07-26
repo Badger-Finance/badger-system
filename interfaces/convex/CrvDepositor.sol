@@ -1,6 +1,7 @@
 //  SPDX-License-Identifier: MIT
 
 pragma solidity >=0.6.0;
+
 interface CrvDepositor {
     //deposit crv for cvxCrv
     //can locking immediately or defer locking to someone else by paying a fee.

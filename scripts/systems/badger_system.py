@@ -227,12 +227,13 @@ def connect_badger(
 
     badger.connect_multisig(badger_deploy["devMultisig"])
     badger.connect_ops_multisig(badger_deploy["opsMultisig"])
+    badger.connect_test_multisig(badger_deploy["testMultisig"])
 
     if "dao" in badger_deploy:
         badger.connect_dao()
 
-    if "treasuryMultisig" in badger_deploy:
-        badger.connect_treasury_multisig(badger_deploy["treasuryMultisig"])
+    if "paymentsMultisig" in badger_deploy:
+        badger.connect_treasury_multisig(badger_deploy["paymentsMultisig"])
 
     badger.connect_logic(badger_deploy["logic"])
 
@@ -485,7 +486,9 @@ class BadgerSystem:
                 artifacts.aragon.MiniMeToken["abi"],
             ),
             kernel=Contract.from_abi(
-                "Agent", badger_config.dao.kernel, artifacts.aragon.Agent["abi"],
+                "Agent",
+                badger_config.dao.kernel,
+                artifacts.aragon.Agent["abi"],
             ),
             agent=Contract.from_abi(
                 "Agent", badger_config.dao.agent, artifacts.aragon.Agent["abi"]
@@ -498,10 +501,13 @@ class BadgerSystem:
         self.devMultisig = connect_gnosis_safe(address)
 
     def connect_treasury_multisig(self, address):
-        self.treasuryMultisig = connect_gnosis_safe(address)
+        self.paymentsMultisig = connect_gnosis_safe(address)
 
     def connect_ops_multisig(self, address):
         self.opsMultisig = connect_gnosis_safe(address)
+
+    def connect_test_multisig(self, address):
+        self.testMultisig = connect_gnosis_safe(address)
 
     def connect_uniswap(self):
         self.uniswap = UniswapSystem()
@@ -867,11 +873,15 @@ class BadgerSystem:
         controller.setVault(want, vault, {"from": deployer})
 
         controller.approveStrategy(
-            want, strategy, {"from": deployer},
+            want,
+            strategy,
+            {"from": deployer},
         )
 
         controller.setStrategy(
-            want, strategy, {"from": deployer},
+            want,
+            strategy,
+            {"from": deployer},
         )
 
     def wire_up_sett_multisig(self, vault, strategy, controller):
@@ -924,7 +934,9 @@ class BadgerSystem:
         assert rewardsToken.balanceOf(deployer) >= amount
 
         rewardsToken.transfer(
-            rewards, amount, {"from": deployer},
+            rewards,
+            amount,
+            {"from": deployer},
         )
 
         ## uint256 startTimestamp, uint256 _rewardsDuration, uint256 reward
@@ -941,7 +953,11 @@ class BadgerSystem:
         self.rewardsEscrow.approveRecipient(geyser, {"from": deployer})
 
         self.rewardsEscrow.signalTokenLock(
-            self.token, params.amount, params.duration, startTime, {"from": deployer},
+            self.token,
+            params.amount,
+            params.duration,
+            startTime,
+            {"from": deployer},
         )
 
     # ===== Strategy Macros =====
@@ -1145,15 +1161,31 @@ class BadgerSystem:
             {
                 "to": self.governanceTimelock.address,
                 "data": self.governanceTimelock.queueTransaction.encode_input(
-                    target, eth, signature, data, eta,
+                    target,
+                    eth,
+                    signature,
+                    data,
+                    eta,
                 ),
             },
         )
         multi.executeTx(id)
 
         txHash = Web3.solidityKeccak(
-            ["address", "uint256", "string", "bytes", "uint256",],
-            [target, eth, signature, data, eta,],
+            [
+                "address",
+                "uint256",
+                "string",
+                "bytes",
+                "uint256",
+            ],
+            [
+                target,
+                eth,
+                signature,
+                data,
+                eta,
+            ],
         ).hex()
 
         txFilename = "{}.json".format(txHash)
@@ -1168,6 +1200,28 @@ class BadgerSystem:
             }
             f.write(json.dumps(txData, indent=4, sort_keys=True))
         return txFilename
+
+    def governance_execute_transaction_from_params(self, params):
+        multi = GnosisSafe(self.devMultisig)
+
+        id = multi.addTx(
+            MultisigTxMetadata(description="Execute timelock transaction"),
+            {
+                "to": self.governanceTimelock.address,
+                "data": self.governanceTimelock.executeTransaction.encode_input(
+                    params["target"],
+                    0,
+                    params["signature"],
+                    params["data"],
+                    params["eta"],
+                ),
+            },
+        )
+
+        if multisig_success(multi.executeTx(id)):
+            console.print(
+                f"[yellow]⏰ Successfully Executed Timelock TX ✓[/yellow]", params
+            )
 
     def governance_execute_transaction(self, txFilename):
         multi = GnosisSafe(self.devMultisig)
@@ -1409,6 +1463,15 @@ class BadgerSystem:
             raise NameError
 
         return self.sett_system.vaults[id]
+
+    def getSettFromStrategy(self, strategy):
+        settName = ""
+        for name, strat in self.sett_system.strategies.items():
+            if strat.address.lower() == strategy.lower():
+                settName = name
+        if not settName:
+            raise NameError
+        return settName
 
     def getGuestList(self, id):
         if not id in self.guestLists.keys():

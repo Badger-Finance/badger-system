@@ -180,8 +180,6 @@ class SimulationManager:
             return SushiLpOptimizerProvisioner(self)
         if settId == "native.uniBadgerWbtc":
             return BadgerLpMetaFarmProvisioner(self)
-        if settId in ["native.renCrv", "native.sbtcCrv", "native.tbtcCrv"]:
-            return CurveGaugeProvisioner(self)
         if settId in ["native.sushiSClawUSDC", "native.sushiBClawUSDC"]:
             return SushiClawUSDCProvisioner(self)
         if settId == "native.pancakeBnbBtcb":
@@ -197,12 +195,9 @@ class SimulationManager:
         if settId == "native.uniWbtcIbBtc":
             return WbtcIbBtcLpProvisioner(self, isUniswap=True)
         if settId in [
-            "native.convexRenCrv",
-            "native.convexSbtcCrv",
-            "native.convexTbtcCrv",
-        ]:
-            return ConvexProvisioner(self)
-        if settId in [
+            "native.renCrv",
+            "native.sbtcCrv",
+            "native.tbtcCrv",
             "native.hbtcCrv",
             "native.pbtcCrv",
             "native.obtcCrv",

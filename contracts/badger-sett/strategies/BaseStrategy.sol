@@ -105,7 +105,7 @@ abstract contract BaseStrategy is PausableUpgradeable, SettAccessControl {
     function isTendable() public virtual view returns (bool) {
         return false;
     }
-    
+
     function isProtectedToken(address token) public view returns (bool) {
         address[] memory protectedTokens = getProtectedTokens();
         for (uint256 i = 0; i < protectedTokens.length; i++) {
@@ -115,7 +115,7 @@ abstract contract BaseStrategy is PausableUpgradeable, SettAccessControl {
         }
         return false;
     }
-    
+
     /// ===== Permissioned Actions: Governance =====
 
     function setGuardian(address _guardian) external {
@@ -259,7 +259,7 @@ abstract contract BaseStrategy is PausableUpgradeable, SettAccessControl {
         require(_vault != address(0), "!vault"); // additional protection so we don't burn the funds
         IERC20Upgradeable(want).safeTransfer(_vault, _amount);
     }
-    
+
     /// @notice Utility function to diff two numbers, expects higher value in first position
     function _diff(uint256 a, uint256 b) internal pure returns (uint256) {
         require(a >= b, "diff/expected-higher-number-in-first-position");

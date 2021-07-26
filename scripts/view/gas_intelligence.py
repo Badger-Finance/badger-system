@@ -5,6 +5,7 @@ import json
 import os
 from time import time
 from dotmap import DotMap
+from typing import List, Tuple
 
 """
 Find the cheapest gas price that could be expected to get mined in a reasonable amount of time.
@@ -52,7 +53,7 @@ def initialize_elastic(network: str) -> any:
 
 
 # fetch average hourly gas prices over the last specified hours
-def fetch_gas_hour(network: str, hours=24) -> list[float]:
+def fetch_gas_hour(network: str, hours=24) -> List[float]:
     es = initialize_elastic(network)
     now = int(time())
     seconds = hours * 3600
@@ -88,7 +89,7 @@ def fetch_gas_hour(network: str, hours=24) -> list[float]:
 
 
 # fetch average gas prices per minute over the last specified minutes
-def fetch_gas_min(network: str, minutes=60) -> list[float]:
+def fetch_gas_min(network: str, minutes=60) -> List[float]:
     es = initialize_elastic(network)
     now = int(time())
     seconds = minutes * 60
@@ -123,7 +124,7 @@ def fetch_gas_min(network: str, minutes=60) -> list[float]:
     ]
 
 
-def is_outlier(points: list[float], thresh=3.5) -> list[bool]:
+def is_outlier(points: List[float], thresh=3.5) -> List[bool]:
     """
     Returns a boolean array with True if points are outliers and False
     otherwise.
@@ -160,7 +161,7 @@ def is_outlier(points: list[float], thresh=3.5) -> list[bool]:
 # main entry point
 def analyze_gas(
     options={"timeframe": "minutes", "periods": 60}
-) -> tuple[int, int, int]:
+) -> Tuple[int, int, int]:
     if not os.path.isfile(os.path.dirname(__file__) + CREDENTIALS):
         print("Could not fetch historical gas data")
         return DotMap(
@@ -207,7 +208,7 @@ def analyze_gas(
 
 
 # run this to test analyze_gas and print values
-def main() -> tuple[int, int, int]:
+def main() -> Tuple[int, int, int]:
     results = analyze_gas()
     print("timeframe:", "minutes")
     print("approximate most common gas price:", to_gwei(results["mode"]))

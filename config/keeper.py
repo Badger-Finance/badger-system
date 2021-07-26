@@ -16,7 +16,7 @@ setts_to_skip = {
             # "native.tbtcCrv",
             "native.convexTbtcCrv",
             "native.uniBadgerWbtc",
-            # "harvest.renCrv",
+            "harvest.renCrv",
             "native.sushiWbtcEth",
             "native.sushiBadgerWbtc",
             "native.digg",
@@ -68,22 +68,22 @@ setts_to_skip = {
             # "native.tbtcCrv",
             "native.convexTbtcCrv",
             "native.uniBadgerWbtc",
-            # "harvest.renCrv",
-            # "native.sushiWbtcEth",
-            # "native.sushiBadgerWbtc",
+            "harvest.renCrv",
+            "native.sushiWbtcEth",
+            "native.sushiBadgerWbtc",
             "native.digg",
             "native.uniDiggWbtc",
-            # "native.sushiDiggWbtc",
+            "native.sushiDiggWbtc",
             "yearn.wbtc",
-            # "experimental.sushiIBbtcWbtc",
+            "experimental.sushiIBbtcWbtc",
             "experimental.digg",
-            # "native.hbtcCrv",
-            # "native.pbtcCrv",
-            # "native.obtcCrv",
-            # "native.bbtcCrv",
-            # "native.tricrypto",
-            # "native.cvxCrv",
-            # "native.cvx",
+            "native.hbtcCrv",
+            "native.pbtcCrv",
+            "native.obtcCrv",
+            "native.bbtcCrv",
+            "native.tricrypto",
+            "native.cvxCrv",
+            "native.cvx",
         ],
     },
     "bsc": {
@@ -94,8 +94,16 @@ setts_to_skip = {
 }
 
 run_intervals = {
-    "eth": {"harvest": days(1), "tend": hours(12), "earn": minutes(60),},
-    "bsc": {"harvest": minutes(10), "tend": minutes(15), "earn": minutes(10),},
+    "eth": {
+        "harvest": days(1),
+        "tend": hours(12),
+        "earn": minutes(60),
+    },
+    "bsc": {
+        "harvest": minutes(10),
+        "tend": minutes(15),
+        "earn": minutes(10),
+    },
 }
 
 earn_default_percentage_threshold = 0.01

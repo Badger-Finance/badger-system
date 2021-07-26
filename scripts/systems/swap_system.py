@@ -54,7 +54,9 @@ def connect_swap(badger_deploy_file):
     swap = SwapSystem(
         badger_deploy["deployer"],
         Contract.from_abi(
-            "ProxyAdmin", web3.toChecksumAddress(badger_deploy["devProxyAdmin"]), abi,
+            "ProxyAdmin",
+            web3.toChecksumAddress(badger_deploy["devProxyAdmin"]),
+            abi,
         ),
         swap_config,
     )
@@ -63,7 +65,11 @@ def connect_swap(badger_deploy_file):
     # arguments: (attr name, address)
     strategies = swap_deploy["strategies"]
     connectable = [
-        ("curve", "CurveSwapStrategy", strategies["curve"],),
+        (
+            "curve",
+            "CurveSwapStrategy",
+            strategies["curve"],
+        ),
     ]
     for args in connectable:
         swap.connect_strategy(*args)
@@ -118,10 +124,12 @@ class SwapSystem:
         deployer = self.deployer
         self.logic = DotMap(
             CurveSwapStrategy=CurveSwapStrategy.deploy(
-                {"from": deployer}, publish_source=self.publish_source,
+                {"from": deployer},
+                publish_source=self.publish_source,
             ),
             SwapStrategyRouter=SwapStrategyRouter.deploy(
-                {"from": deployer}, publish_source=self.publish_source,
+                {"from": deployer},
+                publish_source=self.publish_source,
             ),
         )
 
@@ -133,7 +141,9 @@ class SwapSystem:
             SwapStrategyRouter.abi,
             self.logic.SwapStrategyRouter.address,
             web3.toChecksumAddress(devProxyAdmin.address),
-            self.logic.SwapStrategyRouter.initialize.encode_input(admin.address,),
+            self.logic.SwapStrategyRouter.initialize.encode_input(
+                admin.address,
+            ),
             self.deployer,
         )
 
@@ -147,7 +157,8 @@ class SwapSystem:
             self.logic.CurveSwapStrategy.address,
             web3.toChecksumAddress(devProxyAdmin.address),
             self.logic.CurveSwapStrategy.initialize.encode_input(
-                admin.address, config.strategies.curve.registry,
+                admin.address,
+                config.strategies.curve.registry,
             ),
             self.deployer,
         )
@@ -191,7 +202,9 @@ class SwapSystem:
         deployer = self.deployer
         strategy = MockSwapStrategy.deploy({"from": deployer})
         router = MockSwapStrategyRouter.deploy(
-            strategy, router_fail, {"from": deployer},
+            strategy,
+            router_fail,
+            {"from": deployer},
         )
 
         self.mocks.router = router

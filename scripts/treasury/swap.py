@@ -45,13 +45,13 @@ def printUniTrade(method, params):
 def swap_transfer(recipient, params):
     badger = connect_badger("deploy-final.json")
 
-    badger.treasuryMultisig = connect_gnosis_safe(
+    badger.paymentsMultisig = connect_gnosis_safe(
         "0xD4868d98849a58F743787c77738D808376210292"
     )
 
     expectedMultisig = "0xB65cef03b9B89f99517643226d76e286ee999e77"
     assert badger.devMultisig == expectedMultisig
-    multi = GnosisSafe(badger.treasuryMultisig)
+    multi = GnosisSafe(badger.paymentsMultisig)
 
     one_wei = Wei("1")
 
@@ -68,7 +68,8 @@ def swap_transfer(recipient, params):
     # Note: The allowance must first be set to 0
     id = multi.addTx(
         MultisigTxMetadata(
-            description="Approve UNI Router to send BADGER", operation="call",
+            description="Approve UNI Router to send BADGER",
+            operation="call",
         ),
         params={
             "to": badger.token.address,
@@ -81,7 +82,8 @@ def swap_transfer(recipient, params):
     # Set proper allowance
     id = multi.addTx(
         MultisigTxMetadata(
-            description="Approve UNI Router to send BADGER", operation="call",
+            description="Approve UNI Router to send BADGER",
+            operation="call",
         ),
         params={
             "to": badger.token.address,
@@ -96,24 +98,24 @@ def swap_transfer(recipient, params):
     console.print(
         {
             "rewardsEscrowBalance": val(
-                badger.token.balanceOf(badger.treasuryMultisig)
+                badger.token.balanceOf(badger.paymentsMultisig)
             ),
             "rewardsEscrowRouterAllowance": val(
-                badger.token.allowance(badger.treasuryMultisig, uniswap.router)
+                badger.token.allowance(badger.paymentsMultisig, uniswap.router)
             ),
             "max_in": val(params["max_in"]),
         }
     )
 
-    assert badger.token.balanceOf(badger.treasuryMultisig) > params["max_in"]
+    assert badger.token.balanceOf(badger.paymentsMultisig) > params["max_in"]
     assert (
-        badger.token.allowance(badger.treasuryMultisig, uniswap.router)
+        badger.token.allowance(badger.paymentsMultisig, uniswap.router)
         >= params["max_in"]
     )
 
     # === Trade Badger ===
-    before = end_token.balanceOf(badger.treasuryMultisig)
-    beforeBadger = badger.token.balanceOf(badger.treasuryMultisig)
+    before = end_token.balanceOf(badger.paymentsMultisig)
+    beforeBadger = badger.token.balanceOf(badger.paymentsMultisig)
 
     console.print({"EAO": params["exact_amount_out"]})
 
@@ -121,7 +123,9 @@ def swap_transfer(recipient, params):
 
     id = multi.addTx(
         MultisigTxMetadata(
-            description="Trade Badger for output token", operation="call", callInfo={},
+            description="Trade Badger for output token",
+            operation="call",
+            callInfo={},
         ),
         params={
             "to": uniswap.router.address,
@@ -129,7 +133,7 @@ def swap_transfer(recipient, params):
                 params["exact_amount_out"],
                 int(params["max_in"] * 1.5),
                 params["path"],
-                badger.treasuryMultisig,
+                badger.paymentsMultisig,
                 expiration,
             ),
         },
@@ -145,7 +149,7 @@ def swap_transfer(recipient, params):
             params["exact_amount_out"],
             int(params["max_in"] * 1.5),
             params["path"],
-            badger.treasuryMultisig,
+            badger.paymentsMultisig,
             expiration,
         ),
     )
@@ -154,13 +158,13 @@ def swap_transfer(recipient, params):
     console.print(
         {
             "before_input_coin": val(beforeBadger),
-            "after_input_coin": val(badger.token.balanceOf(badger.treasuryMultisig)),
+            "after_input_coin": val(badger.token.balanceOf(badger.paymentsMultisig)),
             "change_input_coin": val(
-                beforeBadger - badger.token.balanceOf(badger.treasuryMultisig)
+                beforeBadger - badger.token.balanceOf(badger.paymentsMultisig)
             ),
             "before_output_coin": val(before, decimals=end_token.decimals()),
             "post_output_coin": val(
-                end_token.balanceOf(badger.treasuryMultisig),
+                end_token.balanceOf(badger.paymentsMultisig),
                 decimals=end_token.decimals(),
             ),
             "end_token": end_token,
@@ -168,7 +172,7 @@ def swap_transfer(recipient, params):
         }
     )
 
-    assert end_token.balanceOf(badger.treasuryMultisig) >= params["exact_amount_out"]
+    assert end_token.balanceOf(badger.paymentsMultisig) >= params["exact_amount_out"]
     console.print("\n[green] ✅ Actions Complete [/green]")
 
 

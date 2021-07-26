@@ -39,21 +39,21 @@ contract StrategyPlaceholder is BaseStrategy {
         return "1.0";
     }
 
-    function getName() external pure override returns (string memory) {
+    function getName() external override pure returns (string memory) {
         return "StrategyPlaceholder";
     }
 
-    function balanceOfPool() public view override returns (uint256) {
+    function balanceOfPool() public override view returns (uint256) {
         return 0;
     }
 
-    function getProtectedTokens() public view override returns (address[] memory) {
+    function getProtectedTokens() public override view returns (address[] memory) {
         address[] memory protectedTokens = new address[](2);
         protectedTokens[0] = want;
         return protectedTokens;
     }
 
-    function isTendable() public view override returns (bool) {
+    function isTendable() public override view returns (bool) {
         return false;
     }
 
@@ -63,12 +63,10 @@ contract StrategyPlaceholder is BaseStrategy {
     }
 
     /// @dev Deposit Badger into the staking contract
-    function _deposit(uint256 _want) internal override {
-    }
+    function _deposit(uint256 _want) internal override {}
 
     /// @dev Unroll from all strategy positions, and transfer non-core tokens to controller rewards
-    function _withdrawAll() internal override {
-    }
+    function _withdrawAll() internal override {}
 
     /// @dev Withdraw want from staking rewards, using earnings first
     function _withdrawSome(uint256 _amount) internal override returns (uint256) {

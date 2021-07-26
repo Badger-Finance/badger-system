@@ -1,9 +1,10 @@
 from helpers.sett.resolvers.StrategyCoreResolver import StrategyCoreResolver
-from brownie import interface, accounts
+from brownie import *
 from helpers.multicall import Call, as_wei, func
 from rich.console import Console
-from helpers.utils import val
+from helpers.utils import val, approx
 from tabulate import tabulate
+from helpers.registry import registry
 
 console = Console()
 
@@ -12,24 +13,46 @@ class StrategyConvexStakingOptimizerResolver(StrategyCoreResolver):
 
     # ===== override default =====
     def confirm_harvest_events(self, before, after, tx):
-        key = "HarvestState"
+        key = "TreeDistribution"
         assert key in tx.events
-        assert len(tx.events[key]) == 1
-        event = tx.events[key][0]
-        keys = [
-            "xSushiHarvested",
-            "totalxSushi",
-            "toStrategist",
-            "toGovernance",
-            "toBadgerTree",
-            "timestamp",
-            "blockNumber",
-        ]
-        for key in keys:
-            assert key in event
+        assert len(tx.events[key]) >= 1
+        for event in tx.events[key]:
+            keys = [
+                "token",
+                "amount",
+                "blockNumber",
+                "timestamp",
+            ]
+            for key in keys:
+                assert key in event
 
-        console.print("[blue]== Convex Strat harvest() State ==[/blue]")
-        self.printState(event, keys)
+            console.print(
+                "[blue]== Convex Strat harvest() TreeDistribution State ==[/blue]"
+            )
+            self.printState(event, keys)
+
+        key = "PerformanceFeeGovernance"
+        assert key in tx.events
+        assert len(tx.events[key]) >= 1
+        for event in tx.events[key]:
+            keys = [
+                "destination",
+                "token",
+                "amount",
+                "blockNumber",
+                "timestamp",
+            ]
+            for key in keys:
+                assert key in event
+
+            console.print(
+                "[blue]== Convex Strat harvest() PerformanceFeeGovernance State ==[/blue]"
+            )
+            self.printState(event, keys)
+
+        key = "PerformanceFeeStrategist"
+        assert key not in tx.events
+        # Strategist performance fee is set to 0
 
     def confirm_tend_events(self, before, after, tx):
         key = "Tend"
@@ -62,8 +85,12 @@ class StrategyConvexStakingOptimizerResolver(StrategyCoreResolver):
 
     def printState(self, event, keys):
         table = []
+        nonAmounts = ["token", "destination", "blockNumber", "timestamp"]
         for key in keys:
-            table.append([key, val(event[key])])
+            if key in nonAmounts:
+                table.append([key, event[key]])
+            else:
+                table.append([key, val(event[key])])
 
         print(tabulate(table, headers=["account", "value"]))
 
@@ -72,7 +99,7 @@ class StrategyConvexStakingOptimizerResolver(StrategyCoreResolver):
         console.print("=== Compare Convex Harvest() ===")
 
         # Harvest event emission not yet implemented
-        # self.confirm_harvest_events(before, after, tx)
+        self.confirm_harvest_events(before, after, tx)
 
         super().confirm_harvest(before, after, tx)
 
@@ -82,6 +109,84 @@ class StrategyConvexStakingOptimizerResolver(StrategyCoreResolver):
         # PPFS should not decrease
         assert after.get("sett.pricePerFullShare") >= before.get(
             "sett.pricePerFullShare"
+        )
+        # 80% of collected cvx is deposited on helper vaults
+        assert approx(
+            (
+                after.balances("cvx", "cvxHelperVault")
+                - before.balances("cvx", "cvxHelperVault")
+            ),
+            abs(
+                before.balances("cvx", "cvxRewardsPool")
+                - after.balances("cvx", "cvxRewardsPool")
+            )
+            * 0.8,
+            1,
+        )
+        # 80% of collected cvxCrv is deposited on helper vaults
+        assert approx(
+            (
+                after.balances("cvxCrv", "cvxCrvHelperVault")
+                - before.balances("cvxCrv", "cvxCrvHelperVault")
+            ),
+            abs(
+                before.balances("cvxCrv", "cvxCrvRewardsPool")
+                - after.balances("cvxCrv", "cvxCrvRewardsPool")
+            )
+            * 0.8,
+            1,
+        )
+        # Check that helper vault shares were distributed correctly:
+        cvxHelperVault = SettV4.at(registry.convex.cvxHelperVault)
+        cvxCrvHelperVault = SettV4.at(registry.convex.cvxCrvHelperVault)
+
+        # 80% of cvxHelperVault shares were distributed through the tree
+        assert approx(
+            (
+                after.balances("cvx", "cvxHelperVault")
+                - before.balances("cvx", "cvxHelperVault")
+            )
+            * (cvxHelperVault.getPricePerFullShare() / 1e18)
+            * 0.8,
+            after.balances("bCvx", "badgerTree")
+            - before.balances("bCvx", "badgerTree"),
+            1,
+        )
+        # 20% of cvxHelperVault shares were distributed through the tree
+        assert approx(
+            (
+                after.balances("cvx", "cvxHelperVault")
+                - before.balances("cvx", "cvxHelperVault")
+            )
+            * (cvxHelperVault.getPricePerFullShare() / 1e18)
+            * 0.2,
+            after.balances("bCvx", "governanceRewards")
+            - before.balances("bCvx", "governanceRewards"),
+            1,
+        )
+        # 80% of cvxCrvHelperVault shares were distributed through the tree
+        assert approx(
+            (
+                after.balances("cvxCrv", "cvxCrvHelperVault")
+                - before.balances("cvxCrv", "cvxCrvHelperVault")
+            )
+            * (cvxHelperVault.getPricePerFullShare() / 1e18)
+            * 0.8,
+            after.balances("bCvxCrv", "badgerTree")
+            - before.balances("bCvxCrv", "badgerTree"),
+            1,
+        )
+        # 20% of cvxCrvHelperVault shares were distributed through the tree
+        assert approx(
+            (
+                after.balances("cvxCrv", "cvxCrvHelperVault")
+                - before.balances("cvxCrv", "cvxCrvHelperVault")
+            )
+            * (cvxHelperVault.getPricePerFullShare() / 1e18)
+            * 0.2,
+            after.balances("bCvxCrv", "governanceRewards")
+            - before.balances("bCvxCrv", "governanceRewards"),
+            1,
         )
 
     def confirm_tend(self, before, after, tx):
@@ -126,6 +231,8 @@ class StrategyConvexStakingOptimizerResolver(StrategyCoreResolver):
         entities["cvxCrvRewardsPool"] = self.manager.strategy.cvxCrvRewardsPool()
         entities["cvxRewardsPool"] = self.manager.strategy.cvxRewardsPool()
         entities["baseRewardsPool"] = self.manager.strategy.baseRewardsPool()
+        entities["cvxHelperVault"] = registry.convex.cvxHelperVault
+        entities["cvxCrvHelperVault"] = registry.convex.cvxCrvHelperVault
 
         super().add_entity_balances_for_tokens(calls, tokenKey, token, entities)
         return calls
@@ -142,8 +249,8 @@ class StrategyConvexStakingOptimizerResolver(StrategyCoreResolver):
         wbtc = interface.IERC20("0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599")
         usdc = interface.IERC20("0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48")
         cvxCrv = interface.IERC20(strategy.cvxCrv())
-        cvxCRV_CRV_SLP = interface.IERC20(strategy.cvxCRV_CRV_SLP())
-        CVX_ETH_SLP = interface.IERC20(strategy.CVX_ETH_SLP())
+        bCvx = interface.IERC20(registry.convex.cvxHelperVault)
+        bCvxCrv = interface.IERC20(registry.convex.cvxCrvHelperVault)
 
         calls = self.add_entity_balances_for_tokens(calls, "crv", crv, entities)
         calls = self.add_entity_balances_for_tokens(calls, "cvx", cvx, entities)
@@ -153,52 +260,7 @@ class StrategyConvexStakingOptimizerResolver(StrategyCoreResolver):
         calls = self.add_entity_balances_for_tokens(calls, "WBTC", wbtc, entities)
         calls = self.add_entity_balances_for_tokens(calls, "USDC", usdc, entities)
         calls = self.add_entity_balances_for_tokens(calls, "cvxCrv", cvxCrv, entities)
-        calls = self.add_entity_balances_for_tokens(
-            calls, "cvxCRV_CRV_SLP", cvxCRV_CRV_SLP, entities
-        )
-        calls = self.add_entity_balances_for_tokens(
-            calls, "CVX_ETH_SLP", CVX_ETH_SLP, entities
-        )
-
-        return calls
-
-    def add_strategy_snap(self, calls, entities=None):
-        super().add_strategy_snap(calls)
-
-        strategy = self.manager.strategy
-
-        cvxCRV_CRV_SLP_Pid = strategy.cvxCRV_CRV_SLP_Pid()
-        CVX_ETH_SLP_Pid = strategy.CVX_ETH_SLP_Pid()
-
-        convexMasterChef = strategy.convexMasterChef()
-
-        if entities:
-            for entityKey, entity in entities.items():
-                calls.append(
-                    Call(
-                        convexMasterChef,
-                        [func.sushiChef.userInfo, cvxCRV_CRV_SLP_Pid, entity],
-                        [
-                            [
-                                "convexMasterChef.userInfo.cvxCRV_CRV_SLP_Pid."
-                                + entityKey,
-                                as_wei,
-                            ]
-                        ],
-                    )
-                )
-                calls.append(
-                    Call(
-                        convexMasterChef,
-                        [func.sushiChef.userInfo, CVX_ETH_SLP_Pid, entity],
-                        [
-                            [
-                                "convexMasterChef.userInfo.CVX_ETH_SLP_Pid."
-                                + entityKey,
-                                as_wei,
-                            ]
-                        ],
-                    )
-                )
+        calls = self.add_entity_balances_for_tokens(calls, "bCvx", bCvx, entities)
+        calls = self.add_entity_balances_for_tokens(calls, "bCvxCrv", bCvxCrv, entities)
 
         return calls

@@ -8,6 +8,7 @@ class ChainRegistry:
     def __init__(
         self,
         curve=None,
+        convex=None,
         uniswap=None,
         open_zeppelin=None,
         aragon=None,
@@ -32,6 +33,7 @@ class ChainRegistry:
         digg=None
     ):
         self.curve = curve
+        self.convex = convex
         self.uniswap = uniswap
         self.open_zeppelin = open_zeppelin
         self.aragon = aragon

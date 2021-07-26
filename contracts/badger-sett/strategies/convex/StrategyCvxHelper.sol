@@ -49,6 +49,7 @@ contract StrategyCvxHelper is BaseStrategy, CurveSwapper, UniswapSwapper, TokenS
     CrvDepositor public constant crvDepositor = CrvDepositor(0x8014595F2AB54cD7c604B00E9fb932176fDc86Ae); // Convert CRV -> cvxCRV/ETH SLP
     IBooster public constant booster = IBooster(0xF403C135812408BFbE8713b5A23a04b3D48AAE31);
     ICvxRewardsPool public constant cvxRewardsPool = ICvxRewardsPool(0xCF50b810E57Ac33B91dCF525C6ddd9881B139332);
+    IBaseRewardsPool public constant cvxCrvRewardsPool = IBaseRewardsPool(0x3Fe65692bfCD0e6CF84cB1E7d24108E434A7587e);
     uint256 public constant MAX_UINT_256 = uint256(-1);
 
     event HarvestState(uint256 timestamp, uint256 blockNumber);
@@ -94,22 +95,22 @@ contract StrategyCvxHelper is BaseStrategy, CurveSwapper, UniswapSwapper, TokenS
         return "1.0";
     }
 
-    function getName() external pure override returns (string memory) {
+    function getName() external override pure returns (string memory) {
         return "StrategyCvxHelper";
     }
 
-    function balanceOfPool() public view override returns (uint256) {
+    function balanceOfPool() public override view returns (uint256) {
         return cvxRewardsPool.balanceOf(address(this));
     }
 
-    function getProtectedTokens() public view override returns (address[] memory) {
+    function getProtectedTokens() public override view returns (address[] memory) {
         address[] memory protectedTokens = new address[](2);
         protectedTokens[0] = want;
         protectedTokens[1] = cvx;
         return protectedTokens;
     }
 
-    function isTendable() public view override returns (bool) {
+    function isTendable() public override view returns (bool) {
         return false;
     }
 
@@ -139,7 +140,7 @@ contract StrategyCvxHelper is BaseStrategy, CurveSwapper, UniswapSwapper, TokenS
         if (_preWant < _amount) {
             uint256 _toWithdraw = _amount.sub(_preWant);
             cvxRewardsPool.withdraw(_toWithdraw, false);
-            
+
             // Note: Withdrawl process will earn sushi, this will be deposited into SushiBar on next tend()
         }
 
@@ -155,7 +156,7 @@ contract StrategyCvxHelper is BaseStrategy, CurveSwapper, UniswapSwapper, TokenS
 
     function _tendGainsFromPositions() internal {
         if (cvxRewardsPool.earned(address(this)) > 0) {
-            cvxRewardsPool.getReward(true);
+            cvxRewardsPool.getReward(false);
         }
     }
 
@@ -164,6 +165,11 @@ contract StrategyCvxHelper is BaseStrategy, CurveSwapper, UniswapSwapper, TokenS
         // 1. Harvest gains from positions
         _tendGainsFromPositions();
 
+        uint256 stakedCvxCrv = cvxCrvRewardsPool.balanceOf(address(this));
+        if (stakedCvxCrv > 0) {
+            cvxCrvRewardsPool.withdraw(stakedCvxCrv, true);
+        }
+        
         // 2. Swap cvxCRV tokens to CVX
         uint256 cvxCrvBalance = cvxCrvToken.balanceOf(address(this));
 
@@ -173,10 +179,11 @@ contract StrategyCvxHelper is BaseStrategy, CurveSwapper, UniswapSwapper, TokenS
 
         // Track harvested + converted coin balance of want
         cvxHarvested = cvxToken.balanceOf(address(this));
+        _processFee(cvx, cvxHarvested, performanceFeeGovernance, IController(controller).rewards());
 
         // 3. Stake all CVX
         if (cvxHarvested > 0) {
-            cvxRewardsPool.stake(cvxHarvested);
+            cvxRewardsPool.stake(cvxToken.balanceOf(address(this)));
         }
 
         emit Tend(cvxHarvested);

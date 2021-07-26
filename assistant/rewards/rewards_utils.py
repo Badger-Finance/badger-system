@@ -1,4 +1,3 @@
-from helpers.constants import NO_GEYSERS, CONVEX_SETTS
 from brownie import *
 from rich.console import Console
 from collections import Counter
@@ -8,24 +7,10 @@ from assistant.subgraph.client import (
 )
 from assistant.rewards.classes.RewardsList import RewardsList
 from assistant.rewards.classes.UserBalance import UserBalance, UserBalances
-from helpers.constants import NO_GEYSERS
+from helpers.constants import NO_GEYSERS, REWARDS_BLACKLIST
 from functools import lru_cache
 
-blacklist = [
-    "0x19D97D8fA813EE2f51aD4B4e04EA08bAf4DFfC28",
-    "0x6dEf55d2e18486B9dDfaA075bc4e4EE0B28c1545",
-    "0xd04c48A53c111300aD41190D63681ed3dAd998eC",
-    "0xb9D076fDe463dbc9f915E5392F807315Bf940334",
-    "0x235c9e24D3FB2FAFd58a2E49D454Fdcd2DBf7FF1",
-    "0xAf5A1DECfa95BAF63E0084a35c62592B774A2A87",
-    "0x1862A18181346EBd9EdAf800804f89190DeF24a5",
-    "0x758a43ee2bff8230eeb784879cdcff4828f2544d",
-    "0xC17078FDd324CC473F8175Dc5290fae5f2E84714",
-    "0x88128580ACdD9c04Ce47AFcE196875747bF2A9f6",
-    "0x7e7E112A68d8D2E221E11047a72fFC1065c38e1a",
-]
 
-cream_addresses = {"native.badger": "0x8b950f43fcac4931d408f1fcda55c6cb6cbf3096"}
 console = Console()
 
 
@@ -161,20 +146,6 @@ def get_latest_event_block(firstEvent, events):
         return -1
 
 
-def calc_meta_farm_rewards(badger, name, startBlock, endBlock):
-    console.log("Calculating rewards between {} and {}".format(startBlock, endBlock))
-    startBlock = int(startBlock)
-    endBlock = int(endBlock)
-    startBlockTime = web3.eth.getBlock(startBlock)["timestamp"]
-    endBlockTime = web3.eth.getBlock(endBlock)["timestamp"]
-    sett = badger.getSett(name)
-
-    balances = calculate_sett_balances(badger, name, endBlock)
-    # TODO: Do we want to use  multiple snapshots
-    # here or just the end?
-    return balances
-
-
 def calc_balances_from_geyser_events(geyserEvents):
     balances = {}
     events = [*geyserEvents["stakes"], *geyserEvents["unstakes"]]
@@ -203,7 +174,6 @@ def calculate_sett_balances(badger, name, currentBlock):
     sett = badger.getSett(name)
     underlyingToken = sett.address
     settType = ["", ""]
-    console.log(name)
     if "uni" in name or "sushi" in name:
         settType[0] = "halfLP"
     if "crv" in name.lower() or name == "experimental.sushiIBbtcWbtc":
@@ -227,11 +197,19 @@ def calculate_sett_balances(badger, name, currentBlock):
     balances = {}
     for b in [settBalances, geyserBalances, creamBalances]:
         balances = dict(Counter(balances) + Counter(b))
+
     # Get rid of blacklisted and negative balances
-    for addr, balance in balances.items():
-        if addr in blacklist or balance < 0:
+    for addr, balance in list(balances.items()):
+        if addr in map(REWARDS_BLACKLIST.keys(), lambda a: a.lower()):
+            console.log(
+                "Removing {} from balances".format(REWARDS_BLACKLIST[addr.lower()])
+            )
+            del balances[addr]
+        if balance < 0:
             del balances[addr]
 
+    # Testing for peak address
+    # balances["0x41671BA1abcbA387b9b2B752c205e22e916BE6e3".lower()] = 10000
     userBalances = [
         UserBalance(addr, bal, underlyingToken, settType)
         for addr, bal in balances.items()

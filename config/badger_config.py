@@ -19,6 +19,7 @@ harvest = registry.harvest
 sushi = registry.sushi
 pools = curve.pools
 chainlink = registry.chainlink
+convex = registry.convex
 
 sett_config = DotMap(
     native=DotMap(
@@ -52,7 +53,7 @@ sett_config = DotMap(
                 lpComponent=registry.tokens.wbtc,
                 performanceFeeStrategist=1000,
                 performanceFeeGovernance=1000,
-                withdrawalFee=50,
+                withdrawalFee=20,
                 keepCRV=0,
             ),
         ),
@@ -66,7 +67,7 @@ sett_config = DotMap(
                 lpComponent=registry.tokens.wbtc,
                 performanceFeeStrategist=1000,
                 performanceFeeGovernance=1000,
-                withdrawalFee=50,
+                withdrawalFee=20,
                 keepCRV=0,
             ),
         ),
@@ -80,7 +81,7 @@ sett_config = DotMap(
                 lpComponent=registry.tokens.wbtc,
                 performanceFeeStrategist=1000,
                 performanceFeeGovernance=1000,
-                withdrawalFee=50,
+                withdrawalFee=20,
                 keepCRV=0,
             ),
         ),
@@ -115,14 +116,16 @@ sett_config = DotMap(
                 want=pools.renCrv.token,
                 pid=curve.pids.renCrv,
                 lpComponent=registry.tokens.wbtc,
-                performanceFeeStrategist=1000,
-                performanceFeeGovernance=1000,
-                withdrawalFee=50,
+                performanceFeeStrategist=0,
+                performanceFeeGovernance=2000,
+                withdrawalFee=20,
                 curvePool=DotMap(
                     swap=registry.curve.pools.renCrv.swap,
                     wbtcPosition=1,
                     numElements=2,
                 ),
+                cvxHelperVault=convex.cvxHelperVault,
+                cvxCrvHelperVault=convex.cvxCrvHelperVault,
             ),
         ),
         convexSbtcCrv=DotMap(
@@ -131,14 +134,16 @@ sett_config = DotMap(
                 want=pools.sbtcCrv.token,
                 pid=curve.pids.sbtcCrv,
                 lpComponent=registry.tokens.wbtc,
-                performanceFeeStrategist=1000,
-                performanceFeeGovernance=1000,
-                withdrawalFee=50,
+                performanceFeeStrategist=0,
+                performanceFeeGovernance=2000,
+                withdrawalFee=20,
                 curvePool=DotMap(
                     swap=registry.curve.pools.sbtcCrv.swap,
                     wbtcPosition=1,
                     numElements=3,
                 ),
+                cvxHelperVault=convex.cvxHelperVault,
+                cvxCrvHelperVault=convex.cvxCrvHelperVault,
             ),
         ),
         convexTbtcCrv=DotMap(
@@ -147,14 +152,16 @@ sett_config = DotMap(
                 want=pools.tbtcCrv.token,
                 pid=curve.pids.tbtcCrv,
                 lpComponent=registry.tokens.wbtc,
-                performanceFeeStrategist=1000,
-                performanceFeeGovernance=1000,
-                withdrawalFee=50,
+                performanceFeeStrategist=0,
+                performanceFeeGovernance=2000,
+                withdrawalFee=20,
                 curvePool=DotMap(
                     swap=registry.curve.pools.tbtcCrv.swap,
                     wbtcPosition=2,
                     numElements=4,
                 ),
+                cvxHelperVault=convex.cvxHelperVault,
+                cvxCrvHelperVault=convex.cvxCrvHelperVault,
             ),
         ),
         convexHbtcCrv=DotMap(
@@ -163,14 +170,16 @@ sett_config = DotMap(
                 want=pools.hbtcCrv.token,
                 pid=curve.pids.hbtcCrv,
                 lpComponent=registry.tokens.wbtc,
-                performanceFeeStrategist=1000,
-                performanceFeeGovernance=1000,
-                withdrawalFee=50,
+                performanceFeeStrategist=0,
+                performanceFeeGovernance=2000,
+                withdrawalFee=20,
                 curvePool=DotMap(
                     swap=registry.curve.pools.hbtcCrv.swap,
                     wbtcPosition=1,
                     numElements=2,
                 ),
+                cvxHelperVault=convex.cvxHelperVault,
+                cvxCrvHelperVault=convex.cvxCrvHelperVault,
             ),
         ),
         convexObtcCrv=DotMap(
@@ -179,14 +188,16 @@ sett_config = DotMap(
                 want=pools.obtcCrv.token,
                 pid=curve.pids.obtcCrv,
                 lpComponent=registry.tokens.wbtc,
-                performanceFeeStrategist=1000,
-                performanceFeeGovernance=1000,
-                withdrawalFee=50,
+                performanceFeeStrategist=0,
+                performanceFeeGovernance=2000,
+                withdrawalFee=20,
                 curvePool=DotMap(
                     swap=registry.curve.pools.obtcCrv.swap,
                     wbtcPosition=2,
                     numElements=4,
                 ),
+                cvxHelperVault=convex.cvxHelperVault,
+                cvxCrvHelperVault=convex.cvxCrvHelperVault,
             ),
         ),
         convexPbtcCrv=DotMap(
@@ -195,14 +206,16 @@ sett_config = DotMap(
                 want=pools.pbtcCrv.token,
                 pid=curve.pids.pbtcCrv,
                 lpComponent=registry.tokens.wbtc,
-                performanceFeeStrategist=1000,
-                performanceFeeGovernance=1000,
-                withdrawalFee=50,
+                performanceFeeStrategist=0,
+                performanceFeeGovernance=2000,
+                withdrawalFee=20,
                 curvePool=DotMap(
                     swap=registry.curve.pools.pbtcCrv.swap,
                     wbtcPosition=2,
                     numElements=4,
                 ),
+                cvxHelperVault=convex.cvxHelperVault,
+                cvxCrvHelperVault=convex.cvxCrvHelperVault,
             ),
         ),
         convexBbtcCrv=DotMap(
@@ -211,14 +224,16 @@ sett_config = DotMap(
                 want=pools.bbtcCrv.token,
                 pid=curve.pids.bbtcCrv,
                 lpComponent=registry.tokens.wbtc,
-                performanceFeeStrategist=1000,
-                performanceFeeGovernance=1000,
-                withdrawalFee=50,
+                performanceFeeStrategist=0,
+                performanceFeeGovernance=2000,
+                withdrawalFee=20,
                 curvePool=DotMap(
                     swap=registry.curve.pools.bbtcCrv.swap,
                     wbtcPosition=2,
                     numElements=4,
                 ),
+                cvxHelperVault=convex.cvxHelperVault,
+                cvxCrvHelperVault=convex.cvxCrvHelperVault,
             ),
         ),
         convexTriCrypto=DotMap(
@@ -227,14 +242,16 @@ sett_config = DotMap(
                 want=pools.triCrypto.token,
                 pid=curve.pids.triCrypto,
                 lpComponent=registry.tokens.wbtc,
-                performanceFeeStrategist=1000,
-                performanceFeeGovernance=1000,
-                withdrawalFee=50,
+                performanceFeeStrategist=0,
+                performanceFeeGovernance=2000,
+                withdrawalFee=20,
                 curvePool=DotMap(
                     swap=registry.curve.pools.triCrypto.swap,
                     wbtcPosition=1,
                     numElements=3,
                 ),
+                cvxHelperVault=convex.cvxHelperVault,
+                cvxCrvHelperVault=convex.cvxCrvHelperVault,
             ),
         ),
     ),
@@ -245,7 +262,7 @@ sett_config = DotMap(
                 want=registry.tokens.cvx,
                 performanceFeeStrategist=1000,
                 performanceFeeGovernance=1000,
-                withdrawalFee=50,
+                withdrawalFee=20,
             ),
         ),
         cvxCrv=DotMap(
@@ -254,7 +271,7 @@ sett_config = DotMap(
                 want=registry.tokens.cvxCrv,
                 performanceFeeStrategist=1000,
                 performanceFeeGovernance=1000,
-                withdrawalFee=50,
+                withdrawalFee=20,
             ),
         ),
     ),
@@ -269,7 +286,7 @@ sett_config = DotMap(
                 pid=pickle.pids.pRenCrv,
                 performanceFeeStrategist=1000,
                 performanceFeeGovernance=1000,
-                withdrawalFee=50,
+                withdrawalFee=20,
             ),
         ),
     ),
@@ -285,7 +302,7 @@ sett_config = DotMap(
                 badgerTree=registry.harvest.badgerTree,
                 performanceFeeStrategist=1000,
                 performanceFeeGovernance=1000,
-                withdrawalFee=50,
+                withdrawalFee=20,
             ),
         ),
     ),
@@ -294,11 +311,16 @@ sett_config = DotMap(
             # Unfinished
             strategyName="StrategyDiggLpMetaFarm",
             params=DotMap(
-                performanceFeeStrategist=0, performanceFeeGovernance=0, withdrawalFee=0,
+                performanceFeeStrategist=0,
+                performanceFeeGovernance=0,
+                withdrawalFee=0,
             ),
         ),
         uniGenericLp=DotMap(
-            strategyName="StrategyUniGenericLp", params=DotMap(withdrawalFee=0,),
+            strategyName="StrategyUniGenericLp",
+            params=DotMap(
+                withdrawalFee=0,
+            ),
         ),
     ),
     sushi=DotMap(
@@ -319,7 +341,7 @@ sett_config = DotMap(
                 # want=pools.renCrv.token,
                 performanceFeeStrategist=1000,
                 performanceFeeGovernance=1000,
-                withdrawalFee=50,
+                withdrawalFee=20,
             ),
         ),
         sushiDiggWBtc=DotMap(
@@ -354,7 +376,7 @@ sett_config = DotMap(
             params=DotMap(
                 performanceFeeStrategist=1000,
                 performanceFeeGovernance=1000,
-                withdrawalFee=50,
+                withdrawalFee=20,
             ),
         ),
     ),
@@ -416,10 +438,13 @@ badger_config = DotMap(
     initialHuntAmount=badger_total_supply * 5 // 100,
     rewardsEscrowBadgerAmount=badger_total_supply * 40 // 100,
     tokenLockParams=DotMap(
-        badgerLockAmount=badger_total_supply * 35 // 100, lockDuration=days(30),
+        badgerLockAmount=badger_total_supply * 35 // 100,
+        lockDuration=days(30),
     ),
     teamVestingParams=DotMap(
-        startTime=globalStartTime, cliffDuration=days(30), totalDuration=days(365),
+        startTime=globalStartTime,
+        cliffDuration=days(30),
+        totalDuration=days(365),
     ),
     devMultisigParams=DotMap(
         threshold=1,
@@ -444,18 +469,47 @@ badger_config = DotMap(
     geyserParams=DotMap(
         badgerDistributionStart=globalStartTime,
         unlockSchedules=DotMap(
-            badger=[DotMap(amount=Wei("45000 ether"), duration=days(7),)],  # 1 week
+            badger=[
+                DotMap(
+                    amount=Wei("45000 ether"),
+                    duration=days(7),
+                )
+            ],  # 1 week
             uniBadgerWbtc=[
-                DotMap(amount=Wei("65000 ether"), duration=days(7),)  # 1 week
+                DotMap(
+                    amount=Wei("65000 ether"),
+                    duration=days(7),
+                )  # 1 week
             ],
-            bSbtcCrv=[DotMap(amount=Wei("76750 ether"), duration=days(7),)],  # 1 week
-            bRenCrv=[DotMap(amount=Wei("76750 ether"), duration=days(7),)],  # 1 week
-            bTbtcCrv=[DotMap(amount=Wei("76750 ether"), duration=days(7),)],  # 1 week
+            bSbtcCrv=[
+                DotMap(
+                    amount=Wei("76750 ether"),
+                    duration=days(7),
+                )
+            ],  # 1 week
+            bRenCrv=[
+                DotMap(
+                    amount=Wei("76750 ether"),
+                    duration=days(7),
+                )
+            ],  # 1 week
+            bTbtcCrv=[
+                DotMap(
+                    amount=Wei("76750 ether"),
+                    duration=days(7),
+                )
+            ],  # 1 week
             bSuperRenCrvPickle=[
-                DotMap(amount=Wei("76750 ether"), duration=days(7),)  # 1 week
+                DotMap(
+                    amount=Wei("76750 ether"),
+                    duration=days(7),
+                )  # 1 week
             ],
             bSuperRenCrvHarvest=[
-                DotMap(amount=Wei("76750 ether"), duration=days(7),)  # 1 week
+                DotMap(
+                    amount=Wei("76750 ether"),
+                    duration=days(7),
+                )  # 1 week
             ],
         ),
     ),
@@ -512,7 +566,8 @@ digg_config_test = DotMap(
         minimumProviders=1,
     ),
     centralizedOracleParams=DotMap(
-        owners=[AddressZero, AddressZero, AddressZero], threshold=1,
+        owners=[AddressZero, AddressZero, AddressZero],
+        threshold=1,
     ),
     tokenLockParams=DotMap(
         diggAmount=int(total_digg * dao_treasury_pct / 100), lockDuration=days(30)
@@ -530,7 +585,10 @@ digg_config_test = DotMap(
         unlockSchedules=DotMap(
             # Setting distribution amt to 25% for now.
             digg=[
-                DotMap(amount=1000 * (10 ** digg_decimals), duration=days(7),)
+                DotMap(
+                    amount=1000 * (10 ** digg_decimals),
+                    duration=days(7),
+                )
             ],  # 1 week
         ),
     ),
@@ -557,10 +615,13 @@ digg_config = DotMap(
     ),
     # cpi oracle always reports 1
     cpiOracleParams=DotMap(
-        reportExpirationTimeSec=5356800, reportDelaySec=86400, minimumProviders=1,
+        reportExpirationTimeSec=5356800,
+        reportDelaySec=86400,
+        minimumProviders=1,
     ),
     centralizedOracleParams=DotMap(
-        owners=[AddressZero, AddressZero, AddressZero], threshold=1,
+        owners=[AddressZero, AddressZero, AddressZero],
+        threshold=1,
     ),
     tokenLockParams=DotMap(
         diggAmount=int(total_digg * dao_treasury_pct / 100), lockDuration=days(7)

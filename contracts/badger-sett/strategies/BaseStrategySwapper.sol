@@ -91,7 +91,7 @@ abstract contract BaseStrategyMultiSwapper is BaseStrategy {
         return IUniswapV2Factory(factory).getPair(token0, token1);
     }
 
-    function _get_sushi_pair(address token0, address token1) internal view returns (address) { 
+    function _get_sushi_pair(address token0, address token1) internal view returns (address) {
         address factory = IUniswapRouterV2(sushiswap).factory();
         return IUniswapV2Factory(factory).getPair(token0, token1);
     }
@@ -146,7 +146,7 @@ abstract contract BaseStrategyMultiSwapper is BaseStrategy {
         uint256 _ethBalance = address(this).balance;
 
         _safeApproveHelper(token0, sushiswap, _token0Balance);
-        IUniswapRouterV2(sushiswap).addLiquidityETH{ value: address(this).balance }(token0, _token0Balance, 0, 0, address(this), block.timestamp);
+        IUniswapRouterV2(sushiswap).addLiquidityETH{value: address(this).balance}(token0, _token0Balance, 0, 0, address(this), block.timestamp);
     }
 
     uint256[50] private __gap;
