@@ -42,7 +42,7 @@ def badger_boost(badger: BadgerSystem, currentBlock: int):
     :param badger: badger system
     :param currentBlock: block to calculate boost at
     """
-    console.log("Calculating boost ...")
+    console.log("Calculating boost at block {} ...".format(currentBlock))
     nativeSetts, nonNativeSetts = calc_boost_data(badger, currentBlock)
     allAddreses = calc_union_addresses(nativeSetts, nonNativeSetts)
     badgerBoost = {}
