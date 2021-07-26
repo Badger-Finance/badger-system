@@ -1,4 +1,3 @@
-from helpers.constants import NO_GEYSERS, CONVEX_SETTS
 from brownie import *
 from rich.console import Console
 from collections import Counter
