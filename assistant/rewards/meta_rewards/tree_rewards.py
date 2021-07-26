@@ -10,8 +10,10 @@ from brownie import web3
 console = Console()
 
 
-def calc_tree_rewards(badger, startBlock, endBlock, nextCycle):
-
+def calc_tree_rewards(badger: BadgerSystem, startBlock: int, endBlock: int, nextCycle: int,chain: str):
+    """
+    Calculate extra rewards based on TreeDistribution events as part of farm and distribute.
+    """
     # sharesPerFragment = badger.digg.logic.UFragments._sharesPerFragment()
     # _, _2, ibbtc_balances = fetch_wallet_balances(sharesPerFragment, endBlock)
 

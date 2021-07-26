@@ -3,6 +3,7 @@ from scripts.systems.badger_system import BadgerSystem
 from typing import Dict
 
 
+@lru_cache(maxsize=128)
 def chain_snapshot(badger: BadgerSystem, chain: str, block: int):
     """
     Take a snapshot of a chains sett balances at a certain block
@@ -26,7 +27,12 @@ def chain_snapshot(badger: BadgerSystem, chain: str, block: int):
 
     return balancesBySett
 
+@lru_cache(maxsize=128)
+def sett_snapshot(badger, chain, block,sett):
+    return chain_snapshot(badger,chain,block)[sett]
 
+
+@lru_cache(maxsize=128)
 def parse_sett_balances(settAddress: str, balances: Dict[str, int], chain: str):
     """
     Blacklist balances and add metadata for boost

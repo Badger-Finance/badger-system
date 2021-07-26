@@ -10,7 +10,7 @@ from helpers.constants import (
     STAKE_RATIO_RANGES,
 )
 from collections import OrderedDict
-from assistant.rewards.rewards_utils import combine_balances, calculate_sett_balances
+from assistant.rewards.rewards_utils import combine_balances
 from tabulate import tabulate
 
 from assistant.rewards.classes.UserBalance import UserBalance, UserBalances
@@ -20,7 +20,7 @@ console = Console()
 boostInfo = {}
 
 
-def calc_stake_ratio(address, nativeSetts, nonNativeSetts):
+def calc_stake_ratio(address: str, nativeSetts: UserBalances, nonNativeSetts: UserBalances):
     """
     Calculate the stake ratio for an address
     :param address: address to find stake ratio for
@@ -36,7 +36,12 @@ def calc_stake_ratio(address, nativeSetts, nonNativeSetts):
     return stakeRatio
 
 
-def badger_boost(badger, currentBlock):
+def badger_boost(badger: BadgerSystem, currentBlock: int):
+    """
+    Calculate badger boost multipliers based on stake ratios
+    :param badger: badger system
+    :param currentBlock: block to calculate boost at
+    """
     console.log("Calculating boost ...")
     nativeSetts, nonNativeSetts = calc_boost_data(badger, currentBlock)
     allAddreses = calc_union_addresses(nativeSetts, nonNativeSetts)

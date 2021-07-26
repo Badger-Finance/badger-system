@@ -1,5 +1,4 @@
 from assistant.subgraph.client import fetch_tree_distributions
-from assistant.rewards.rewards_utils import calculate_sett_balances
 from assistant.badger_api.account import fetch_claimable_balances
 from helpers.constants import BCVX, BCVXCRV
 from rich.console import Console

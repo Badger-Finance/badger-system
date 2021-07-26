@@ -38,51 +38,33 @@ gas_strategy = gas_strategies.exponentialScalingFast
 console = Console()
 
 
-def calc_sett_rewards(badger, periodStartBlock, endBlock, cycle, unclaimedRewards):
+def calc_sett_rewards(
+    badger: BadgerSystem,
+    startBlock: int,
+    endBlock: int,
+    cycle: int,
+    chain: str,
+    unclaimedRewards: Dict[str, Dict[str, int]],
+    boost
+):
+
     """
-    Calculate rewards for each sett, and sum them
+    Calculate rewards for each sett on a chain and sum them
+    :param badger: badger system
+    :param startBlock: start of cycle
+    :param endBlock: end of cycle
+    :param cycle: number of current cycle
+    :param chain: chain to calculate rewards for
+    :param unclaimedRewards: all unclaimed rewards for users on current chain
+    :param boost: badger boost multipliers
     """
-    rewardsBySett = {}
-    noRewards = ["native.digg", "experimental.digg"]
-    boosts, boostInfo = badger_boost(badger, endBlock)
-    apyBoosts = {}
-    multiplierData = {}
-    for key, sett in badger.sett_system.vaults.items():
-        if key in noRewards:
-            continue
+    balancesBySett = chain_snapshot(badger, chain, endBlock)
+    rewards = []
+    for sett , balances in balancesBySett.items():
+        settRewards = calc_rewards(badger, sett, balances, startBlock, endBlock, chain, boost)
+        rewards.append(settRewards)
 
-        settRewards, apyBoost = calc_snapshot(
-            badger, key, periodStartBlock, endBlock, cycle, boosts, unclaimedRewards
-        )
-        if len(apyBoost) > 0:
-            minimum = min(apyBoost.values())
-            maximum = max(apyBoost.values())
-            multiplierData[sett.address] = {"min": minimum, "max": maximum}
-            for addr in apyBoost:
-                if addr not in apyBoosts:
-                    apyBoosts[addr] = {}
-                apyBoosts[addr][sett.address] = apyBoost[addr]
-
-        rewardsBySett[key] = settRewards
-
-    rewards = combine_rewards(list(rewardsBySett.values()), cycle, badger.badgerTree)
-    boostsMetadata = {"multiplierData": multiplierData, "userData": {}}
-
-    for addr, multipliers in apyBoosts.items():
-        boostsMetadata["userData"][addr] = {
-            "boost": boosts.get(addr, 1),
-            "multipliers": multipliers,
-            "nonNativeBalance": boostInfo.get(addr, {}).get("nonNativeBalance", 0),
-            "nativeBalance": boostInfo.get(addr, {}).get("nativeBalance", 0),
-            "stakeRatio": boostInfo.get(addr, {}).get("stakeRatio", 0),
-        }
-
-    with open("badger-boosts.json", "w") as fp:
-        json.dump(boostsMetadata, fp)
-
-    upload_boosts(test=True)
-
-    return rewards
+    return combine_rewards(rewards,cycle, badger.badgerTree)
 
 
 def fetchPendingMerkleData(badger):

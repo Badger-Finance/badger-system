@@ -111,6 +111,9 @@ def process_cumulative_rewards(current, new: RewardsList):
 def sum_rewards(sources, cycle, badgerTree):
     """
     Sum rewards from all given set of rewards' list, returning a single rewards list
+    :param sources: list of rewards lists
+    :param cycle: rewards cycle number
+    :param badgerTree: badgerTree contract
     """
     totals = RewardsList(cycle, badgerTree)
     total = 0
@@ -134,68 +137,8 @@ def sum_rewards(sources, cycle, badgerTree):
     return totals
 
 
-def calc_balances_from_geyser_events(geyserEvents):
-    balances = {}
-    events = [*geyserEvents["stakes"], *geyserEvents["unstakes"]]
-    events = sorted(events, key=lambda e: e["timestamp"])
-    currentTime = 0
-    for event in events:
-        timestamp = int(event["timestamp"])
-        assert timestamp >= currentTime
-        balances[event["user"]] = int(event["total"])
-
-    console.log("Sum of geyser balances: {}".format(sum(balances.values()) / 10 ** 18))
-    console.log("Fetched {} geyser balances".format(len(balances)))
-    return balances
-
-
 def combine_balances(balances):
     allBalances = UserBalances()
     for userBalances in balances:
         allBalances = allBalances + userBalances
     return allBalances
-
-
-@lru_cache(maxsize=None)
-def calculate_sett_balances(badger, name, currentBlock):
-    console.log("Fetching {} sett balances".format(name))
-    sett = badger.getSett(name)
-    underlyingToken = sett.address
-    settType = ["", ""]
-    if "uni" in name or "sushi" in name:
-        settType[0] = "halfLP"
-    if "crv" in name.lower() or name == "experimental.sushiIBbtcWbtc":
-        settType[0] = "fullLP"
-    if "badger" in name.lower() or "digg" in name.lower() or "eth" in name.lower():
-        settType[1] = "nonNative"
-    else:
-        settType[1] = "native"
-
-    settBalances = fetch_sett_balances(name, underlyingToken.lower(), currentBlock)
-    geyserBalances = {}
-    creamBalances = {}
-
-    if name not in NO_GEYSERS:
-
-        geyserAddr = badger.getGeyser(name).address.lower()
-        geyserEvents = fetch_geyser_events(geyserAddr, currentBlock)
-        geyserBalances = calc_balances_from_geyser_events(geyserEvents)
-        settBalances[geyserAddr] = 0
-
-    balances = {}
-    for b in [settBalances, geyserBalances, creamBalances]:
-        balances = dict(Counter(balances) + Counter(b))
-
-    # Get rid of blacklisted and negative balances
-    for addr, balance in list(balances.items()):
-        if addr in blacklist or balance < 0:
-            del balances[addr]
-
-    # Testing for peak address
-    # balances["0x41671BA1abcbA387b9b2B752c205e22e916BE6e3".lower()] = 10000
-    userBalances = [
-        UserBalance(addr, bal, underlyingToken, settType)
-        for addr, bal in balances.items()
-    ]
-    console.log("\n")
-    return UserBalances(userBalances)

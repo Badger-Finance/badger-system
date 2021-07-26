@@ -16,8 +16,11 @@ rewards_bucket = "badger-json"
 analytics_bucket = "badger-analytics"
 
 
-def download_latest_tree():
-
+def download_latest_tree(chain: str):
+    """
+    Download the latest merkle tree that was uploaded for a chain
+    :param chain: the chain from which to fetch the latest tree from
+    """
     s3 = boto3.client(
         "s3",
         aws_access_key_id=env_config.aws_access_key_id,
@@ -26,7 +29,7 @@ def download_latest_tree():
 
     target = {
         "bucket": merkle_bucket,
-        "key": "badger-tree.json",
+        "key": "badger-tree-{}.json".format(chain),
     }  # badger-api production
 
     console.print("Downloading latest rewards file from s3: " + target["bucket"])
@@ -35,14 +38,11 @@ def download_latest_tree():
     return s3_clientdata
 
 
-def download_tree(fileName):
-
-    s3 = boto3.client(
-        "s3",
-        aws_access_key_id=env_config.aws_access_key_id,
-        aws_secret_access_key=env_config.aws_secret_access_key,
-    )
-
+def download_tree(fileName: str):
+    """
+    Download a specific tree based on the merkle root of that tree
+    :param fileName: fileName of tree to download
+    """
     upload_bucket = "badger-json"
     upload_file_key = "rewards/" + fileName
 
@@ -55,7 +55,11 @@ def download_tree(fileName):
     return s3_clientdata
 
 
-def download_past_trees(number):
+def download_past_trees(number: int):
+    """
+    Download a number of past trees
+    :param number: number of trees to download from the latest
+    """
     trees = []
     key = "badger-tree.json"
     response = s3.list_object_versions(Prefix=key, Bucket=merkle_bucket)
@@ -70,7 +74,12 @@ def download_past_trees(number):
     return trees
 
 
-def upload(fileName, data, bucket="badger-json", publish=True):
+def upload(fileName: str, data: Dict, bucket="badger-json" : str, publish=True: bool):
+    """
+    Upload the badger tree to multiple buckets
+    :param fileName: the filename of the uploaded bucket
+    :param data: the data to push
+    """
     if not publish:
         upload_targets = [
             {
@@ -108,7 +117,10 @@ def upload(fileName, data, bucket="badger-json", publish=True):
         )
 
 
-def upload_boosts(test):
+def upload_boosts(test: bool):
+    """
+    Upload the boosts file to either prod or staging
+    """
     fileName = "badger-boosts.json"
 
     if test:
@@ -120,7 +132,12 @@ def upload_boosts(test):
     console.log("✅ Uploaded file to s3://" + bucket + "/" + fileName)
 
 
-def upload_analytics(cycle, data):
+def upload_analytics(cycle:int, data):
+    """
+    Upload analytics data to analytics bucket
+    :param cycle: which cycle to upload
+    :param data: cycle information
+    """
     jsonKey = "logs/{}.json".format(cycle)
     console.log("Uploading file to s3://" + analytics_bucket + "/" + jsonKey)
     s3.put_object(Body=str(json.dumps(data)), Bucket=analytics_bucket, Key=jsonKey)
@@ -128,6 +145,10 @@ def upload_analytics(cycle, data):
 
 
 def upload_schedules(data):
+    """
+    Upload schedules to analytics bucket
+    :param data: schedules to upload
+    """
     jsonKey = "schedules.json"
     console.log("Uploading file to s3://" + analytics_bucket + "/" + jsonKey)
     s3.put_object(Body=str(json.dumps(data)), Bucket=analytics_bucket, Key=jsonKey)
