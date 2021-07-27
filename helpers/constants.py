@@ -173,4 +173,14 @@ STAKE_RATIO_RANGES = list(
     )
 )
 
-SETT_INFO = {}
+SETT_INFO = {
+    "0x19D97D8fA813EE2f51aD4B4e04EA08bAf4DFfC28": {
+        "type": "native",
+        "ratio": 1,
+    },
+    "0x235c9e24D3FB2FAFd58a2E49D454Fdcd2DBf7FF1": {"type": "native", "ratio": 0.5},
+    "0x1862A18181346EBd9EdAf800804f89190DeF24a5": {"type": "native", "ratio": 0.5},
+    "0x7e7E112A68d8D2E221E11047a72fFC1065c38e1a": {"type": "native", "ratio": 1},
+    "0xC17078FDd324CC473F8175Dc5290fae5f2E84714": {"type": "native", "ratio": 0.5},
+    "0x88128580ACdD9c04Ce47AFcE196875747bF2A9f6": {"type": "native", "ratio": 0.5},
+}

@@ -379,8 +379,6 @@ def fetch_chain_balances(chain, block):
     while True:
         variables["lastId"] = {"id_gt": lastId}
         results = client.execute(query, variable_values=variables)
-        if len(results["userSettBalances"]) == 0:
-            return {}
         newBalances = {}
         balanceData = results["userSettBalances"]
         for result in balanceData:
@@ -391,11 +389,11 @@ def fetch_chain_balances(chain, block):
                 "settAddress": result["sett"]["id"],
             }
 
-        console.log("Fetching {} sett balances".format(len(balanceData)))
         if len(balanceData) == 0:
             break
         else:
+            console.log("Fetching {} sett balances".format(len(balanceData)))
             lastId = balanceData[-1]["id"]
             balances = {**newBalances, **balances}
-
+    console.log("Fetched {} total sett balances".format(len(balances)))
     return balances

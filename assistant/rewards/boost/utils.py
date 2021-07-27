@@ -1,4 +1,4 @@
-from re import I
+from rich.console import Console
 from assistant.rewards.classes.UserBalance import UserBalance, UserBalances
 from collections import Counter
 from scripts.systems.badger_system import BadgerSystem
@@ -7,6 +7,7 @@ from assistant.badger_api.prices import (
     fetch_token_prices,
 )
 
+console = Console()
 prices = fetch_token_prices()
 
 
@@ -37,17 +38,17 @@ def filter_dust(balances: UserBalances, dustAmount: int):
     )
 
 
-def convert_balances_to_usd(balances: UserBalances):
+def convert_balances_to_usd(balances: UserBalances, sett: str):
     """
     Convert sett balance to usd and multiply by correct ratio
     :param balances: balances to convert to usd
     """
-    price = prices[""]
+    price = prices[sett]
     priceRatio = balances.settRatio
     for user in balances:
-        user.balance = settRatio * price * user.balance
+        user.balance = priceRatio * price * user.balance
 
-    return userBalances
+    return balances
 
 
 def calc_boost_data(badger: BadgerSystem, block: int):
@@ -64,8 +65,8 @@ def calc_boost_data(badger: BadgerSystem, block: int):
 
     for chain in chains:
         snapshot = chain_snapshot(badger, chain, block)
+        console.log("Converting balances to USD")
         for sett, balances in snapshot.items():
-
             balances = convert_balances_to_usd(balances, sett)
             if balances.settType == "native":
                 native = dict(Counter(balances) + Counter(native))

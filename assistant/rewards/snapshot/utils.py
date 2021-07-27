@@ -5,6 +5,7 @@ from assistant.subgraph.client import fetch_chain_balances
 from functools import lru_cache
 from rich.console import Console
 from typing import Dict
+from brownie import web3
 
 console = Console()
 
@@ -19,17 +20,21 @@ def chain_snapshot(badger: BadgerSystem, chain: str, block: int):
     :param block: block at which to query
 
     """
-    chainBalances = fetch_chain_balances(chain, block)
+    chainBalances = fetch_chain_balances(chain, block - 50)
+    balanceInfo = {}
     balancesBySett = {}
 
     for addr, balanceData in chainBalances.items():
         settAddress = balanceData["settAddress"]
-        if settAddress not in balanceData:
-            balanceData[settAddress] = {}
-        balancesBySett[settAddress][addr] = balanceData["amount"]
-
-    for sett, balances in list(balancesBySett.items()):
-        balancesBySett[sett] = parse_sett_balances(sett, balances, chain)
+        if settAddress not in balanceInfo:
+            balanceInfo[settAddress] = {}
+        balanceInfo[settAddress][addr] = balanceData["amount"]
+    for settAddr, balances in list(balanceInfo.items()):
+        console.log(settAddr)
+        console.log(balances)
+        settBalances = parse_sett_balances(settAddr, balances, chain)
+        console.log("Fetched {} balances for sett {}".format(len(balances), settAddr))
+        balancesBySett[settAddr] = settBalances
 
     return balancesBySett
 
@@ -39,7 +44,6 @@ def sett_snapshot(badger, chain, block, sett):
     return chain_snapshot(badger, chain, block)[sett]
 
 
-@lru_cache(maxsize=128)
 def parse_sett_balances(settAddress: str, balances: Dict[str, int], chain: str):
     """
     Blacklist balances and add metadata for boost
@@ -53,9 +57,15 @@ def parse_sett_balances(settAddress: str, balances: Dict[str, int], chain: str):
             )
             del balances[addr]
 
-    settType = SETT_INFO[settAddress]["type"]
-    settRatio = SETT_INFO[settAddress]["ratio"]
+    settType, settRatio = get_sett_info(settAddress)
     userBalances = [
         UserBalance(addr, bal, settAddress) for addr, bal in balances.items()
     ]
     return UserBalances(userBalances, settType, settRatio)
+
+
+def get_sett_info(settAddress):
+    info = SETT_INFO.get(
+        web3.toChecksumAddress(settAddress), {"type": "nonNative", "ratio": 1}
+    )
+    return info["type"], info["ratio"]
