@@ -1,7 +1,5 @@
 from brownie import *
-import json
 from rich.console import Console
-from assistant.subgraph.client import fetch_wallet_balances
 from helpers.constants import (
     BADGER,
     DIGG,
@@ -11,23 +9,28 @@ from helpers.constants import (
 )
 from collections import OrderedDict
 from assistant.rewards.rewards_utils import combine_balances
+from scripts.systems.badger_system import BadgerSystem
 from tabulate import tabulate
 
 from assistant.rewards.classes.UserBalance import UserBalance, UserBalances
+from assistant.rewards.boost.utils import (
+    calc_union_addresses,
+    calc_boost_data,
+)
 
 console = Console()
 
-boostInfo = {}
 
-
-def calc_stake_ratio(address: str, nativeSetts: UserBalances, nonNativeSetts: UserBalances):
+def calc_stake_ratio(
+    address: str, nativeSetts: UserBalances, nonNativeSetts: UserBalances
+):
     """
     Calculate the stake ratio for an address
     :param address: address to find stake ratio for
     :param nativeSetts: native balances
     :param nonNativeSetts: non native balances
     """
-    nativeBalance = getattr(nativeBalance[address], "balance", 0)
+    nativeBalance = getattr(nativeSetts[address], "balance", 0)
     nonNativeBalance = getattr(nonNativeSetts[address], "balance", 0)
     if nonNativeBalance == 0:
         stakeRatio = 0
@@ -44,8 +47,9 @@ def badger_boost(badger: BadgerSystem, currentBlock: int):
     """
     console.log("Calculating boost at block {} ...".format(currentBlock))
     nativeSetts, nonNativeSetts = calc_boost_data(badger, currentBlock)
-    allAddreses = calc_union_addresses(nativeSetts, nonNativeSetts)
+    allAddresses = calc_union_addresses(nativeSetts, nonNativeSetts)
     badgerBoost = {}
+    boostInfo = {}
 
     stakeRatiosList = [
         calc_stake_ratio(addr, nativeSetts, nonNativeSetts) for addr in allAddresses

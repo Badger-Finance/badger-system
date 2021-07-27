@@ -3,7 +3,11 @@ from assistant.badger_api.config import urls
 import concurrent.futures
 
 
-def fetch_account_data(address):
+def fetch_account_data(address: str):
+    """
+    Fetch data from account data
+    :param address: address whose information is required
+    """
     data = (
         requests.get("{}/accounts/{}".format(urls["staging"], address))
         .json()
@@ -13,6 +17,13 @@ def fetch_account_data(address):
 
 
 def fetch_claimable_balances(addresses):
+    """
+    Fetch the claimable balances for a list of address
+    by fetching in parallel
+
+
+    :param addresses: list of addresses whose balances we want
+    """
     results = {}
     with concurrent.futures.ThreadPoolExecutor(max_workers=100) as executor:
         futures_to_addr = {

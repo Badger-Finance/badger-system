@@ -1,4 +1,7 @@
+from re import I
 from assistant.rewards.classes.UserBalance import UserBalance, UserBalances
+from collections import Counter
+from scripts.systems.badger_system import BadgerSystem
 from assistant.rewards.snapshot.utils import chain_snapshot
 from assistant.badger_api.prices import (
     fetch_token_prices,
@@ -34,12 +37,12 @@ def filter_dust(balances: UserBalances, dustAmount: int):
     )
 
 
-def convert_balances_to_usd(balances: userBalances):
+def convert_balances_to_usd(balances: UserBalances):
     """
     Convert sett balance to usd and multiply by correct ratio
     :param balances: balances to convert to usd
     """
-    price = prices[tokenAddress]
+    price = prices[""]
     priceRatio = balances.settRatio
     for user in balances:
         user.balance = settRatio * price * user.balance
@@ -53,23 +56,22 @@ def calc_boost_data(badger: BadgerSystem, block: int):
     :param badger: badger system
     :param block: block to collect the boost data from
     """
-    chains = ["eth", "bsc", "polygon", "xdai"]
-    ethSnapshot = chain_snapshot("eth", badger, block)
-    bscSnapshot = chain_snapshot("eth", badger, block)
-    polygonSnapshot = chain_snapshot("polygon", badger, block)
+    chains = ["eth"]
     ## Figure out how to map blocks, maybe  time -> block per chain
 
     native = {}
     nonNative = {}
 
     for chain in chains:
-        snapshot = chain_snapshot(chain, badger, block)
+        snapshot = chain_snapshot(badger, chain, block)
         for sett, balances in snapshot.items():
-            balances = convert_balances_to_usd(balances)
+
+            balances = convert_balances_to_usd(balances, sett)
             if balances.settType == "native":
                 native = dict(Counter(balances) + Counter(native))
             elif balances.settType == "nonNative":
                 nonNative = dict(Counter(balances) + Counter(nonNative))
 
-    return (filter_dust(UserBalances(native, "", ""), 1),)
-    filter_dust(UserBalances(nonNative, "", ""), 1)
+    native = filter_dust(UserBalances(native, "", ""), 1)
+    nonNative = filter_dust(UserBalances(nonNative, "", ""), 1)
+    return native, nonNative

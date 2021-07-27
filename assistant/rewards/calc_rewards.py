@@ -1,5 +1,8 @@
 from assistant.rewards.classes.RewardsList import RewardsList
 from assistant.rewards.classes.RewardsLog import rewardsLog
+from assistant.rewards.classes.UserBalance import UserBalances
+from scripts.systems.badger_system import BadgerSystem
+
 from assistant.rewards.classes.Schedule import Schedule
 from helpers.time_utils import to_days, to_hours, to_utc_date
 from helpers.digg_utils import diggUtils
@@ -16,7 +19,15 @@ from rich.console import Console
 console = Console()
 
 
-def calc_rewards(badger: BadgerSystem, sett: str, balances: UserBalances, startBlock: int, endBlock: int, chain: str, boost):
+def calc_rewards(
+    badger: BadgerSystem,
+    sett: str,
+    balances: UserBalances,
+    startBlock: int,
+    endBlock: int,
+    chain: str,
+    boost,
+):
     """
     Calculate rewards for a sett on any chain between a cycle
     :param badger: badger system
@@ -27,8 +38,9 @@ def calc_rewards(badger: BadgerSystem, sett: str, balances: UserBalances, startB
     :chain: chain to calculate rewards on
     :boost: boost multipliers for each chain
     """
-    
+
     pass
+
 
 def get_distributed_for_token_at(token, endTime, schedules, name):
     totalToDistribute = 0

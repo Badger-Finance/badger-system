@@ -158,6 +158,13 @@ SETT_BOOST_RATIOS = {
 }
 
 CONVEX_SETTS = ["native.hbtcCrv", "native.pbtcCrv", "native.obtcCrv", "native.bbtcCrv"]
+
+REWARDS_BLACKLIST = {
+    "0x19d97d8fa813ee2f51ad4b4e04ea08baf4dffc28": "Badger Vault",
+    "0xb65cef03b9b89f99517643226d76e286ee999e77": "Badger Dev Multisig",
+    "0x8b950f43fcac4931d408f1fcda55c6cb6cbf3096": "Cream bBadger",
+    "0x0a54d4b378c8dbfc7bc93be50c85debafdb87439": "Sushiswap bBadger/Weth",
+}
 STAKE_RATIO_RANGES = list(
     reversed(
         [(i / 100, i * 20) for i in range(100, 0, -10)]
@@ -165,3 +172,5 @@ STAKE_RATIO_RANGES = list(
         + [(0.01, 2)]
     )
 )
+
+SETT_INFO = {}

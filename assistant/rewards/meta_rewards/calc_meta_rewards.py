@@ -1,3 +1,4 @@
+from scripts.systems.badger_system import BadgerSystem
 from tqdm import tqdm
 from brownie import *
 from assistant.rewards.classes.RewardsList import RewardsList
@@ -8,7 +9,15 @@ from rich.console import Console
 console = Console()
 
 
-def calc_rewards(badger, start, end, nextCycle, events, name, token):
+def calc_rewards(
+    badger: BadgerSystem,
+    start: int,
+    end: int,
+    nextCycle: int,
+    events,
+    name: str,
+    token: str,
+):
     def filter_events(e):
         return int(e["blockNumber"]) > start and int(e["blockNumber"]) < end
 
@@ -23,7 +32,9 @@ def calc_rewards(badger, start, end, nextCycle, events, name, token):
     return rewards
 
 
-def process_rewards(badger, events, name, nextCycle, token):
+def process_rewards(
+    badger: BadgerSystem, events, name: str, nextCycle: int, token: str
+):
     totalFromEvents = sum([int(e["rewardAmount"]) for e in events]) / 1e18
     rewards = RewardsList(nextCycle, badger.badgerTree)
     total = 0
@@ -57,7 +68,7 @@ def process_rewards(badger, events, name, nextCycle, token):
     return rewards
 
 
-def calc_meta_farm_rewards(badger, name, harvestBlock):
+def calc_meta_farm_rewards(badger: BadgerSystem, name: str, harvestBlock: int):
     console.log("Calculating rewards for {} harvest at {}".format(name, harvestBlock))
     harvestBlock = int(harvestBlock)
     sett = badger.getSett(name)

@@ -1,6 +1,12 @@
 from helpers.constants import REWARDS_BLACKLIST, SETT_INFO
 from scripts.systems.badger_system import BadgerSystem
+from assistant.rewards.classes.UserBalance import UserBalances, UserBalance
+from assistant.subgraph.client import fetch_chain_balances
+from functools import lru_cache
+from rich.console import Console
 from typing import Dict
+
+console = Console()
 
 
 @lru_cache(maxsize=128)
@@ -27,9 +33,10 @@ def chain_snapshot(badger: BadgerSystem, chain: str, block: int):
 
     return balancesBySett
 
+
 @lru_cache(maxsize=128)
-def sett_snapshot(badger, chain, block,sett):
-    return chain_snapshot(badger,chain,block)[sett]
+def sett_snapshot(badger, chain, block, sett):
+    return chain_snapshot(badger, chain, block)[sett]
 
 
 @lru_cache(maxsize=128)

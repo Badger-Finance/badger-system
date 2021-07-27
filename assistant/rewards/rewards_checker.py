@@ -11,6 +11,8 @@ import json
 from helpers.utils import val
 from helpers.constants import TOKENS_TO_CHECK, DIGG, BADGER
 
+from scripts.systems.badger_system import BadgerSystem
+
 console = Console()
 
 
@@ -358,6 +360,7 @@ def push_rewards(badger: BadgerSystem, afterContentHash):
 
 
 def test_claims(badger: BadgerSystem, startBlock, endBlock, before_file, after_file):
+    digg_contract = get_digg_contract()
     before = before_file["claims"]
     claims = after_file["claims"]
 

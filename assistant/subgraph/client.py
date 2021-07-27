@@ -4,7 +4,7 @@ from rich.console import Console
 from gql import gql, Client
 from gql.transport.aiohttp import AIOHTTPTransport
 from decimal import *
-import json
+import math
 from functools import lru_cache
 
 getcontext().prec = 20
@@ -352,12 +352,13 @@ def fetch_cream_balances(tokenSymbol, blockNumber):
     return retVal
 
 
-def fetch_chain_balances(chain,block):
-    client = make_gql_client(chain).execute
+def fetch_chain_balances(chain, block):
+    client = make_gql_client(chain)
     query = gql(
         """
         query balances($blockHeight: Block_height,$lastId:UserSettBalance_filter) {
-            userSettBalances(block: $blockHeight, where:$lastId) {
+            userSettBalances(first: 1000, block: $blockHeight, where:$lastId) {
+                id
                 user {
                     id
                 }
@@ -373,25 +374,28 @@ def fetch_chain_balances(chain,block):
         """
     )
     lastId = ""
-    variables = {"blockHeight": {"number": block }}
+    variables = {"blockHeight": {"number": block}}
     balances = {}
     while True:
         variables["lastId"] = {"id_gt": lastId}
-        client.execute(query,variable_values=variables)
+        results = client.execute(query, variable_values=variables)
         if len(results["userSettBalances"]) == 0:
             return {}
         newBalances = {}
-        balance_data = results["userSettBalances"]
-        for result in balance_data:
+        balanceData = results["userSettBalances"]
+        for result in balanceData:
             account = result["user"]["id"]
             newBalances[account] = {
-                "amount":  result["netDeposit"]/ math.pow(10,result["sett"]["token"]["decimals"])
-                "settAddress": result["sett"]["id"]
+                "amount": float(result["netDeposit"])
+                / math.pow(10, int(result["sett"]["token"]["decimals"])),
+                "settAddress": result["sett"]["id"],
             }
-        if len(balance_data) == 0:
+
+        console.log("Fetching {} sett balances".format(len(balanceData)))
+        if len(balanceData) == 0:
             break
         else:
-            lastId = balance_Data[-1]["id"]
-            balances = {**newBalances,**balances}
+            lastId = balanceData[-1]["id"]
+            balances = {**newBalances, **balances}
 
-    sreturn balances
+    return balances

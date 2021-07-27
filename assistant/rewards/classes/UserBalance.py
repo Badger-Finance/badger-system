@@ -15,8 +15,8 @@ class UserBalance:
 @dataclass
 class UserBalances:
     userBalances: Dict[str, UserBalance] = field(default_factory=lambda: [])
-    settType: str
-    settRatio: int
+    settType: str = field(default="none")
+    settRatio: int = field(default=0)
 
     def __post_init__(self):
         if len(self.userBalances) > 0:

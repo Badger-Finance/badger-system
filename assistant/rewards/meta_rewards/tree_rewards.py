@@ -1,6 +1,7 @@
 from helpers.constants import PEAK_ADDRESSES
 from assistant.subgraph.client import fetch_tree_distributions
 from assistant.subgraph.client import fetch_wallet_balances
+from scripts.systems.badger_system import BadgerSystem
 from assistant.rewards.rewards_utils import calculate_sett_balances
 from rich.console import Console
 from assistant.rewards.classes.RewardsList import RewardsList
@@ -10,7 +11,9 @@ from brownie import web3
 console = Console()
 
 
-def calc_tree_rewards(badger: BadgerSystem, startBlock: int, endBlock: int, nextCycle: int,chain: str):
+def calc_tree_rewards(
+    badger: BadgerSystem, startBlock: int, endBlock: int, nextCycle: int, chain: str
+):
     """
     Calculate extra rewards based on TreeDistribution events as part of farm and distribute.
     """

@@ -5,27 +5,25 @@ from brownie.network.gas.strategies import GasNowStrategy
 from config.rewards_config import rewards_config
 from helpers.time_utils import to_hours
 from rich.console import Console
-from tqdm import tqdm
-from assistant.rewards.boost import badger_boost
-from assistant.rewards.twap import digg_btc_twap, calculate_digg_allocation
 from assistant.rewards.aws_utils import (
     download_latest_tree,
     download_tree,
     upload,
     upload_boosts,
 )
-from assistant.rewards.calc_snapshot import calc_snapshot
-from assistant.rewards.meta_rewards.harvest import calc_farm_rewards
+from typing import Dict
+
+from assistant.rewards.snapshot.utils import chain_snapshot
 from assistant.rewards.meta_rewards.sushi import calc_all_sushi_rewards
 from assistant.rewards.meta_rewards.tree_rewards import calc_tree_rewards
 from assistant.rewards.meta_rewards.unclaimed_rewards import get_unclaimed_rewards
+from assistant.rewards.calc_rewards import calc_rewards
 from assistant.rewards.rewards_utils import (
     keccak,
     process_cumulative_rewards,
     combine_rewards,
 )
 from assistant.rewards.classes.MerkleTree import rewards_to_merkle_tree
-from assistant.rewards.classes.RewardsList import RewardsList
 from assistant.rewards.classes.RewardsLog import rewardsLog
 
 from assistant.rewards.rewards_checker import compare_rewards, verify_rewards
@@ -45,7 +43,7 @@ def calc_sett_rewards(
     cycle: int,
     chain: str,
     unclaimedRewards: Dict[str, Dict[str, int]],
-    boost
+    boost,
 ):
 
     """
@@ -60,14 +58,16 @@ def calc_sett_rewards(
     """
     balancesBySett = chain_snapshot(badger, chain, endBlock)
     rewards = []
-    for sett , balances in balancesBySett.items():
-        settRewards = calc_rewards(badger, sett, balances, startBlock, endBlock, chain, boost)
+    for sett, balances in balancesBySett.items():
+        settRewards = calc_rewards(
+            badger, sett, balances, startBlock, endBlock, chain, boost
+        )
         rewards.append(settRewards)
 
-    return combine_rewards(rewards,cycle, badger.badgerTree)
+    return combine_rewards(rewards, cycle, badger.badgerTree)
 
 
-def fetchPendingMerkleData(badger):
+def fetchPendingMerkleData(badger: BadgerSystem):
     # currentMerkleData = badger.badgerTree.getPendingMerkleData()
     # root = str(currentMerkleData[0])
     # contentHash = str(currentMerkleData[1])
@@ -87,7 +87,7 @@ def fetchPendingMerkleData(badger):
     }
 
 
-def fetchCurrentMerkleData(badger):
+def fetchCurrentMerkleData(badger: BadgerSystem):
     # currentMerkleData = badger.badgerTree.getCurrentMerkleData()
     # root = str(currentMerkleData[0])
     # contentHash = str(currentMerkleData[1])
@@ -107,7 +107,7 @@ def fetchCurrentMerkleData(badger):
     }
 
 
-def getNextCycle(badger):
+def getNextCycle(badger: BadgerSystem):
     return badger.badgerTree.currentCycle() + 1
 
 
@@ -368,5 +368,5 @@ def run_action(badger, args, test, saveLocalFile=True):
     return False
 
 
-def content_hash_to_filename(contentHash):
+def content_hash_to_filename(contentHash: str):
     return "rewards-" + str(chain.id) + "-" + str(contentHash) + ".json"

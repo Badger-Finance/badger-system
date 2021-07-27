@@ -3,6 +3,7 @@ from brownie import *
 from rich.console import Console
 from config.env_config import env_config
 import json
+from typing import Dict
 
 console = Console()
 
@@ -74,7 +75,9 @@ def download_past_trees(number: int):
     return trees
 
 
-def upload(fileName: str, data: Dict, bucket="badger-json" : str, publish=True: bool):
+def upload(
+    fileName: str, data: Dict, bucket: str = "badger-json", publish: bool = True
+):
     """
     Upload the badger tree to multiple buckets
     :param fileName: the filename of the uploaded bucket
@@ -132,7 +135,7 @@ def upload_boosts(test: bool):
     console.log("✅ Uploaded file to s3://" + bucket + "/" + fileName)
 
 
-def upload_analytics(cycle:int, data):
+def upload_analytics(cycle: int, data):
     """
     Upload analytics data to analytics bucket
     :param cycle: which cycle to upload

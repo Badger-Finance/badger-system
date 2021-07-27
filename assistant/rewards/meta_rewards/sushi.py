@@ -1,3 +1,4 @@
+from scripts.systems.badger_system import BadgerSystem
 from brownie import *
 from assistant.subgraph.client import fetch_sushi_harvest_events
 from assistant.rewards.classes.RewardsList import RewardsList
@@ -6,7 +7,9 @@ from assistant.rewards.rewards_utils import combine_rewards
 from helpers.constants import XSUSHI
 
 
-def calc_all_sushi_rewards(badger, startBlock, endBlock, nextCycle):
+def calc_all_sushi_rewards(
+    badger: BadgerSystem, startBlock: int, endBlock: int, nextCycle: int
+):
     allSushiEvents = fetch_sushi_harvest_events()
 
     wbtcEthRewards = calc_sushi_rewards(

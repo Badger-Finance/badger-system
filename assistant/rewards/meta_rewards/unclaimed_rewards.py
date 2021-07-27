@@ -4,11 +4,12 @@ from helpers.constants import BCVX, BCVXCRV
 from rich.console import Console
 from assistant.rewards.classes.RewardsList import RewardsList
 from brownie import web3
+from typing import List
 
 console = Console()
 
 
-def get_unclaimed_rewards(addresses):
+def get_unclaimed_rewards(addresses: List[str]):
     console.log("Fetching {} unclaimed balances".format(len(addresses)))
     chunked = chunk(addresses, 500)
     bCvxClaimable = {}
