@@ -21,6 +21,8 @@
     "paymentsMultisig": "0xD4868d98849a58F743787c77738D808376210292",
     "testMultisig": "0x55949f769d0af7453881435612561d109fff07b8",
     "testGatedProxy": "0x375C48a3A3685d7e28EB45e612da6Dd51c7E38E0",
+    "create2EOA": "0x19f989de5a7c6de67257a93efb467b919efb703b",
+    "create2Deployer": "0x04254eba6Ba1EA9516A753C85D450E06c1Eba5a3",
     "timelock": "0x21CF9b77F88Adf8F8C98d7E33Fe601DC57bC0893",
     "token": "0x3472A5A71965499acd81997a54BBA8D852C6E53d",
     "multisigs": {
@@ -67,7 +69,7 @@
         "StrategyCurveGaugeRenBtcCrv": "0x8B60386a978dFC3241E9112dB3ea009331838846",
         "HoneypotMeme": "0x7eCc602743bD50FB01fF60e9288fc532B851afc5",
         "StrategySushiLpOptimizer": "0x5435Fc74aeD67C81BB500490A4365AF5e6021bba",
-        "StrategySushiBadgerWbtc": "0x5362626879686d3d98b467fb713fe19ea083f207",
+        "StrategySushiBadgerWbtc": "0x025Caaff08e6eb453e551B4AB2e6a1376f3441D5",
         "UFragments": "0xFaBec03B04279c6E73F27AaF25866ACc844448Ae",
         "UFragmentsPolicy": "0x4750caa4999404cb26ff6db2d0abc09b000122e0",
         "DiggRewardsFaucet": "0xa42acbbee5796ad0862fd7340edc25f111cd10eb",
@@ -93,7 +95,8 @@
         "StrategyConvexLpOptimizer": "0xAB10f878bD27ae01DF36Ba645E458f7dbca7AA46",
         "StrategyConvexStakingOptimizer" :"0x01d10fdc6b484BE380144dF12EB6C75387EfC49B",
         "StrategyCvxHelper": "0x0172B8110b47448E32Ea9e4f291dB461Ee82D1d9",
-        "StrategyCvxCrvHelper": "0x440E52dA3623203b0bc76FCae62429F2D4521173"
+        "StrategyCvxCrvHelper": "0x440E52dA3623203b0bc76FCae62429F2D4521173",
+        "BadgerRegistryV1": "0x3ab7c96c22ba2615eac91f1c48a73bf40c63fbea"
     },
     "dao": {
         "token": "0x3472A5A71965499acd81997a54BBA8D852C6E53d",

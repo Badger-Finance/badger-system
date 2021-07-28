@@ -14,6 +14,10 @@ class NetworkManager:
             return "eth"
         if re.match(r"(?:bsc|binance)", s):
             return "bsc"
+        if re.match(r"(?:xdai)", s):
+            return "xdai"
+        if re.match(r"(?:polygon)", s):
+            return "polygon"
         return None
 
     def get_active_network(self):
@@ -47,9 +51,6 @@ class NetworkManager:
             return "badger-deploy-bsc.json"
             # return "badger-test-bsc.json"
         else:
-            raise Exception(
-                "No badger deploy file registered for network {}".format(active)
-            )
-
+            return "deploy-multichain.json"
 
 network_manager = NetworkManager()

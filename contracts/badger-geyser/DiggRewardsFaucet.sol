@@ -31,7 +31,6 @@ contract DiggRewardsFaucet is Initializable, AccessControlUpgradeable, PausableU
     bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
     bytes32 public constant UNPAUSER_ROLE = keccak256("UNPAUSER_ROLE");
 
-
     /* ========== STATE VARIABLES ========== */
 
     IERC20Upgradeable public rewardsToken;

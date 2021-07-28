@@ -15,7 +15,7 @@ from dotmap import DotMap
 from helpers.gnosis_safe import GnosisSafe, MultisigTxMetadata, multisig_success
 from helpers.network import network_manager
 from helpers.proxy_utils import deploy_proxy, deploy_proxy_admin
-from helpers.registry import artifacts, registry
+from helpers.registry.artifacts import artifacts
 from helpers.sett.strategy_registry import name_to_artifact, contract_name_to_artifact
 from helpers.time_utils import days, to_days, to_utc_date
 from rich.console import Console
@@ -227,7 +227,9 @@ def connect_badger(
 
     badger.connect_multisig(badger_deploy["devMultisig"])
     badger.connect_ops_multisig(badger_deploy["opsMultisig"])
-    badger.connect_test_multisig(badger_deploy["testMultisig"])
+    
+    if "testMultisig" in badger_deploy:
+        badger.connect_test_multisig(badger_deploy["testMultisig"])
 
     if "dao" in badger_deploy:
         badger.connect_dao()
@@ -237,13 +239,16 @@ def connect_badger(
 
     badger.connect_logic(badger_deploy["logic"])
 
-    badger.connect_guest_lists(badger_deploy["guest_lists"])
+    if "guest_lists" in badger_deploy:
+        badger.connect_guest_lists(badger_deploy["guest_lists"])
 
     # badger.connect_dev_multisig(badger_deploy["devMultisig"])
 
     # Connect Vesting / Rewards Infrastructure
     if "teamVesting" in badger_deploy:
         badger.connect_team_vesting(badger_deploy["teamVesting"])
+    if "create2Deployer" in badger_deploy:
+        badger.connect_create_2_deployer(badger_deploy["create2Deployer"])
     if "badgerHunt" in badger_deploy:
         badger.connect_badger_hunt(badger_deploy["badgerHunt"])
     if "badgerTree" in badger_deploy:
@@ -586,6 +591,13 @@ class BadgerSystem:
             deployer,
         )
         self.track_contract_upgradeable("rewardsEscrow", self.rewardsEscrow)
+
+    def deploy_create_2(self, bytecode, salt, overrides):
+        console.print(f"[green]Deploying via Create2Deployer....[/green]")
+        tx = self.create_2_deployer.deploy(bytecode, salt, overrides)
+        event = tx.events['Deployed'][0]
+        console.log(event)
+        return event['addr']
 
     def deploy_badger_tree(self):
         deployer = self.deployer
@@ -1371,6 +1383,9 @@ class BadgerSystem:
         self.teamVesting = SmartVesting.at(address)
         self.track_contract_upgradeable("teamVesting", self.teamVesting)
 
+    def connect_create_2_deployer(self, address):
+        self.create_2_deployer = interface.IAnyswapCreate2Deployer(address)
+
     # Routes rewards connection to correct underlying contract based on id.
     def connect_rewards(self, id, address):
         if id in [
@@ -1504,6 +1519,9 @@ class BadgerSystem:
             raise NameError
 
         return self.sett_system.strategies[id]
+
+    def getCreate2Deployer(self):
+        return self.create_2_deployer
 
     def getStrategyWant(self, id):
         return interface.IERC20(self.sett_system.strategies[id].want())

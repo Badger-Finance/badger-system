@@ -1,0 +1,41 @@
+{
+    "accounts": {
+        "deployer": "0xDA25ee226E534d868f0Dd8a459536b03fEE9079b",
+        "guardian": "0x29F7F8896Fb913CF7f9949C623F896a154727919",
+        "keeper": "0x872213E29C85d7e30F1C8202FC47eD1Ec124BB1D",
+        "root_proposer": "0x68de9E2b015904530593426d934CE608e117Fa7A",
+        "root_approver": "0x626f69162ea1556a75dd4443d87d2fe38dd25901",
+        "earner": "0x46099Ffa86aAeC689D11F5D5130044Ff7082C2AD",
+        "harvester": "0x73433896620E71f7b1C72405b8D2898e951Ca4d5",
+        "external_harvester": "0x64E2286148Fbeba8BEb4613Ede74bAc7646B2A2B",
+        "rebaser": "0x10DC486A5c0d7e0315637ee5A22E54b6ECFCf676",
+        "create2EOA": "0x3143373CA332EFf234174f7bCf04bcd9A5526BB8"
+    },
+    "infra": {
+        "create2Deployer": "0x04254eba6Ba1EA9516A753C85D450E06c1Eba5a3",
+        "proxyAdminPassThrough": "0x3F204A06AB6A6B6Bb437B58Ae39B56B906927D95",
+        "proxyAdminDev": "0xC4fE5Db8D3c0d0f410D6A7496Faa4f1658d2a301",
+        "proxyAdminTimelock": "0x9208E6c28959c47E58344d5f84d88F07Fca96CFC",
+        "bricked": "0x19a21Fbba3561aD53e70268caFA3D3c8db05A79C",
+        "governanceTimelock": "",
+        "registry": "0x22765948A3d5048F3644b81792e4E1aA7ea3da4a"
+    },
+    "contracts": {
+        "governanceTimelock": {
+            "address": "",
+            "salt": "0"
+        },
+        "registry": {
+            "address": "",
+            "salt": "1"
+        },
+        "keeperAccessControl": {
+            "address": "",
+            "salt": "2"
+        },
+        "badgerTree": {
+            "address": "",
+            "salt": "3"
+        }
+    }
+}

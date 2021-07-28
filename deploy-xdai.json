@@ -1,0 +1,20 @@
+{
+    "logic": {
+        "BadgerRegistryV1": ["0x88f5dC3C63763bc3D14BceB38707Dfc9e797775C"],
+        "SettV3": ["0x34708C0059e8694193106A4A2E96C215Ed4f43C9"],
+        "Controller": ["0xBA77f65a97433d4362Db5c798987d6f0bD28faA3"],
+        "StrategyPlaceholder": ["0x051c9B2f06B96ce9606a391Ee33c44D2D4B55727"]
+    },
+    "v1": {
+        "controller": "0xc00e71719d1494886942d6277DAeA20494cf0EeC",
+        "tokens": {
+            "sushiWbtcWethLp": "0xe21f631f47bfb2bc53ed134e83b8cff00e0ec054"
+        },
+        "vaults": {
+            "sushiWbtcWethLp": "0x30bCE7386e016D6038201F57D1bA52CbA7AEFeCf"
+        },
+        "strategies": {
+            "sushiWbtcWethLp": "0xab5bC9379dF7512A5ceb376901C4409B505Bc2EF"
+        }
+    }
+}

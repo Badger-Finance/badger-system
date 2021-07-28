@@ -2,7 +2,6 @@ from helpers.constants import AddressZero
 from brownie import *
 from rich.console import Console
 
-from helpers.registry import registry
 from helpers.proxy_utils import deploy_proxy
 
 console = Console()
@@ -11,9 +10,6 @@ console = Console()
 Sett is a subsystem of badger.
 Requires the BadgerDAO infrastructure & multisig to be deployed
 """
-
-curve = registry.curve
-tokens = registry.tokens
 
 
 def deploy_strategy(
@@ -27,6 +23,9 @@ def deploy_strategy(
     keeper=None,
     guardian=None,
 ):
+    from helpers.registry import registry
+    curve = registry.curve
+    tokens = registry.tokens
     if not governance:
         governance = deployer
 
