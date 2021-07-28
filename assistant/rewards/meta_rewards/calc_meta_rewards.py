@@ -62,4 +62,5 @@ def calc_meta_farm_rewards(badger, name, harvestBlock):
     harvestBlock = int(harvestBlock)
     sett = badger.getSett(name)
     balances = calculate_sett_balances(badger, name, harvestBlock)
+    console.log(balances)
     return balances

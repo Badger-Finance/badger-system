@@ -183,17 +183,10 @@ def calculate_sett_balances(badger, name, currentBlock):
     else:
         settType[1] = "native"
 
-    settBalances = fetch_sett_balances(name, underlyingToken.lower(), currentBlock)
+    settBalances = fetch_sett_balances(underlyingToken.lower(), currentBlock)
+    console.log(len(settBalances))
     geyserBalances = {}
     creamBalances = {}
-
-    if name not in NO_GEYSERS:
-
-        geyserAddr = badger.getGeyser(name).address.lower()
-        geyserEvents = fetch_geyser_events(geyserAddr, currentBlock)
-        geyserBalances = calc_balances_from_geyser_events(geyserEvents)
-        settBalances[geyserAddr] = 0
-
     balances = {}
     for b in [settBalances, geyserBalances, creamBalances]:
         balances = dict(Counter(balances) + Counter(b))

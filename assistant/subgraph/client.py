@@ -5,6 +5,7 @@ from gql import gql, Client
 from gql.transport.aiohttp import AIOHTTPTransport
 from decimal import *
 import json
+import math
 from functools import lru_cache
 
 getcontext().prec = 20
@@ -51,47 +52,64 @@ def fetch_tree_distributions(startBlock, endBlock):
 
 
 @lru_cache(maxsize=None)
-def fetch_sett_balances(key, settId, startBlock):
+def fetch_all_sett_balances(block):
     query = gql(
         """
-        query balances_and_events($vaultID: Vault_filter, $blockHeight: Block_height,$lastBalanceId:AccountVaultBalance_filter) {
-            vaults(block: $blockHeight, where: $vaultID) {
-                balances(first:1000,where: $lastBalanceId) {
+        query balances($blockHeight: Block_height,$lastId:UserSettBalance_filter) {
+            userSettBalances(first: 1000, block: $blockHeight, where:$lastId) {
+                id
+                user {
                     id
-                    account {
-                        id
-                    }
-                    shareBalanceRaw
-                  }
                 }
+                sett {
+                    id
+                    token{
+                        decimals
+                    }
+                }
+                netShareDeposit
             }
+        }
         """
     )
-    lastBalanceId = ""
-    variables = {"blockHeight": {"number": startBlock}, "vaultID": {"id": settId}}
-    balances = {}
+    lastId = ""
+    variables = {"blockHeight": {"number": block}}
+    balancesBySett = {}
     while True:
-        variables["lastBalanceId"] = {"id_gt": lastBalanceId}
-
+        variables["lastId"] = {"id_gt": lastId}
         results = sett_client.execute(query, variable_values=variables)
-        if len(results["vaults"]) == 0:
-            return {}
         newBalances = {}
-        balance_data = results["vaults"][0]["balances"]
-        for result in balance_data:
-            account = result["id"].split("-")[0]
-            newBalances[account] = int(result["shareBalanceRaw"])
+        balanceData = results["userSettBalances"]
+        for result in balanceData:
+            account = result["user"]["id"]
+            sett = result["sett"]["id"]
+            decimals = int(result["sett"]["token"]["decimals"])
+            netDeposit = float(result["netShareDeposit"])
+            if netDeposit > 0:
+                if sett not in newBalances:
+                    newBalances[sett] = {}
+                newBalances[sett][account] = netDeposit / math.pow(10,decimals)
 
-        if len(balance_data) == 0:
+        if len(balanceData) == 0:
             break
+        else:
+            console.log("Fetching {} sett balances".format(len(balanceData)))
+            lastId = balanceData[-1]["id"]
+            for sett, bData in newBalances.items():
+                if sett not in balancesBySett:
+                    balancesBySett[sett] = {}
+                for account, balance in bData.items():
+                    balancesBySett[sett][account] = balance
+    console.log("Fetched {} total setts".format(len(balancesBySett)))
+    return balancesBySett
 
-        if len(balance_data) > 0:
-            lastBalanceId = balance_data[-1]["id"]
-
-        balances = {**newBalances, **balances}
-    console.log("Processing {} balances".format(len(balances)))
-    return balances
-
+@lru_cache(maxsize=None) 
+def fetch_sett_balances(sett, block):
+    console.log(sett)
+    sett_balances = fetch_all_sett_balances(block)
+    console.log(sett_balances.keys())
+    console.log( sett in sett_balances)
+    return sett_balances[sett.lower()]
 
 @lru_cache(maxsize=None)
 def fetch_geyser_events(geyserId, startBlock):

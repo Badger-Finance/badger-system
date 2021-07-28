@@ -30,6 +30,7 @@ def calc_snapshot(
     endTime = web3.eth.getBlock(endBlock)["timestamp"]
 
     userBalances = calculate_sett_balances(badger, name, endBlock)
+    console.log(userBalances)
 
     apyBoosts = {}
     if name in NON_NATIVE_SETTS:

@@ -208,15 +208,17 @@ def generate_rewards_in_range(badger, startBlock, endBlock, pastRewards, saveLoc
         if BCVX in tokens or BCVXCRV in tokens:
             unclaimedAddresses.append(addr)
 
-    sushiRewards = calc_all_sushi_rewards(badger, startBlock, endBlock, nextCycle)
-    treeRewards = calc_tree_rewards(badger, startBlock, endBlock, nextCycle)
     settRewards = calc_sett_rewards(
         badger,
         startBlock,
         endBlock,
         nextCycle,
         get_unclaimed_rewards(unclaimedAddresses),
+    
     )
+    sushiRewards = calc_all_sushi_rewards(badger, startBlock, endBlock, nextCycle)
+    treeRewards = calc_tree_rewards(badger, startBlock, endBlock, nextCycle)
+
 
     newRewards = combine_rewards(
         [settRewards, treeRewards, sushiRewards], nextCycle, badger.badgerTree
