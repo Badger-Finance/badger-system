@@ -30,7 +30,6 @@ def calc_snapshot(
     endTime = web3.eth.getBlock(endBlock)["timestamp"]
 
     userBalances = calculate_sett_balances(badger, name, endBlock)
-    console.log(userBalances)
 
     apyBoosts = {}
     if name in NON_NATIVE_SETTS:
@@ -98,13 +97,14 @@ def calc_snapshot(
                             )
                         )
                         totalbCvxBal = sum(unclaimedBalances["bCvx"].values())
-                        cvxRewardsUnit = rewardAmount / totalbCvxBal
-                        for addr, bal in unclaimedBalances["bCvx"].items():
-                            rewards.increase_user_rewards(
-                                web3.toChecksumAddress(addr),
-                                token,
-                                int(cvxRewardsUnit * bal),
-                            )
+                        if totalbCvxBal > 0:
+                            cvxRewardsUnit = rewardAmount / totalbCvxBal
+                            for addr, bal in unclaimedBalances["bCvx"].items():
+                                rewards.increase_user_rewards(
+                                    web3.toChecksumAddress(addr),
+                                    token,
+                                    int(cvxRewardsUnit * bal),
+                                )
                     if name == "native.cvxCrv":
 
                         console.log(
@@ -114,13 +114,14 @@ def calc_snapshot(
                         )
 
                         totalbCvxCrvBal = sum(unclaimedBalances["bCvxCrv"].values())
-                        bCvxCrvRewardsUnit = rewardAmount / totalbCvxCrvBal
-                        for addr, bal in unclaimedBalances["bCvxCrv"].items():
-                            rewards.increase_user_rewards(
-                                web3.toChecksumAddress(addr),
-                                token,
-                                int(bCvxCrvRewardsUnit * bal),
-                            )
+                        if totalbCvxCrvBal > 0:
+                            bCvxCrvRewardsUnit = rewardAmount / totalbCvxCrvBal
+                            for addr, bal in unclaimedBalances["bCvxCrv"].items():
+                                rewards.increase_user_rewards(
+                                    web3.toChecksumAddress(addr),
+                                    token,
+                                    int(bCvxCrvRewardsUnit * bal),
+                                )
                 else:
                     rewards.increase_user_rewards(addr, token, int(rewardAmount))
 

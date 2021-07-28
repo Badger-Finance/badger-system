@@ -105,10 +105,7 @@ def fetch_all_sett_balances(block):
 
 @lru_cache(maxsize=None) 
 def fetch_sett_balances(sett, block):
-    console.log(sett)
     sett_balances = fetch_all_sett_balances(block)
-    console.log(sett_balances.keys())
-    console.log( sett in sett_balances)
     return sett_balances[sett.lower()]
 
 @lru_cache(maxsize=None)
