@@ -10,17 +10,19 @@ from scripts.systems.bridge_system import BridgeSystem, connect_bridge
 from scripts.systems.badger_system import BadgerSystem, connect_badger
 from scripts.systems.swap_system import connect_swap
 from config.badger_config import badger_config
+from helpers.registry import registry
 
 console = Console()
 
 
 def upgrade_swap_strategy(
-        badger: BadgerSystem,
-        strategy: network.contract.ProjectContract,
-        SwapStrategy: network.contract.ContractContainer) -> str:
-    '''
+    badger: BadgerSystem,
+    strategy: network.contract.ProjectContract,
+    SwapStrategy: network.contract.ContractContainer,
+) -> str:
+    """
     Upgrades swap strategy.
-    '''
+    """
     logic = SwapStrategy.deploy({"from": badger.deployer})
     return badger.queue_upgrade(
         strategy.address,
@@ -28,12 +30,10 @@ def upgrade_swap_strategy(
     )
 
 
-def upgrade_bridge(
-        badger: BadgerSystem,
-        bridge: BridgeSystem) -> str:
-    '''
+def upgrade_bridge(badger: BadgerSystem, bridge: BridgeSystem) -> str:
+    """
     Upgrades bridge.
-    '''
+    """
     adapterLogic = BadgerBridgeAdapter.deploy({"from": badger.deployer})
 
     return badger.queue_upgrade(
@@ -42,12 +42,10 @@ def upgrade_bridge(
     )
 
 
-def configure_bridge(
-        badger: BadgerSystem,
-        bridge: BridgeSystem):
-    '''
+def configure_bridge(badger: BadgerSystem, bridge: BridgeSystem):
+    """
     Configures bridge to use curve token wrapper.
-    '''
+    """
 
     multi = GnosisSafe(badger.devMultisig)
     id = multi.addTx(
@@ -56,12 +54,42 @@ def configure_bridge(
         ),
         {
             "to": bridge.adapter.address,
-            "data":
-                bridge.adapter.setCurveTokenWrapper.
-                encode_input(bridge.curveTokenWrapper.address),
+            "data": bridge.adapter.setCurveTokenWrapper.encode_input(
+                bridge.curveTokenWrapper.address
+            ),
         },
     )
     multi.executeTx(id)
+
+    yearnWbtc = connect_badger("deploy-final.json")
+    wbtcAddr = yearnWbtc.sett_system["vaults"]["yearn.wbtc"]
+
+    multi.execute(
+        MultisigTxMetadata(description="add defi dollar contract addresses to adapter contract"),
+        {
+            "to": bridge.adapter.address,
+            "data": bridge.adapter.setIbbtcContracts.encode_input(registry.defidollar.addresses.ibbtc, registry.defidollar.addresses.badgerPeak, registry.defidollar.addresses.wbtcPeak),
+        },
+    )
+
+    i = 0
+    while i < 3:
+        multi.execute(
+            MultisigTxMetadata(description="populate vault/poolid dictionary"),
+            {
+                "to": bridge.adapter.address,
+                "data": bridge.adapter.setVaultPoolId.encode_input(registry.defidollar.pools[i].id, registry.defidollar.pools[i].sett),
+            },
+        )
+        i += 1
+
+    multi.execute(
+        MultisigTxMetadata(description="populate vault/poolid dictionary"),
+        {
+            "to": bridge.adapter.address,
+            "data": bridge.adapter.setVaultPoolId.encode_input(3, wbtcAddr),
+        },
+    )
 
 
 def main():
