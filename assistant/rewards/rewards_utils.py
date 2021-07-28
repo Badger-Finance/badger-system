@@ -193,7 +193,7 @@ def calculate_sett_balances(badger, name, currentBlock):
 
     # Get rid of blacklisted and negative balances
     for addr, balance in list(balances.items()):
-        if addr in map(REWARDS_BLACKLIST.keys(), lambda a: a.lower()):
+        if addr.lower() in REWARDS_BLACKLIST:
             console.log(
                 "Removing {} from balances".format(REWARDS_BLACKLIST[addr.lower()])
             )
