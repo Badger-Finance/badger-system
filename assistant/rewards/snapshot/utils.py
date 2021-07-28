@@ -30,8 +30,6 @@ def chain_snapshot(badger: BadgerSystem, chain: str, block: int):
             balanceInfo[settAddress] = {}
         balanceInfo[settAddress][addr] = balanceData["amount"]
     for settAddr, balances in list(balanceInfo.items()):
-        console.log(settAddr)
-        console.log(balances)
         settBalances = parse_sett_balances(settAddr, balances, chain)
         console.log("Fetched {} balances for sett {}".format(len(balances), settAddr))
         balancesBySett[settAddr] = settBalances
@@ -58,6 +56,9 @@ def parse_sett_balances(settAddress: str, balances: Dict[str, int], chain: str):
             del balances[addr]
 
     settType, settRatio = get_sett_info(settAddress)
+    console.log(
+        "Sett {} has type {} and Ratio {} \n".format(settAddress, settType, settRatio)
+    )
     userBalances = [
         UserBalance(addr, bal, settAddress) for addr, bal in balances.items()
     ]

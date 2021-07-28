@@ -1,6 +1,7 @@
 from rich.console import Console
 from assistant.rewards.classes.UserBalance import UserBalance, UserBalances
 from collections import Counter
+from brownie import web3
 from scripts.systems.badger_system import BadgerSystem
 from assistant.rewards.snapshot.utils import chain_snapshot
 from assistant.badger_api.prices import (
@@ -17,12 +18,9 @@ def calc_union_addresses(nativeSetts: UserBalances, nonNativeSetts: UserBalances
     :param nativeSetts: native setts
     :param nonNativeSetts: non native setts
     """
-    return set.union(
-        *[
-            {user.address for user in nativeSetts},
-            {user.address for user in nonNativeSetts},
-        ]
-    )
+    nativeAddresses = [user.address for user in nativeSetts]
+    nonNativeAddresses = [user.address for user in nonNativeSetts]
+    return list(set(nativeAddresses + nonNativeAddresses))
 
 
 def filter_dust(balances: UserBalances, dustAmount: int):
@@ -43,7 +41,7 @@ def convert_balances_to_usd(balances: UserBalances, sett: str):
     Convert sett balance to usd and multiply by correct ratio
     :param balances: balances to convert to usd
     """
-    price = prices[sett]
+    price = prices[web3.toChecksumAddress(sett)]
     priceRatio = balances.settRatio
     for user in balances:
         user.balance = priceRatio * price * user.balance
@@ -60,8 +58,8 @@ def calc_boost_data(badger: BadgerSystem, block: int):
     chains = ["eth"]
     ## Figure out how to map blocks, maybe  time -> block per chain
 
-    native = {}
-    nonNative = {}
+    native = UserBalances()
+    nonNative = UserBalances()
 
     for chain in chains:
         snapshot = chain_snapshot(badger, chain, block)
@@ -69,10 +67,12 @@ def calc_boost_data(badger: BadgerSystem, block: int):
         for sett, balances in snapshot.items():
             balances = convert_balances_to_usd(balances, sett)
             if balances.settType == "native":
-                native = dict(Counter(balances) + Counter(native))
+                console.log("Adding {} to native balances".format(sett))
+                native = balances + native
             elif balances.settType == "nonNative":
-                nonNative = dict(Counter(balances) + Counter(nonNative))
+                console.log("Adding {} to non native balances".format(sett))
+                nonNative = balances + nonNative
 
-    native = filter_dust(UserBalances(native, "", ""), 1)
-    nonNative = filter_dust(UserBalances(nonNative, "", ""), 1)
+    native = filter_dust(native, 1)
+    nonNative = filter_dust(nonNative, 1)
     return native, nonNative

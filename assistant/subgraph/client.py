@@ -383,11 +383,12 @@ def fetch_chain_balances(chain, block):
         balanceData = results["userSettBalances"]
         for result in balanceData:
             account = result["user"]["id"]
-            newBalances[account] = {
-                "amount": float(result["netDeposit"])
-                / math.pow(10, int(result["sett"]["token"]["decimals"])),
-                "settAddress": result["sett"]["id"],
-            }
+            if float(result["netDeposit"]) > 0:
+                newBalances[account] = {
+                    "amount": float(result["netDeposit"])
+                    / math.pow(10, int(result["sett"]["token"]["decimals"])),
+                    "settAddress": result["sett"]["id"],
+                }
 
         if len(balanceData) == 0:
             break

@@ -5,7 +5,6 @@ from config.env_config import env_config
 
 
 def subgraph_url(name):
-    print(name)
     if name in subgraph_ids:
         return "https://gateway.thegraph.com/api/{}/subgraphs/id/{}".format(
             env_config.graph_api_key, subgraph_ids[name]
@@ -16,6 +15,5 @@ def subgraph_url(name):
 
 def make_gql_client(name):
     url = subgraph_url(name)
-    print(url)
     transport = AIOHTTPTransport(url=url)
     return Client(transport=transport, fetch_schema_from_transport=True)

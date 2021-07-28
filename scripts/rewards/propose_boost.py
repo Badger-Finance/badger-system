@@ -11,4 +11,5 @@ def main():
     badger = connect_badger()
     currentBlock = chain.height
     badgerBoost, boostInfo = badger_boost(badger, currentBlock)
-    upload_boosts(test=True)
+
+    # upload_boosts(test=True)

@@ -1,5 +1,6 @@
 from brownie import *
 from rich.console import Console
+import json
 from helpers.constants import (
     BADGER,
     DIGG,
@@ -32,9 +33,10 @@ def calc_stake_ratio(
     """
     nativeBalance = getattr(nativeSetts[address], "balance", 0)
     nonNativeBalance = getattr(nonNativeSetts[address], "balance", 0)
-    if nonNativeBalance == 0:
+    if nonNativeBalance == 0 or nativeBalance == 0:
         stakeRatio = 0
     else:
+        console.log("Non zero stakeRatio :)")
         stakeRatio = (nativeBalance) / nonNativeBalance
     return stakeRatio
 
@@ -48,8 +50,11 @@ def badger_boost(badger: BadgerSystem, currentBlock: int):
     console.log("Calculating boost at block {} ...".format(currentBlock))
     nativeSetts, nonNativeSetts = calc_boost_data(badger, currentBlock)
     allAddresses = calc_union_addresses(nativeSetts, nonNativeSetts)
+    console.log("{} addresses fetched".format(len(allAddresses)))
+    console.log(nativeSetts)
     badgerBoost = {}
     boostInfo = {}
+    boostData = {}
 
     stakeRatiosList = [
         calc_stake_ratio(addr, nativeSetts, nonNativeSetts) for addr in allAddresses
@@ -60,20 +65,14 @@ def badger_boost(badger: BadgerSystem, currentBlock: int):
         sorted(stakeRatios.items(), key=lambda t: t[1], reverse=True)
     )
 
-    for addr in allAddresses:
-        boostInfo[addr.lower()] = {
-            "nativeBalance": 0,
-            "nonNativeBalance": 0,
-            "stakeRatio": 0,
-        }
-
     boostInfo = {}
-
+    for addr in allAddresses:
+        boostInfo[addr] = {"nativeBalance": 0, "nonNativeBalance": 0, "stakeRatio": 0}
     for user in nativeSetts:
-        boostInfo[user.address.lower()]["nativeBalance"] += user.balance
+        boostInfo[user.address.lower()]["nativeBalance"] = user.balance
 
     for user in nonNativeSetts:
-        boostInfo[user.address.lower()]["nonNativeBalance"] += user.balance
+        boostInfo[user.address.lower()]["nonNativeBalance"] = user.balance
 
     for addr, ratio in stakeRatios.items():
         boostInfo[addr.lower()]["stakeRatio"] = ratio
@@ -94,6 +93,18 @@ def badger_boost(badger: BadgerSystem, currentBlock: int):
 
             stakeData[userStakeRange] = stakeData.get(userStakeRange, 0) + 1
             badgerBoost[addr] = userBoost
+
+    for addr, boost in badgerBoost.items():
+        boostMetaData = boostInfo.get(addr, {})
+        boostData[addr] = {
+            "boost": boost,
+            "nativeBalance": boostMetaData.get("nativeBalance", 0),
+            "nonNativeBalance": boostMetaData.get("nonNativeBalance", 0),
+            "stakeRatio": boostMetaData.get("stakeRatio", 0),
+        }
+
+    with open("badger-boosts.json", "w") as fp:
+        json.dump(boostData, fp)
 
     console.log(len(badgerBoost))
     print(

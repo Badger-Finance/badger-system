@@ -1,15 +1,7 @@
-from helpers.constants import NO_GEYSERS, CONVEX_SETTS
 from brownie import *
 from rich.console import Console
-from collections import Counter
-from assistant.subgraph.client import (
-    fetch_sett_balances,
-    fetch_geyser_events,
-)
 from assistant.rewards.classes.RewardsList import RewardsList
 from assistant.rewards.classes.UserBalance import UserBalance, UserBalances
-from helpers.constants import NO_GEYSERS, REWARDS_BLACKLIST
-from functools import lru_cache
 
 
 console = Console()

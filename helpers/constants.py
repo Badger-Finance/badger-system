@@ -157,8 +157,6 @@ SETT_BOOST_RATIOS = {
     "native.cvx": 0.1,
 }
 
-CONVEX_SETTS = ["native.hbtcCrv", "native.pbtcCrv", "native.obtcCrv", "native.bbtcCrv"]
-
 REWARDS_BLACKLIST = {
     "0x19d97d8fa813ee2f51ad4b4e04ea08baf4dffc28": "Badger Vault",
     "0xb65cef03b9b89f99517643226d76e286ee999e77": "Badger Dev Multisig",
