@@ -23,6 +23,7 @@ from helpers.sett.resolvers import (
     StrategyDiggLpMetaFarmResolver,
     StrategyUnitProtocolRenbtcResolver,
     StrategyUniGenericLpResolver,
+    StrategyMStableVaultResolver,
     StabilizeStrategyDiggV1Resolver,
     StrategyConvexStakingOptimizerResolver,
     StrategyCvxHelperResolver,
@@ -191,6 +192,8 @@ class SnapshotManager:
             return StrategyUniGenericLpResolver(self)
         if name == "StabilizeStrategyDiggV1":
             return StabilizeStrategyDiggV1Resolver(self)
+        if name == "StrategyMStableVault":
+            return StrategyMStableVaultResolver(self)
         if name == "StrategyConvexStakingOptimizer":
             return StrategyConvexStakingOptimizerResolver(self)
         if name == "StrategyCvxHelper":

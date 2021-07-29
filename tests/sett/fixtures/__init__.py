@@ -14,6 +14,8 @@ from .YearnMiniDeploy import YearnMiniDeploy
 from .SushiWbtcIbBtcLpOptimizerMiniDeploy import SushiWbtcIbBtcLpOptimizerMiniDeploy
 from .UnitProtocolRenBtcMiniDeploy import UnitProtocolRenBtcMiniDeploy
 from .UniGenericLpMiniDeploy import UniGenericLpMiniDeploy
+from .MStableImBtcMiniDeploy import MStableImBtcMiniDeploy
+from .MStableFpMbtcHbtcMiniDeploy import MStableFpMbtcHbtcMiniDeploy
 from .ConvexRenBtcMiniDeploy import ConvexRenBtcMiniDeploy
 from .ConvexSBtcMiniDeploy import ConvexSBtcMiniDeploy
 from .ConvexTBtcMiniDeploy import ConvexTBtcMiniDeploy

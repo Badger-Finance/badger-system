@@ -3,7 +3,14 @@ from assistant.rewards.classes.RewardsList import RewardsList
 from assistant.rewards.classes.RewardsLog import rewardsLog
 from assistant.rewards.classes.Schedule import Schedule
 from helpers.time_utils import to_days, to_hours, to_utc_date
-from helpers.constants import NON_NATIVE_SETTS, NATIVE_DIGG_SETTS, DIGG, BADGER_TREE
+from helpers.digg_utils import diggUtils
+from helpers.constants import (
+    NON_NATIVE_SETTS,
+    NATIVE_DIGG_SETTS,
+    DIGG,
+    BADGER_TREE,
+    DFD,
+)
 from brownie import *
 from rich.console import Console
 
@@ -13,8 +20,6 @@ console = Console()
 def calc_snapshot(
     badger, name, startBlock, endBlock, nextCycle, boosts, unclaimedBalances
 ):
-    digg = interface.IDigg(DIGG)
-
     console.log("==== Processing rewards for {} at {} ====".format(name, endBlock))
 
     rewards = RewardsList(nextCycle, badger.badgerTree)
@@ -61,19 +66,10 @@ def calc_snapshot(
         # Make sure there are tokens to distribute (some geysers only
         # distribute one token)
         if token == DIGG:
-
-            # if name in NATIVE_DIGG_SETTS:
-            #    tokenDistribution = tokenDistribution * diggAllocation
-            # else:
-            #    tokenDistribution = tokenDistribution * (1 - diggAllocation)
-            fragments = digg.sharesToFragments(tokenDistribution) / 1e9
-            console.log(
-                "{} DIGG tokens distributed".format(
-                    digg.sharesToFragments(tokenDistribution) / 1e9
-                )
-            )
+            fragments = diggUtils.sharesToFragments(tokenDistribution) / 1e9
+            console.log("{} DIGG tokens distributed".format(fragments))
             rewardsLog.add_total_token_dist(name, token, fragments)
-        elif token == "0x20c36f062a31865bED8a5B1e512D9a1A20AA333A":
+        elif token == DFD:
             console.log("{} DFD tokens distributed".format(tokenDistribution / 1e18))
             rewardsLog.add_total_token_dist(name, token, tokenDistribution / 1e18)
         else:
