@@ -10,22 +10,22 @@ from helpers.time_utils import days, to_timestamp
 weekly_schedule = {
     # CRV LP
     "native.renCrv": {
-        "badger": Wei("6900 ether"),
+        "badger": Wei("5114 ether"),
         "digg": to_digg_shares(0),
     },
     "native.sbtcCrv": {
-        "badger": Wei("3450 ether"),
+        "badger": Wei("2557 ether"),
         "digg": to_digg_shares(0),
     },
     "native.tbtcCrv": {
-        "badger": Wei("3450 ether"),
+        "badger": Wei("2557 ether"),
         "digg": to_digg_shares(0),
     },
-    "native.hbtcCrv": {"badger": Wei("6900 ether"), "digg": to_digg_shares(0)},
-    "native.bbtcCrv": {"badger": Wei("6900 ether"), "digg": to_digg_shares(0)},
-    "native.obtcCrv": {"badger": Wei("3450 ether"), "digg": to_digg_shares(0)},
-    "native.pbtcCrv": {"badger": Wei("3450 ether"), "digg": to_digg_shares(0)},
-    "native.tricrypto": {"badger": Wei("6900 ether"), "digg": to_digg_shares(0)},
+    "native.hbtcCrv": {"badger": Wei("5114 ether"), "digg": to_digg_shares(0)},
+    "native.bbtcCrv": {"badger": Wei("5114 ether"), "digg": to_digg_shares(0)},
+    "native.obtcCrv": {"badger": Wei("2557 ether"), "digg": to_digg_shares(0)},
+    "native.pbtcCrv": {"badger": Wei("2557 ether"), "digg": to_digg_shares(0)},
+    "native.tricrypto": {"badger": Wei("5114 ether"), "digg": to_digg_shares(0)},
     # Sushi LP
     "native.sushiWbtcEth": {
         "badger": Wei("2300 ether"),
@@ -40,8 +40,8 @@ weekly_schedule = {
     "yearn.wbtc": {"badger": Wei("2300 ether"), "digg": to_digg_shares(0)},
 
     # Convex Helper
-    "native.cvx": {"badger": Wei("230 ether"), "digg": to_digg_shares(0)},
-    "native.cvxCrv": {"badger": Wei("230 ether"), "digg": to_digg_shares(0)},
+    "native.cvx": {"badger": Wei("278 ether"), "digg": to_digg_shares(0)},
+    "native.cvxCrv": {"badger": Wei("278 ether"), "digg": to_digg_shares(0)},
 
     # Native Setts
     "native.badger": {
@@ -58,14 +58,14 @@ weekly_schedule = {
     },
 
     # Digg Setts
-     "native.digg": {"badger": Wei("0 ether"), "digg": to_digg_shares(4.990)},
+     "native.digg": {"badger": Wei("0 ether"), "digg": to_digg_shares(4.140)},
     "native.uniDiggWbtc": {
         "badger": Wei("0 ether"),
-        "digg": to_digg_shares(9.990),
+        "digg": to_digg_shares(8.280),
     },
     "native.sushiDiggWbtc": {
         "badger": Wei("0 ether"),
-        "digg": to_digg_shares(9.990),
+        "digg": to_digg_shares(8.280),
     },
 }
 
