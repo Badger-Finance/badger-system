@@ -16,25 +16,39 @@ contract KeeperAccessControl is AccessControlUpgradeable {
         _setupRole(DEFAULT_ADMIN_ROLE, initialAdmin_);
     }
 
+    modifier settBalanceCheck(address sett) {
+        uint256 balanceOfBefore = ISett(sett).balance();
+        _;
+        uint256 balanceOfAfter = ISett(sett).balance();
+        require(balanceOfAfter >= balanceOfBefore, "Sett balance must not decrease");
+    }
+
+    modifier strategyBalanceCheck(address strategy) {
+        uint256 balanceOfBefore = IStrategy(strategy).balanceOf();
+        _;
+        uint256 balanceOfAfter = IStrategy(strategy).balanceOf();
+        require(balanceOfAfter >= balanceOfBefore, "Strategy balance must not decrease");
+    }
+
     // ===== Permissioned Functions: Earner (Move money into strategy positions) =====
-    function deposit(address strategy) external {
+    function deposit(address strategy) external strategyBalanceCheck(strategy) {
         require(hasRole(EARNER_ROLE, msg.sender), "EARNER_ROLE");
         IStrategy(strategy).deposit();
     }
 
-    function earn(address sett) external {
+    function earn(address sett) external settBalanceCheck(sett) {
         require(hasRole(EARNER_ROLE, msg.sender), "EARNER_ROLE");
         ISett(sett).earn();
     }
 
     // ===== Permissioned Functions: Tender =====
-    function tend(address strategy) external {
+    function tend(address strategy) external strategyBalanceCheck(strategy) {
         require(hasRole(TENDER_ROLE, msg.sender), "TENDER_ROLE");
         IStrategy(strategy).tend();
     }
 
     // ===== Permissioned Functions: Harvester =====
-    function harvest(address strategy) external {
+    function harvest(address strategy) external strategyBalanceCheck(strategy) {
         require(hasRole(HARVESTER_ROLE, msg.sender), "HARVESTER_ROLE");
         IStrategy(strategy).harvest();
     }
