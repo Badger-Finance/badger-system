@@ -36,7 +36,7 @@ class TxTimer:
         self.timer_tick = timer_tick
         self.waiting = False
         self.sender = None
-        self.webhook = os.environ["TX_TIMER_WEBHOOK"]
+        self.webhook = os.environ.get("TX_TIMER_WEBHOOK", "")
         self.tx_type = ""
 
     def alert(self, msg: str) -> None:

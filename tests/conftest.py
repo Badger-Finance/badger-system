@@ -115,6 +115,10 @@ bscSettsToRun = [
     "native.pancakeBnbBtcb",
 ]
 
+renBTCSettsToRun = [
+    "native.unitRenBtc",
+]
+
 runTestSetts = True
 
 networkSettsMap = {

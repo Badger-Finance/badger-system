@@ -254,6 +254,16 @@ sett_config = DotMap(
                 cvxCrvHelperVault=convex.cvxCrvHelperVault,
             ),
         ),
+        unitRenBtc=DotMap(
+            strategyName="StrategyUnitProtocolRenbtc",
+            params=DotMap(
+                want=registry.tokens.renbtc,
+                performanceFeeStrategist=1000,
+                performanceFeeGovernance=1000,
+                withdrawalFee=0,
+                keepCRV=0,
+            ),
+        ),
     ),
     helper=DotMap(
         cvx=DotMap(
