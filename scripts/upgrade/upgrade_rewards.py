@@ -17,6 +17,7 @@ CONTROLLER_ADDRESS = "0x63cF44B2548e4493Fd099222A1eC79F3344D9682"
 GOVERNANCE_MULTISIG_ADDRESS = "0xB65cef03b9B89f99517643226d76e286ee999e77"
 FUNCTION_TO_CALL = "setRewards(address)"
 
+
 def test_update_rewards(badger: BadgerSystem) -> str:
     data = encode_abi(["address"], [GOVERNANCE_MULTISIG_ADDRESS])
     delay = 2 * days(2)

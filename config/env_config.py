@@ -10,6 +10,7 @@ class EnvConfig:
         self.aws_secret_access_key = decouple.config(
             "AWS_SECRET_ACCESS_KEY", default=""
         )
+        self.graph_api_key = decouple.config("GRAPH_API_KEY", default="")
         self.debug = debug
 
 

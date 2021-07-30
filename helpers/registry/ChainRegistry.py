@@ -8,6 +8,7 @@ class ChainRegistry:
     def __init__(
         self,
         curve=None,
+        convex=None,
         uniswap=None,
         open_zeppelin=None,
         aragon=None,
@@ -28,8 +29,11 @@ class ChainRegistry:
         compound=None,
         chainlink=None,
         defidollar=None,
+        mstable=None,
+        digg=None
     ):
         self.curve = curve
+        self.convex = convex
         self.uniswap = uniswap
         self.open_zeppelin = open_zeppelin
         self.aragon = aragon
@@ -49,6 +53,8 @@ class ChainRegistry:
         self.aave = aave
         self.compound = compound
         self.defidollar = defidollar
+        self.mstable=mstable
+        self.digg = digg
         self.chainlink = chainlink
 
     def yearn_system(self) -> YearnSystem:

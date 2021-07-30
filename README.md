@@ -102,9 +102,17 @@ These files maintain a registry of all live Badger contracts on a given chain.
 * Ethereum Mainnet: [deploy-final.json](https://github.com/Badger-Finance/badger-system/blob/develop/deploy-final.json)
 * Binance Smart Chain: [badger-deploy-bsc.json](https://github.com/Badger-Finance/badger-system/blob/develop/badger-deploy-bsc.json)
 
+
+### Post-Update
+
+- Set boost flag to false to upload boosts to production instead of staging
+- Run scripts with --network mainnet instead of --network mainnet-fork
+
 ### Documentation
 
 You can read more about Badger at our [GitBook](https://app.gitbook.com/@badger-finance/s/badger-finance/).
+
+
 
 ### Discussion
 

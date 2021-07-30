@@ -50,25 +50,12 @@ contract StrategySushiBadgerWbtc is BaseStrategyMultiSwapper {
         uint256 blockNumber
     );
 
-    event HarvestBadgerState(
-        uint256 badgerHarvested,
-        uint256 badgerConvertedToWbtc,
-        uint256 wbtcFromConversion,
-        uint256 lpGained,
-        uint256 timestamp,
-        uint256 blockNumber
-    );
-
     struct HarvestData {
-        uint256 badgerHarvested;
         uint256 xSushiHarvested;
         uint256 totalxSushi;
         uint256 toStrategist;
         uint256 toGovernance;
         uint256 toBadgerTree;
-        uint256 badgerConvertedToWbtc;
-        uint256 wbtcFromConversion;
-        uint256 lpGained;
     }
 
     struct TendData {
@@ -112,11 +99,11 @@ contract StrategySushiBadgerWbtc is BaseStrategyMultiSwapper {
     }
 
     function balanceOfPool() public override view returns (uint256) {
-        // Note: Our want balance is actually in the SushiChef, but it is also tracked in the geyser, which is easier to read
-        return IStakingRewardsSignalOnly(geyser).balanceOf(address(this));
+        (uint256 staked, ) = ISushiChef(chef).userInfo(pid, address(this));
+        return staked;
     }
 
-    function getProtectedTokens() external override view returns (address[] memory) {
+    function getProtectedTokens() public override view returns (address[] memory) {
         address[] memory protectedTokens = new address[](5);
         protectedTokens[0] = want;
         protectedTokens[1] = geyser;
@@ -146,9 +133,6 @@ contract StrategySushiBadgerWbtc is BaseStrategyMultiSwapper {
     function _deposit(uint256 _want) internal override {
         // Deposit all want in sushi chef
         ISushiChef(chef).deposit(pid, _want);
-
-        // "Deposit" same want into personal staking rewards via signal (note: this is a SIGNAL ONLY - the staking rewards must be locked to just this account)
-        IStakingRewardsSignalOnly(geyser).stake(_want);
     }
 
     /// @dev Unroll from all strategy positions, and transfer non-core tokens to controller rewards
@@ -168,15 +152,6 @@ contract StrategySushiBadgerWbtc is BaseStrategyMultiSwapper {
         // Send all Sushi to controller rewards
         IERC20Upgradeable(sushi).safeTransfer(IController(controller).rewards(), _sushi);
 
-        // === Transfer extra token: Badger ===
-
-        // "Unstake" from badger rewards source and hrvest all badger rewards
-        IStakingRewardsSignalOnly(geyser).exit();
-
-        // Send all badger rewards to controller rewards
-        uint256 _badger = IERC20Upgradeable(badger).balanceOf(address(this));
-        IERC20Upgradeable(badger).safeTransfer(IController(controller).rewards(), _badger);
-
         // Note: All want is automatically withdrawn outside this "inner hook" in base strategy function
     }
 
@@ -188,10 +163,7 @@ contract StrategySushiBadgerWbtc is BaseStrategyMultiSwapper {
         // If we lack sufficient idle want, withdraw the difference from the strategy position
         if (_preWant < _amount) {
             uint256 _toWithdraw = _amount.sub(_preWant);
-
             ISushiChef(chef).withdraw(pid, _toWithdraw);
-            // Note: Also signal withdraw from staking rewards
-            IStakingRewardsSignalOnly(geyser).withdraw(_toWithdraw);
 
             // Note: Withdrawl process will earn sushi, this will be deposited into SushiBar on next tend()
         }
@@ -229,9 +201,8 @@ contract StrategySushiBadgerWbtc is BaseStrategyMultiSwapper {
         return tendData;
     }
 
-    /// @dev Harvest accumulated badger rewards and convert them to LP tokens
-    /// @dev Harvest accumulated sushi and send to the controller
-    /// @dev Restake the gained LP tokens in the Geyser
+    /// @dev Harvest accumulated sushi from SushiChef and SushiBar and send to rewards tree for distribution. Take performance fees on gains
+    /// @dev The less frequent the harvest, the higher the gains due to compounding
     function harvest() external whenNotPaused returns (HarvestData memory) {
         _onlyAuthorizedActors();
 
@@ -240,9 +211,7 @@ contract StrategySushiBadgerWbtc is BaseStrategyMultiSwapper {
         uint256 _beforexSushi = IERC20Upgradeable(xsushi).balanceOf(address(this));
         uint256 _beforeLp = IERC20Upgradeable(want).balanceOf(address(this));
 
-        uint256 _beforeBadger = IERC20Upgradeable(badger).balanceOf(address(this));
-
-        // ===== Harvest sushi rewards from Chef =====
+        // == Harvest sushi rewards from Chef ==
 
         // Note: Deposit of zero harvests rewards balance, but go ahead and deposit idle want if we have it
         ISushiChef(chef).deposit(pid, _beforeLp);
@@ -271,36 +240,6 @@ contract StrategySushiBadgerWbtc is BaseStrategyMultiSwapper {
         harvestData.toBadgerTree = IERC20Upgradeable(xsushi).balanceOf(address(this));
         IERC20Upgradeable(xsushi).safeTransfer(badgerTree, harvestData.toBadgerTree);
 
-        // ===== Harvest all Badger rewards: Sell to underlying (no performance fees) =====
-
-        IStakingRewardsSignalOnly(geyser).getReward();
-
-        uint256 _afterBadger = IERC20Upgradeable(badger).balanceOf(address(this));
-        harvestData.badgerHarvested = _afterBadger.sub(_beforeBadger);
-
-        // ===== Swap half of badger for wBTC in liquidity pool =====
-        if (harvestData.badgerHarvested > 0) {
-            harvestData.badgerConvertedToWbtc = harvestData.badgerHarvested.div(2);
-            if (harvestData.badgerConvertedToWbtc > 0) {
-                address[] memory path = new address[](2);
-                path[0] = badger; // Badger
-                path[1] = wbtc;
-
-                _swap_sushiswap(badger, harvestData.badgerConvertedToWbtc, path);
-
-                // Add Badger and wBTC as liquidity if any to add
-                _add_max_liquidity_sushiswap(badger, wbtc);
-            }
-        }
-
-        // ===== Deposit gained LP position into Chef & staking rewards =====
-        uint256 _afterLp = IERC20Upgradeable(want).balanceOf(address(this));
-        harvestData.lpGained = _afterLp.sub(_beforeLp);
-
-        if (harvestData.lpGained > 0) {
-            _deposit(harvestData.lpGained);
-        }
-
         emit HarvestState(
             harvestData.xSushiHarvested,
             harvestData.totalxSushi,
@@ -311,16 +250,8 @@ contract StrategySushiBadgerWbtc is BaseStrategyMultiSwapper {
             block.number
         );
 
-        emit HarvestBadgerState(
-            harvestData.badgerHarvested,
-            harvestData.badgerConvertedToWbtc,
-            harvestData.wbtcFromConversion,
-            harvestData.lpGained,
-            block.timestamp,
-            block.number
-        );
-
-        emit Harvest(harvestData.lpGained, block.number);
+        // We never increase underlying position
+        emit Harvest(0, block.number);
 
         return harvestData;
     }

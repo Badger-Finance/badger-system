@@ -1,7 +1,6 @@
 from brownie import *
 
 name_to_artifact = {
-    "SmartVesting": SmartVesting,
     "SmartTimelock": SmartTimelock,
     "RewardsEscrow": RewardsEscrow,
     "BadgerGeyser": BadgerGeyser,
@@ -14,13 +13,13 @@ name_to_artifact = {
     "SettV1": Sett,
     "SettV1.1": Sett,
     "SettV3": SettV3,
+    "SettV4": SettV4,
     "StabilizeDiggSett": StabilizeDiggSett,
     "StakingRewards": StakingRewards,
     "StakingRewardsSignalOnly": StakingRewardsSignalOnly,
     "StrategyBadgerRewards": StrategyBadgerRewards,
     "StrategyBadgerLpMetaFarm": StrategyBadgerLpMetaFarm,
     "StrategyHarvestMetaFarm": StrategyHarvestMetaFarm,
-    "StrategyPickleMetaFarm": StrategyPickleMetaFarm,
     "StrategyCurveGaugeTbtcCrv": StrategyCurveGaugeTbtcCrv,
     "StrategyCurveGaugeSbtcCrv": StrategyCurveGaugeSbtcCrv,
     "StrategyCurveGaugeRenBtcCrv": StrategyCurveGaugeRenBtcCrv,
@@ -32,6 +31,11 @@ name_to_artifact = {
     "StrategyPancakeLpOptimizer": StrategyPancakeLpOptimizer,
     "StrategyUnitProtocolRenbtc": StrategyUnitProtocolRenbtc,
     "StrategyUniGenericLp": StrategyUniGenericLp,
+    "StrategyMStableVaultImbtc": StrategyMStableVaultImbtc,
+    "StrategyMStableVaultFpMbtcHbtc": StrategyMStableVaultFpMbtcHbtc,
+    "StrategyConvexLpOptimizer": StrategyConvexLpOptimizer,
+    "StrategyConvexStakingOptimizer": StrategyConvexStakingOptimizer,
+    "StrategyConvexLpOptimizer": StrategyConvexLpOptimizer,
     "DiggRewardsFaucet": DiggRewardsFaucet,
     "DiggSett": DiggSett,
     "HoneypotMeme": HoneypotMeme,
@@ -55,6 +59,9 @@ name_to_artifact = {
     "VipCappedGuestListBbtcUpgradeable": VipCappedGuestListBbtcUpgradeable,
     "Disperse": Disperse,
     "DiggTreasury": DiggTreasury,
+    "StrategyCvxHelper": StrategyCvxHelper,
+    "StrategyCvxCrvHelper": StrategyCvxCrvHelper,
+    "StrategyPlaceholder": StrategyPlaceholder,
 }
 
 

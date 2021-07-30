@@ -11,13 +11,16 @@ from tests.sett.generic_strategy_tests.strategy_flow import (
     assert_single_user_harvest_flow_remove_fees,
 )
 
-# @pytest.mark.skip()
+
+@pytest.mark.skip()
 @pytest.mark.parametrize(
     "settConfig",
     settTestConfig,
 )
 def test_deposit_withdraw_single_user_flow(settConfig):
     assert_deposit_withdraw_single_user_flow(settConfig)
+
+    # assert False
 
 
 # @pytest.mark.skip()
@@ -27,6 +30,8 @@ def test_deposit_withdraw_single_user_flow(settConfig):
 )
 def test_single_user_harvest_flow(settConfig):
     assert_single_user_harvest_flow(settConfig)
+
+    assert False
 
 
 @pytest.mark.skip()

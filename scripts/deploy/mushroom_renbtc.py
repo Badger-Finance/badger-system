@@ -29,7 +29,9 @@ from helpers.time_utils import days, hours
 console = Console()
 limit = Wei("100 gwei")
 from helpers.gas_utils import gas_strategies
+
 gas_strategies.set_default(gas_strategies.exponentialScalingFast)
+
 
 def main():
     """
@@ -43,22 +45,12 @@ def main():
     Mushroom fee address
     All that good stuff
     """
-    badger = connect_badger(load_deployer=True)
+    badger = connect_badger()
     digg = badger.digg
     dev = badger.deployer
 
-    key = "experimental.renBtc"
-
-    # Distribute Test Tokens
-    # distribute_from_whales(dev, assets=["digg"])
-    # digg.token.transfer(badger.devMultisig, digg.token.balanceOf(dev), {'from':dev})
-
-    # Connect Contracts
-    vault = badger.getSett(key)
-    strat = badger.getStrategy(key)
-    guestList = badger.getGuestList(key)
-
-    controller = badger.getController("experimental")
+    distribute_from_whales(dev, assets=["digg"])
+    digg.token.transfer(badger.devMultisig, digg.token.balanceOf(dev), {"from": dev})
 
     badger.keeper = "0x872213E29C85d7e30F1C8202FC47eD1Ec124BB1D"
     badger.guardian = "0x29F7F8896Fb913CF7f9949C623F896a154727919"
@@ -82,7 +74,7 @@ def main():
         False,
         "",
         "",
-        {"from": badger.deployer}
+        {"from": badger.deployer},
     )
 
     strat.initialize(
@@ -93,17 +85,19 @@ def main():
         badger.guardian,
         [want],
         [1000, 1000, 50, 0],
-        {"from": badger.deployer}
+        {"from": badger.deployer},
     )
+    controller = safe.contract("0x9b4efA18c0c6b4822225b81D150f3518160f8609")
+    guestList = VipCappedGuestListBbtcUpgradeable.at(vault.guestList())
 
     vault.unpause({"from": badger.deployer})
 
     guestList.initialize(vault, {"from": badger.deployer})
     # guestList.setUserDepositCap(1 * 10 ** want.deicmals(), {"from": badger.deployer})
     # guestList.setTotalDepositCap(10 * 10 ** want.deicmals(), {"from": badger.deployer})
-    vault.setGuestList(guestList, {'from': badger.deployer})
+    vault.setGuestList(guestList, {"from": badger.deployer})
 
-    vault.setGovernance(badger.opsMultisig, {'from': badger.deployer})
+    vault.setGovernance(badger.opsMultisig, {"from": badger.deployer})
 
     guestList.transferOwnership(badger.opsMultisig, {"from": badger.deployer})
 
