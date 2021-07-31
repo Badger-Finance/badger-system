@@ -52,10 +52,10 @@ def main():
 
     transfers = [
         # TransferOp(badger.paymentsMultisig, badger.token, Wei("51222 ether")),
-        TransferOp(badger.badgerTree, badger.token, Wei("60000 ether")),
-        TransferOp(badger.badgerTree, diggToken, Wei("3 gwei")),
+        TransferOp(badger.badgerTree, badger.token, Wei("40000 ether")),
+        TransferOp(badger.badgerTree, diggToken, Wei("2 gwei")),
         # TransferOp(badger.badgerTree, dfd, Wei("200000 ether")),
-        TransferOp(badger.badgerRewardsManager, badger.token, Wei("10000 ether")),
+        TransferOp(badger.badgerRewardsManager, badger.token, Wei("20000 ether")),
         TransferOp(badger.badgerRewardsManager, diggToken, Wei("2 gwei")),
     ]
 
