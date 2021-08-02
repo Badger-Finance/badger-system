@@ -321,5 +321,6 @@ contract StrategyPancakeLpOptimizer is PancakeSwapper {
         swapData.lpGained = lpAfter.sub(lpBefore);
 
         emit TokenSwap(swapData.tokenIn, swapData.totalSold, swapData.convertedToToken0, swapData.convertedToToken1, swapData.lpGained);
+        return swapData;
     }
 }
