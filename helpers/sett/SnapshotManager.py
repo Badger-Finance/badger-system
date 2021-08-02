@@ -310,81 +310,99 @@ class SnapshotManager:
                 before, after, {"user": user, "amount": userBalance}, tx
             )
 
-    def estimateProfitTendViaManager(self, key, strategy, overrides):
-        gas_estimate = self.badger.badgerRewardsManager.tend.estimate_gas(
-            strategy, overrides
-        )
-        gas_cost = web3.fromWei(gas_strategies.gas_cost(gas_estimate), "ether")
-        earnings = get_tend_earnings_manager(self.badger, self.strategy, key, overrides)
-        if earnings == "skip":
-            return 0
+    def estimateProfitTendViaManager(self, key, strategy, overrides, min_profit):
+        try:
+            gas_estimate = self.badger.badgerRewardsManager.tend.estimate_gas(
+                strategy, overrides
+            )
+            gas_cost = web3.fromWei(gas_strategies.gas_cost(gas_estimate), "ether")
+            earnings = get_tend_earnings_manager(
+                self.badger, self.strategy, key, overrides
+            )
+            if earnings == "skip":
+                return min_profit
 
-        profit = decimal.Decimal(earnings) - gas_cost
-        console.log(
-            "expected gas cost:",
-            gas_cost,
-            "expected earnings:",
-            earnings,
-            "expected profits",
-            profit,
-        )
-        return profit
+            profit = decimal.Decimal(earnings) - gas_cost
+            console.log(
+                "expected gas cost:",
+                gas_cost,
+                "expected earnings:",
+                earnings,
+                "expected profits",
+                profit,
+            )
+            return profit
+        except:
+            print("profit estimation failed")
+            return min_profit
 
-    def estimateProfitTend(self, key, overrides):
-        gas_estimate = self.strategy.tend.estimate_gas(overrides)
-        gas_cost = web3.fromWei(gas_strategies.gas_cost(gas_estimate), "ether")
-        earnings = get_tend_earnings(self.strategy, key, overrides)
-        if earnings == "skip":
-            return 0
+    def estimateProfitTend(self, key, overrides, min_profit):
+        try:
+            gas_estimate = self.strategy.tend.estimate_gas(overrides)
+            gas_cost = web3.fromWei(gas_strategies.gas_cost(gas_estimate), "ether")
+            earnings = get_tend_earnings(self.strategy, key, overrides)
+            if earnings == "skip":
+                return min_profit
 
-        profit = decimal.Decimal(earnings) - gas_cost
-        console.log(
-            "expected gas cost:",
-            gas_cost,
-            "expected earnings:",
-            earnings,
-            "expected profits",
-            profit,
-        )
-        return profit
+            profit = decimal.Decimal(earnings) - gas_cost
+            console.log(
+                "expected gas cost:",
+                gas_cost,
+                "expected earnings:",
+                earnings,
+                "expected profits",
+                profit,
+            )
+            return profit
+        except:
+            print("profit estimation failed")
+            return min_profit
 
-    def estimateProfitHarvestViaManager(self, key, strategy, overrides):
-        gas_estimate = self.badger.badgerRewardsManager.harvest.estimate_gas(
-            strategy, overrides
-        )
-        gas_cost = web3.fromWei(gas_strategies.gas_cost(gas_estimate), "ether")
-        earnings = get_harvest_earnings(self.strategy, key, overrides)
-        if earnings == "skip":
-            return 0
+    def estimateProfitHarvestViaManager(self, key, strategy, overrides, min_profit):
+        try:
+            gas_estimate = self.badger.badgerRewardsManager.harvest.estimate_gas(
+                strategy, overrides
+            )
+            gas_cost = web3.fromWei(gas_strategies.gas_cost(gas_estimate), "ether")
+            earnings = get_harvest_earnings(self.strategy, key, overrides)
+            if earnings == "skip":
+                return min_profit
 
-        profit = decimal.Decimal(earnings) - gas_cost
-        console.log(
-            "expected gas cost:",
-            gas_cost,
-            "expected earnings:",
-            earnings,
-            "expected profits",
-            profit,
-        )
-        return profit
+            profit = decimal.Decimal(earnings) - gas_cost
+            console.log(
+                "expected gas cost:",
+                gas_cost,
+                "expected earnings:",
+                earnings,
+                "expected profits",
+                profit,
+            )
+            return profit
+        except:
+            print("profit estimation failed")
+            return min_profit
 
-    def estimateProfitHarvest(self, key, overrides):
-        gas_estimate = self.strategy.harvest.estimate_gas(overrides)
-        gas_cost = web3.fromWei(gas_strategies.gas_cost(gas_estimate), "ether")
-        earnings = get_harvest_earnings(self.strategy, key, overrides)
-        if earnings == "skip":
-            return 0
+    def estimateProfitHarvest(self, key, overrides, min_profit):
+        try:
+            gas_estimate = self.strategy.harvest.estimate_gas(overrides)
+            gas_cost = web3.fromWei(gas_strategies.gas_cost(gas_estimate), "ether")
+            earnings = get_harvest_earnings(self.strategy, key, overrides)
+            if earnings == "skip":
+                return min_profit
 
-        profit = decimal.Decimal(earnings) - gas_cost
-        console.log(
-            "expected gas cost:",
-            gas_cost,
-            "expected earnings:",
-            earnings,
-            "expected profits",
-            profit,
-        )
-        return profit
+            profit = decimal.Decimal(earnings) - gas_cost
+            console.log(
+                "expected gas cost:",
+                gas_cost,
+                "expected earnings:",
+                earnings,
+                "expected profits",
+                profit,
+            )
+            return profit
+        except:
+            print("profit estimation failed")
+            return min_profit
 
     def format(self, key, value):
         if type(value) is int:
