@@ -2,18 +2,14 @@ from brownie import *
 from rich.console import Console
 import json
 from helpers.constants import (
-    BADGER,
-    DIGG,
-    SETT_BOOST_RATIOS,
-    MAX_BOOST,
     STAKE_RATIO_RANGES,
 )
+from typing import Dict
 from collections import OrderedDict
 from assistant.rewards.rewards_utils import combine_balances
 from scripts.systems.badger_system import BadgerSystem
 from tabulate import tabulate
 
-from assistant.rewards.classes.UserBalance import UserBalance, UserBalances
 from assistant.rewards.boost.utils import (
     calc_union_addresses,
     calc_boost_data,
@@ -23,7 +19,7 @@ console = Console()
 
 
 def calc_stake_ratio(
-    address: str, nativeSetts: UserBalances, nonNativeSetts: UserBalances
+    address: str, nativeSetts: Dict[str, int], nonNativeSetts: Dict[str, int]
 ):
     """
     Calculate the stake ratio for an address
@@ -31,12 +27,11 @@ def calc_stake_ratio(
     :param nativeSetts: native balances
     :param nonNativeSetts: non native balances
     """
-    nativeBalance = getattr(nativeSetts[address], "balance", 0)
-    nonNativeBalance = getattr(nonNativeSetts[address], "balance", 0)
+    nativeBalance = nativeSetts.get(address.lower(), 0)
+    nonNativeBalance = nonNativeSetts.get(address.lower(), 0)
     if nonNativeBalance == 0 or nativeBalance == 0:
         stakeRatio = 0
     else:
-        console.log("Non zero stakeRatio :)")
         stakeRatio = (nativeBalance) / nonNativeBalance
     return stakeRatio
 
@@ -49,9 +44,9 @@ def badger_boost(badger: BadgerSystem, currentBlock: int):
     """
     console.log("Calculating boost at block {} ...".format(currentBlock))
     nativeSetts, nonNativeSetts = calc_boost_data(badger, currentBlock)
+
     allAddresses = calc_union_addresses(nativeSetts, nonNativeSetts)
     console.log("{} addresses fetched".format(len(allAddresses)))
-    console.log(nativeSetts)
     badgerBoost = {}
     boostInfo = {}
     boostData = {}
@@ -61,18 +56,16 @@ def badger_boost(badger: BadgerSystem, currentBlock: int):
     ]
 
     stakeRatios = dict(zip(allAddresses, stakeRatiosList))
-    stakeRatios = OrderedDict(
-        sorted(stakeRatios.items(), key=lambda t: t[1], reverse=True)
-    )
 
     boostInfo = {}
     for addr in allAddresses:
         boostInfo[addr] = {"nativeBalance": 0, "nonNativeBalance": 0, "stakeRatio": 0}
-    for user in nativeSetts:
-        boostInfo[user.address.lower()]["nativeBalance"] = user.balance
 
-    for user in nonNativeSetts:
-        boostInfo[user.address.lower()]["nonNativeBalance"] = user.balance
+    for user, nativeUsd in nativeSetts.items():
+        boostInfo[user.lower()]["nativeBalance"] = nativeUsd
+
+    for user, nonNativeUsd in nonNativeSetts.items():
+        boostInfo[user.lower()]["nonNativeBalance"] = nonNativeUsd
 
     for addr, ratio in stakeRatios.items():
         boostInfo[addr.lower()]["stakeRatio"] = ratio

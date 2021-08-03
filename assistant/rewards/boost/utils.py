@@ -2,6 +2,7 @@ from rich.console import Console
 from assistant.rewards.classes.UserBalance import UserBalance, UserBalances
 from collections import Counter
 from brownie import web3
+from typing import Dict
 from scripts.systems.badger_system import BadgerSystem
 from assistant.rewards.snapshot.utils import chain_snapshot
 from assistant.badger_api.prices import (
@@ -12,28 +13,24 @@ console = Console()
 prices = fetch_token_prices()
 
 
-def calc_union_addresses(nativeSetts: UserBalances, nonNativeSetts: UserBalances):
+def calc_union_addresses(nativeSetts: Dict[str, int], nonNativeSetts: Dict[str, int]):
     """
     Combine addresses from native setts and non native setts
     :param nativeSetts: native setts
     :param nonNativeSetts: non native setts
     """
-    nativeAddresses = [user.address for user in nativeSetts]
-    nonNativeAddresses = [user.address for user in nonNativeSetts]
+    nativeAddresses = list(nativeSetts.keys())
+    nonNativeAddresses = list(nonNativeSetts.keys())
     return list(set(nativeAddresses + nonNativeAddresses))
 
 
-def filter_dust(balances: UserBalances, dustAmount: int):
+def filter_dust(balances: Dict[str, int], dustAmount: int):
     """
     Filter out dust values from user balances
     :param balances: balances to filter
     :param dustAmount: dollar amount to filter by
     """
-    return UserBalances(
-        list(filter(lambda user: user.balance > dustAmount, balances)),
-        balances.settType,
-        balances.settRatio,
-    )
+    return {addr: value for addr, value in balances.items() if value > dustAmount}
 
 
 def convert_balances_to_usd(balances: UserBalances, sett: str):
@@ -43,10 +40,11 @@ def convert_balances_to_usd(balances: UserBalances, sett: str):
     """
     price = prices[web3.toChecksumAddress(sett)]
     priceRatio = balances.settRatio
+    usdBalances = {}
     for user in balances:
-        user.balance = priceRatio * price * user.balance
+        usdBalances[user.address] = priceRatio * price * user.balance
 
-    return balances
+    return usdBalances, balances.settType
 
 
 def calc_boost_data(badger: BadgerSystem, block: int):
@@ -55,23 +53,21 @@ def calc_boost_data(badger: BadgerSystem, block: int):
     :param badger: badger system
     :param block: block to collect the boost data from
     """
-    chains = ["eth"]
+    chains = ["eth", "polygon"]
     ## Figure out how to map blocks, maybe  time -> block per chain
 
-    native = UserBalances()
-    nonNative = UserBalances()
+    native = {}
+    nonNative = {}
 
     for chain in chains:
         snapshot = chain_snapshot(badger, chain, block)
         console.log("Converting balances to USD")
         for sett, balances in snapshot.items():
-            balances = convert_balances_to_usd(balances, sett)
-            if balances.settType == "native":
-                console.log("Adding {} to native balances".format(sett))
-                native = balances + native
-            elif balances.settType == "nonNative":
-                console.log("Adding {} to non native balances".format(sett))
-                nonNative = balances + nonNative
+            balances, settType = convert_balances_to_usd(balances, sett)
+            if settType == "native":
+                native = {**native, **balances}
+            elif settType == "nonNative":
+                nonNative = {**nonNative, **balances}
 
     native = filter_dust(native, 1)
     nonNative = filter_dust(nonNative, 1)

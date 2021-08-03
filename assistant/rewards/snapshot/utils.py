@@ -21,15 +21,9 @@ def chain_snapshot(badger: BadgerSystem, chain: str, block: int):
 
     """
     chainBalances = fetch_chain_balances(chain, block - 50)
-    balanceInfo = {}
     balancesBySett = {}
 
-    for addr, balanceData in chainBalances.items():
-        settAddress = balanceData["settAddress"]
-        if settAddress not in balanceInfo:
-            balanceInfo[settAddress] = {}
-        balanceInfo[settAddress][addr] = balanceData["amount"]
-    for settAddr, balances in list(balanceInfo.items()):
+    for settAddr, balances in list(chainBalances.items()):
         settBalances = parse_sett_balances(settAddr, balances, chain)
         console.log("Fetched {} balances for sett {}".format(len(balances), settAddr))
         balancesBySett[settAddr] = settBalances

@@ -383,18 +383,22 @@ def fetch_chain_balances(chain, block):
         balanceData = results["userSettBalances"]
         for result in balanceData:
             account = result["user"]["id"]
-            if float(result["netDeposit"]) > 0:
-                newBalances[account] = {
-                    "amount": float(result["netDeposit"])
-                    / math.pow(10, int(result["sett"]["token"]["decimals"])),
-                    "settAddress": result["sett"]["id"],
-                }
+            deposit = float(result["netDeposit"])
+            decimals = int(result["sett"]["token"]["decimals"])
+            sett = result["sett"]["id"]
+            if deposit > 0:
+                if sett not in newBalances:
+                    newBalances[sett] = {}
+                newBalances[sett][account.lower()] = deposit / math.pow(10, decimals)
 
         if len(balanceData) == 0:
             break
         else:
             console.log("Fetching {} sett balances".format(len(balanceData)))
             lastId = balanceData[-1]["id"]
-            balances = {**newBalances, **balances}
+            for settAddr, newBals in newBalances.items():
+                if settAddr not in balances:
+                    balances[settAddr] = {}
+                balances[settAddr] = {**balances[settAddr], **newBals}
     console.log("Fetched {} total sett balances".format(len(balances)))
     return balances
