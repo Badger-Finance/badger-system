@@ -235,7 +235,7 @@ def test_post_migration_flow(setup):
     cvxCrvHelper = badger.getSett("native.cvxCrv")
 
     helper_governance = accounts.at(cvxHelper.governance(), force=True)
-    
+
     # Approve Strategy to deposit in Helpers
     cvxHelper.approveContractAccess(strategy, {"from": helper_governance})
     cvxCrvHelper.approveContractAccess(strategy, {"from": helper_governance})

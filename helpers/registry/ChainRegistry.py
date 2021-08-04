@@ -29,7 +29,7 @@ class ChainRegistry:
         compound=None,
         chainlink=None,
         defidollar=None,
-        digg=None
+        digg=None,
     ):
         self.curve = curve
         self.convex = convex

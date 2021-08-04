@@ -1,6 +1,10 @@
 from helpers.rewards.LoggerUnlockSchedule import LoggerUnlockSchedule
 from scripts.actions.helpers.RewardsSchedule import RewardsSchedule
-from config.active_emissions import build_weekly_schedules, emissions, get_active_rewards_schedule
+from config.active_emissions import (
+    build_weekly_schedules,
+    emissions,
+    get_active_rewards_schedule,
+)
 import datetime
 import json
 import os
@@ -45,6 +49,7 @@ pretty.install()
 start = to_timestamp(datetime.datetime(2021, 7, 8, 13, 00))
 duration = days(7)
 
+
 def set_schedules(logger, schedules):
     for i in range(0, len(schedules)):
         schedule = schedules[i]
@@ -57,12 +62,15 @@ def set_schedules(logger, schedules):
             schedule.duration,
         )
 
+
 def main():
     badger = connect_badger(load_deployer=True)
 
     safe = ApeSafe(badger.opsMultisig.address)
     helper = ApeSafeHelper(badger, safe)
-    logger = helper.contract_from_abi(badger.rewardsLogger.address, "RewardsLogger", RewardsLogger.abi)
+    logger = helper.contract_from_abi(
+        badger.rewardsLogger.address, "RewardsLogger", RewardsLogger.abi
+    )
 
     schedules = build_weekly_schedules(badger, start, duration)
     console.print(schedules)
@@ -70,8 +78,6 @@ def main():
 
     for key in badger.getAllSettIds():
         sett = badger.getSett(key)
-        badger.print_logger_unlock_schedules(
-            sett.address, name=sett.name()
-        )
+        badger.print_logger_unlock_schedules(sett.address, name=sett.name())
 
     helper.publish()

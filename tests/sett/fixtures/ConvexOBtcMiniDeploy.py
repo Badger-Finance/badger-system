@@ -118,7 +118,10 @@ class ConvexOBtcMiniDeploy(SettMiniDeployBase):
         guestlist.setGuests(addresses, invited, {"from": self.deployer})
 
         self.strategy.addExtraRewardsToken(
-            registry.tokens.bor, (3000, 10000, 0, 0, 0), [registry.tokens.bor, registry.tokens.weth, registry.tokens.wbtc], {"from": self.governance}
+            registry.tokens.bor,
+            (3000, 10000, 0, 0, 0),
+            [registry.tokens.bor, registry.tokens.weth, registry.tokens.wbtc],
+            {"from": self.governance},
         )
 
     # Setup used for running simulation without deployed strategy:

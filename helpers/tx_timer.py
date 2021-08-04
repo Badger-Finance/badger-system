@@ -7,7 +7,7 @@ import os
 
 class TxTimer:
     """
-    Starts a timer in a new thread that will send a message to the specified webhook 
+    Starts a timer in a new thread that will send a message to the specified webhook
     if the timer is not turned off before `time_threshold`.
 
     Usage:
