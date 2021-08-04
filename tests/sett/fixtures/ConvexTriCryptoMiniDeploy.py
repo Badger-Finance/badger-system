@@ -40,7 +40,7 @@ class ConvexTriCryptoMiniDeploy(SettMiniDeployBase):
 
             # Add rewards address to guestlists
             list_add = cvxHelperVault.guestList()
-            if(list_add != AddressZero):
+            if list_add != AddressZero:
                 cvxGuestlist = VipCappedGuestListBbtcUpgradeable.at(
                     cvxHelperVault.guestList()
                 )

@@ -38,6 +38,7 @@ def test_migrate_single_user(settConfig):
 def test_withdraw_other(settConfig):
     assert_withdraw_other(settConfig)
 
+
 @pytest.mark.parametrize("settConfig", settTestConfig)
 def test_single_user_harvest_flow_remove_fees(settConfig):
     assert_single_user_harvest_flow_remove_fees(settConfig)

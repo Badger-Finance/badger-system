@@ -82,7 +82,7 @@ settsToRun = [
     # "native.tricrypto",
     "native.tricryptoDos",
     # "native.cvx",
-    #"native.cvxCrv",
+    # "native.cvxCrv",
 ]
 
 yearnSettsToRun = [
