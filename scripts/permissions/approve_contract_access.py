@@ -12,6 +12,7 @@ to_approve = [
     "native.obtcCrv",
     "native.bbtcCrv",
     "native.tricrypto",
+    "native.tricryptoDos",
 ]
 destination_setts = ["native.cvxCrv", "native.cvx"]
 

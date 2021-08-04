@@ -228,6 +228,24 @@ sett_config = DotMap(
                 cvxCrvHelperVault=convex.cvxCrvHelperVault,
             ),
         ),
+        convexTriCryptoDos=DotMap(
+            strategyName="StrategyConvexStakingOptimizer",
+            params=DotMap(
+                want=pools.triCryptoDos.token,
+                pid=curve.pids.triCryptoDos,
+                lpComponent=registry.tokens.wbtc,
+                performanceFeeStrategist=0,
+                performanceFeeGovernance=2000,
+                withdrawalFee=20,
+                curvePool=DotMap(
+                    swap=registry.curve.pools.triCryptoDos.swap,
+                    wbtcPosition=1,
+                    numElements=3,
+                ),
+                cvxHelperVault=convex.cvxHelperVault,
+                cvxCrvHelperVault=convex.cvxCrvHelperVault,
+            ),
+        ),
     ),
     helper=DotMap(
         cvx=DotMap(

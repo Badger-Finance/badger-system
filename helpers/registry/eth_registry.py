@@ -141,6 +141,11 @@ curve_registry = DotMap(
             swap="0x80466c64868E1ab14a1Ddf27A676C3fcBE638Fe5",
             gauge="0x331aF2E331bd619DefAa5DAc6c038f53FCF9F785",
         ),
+        triCryptoDos=DotMap(
+            token="0xc4AD29ba4B3c580e6D59105FFf484999997675Ff",
+            swap="0x3993d34e7e99Abf6B6f367309975d1360222D446",
+            gauge="0xDeFd8FdD20e0f34115C7018CCfb655796F6B2168",
+        ),
     ),
     pids=DotMap(
         renCrv=6,
@@ -151,6 +156,7 @@ curve_registry = DotMap(
         obtcCrv=20,
         bbtcCrv=19,
         triCrypto=37,
+        triCryptoDos=26,
     ),
 )
 
