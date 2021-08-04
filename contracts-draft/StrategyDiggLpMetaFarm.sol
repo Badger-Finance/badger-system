@@ -82,7 +82,7 @@ contract StrategyDiggLpMetaFarm is BaseStrategy {
         return IStakingRewards(geyser).balanceOf(address(this));
     }
 
-    function getProtectedTokens() external override view returns (address[] memory) {
+    function getProtectedTokens() public override view returns (address[] memory) {
         address[] memory protectedTokens = new address[](3);
         protectedTokens[0] = want;
         protectedTokens[1] = geyser;

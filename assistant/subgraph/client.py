@@ -1,4 +1,5 @@
 from assistant.subgraph.config import subgraph_config
+from assistant.subgraph.utils import make_gql_client
 from brownie import interface
 from rich.console import Console
 from gql import gql, Client
@@ -10,13 +11,50 @@ from functools import lru_cache
 getcontext().prec = 20
 console = Console()
 
-tokens_subgraph_url = subgraph_config["tokens"]
-tokens_transport = AIOHTTPTransport(url=tokens_subgraph_url)
-tokens_client = Client(transport=tokens_transport, fetch_schema_from_transport=True)
+tokens_client = make_gql_client("tokens")
+sett_client = make_gql_client("setts")
+harvests_client = make_gql_client("harvests")
 
-sett_subgraph_url = subgraph_config["setts"]
-sett_transport = AIOHTTPTransport(url=sett_subgraph_url)
-sett_client = Client(transport=sett_transport, fetch_schema_from_transport=True)
+## TODO: seperate files by chain/subgraph
+
+harvest_subgraph_url = subgraph_config["harvests"]
+harvests_transport = AIOHTTPTransport(url=harvest_subgraph_url)
+harvests_client = Client(transport=harvests_transport)
+
+
+def fetch_tree_distributions(startBlock, endBlock):
+    query = gql(
+        """
+        query tree_distributions(
+            $blockHeight: Block_height
+            $lastDistId: TreeDistribution_filter
+            ) {
+            treeDistributions(block: $blockHeight, where: $lastDistId) {
+                id
+                token {
+                    address
+                    symbol
+                }
+                amount
+                blockNumber
+                }
+            }
+        """
+    )
+    lastDistId = "0x0000000000000000000000000000000000000000"
+    variables = {"blockHeight": {"number": endBlock}}
+    treeDistributions = []
+    while True:
+        variables["lastDistId"] = {"id_gt": lastDistId}
+        results = harvests_client.execute(query, variable_values=variables)
+        distData = results["treeDistributions"]
+        if len(distData) == 0:
+            break
+        else:
+            treeDistributions = [*treeDistributions, *distData]
+        if len(distData) > 0:
+            lastDistId = distData[-1]["id"]
+    return [td for td in treeDistributions if int(td["blockNumber"]) > int(startBlock)]
 
 
 @lru_cache(maxsize=None)
@@ -41,6 +79,7 @@ def fetch_sett_balances(key, settId, startBlock):
     balances = {}
     while True:
         variables["lastBalanceId"] = {"id_gt": lastBalanceId}
+
         results = sett_client.execute(query, variable_values=variables)
         if len(results["vaults"]) == 0:
             return {}
@@ -178,7 +217,8 @@ def fetch_sett_transfers(settID, startBlock, endBlock):
 
     deposits = map(convert_amount, results["vaults"][0]["deposits"])
     withdrawals = map(
-        negate_withdrawals, map(convert_amount, results["vaults"][0]["withdrawals"]),
+        negate_withdrawals,
+        map(convert_amount, results["vaults"][0]["withdrawals"]),
     )
 
     deposits = list(filter(filter_by_startBlock, list(deposits)))
@@ -187,7 +227,8 @@ def fetch_sett_transfers(settID, startBlock, endBlock):
     console.log("Processing {} withdrawals".format(len((withdrawals))))
 
     return sorted(
-        [*deposits, *withdrawals], key=lambda t: t["transaction"]["timestamp"],
+        [*deposits, *withdrawals],
+        key=lambda t: t["transaction"]["timestamp"],
     )
 
 
@@ -206,7 +247,7 @@ def fetch_farm_harvest_events():
 
     """
     )
-    results = sett_client.execute(query)
+    results = harvests_client.execute(query)
     for event in results["farmHarvestEvents"]:
         event["rewardAmount"] = event.pop("farmToRewards")
 
@@ -230,10 +271,11 @@ def fetch_sushi_harvest_events():
         }
     """
     )
-    results = sett_client.execute(query)
+    results = harvests_client.execute(query)
     wbtcEthEvents = []
     wbtcBadgerEvents = []
     wbtcDiggEvents = []
+    iBbtcWbtcEvents = []
     for event in results["sushiHarvestEvents"]:
         event["rewardAmount"] = event.pop("toBadgerTree")
         strategy = event["id"].split("-")[0]
@@ -243,15 +285,19 @@ def fetch_sushi_harvest_events():
             wbtcBadgerEvents.append(event)
         elif strategy == "0xaa8dddfe7dfa3c3269f1910d89e4413dd006d08a":
             wbtcDiggEvents.append(event)
+        elif strategy == "0xf4146a176b09c664978e03d28d07db4431525dad":
+            iBbtcWbtcEvents.append(event)
 
     return {
         "wbtcEth": wbtcEthEvents,
         "wbtcBadger": wbtcBadgerEvents,
         "wbtcDigg": wbtcDiggEvents,
+        "iBbtcWbtc": iBbtcWbtcEvents,
     }
 
 
-def fetch_wallet_balances(badger_price, digg_price, digg, blockNumber):
+@lru_cache(maxsize=None)
+def fetch_wallet_balances(sharesPerFragment, blockNumber):
     increment = 1000
     query = gql(
         """
@@ -273,7 +319,7 @@ def fetch_wallet_balances(badger_price, digg_price, digg, blockNumber):
 
     badger_balances = {}
     digg_balances = {}
-    sharesPerFragment = digg.logic.UFragments._sharesPerFragment()
+    ibbtc_balances = {}
     console.log(sharesPerFragment)
     while continueFetching:
         variables = {
@@ -291,20 +337,28 @@ def fetch_wallet_balances(badger_price, digg_price, digg, blockNumber):
             )
             for entry in nextPage["tokenBalances"]:
                 address = entry["id"].split("-")[0]
-                if entry["token"]["symbol"] == "BADGER" and int(entry["balance"]) > 0:
-                    badger_balances[address] = (
-                        float(entry["balance"]) / 1e18
-                    ) * badger_price
-                if entry["token"]["symbol"] == "DIGG" and int(entry["balance"]) > 0:
-                    # Speed this up
-                    if entry["balance"] == 0:
-                        fragmentBalance = 0
-                    else:
-                        fragmentBalance = sharesPerFragment / int(entry["balance"])
+                amount = float(entry["balance"])
+                if amount > 0:
+                    if entry["token"]["symbol"] == "BADGER":
+                        badger_balances[address] = amount / 1e18
+                    if entry["token"]["symbol"] == "DIGG":
+                        # Speed this up
+                        if entry["balance"] == 0:
+                            fragmentBalance = 0
+                        else:
+                            fragmentBalance = sharesPerFragment / amount
+                        digg_balances[address] = float(fragmentBalance) / 1e9
+                    if entry["token"]["symbol"] == "ibBTC":
+                        if (
+                            address
+                            == "0x18d98D452072Ac2EB7b74ce3DB723374360539f1".lower()
+                        ):
+                            # Ignore sushiswap pool
+                            ibbtc_balances[address] = 0
+                        else:
+                            ibbtc_balances[address] = amount / 1e18
 
-                    digg_balances[address] = (float(fragmentBalance) / 1e9) * digg_price
-
-    return badger_balances, digg_balances
+    return badger_balances, digg_balances, ibbtc_balances
 
 
 def fetch_cream_balances(tokenSymbol, blockNumber):

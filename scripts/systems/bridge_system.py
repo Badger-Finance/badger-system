@@ -56,7 +56,9 @@ def connect_bridge(badger, badger_deploy_file):
     bridge = BridgeSystem(
         badger.deployer,
         Contract.from_abi(
-            "ProxyAdmin", web3.toChecksumAddress(badger_deploy["devProxyAdmin"]), abi,
+            "ProxyAdmin",
+            web3.toChecksumAddress(badger_deploy["devProxyAdmin"]),
+            abi,
         ),
         bridge_config,
     )
@@ -159,9 +161,14 @@ class BridgeSystem:
             # Distribute token from whale -> deployer -> mock gateway.
             distribute_from_whale(whaleConfig, deployer, percentage=1.0)
             token.transfer(
-                gateway, token.balanceOf(deployer), {"from": deployer},
+                gateway,
+                token.balanceOf(deployer),
+                {"from": deployer},
             )
-            self.mocks[tokenName] = DotMap(token=token, gateway=gateway,)
+            self.mocks[tokenName] = DotMap(
+                token=token,
+                gateway=gateway,
+            )
             r.addGateway(tokenName, gateway.address)
             r.addToken(tokenName, token.address)
         self.mocks.registry = r

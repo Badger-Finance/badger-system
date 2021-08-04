@@ -6,7 +6,9 @@ from .BaseAction import BaseAction
 
 class SettEarnAction(BaseAction):
     def __init__(
-        self, snap: SnapshotManager, keeper: Any,
+        self,
+        snap: SnapshotManager,
+        keeper: Any,
     ):
         self.snap = snap
         self.keeper = keeper

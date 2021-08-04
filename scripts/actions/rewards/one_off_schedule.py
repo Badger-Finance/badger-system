@@ -26,14 +26,22 @@ from helpers.gnosis_safe import (
 )
 from helpers.registry import registry
 from helpers.time_utils import days, hours, to_days, to_timestamp, to_utc_date
-from helpers.utils import fragments_to_shares, initial_fragments_to_current_fragments, shares_to_fragments, to_digg_shares, val
+from helpers.utils import (
+    fragments_to_shares,
+    initial_fragments_to_current_fragments,
+    shares_to_fragments,
+    to_digg_shares,
+    val,
+)
 from rich import pretty
 from rich.console import Console
 from scripts.systems.badger_system import BadgerSystem, connect_badger
 from tabulate import tabulate
 from ape_safe import ApeSafe
+
 console = Console()
 pretty.install()
+
 
 def main():
     badger = connect_badger(load_deployer=True)
@@ -43,22 +51,45 @@ def main():
     deployer = badger.deployer
 
     safe = ApeSafe(badger.opsMultisig.address)
-    logger = safe.contract(badger.rewardsLogger.address)
+    helper = ApeSafeHelper(badger, safe)
+    logger = helper.contract_from_abi(
+        badger.rewardsLogger.address, "RewardsLogger", RewardsLogger.abi
+    )
 
     experimental_vault = "0x8a8ffec8f4a0c8c9585da95d9d97e8cd6de273de"
 
-    start = 1620943200
+    start = 1625158800
     duration = days(7)
     end = start + duration
 
-    badger_amount = int(Wei("4000 ether") * .9)
-    digg_amount = int(fragments_to_shares(0.4) * .9)
-    dfd_amount = int(Wei("205131 ether") * .9)
+    badger_amount = Wei("4693.390000000000327418 ether")
+    # digg_amount = int(fragments_to_shares(0.4) * 0.9)
+    # dfd_amount = int(Wei("205131 ether") * 0.9)
 
     schedules = [
-        LoggerUnlockSchedule((experimental_vault, badger.token.address, badger_amount, start, end, duration)),
-        LoggerUnlockSchedule((experimental_vault, badger.digg.token.address, digg_amount, start, end, duration)),
-        LoggerUnlockSchedule((experimental_vault, registry.tokens.dfd, dfd_amount, start, end, duration))
+        LoggerUnlockSchedule(
+            (
+                experimental_vault,
+                badger.token.address,
+                badger_amount,
+                start,
+                end,
+                duration,
+            )
+        ),
+        # LoggerUnlockSchedule(
+        #     (
+        #         experimental_vault,
+        #         badger.digg.token.address,
+        #         digg_amount,
+        #         start,
+        #         end,
+        #         duration,
+        #     )
+        # ),
+        # LoggerUnlockSchedule(
+        #     (experimental_vault, registry.tokens.dfd, dfd_amount, start, end, duration)
+        # ),
     ]
 
     for i in range(0, len(schedules)):
@@ -69,10 +100,11 @@ def main():
             schedule.amount,
             schedule.start,
             schedule.end,
-            schedule.duration
+            schedule.duration,
         )
 
-    badger.print_logger_unlock_schedules(experimental_vault, name="Experimental iBBTC Vault")
-    
-    helper = ApeSafeHelper(badger, safe)
+    badger.print_logger_unlock_schedules(
+        experimental_vault, name="Experimental iBBTC Vault"
+    )
+
     helper.publish()

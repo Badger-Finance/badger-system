@@ -15,7 +15,7 @@ from scripts.systems.sushiswap_system import SushiswapSystem
 from scripts.systems.uniswap_system import UniswapSystem
 from tabulate import tabulate
 
-gas_strategies.set_default_for_active_chain()
+gas_strategies.set_default(gas_strategies.exponentialScalingFast)
 
 uniswap = UniswapSystem()
 sushiswap = SushiswapSystem()
@@ -45,7 +45,10 @@ def transfer_for_strategy_internal(badger, key, amount):
     manager = badger.badgerRewardsManager
     want = interface.IERC20(strategy.want())
     manager.transferWant(
-        want, strategy, amount, {"from": badger.keeper, "gas_limit": 1000000}
+        want,
+        strategy,
+        amount,
+        {"from": badger.external_harvester, "gas_limit": 1000000},
     )
 
 
@@ -67,7 +70,7 @@ def rapid_harvest(badger):
         Test: Load up sending accounts with ETH and whale tokens
         """
         accounts[0].transfer(badger.deployer, Wei("5 ether"))
-        accounts[0].transfer(badger.keeper, Wei("5 ether"))
+        accounts[0].transfer(badger.external_harvester, Wei("5 ether"))
         accounts[0].transfer(badger.guardian, Wei("5 ether"))
 
     # TODO: Daily amount = calculate from the LP token scale
@@ -105,7 +108,10 @@ def rapid_harvest(badger):
         rewards.getDistributions(key).getToStakingRewardsDaily("digg")
     )
     transfer_for_strategy(
-        badger, key, diggBaseRewards, decimals=9,
+        badger,
+        key,
+        diggBaseRewards,
+        decimals=9,
     )
 
 

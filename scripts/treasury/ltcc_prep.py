@@ -4,7 +4,7 @@ from helpers.token_utils import (
     token_metadata,
     asset_to_address,
     to_token_scale,
-    badger_to_bBadger
+    badger_to_bBadger,
 )
 from ape_safe import ApeSafe
 from helpers.coingecko import fetch_usd_price, fetch_usd_price_eth
@@ -34,15 +34,16 @@ from rich import pretty
 from rich.console import Console
 from scripts.systems.badger_system import BadgerSystem, connect_badger
 from tabulate import tabulate
-from helpers.ltcc import (load_ltcc_recipients, LtccPayments)
+from helpers.ltcc import load_ltcc_recipients, LtccPayments
 from helpers.ltcc.LtccRecipient import LtccRecipient
 
 console = Console()
 pretty.install()
 
+
 def main():
     badger = connect_badger()
-    multisig = badger.treasuryMultisig
+    multisig = badger.paymentsMultisig
 
     safe = ApeSafe(multisig.address)
 
@@ -92,5 +93,3 @@ def main():
     safe.preview(safe_tx)
     data = safe.print_transaction(safe_tx)
     safe.post_transaction(safe_tx)
-
-   

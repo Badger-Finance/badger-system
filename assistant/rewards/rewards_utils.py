@@ -1,3 +1,4 @@
+from helpers.constants import NO_GEYSERS, CONVEX_SETTS
 from brownie import *
 from rich.console import Console
 from collections import Counter
@@ -7,6 +8,7 @@ from assistant.subgraph.client import (
 )
 from assistant.rewards.classes.RewardsList import RewardsList
 from assistant.rewards.classes.UserBalance import UserBalance, UserBalances
+from helpers.constants import NO_GEYSERS
 from functools import lru_cache
 
 blacklist = [
@@ -159,20 +161,6 @@ def get_latest_event_block(firstEvent, events):
         return -1
 
 
-def calc_meta_farm_rewards(badger, name, startBlock, endBlock):
-    console.log("Calculating rewards between {} and {}".format(startBlock, endBlock))
-    startBlock = int(startBlock)
-    endBlock = int(endBlock)
-    startBlockTime = web3.eth.getBlock(startBlock)["timestamp"]
-    endBlockTime = web3.eth.getBlock(endBlock)["timestamp"]
-    sett = badger.getSett(name)
-
-    balances = calculate_sett_balances(badger, name, endBlock)
-    # TODO: Do we want to use  multiple snapshots
-    # here or just the end?
-    return balances
-
-
 def calc_balances_from_geyser_events(geyserEvents):
     balances = {}
     events = [*geyserEvents["stakes"], *geyserEvents["unstakes"]]
@@ -203,7 +191,7 @@ def calculate_sett_balances(badger, name, currentBlock):
     settType = ["", ""]
     if "uni" in name or "sushi" in name:
         settType[0] = "halfLP"
-    elif "crv" in name:
+    if "crv" in name.lower() or name == "experimental.sushiIBbtcWbtc":
         settType[0] = "fullLP"
     if "badger" in name.lower() or "digg" in name.lower() or "eth" in name.lower():
         settType[1] = "nonNative"
@@ -213,9 +201,9 @@ def calculate_sett_balances(badger, name, currentBlock):
     settBalances = fetch_sett_balances(name, underlyingToken.lower(), currentBlock)
     geyserBalances = {}
     creamBalances = {}
-    # Digg doesn't have a geyser so we have to ignore it
-    noGeysers = ["native.digg", "experimental.sushiIBbtcWbtc", "experimental.digg"]
-    if name not in noGeysers:
+
+    if name not in NO_GEYSERS:
+
         geyserAddr = badger.getGeyser(name).address.lower()
         geyserEvents = fetch_geyser_events(geyserAddr, currentBlock)
         geyserBalances = calc_balances_from_geyser_events(geyserEvents)
@@ -229,6 +217,8 @@ def calculate_sett_balances(badger, name, currentBlock):
         if addr in blacklist or balance < 0:
             del balances[addr]
 
+    # Testing for peak address
+    # balances["0x41671BA1abcbA387b9b2B752c205e22e916BE6e3".lower()] = 10000
     userBalances = [
         UserBalance(addr, bal, underlyingToken, settType)
         for addr, bal in balances.items()

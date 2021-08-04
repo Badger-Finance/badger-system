@@ -20,8 +20,9 @@ skip = [
     # "native.uniDiggWbtc",
     # "native.sushiDiggWbtc",
     # "yearn.wbtc",
-    # "experimental.sushiIBbtcWbtc"
+    # "experimental.sushiIBbtcWbtc",
 ]
+
 
 def main():
     badger = connect_badger()

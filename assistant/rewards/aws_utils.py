@@ -2,6 +2,7 @@ import boto3
 from brownie import *
 from rich.console import Console
 from config.env_config import env_config
+import json
 
 console = Console()
 
@@ -69,7 +70,7 @@ def download_past_trees(number):
     return trees
 
 
-def upload(fileName, bucket="badger-json", publish=True):
+def upload(fileName, data, bucket="badger-json", publish=True):
     if not publish:
         upload_targets = [
             {
@@ -99,7 +100,9 @@ def upload(fileName, bucket="badger-json", publish=True):
         console.print(
             "Uploading file to s3://" + target["bucket"] + "/" + target["key"]
         )
-        s3.upload_file(fileName, target["bucket"], target["key"])
+        s3.put_object(
+            Body=str(json.dumps(data)), Bucket=target["bucket"], Key=target["key"]
+        )
         console.print(
             "✅ Uploaded file to s3://" + target["bucket"] + "/" + target["key"]
         )
@@ -117,19 +120,8 @@ def upload_boosts(test):
     console.log("✅ Uploaded file to s3://" + bucket + "/" + fileName)
 
 
-def upload_analytics(fileName):
-    bucket = "badger-analytics"
-    console.log(fileName)
-
-    jsonKey = "rewards/{}.json".format(fileName)
-    console.log(jsonKey)
-    pngKey = "rewards/{}.png".format(fileName)
-    console.log(pngKey)
-
-    console.log("Uploading file to s3://" + bucket + "/" + jsonKey)
-    s3.upload_file("logs/{}".format(jsonKey), bucket, jsonKey)
-    console.log("✅ Uploaded file to s3://" + bucket + "/" + jsonKey)
-
-    # console.log("Uploading file to s3://" + bucket + "/" + pngKey)
-    # s3.upload_file("logs/{}".format(pngKey), bucket, pngKey)
-    # console.log("✅ Uploaded file to s3://" + bucket + "/" + pngKey)
+def upload_analytics(cycle, data):
+    jsonKey = "logs/{}.json".format(cycle)
+    console.log("Uploading file to s3://" + analytics_bucket + "/" + jsonKey)
+    s3.put_object(Body=str(json.dumps(data)), Bucket=analytics_bucket, Key=jsonKey)
+    console.log("✅ Uploaded file to s3://" + analytics_bucket + "/" + jsonKey)

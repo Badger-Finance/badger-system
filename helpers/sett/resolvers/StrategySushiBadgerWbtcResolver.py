@@ -3,6 +3,7 @@ from brownie import interface
 from tabulate import tabulate
 
 from helpers.multicall import Call, func, as_wei
+from helpers.constants import AddressZero
 from .StrategyCoreResolver import StrategyCoreResolver, console
 from .StrategyBaseSushiResolver import StrategyBaseSushiResolver
 
@@ -21,17 +22,20 @@ class StrategySushiBadgerWbtcResolver(StrategyBaseSushiResolver, StrategyCoreRes
     def confirm_harvest(self, before, after, tx):
         console.print("=== Compare Harvest Badger ===")
         self.manager.printCompare(before, after)
-        self.confirm_harvest_events(before, after, tx)
 
         super().confirm_harvest(before, after, tx)
 
         # Geyser should have same amount of funds
 
     def add_strategy_snap(self, calls, entities=None):
+        super().add_strategy_snap(calls)
+
         strategy = self.manager.strategy
         staking_rewards_address = strategy.geyser()
 
-        super().add_strategy_snap(calls)
+        if staking_rewards_address == AddressZero:
+            return calls
+
         calls.append(
             Call(
                 staking_rewards_address,
@@ -56,23 +60,6 @@ class StrategySushiBadgerWbtcResolver(StrategyBaseSushiResolver, StrategyCoreRes
             table.append([key, val(event[key])])
 
         print(tabulate(table, headers=["account", "value"]))
-
-    def confirm_harvest_events(self, before, after, tx):
-        key = "HarvestBadgerState"
-        assert key in tx.events
-        assert len(tx.events[key]) == 1
-        event = tx.events[key][0]
-        keys = [
-            "badgerHarvested",
-            "badgerConvertedToWbtc",
-            "wbtcFromConversion",
-            "toGovernance",
-            "toBadgerTree",
-        ]
-        for key in keys:
-            assert key in event
-
-        self.printHarvestRewardsState(event, keys)
 
     def get_strategy_destinations(self):
         destinations = super().get_strategy_destinations()
