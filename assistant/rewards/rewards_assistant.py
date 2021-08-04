@@ -5,11 +5,15 @@ from brownie.network.gas.strategies import GasNowStrategy
 from config.rewards_config import rewards_config
 from helpers.time_utils import to_hours
 from rich.console import Console
-from assistant.rewards.aws_utils import (
+from assistant.rewards.aws.aws_utils import (
     download_latest_tree,
     download_tree,
-    upload,
-    upload_boosts,
+    upload_tree,
+)
+from assistant.rewards.aws.boost import upload_boosts
+from assistant.rewards.aws.trees import (
+    download_latest_tree,
+    download_tree,
 )
 from typing import Dict
 

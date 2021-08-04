@@ -6,7 +6,7 @@ from tabulate import tabulate
 from scripts.systems.badger_system import BadgerSystem
 from brownie import *
 from rich.console import Console
-from assistant.rewards.aws_utils import upload
+from assistant.rewards.aws_utils import upload_tree
 import json
 from helpers.utils import val
 from helpers.constants import TOKENS_TO_CHECK, DIGG, BADGER
