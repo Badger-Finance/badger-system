@@ -20,7 +20,10 @@ class ConvexTriCryptoDosMiniDeploy(SettMiniDeployBase):
     def post_vault_deploy_setup(self, deploy=True):
         if not deploy:
             return
-        distribute_from_whales(self.deployer, 1)
+        whale = accounts.at("0xDeFd8FdD20e0f34115C7018CCfb655796F6B2168", force=True)
+        token = interface.IERC20(sett_config.native.convexTriCryptoDos.params.want)
+        balance = token.balanceOf(whale)
+        token.transfer(self.deployer, balance // 2, {"from": whale})
 
     def post_deploy_setup(self, deploy):
         if deploy:
