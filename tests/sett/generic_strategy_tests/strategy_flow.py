@@ -274,9 +274,7 @@ def assert_withdraw_other(settConfig):
             )
 
     # Should send balance of non-protected token to sender
-    controller.inCaseStrategyTokenGetStuck(
-        strategy, mockToken, {"from": deployer}
-    )
+    controller.inCaseStrategyTokenGetStuck(strategy, mockToken, {"from": deployer})
 
     with brownie.reverts():
         controller.inCaseStrategyTokenGetStuck(
