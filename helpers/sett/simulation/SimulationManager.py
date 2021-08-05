@@ -200,6 +200,7 @@ class SimulationManager:
             "native.obtcCrv",
             "native.bbtcCrv",
             "native.tricrypto",
+            "native.tricryptoDos",
         ]:
             return ConvexProvisioner(self)
         if settId == "native.cvx":

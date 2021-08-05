@@ -1,15 +1,17 @@
 from tests.sett.fixtures.SettMiniDeployBase import SettMiniDeployBase
-from config.badger_config import sett_config
+from config.badger_config import badger_config, sett_config, digg_config
+from helpers.registry import registry
 from helpers.token_utils import distribute_from_whales
 from brownie import *
 from helpers.proxy_utils import deploy_proxy
-from helpers.registry import registry
+import json
+from helpers.constants import AddressZero
 
 
-class ConvexOBtcMiniDeploy(SettMiniDeployBase):
+class ConvexTriCryptoDosMiniDeploy(SettMiniDeployBase):
     def fetch_params(self):
-        params = sett_config.native.convexObtcCrv.params
-        want = sett_config.native.convexObtcCrv.params.want
+        params = sett_config.native.convexTriCryptoDos.params
+        want = sett_config.native.convexTriCryptoDos.params.want
 
         params.badgerTree = self.badger.badgerTree
 
@@ -18,7 +20,10 @@ class ConvexOBtcMiniDeploy(SettMiniDeployBase):
     def post_vault_deploy_setup(self, deploy=True):
         if not deploy:
             return
-        distribute_from_whales(self.deployer, 1)
+        whale = accounts.at("0xDeFd8FdD20e0f34115C7018CCfb655796F6B2168", force=True)
+        token = interface.IERC20(sett_config.native.convexTriCryptoDos.params.want)
+        balance = token.balanceOf(whale)
+        token.transfer(self.deployer, balance // 2, {"from": whale})
 
     def post_deploy_setup(self, deploy):
         if deploy:
@@ -37,37 +42,43 @@ class ConvexOBtcMiniDeploy(SettMiniDeployBase):
             )
 
             # Add rewards address to guestlists
-            cvxGuestlist = VipCappedGuestListBbtcUpgradeable.at(
-                cvxHelperVault.guestList()
-            )
-            cvxCrvGuestlist = VipCappedGuestListBbtcUpgradeable.at(
-                cvxCrvHelperVault.guestList()
-            )
+            list_add = cvxHelperVault.guestList()
+            if list_add != AddressZero:
+                cvxGuestlist = VipCappedGuestListBbtcUpgradeable.at(
+                    cvxHelperVault.guestList()
+                )
+                cvxCrvGuestlist = VipCappedGuestListBbtcUpgradeable.at(
+                    cvxCrvHelperVault.guestList()
+                )
 
-            cvxOwner = accounts.at(cvxGuestlist.owner(), force=True)
-            cvxCrvOwner = accounts.at(cvxCrvGuestlist.owner(), force=True)
+                cvxOwner = accounts.at(cvxGuestlist.owner(), force=True)
+                cvxCrvOwner = accounts.at(cvxCrvGuestlist.owner(), force=True)
 
-            cvxGuestlist.setGuests(
-                [self.controller.rewards(), self.strategy],
-                [True, True],
-                {"from": cvxOwner},
-            )
-            cvxCrvGuestlist.setGuests(
-                [self.controller.rewards(), self.strategy],
-                [True, True],
-                {"from": cvxCrvOwner},
-            )  # Strategy added since SettV4.sol currently checks for the sender
-            # instead of receipient for authorization on depositFor()
+                cvxGuestlist.setGuests(
+                    [self.controller.rewards(), self.strategy],
+                    [True, True],
+                    {"from": cvxOwner},
+                )
+                cvxCrvGuestlist.setGuests(
+                    [self.controller.rewards(), self.strategy],
+                    [True, True],
+                    {"from": cvxCrvOwner},
+                )  # Strategy added since SettV4.sol currently checks for the sender
+                # instead of receipient for authorization on depositFor()
 
             return
+
+        # Vault uses testMultisig
+        testMultisig = accounts.at(self.vault.governance(), force=True)
 
         if not (self.vault.controller() == self.strategy.controller()):
             # NB: Not all vaults are pauseable.
             try:
                 if self.vault.paused():
-                    self.vault.unpause({"from": self.governance})
+                    self.vault.unpause({"from": self.testMultisig})
             except exceptions.VirtualMachineError:
                 pass
+
             # Change vault's conroller to match the strat's
             self.vault.setController(
                 self.strategy.controller(), {"from": self.governance}
@@ -92,21 +103,20 @@ class ConvexOBtcMiniDeploy(SettMiniDeployBase):
             self.strategy.want(), self.strategy.address, {"from": self.governance}
         )
 
-        # Add vault to controller for want
-        # self.controller.setVault(self.vault.token(), self.vault.address, {"from": self.governance})
-
         assert self.controller.strategies(self.vault.token()) == self.strategy.address
         assert self.controller.vaults(self.strategy.want()) == self.vault.address
 
-        # Add actors to guestlist
+        # Add users to guestlist
         guestlist = VipCappedGuestListBbtcUpgradeable.at(self.vault.guestList())
+
+        owner = accounts.at("0xd41f7006bcb2B3d0F9C5873272Ebed67B37F80Dc", force=True)
 
         addresses = []
         for account in accounts:
             addresses.append(account.address)
 
         # Add actors addresses
-        addresses.append(guestlist.owner())
+        addresses.append(owner.address)
         addresses.append(self.governance.address)
         addresses.append(self.strategist.address)
         addresses.append(self.keeper.address)
@@ -115,14 +125,11 @@ class ConvexOBtcMiniDeploy(SettMiniDeployBase):
 
         invited = [True] * len(addresses)
 
-        guestlist.setGuests(addresses, invited, {"from": self.deployer})
+        guestlist.setGuests(addresses, invited, {"from": owner})
 
-        self.strategy.addExtraRewardsToken(
-            registry.tokens.bor,
-            (3000, 10000, 0, 0, 0),
-            [registry.tokens.bor, registry.tokens.weth, registry.tokens.wbtc],
-            {"from": self.governance},
-        )
+        # Increase gustlist caps since randomly generated amounts tend to be bigger than current caps
+        guestlist.setTotalDepositCap("5080189446897250400000", {"from": owner})
+        guestlist.setUserDepositCap("5081890446897250400000", {"from": owner})
 
     # Setup used for running simulation without deployed strategy:
 
