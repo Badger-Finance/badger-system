@@ -54,9 +54,9 @@ def fetch_tree_distributions(startBlock, endBlock):
 @lru_cache(maxsize=None)
 def fetch_sett_balances(key, settId, startBlock):
     if key == "native.tricrypto2":
-        client = sett_client
-    else:
         client = sett_tricrypto2_client
+    else:
+        client = sett_client
     query = gql(
         """
         query balances_and_events($vaultID: Vault_filter, $blockHeight: Block_height,$lastBalanceId:AccountVaultBalance_filter) {
