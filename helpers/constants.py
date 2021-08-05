@@ -132,8 +132,9 @@ NO_GEYSERS = [
     "native.tricrypto",
     "native.cvxCrv",
     "native.cvx",
+    "native.mstableImBtc",
+    "native.mstableFpMbtcHbtc"
 ]
-
 SETT_BOOST_RATIOS = {
     "native.uniDiggWbtc": 0.5,
     "native.sushiDiggWbtc": 0.5,
