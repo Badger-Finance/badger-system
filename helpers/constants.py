@@ -133,7 +133,7 @@ NO_GEYSERS = [
     "native.cvxCrv",
     "native.cvx",
     "native.mstableImBtc",
-    "native.mstableFpMbtcHbtc"
+    "native.mstableFpMbtcHbtc",
 ]
 SETT_BOOST_RATIOS = {
     "native.uniDiggWbtc": 0.5,

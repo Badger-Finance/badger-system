@@ -43,7 +43,12 @@ def calc_sett_rewards(badger, periodStartBlock, endBlock, cycle, unclaimedReward
     Calculate rewards for each sett, and sum them
     """
     rewardsBySett = {}
-    noRewards = ["native.digg", "experimental.digg", "native.mstableImBtc", "native.mstableFpMbtcHbtc"]
+    noRewards = [
+        "native.digg",
+        "experimental.digg",
+        "native.mstableImBtc",
+        "native.mstableFpMbtcHbtc",
+    ]
     boosts, boostInfo = badger_boost(badger, endBlock)
     apyBoosts = {}
     multiplierData = {}
