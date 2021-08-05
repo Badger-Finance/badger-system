@@ -275,7 +275,7 @@ def assert_withdraw_other(settConfig):
 
     # Should send balance of non-protected token to sender
     controller.inCaseStrategyTokenGetStuck(
-        strategy, mockToken, {"from": strategyKeeper}
+        strategy, mockToken, {"from": deployer}
     )
 
     with brownie.reverts():
@@ -331,12 +331,7 @@ def assert_single_user_harvest_flow_remove_fees(settConfig):
 
     # Harvesting on the HarvestMetaFarm does not increase the underlying position, it sends rewards to the rewardsTree
     # For HarvestMetaFarm, we expect FARM rewards to be distributed to rewardsTree
-    if settConfig == "harvest.renCrv":
-        assert want.balanceOf(controller.rewards() > 0)
-
-    # For most Setts, harvesting should increase the underlying position
-    else:
-        assert want.balanceOf(controller.rewards() > 0)
+    assert want.balanceOf(controller.rewards()) > 0
 
     chain.sleep(days(1))
     chain.mine()
