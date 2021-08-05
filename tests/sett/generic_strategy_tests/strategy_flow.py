@@ -251,7 +251,9 @@ def assert_withdraw_other(settConfig):
 
     if strategy.isTendable():
         strategy.tend({"from": strategyKeeper})
-
+    ## Extra sleep because some tend will actually swap
+    chain.sleep(days(1))
+    chain.mine()
     strategy.harvest({"from": strategyKeeper})
 
     chain.sleep(days(0.5))
@@ -287,7 +289,7 @@ def assert_withdraw_other(settConfig):
 def assert_single_user_harvest_flow_remove_fees(settConfig):
     suiteName = "assert_single_user_harvest_flow_remove_fees" + ": " + settConfig["id"]
 
-    badger = badger_single_sett(settConfig["id"])
+    badger = badger_single_sett(settConfig)
     controller = badger.getController(settConfig["id"])
     sett = badger.getSett(settConfig["id"])
     strategy = badger.getStrategy(settConfig["id"])
@@ -325,7 +327,6 @@ def assert_single_user_harvest_flow_remove_fees(settConfig):
     with brownie.reverts("onlyAuthorizedActors"):
         strategy.harvest({"from": randomUser})
 
-    tx = strategy.harvest({"from": deployer})
     snap.settHarvest({"from": strategyKeeper})
 
     # Harvesting on the HarvestMetaFarm does not increase the underlying position, it sends rewards to the rewardsTree
