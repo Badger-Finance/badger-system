@@ -117,8 +117,7 @@ NON_NATIVE_SETTS = [
     "native.obtcCrv",
     "native.bbtcCrv",
     "native.tricrypto",
-    "native.tricrypto2"
-    "native.cvxCrv",
+    "native.tricrypto2" "native.cvxCrv",
     "native.cvx",
 ]
 
@@ -131,8 +130,7 @@ NO_GEYSERS = [
     "native.obtcCrv",
     "native.bbtcCrv",
     "native.tricrypto",
-    "native.tricrypto2"
-    "native.cvxCrv",
+    "native.tricrypto2" "native.cvxCrv",
     "native.cvx",
 ]
 

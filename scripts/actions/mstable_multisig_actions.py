@@ -8,6 +8,7 @@ from helpers.gnosis_safe import ApeSafeHelper
 def main():
     supportStrategies()
 
+
 def supportStrategies():
     badger = connect_badger("deploy-final.json")
 
