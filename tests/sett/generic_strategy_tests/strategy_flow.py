@@ -120,17 +120,16 @@ def assert_single_user_harvest_flow(settConfig):
 
 def assert_migrate_single_user(settConfig):
     badger = badger_single_sett(settConfig)
-    controller = badger.getController(settConfig['id'])
-    sett = badger.getSett(settConfig['id'])
-    strategy = badger.getStrategy(settConfig['id'])
-    want = badger.getStrategyWant(settConfig['id'])
+    controller = badger.getController(settConfig["id"])
+    sett = badger.getSett(settConfig["id"])
+    strategy = badger.getStrategy(settConfig["id"])
+    want = badger.getStrategyWant(settConfig["id"])
     strategyKeeper = accounts.at(strategy.keeper(), force=True)
-
 
     deployer = badger.deployer
     randomUser = accounts[6]
 
-    snap = SnapshotManager(badger, settConfig['id'])
+    snap = SnapshotManager(badger, settConfig["id"])
 
     startingBalance = want.balanceOf(deployer)
     depositAmount = startingBalance // 2
@@ -223,10 +222,10 @@ def assert_withdraw_other(settConfig):
     - Non-controller shouldn't be able to do either
     """
     badger = badger_single_sett(settConfig)
-    controller = badger.getController(settConfig['id'])
-    sett = badger.getSett(settConfig['id'])
-    strategy = badger.getStrategy(settConfig['id'])
-    want = badger.getStrategyWant(settConfig['id'])
+    controller = badger.getController(settConfig["id"])
+    sett = badger.getSett(settConfig["id"])
+    strategy = badger.getStrategy(settConfig["id"])
+    want = badger.getStrategyWant(settConfig["id"])
 
     deployer = badger.deployer
     randomUser = accounts[6]
@@ -285,11 +284,11 @@ def assert_single_user_harvest_flow_remove_fees(settConfig):
     suiteName = "assert_single_user_harvest_flow_remove_fees" + ": " + settConfig
     testRecorder = TestRecorder(suiteName)
 
-    badger = badger_single_sett(settConfig['id'])
-    controller = badger.getController(settConfig['id'])
-    sett = badger.getSett(settConfig['id'])
-    strategy = badger.getStrategy(settConfig['id'])
-    want = badger.getStrategyWant(settConfig['id'])
+    badger = badger_single_sett(settConfig["id"])
+    controller = badger.getController(settConfig["id"])
+    sett = badger.getSett(settConfig["id"])
+    strategy = badger.getStrategy(settConfig["id"])
+    want = badger.getStrategyWant(settConfig["id"])
 
     deployer = badger.deployer
     randomUser = accounts[6]
