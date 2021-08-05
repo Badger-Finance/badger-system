@@ -16,28 +16,28 @@ class StrategyMStableVaultResolver(StrategyCoreResolver):
     def add_strategy_snap(self, calls, entities=None):
         super().add_strategy_snap(calls)
 
-        strategy = self.manager.strategy        
-        mstableVault = strategy.vault()       
+        strategy = self.manager.strategy
+        mstableVault = strategy.vault()
 
-        return calls 
+        return calls
 
     def confirm_harvest_events(self, before, after, tx):
-        key = 'MStableHarvest'
+        key = "MStableHarvest"
         assert key in tx.events
         assert len(tx.events[key]) == 1
         event = tx.events[key][0]
 
         keys = [
-            'mtaTotal',
-            'mtaSentToVoterProxy',
-            'mtaRecycledToWant',
-            'lpComponentPurchased',
-            'wantProcessed',
-            'wantFees',
-            'wantDeposited',
-            'mtaPostVesting',
-            'mtaFees',
-            'mtaPostVestingSentToBadgerTree'
+            "mtaTotal",
+            "mtaSentToVoterProxy",
+            "mtaRecycledToWant",
+            "lpComponentPurchased",
+            "wantProcessed",
+            "wantFees",
+            "wantDeposited",
+            "mtaPostVesting",
+            "mtaFees",
+            "mtaPostVestingSentToBadgerTree",
         ]
         for key in keys:
             assert key in event
@@ -45,23 +45,25 @@ class StrategyMStableVaultResolver(StrategyCoreResolver):
         self.printMStableState(event, keys)
 
         assert approx(
-            float(event['mtaSentToVoterProxy']),
-            float(event['mtaTotal']) * sett_config.native.imBtc.params.govMta/10000,
+            float(event["mtaSentToVoterProxy"]),
+            float(event["mtaTotal"]) * sett_config.native.imBtc.params.govMta / 10000,
             1,
         )
 
         assert approx(
-            float(event['mtaSentToVoterProxy']),
-            float(event['mtaTotal']) * sett_config.native.imBtc.params.govMta/10000,
+            float(event["mtaSentToVoterProxy"]),
+            float(event["mtaTotal"]) * sett_config.native.imBtc.params.govMta / 10000,
             1,
         )
-        
+
         # After 6 months
-        if float(event['mtaPostVesting']) > 0:
-            assert float(event['mtaPostVestingSentToBadgerTree']) > 0
+        if float(event["mtaPostVesting"]) > 0:
+            assert float(event["mtaPostVestingSentToBadgerTree"]) > 0
             assert approx(
-                float(event['mtaPostVestingSentToBadgerTree']),
-                float(event['mtaPostVesting']) - float(event['mtaFees'][0]) - float(event['mtaFees'][1]),
+                float(event["mtaPostVestingSentToBadgerTree"]),
+                float(event["mtaPostVesting"])
+                - float(event["mtaFees"][0])
+                - float(event["mtaFees"][1]),
                 1,
             )
             assert approx(
@@ -69,30 +71,32 @@ class StrategyMStableVaultResolver(StrategyCoreResolver):
                     after.balances("mta", "badgerTree")
                     - before.balances("mta", "badgerTree")
                 ),
-                float(event['mtaPostVestingSentToBadgerTree']),
+                float(event["mtaPostVestingSentToBadgerTree"]),
                 1,
             )
-        
+
         assert approx(
             (
                 after.balances("want", "mStableVault")
                 - before.balances("want", "mStableVault")
             ),
-            float(event['wantDeposited']),
+            float(event["wantDeposited"]),
             1,
         )
         assert approx(
-            float(event['wantDeposited']),
-            float(event['wantProcessed']) - float(event['wantFees'][0]) - float(event['wantFees'][1]),
+            float(event["wantDeposited"]),
+            float(event["wantProcessed"])
+            - float(event["wantFees"][0])
+            - float(event["wantFees"][1]),
             1,
         )
 
         # mtaRecycledToWant = mtaTotal - govFee - mtaPostVesting
         assert approx(
-            (
-                float(event['mtaRecycledToWant'])
-            ),
-            float(event['mtaTotal']) - float(event['mtaSentToVoterProxy']) - float(event['mtaPostVesting']),
+            (float(event["mtaRecycledToWant"])),
+            float(event["mtaTotal"])
+            - float(event["mtaSentToVoterProxy"])
+            - float(event["mtaPostVesting"]),
             1,
         )
 
@@ -106,7 +110,7 @@ class StrategyMStableVaultResolver(StrategyCoreResolver):
             else:
                 table.append([key, val(event[key])])
 
-        print(tabulate(table, headers=["account", "value"]))        
+        print(tabulate(table, headers=["account", "value"]))
 
     def get_strategy_destinations(self):
         """
@@ -115,14 +119,13 @@ class StrategyMStableVaultResolver(StrategyCoreResolver):
         """
 
         strategy = self.manager.strategy
-        return {} 
+        return {}
 
     def add_entity_balances_for_tokens(self, calls, tokenKey, token, entities):
         entities["badgerTree"] = self.manager.strategy.badgerTree()
         entities["strategy"] = self.manager.strategy.address
         entities["voterProxy"] = self.manager.strategy.voterProxy()
         entities["mStableVault"] = self.manager.strategy.vault()
-
 
         super().add_entity_balances_for_tokens(calls, tokenKey, token, entities)
         return calls
@@ -158,7 +161,9 @@ class StrategyMStableVaultResolver(StrategyCoreResolver):
         assert after.get("strategy.balanceOf") >= before.get("strategy.balanceOf")
 
         # PPFS should not decrease
-        assert after.get("sett.pricePerFullShare") >= before.get("sett.pricePerFullShare")
+        assert after.get("sett.pricePerFullShare") >= before.get(
+            "sett.pricePerFullShare"
+        )
 
     def confirm_tend(self, before, after, tx):
         """
