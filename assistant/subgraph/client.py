@@ -12,6 +12,7 @@ console = Console()
 
 tokens_client = make_gql_client("tokens")
 sett_client = make_gql_client("setts")
+sett_tricrypto2_client = make_gql_client("setts_tricrypto")
 harvests_client = make_gql_client("harvests")
 
 
@@ -52,6 +53,10 @@ def fetch_tree_distributions(startBlock, endBlock):
 
 @lru_cache(maxsize=None)
 def fetch_sett_balances(key, settId, startBlock):
+    if key == "native.tricrypto2":
+        client = sett_client
+    else:
+        client = sett_tricrypto2_client
     query = gql(
         """
         query balances_and_events($vaultID: Vault_filter, $blockHeight: Block_height,$lastBalanceId:AccountVaultBalance_filter) {
@@ -73,7 +78,7 @@ def fetch_sett_balances(key, settId, startBlock):
     while True:
         variables["lastBalanceId"] = {"id_gt": lastBalanceId}
 
-        results = sett_client.execute(query, variable_values=variables)
+        results = client.execute(query, variable_values=variables)
         if len(results["vaults"]) == 0:
             return {}
         newBalances = {}
