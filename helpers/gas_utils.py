@@ -77,4 +77,3 @@ class GasStrategies:
 
 
 gas_strategies = GasStrategies()
-gas_strategies.set_default(gas_strategies.fast)

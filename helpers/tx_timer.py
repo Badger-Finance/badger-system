@@ -40,8 +40,10 @@ class TxTimer:
         self.tx_type = ""
 
     def alert(self, msg: str) -> None:
-        print(msg)
-        requests.post(self.webhook, {"content": msg})
+        if self.webhook:
+            requests.post(self.webhook, {"content": msg})
+        else:
+            print("No webhook supplied")
 
     def track_tx(self) -> None:
         """
