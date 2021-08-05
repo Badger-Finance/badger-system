@@ -170,7 +170,7 @@ def assert_migrate_single_user(settConfig):
         chain.sleep(days(2))
         chain.mine()
 
-        strategy.tend({"from": deployer})
+        strategy.tend({"from": strategyKeeper})
 
         before = {"settWant": want.balanceOf(sett), "stratWant": strategy.balanceOf()}
 
@@ -192,7 +192,7 @@ def assert_migrate_single_user(settConfig):
     chain.mine()
 
     if strategy.isTendable():
-        strategy.tend({"from": deployer})
+        strategy.tend({"from": strategyKeeper})
 
     chain.sleep(days(1))
     chain.mine()
@@ -229,6 +229,7 @@ def assert_withdraw_other(settConfig):
 
     deployer = badger.deployer
     randomUser = accounts[6]
+    strategyKeeper = accounts.at(strategy.keeper(), force=True)
 
     startingBalance = want.balanceOf(deployer)
 
@@ -239,20 +240,19 @@ def assert_withdraw_other(settConfig):
     # Deposit
     want.approve(sett, MaxUint256, {"from": deployer})
     sett.deposit(depositAmount, {"from": deployer})
-    after = sett_snapshot(sett, strategy, deployer)
 
     chain.sleep(15)
     chain.mine()
 
-    sett.earn({"from": deployer})
+    sett.earn({"from": strategyKeeper})
 
     chain.sleep(days(0.5))
     chain.mine()
 
     if strategy.isTendable():
-        strategy.tend({"from": deployer})
+        strategy.tend({"from": strategyKeeper})
 
-    strategy.harvest({"from": deployer})
+    strategy.harvest({"from": strategyKeeper})
 
     chain.sleep(days(0.5))
     chain.mine()
@@ -267,10 +267,14 @@ def assert_withdraw_other(settConfig):
     protectedTokens = strategy.getProtectedTokens()
     for token in protectedTokens:
         with brownie.reverts():
-            controller.inCaseStrategyTokenGetStuck(strategy, token, {"from": deployer})
+            controller.inCaseStrategyTokenGetStuck(
+                strategy, token, {"from": strategyKeeper}
+            )
 
     # Should send balance of non-protected token to sender
-    controller.inCaseStrategyTokenGetStuck(strategy, mockToken, {"from": deployer})
+    controller.inCaseStrategyTokenGetStuck(
+        strategy, mockToken, {"from": strategyKeeper}
+    )
 
     with brownie.reverts():
         controller.inCaseStrategyTokenGetStuck(
@@ -281,8 +285,7 @@ def assert_withdraw_other(settConfig):
 
 
 def assert_single_user_harvest_flow_remove_fees(settConfig):
-    suiteName = "assert_single_user_harvest_flow_remove_fees" + ": " + settConfig
-    testRecorder = TestRecorder(suiteName)
+    suiteName = "assert_single_user_harvest_flow_remove_fees" + ": " + settConfig["id"]
 
     badger = badger_single_sett(settConfig["id"])
     controller = badger.getController(settConfig["id"])
@@ -293,38 +296,28 @@ def assert_single_user_harvest_flow_remove_fees(settConfig):
     deployer = badger.deployer
     randomUser = accounts[6]
 
+    snap = SnapshotManager(badger, settConfig["id"])
+
     tendable = strategy.isTendable()
 
     startingBalance = want.balanceOf(deployer)
+    strategyKeeper = accounts.at(strategy.keeper(), force=True)
 
     depositAmount = Wei("1 ether")
     assert startingBalance >= depositAmount
 
     # Deposit
-    before = sett_snapshot(sett, strategy, deployer)
     want.approve(sett, MaxUint256, {"from": deployer})
     sett.deposit(depositAmount, {"from": deployer})
-    after = sett_snapshot(sett, strategy, deployer)
-
-    confirm_deposit(before, after, deployer, depositAmount)
 
     # Earn
-    before = sett_snapshot(sett, strategy, deployer)
-    sett.earn({"from": deployer})
-    after = sett_snapshot(sett, strategy, deployer)
-
-    confirm_earn(before, after)
+    sett.earn({"from": strategyKeeper})
 
     chain.sleep(days(0.5))
     chain.mine()
 
     if tendable:
-        before = sett_snapshot(sett, strategy, deployer)
-        tx = strategy.tend({"from": deployer})
-        after = sett_snapshot(sett, strategy, deployer)
-        testRecorder.add_record(EventRecord("Tend", tx.events, tx.timestamp))
-
-        confirm_tend(before, after, deployer)
+        tx = snap.settTend({"from": strategyKeeper})
 
     chain.sleep(days(1))
     chain.mine()
@@ -332,15 +325,8 @@ def assert_single_user_harvest_flow_remove_fees(settConfig):
     with brownie.reverts("onlyAuthorizedActors"):
         strategy.harvest({"from": randomUser})
 
-    before = sett_snapshot(sett, strategy, deployer)
     tx = strategy.harvest({"from": deployer})
-    after = sett_snapshot(sett, strategy, deployer)
-    testRecorder.add_record(EventRecord("Harvest", tx.events, tx.timestamp))
-    testRecorder.print_to_file(suiteName + ".json")
-
-    confirm_harvest(before, after, deployer)
-
-    after_harvest = sett_snapshot(sett, strategy, deployer)
+    snap.settHarvest({"from": strategyKeeper})
 
     # Harvesting on the HarvestMetaFarm does not increase the underlying position, it sends rewards to the rewardsTree
     # For HarvestMetaFarm, we expect FARM rewards to be distributed to rewardsTree
@@ -355,24 +341,12 @@ def assert_single_user_harvest_flow_remove_fees(settConfig):
     chain.mine()
 
     if tendable:
-        tx = strategy.tend({"from": deployer})
-        testRecorder.add_record(EventRecord("Tend", tx.events, tx.timestamp))
+        tx = strategy.tend({"from": strategyKeeper})
 
     chain.sleep(days(3))
     chain.mine()
 
-    before_harvest = sett_snapshot(sett, strategy, deployer)
-    tx = strategy.harvest({"from": deployer})
-    after_harvest = sett_snapshot(sett, strategy, deployer)
-    testRecorder.add_record(EventRecord("Harvest", tx.events, tx.timestamp))
-
-    harvested = tx.events["Harvest"][0]["harvested"]
-    if settConfig != "harvest.renCrv":
-        assert harvested > 0
-        assert (
-            after_harvest.sett.pricePerFullShare > before_harvest.sett.pricePerFullShare
-        )
-        assert after_harvest.strategy.balanceOf > before_harvest.strategy.balanceOf
+    tx = snap.settHarvest({"from": strategyKeeper})
 
     sett.withdrawAll({"from": deployer})
 
@@ -384,5 +358,4 @@ def assert_single_user_harvest_flow_remove_fees(settConfig):
         "gainsPercentage": (endingBalance - startingBalance) / startingBalance,
     }
 
-    # testRecorder.add_record(EventRecord("Final Report", report, 0))
-    testRecorder.print_to_file(suiteName + ".json")
+    print(report)
