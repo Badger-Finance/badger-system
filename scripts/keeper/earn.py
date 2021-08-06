@@ -98,13 +98,20 @@ def earn_all(badger: BadgerSystem, skip):
             snap = SnapshotManager(badger, key)
             before = snap.snap()
 
-            keeper = badger.earner
-            snap.settEarnAcl(
-                vault,
-                {"from": keeper, "gas_limit": 2000000, "allow_revert": True},
-                confirm=False,
-            )
-
+            
+            if vault.keeper() == badger.keeperAccessControl:
+                keeper = badger.earner
+                snap.settEarnAcl(
+                    vault,
+                    {"from": keeper, "gas_limit": 2000000, "allow_revert": True},
+                    confirm=False,
+                )
+            else:
+                keeper = accounts.at(vault.keeper())
+                snap.settEarn(
+                    {"from": keeper, "gas_limit": 2000000, "allow_revert": True},
+                    confirm=False,
+                )
             after = snap.snap()
             snap.printCompare(before, after)
 
