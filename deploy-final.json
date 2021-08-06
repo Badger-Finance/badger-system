@@ -91,7 +91,7 @@
         "StabilizeDiggSett": "0x3ee8ECEF1c5D6B924a03A32eFF4233d3dE5190E5",
         "DiggTreasury": "0x132069EA2E57b44C53C60697FD37453Afcae2708",
         "StrategyConvexLpOptimizer": "0xAB10f878bD27ae01DF36Ba645E458f7dbca7AA46",
-        "StrategyConvexStakingOptimizer" :"0x01d10fdc6b484BE380144dF12EB6C75387EfC49B",
+        "StrategyConvexStakingOptimizer": "0x01d10fdc6b484BE380144dF12EB6C75387EfC49B",
         "StrategyCvxHelper": "0x0172B8110b47448E32Ea9e4f291dB461Ee82D1d9",
         "StrategyCvxCrvHelper": "0x440E52dA3623203b0bc76FCae62429F2D4521173"
     },
@@ -126,8 +126,11 @@
             "native.obtcCrv": "0xf349c0faa80fc1870306ac093f75934078e28991",
             "native.bbtcCrv": "0x5dce29e92b1b939f8e8c60dcf15bde82a85be4a9",
             "native.tricrypto": "0xBE08Ef12e4a553666291E9fFC24fCCFd354F2Dd2",
+            "native.tricrypto2": "0x27E98fC7d05f54E544d16F58C194C2D7ba71e3B5",
             "native.cvxCrv": "0x2B5455aac8d64C14786c3a29858E43b5945819C0",
-            "native.cvx": "0x53c8e199eb2cb7c01543c137078a038937a68e40"
+            "native.cvx": "0x53c8e199eb2cb7c01543c137078a038937a68e40",
+            "native.mstableImBtc": "0x599D92B453C010b1050d31C364f6ee17E819f193",
+            "native.mstableFpMbtcHbtc": "0x26B8efa69603537AC8ab55768b6740b67664D518"
         },
         "vault_artifacts": {
             "native.badger": "Sett",
@@ -152,8 +155,11 @@
             "native.obtcCrv": "SettV3",
             "native.bbtcCrv": "SettV3",
             "native.tricrypto": "SettV3",
+            "native.tricrypto2": "SettV3",
             "native.cvxCrv": "SettV4",
-            "native.cvx": "SettV4"
+            "native.cvx": "SettV4",
+            "native.mstableImBtc": "SettV4",
+            "native.mstableFpMbtcHbtc": "SettV4"
         },
         "strategies": {
             "native.badger": "0x75b8E21BD623012Efb3b69E1B562465A68944eE6",
@@ -174,8 +180,11 @@
             "native.obtcCrv": "0x2bb864cdb4856ab2d148c5ca52dd7ccec126d138",
             "native.bbtcCrv": "0x4f3e7a4566320b2709fd1986f2e9f84053d3e2a0",
             "native.tricrypto": "0x05ec4356e1acd89cc2d16adc7415c8c95e736ac1",
+            "native.tricrypto2": "0x2eB6479c2f033360C0F4575A88e3b8909Cbc6a03",
             "native.cvxCrv": "0x826048381d65a65DAa51342C51d464428d301896",
-            "native.cvx": "0xBCee2c6CfA7A4e29892c3665f464Be5536F16D95"
+            "native.cvx": "0xBCee2c6CfA7A4e29892c3665f464Be5536F16D95",
+            "native.mstableImBtc": "0xd409C506742b7f76f164909025Ab29A47e06d30A",
+            "native.mstableFpMbtcHbtc": "0x54D06A0E1cE55a7a60Ee175AbCeaC7e363f603f3"
         },
         "strategies_registry": {
             "native.renCrv": {
@@ -229,8 +238,11 @@
             "native.obtcCrv": "StrategyConvexStakingOptimizer",
             "native.bbtcCrv": "StrategyConvexStakingOptimizer",
             "native.tricrypto": "StrategyConvexStakingOptimizer",
+            "native.tricrypto2": "StrategyConvexStakingOptimizer",
             "native.cvxCrv": "StrategyCvxCrvHelper",
-            "native.cvx": "StrategyCvxHelper"
+            "native.cvx": "StrategyCvxHelper",
+            "native.mstableImBtc": "StrategyMStableVaultImbtc",
+            "native.mstableFpMbtcHbtc": "StrategyMStableVaultFpMbtcHbtc"
         },
         "rewards": {
             "native.badger": "0xBD9c69654B8F3E5978DFd138B00cB0Be29F28cCf",
@@ -337,6 +349,9 @@
         "byvWbtc": "0x4b92d19c11435614CD49Af1b589001b7c08cD4D5",
         "bBtc": "0xc4E15973E6fF2A35cC804c2CF9D2a1b817a8b40F",
         "core": "0x2A8facc9D49fBc3ecFf569847833C380A13418a8"
+    },
+    "mstable": {
+        "MStableVoterProxy": "0x10D96b1Fd46Ce7cE092aA905274B8eD9d4585A6E"
     },
     "obsolete": {
         "StrategyPickleMetaFarm": "0xF6BC36280F32398A031A7294e81131aEE787D178"

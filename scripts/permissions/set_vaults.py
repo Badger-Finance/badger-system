@@ -13,51 +13,65 @@ from helpers.console_utils import console
 from helpers.registry import registry
 from tabulate import tabulate
 from scripts.permissions.access_control import BadgerRewardsManagerHelper
+
 # from helpers.gas_utils import gas_strategies
 # gas_strategies.set_default(gas_strategies.exponentialScalingFast)
 # gas_strategies.set_default_for_active_chain()
 
 all_setts = [
-            "native.badger",
-            "native.renCrv",
-            "native.sbtcCrv",
-            "native.tbtcCrv",
-            "native.uniBadgerWbtc",
-            "harvest.renCrv",
-            "native.sushiWbtcEth",
-            "native.sushiBadgerWbtc",
-            "native.digg",
-            "native.uniDiggWbtc",
-            "native.sushiDiggWbtc",
-            "native.hbtcCrv",
-            "native.pbtcCrv",
-            "native.obtcCrv",
-            "native.bbtcCrv",
-            "native.tricrypto",
-            "native.cvxCrv",
-            "native.cvx",
-        
+    "native.badger",
+    "native.renCrv",
+    "native.sbtcCrv",
+    "native.tbtcCrv",
+    "native.uniBadgerWbtc",
+    "harvest.renCrv",
+    "native.sushiWbtcEth",
+    "native.sushiBadgerWbtc",
+    "native.digg",
+    "native.uniDiggWbtc",
+    "native.sushiDiggWbtc",
+    "native.hbtcCrv",
+    "native.pbtcCrv",
+    "native.obtcCrv",
+    "native.bbtcCrv",
+    "native.tricrypto",
+    "native.cvxCrv",
+    "native.cvx",
 ]
 
 new_crv_setts = [
-        "native.hbtcCrv",
-        "native.pbtcCrv",
-        "native.obtcCrv",
-        "native.bbtcCrv",
-    ]
+    "native.hbtcCrv",
+    "native.pbtcCrv",
+    "native.obtcCrv",
+    "native.bbtcCrv",
+]
 
 set_fees = [
-        "native.renCrv",
-        "native.sbtcCrv",
-        "native.tbtcCrv",
-        "native.hbtcCrv",
-        "native.pbtcCrv",
-        "native.obtcCrv",
-        "native.bbtcCrv",
-        "native.tricrypto",
-    ]
-vaults_to_add = ["native.hbtcCrv", "native.pbtcCrv", "native.obtcCrv", "native.bbtcCrv", "native.tricrypto", "native.cvxCrv", "native.cvx"]
-new_core_vaults = ["native.hbtcCrv", "native.pbtcCrv", "native.obtcCrv", "native.bbtcCrv", "native.tricrypto"]
+    "native.renCrv",
+    "native.sbtcCrv",
+    "native.tbtcCrv",
+    "native.hbtcCrv",
+    "native.pbtcCrv",
+    "native.obtcCrv",
+    "native.bbtcCrv",
+    "native.tricrypto",
+]
+vaults_to_add = [
+    "native.hbtcCrv",
+    "native.pbtcCrv",
+    "native.obtcCrv",
+    "native.bbtcCrv",
+    "native.tricrypto",
+    "native.cvxCrv",
+    "native.cvx",
+]
+new_core_vaults = [
+    "native.hbtcCrv",
+    "native.pbtcCrv",
+    "native.obtcCrv",
+    "native.bbtcCrv",
+    "native.tricrypto",
+]
 helper_vaults = ["native.cvxCrv", "native.cvx"]
 to_migrate = ["native.renCrv", "native.sbtcCrv", "native.tbtcCrv"]
 controller_id = "experimental"
@@ -130,6 +144,7 @@ def modify_guest_lists(badger, helper, vault_keys):
         guestList.setUserDepositCap(new_cap)
         guestList.setTotalDepositCap(new_cap)
         assert guestList.guestRoot() == EmptyBytes32
+
 
 def set_guest_lists(badger, helper, vaults_to_add):
     for key in vaults_to_add:
@@ -232,19 +247,31 @@ def initialize_strategies(badger):
 
         assert vault.token() == strategy.want()
 
+
 def change_proxy_admin_controller(badger, helper, admin, new_admin, setts):
-    admin = helper.contract_from_abi(admin.address, "ProxyAdmin", artifacts.open_zeppelin["ProxyAdmin"]["abi"])
-    new_admin = helper.contract_from_abi(new_admin.address, "ProxyAdmin", artifacts.open_zeppelin["ProxyAdmin"]["abi"])
+    admin = helper.contract_from_abi(
+        admin.address, "ProxyAdmin", artifacts.open_zeppelin["ProxyAdmin"]["abi"]
+    )
+    new_admin = helper.contract_from_abi(
+        new_admin.address, "ProxyAdmin", artifacts.open_zeppelin["ProxyAdmin"]["abi"]
+    )
 
     for key in setts:
         sett = badger.getController(key)
-        console.print(f"Change proxy admin of Controller {key} {sett.address} to {new_admin}")
+        console.print(
+            f"Change proxy admin of Controller {key} {sett.address} to {new_admin}"
+        )
         admin.changeProxyAdmin(sett, new_admin)
         assert new_admin.getProxyAdmin(sett) == new_admin
 
+
 def change_proxy_admin_sett(badger, helper, admin, new_admin, setts):
-    admin = helper.contract_from_abi(admin.address, "ProxyAdmin", artifacts.open_zeppelin["ProxyAdmin"]["abi"])
-    new_admin = helper.contract_from_abi(new_admin.address, "ProxyAdmin", artifacts.open_zeppelin["ProxyAdmin"]["abi"])
+    admin = helper.contract_from_abi(
+        admin.address, "ProxyAdmin", artifacts.open_zeppelin["ProxyAdmin"]["abi"]
+    )
+    new_admin = helper.contract_from_abi(
+        new_admin.address, "ProxyAdmin", artifacts.open_zeppelin["ProxyAdmin"]["abi"]
+    )
 
     for key in setts:
         sett = badger.getSett(key)
@@ -252,13 +279,20 @@ def change_proxy_admin_sett(badger, helper, admin, new_admin, setts):
         admin.changeProxyAdmin(sett, new_admin)
         assert new_admin.getProxyAdmin(sett) == new_admin
 
+
 def change_proxy_admin_strategy(badger, helper, admin, new_admin, strategies):
-    admin = helper.contract_from_abi(admin.address, "ProxyAdmin", artifacts.open_zeppelin["ProxyAdmin"]["abi"])
-    new_admin = helper.contract_from_abi(new_admin.address, "ProxyAdmin", artifacts.open_zeppelin["ProxyAdmin"]["abi"])
+    admin = helper.contract_from_abi(
+        admin.address, "ProxyAdmin", artifacts.open_zeppelin["ProxyAdmin"]["abi"]
+    )
+    new_admin = helper.contract_from_abi(
+        new_admin.address, "ProxyAdmin", artifacts.open_zeppelin["ProxyAdmin"]["abi"]
+    )
 
     for key in strategies:
         strategy = badger.getStrategy(key)
-        console.print(f"Change proxy admin of Strategy {key} {strategy.address} to {new_admin}")
+        console.print(
+            f"Change proxy admin of Strategy {key} {strategy.address} to {new_admin}"
+        )
         admin.changeProxyAdmin(strategy, new_admin)
         assert new_admin.getProxyAdmin(strategy) == new_admin
 
@@ -625,17 +659,28 @@ def allow_strategies_on_rewards_manager(badger, safe, helper, vaults_to_add):
 
     helper.publish()
 
+
 def approve_strategies_on_rewards_manager(badger, helper, strategy_keys):
-    rm = helper.contract_from_abi(badger.badgerRewardsManager.address, "BadgerRewardsManager", BadgerRewardsManager.abi)
+    rm = helper.contract_from_abi(
+        badger.badgerRewardsManager.address,
+        "BadgerRewardsManager",
+        BadgerRewardsManager.abi,
+    )
     for key in strategy_keys:
         strat = badger.getStrategy(key)
         rm.approveStrategy(strat)
 
+
 def approve_setts_on_rewards_manager(badger, helper, sett_keys):
-    rm = helper.contract_from_abi(badger.badgerRewardsManager.address, "BadgerRewardsManager", BadgerRewardsManager.abi)
+    rm = helper.contract_from_abi(
+        badger.badgerRewardsManager.address,
+        "BadgerRewardsManager",
+        BadgerRewardsManager.abi,
+    )
     for key in sett_keys:
         sett = badger.getSett(key)
         rm.approveStrategy(sett)
+
 
 def modify_curve_swap_addresses(badger, helper):
     strategy_address = badger.getStrategy("native.pbtcCrv").address
@@ -663,9 +708,14 @@ def modify_curve_swap_addresses(badger, helper):
     strategy.setCurvePoolSwap(registry.curve.pools.bbtcCrv.swap)
     helper.publish()
 
+
 def set_convex_ac_performance_fees(badger, helper, strats):
     for key in strats:
-        strategy = helper.contract_from_abi(badger.getStrategy(key).address, "StrategyConvexStakingOptimizer", StrategyConvexStakingOptimizer.abi)
+        strategy = helper.contract_from_abi(
+            badger.getStrategy(key).address,
+            "StrategyConvexStakingOptimizer",
+            StrategyConvexStakingOptimizer.abi,
+        )
         console.print(f"Setting fees on strategy {key} {strategy.address}")
         strategy.setWithdrawalFee(50)
         strategy.setPerformanceFeeGovernance(1000)
@@ -928,7 +978,9 @@ def update_rm(badger, safe, helper):
 
 def set_min(badger, helper, min, setts):
     for key in setts:
-        sett = helper.contract_from_abi(badger.getSett(key).address, "SettV3", SettV3.abi)
+        sett = helper.contract_from_abi(
+            badger.getSett(key).address, "SettV3", SettV3.abi
+        )
         console.print(f"Set min on {key} {sett.address}")
         sett.setMin(min)
 
@@ -950,11 +1002,15 @@ def set_governance(badger, helper, new, setts):
         sett.setGovernance(new)
     helper.publish()
 
+
 def set_governance_strategies(badger, helper, new, setts):
     for key in setts:
-        sett = helper.contract_from_abi(badger.getStrategy(key).address, "SettV3", SettV3.abi)
+        sett = helper.contract_from_abi(
+            badger.getStrategy(key).address, "SettV3", SettV3.abi
+        )
         sett.setGovernance(new)
     helper.publish()
+
 
 def switch_proxy_admin(badger, helper, keeper, strategies):
     testProxyAdmin = helper.contract_from_abi(badger.testProxyAdmin)
@@ -983,6 +1039,7 @@ def approve_on_helper_vaults(badger, helper, strategies):
 
     helper.publish()
 
+
 def main():
     """
     Promote an experimental vault to official status
@@ -1006,7 +1063,9 @@ def main():
     rewardsManagerHelper.grant_role_on_rewards_manager(EARNER_ROLE, [badger.earner])
 
     rewardsManagerHelper.revoke_role_on_rewards_manager(SWAPPER_ROLE, [badger.keeper])
-    rewardsManagerHelper.revoke_role_on_rewards_manager(DISTRIBUTOR_ROLE, [badger.keeper])
+    rewardsManagerHelper.revoke_role_on_rewards_manager(
+        DISTRIBUTOR_ROLE, [badger.keeper]
+    )
     print_access_control(badger.badgerRewardsManager)
 
     helper.publish()

@@ -3,9 +3,16 @@ import json
 from rich.console import Console
 from assistant.rewards.aws_utils import upload_boosts
 from assistant.subgraph.client import fetch_wallet_balances
-from helpers.constants import BADGER, DIGG, SETT_BOOST_RATIOS, MAX_BOOST
+from helpers.constants import (
+    BADGER,
+    DIGG,
+    SETT_BOOST_RATIOS,
+    MAX_BOOST,
+    STAKE_RATIO_RANGES,
+)
 from collections import OrderedDict
 from assistant.rewards.rewards_utils import combine_balances, calculate_sett_balances
+from tabulate import tabulate
 from assistant.badger_api.prices import (
     fetch_token_prices,
     fetch_ppfs,
@@ -82,8 +89,15 @@ def badger_boost(badger, currentBlock):
     badgerSetts = UserBalances()
     nonNativeSetts = UserBalances()
     boostInfo = {}
+    noBoost = [
+        "experimental.digg",
+        "native.mstableImBtc",
+        "native.mstableFpMbtcHbtc",
+    ]
+
+    badgerBoost = {}
     for name, sett in allSetts.items():
-        if name in ["experimental.digg"]:
+        if name in noBoost:
             continue
         balances = calculate_sett_balances(badger, name, currentBlock)
         balances = convert_balances_to_usd(sett, name, balances)
@@ -162,30 +176,29 @@ def badger_boost(badger, currentBlock):
     for addr, ratio in stakeRatios.items():
         boostInfo[addr.lower()]["stakeRatio"] = ratio
 
-    sortedNonNative = UserBalances(
-        sorted(
-            nonNativeSetts.userBalances.values(),
-            key=lambda u: stakeRatios[u.address],
-            reverse=True,
-        )
-    )
-    nonNativeTotal = sortedNonNative.total_balance()
-    percentageNonNative = {}
-    for user in sortedNonNative:
-        percentage = user.balance / nonNativeTotal
-        percentageNonNative[user.address] = percentage
-
-    cumulativePercentages = dict(
-        zip(percentageNonNative.keys(), calc_cumulative(percentageNonNative.values()))
-    )
-    badgerBoost = dict(
-        zip(cumulativePercentages.keys(), calc_boost(cumulativePercentages.values()))
-    )
-    for addr, boost in badgerBoost.items():
-        # Users with no stake ratio have a boost of 1
-        if stakeRatios[addr] == 0:
+    stakeData = {}
+    console.log(STAKE_RATIO_RANGES)
+    for addr, stakeRatio in stakeRatios.items():
+        if stakeRatio == 0:
             badgerBoost[addr] = 1
+        else:
+
+            userBoost = 1
+            userStakeRange = 0
+            for stakeRange, multiplier in STAKE_RATIO_RANGES:
+                if stakeRatio > stakeRange:
+                    userBoost = multiplier
+                    userStakeRange = stakeRange
+
+            stakeData[userStakeRange] = stakeData.get(userStakeRange, 0) + 1
+            badgerBoost[addr] = userBoost
 
     console.log(len(badgerBoost))
+    print(
+        tabulate(
+            [[rng, amount] for rng, amount in stakeData.items()],
+            headers=["range", "amount of users"],
+        )
+    )
 
     return badgerBoost, boostInfo

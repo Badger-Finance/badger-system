@@ -117,7 +117,7 @@ NON_NATIVE_SETTS = [
     "native.obtcCrv",
     "native.bbtcCrv",
     "native.tricrypto",
-    "native.cvxCrv",
+    "native.tricrypto2" "native.cvxCrv",
     "native.cvx",
 ]
 
@@ -130,6 +130,7 @@ NO_GEYSERS = [
     "native.obtcCrv",
     "native.bbtcCrv",
     "native.tricrypto",
+    "native.tricrypto2",
     "native.cvxCrv",
     "native.cvx",
 ]
@@ -153,10 +154,35 @@ SETT_BOOST_RATIOS = {
     "native.obtcCrv": 1,
     "native.bbtcCrv": 1,
     "native.tricrypto": 1,
+    "native.tricrypto2": 1,
     "native.cvxCrv": 0.1,
     "native.cvx": 0.1,
 }
 
+STAKE_RATIO_RANGES = list(
+    [
+        (0, 1),
+        (0.001, 2),
+        (0.0025, 5),
+        (0.005, 10),
+        (0.01, 20),
+        (0.025, 50),
+        (0.05, 100),
+        (0.075, 150),
+        (0.10, 200),
+        (0.15, 300),
+        (0.2, 400),
+        (0.25, 500),
+        (0.3, 600),
+        (0.4, 800),
+        (0.5, 1000),
+        (0.6, 1200),
+        (0.7, 1400),
+        (0.8, 1600),
+        (0.9, 1800),
+        (1, 2000),
+    ]
+)
 REWARDS_BLACKLIST = {
     "0x19d97d8fa813ee2f51ad4b4e04ea08baf4dffc28": "Badger Vault",
     "0xb65cef03b9b89f99517643226d76e286ee999e77": "Badger Dev Multisig",

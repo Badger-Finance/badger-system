@@ -22,7 +22,7 @@ import "interfaces/badger/IStakingRewardsSignalOnly.sol";
 /*
     ===== Pancake LP Optimizer =====
     - Stake LP tokens for Cake rewards, sell these evenly for underlying assets & LP
-    - Performance fees are taken on Cake directly
+    - Performance fees are taken from the cake harvested after converting to the want LP token
     - Swap half of cake for each LP asset:
         token0 = x, path = [x, y, z]
         token1 = x, path = [x, y, z]
@@ -321,5 +321,6 @@ contract StrategyPancakeLpOptimizer is PancakeSwapper {
         swapData.lpGained = lpAfter.sub(lpBefore);
 
         emit TokenSwap(swapData.tokenIn, swapData.totalSold, swapData.convertedToToken0, swapData.convertedToToken1, swapData.lpGained);
+        return swapData;
     }
 }

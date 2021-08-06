@@ -40,7 +40,6 @@ weekly_schedule = {
     # Convex Helper
     "native.cvx": {"badger": Wei("245 ether"), "digg": to_digg_shares(0)},
     "native.cvxCrv": {"badger": Wei("245 ether"), "digg": to_digg_shares(0)},
-
     # Native Setts
     "native.badger": {
         "badger": Wei("2300 ether"),
@@ -55,7 +54,7 @@ weekly_schedule = {
         "digg": to_digg_shares(0),
     },
     # Digg Setts
-     "native.digg": {"badger": Wei("0 ether"), "digg": to_digg_shares(4.690) // 2},
+    "native.digg": {"badger": Wei("0 ether"), "digg": to_digg_shares(4.690) // 2},
     "native.uniDiggWbtc": {
         "badger": Wei("0 ether"),
         "digg": to_digg_shares(9.390),
@@ -74,6 +73,7 @@ class Emissions:
 
 emissions = Emissions(active_emissions=weekly_schedule)
 
+
 def get_total_weekly_emissions():
     totals = {}
     for key, value in weekly_schedule.items():
@@ -83,6 +83,8 @@ def get_total_weekly_emissions():
             totals[asset] += amount
 
     return totals
+
+
 def build_weekly_schedules(badger: BadgerSystem, start, duration):
     end = start + duration
     schedules = []

@@ -25,18 +25,20 @@ class MStableImBtcMiniDeploy(SettMiniDeployBase):
         """
 
         self.dualGovernance = accounts[6]
-            
+
         mstable_config_test = DotMap(
-            dualGovernance=self.dualGovernance, # Placeholder as dualGovernance multi-sig hasn't been launched
+            dualGovernance=self.dualGovernance,  # Placeholder as dualGovernance multi-sig hasn't been launched
             badgerGovernance=self.governance,
             strategist=self.strategist,
             keeper=self.keeper,
             configAddress1=registry.mstable.nexus,
             configAddress2=registry.mstable.votingLockup,
-            rates=8000, # Placeholder: redistributionRate set to 80%
+            rates=8000,  # Placeholder: redistributionRate set to 80%
         )
 
-        self.mstable = MStableSystem(self.deployer, self.badger.devProxyAdmin, mstable_config_test)
+        self.mstable = MStableSystem(
+            self.deployer, self.badger.devProxyAdmin, mstable_config_test
+        )
         self.mstable.deploy_logic("MStableVoterProxy", MStableVoterProxy)
         self.mstable.deploy_voterproxy()
 
@@ -103,10 +105,10 @@ class MStableImBtcMiniDeploy(SettMiniDeployBase):
 
         # Add strat to voterproxy
         self.mstable.voterproxy.supportStrategy(
-            self.strategy.address, 
+            self.strategy.address,
             registry.mstable.pools.imBtc.vault,
-            {'from': self.dualGovernance}
-        ) # Must be dualGovernance
+            {"from": self.dualGovernance},
+        )  # Must be dualGovernance
 
         # Add final state of mstable system to badger system
         self.badger.mstable = self.mstable
