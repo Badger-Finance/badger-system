@@ -257,6 +257,8 @@ def connect_badger(
         badger.connect_rewards_escrow(badger_deploy["rewardsEscrow"])
     if "honeypotMeme" in badger_deploy:
         badger.connect_honeypot_meme(badger_deploy["honeypotMeme"])
+    if "keeperAccessControl" in badger_deploy:
+        badger.connect_keeper_acl(badger_deploy["keeperAccessControl"])
     if "communityPool" in badger_deploy:
         badger.connect_community_pool(badger_deploy["communityPool"])
     if "daoBadgerTimelock" in badger_deploy:
@@ -1324,6 +1326,10 @@ class BadgerSystem:
         self.rewardsEscrow = RewardsEscrow.at(address)
         self.track_contract_upgradeable("rewardsEscrow", self.rewardsEscrow)
 
+    def connect_keeper_acl(self, address):
+        self.keeperAccessControl = KeeperAccessControl.at(address)
+        self.track_contract_upgradeable("keeperAccessControl", self.keeperAccessControl)
+
     def connect_badger_tree(self, address):
         self.badgerTree = BadgerTreeV2.at(address)
         self.track_contract_upgradeable("badgerTree", self.badgerTree)
@@ -1558,9 +1564,10 @@ class BadgerSystem:
                     return admin
             except:
                 continue
-        raise Exception(
-            f"Contract not managed by any connected proxyAdmin from: {potential_admins}"
-        )
+        return None
+        # raise Exception(
+        #     f"Contract not managed by any connected proxyAdmin from: {potential_admins}"
+        # )
 
     def getConnectedProxyAdmins(self):
         connected_admins = {}
