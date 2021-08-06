@@ -32,6 +32,7 @@ setts_to_skip = {
             # "native.tricrypto",
             "native.cvxCrv",
             "native.cvx",
+            # "native.tricrypto2",
         ],
         "tend": [
             "native.badger",
@@ -58,6 +59,7 @@ setts_to_skip = {
             # "native.tricrypto",
             "native.cvxCrv",
             "native.cvx",
+            # "native.tricrypto2",
         ],
         "earn": [
             "native.badger",
@@ -84,6 +86,7 @@ setts_to_skip = {
             # "native.tricrypto",
             # "native.cvxCrv",
             # "native.cvx",
+            # "native.tricrypto2"
         ],
     },
     "bsc": {
