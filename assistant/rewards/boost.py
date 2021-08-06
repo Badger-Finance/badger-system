@@ -89,9 +89,15 @@ def badger_boost(badger, currentBlock):
     badgerSetts = UserBalances()
     nonNativeSetts = UserBalances()
     boostInfo = {}
+    noBoost = [
+        "experimental.digg",
+        "native.mstableImBtc",
+        "native.mstableFpMbtcHbtc",
+    ]
+
     badgerBoost = {}
     for name, sett in allSetts.items():
-        if name in ["experimental.digg"]:
+        if name in noBoost:
             continue
         balances = calculate_sett_balances(badger, name, currentBlock)
         balances = convert_balances_to_usd(sett, name, balances)

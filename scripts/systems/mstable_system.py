@@ -12,6 +12,7 @@ from rich.console import Console
 
 console = Console()
 
+
 class MStableSystem:
     """
     The mStable System consists of the MStableVoterProxy
@@ -54,4 +55,3 @@ class MStableSystem:
         self.logic[name] = BrownieArtifact.deploy(
             {"from": deployer},
         )
-

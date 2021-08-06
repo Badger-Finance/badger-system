@@ -19,19 +19,21 @@ def print_role_list(contract, role, members, name=""):
         table.append([member])
     print(tabulate(table, ["address"]))
 
+
 def print_access_control(contract):
-    '''
+    """
     Print all role holders for a contract
-    '''
+    """
     for name, hex in role_registry.roles.items():
         role_members = []
         count = contract.getRoleMemberCount(hex)
         if count > 0:
-            for i in range (0, count):
+            for i in range(0, count):
                 account = contract.getRoleMember(hex, i)
                 role_members.append(account)
-        
+
             print_role_list(contract, hex, role_members, name=name)
+
 
 def main():
     badger = connect_badger()

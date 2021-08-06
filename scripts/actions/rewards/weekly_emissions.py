@@ -1,6 +1,11 @@
 from helpers.rewards.LoggerUnlockSchedule import LoggerUnlockSchedule
 from scripts.actions.helpers.RewardsSchedule import RewardsSchedule
-from config.active_emissions import build_weekly_schedules, emissions, get_active_rewards_schedule, get_total_weekly_emissions
+from config.active_emissions import (
+    build_weekly_schedules,
+    emissions,
+    get_active_rewards_schedule,
+    get_total_weekly_emissions,
+)
 import datetime
 import json
 import os
@@ -68,7 +73,9 @@ def main():
 
     safe = ApeSafe(badger.opsMultisig.address)
     helper = ApeSafeHelper(badger, safe)
-    logger = helper.contract_from_abi(badger.rewardsLogger.address, "RewardsLogger", RewardsLogger.abi)
+    logger = helper.contract_from_abi(
+        badger.rewardsLogger.address, "RewardsLogger", RewardsLogger.abi
+    )
     total_emissions = get_total_weekly_emissions()
     console.print(total_emissions)
     schedules = build_weekly_schedules(badger, start, duration)

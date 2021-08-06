@@ -117,7 +117,7 @@ NON_NATIVE_SETTS = [
     "native.obtcCrv",
     "native.bbtcCrv",
     "native.tricrypto",
-    "native.cvxCrv",
+    "native.tricrypto2" "native.cvxCrv",
     "native.cvx",
 ]
 
@@ -130,6 +130,7 @@ NO_GEYSERS = [
     "native.obtcCrv",
     "native.bbtcCrv",
     "native.tricrypto",
+    "native.tricrypto2",
     "native.cvxCrv",
     "native.cvx",
 ]
@@ -153,6 +154,7 @@ SETT_BOOST_RATIOS = {
     "native.obtcCrv": 1,
     "native.bbtcCrv": 1,
     "native.tricrypto": 1,
+    "native.tricrypto2": 1,
     "native.cvxCrv": 0.1,
     "native.cvx": 0.1,
 }

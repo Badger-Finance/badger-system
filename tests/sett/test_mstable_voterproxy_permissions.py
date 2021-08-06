@@ -6,18 +6,21 @@ from helpers.constants import *
 from tests.conftest import badger_single_sett, settTestConfig
 from helpers.registry import registry
 
+
 def state_setup(badger, settConfig):
     voterproxy = badger.mstable.voterproxy
 
     accounts.at(badger.deployer, force=True)
-    accounts.at(voterproxy.governance(), force=True) # dualGovernance
+    accounts.at(voterproxy.governance(), force=True)  # dualGovernance
     accounts.at(voterproxy.badgerGovernance(), force=True)
     accounts.at(voterproxy.keeper(), force=True)
     accounts.at(voterproxy.strategist(), force=True)
 
-#@pytest.mark.skip()
+
+# @pytest.mark.skip()
 @pytest.mark.parametrize(
-    "settConfig", settTestConfig,
+    "settConfig",
+    settTestConfig,
 )
 def test_voterproxy_onlygovernors_permissions(settConfig):
     badger = badger_single_sett(settConfig)
@@ -40,16 +43,10 @@ def test_voterproxy_onlygovernors_permissions(settConfig):
         nexusGovernor,
     ]
 
-    unauthorizedActors = [
-        deployer,
-        governance,
-        keeper,
-        strategist,
-        randomUser
-    ]
+    unauthorizedActors = [deployer, governance, keeper, strategist, randomUser]
 
     # End Setup
-    
+
     # exitLock
     for actor in authorizedActors:
         # onlyGovernors authorization works but reverts, as expected, on votingLockup.exit();
@@ -68,7 +65,9 @@ def test_voterproxy_onlygovernors_permissions(settConfig):
         voterproxy.changeRedistributionRate(newRate, {"from": actor})
         newRate = newRate - 1000
 
-    assert voterproxy.redistributionRate() == originalRate - (len(authorizedActors) * 1000)
+    assert voterproxy.redistributionRate() == originalRate - (
+        len(authorizedActors) * 1000
+    )
 
     for actor in unauthorizedActors:
         with brownie.reverts("onlyGovernors"):
@@ -104,12 +103,12 @@ def test_voterproxy_onlygovernors_permissions(settConfig):
     # Reverts when trying to repay same loan again
     with brownie.reverts("Non-existing loan"):
         voterproxy.repayLoan(deployer.address, {"from": authorizedActors[1]})
-        
 
 
-#@pytest.mark.skip()
+# @pytest.mark.skip()
 @pytest.mark.parametrize(
-    "settConfig", settTestConfig,
+    "settConfig",
+    settTestConfig,
 )
 def test_voterproxy_onlyharvester_permissions(settConfig):
     badger = badger_single_sett(settConfig)
@@ -133,15 +132,10 @@ def test_voterproxy_onlyharvester_permissions(settConfig):
         keeper,
     ]
 
-    unauthorizedActors = [
-        deployer,
-        governance,
-        strategist,
-        randomUser
-    ]
+    unauthorizedActors = [deployer, governance, strategist, randomUser]
 
     # End Setup
-    
+
     # harvestMta
     for actor in authorizedActors:
         # onlyGovernors authorization works but reverts, as expected, as there is no mta staked;
@@ -153,10 +147,10 @@ def test_voterproxy_onlyharvester_permissions(settConfig):
             voterproxy.harvestMta({"from": actor})
 
 
-
-#@pytest.mark.skip()
+# @pytest.mark.skip()
 @pytest.mark.parametrize(
-    "settConfig", settTestConfig,
+    "settConfig",
+    settTestConfig,
 )
 def test_voterproxy_onlygovernance_permissions(settConfig):
     badger = badger_single_sett(settConfig)
@@ -165,7 +159,6 @@ def test_voterproxy_onlygovernance_permissions(settConfig):
 
     settId = settConfig["id"]
     strategy = badger.getStrategy(settId)
-    
 
     nexus_governor = "0xf6ff1f7fceb2ce6d26687eaab5988b445d0b94a2"
 
@@ -192,29 +185,25 @@ def test_voterproxy_onlygovernance_permissions(settConfig):
     ]
 
     # End Setup
-    
+
     # supportStrategy
     for actor in authorizedActors:
-        # onlyGovernance authorization works but reverts, as expected, 
+        # onlyGovernance authorization works but reverts, as expected,
         # since the strategy was already supported on miniDeploy.
         with brownie.reverts("Strategy already supported"):
             voterproxy.supportStrategy(
-                strategy.address,
-                registry.mstable.pools.imBtc.vault,
-                {"from": actor}
+                strategy.address, registry.mstable.pools.imBtc.vault, {"from": actor}
             )
 
     for actor in unauthorizedActors:
         with brownie.reverts("onlyGovernance"):
             voterproxy.supportStrategy(
-                strategy.address,
-                registry.mstable.pools.imBtc.vault,
-                {"from": actor}
+                strategy.address, registry.mstable.pools.imBtc.vault, {"from": actor}
             )
 
     # createLock
     for actor in authorizedActors:
-        # onlyGovernance authorization works but reverts, as expected, since there are no assets 
+        # onlyGovernance authorization works but reverts, as expected, since there are no assets
         # deposited on the contract
         with brownie.reverts("Must stake non zero amount"):
             voterproxy.createLock(1000, {"from": actor})
@@ -237,12 +226,11 @@ def test_voterproxy_onlygovernance_permissions(settConfig):
     dummyAddress = "0x1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a"
 
     for actor in authorizedActors:
-            voterproxy.changeLockAddress(dummyAddress, {"from": actor})
+        voterproxy.changeLockAddress(dummyAddress, {"from": actor})
 
     for actor in unauthorizedActors:
         with brownie.reverts("onlyGovernance"):
             voterproxy.changeLockAddress(dummyAddress, {"from": actor})
-
 
     # setGovernance
     for actor in unauthorizedActors:
@@ -254,14 +242,14 @@ def test_voterproxy_onlygovernance_permissions(settConfig):
 
     # Non-governance address (previous governance) attempts to change keeper
     with brownie.reverts("onlyGovernance"):
-            voterproxy.setKeeper(randomUser, {"from": governance})
+        voterproxy.setKeeper(randomUser, {"from": governance})
 
     # Change keeper to randomUser from newly appointed governance
     voterproxy.setKeeper(randomUser, {"from": randomUser})
 
     # Non-governance address (previous governance) attempts to change strategist
     with brownie.reverts("onlyGovernance"):
-            voterproxy.setStrategist(randomUser, {"from": governance})
+        voterproxy.setStrategist(randomUser, {"from": governance})
 
     # Change strategist to randomUser from newly appointed governance
     voterproxy.setStrategist(randomUser, {"from": randomUser})

@@ -15,7 +15,8 @@ console = Console()
 
 # @pytest.mark.skip()
 @pytest.mark.parametrize(
-    "settConfig", settTestConfig,
+    "settConfig",
+    settTestConfig,
 )
 def test_deposit_withdraw_single_user_flow(settConfig):
     badger = badger_single_sett(settConfig)
@@ -66,9 +67,11 @@ def test_deposit_withdraw_single_user_flow(settConfig):
 
     # assert False
 
+
 # @pytest.mark.skip()
 @pytest.mark.parametrize(
-    "settConfig", settTestConfig,
+    "settConfig",
+    settTestConfig,
 )
 def test_single_user_harvest_flow(settConfig):
     badger = badger_single_sett(settConfig)
@@ -132,9 +135,11 @@ def test_single_user_harvest_flow(settConfig):
 
     # assert False
 
+
 # @pytest.mark.skip()
 @pytest.mark.parametrize(
-    "settConfig", settTestConfig,
+    "settConfig",
+    settTestConfig,
 )
 def test_voterproxy_loan(settConfig):
     badger = badger_single_sett(settConfig)
@@ -145,7 +150,9 @@ def test_voterproxy_loan(settConfig):
     want = badger.getStrategyWant(settConfig["id"])
     voterproxy = badger.mstable.voterproxy
 
-    badgerGovernance = accounts.at(badger.mstable.voterproxy.badgerGovernance(), force=True)
+    badgerGovernance = accounts.at(
+        badger.mstable.voterproxy.badgerGovernance(), force=True
+    )
     dualGovernance = accounts.at(badger.mstable.voterproxy.governance(), force=True)
     proxyKeeper = accounts.at(badger.mstable.voterproxy.keeper(), force=True)
     settKeeper = accounts.at(sett.keeper(), force=True)
@@ -160,7 +167,7 @@ def test_voterproxy_loan(settConfig):
     randomUser = accounts[6]
 
     mta = ERC20.at(strategy.mta())
-    
+
     mtaBalance = mta.balanceOf(deployer.address)
     assert mtaBalance > 0
 
@@ -191,7 +198,6 @@ def test_voterproxy_loan(settConfig):
 
     chain.sleep(days(2))
     chain.mine()
-
 
     # == Deposit -> Earn -> Harvest -> Withdraw flow == #
 
@@ -228,7 +234,6 @@ def test_voterproxy_loan(settConfig):
     chain.sleep(days(2))
     chain.mine()
 
-
     # == harvestMta == #
     stratBalanceBefore = mta.balanceOf(strategy.address)
     tx = voterproxy.harvestMta({"from": proxyKeeper})
@@ -236,21 +241,20 @@ def test_voterproxy_loan(settConfig):
 
     # Redistribution rate set to 80%
     assert approx(
-        int(tx.events["MtaHarvested"][0]["distributed"]), 
-        int(tx.events["MtaHarvested"][0]["harvested"])*0.8, 
-        1
+        int(tx.events["MtaHarvested"][0]["distributed"]),
+        int(tx.events["MtaHarvested"][0]["harvested"]) * 0.8,
+        1,
     )
     # Full amount transfer to strategy as it is the only strategy set on VoterProxy
     assert approx(
         mta.balanceOf(strategy.address),
         stratBalanceBefore + int(tx.events["MtaHarvested"][0]["distributed"]),
-        1
+        1,
     )
 
     # Chain sleeps for 3 months
     chain.sleep(days(93))
     chain.mine()
-
 
     # == Exit lock == #
     voterproxy.exitLock({"from": badgerGovernance})
@@ -267,7 +271,3 @@ def test_voterproxy_loan(settConfig):
     assert voterproxy.loans(deployer.address) == 0
 
     # assert False
-
-
-
-

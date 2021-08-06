@@ -16,14 +16,18 @@ def modify_rewards(badger: BadgerSystem, bridge: BridgeSystem):
         MultisigTxMetadata(description="update rewards split governance"),
         {
             "to": bridge.adapter.address,
-            "data": bridge.adapter.setPercentageFeeGovernanceBps.encode_input(PERCENTAGE_FEE_BPS),
+            "data": bridge.adapter.setPercentageFeeGovernanceBps.encode_input(
+                PERCENTAGE_FEE_BPS
+            ),
         },
     )
     multisig.execute(
         MultisigTxMetadata(description="update rewards split rewards"),
         {
             "to": bridge.adapter.address,
-            "data": bridge.adapter.setPercentageFeeRewardsBps.encode_input(PERCENTAGE_FEE_BPS),
+            "data": bridge.adapter.setPercentageFeeRewardsBps.encode_input(
+                PERCENTAGE_FEE_BPS
+            ),
         },
     )
 
