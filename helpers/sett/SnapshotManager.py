@@ -106,6 +106,7 @@ class SnapshotManager:
         self.controller = Controller.at(self.sett.controller())
         self.want = interface.IERC20(self.sett.token())
         self.resolver = self.init_resolver(self.strategy.getName())
+        self.keeperAccessControl = badger.keeperAccessControl
         self.snaps = {}
         self.settSnaps = {}
         self.entities = {}
@@ -227,6 +228,19 @@ class SnapshotManager:
         if confirm:
             self.resolver.confirm_tend(before, after, tx)
 
+    def settTendAcl(self, strategy, overrides, confirm=True):
+        user = overrides["from"].address
+        trackedUsers = {"user": user}
+        before = self.snap(trackedUsers)
+
+        tx_timer.start_timer(overrides["from"], "Tend")
+        tx = self.keeperAccessControl.tend(strategy, overrides)
+        tx_timer.end_timer()
+
+        after = self.snap(trackedUsers)
+        if confirm:
+            self.resolver.confirm_tend(before, after, tx)
+
     def settHarvestViaManager(self, strategy, overrides, confirm=True):
         user = overrides["from"].address
         trackedUsers = {"user": user}
@@ -234,6 +248,19 @@ class SnapshotManager:
 
         tx_timer.start_timer(overrides["from"], "Harvest")
         tx = self.badger.badgerRewardsManager.harvest(strategy, overrides)
+        tx_timer.end_timer()
+
+        after = self.snap(trackedUsers)
+        if confirm:
+            self.resolver.confirm_harvest(before, after, tx)
+
+    def settHarvestAcl(self, strategy, overrides, confirm=True):
+        user = overrides["from"].address
+        trackedUsers = {"user": user}
+        before = self.snap(trackedUsers)
+
+        tx_timer.start_timer(overrides["from"], "Harvest")
+        tx = self.keeperAccessControl.harvest(strategy, overrides)
         tx_timer.end_timer()
 
         after = self.snap(trackedUsers)
@@ -276,6 +303,15 @@ class SnapshotManager:
             self.resolver.confirm_deposit(
                 before, after, {"user": user, "amount": userBalance}
             )
+
+    def settEarnAcl(self, sett, overrides, confirm=True):
+        user = overrides["from"].address
+        trackedUsers = {"user": user}
+        before = self.snap(trackedUsers)
+        self.keeperAccessControl.earn(sett, overrides)
+        after = self.snap(trackedUsers)
+        if confirm:
+            self.resolver.confirm_earn(before, after, {"user": user})
 
     def settEarn(self, overrides, confirm=True):
         user = overrides["from"].address
@@ -469,6 +505,10 @@ class SnapshotManager:
         table.append(["strategy.guardian", self.strategy.guardian()])
 
         table.append(["---------------", "--------------------"])
+
+        if self.strategy.keeper() != web3.toChecksumAddress("0xf101Be274FC6cd72CF5fE726fa2e938Ea7401E87"):
+            console.print("[yellow]This keeper needs to be updated to ACL![/yellow]")
+
         print(tabulate(table, headers=["account", "value"]))
 
     def printBasics(self, snap: Snap):

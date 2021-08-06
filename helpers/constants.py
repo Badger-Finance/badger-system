@@ -13,10 +13,11 @@ class RoleRegistry:
     def __init__(self):
         self.roles = {}
 
+        self.roles["DEFAULT_ADMIN_ROLE"] = "0x0000000000000000000000000000000000000000000000000000000000000000"
+
     def add_role(self, name):
         encoded = web3.keccak(text=name).hex()
         self.roles[name] = encoded
-
 
 # Approved Contract Roles
 APPROVED_STAKER_ROLE = web3.keccak(text="APPROVED_STAKER_ROLE").hex()
@@ -44,6 +45,7 @@ SWAPPER_ROLE = web3.keccak(text="SWAPPER_ROLE").hex()
 DISTRIBUTOR_ROLE = web3.keccak(text="DISTRIBUTOR_ROLE").hex()
 
 APPROVED_ACCOUNT_ROLE = web3.keccak(text="APPROVED_ACCOUNT_ROLE").hex()
+MANAGER_ROLE = web3.keccak(text="MANAGER_ROLE").hex()
 
 role_registry = RoleRegistry()
 
@@ -63,11 +65,14 @@ role_registry.add_role("TOKEN_LOCKER_ROLE")
 
 role_registry.add_role("KEEPER_ROLE")
 role_registry.add_role("EARNER_ROLE")
+role_registry.add_role("HARVESTER_ROLE")
+role_registry.add_role("TENDER_ROLE")
 
 role_registry.add_role("SWAPPER_ROLE")
 role_registry.add_role("DISTRIBUTOR_ROLE")
 
 role_registry.add_role("APPROVED_ACCOUNT_ROLE")
+role_registry.add_role("MANAGER_ROLE")
 
 
 DIGG = "0x798D1bE841a82a273720CE31c822C61a67a601C3"
