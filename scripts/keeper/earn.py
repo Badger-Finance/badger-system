@@ -1,7 +1,6 @@
 from helpers.utils import val
 from brownie import *
 from config.keeper import keeper_config
-from helpers.gas_utils import gas_strategies
 from helpers.registry import registry
 from helpers.sett.SnapshotManager import SnapshotManager
 from rich.console import Console
@@ -9,10 +8,6 @@ from scripts.systems.badger_system import BadgerSystem, connect_badger
 from tabulate import tabulate
 
 console = Console()
-
-
-gas_strategies.set_default_for_active_chain()
-
 
 def get_expected_strategy_deposit_location(badger: BadgerSystem, id):
     if id == "native.badger":

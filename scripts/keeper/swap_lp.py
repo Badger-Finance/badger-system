@@ -1,10 +1,7 @@
 from assistant.rewards.rewards_checker import val
 from brownie import *
-from brownie.network.gas.strategies import GasNowStrategy
 from config.active_emissions import get_active_rewards_schedule
-from helpers.gas_utils import gas_strategies
 from helpers.registry import registry
-from helpers.sett.SnapshotManager import SnapshotManager
 from helpers.snapshot import diff_numbers_by_key, snap_strategy_balance
 from helpers.utils import shares_to_fragments, to_digg_shares, to_tabulate, tx_wait
 from rich.console import Console
@@ -14,8 +11,6 @@ from scripts.systems.digg_system import connect_digg
 from scripts.systems.sushiswap_system import SushiswapSystem
 from scripts.systems.uniswap_system import UniswapSystem
 from tabulate import tabulate
-
-gas_strategies.set_default(gas_strategies.exponentialScalingFast)
 
 uniswap = UniswapSystem()
 sushiswap = SushiswapSystem()

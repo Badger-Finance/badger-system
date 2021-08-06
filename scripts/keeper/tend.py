@@ -2,12 +2,9 @@ from helpers.sett.SnapshotManager import SnapshotManager
 from config.keeper import keeper_config
 from helpers.utils import tx_wait, val
 from brownie import *
-from helpers.gas_utils import gas_strategies
 from rich.console import Console
 from scripts.systems.badger_system import BadgerSystem, connect_badger
 from tabulate import tabulate
-
-gas_strategies.set_default_for_active_chain()
 
 console = Console()
 
