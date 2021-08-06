@@ -6,13 +6,6 @@ from scripts.systems.badger_system import BadgerSystem
 from assistant.rewards.classes.Schedule import Schedule
 from helpers.time_utils import to_days, to_hours, to_utc_date
 from helpers.digg_utils import diggUtils
-from helpers.constants import (
-    NON_NATIVE_SETTS,
-    NATIVE_DIGG_SETTS,
-    DIGG,
-    BADGER_TREE,
-    DFD,
-)
 from brownie import *
 from rich.console import Console
 

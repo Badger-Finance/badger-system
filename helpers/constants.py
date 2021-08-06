@@ -99,63 +99,11 @@ PEAK_ADDRESSES = [
     "0x41671BA1abcbA387b9b2B752c205e22e916BE6e3",
 ]
 
-MAX_BOOST = 3
 DIGG_SETTS = ["native.uniDiggWbtc", "native.sushiDiggWbtc", "native.digg"]
 BADGER_SETTS = ["native.badger", "native.uniBadgerWbtc", "native.sushiBadgerWbtc"]
 NATIVE_DIGG_SETTS = ["native.uniDiggWbtc", "native.sushiDiggWbtc"]
 
-NON_NATIVE_SETTS = [
-    "native.renCrv",
-    "native.sbtcCrv",
-    "native.tbtcCrv",
-    "native.sushiWbtcEth",
-    "harvest.renCrv",
-    "yearn.wbtc",
-    "experimental.sushiIBbtcWbtc",
-    "native.hbtcCrv",
-    "native.pbtcCrv",
-    "native.obtcCrv",
-    "native.bbtcCrv",
-    "native.tricrypto",
-    "native.cvxCrv",
-    "native.cvx",
-]
 
-NO_GEYSERS = [
-    "native.digg",
-    "experimental.sushiIBbtcWbtc",
-    "experimental.digg",
-    "native.hbtcCrv",
-    "native.pbtcCrv",
-    "native.obtcCrv",
-    "native.bbtcCrv",
-    "native.tricrypto",
-    "native.cvxCrv",
-    "native.cvx",
-]
-
-SETT_BOOST_RATIOS = {
-    "native.uniDiggWbtc": 0.5,
-    "native.sushiDiggWbtc": 0.5,
-    "native.uniBadgerWbtc": 0.5,
-    "native.sushiBadgerWbtc": 0.5,
-    "native.badger": 1,
-    "native.digg": 1,
-    "native.renCrv": 1,
-    "native.sbtcCrv": 1,
-    "native.tbtcCrv": 1,
-    "harvest.renCrv": 1,
-    "native.sushiWbtcEth": 1,
-    "yearn.wbtc": 1,
-    "experimental.sushiIBbtcWbtc": 1,
-    "native.hbtcCrv": 1,
-    "native.pbtcCrv": 1,
-    "native.obtcCrv": 1,
-    "native.bbtcCrv": 1,
-    "native.tricrypto": 1,
-    "native.cvxCrv": 0.1,
-    "native.cvx": 0.1,
-}
 
 REWARDS_BLACKLIST = {
     "0x19d97d8fa813ee2f51ad4b4e04ea08baf4dffc28": "Badger Vault",

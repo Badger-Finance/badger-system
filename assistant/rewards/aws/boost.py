@@ -61,7 +61,7 @@ def add_user_data(test: bool, userData):
 def add_multipliers(test: bool, multiplierData, userMultipliers):
     """Upload sett and user multipliers
 
-    :param test: [description]
+    :param test:
     :param multiplierData: sett multipliers
     :param userMultipliers: user multipliers
     """

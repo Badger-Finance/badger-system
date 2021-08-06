@@ -53,7 +53,7 @@ def calc_boost_data(badger: BadgerSystem, block: int):
     :param badger: badger system
     :param block: block to collect the boost data from
     """
-    chains = ["eth"]
+    chains = ["eth", "bsc"]
     ## Figure out how to map blocks, maybe  time -> block per chain
 
     native = {}
