@@ -42,5 +42,5 @@ interface IStrategy {
 
     function tend() external;
 
-    function harvest() external;
+    function harvest() external returns (uint256);
 }

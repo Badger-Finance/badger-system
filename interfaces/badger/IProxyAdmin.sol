@@ -3,6 +3,7 @@ pragma solidity >=0.5.0 <0.8.0;
 
 interface IProxyAdmin {
     function owner() external view returns (address);
+    function transferOwnership(address newOwner) external;
 
     /**
      * @dev Returns the current implementation of a proxy.

@@ -48,7 +48,12 @@ contract KeeperAccessControl is AccessControlUpgradeable {
     }
 
     // ===== Permissioned Functions: Harvester =====
-    function harvest(address strategy) external strategyBalanceCheck(strategy) {
+    function harvest(address strategy) external strategyBalanceCheck(strategy) returns (uint256) {
+        require(hasRole(HARVESTER_ROLE, msg.sender), "HARVESTER_ROLE");
+        return IStrategy(strategy).harvest();
+    }
+
+    function harvestNoReturn(address strategy) external strategyBalanceCheck(strategy) {
         require(hasRole(HARVESTER_ROLE, msg.sender), "HARVESTER_ROLE");
         IStrategy(strategy).harvest();
     }

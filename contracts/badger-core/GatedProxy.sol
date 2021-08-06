@@ -9,20 +9,19 @@ contract GatedProxy is AccessControlUpgradeable, Executor {
     bytes32 public constant APPROVED_ACCOUNT_ROLE = keccak256("APPROVED_ACCOUNT_ROLE");
     event Call(address to, uint256 value, bytes data, uint256 operation);
 
-    function initialize(address initialAdmin_, address initialUser_) external initializer {
+    function initialize(address initialAdmin_, address[] memory initialAccounts_) external initializer {
         __AccessControl_init();
 
         _setupRole(DEFAULT_ADMIN_ROLE, initialAdmin_);
-        _setupRole(APPROVED_ACCOUNT_ROLE, initialUser_);
+
+        for (uint256 i = 0; i < initialAccounts_.length; i++) {
+            _setupRole(APPROVED_ACCOUNT_ROLE, initialAccounts_[i]);
+        }
     }
 
     modifier onlyApprovedAccount() {
         require(hasRole(APPROVED_ACCOUNT_ROLE, msg.sender), "onlyApprovedAccount");
         _;
-    }
-
-    function pause(address destination) public onlyApprovedAccount {
-        IPausable(destination).pause();
     }
 
     /**

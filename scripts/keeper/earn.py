@@ -77,7 +77,6 @@ def earn_preconditions(key, vaultBalance, strategyBalance):
 
 
 def earn_all(badger: BadgerSystem, skip):
-    keeper = badger.deployer
     for key, vault in badger.sett_system.vaults.items():
         if key in skip:
             print("Skip ", key)
@@ -104,8 +103,9 @@ def earn_all(badger: BadgerSystem, skip):
             snap = SnapshotManager(badger, key)
             before = snap.snap()
 
-            keeper = accounts.at(vault.keeper())
-            snap.settEarn(
+            keeper = badger.earner
+            snap.settEarnAcl(
+                vault,
                 {"from": keeper, "gas_limit": 2000000, "allow_revert": True},
                 confirm=False,
             )
