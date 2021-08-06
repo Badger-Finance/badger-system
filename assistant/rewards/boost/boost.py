@@ -94,12 +94,9 @@ def badger_boost(badger: BadgerSystem, currentBlock: int):
             "nativeBalance": boostMetaData.get("nativeBalance", 0),
             "nonNativeBalance": boostMetaData.get("nonNativeBalance", 0),
             "stakeRatio": boostMetaData.get("stakeRatio", 0),
+            "multipliers": {},
         }
 
-    with open("badger-boosts.json", "w") as fp:
-        json.dump(boostData, fp)
-
-    console.log(len(badgerBoost))
     print(
         tabulate(
             [[rng, amount] for rng, amount in stakeData.items()],
@@ -107,4 +104,4 @@ def badger_boost(badger: BadgerSystem, currentBlock: int):
         )
     )
 
-    return badgerBoost, boostInfo
+    return boostData
