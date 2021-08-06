@@ -30,11 +30,8 @@ from assistant.rewards.classes.RewardsLog import rewardsLog
 
 from assistant.rewards.rewards_checker import compare_rewards, verify_rewards
 from scripts.systems.badger_system import BadgerSystem
-from helpers.gas_utils import gas_strategies
 from helpers.constants import BCVX, BCVXCRV
 
-gas_strategies.set_default(gas_strategies.exponentialScalingFast)
-gas_strategy = gas_strategies.exponentialScalingFast
 console = Console()
 
 
@@ -311,7 +308,7 @@ def rootUpdater(badger, startBlock, endBlock, pastRewards, saveLocalFile, test=F
             rewards_data["merkleTree"]["cycle"],
             rewards_data["merkleTree"]["startBlock"],
             rewards_data["merkleTree"]["endBlock"],
-            {"from": badger.root_proposer, "gas_price": gas_strategy},
+            {"from": badger.root_proposer},
         )
         upload(
             rewards_data["contentFileName"], rewards_data["merkleTree"], publish=False
@@ -359,7 +356,7 @@ def guardian(
             rewards_data["merkleTree"]["cycle"],
             rewards_data["merkleTree"]["startBlock"],
             rewards_data["merkleTree"]["endBlock"],
-            {"from": badger.guardian, "gas_price": gas_strategy},
+            {"from": badger.guardian},
         )
         upload(rewards_data["contentFileName"], rewards_data["merkleTree"]),
 
