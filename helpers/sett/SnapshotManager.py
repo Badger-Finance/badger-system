@@ -31,11 +31,6 @@ from helpers.sett.resolvers import (
 )
 from helpers.utils import digg_shares_to_initial_fragments, val
 from scripts.systems.badger_system import BadgerSystem
-from helpers.sett.strategy_earnings import (
-    get_harvest_earnings,
-    get_tend_earnings,
-    get_tend_earnings_manager,
-)
 from helpers.tx_timer import tx_timer
 from helpers.gas_utils import gas_strategies
 
@@ -351,7 +346,8 @@ class SnapshotManager:
             strategy, overrides
         )
         gas_cost = web3.fromWei(gas_strategies.gas_cost(gas_estimate), "ether")
-        earnings = get_tend_earnings_manager(self.badger, self.strategy, key, overrides)
+        # earnings = get_tend_earnings_manager(self.badger, self.strategy, key, overrides)
+        earnings = "skip"
         if earnings == "skip":
             return 0
 
@@ -369,7 +365,8 @@ class SnapshotManager:
     def estimateProfitTend(self, key, overrides):
         gas_estimate = self.strategy.tend.estimate_gas(overrides)
         gas_cost = web3.fromWei(gas_strategies.gas_cost(gas_estimate), "ether")
-        earnings = get_tend_earnings(self.strategy, key, overrides)
+        # earnings = get_tend_earnings(self.strategy, key, overrides)
+        earnings = "skip"
         if earnings == "skip":
             return 0
 
@@ -389,7 +386,8 @@ class SnapshotManager:
             strategy, overrides
         )
         gas_cost = web3.fromWei(gas_strategies.gas_cost(gas_estimate), "ether")
-        earnings = get_harvest_earnings(self.strategy, key, overrides)
+        earnings = "skip"
+        # earnings = get_harvest_earnings(self.strategy, key, overrides)
         if earnings == "skip":
             return 0
 
@@ -407,7 +405,8 @@ class SnapshotManager:
     def estimateProfitHarvest(self, key, overrides):
         gas_estimate = self.strategy.harvest.estimate_gas(overrides)
         gas_cost = web3.fromWei(gas_strategies.gas_cost(gas_estimate), "ether")
-        earnings = get_harvest_earnings(self.strategy, key, overrides)
+        # earnings = get_harvest_earnings(self.strategy, key, overrides)
+        earnings = "skip"
         if earnings == "skip":
             return 0
 
