@@ -153,8 +153,8 @@ SETT_BOOST_RATIOS = {
     "native.obtcCrv": 1,
     "native.bbtcCrv": 1,
     "native.tricrypto": 1,
-    "native.cvxCrv": 0.1,
-    "native.cvx": 0.1,
+    "native.cvxCrv": 1,
+    "native.cvx": 1,
 }
 
 STAKE_RATIO_RANGES = list(
