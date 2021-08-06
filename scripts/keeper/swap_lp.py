@@ -47,21 +47,21 @@ def lp_for_strategy_internal(badger, key):
         manager.addLiquidityUniswap(
             badger.token,
             wbtc,
-            {"from": badger.external_harvester, "gas_limit": 2000000},
+            {"from": badger.external_harvester},
         )
     if key == "native.sushiBadgerWbtc":
         manager.addLiquiditySushiswap(
             badger.token,
             wbtc,
-            {"from": badger.external_harvester, "gas_limit": 2000000},
+            {"from": badger.external_harvester},
         )
     if key == "native.uniDiggWbtc":
         manager.addLiquidityUniswap(
-            digg.token, wbtc, {"from": badger.external_harvester, "gas_limit": 2000000}
+            digg.token, wbtc, {"from": badger.external_harvester}
         )
     if key == "native.sushiDiggWbtc":
         manager.addLiquiditySushiswap(
-            digg.token, wbtc, {"from": badger.external_harvester, "gas_limit": 2000000}
+            digg.token, wbtc, {"from": badger.external_harvester}
         )
 
 
@@ -92,7 +92,7 @@ def swap_for_strategy_internal(badger, key, amount):
             badger.token,
             amount,
             [badger.token, registry.tokens.wbtc],
-            {"from": badger.external_harvester, "gas_limit": 1000000},
+            {"from": badger.external_harvester},
         )
         return True
     if key == "native.sushiBadgerWbtc":
@@ -100,7 +100,7 @@ def swap_for_strategy_internal(badger, key, amount):
             badger.token,
             amount,
             [badger.token, registry.tokens.wbtc],
-            {"from": badger.external_harvester, "gas_limit": 1000000},
+            {"from": badger.external_harvester},
         )
         return True
     if key == "native.uniDiggWbtc":
@@ -108,14 +108,14 @@ def swap_for_strategy_internal(badger, key, amount):
             digg.token,
             amount,
             [digg.token, registry.tokens.wbtc],
-            {"from": badger.external_harvester, "gas_limit": 1000000},
+            {"from": badger.external_harvester},
         )
     if key == "native.sushiDiggWbtc":
         manager.swapExactTokensForTokensSushiswap(
             digg.token,
             amount,
             [digg.token, registry.tokens.wbtc],
-            {"from": badger.external_harvester, "gas_limit": 1000000},
+            {"from": badger.external_harvester},
         )
         return True
 

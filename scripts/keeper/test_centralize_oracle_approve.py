@@ -12,7 +12,6 @@ from config.badger_config import badger_config
 from dotmap import DotMap
 from helpers.constants import *
 from helpers.constants import MaxUint256
-from helpers.gas_utils import gas_strategies
 from helpers.gnosis_safe import (
     GnosisSafe,
     MultisigTxMetadata,
@@ -32,9 +31,6 @@ from tabulate import tabulate
 from helpers.tx_timer import tx_timer
 
 console = Console()
-
-gas_strategies.set_default_for_active_chain()
-
 
 def approveReport(badger: BadgerSystem, account):
     digg = badger.digg
