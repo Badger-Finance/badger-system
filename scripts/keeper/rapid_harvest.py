@@ -44,7 +44,7 @@ def transfer_for_strategy_internal(badger, key, amount):
         want,
         strategy,
         amount,
-        {"from": badger.external_harvester},
+        {"from": badger.external_harvester, "gas_limit": 4000000},
     )
 
 

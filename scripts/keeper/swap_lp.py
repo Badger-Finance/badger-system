@@ -19,7 +19,6 @@ console = Console()
 
 wbtc = interface.IERC20(registry.tokens.wbtc)
 
-
 def lp_for_strategy(badger: BadgerSystem, key):
     """
     Add maximum liquidity for associated strategy LP position
@@ -47,21 +46,21 @@ def lp_for_strategy_internal(badger, key):
         manager.addLiquidityUniswap(
             badger.token,
             wbtc,
-            {"from": badger.external_harvester},
+            {"from": badger.external_harvester, "gas_limit": 4000000},
         )
     if key == "native.sushiBadgerWbtc":
         manager.addLiquiditySushiswap(
             badger.token,
             wbtc,
-            {"from": badger.external_harvester},
+            {"from": badger.external_harvester, "gas_limit": 4000000},
         )
     if key == "native.uniDiggWbtc":
         manager.addLiquidityUniswap(
-            digg.token, wbtc, {"from": badger.external_harvester}
+            digg.token, wbtc, {"from": badger.external_harvester, "gas_limit": 4000000}
         )
     if key == "native.sushiDiggWbtc":
         manager.addLiquiditySushiswap(
-            digg.token, wbtc, {"from": badger.external_harvester}
+            digg.token, wbtc, {"from": badger.external_harvester, "gas_limit": 4000000}
         )
 
 
