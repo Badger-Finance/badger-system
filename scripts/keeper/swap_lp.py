@@ -170,15 +170,15 @@ def main():
     lp_for_strategy(badger, key)
 
     # # ===== native.uniDiggWbtc =====
-    key = "native.uniDiggWbtc"
-    swap_for_strategy(
-        badger,
-        key,
-        shares_to_fragments(
-            rewards.getDistributions(key).getToStakingRewardsDaily("digg") // 2
-        ),
-    )
-    lp_for_strategy(badger, key)
+    # key = "native.uniDiggWbtc"
+    # swap_for_strategy(
+    #     badger,
+    #     key,
+    #     shares_to_fragments(
+    #         rewards.getDistributions(key).getToStakingRewardsDaily("digg") // 2
+    #     ),
+    # )
+    # lp_for_strategy(badger, key)
 
     # # ===== native.sushiDiggWbtc =====
     key = "native.sushiDiggWbtc"
