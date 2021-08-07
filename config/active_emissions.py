@@ -10,22 +10,22 @@ from helpers.time_utils import days, to_timestamp
 weekly_schedule = {
     # CRV LP
     "native.renCrv": {
-        "badger": Wei("5651 ether"),
+        "badger": Wei("4628 ether"),
         "digg": to_digg_shares(0),
     },
     "native.sbtcCrv": {
-        "badger": Wei("2825 ether"),
+        "badger": Wei("2314 ether"),
         "digg": to_digg_shares(0),
     },
     "native.tbtcCrv": {
-        "badger": Wei("2825 ether"),
+        "badger": Wei("2314 ether"),
         "digg": to_digg_shares(0),
     },
-    "native.hbtcCrv": {"badger": Wei("5651 ether"), "digg": to_digg_shares(0)},
-    "native.bbtcCrv": {"badger": Wei("5651 ether"), "digg": to_digg_shares(0)},
-    "native.obtcCrv": {"badger": Wei("2825 ether"), "digg": to_digg_shares(0)},
-    "native.pbtcCrv": {"badger": Wei("2825 ether"), "digg": to_digg_shares(0)},
-    "native.tricrypto": {"badger": Wei("5651 ether"), "digg": to_digg_shares(0)},
+    "native.hbtcCrv": {"badger": Wei("4628 ether"), "digg": to_digg_shares(0)},
+    "native.bbtcCrv": {"badger": Wei("4628 ether"), "digg": to_digg_shares(0)},
+    "native.obtcCrv": {"badger": Wei("2314 ether"), "digg": to_digg_shares(0)},
+    "native.pbtcCrv": {"badger": Wei("2314 ether"), "digg": to_digg_shares(0)},
+    "native.tricrypto2": {"badger": Wei("4628 ether"), "digg": to_digg_shares(0)},
     # Sushi LP
     "native.sushiWbtcEth": {
         "badger": Wei("2300 ether"),
@@ -38,8 +38,8 @@ weekly_schedule = {
     # Yearn Partner
     "yearn.wbtc": {"badger": Wei("2300 ether"), "digg": to_digg_shares(0)},
     # Convex Helper
-    "native.cvx": {"badger": Wei("261 ether"), "digg": to_digg_shares(0)},
-    "native.cvxCrv": {"badger": Wei("261 ether"), "digg": to_digg_shares(0)},
+    "native.cvx": {"badger": Wei("296 ether"), "digg": to_digg_shares(0)},
+    "native.cvxCrv": {"badger": Wei("296 ether"), "digg": to_digg_shares(0)},
 
     # Native Setts
     "native.badger": {
@@ -55,14 +55,14 @@ weekly_schedule = {
         "digg": to_digg_shares(0),
     },
     # Digg Setts
-     "native.digg": {"badger": Wei("0 ether"), "digg": to_digg_shares(4.41) // 2},
+     "native.digg": {"badger": Wei("0 ether"), "digg": to_digg_shares(3.89) // 2},
     "native.uniDiggWbtc": {
         "badger": Wei("0 ether"),
-        "digg": to_digg_shares(8.82) // 2,
+        "digg": to_digg_shares(0) // 2,
     },
     "native.sushiDiggWbtc": {
         "badger": Wei("0 ether"),
-        "digg": to_digg_shares(8.82) // 2,
+        "digg": to_digg_shares(40.44) // 2,
     },
 }
 
@@ -109,7 +109,7 @@ def build_weekly_schedules(badger: BadgerSystem, start, duration):
 
 def get_active_rewards_schedule(badger: BadgerSystem):
     rest = RewardsSchedule(badger)
-    rest.setStart(to_timestamp(datetime.datetime(2021, 7, 22, 1, 00)))
+    rest.setStart(to_timestamp(datetime.datetime(2021, 8, 4, 1, 00)))
     rest.setDuration(days(7))
 
     # TODO: Set to read from config emissions. Emit auto-compounding events & on-chain readable data in Unified Rewards Logger.
