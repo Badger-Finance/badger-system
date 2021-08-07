@@ -43,26 +43,26 @@ weekly_schedule = {
 
     # Native Setts
     "native.badger": {
-        "badger": Wei("2300 ether") // 2,
+        "badger": Wei("2300 ether"),
         "digg": to_digg_shares(0),
     },
     "native.uniBadgerWbtc": {
-        "badger": Wei("4600 ether") // 2,
+        "badger": Wei("4600 ether"),
         "digg": to_digg_shares(0),
     },
     "native.sushiBadgerWbtc": {
-        "badger": Wei("4600 ether") // 2,
+        "badger": Wei("4600 ether"),
         "digg": to_digg_shares(0),
     },
     # Digg Setts
-     "native.digg": {"badger": Wei("0 ether"), "digg": to_digg_shares(3.89) // 2},
+     "native.digg": {"badger": Wei("0 ether"), "digg": to_digg_shares(3.89)},
     "native.uniDiggWbtc": {
         "badger": Wei("0 ether"),
-        "digg": to_digg_shares(0) // 2,
+        "digg": to_digg_shares(0),
     },
     "native.sushiDiggWbtc": {
         "badger": Wei("0 ether"),
-        "digg": to_digg_shares(40.44) // 2,
+        "digg": to_digg_shares(40.44),
     },
 }
 
