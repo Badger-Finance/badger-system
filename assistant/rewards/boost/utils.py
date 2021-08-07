@@ -1,7 +1,7 @@
 from rich.console import Console
 from assistant.rewards.classes.UserBalance import UserBalance, UserBalances
 from collections import Counter
-from brownie import web3
+from brownie import *
 from typing import Dict
 from scripts.systems.badger_system import BadgerSystem
 from assistant.rewards.snapshot.utils import chain_snapshot
@@ -40,9 +40,13 @@ def convert_balances_to_usd(balances: UserBalances, sett: str):
     """
     price = prices[web3.toChecksumAddress(sett)]
     priceRatio = balances.settRatio
+    settToken = interface.IERC20(sett)
+    decimals = settToken.decimals()
+    symbol = settToken.symbol() 
+    console.log(symbol, decimals, price, priceRatio)
     usdBalances = {}
     for user in balances:
-        usdBalances[user.address] = priceRatio * price * user.balance
+        usdBalances[user.address] = priceRatio * price * user.balance / pow(10, decimals)
 
     return usdBalances, balances.settType
 
