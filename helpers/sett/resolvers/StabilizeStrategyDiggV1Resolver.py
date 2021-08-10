@@ -25,7 +25,7 @@ class StabilizeStrategyDiggV1Resolver(StrategyCoreResolver):
             ]
             for key in keys:
                 assert key in event
-            console.print("[blue]== Convex Strat rebalance() NoTrade State ==[/blue]")
+            console.print("[blue]== rebalance() NoTrade State ==[/blue]")
             self.printState(event, keys)
 
         key = "TradeState"
@@ -42,7 +42,7 @@ class StabilizeStrategyDiggV1Resolver(StrategyCoreResolver):
             ]
             for key in keys:
                 assert key in event
-            console.print("[blue]== Convex Strat rebalance() TradeState State ==[/blue]")
+            console.print("[blue]== rebalance() TradeState State ==[/blue]")
             self.printState(event, keys)
 
         key = "Approval"
@@ -57,7 +57,7 @@ class StabilizeStrategyDiggV1Resolver(StrategyCoreResolver):
                     assert key in event
 
                 console.print(
-                    "[blue]== Convex Strat rebalance() Approval State ==[/blue]"
+                    "[blue]== rebalance() Approval State ==[/blue]"
                 )
                 self.printState(event, keys)
 
@@ -100,9 +100,9 @@ class StabilizeStrategyDiggV1Resolver(StrategyCoreResolver):
             newSupply = event["newSupply"]
 
             # Sold Digg
-            if event["diggInExpansion"]:
+            if event["diggInExpansion"]:                
                 rebasePercentage = (newSupply - oldSupply) / oldSupply
-                changedDigg = before.balances("want", "strategy") * rebasePercentage
+                changedDigg = before.balances("want", "strategy") - (before.balances("want", "strategy")/(1 + rebasePercentage))
                 assert approx(
                     changedDigg * (soldPercent/100000),
                     before.balances("want", "strategy") - after.balances("want", "strategy"),
@@ -291,7 +291,6 @@ class StabilizeStrategyDiggV1Resolver(StrategyCoreResolver):
         diggSLP = interface.IERC20("0x9a13867048e01c663ce8Ce2fE0cDAE69Ff9F35E3")
         diggUniLP = interface.IERC20("0xE86204c4eDDd2f70eE00EAd6805f917671F56c52")
         wbtc = interface.IERC20("0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599")
-        digg = interface.IERC20("0x798D1bE841a82a273720CE31c822C61a67a601C3")
 
 
         calls = self.add_entity_balances_for_tokens(calls, "diggSLP", diggSLP, entities)
