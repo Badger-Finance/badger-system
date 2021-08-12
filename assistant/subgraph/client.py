@@ -61,7 +61,6 @@ def fetch_sett_balances(key, settId, startBlock):
         """
         query balances_and_events($vaultID: Vault_filter, $blockHeight: Block_height,$lastBalanceId:AccountVaultBalance_filter) {
             vaults(block: $blockHeight, where: $vaultID) {
-                pricePerFullShare
                 balances(first:1000,where: $lastBalanceId) {
                     id
                     account {
@@ -84,13 +83,9 @@ def fetch_sett_balances(key, settId, startBlock):
             return {}
         newBalances = {}
         balance_data = results["vaults"][0]["balances"]
-        ppfs = float(results["vaults"][0]["pricePerFullShare"])
-        if key == "yearn.wbtc":
-            ppfs += 1
-
         for result in balance_data:
             account = result["id"].split("-")[0]
-            newBalances[account] = int(result["shareBalanceRaw"]) * float(ppfs)
+            newBalances[account] = int(result["shareBalanceRaw"])
 
         if len(balance_data) == 0:
             break

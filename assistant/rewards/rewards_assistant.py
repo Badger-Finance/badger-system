@@ -9,10 +9,10 @@ from tqdm import tqdm
 from assistant.rewards.boost import badger_boost
 from assistant.rewards.twap import digg_btc_twap, calculate_digg_allocation
 from assistant.rewards.aws_utils import (
-    download_latest_tree,
+    download_boosts,
     download_tree,
     upload,
-    upload_boosts,
+    upload_multipliers,
 )
 from assistant.rewards.calc_snapshot import calc_snapshot
 from assistant.rewards.meta_rewards.harvest import calc_farm_rewards
@@ -46,7 +46,8 @@ def calc_sett_rewards(badger, periodStartBlock, endBlock, cycle, unclaimedReward
         "native.mstableImBtc",
         "native.mstableFpMbtcHbtc",
     ]
-    boosts, boostInfo = badger_boost(badger, endBlock)
+    test = False
+    boosts = download_boosts(test)["userData"]
     apyBoosts = {}
     multiplierData = {}
     for key, sett in badger.sett_system.vaults.items():
@@ -68,21 +69,7 @@ def calc_sett_rewards(badger, periodStartBlock, endBlock, cycle, unclaimedReward
         rewardsBySett[key] = settRewards
 
     rewards = combine_rewards(list(rewardsBySett.values()), cycle, badger.badgerTree)
-    boostsMetadata = {"multiplierData": multiplierData, "userData": {}}
-
-    for addr, multipliers in apyBoosts.items():
-        boostsMetadata["userData"][addr] = {
-            "boost": boosts.get(addr, 1),
-            "multipliers": multipliers,
-            "nonNativeBalance": boostInfo.get(addr, {}).get("nonNativeBalance", 0),
-            "nativeBalance": boostInfo.get(addr, {}).get("nativeBalance", 0),
-            "stakeRatio": boostInfo.get(addr, {}).get("stakeRatio", 0),
-        }
-
-    with open("badger-boosts.json", "w") as fp:
-        json.dump(boostsMetadata, fp)
-
-    upload_boosts(test=False)
+    upload_multipliers(test, apyBoosts, multiplierData)
 
     return rewards
 

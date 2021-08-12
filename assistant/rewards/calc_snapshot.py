@@ -43,7 +43,8 @@ def calc_snapshot(
             preBoost[user.address] = userBalances.percentage_of_total(user.address)
 
         for user in userBalances:
-            boostAmount = boosts.get(user.address, 1)
+            boostInfo = boosts.get(user.address, {})
+            boostAmount = boostInfo.get("boost", 1)
             user.boost_balance(boostAmount)
 
         for user in userBalances:
