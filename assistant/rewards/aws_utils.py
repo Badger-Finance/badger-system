@@ -108,6 +108,20 @@ def upload(fileName, data, bucket="badger-json", publish=True):
         )
 
 
+def download_boosts(test):
+    fileName = "badger-boosts.json"
+    if test:
+        bucket = "badger-staging-merkle-proofs"
+    else:
+        bucket = "badger-merkle-proofs"
+
+    s3_client_obj = s3.get_object(
+        Bucket=bucket,
+        Key=fileName,
+    )
+    return json.loads(s3_client_obj["Body"].read().decode("utf-8"))
+
+
 def upload_boosts(test):
     fileName = "badger-boosts.json"
 
@@ -118,6 +132,19 @@ def upload_boosts(test):
     console.log("Uploading file to s3://" + bucket + "/" + fileName)
     s3.upload_file(fileName, bucket, fileName)
     console.log("✅ Uploaded file to s3://" + bucket + "/" + fileName)
+
+
+def upload_multipliers(test, userMultipliers, settMultipliers):
+
+    boosts = download_boosts(test)
+    boosts["multiplierData"] = settMultipliers
+    for user, multipliers in userMultipliers.items():
+        if user in boosts["userData"]:
+            boosts["userData"][user]["multipliers"] = multipliers
+    with open("badger-boosts.json", "w") as fp:
+        json.dump(boosts, fp)
+
+    upload_boosts(test)
 
 
 def upload_analytics(cycle, data):
