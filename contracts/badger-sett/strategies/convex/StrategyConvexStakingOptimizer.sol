@@ -442,7 +442,7 @@ contract StrategyConvexStakingOptimizer is BaseStrategy, CurveSwapper, UniswapSw
     }
 
     // No-op until we optimize harvesting strategy. Auto-compouding is key.
-    function harvest() external whenNotPaused returns (HarvestData memory) {
+    function harvest() external whenNotPaused returns (uint256) {
         _onlyAuthorizedActors();
         HarvestData memory harvestData;
 
@@ -530,10 +530,11 @@ contract StrategyConvexStakingOptimizer is BaseStrategy, CurveSwapper, UniswapSw
 
         // 4. Roll WBTC gained into want position
         uint256 wbtcToDeposit = wbtcToken.balanceOf(address(this));
+        uint256 wantGained;
 
         if (wbtcToDeposit > 0) {
             _add_liquidity_single_coin(curvePool.swap, want, wbtc, wbtcToDeposit, curvePool.wbtcPosition, curvePool.numElements, 0);
-            uint256 wantGained = IERC20Upgradeable(want).balanceOf(address(this)).sub(idleWant);
+            wantGained = IERC20Upgradeable(want).balanceOf(address(this)).sub(idleWant);
             // Half of gained want (10% of rewards) are auto-compounded, half of gained want is taken as a performance fee
             uint256 autoCompoundedPerformanceFee = wantGained.mul(autoCompoundingPerformanceFeeGovernance).div(MAX_FEE);
             IERC20Upgradeable(want).transfer(IController(controller).rewards(), autoCompoundedPerformanceFee);
@@ -609,6 +610,6 @@ contract StrategyConvexStakingOptimizer is BaseStrategy, CurveSwapper, UniswapSw
         uint256 totalWantAfter = balanceOf();
         require(totalWantAfter >= totalWantBefore, "harvest-total-want-must-not-decrease");
 
-        return harvestData;
+        return wantGained;
     }
 }
