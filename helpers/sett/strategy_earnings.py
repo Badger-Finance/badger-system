@@ -145,7 +145,7 @@ def get_price(token: str, sellAmount=1000000000000000000):
     return data["guaranteedPrice"]
 
 
-def token_data(key: str, tend: bool) -> tuple[str, str]:
+def token_data(key: str, tend: bool) -> (str, str):
     """
     returns the yield token symbol and address for the strategy
 

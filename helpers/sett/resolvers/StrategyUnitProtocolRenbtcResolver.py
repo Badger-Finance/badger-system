@@ -37,10 +37,11 @@ class StrategyUnitProtocolRenbtcResolver(StrategyCoreResolver):
         event = tx.events[key][0]
         keys = [
             "crvHarvested",
-            "crvRecycled",
+            "cvxHarvested",
+            "wantProcessed",
             "strategistPerformanceFee",
             "governancePerformanceFee",
-            "wantDeposited",
+            "usdpRepaid",
         ]
         for key in keys:
             assert key in event

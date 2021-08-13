@@ -32,7 +32,7 @@ abstract contract StrategyUnitProtocolMeta is BaseStrategy, UniswapSwapper {
     bool public collateralPriceEth = false;
 
     // configurable minimum collateralization percent this strategy would hold for CDP
-    uint256 public minRatio = 200;
+    uint256 public minRatio = 150;
     // collateralization percent buffer in CDP debt actions
     uint256 public ratioBuff = 200;
     uint256 public constant ratioBuffMax = 10000;
@@ -62,7 +62,13 @@ abstract contract StrategyUnitProtocolMeta is BaseStrategy, UniswapSwapper {
 
     function getDebtWithoutFee() public view returns (uint256) {
         return IUnitVault(unitVault).debts(collateral, address(this));
-    }
+    }		
+	
+    function getDueFee() public view returns (uint256) {
+        uint256 totalDebt = getDebtBalance();
+        uint256 borrowed = getDebtWithoutFee();
+        return totalDebt > borrowed? totalDebt.sub(borrowed) : 0;
+    }	
 
     function debtLimit() public view returns (uint256) {
         return IUnitVaultParameters(unitVaultParameters).tokenDebtLimit(collateral);

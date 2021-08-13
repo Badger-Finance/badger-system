@@ -395,4 +395,9 @@ eth_registry.whales = DotMap(
         token="0x62b9c7356a2dc64a1969e19c23e4f579f9810aa7",
         action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT,
     ),
+    usdp=DotMap(
+        whale="0x42d7025938bEc20B69cBae5A77421082407f053A",
+        token="0x1456688345527bE1f37E9e627DA0837D6f08C925",
+        action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT,
+    ),
 )
