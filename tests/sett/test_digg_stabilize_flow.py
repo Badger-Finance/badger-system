@@ -68,14 +68,16 @@ def test_single_user_rebalance_flow(settConfig):
     chain.mine()
 
     # Rebase
-    # Push/rebase on an exchange rate of 1.2
+    # Push/rebase on an exchange rate of 1.
+    print("TotalSupply before:", want.totalSupply())
     snap.rebase(1.2 * 10 ** 18, {"from": deployer})
+    print("TotalSupply after:", want.totalSupply())
     print("Time After First Rebase: ", chain.time())
 
     print(diggOracle.latestRoundData())
 
     # Rebalance
-    snap.rebalance({"from": settKeeper})
+    snap.rebalance({"from": strategyKeeper})
 
     chain.sleep(hours(0.25))
     chain.mine()
@@ -88,13 +90,15 @@ def test_single_user_rebalance_flow(settConfig):
 
     # Rebase
     # Push/rebase on an exchange rate of 0.6
-    snap.rebase(0.6 * 10 ** 18, {"from": deployer})
+    print("TotalSupply before:", want.totalSupply())
+    snap.rebase(0.4 * 10 ** 18, {"from": deployer})
+    print("TotalSupply after:", want.totalSupply())
     print("Time After First Rebase: ", chain.time())
 
     print(diggOracle.latestRoundData())
 
     # Rebalance
-    snap.rebalance({"from": settKeeper})
+    snap.rebalance({"from": strategyKeeper})
 
     chain.sleep(hours(0.25))
     chain.mine()
@@ -103,7 +107,6 @@ def test_single_user_rebalance_flow(settConfig):
     amount = sett.balanceOf(randomUser.address)
     snap.settWithdraw(amount // 2, {"from": randomUser})
 
-    assert False
 
 def rebase(badger: BadgerSystem, account):
     digg = badger.digg
