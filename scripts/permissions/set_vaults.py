@@ -988,15 +988,16 @@ def main():
     badger = connect_badger(load_deployer=True)
 
     if rpc.is_active():
-        dev_multi = ApeSafe(badger.devMultisig.address)
+        dev_multi = ApeSafe(badger.testMultisig.address)
         helper = ApeSafeHelper(badger, dev_multi)
         assert True
     else:
         from helpers.gas_utils import gas_strategies
-
         gas_strategies.set_default(gas_strategies.exponentialScalingFast)
 
-    set_withdrawal_fee(badger, helper, ["native.tricrypto"])
+    change_proxy_admin_sett(badger, helper, badger.testProxyAdmin, badger.devProxyAdmin, ["native.tricrypto2"])
+    change_proxy_admin_strategy(badger, helper, badger.testProxyAdmin, badger.devProxyAdmin, ["native.tricrypto2"])
+    # set_withdrawal_fee(badger, helper, ["native.tricrypto"])
     # set_vaults_on_controller(badger, helper, ['native.tricrypto2'])
     # set_strategies_on_controller(badger, helper, "experimental", ['native.tricrypto2'])
 

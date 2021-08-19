@@ -1,8 +1,5 @@
-from helpers.token_utils import print_balances, to_token
 from brownie import *
-from helpers.time_utils import hours, to_utc_date
 from tabulate import tabulate
-from helpers.registry import registry
 from helpers.console_utils import console
 from helpers.constants import *
 
@@ -32,7 +29,7 @@ def print_access_control(contract):
             print_role_list(contract, hex, role_members, name=name)
 
 def main():
-    contracts_to_view = [interface.IAccessControl("0x711A339c002386f9db409cA55b6A35a604aB6cF6")]
+    contracts_to_view = [interface.IAccessControl("0x711a339c002386f9db409ca55b6a35a604ab6cf6")]
 
     for contract in contracts_to_view:
         print_access_control(contract)

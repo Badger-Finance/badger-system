@@ -1601,12 +1601,13 @@ class BadgerSystem:
     def print_logger_unlock_schedules(self, beneficiary, name=None):
         logger = self.rewardsLogger
 
-        schedules = logger.getAllUnlockSchedulesFor(beneficiary)
-
         if not name:
-            name = ""
+            name = str(beneficiary)
 
         console.print(f"[cyan]=== Latest Unlock Schedules {name}===[/cyan]")
+
+        schedules = logger.getAllUnlockSchedulesFor(beneficiary)
+
         table = []
 
         if len(schedules) == 0:

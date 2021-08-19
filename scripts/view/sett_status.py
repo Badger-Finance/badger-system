@@ -70,8 +70,7 @@ def main():
 
         if sett_type == "v1":
             snap = SnapshotManager(badger, key)
-            # state = snap.snap()
-
+            state = snap.snap()
             # snap.printTable(state)
 
             if badger.hasStrategy(key):

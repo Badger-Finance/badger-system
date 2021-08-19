@@ -59,7 +59,7 @@ def tend_all(badger: BadgerSystem, skip, min_profit=0):
                     confirm=False,
                 )
         else:
-            keeper = badger.harvester
+            keeper = accounts.at(strategy.keeper())
             # estimated_profit = snap.estimateProfitTend(
             #     key, {"from": keeper, "gas_limit": 1000000}
             # )

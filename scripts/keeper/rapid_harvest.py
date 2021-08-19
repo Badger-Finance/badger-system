@@ -82,9 +82,9 @@ def rapid_harvest(badger):
     transfer_for_strategy(badger, key, want.balanceOf(manager))
 
     # # # ===== native.uniDiggWbtc =====
-    key = "native.uniDiggWbtc"
-    want = badger.getStrategyWant(key)
-    transfer_for_strategy(badger, key, want.balanceOf(manager))
+    # key = "native.uniDiggWbtc"
+    # want = badger.getStrategyWant(key)
+    # transfer_for_strategy(badger, key, want.balanceOf(manager))
 
     # # # ===== native.sushiDiggWbtc =====
     key = "native.sushiDiggWbtc"
