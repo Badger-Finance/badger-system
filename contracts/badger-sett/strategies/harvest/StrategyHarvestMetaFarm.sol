@@ -66,6 +66,8 @@ contract StrategyHarvestMetaFarm is BaseStrategyMultiSwapper {
         uint256 blockNumber
     );
 
+    event TreeDistribution(address indexed token, uint256 amount, uint256 indexed blockNumber, uint256 timestamp);
+
     struct HarvestData {
         uint256 totalFarmHarvested;
         uint256 farmToRewards;
@@ -286,6 +288,7 @@ contract StrategyHarvestMetaFarm is BaseStrategyMultiSwapper {
         // Distribute remaining FARM rewards to rewardsTree
         harvestData.farmToRewards = IERC20Upgradeable(farm).balanceOf(address(this));
         IERC20Upgradeable(farm).transfer(badgerTree, harvestData.farmToRewards);
+        emit TreeDistribution(farm, harvestData.farmToRewards, block.number, block.timestamp);
 
         lastHarvested = now;
 
