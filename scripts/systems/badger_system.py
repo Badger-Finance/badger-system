@@ -554,6 +554,7 @@ class BadgerSystem:
         self.logic["DiggSett"] = DiggSett.deploy({"from": deployer})
 
     def deploy_staking_rewards_logic(self):
+        deployer = self.deployer
         self.logic["StakingRewards"] = StakingRewards.deploy({"from": deployer})
         self.logic["StakingRewardsSignalOnly"] = StakingRewardsSignalOnly.deploy(
             {"from": deployer}
