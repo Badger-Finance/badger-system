@@ -72,9 +72,6 @@ settsToRun = [
     # "native.uniWbtcIbBtc",
     "native.mstableImBtc",
     "native.mstableFpMbtcHbtc",
-    # "native.convexRenCrv",
-    # "native.convexSbtcCrv",
-    # "native.convexTbtcCrv",
     "native.renCrv",
     "native.sbtcCrv",
     "native.tbtcCrv",
@@ -83,6 +80,7 @@ settsToRun = [
     "native.obtcCrv",
     "native.bbtcCrv",
     "native.tricrypto",
+    "native.tricryptoDos",
     "native.cvx",
     "native.cvxCrv",
 ]
