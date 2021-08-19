@@ -135,7 +135,7 @@ contract StrategyDiggLpMetaFarm is BaseStrategyMultiSwapper {
 
     /// @dev Harvest accumulated digg rewards and convert them to LP tokens
     /// @dev Restake the gained LP tokens in the Geyser
-    function harvest() external whenNotPaused returns (HarvestData memory) {
+    function harvest() external whenNotPaused returns (uint256) {
         _onlyAuthorizedActors();
 
         HarvestData memory harvestData;
@@ -202,6 +202,6 @@ contract StrategyDiggLpMetaFarm is BaseStrategyMultiSwapper {
         );
         emit Harvest(harvestData.lpGained, block.number);
 
-        return harvestData;
+        return harvestData.lpGained;
     }
 }

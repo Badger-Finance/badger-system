@@ -205,7 +205,7 @@ contract StrategySushiBadgerWbtc is BaseStrategyMultiSwapper {
 
     /// @dev Harvest accumulated sushi from SushiChef and SushiBar and send to rewards tree for distribution. Take performance fees on gains
     /// @dev The less frequent the harvest, the higher the gains due to compounding
-    function harvest() external whenNotPaused returns (HarvestData memory) {
+    function harvest() external whenNotPaused returns (uint256) {
         _onlyAuthorizedActors();
 
         HarvestData memory harvestData;
@@ -256,6 +256,6 @@ contract StrategySushiBadgerWbtc is BaseStrategyMultiSwapper {
         // We never increase underlying position
         emit Harvest(0, block.number);
 
-        return harvestData;
+        return harvestData.xSushiHarvested;
     }
 }
