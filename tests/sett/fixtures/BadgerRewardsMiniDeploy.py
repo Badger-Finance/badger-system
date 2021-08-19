@@ -30,6 +30,7 @@ class BadgerRewardsMiniDeploy(SettMiniDeployBase):
         """
         Deploy StakingRewards for Strategy
         """
+        self.badger.deploy_staking_rewards_logic()
         self.rewards = self.badger.deploy_sett_staking_rewards(
             self.key, self.badger.token, self.badger.token
         )
