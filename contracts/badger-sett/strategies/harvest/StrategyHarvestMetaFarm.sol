@@ -265,7 +265,7 @@ contract StrategyHarvestMetaFarm is BaseStrategyMultiSwapper {
     /// @notice Harvest from strategy mechanics, realizing increase in underlying position
     /// @notice For this strategy, harvest rewards are sent to rewards tree for distribution rather than converted to underlying
     /// @notice Any APY calculation must consider expected results from harvesting
-    function harvest() external whenNotPaused returns (HarvestData memory) {
+    function harvest() external whenNotPaused returns (uint256) {
         _onlyAuthorizedActors();
 
         HarvestData memory harvestData;
@@ -302,7 +302,7 @@ contract StrategyHarvestMetaFarm is BaseStrategyMultiSwapper {
             block.number
         );
 
-        return harvestData;
+        return harvestData.totalFarmHarvested;
     }
 
     /// @notice 'Recycle' FARM gained from staking into profit sharing pool for increased APY
