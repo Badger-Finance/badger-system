@@ -60,6 +60,8 @@ contract StrategySushiLpOptimizer is BaseStrategy {
 
     event WithdrawState(uint256 toWithdraw, uint256 preWant, uint256 postWant, uint256 withdrawn);
 
+    event TreeDistribution(address indexed token, uint256 amount, uint256 indexed blockNumber, uint256 timestamp);
+
     function initialize(
         address _governance,
         address _strategist,
@@ -237,6 +239,7 @@ contract StrategySushiLpOptimizer is BaseStrategy {
         //tree gets xsushi instead of sushi so it keeps compounding
         harvestData.toBadgerTree = IERC20Upgradeable(xsushi).balanceOf(address(this));
         IERC20Upgradeable(xsushi).safeTransfer(badgerTree, harvestData.toBadgerTree);
+        emit TreeDistribution(xsushi, harvestData.toBadgerTree, block.number, block.timestamp);
 
         emit HarvestState(
             harvestData.xSushiHarvested,
