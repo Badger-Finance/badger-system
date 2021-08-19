@@ -1,15 +1,17 @@
 from tests.sett.fixtures.SettMiniDeployBase import SettMiniDeployBase
-from config.badger_config import sett_config
+from config.badger_config import badger_config, sett_config, digg_config
+from helpers.registry import registry
 from helpers.token_utils import distribute_from_whales
 from brownie import *
 from helpers.proxy_utils import deploy_proxy
+import json
 from helpers.constants import AddressZero
 
 
-class ConvexHBtcMiniDeploy(SettMiniDeployBase):
+class ConvexTriCryptoDosMiniDeploy(SettMiniDeployBase):
     def fetch_params(self):
-        params = sett_config.native.convexHbtcCrv.params
-        want = sett_config.native.convexHbtcCrv.params.want
+        params = sett_config.native.convexTriCryptoDos.params
+        want = sett_config.native.convexTriCryptoDos.params.want
 
         params.badgerTree = self.badger.badgerTree
 
@@ -18,7 +20,10 @@ class ConvexHBtcMiniDeploy(SettMiniDeployBase):
     def post_vault_deploy_setup(self, deploy=True):
         if not deploy:
             return
-        distribute_from_whales(self.deployer, 1, "hbtcCrv")
+        whale = accounts.at("0xDeFd8FdD20e0f34115C7018CCfb655796F6B2168", force=True)
+        token = interface.IERC20(sett_config.native.convexTriCryptoDos.params.want)
+        balance = token.balanceOf(whale)
+        token.transfer(self.deployer, balance // 2, {"from": whale})
 
     def post_deploy_setup(self, deploy):
         if deploy:
@@ -36,13 +41,9 @@ class ConvexHBtcMiniDeploy(SettMiniDeployBase):
                 self.strategy.address, {"from": cvxCrvHelperGov}
             )
 
-            if (
-                cvxHelperVault.guestList() != AddressZero
-                ) and (
-                cvxCrvHelperVault.guestList() != AddressZero
-            ):
-
-                # Add rewards address to guestlists
+            # Add rewards address to guestlists
+            list_add = cvxHelperVault.guestList()
+            if list_add != AddressZero:
                 cvxGuestlist = VipCappedGuestListBbtcUpgradeable.at(
                     cvxHelperVault.guestList()
                 )
@@ -67,13 +68,17 @@ class ConvexHBtcMiniDeploy(SettMiniDeployBase):
 
             return
 
+        # Vault uses testMultisig
+        testMultisig = accounts.at(self.vault.governance(), force=True)
+
         if not (self.vault.controller() == self.strategy.controller()):
             # NB: Not all vaults are pauseable.
             try:
                 if self.vault.paused():
-                    self.vault.unpause({"from": self.governance})
+                    self.vault.unpause({"from": self.testMultisig})
             except exceptions.VirtualMachineError:
                 pass
+
             # Change vault's conroller to match the strat's
             self.vault.setController(
                 self.strategy.controller(), {"from": self.governance}
@@ -98,23 +103,21 @@ class ConvexHBtcMiniDeploy(SettMiniDeployBase):
             self.strategy.want(), self.strategy.address, {"from": self.governance}
         )
 
-        # Add vault to controller for want
-        # self.controller.setVault(self.vault.token(), self.vault.address, {"from": self.governance})
-
         assert self.controller.strategies(self.vault.token()) == self.strategy.address
         assert self.controller.vaults(self.strategy.want()) == self.vault.address
 
-        
         if (self.vault.guestList() != AddressZero): 
-            # Add actors to guestlist
+            # Add users to guestlist
             guestlist = VipCappedGuestListBbtcUpgradeable.at(self.vault.guestList())
+
+            owner = accounts.at("0xd41f7006bcb2B3d0F9C5873272Ebed67B37F80Dc", force=True)
 
             addresses = []
             for account in accounts:
                 addresses.append(account.address)
 
             # Add actors addresses
-            addresses.append(guestlist.owner())
+            addresses.append(owner.address)
             addresses.append(self.governance.address)
             addresses.append(self.strategist.address)
             addresses.append(self.keeper.address)
@@ -123,5 +126,50 @@ class ConvexHBtcMiniDeploy(SettMiniDeployBase):
 
             invited = [True] * len(addresses)
 
-            guestlist.setGuests(addresses, invited, {"from": self.deployer})
+            guestlist.setGuests(addresses, invited, {"from": owner})
 
+            # Increase gustlist caps since randomly generated amounts tend to be bigger than current caps
+            guestlist.setTotalDepositCap("5080189446897250400000", {"from": owner})
+            guestlist.setUserDepositCap("5081890446897250400000", {"from": owner})
+
+    # Setup used for running simulation without deployed strategy:
+
+    # def post_deploy_setup(self, deploy):
+    #     if deploy:
+    #         return
+
+    #     (params, want) = self.fetch_params()
+
+    #     self.controller = interface.IController(self.vault.controller())
+
+    #     contract = StrategyConvexStakingOptimizer.deploy({"from": self.deployer})
+    #     self.strategy = deploy_proxy(
+    #         "StrategyConvexStakingOptimizer",
+    #         StrategyConvexStakingOptimizer.abi,
+    #         contract.address,
+    #         web3.toChecksumAddress(self.badger.devProxyAdmin.address),
+    #         contract.initialize.encode_input(
+    #             self.governance.address,
+    #             self.strategist.address,
+    #             self.controller.address,
+    #             self.keeper.address,
+    #             self.guardian.address,
+    #             [params.want, self.badger.badgerTree,],
+    #             params.pid,
+    #             [
+    #                 params.performanceFeeGovernance,
+    #                 params.performanceFeeStrategist,
+    #                 params.withdrawalFee,
+    #             ],
+    #         ),
+    #         self.deployer,
+    #     )
+
+    #     self.badger.sett_system.strategies[self.key] = self.strategy
+
+    #     assert self.controller.address == self.strategy.controller()
+
+    #     self.controller.approveStrategy(self.strategy.want(), self.strategy.address, {"from": self.governance})
+    #     self.controller.setStrategy(self.strategy.want(), self.strategy.address, {"from": self.governance})
+
+    #     assert self.controller.strategies(self.vault.token()) == self.strategy.address
