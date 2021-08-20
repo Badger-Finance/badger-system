@@ -170,7 +170,7 @@ class StrategyConvexStakingOptimizerResolver(StrategyCoreResolver):
                 after.balances("cvxCrv", "cvxCrvHelperVault")
                 - before.balances("cvxCrv", "cvxCrvHelperVault")
             )
-            * (cvxHelperVault.getPricePerFullShare() / 1e18)
+            * (cvxCrvHelperVault.getPricePerFullShare() / 1e18)
             * 0.8,
             after.balances("bCvxCrv", "badgerTree")
             - before.balances("bCvxCrv", "badgerTree"),
@@ -182,7 +182,7 @@ class StrategyConvexStakingOptimizerResolver(StrategyCoreResolver):
                 after.balances("cvxCrv", "cvxCrvHelperVault")
                 - before.balances("cvxCrv", "cvxCrvHelperVault")
             )
-            * (cvxHelperVault.getPricePerFullShare() / 1e18)
+            * (cvxCrvHelperVault.getPricePerFullShare() / 1e18)
             * 0.2,
             after.balances("bCvxCrv", "governanceRewards")
             - before.balances("bCvxCrv", "governanceRewards"),
