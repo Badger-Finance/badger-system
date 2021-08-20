@@ -1,6 +1,7 @@
 from helpers.constants import APPROVED_STAKER_ROLE
 from tests.sett.fixtures.SettMiniDeployBase import SettMiniDeployBase
 from config.badger_config import badger_config, sett_config
+from helpers.token_utils import distribute_from_whales
 
 
 class BadgerRewardsMiniDeploy(SettMiniDeployBase):
@@ -17,6 +18,7 @@ class BadgerRewardsMiniDeploy(SettMiniDeployBase):
         """
         Distribute badger to Geyser and allow strategy to take
         """
+        distribute_from_whales(self.deployer, 1, "badger")
         self.badger.distribute_staking_rewards(
             self.key, badger_config.geyserParams.unlockSchedules.badger[0].amount
         )

@@ -308,10 +308,10 @@ def assert_single_user_harvest_flow_remove_fees(settConfig):
 
     # Deposit
     want.approve(sett, MaxUint256, {"from": deployer})
-    sett.deposit(depositAmount, {"from": deployer})
+    snap.settDeposit(depositAmount, {"from": deployer})
 
     # Earn
-    sett.earn({"from": strategyKeeper})
+    snap.settEarn({"from": strategyKeeper})
 
     chain.sleep(days(0.5))
     chain.mine()
@@ -329,7 +329,9 @@ def assert_single_user_harvest_flow_remove_fees(settConfig):
 
     # Harvesting on the HarvestMetaFarm does not increase the underlying position, it sends rewards to the rewardsTree
     # For HarvestMetaFarm, we expect FARM rewards to be distributed to rewardsTree
-    assert want.balanceOf(controller.rewards()) > 0
+    # native.badger doesn't have fees
+    if settConfig["id"] != "native.badger":
+        assert want.balanceOf(controller.rewards()) > 0
 
     chain.sleep(days(1))
     chain.mine()
@@ -342,7 +344,7 @@ def assert_single_user_harvest_flow_remove_fees(settConfig):
 
     tx = snap.settHarvest({"from": strategyKeeper})
 
-    sett.withdrawAll({"from": deployer})
+    snap.settWithdrawAll({"from": deployer})
 
     endingBalance = want.balanceOf(deployer)
 
