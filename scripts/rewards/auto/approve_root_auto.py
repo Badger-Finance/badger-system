@@ -8,6 +8,7 @@ from scripts.systems.badger_system import connect_badger
 from helpers.gas_utils import gas_strategies
 
 from assistant.rewards.rewards_assistant import fetch_current_rewards_tree, run_action
+from helpers.discord import send_message_to_discord
 
 console = Console()
 
@@ -41,5 +42,10 @@ def main():
             approve_root(badger)
         except Exception as e:
             console.print("[red]Error[/red]", e)
+            send_message_to_discord(
+                "**ERROR APPROVING ROOT**",
+                "approve_root_auto.py has encountered an error",
+                [{"name": "Error", "value": e, "inline": True}],
+            )
         finally:
             time.sleep(10 * 60)
