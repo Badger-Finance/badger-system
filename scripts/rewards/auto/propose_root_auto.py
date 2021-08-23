@@ -23,8 +23,8 @@ def main():
         except Exception as e:
             console.print("[red]Error[/red]", e)
             send_message_to_discord(
-                "**ERROR APPROVING ROOT**",
-                "approve_root_auto.py has encountered an error",
+                "**ERROR PROPOSING ROOT**",
+                "propose_root_auto.py has encountered an error",
                 [{"name": "Error", "value": e, "inline": True}],
             )
         finally:
