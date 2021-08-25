@@ -98,7 +98,8 @@ def diff_token_balances(before, after, scale=True):
                 )
             else:
                 amount = after[token][account] - value
-            table.append([token_metadata.get_symbol(token), account, amount])
+            if amount != 0:
+                table.append([token_metadata.get_symbol(token), account, amount])
 
     print(tabulate(table, headers=["asset", "account", "balance"]))
 

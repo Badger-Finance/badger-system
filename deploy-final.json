@@ -30,6 +30,7 @@
     "multisigs": {
         "dev": "0xB65cef03b9B89f99517643226d76e286ee999e77",
         "ops": "0x576cD258835C529B54722F84Bb7d4170aA932C64",
+        "payments": "0xD4868d98849a58F743787c77738D808376210292",
         "dfd": "0x5b5cF8620292249669e1DCC73B753d01543D6Ac7",
         "test": "0x55949f769d0af7453881435612561d109fff07b8",
         "tech": "0x68bf59ef26f57b9ae9fb08ae849a95a87790b187",

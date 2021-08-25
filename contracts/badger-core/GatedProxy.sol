@@ -28,15 +28,14 @@ contract GatedProxy is AccessControlUpgradeable, Executor {
      * @param to Contract address to call
      * @param value ETH value to send, if any
      * @param data Encoded data to send
-     * @param operation Call or Delegatecall
+     * @dev Only calls are supported, not delegatecalls
      */
     function call(
         address to,
         uint256 value,
-        bytes calldata data,
-        uint256 operation
+        bytes calldata data
     ) external payable onlyApprovedAccount returns (bool success) {
-        success = execute(to, value, data, operation, gasleft());
-        emit Call(to, value, data, operation);
+        success = execute(to, value, data, 0, gasleft());
+        emit Call(to, value, data, 0);
     }
 }

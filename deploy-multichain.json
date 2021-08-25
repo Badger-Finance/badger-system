@@ -18,7 +18,9 @@
         "proxyAdminTimelock": "0x9208E6c28959c47E58344d5f84d88F07Fca96CFC",
         "bricked": "0x19a21Fbba3561aD53e70268caFA3D3c8db05A79C",
         "governanceTimelock": "",
-        "registry": "0x22765948A3d5048F3644b81792e4E1aA7ea3da4a"
+        "VaultRegistryV1": "0x22765948A3d5048F3644b81792e4E1aA7ea3da4a",
+        "keeperAccessControl": "0x46fa8817624eea8052093eab8e3fdf0e2e0443b2",
+        "registry": "0xfda7eb6f8b7a9e9fcfd348042ae675d1d652454f"
     },
     "contracts": {
         "governanceTimelock": {
@@ -39,3 +41,4 @@
         }
     }
 }
+    

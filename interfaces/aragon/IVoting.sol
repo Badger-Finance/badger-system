@@ -9,4 +9,8 @@ interface IVoting {
         bool _supports,
         bool _executesIfDecided
     ) external payable;
+
+    function executeVote(
+        uint256 _voteId
+    ) external;
 }
