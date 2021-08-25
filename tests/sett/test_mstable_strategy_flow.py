@@ -4,8 +4,7 @@ import pytest
 from brownie import *
 from helpers.constants import *
 from helpers.sett.SnapshotManager import SnapshotManager
-from tests.conftest import badger_single_sett, settTestConfig
-from tests.helpers import distribute_from_whales, getTokenMetadata
+from tests.conftest import badger_single_sett, mStableSettTestConfig
 from tests.test_recorder import EventRecord, TestRecorder
 from rich.console import Console
 import time
@@ -16,24 +15,20 @@ console = Console()
 # @pytest.mark.skip()
 @pytest.mark.parametrize(
     "settConfig",
-    settTestConfig,
+    mStableSettTestConfig,
 )
 def test_deposit_withdraw_single_user_flow(settConfig):
     badger = badger_single_sett(settConfig)
 
-    controller = badger.getController(settConfig["id"])
     sett = badger.getSett(settConfig["id"])
     strategy = badger.getStrategy(settConfig["id"])
     want = badger.getStrategyWant(settConfig["id"])
 
     settKeeper = accounts.at(sett.keeper(), force=True)
-    strategyKeeper = accounts.at(strategy.keeper(), force=True)
 
     snap = SnapshotManager(badger, settConfig["id"])
 
     deployer = badger.deployer
-
-    governance = strategy.governance()
 
     randomUser = accounts[6]
 
@@ -65,13 +60,11 @@ def test_deposit_withdraw_single_user_flow(settConfig):
 
     snap.settWithdraw(depositAmount // 2 - 1, {"from": deployer})
 
-    # assert False
-
 
 # @pytest.mark.skip()
 @pytest.mark.parametrize(
     "settConfig",
-    settTestConfig,
+    mStableSettTestConfig,
 )
 def test_single_user_harvest_flow(settConfig):
     badger = badger_single_sett(settConfig)
@@ -133,18 +126,15 @@ def test_single_user_harvest_flow(settConfig):
     # Withdraw
     snap.settWithdraw(depositAmount // 2 - 1, {"from": deployer})
 
-    # assert False
-
 
 # @pytest.mark.skip()
 @pytest.mark.parametrize(
     "settConfig",
-    settTestConfig,
+    mStableSettTestConfig,
 )
 def test_voterproxy_loan(settConfig):
     badger = badger_single_sett(settConfig)
 
-    controller = badger.getController(settConfig["id"])
     sett = badger.getSett(settConfig["id"])
     strategy = badger.getStrategy(settConfig["id"])
     want = badger.getStrategyWant(settConfig["id"])
@@ -161,10 +151,6 @@ def test_voterproxy_loan(settConfig):
     snap = SnapshotManager(badger, settConfig["id"])
 
     deployer = badger.deployer
-
-    governance = strategy.governance()
-
-    randomUser = accounts[6]
 
     mta = ERC20.at(strategy.mta())
 
@@ -269,5 +255,3 @@ def test_voterproxy_loan(settConfig):
     # Some MTA must have been accumulated from harvest flow
     assert mta.balanceOf(voterproxy.address) > 0
     assert voterproxy.loans(deployer.address) == 0
-
-    # assert False
