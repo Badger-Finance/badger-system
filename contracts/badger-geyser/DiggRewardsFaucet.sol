@@ -13,6 +13,7 @@ import "deps/@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 import "deps/@openzeppelin/contracts-upgradeable/math/MathUpgradeable.sol";
 
 import "interfaces/digg/IDigg.sol";
+
 /**
     ===== Digg Rewards Faucet =====
     Allow a specified recipient to withdraw DIGG rewards at a rate specified configurable by the admin.
@@ -30,7 +31,6 @@ contract DiggRewardsFaucet is Initializable, AccessControlUpgradeable, PausableU
 
     bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
     bytes32 public constant UNPAUSER_ROLE = keccak256("UNPAUSER_ROLE");
-
 
     /* ========== STATE VARIABLES ========== */
 
@@ -84,7 +84,6 @@ contract DiggRewardsFaucet is Initializable, AccessControlUpgradeable, PausableU
             digg.transfer(msg.sender, rewardInFragments);
             emit RewardPaid(msg.sender, reward, rewardInFragments);
         }
-
     }
 
     /* ========== RESTRICTED FUNCTIONS ========== */
@@ -94,7 +93,11 @@ contract DiggRewardsFaucet is Initializable, AccessControlUpgradeable, PausableU
     /// @param startTimestamp Timestamp to start distribution. If in the past, all "previously" distributed rewards within the range will be immediately claimable.
     /// @param duration Duration over which to distribute the DIGG Shares.
     /// @param rewardInShares Number of DIGG Shares to distribute within the specified time.
-    function notifyRewardAmount(uint256 startTimestamp, uint256 duration, uint256 rewardInShares) external whenNotPaused {
+    function notifyRewardAmount(
+        uint256 startTimestamp,
+        uint256 duration,
+        uint256 rewardInShares
+    ) external whenNotPaused {
         _onlyAdmin();
         rewardsDuration = duration;
         rewardRate = rewardInShares.div(rewardsDuration);
@@ -111,7 +114,6 @@ contract DiggRewardsFaucet is Initializable, AccessControlUpgradeable, PausableU
         periodFinish = startTimestamp.add(rewardsDuration);
         emit RewardAdded(rewardInShares);
         emit RewardsDurationUpdated(rewardsDuration);
-
     }
 
     function initializeRecipient(address _recipient) external whenNotPaused {

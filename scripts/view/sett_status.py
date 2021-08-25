@@ -9,18 +9,18 @@ console = Console()
 
 setts_to_skip = [
     "native.badger",
-    "native.renCrv",
-    "native.sbtcCrv",
-    "native.tbtcCrv",
+    # "native.renCrv",
+    # "native.sbtcCrv",
+    # "native.tbtcCrv",
     "native.uniBadgerWbtc",
-    "harvest.renCrv",
-    "native.sushiWbtcEth",
-    "native.sushiBadgerWbtc",
+    # "harvest.renCrv",
+    # "native.sushiWbtcEth",
+    # "native.sushiBadgerWbtc",
     "native.digg",
     "native.uniDiggWbtc",
-    "native.sushiDiggWbtc",
+    # "native.sushiDiggWbtc",
     "yearn.wbtc",
-    "experimental.sushiIBbtcWbtc",
+    # "experimental.sushiIBbtcWbtc",
     "experimental.digg",
     "native.convexRenCrv",
     "native.convexSbtcCrv",
@@ -66,12 +66,11 @@ def main():
         table.append(["PPFS", sett.getPricePerFullShare()])
         table.append(["totalSupply", sett.totalSupply()])
         table.append(["balance", sett.balance()])
-        print(tabulate(table, ["Key", "Value"]))
+        # print(tabulate(table, ["Key", "Value"]))
 
         if sett_type == "v1":
             snap = SnapshotManager(badger, key)
-            # state = snap.snap()
-
+            state = snap.snap()
             # snap.printTable(state)
 
             if badger.hasStrategy(key):

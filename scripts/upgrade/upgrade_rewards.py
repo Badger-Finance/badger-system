@@ -20,7 +20,7 @@ FUNCTION_TO_CALL = "setRewards(address)"
 
 def test_update_rewards(badger: BadgerSystem) -> str:
     data = encode_abi(["address"], [GOVERNANCE_MULTISIG_ADDRESS])
-    delay = 2 * days(2)
+    delay = days(3)
     eta = web3.eth.getBlock("latest")["timestamp"] + delay
 
     result = badger.timelock_run_direct(CONTROLLER_ADDRESS, FUNCTION_TO_CALL, data, eta)
@@ -35,7 +35,7 @@ def test_update_rewards(badger: BadgerSystem) -> str:
 
 def update_rewards(badger: BadgerSystem) -> str:
     data = encode_abi(["address"], [GOVERNANCE_MULTISIG_ADDRESS])
-    delay = 2 * days(2)
+    delay = days(3)
     eta = web3.eth.getBlock("latest")["timestamp"] + delay
 
     return badger.governance_queue_transaction(
@@ -49,5 +49,5 @@ def main():
     """
     badger = connect_badger(badger_config.prod_json)
 
-    ## test_update_rewards(badger)
+    # test_update_rewards(badger)
     update_rewards(badger)

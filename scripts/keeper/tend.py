@@ -2,12 +2,9 @@ from helpers.sett.SnapshotManager import SnapshotManager
 from config.keeper import keeper_config
 from helpers.utils import tx_wait, val
 from brownie import *
-from helpers.gas_utils import gas_strategies
 from rich.console import Console
 from scripts.systems.badger_system import BadgerSystem, connect_badger
 from tabulate import tabulate
-
-gas_strategies.set_default_for_active_chain()
 
 console = Console()
 
@@ -38,20 +35,35 @@ def tend_all(badger: BadgerSystem, skip, min_profit=0):
         before = snap.snap()
 
         if strategy.keeper() == badger.badgerRewardsManager:
-            estimated_profit = snap.estimateProfitTendViaManager(
-                key, strategy, {"from": keeper, "gas_limit": 1000000}, min_profit
-            )
+            keeper = badger.harvester
+            # estimated_profit = snap.estimateProfitTendViaManager(
+            #     key, strategy, {"from": keeper, "gas_limit": 1000000}
+            # )
+            estimated_profit = 1
             if estimated_profit >= min_profit:
                 snap.settTendViaManager(
                     strategy,
                     {"from": keeper, "gas_limit": 1000000},
                     confirm=False,
                 )
+        elif strategy.keeper() == badger.keeperAccessControl:
+            keeper = badger.harvester
+            # estimated_profit = snap.estimateProfitTendViaManager(
+            #     key, strategy, {"from": keeper, "gas_limit": 1000000}
+            # )
+            estimated_profit = 1
+            if estimated_profit >= min_profit:
+                snap.settTendAcl(
+                    strategy,
+                    {"from": keeper, "gas_limit": 1000000},
+                    confirm=False,
+                )
         else:
             keeper = accounts.at(strategy.keeper())
-            estimated_profit = snap.estimateProfitTend(
-                key, {"from": keeper, "gas_limit": 1000000}, min_profit
-            )
+            # estimated_profit = snap.estimateProfitTend(
+            #     key, {"from": keeper, "gas_limit": 1000000}
+            # )
+            estimated_profit = 1
             if estimated_profit >= min_profit:
                 snap.settTend(
                     {"from": keeper, "gas_limit": 1000000},

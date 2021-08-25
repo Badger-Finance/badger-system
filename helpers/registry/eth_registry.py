@@ -231,6 +231,7 @@ eth_registry.tokens = DotMap(
     crv="0xD533a949740bb3306d119CC777fa900bA034cd52",
     tbtc=web3.toChecksumAddress("0x8daebade922df735c38c80c7ebd708af50815faa"),
     usdt=web3.toChecksumAddress("0xdac17f958d2ee523a2206206994597c13d831ec7"),
+    dai=web3.toChecksumAddress("0x6b175474e89094c44da98b954eedeac495271d0f"),
     badger=eth_registry.badger.token,
     digg="0x798D1bE841a82a273720CE31c822C61a67a601C3",
     farm=eth_registry.harvest.farmToken,

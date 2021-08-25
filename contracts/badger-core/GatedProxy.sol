@@ -9,11 +9,14 @@ contract GatedProxy is AccessControlUpgradeable, Executor {
     bytes32 public constant APPROVED_ACCOUNT_ROLE = keccak256("APPROVED_ACCOUNT_ROLE");
     event Call(address to, uint256 value, bytes data, uint256 operation);
 
-    function initialize(address initialAdmin_, address initialUser_) external initializer {
+    function initialize(address initialAdmin_, address[] memory initialAccounts_) external initializer {
         __AccessControl_init();
 
         _setupRole(DEFAULT_ADMIN_ROLE, initialAdmin_);
-        _setupRole(APPROVED_ACCOUNT_ROLE, initialUser_);
+
+        for (uint256 i = 0; i < initialAccounts_.length; i++) {
+            _setupRole(APPROVED_ACCOUNT_ROLE, initialAccounts_[i]);
+        }
     }
 
     modifier onlyApprovedAccount() {
@@ -21,23 +24,18 @@ contract GatedProxy is AccessControlUpgradeable, Executor {
         _;
     }
 
-    function pause(address destination) public onlyApprovedAccount {
-        IPausable(destination).pause();
-    }
-
     /**
      * @param to Contract address to call
      * @param value ETH value to send, if any
      * @param data Encoded data to send
-     * @param operation Call or Delegatecall
+     * @dev Only calls are supported, not delegatecalls
      */
     function call(
         address to,
         uint256 value,
-        bytes calldata data,
-        uint256 operation
+        bytes calldata data
     ) external payable onlyApprovedAccount returns (bool success) {
-        success = execute(to, value, data, operation, gasleft());
-        emit Call(to, value, data, operation);
+        success = execute(to, value, data, 0, gasleft());
+        emit Call(to, value, data, 0);
     }
 }

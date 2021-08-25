@@ -11,9 +11,13 @@ interface IMiniMe {
 
     function claimTokens(address _token) external;
 
+    function controller() external view returns (address);
+
     function enableTransfers(bool _transfersEnabled) external;
 
     function generateTokens(address _owner, uint256 _amount) external returns (bool);
 
     function destroyTokens(address _owner, uint256 _amount) external returns (bool);
+
+    function changeController(address _newController) external returns (address);
 }

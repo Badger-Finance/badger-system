@@ -15,7 +15,7 @@ from dotmap import DotMap
 from helpers.gnosis_safe import GnosisSafe, MultisigTxMetadata, multisig_success
 from helpers.network import network_manager
 from helpers.proxy_utils import deploy_proxy, deploy_proxy_admin
-from helpers.registry import artifacts, registry
+from helpers.registry.artifacts import artifacts
 from helpers.sett.strategy_registry import name_to_artifact, contract_name_to_artifact
 from helpers.time_utils import days, to_days, to_utc_date
 from rich.console import Console
@@ -227,7 +227,9 @@ def connect_badger(
 
     badger.connect_multisig(badger_deploy["devMultisig"])
     badger.connect_ops_multisig(badger_deploy["opsMultisig"])
-    badger.connect_test_multisig(badger_deploy["testMultisig"])
+    
+    if "testMultisig" in badger_deploy:
+        badger.connect_test_multisig(badger_deploy["testMultisig"])
 
     if "dao" in badger_deploy:
         badger.connect_dao()
@@ -237,13 +239,16 @@ def connect_badger(
 
     badger.connect_logic(badger_deploy["logic"])
 
-    badger.connect_guest_lists(badger_deploy["guest_lists"])
+    if "guest_lists" in badger_deploy:
+        badger.connect_guest_lists(badger_deploy["guest_lists"])
 
     # badger.connect_dev_multisig(badger_deploy["devMultisig"])
 
     # Connect Vesting / Rewards Infrastructure
     if "teamVesting" in badger_deploy:
         badger.connect_team_vesting(badger_deploy["teamVesting"])
+    if "create2Deployer" in badger_deploy:
+        badger.connect_create_2_deployer(badger_deploy["create2Deployer"])
     if "badgerHunt" in badger_deploy:
         badger.connect_badger_hunt(badger_deploy["badgerHunt"])
     if "badgerTree" in badger_deploy:
@@ -252,6 +257,8 @@ def connect_badger(
         badger.connect_rewards_escrow(badger_deploy["rewardsEscrow"])
     if "honeypotMeme" in badger_deploy:
         badger.connect_honeypot_meme(badger_deploy["honeypotMeme"])
+    if "keeperAccessControl" in badger_deploy:
+        badger.connect_keeper_acl(badger_deploy["keeperAccessControl"])
     if "communityPool" in badger_deploy:
         badger.connect_community_pool(badger_deploy["communityPool"])
     if "daoBadgerTimelock" in badger_deploy:
@@ -586,6 +593,13 @@ class BadgerSystem:
             deployer,
         )
         self.track_contract_upgradeable("rewardsEscrow", self.rewardsEscrow)
+
+    def deploy_create_2(self, bytecode, salt, overrides):
+        console.print(f"[green]Deploying via Create2Deployer....[/green]")
+        tx = self.create_2_deployer.deploy(bytecode, salt, overrides)
+        event = tx.events['Deployed'][0]
+        console.log(event)
+        return event['addr']
 
     def deploy_badger_tree(self):
         deployer = self.deployer
@@ -1312,6 +1326,10 @@ class BadgerSystem:
         self.rewardsEscrow = RewardsEscrow.at(address)
         self.track_contract_upgradeable("rewardsEscrow", self.rewardsEscrow)
 
+    def connect_keeper_acl(self, address):
+        self.keeperAccessControl = KeeperAccessControl.at(address)
+        self.track_contract_upgradeable("keeperAccessControl", self.keeperAccessControl)
+
     def connect_badger_tree(self, address):
         self.badgerTree = BadgerTreeV2.at(address)
         self.track_contract_upgradeable("badgerTree", self.badgerTree)
@@ -1370,6 +1388,9 @@ class BadgerSystem:
     def connect_team_vesting(self, address):
         self.teamVesting = SmartVesting.at(address)
         self.track_contract_upgradeable("teamVesting", self.teamVesting)
+
+    def connect_create_2_deployer(self, address):
+        self.create_2_deployer = interface.IAnyswapCreate2Deployer(address)
 
     # Routes rewards connection to correct underlying contract based on id.
     def connect_rewards(self, id, address):
@@ -1505,6 +1526,9 @@ class BadgerSystem:
 
         return self.sett_system.strategies[id]
 
+    def getCreate2Deployer(self):
+        return self.create_2_deployer
+
     def getStrategyWant(self, id):
         return interface.IERC20(self.sett_system.strategies[id].want())
 
@@ -1540,9 +1564,10 @@ class BadgerSystem:
                     return admin
             except:
                 continue
-        raise Exception(
-            f"Contract not managed by any connected proxyAdmin from: {potential_admins}"
-        )
+        return None
+        # raise Exception(
+        #     f"Contract not managed by any connected proxyAdmin from: {potential_admins}"
+        # )
 
     def getConnectedProxyAdmins(self):
         connected_admins = {}
@@ -1576,12 +1601,13 @@ class BadgerSystem:
     def print_logger_unlock_schedules(self, beneficiary, name=None):
         logger = self.rewardsLogger
 
-        schedules = logger.getAllUnlockSchedulesFor(beneficiary)
-
         if not name:
-            name = ""
+            name = str(beneficiary)
 
         console.print(f"[cyan]=== Latest Unlock Schedules {name}===[/cyan]")
+
+        schedules = logger.getAllUnlockSchedulesFor(beneficiary)
+
         table = []
 
         if len(schedules) == 0:

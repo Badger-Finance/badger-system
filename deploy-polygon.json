@@ -1,0 +1,27 @@
+{
+    "logic": {
+        "BadgerTreeV2": ["0x8B459F4d8949f3748dC34430bc91441C954dc391"],
+        "BadgerRegistry": ["0x440E52dA3623203b0bc76FCae62429F2D4521173"],
+        "BadgerRegistryV1": ["0x831BeEaDfC5F4e7D9ecEa045066588824be6EbAa"],
+        "SettV3": ["0xAF0B504BD20626d1fd57F8903898168FCE7ecbc8"],
+        "Controller": ["0x01d10fdc6b484BE380144dF12EB6C75387EfC49B"],
+        "StrategyPlaceholder": ["0xBabAE0E133cd5a6836a63820284cCD8B14D9272a"],
+        "KeeperAccessControl": ["0x20Dce41Acca85E8222D6861Aa6D23B6C941777bF"]
+    },
+    "multisig": {
+        "dev": "0x4977110Ed3CD5eC5598e88c8965951a47dd4e738"
+    },
+    "v1": {
+        "timelock": "0x4f7D83623eeB135eB13DBcEA1A87a96945abE9cc",
+        "controller": "0xc00e71719d1494886942d6277DAeA20494cf0EeC",
+        "tokens": {
+            "sushiWbtcWethLp": "0xe21f631f47bfb2bc53ed134e83b8cff00e0ec054"
+        },
+        "vaults": {
+            "sushiWbtcWethLp": "0x30bCE7386e016D6038201F57D1bA52CbA7AEFeCf"
+        },
+        "strategies": {
+            "sushiWbtcWethLp": "0xab5bC9379dF7512A5ceb376901C4409B505Bc2EF"
+        }
+    }
+}

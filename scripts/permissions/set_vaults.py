@@ -725,15 +725,13 @@ def set_convex_ac_performance_fees(badger, helper, strats):
         assert strategy.withdrawalFee() == 50
 
 
-def set_withdrawal_fee(badger, safe, helper, vaults_to_add):
-    vaults_to_add = ["experimental.sushiIBbtcWbtc"]
+def set_withdrawal_fee(badger, helper, vaults_to_add):
     for key in vaults_to_add:
         console.print(f"Reduce Fees on Strats {key}")
-        controller = safe.contract(badger.getController("experimental").address)
 
-        # vault = safe.contract(badger.getSett(key).address)
-        assert strategy.withdrawalFee() == 50
-        strategy = safe.contract(badger.getStrategy(key).address)
+        strategy = helper.contract_from_abi(badger.getStrategy(key).address, "StrategyConvexStakingOptimizer", StrategyConvexStakingOptimizer.abi)
+        print("withdrawal fee", strategy.withdrawalFee())
+        
         assert strategy.paused() == False
 
         console.print(
@@ -742,8 +740,8 @@ def set_withdrawal_fee(badger, safe, helper, vaults_to_add):
             }
         )
 
-        strategy.setWithdrawalFee(20)
-        assert strategy.withdrawalFee() == 20
+        strategy.setWithdrawalFee(0)
+        assert strategy.withdrawalFee() == 0
     helper.publish()
 
 
@@ -886,16 +884,16 @@ def set_controller_on_strategies(badger, helper, controller_id, strategies):
     helper.publish()
 
 
-def set_strategies_on_controller(badger, safe, helper, controller_id, vaults_to_add):
+def set_strategies_on_controller(badger, helper, controller_id, vaults_to_add):
     for key in vaults_to_add:
 
-        controller = safe.contract_from_abi(
+        controller = helper.contract_from_abi(
             badger.getController(controller_id).address, "Controller", Controller.abi
         )
-        vault = safe.contract_from_abi(
+        vault = helper.contract_from_abi(
             badger.getSett(key).address, "SettV3", SettV3.abi
         )
-        strategy = safe.contract_from_abi(
+        strategy = helper.contract_from_abi(
             badger.getStrategy(key).address,
             "StrategyConvexStakingOptimizer",
             StrategyConvexStakingOptimizer.abi,
@@ -906,11 +904,12 @@ def set_strategies_on_controller(badger, safe, helper, controller_id, vaults_to_
         )
         want = interface.IERC20(strategy.want())
 
-        before_ppfs = vault.getPricePerFullShare()
-        before_balance = vault.balance()
-        before_strategy = controller.strategies(want)
-        before_name = interface.IStrategy(before_strategy).getName()
+        # before_ppfs = vault.getPricePerFullShare()
+        # before_balance = vault.balance()
+        # before_strategy = controller.strategies(want)
+        # before_name = interface.IStrategy(before_strategy).getName()
 
+        controller.approveStrategy(want, strategy)
         controller.setStrategy(want, strategy)
 
         after_ppfs = vault.getPricePerFullShare()
@@ -918,17 +917,17 @@ def set_strategies_on_controller(badger, safe, helper, controller_id, vaults_to_
         after_strategy = controller.strategies(want)
         after_name = strategy.getName()
 
-        after_balance == before_balance
-        before_ppfs == after_ppfs
+        # after_balance == before_balance
+        # before_ppfs == after_ppfs
 
-        console.print(
-            {
-                "before_name": before_name,
-                "before_strategy": before_strategy,
-                "balance": before_balance,
-                "ppfs": before_ppfs,
-            }
-        )
+        # console.print(
+        #     {
+        #         "before_name": before_name,
+        #         "before_strategy": before_strategy,
+        #         "balance": before_balance,
+        #         "ppfs": before_ppfs,
+        #     }
+        # )
 
         console.print(
             {
@@ -946,21 +945,20 @@ def set_strategies_on_controller(badger, safe, helper, controller_id, vaults_to_
         assert controller.strategies(want) == strategy.address
         assert strategy.paused() == False
 
-    helper.publish()
-
-
-def set_vaults_on_controller(badger, safe, helper, vaults_to_add):
+def set_vaults_on_controller(badger, helper, vaults_to_add):
     for settID in vaults_to_add:
-        sett = safe.contract(badger.getSett(settID).address)
+        sett = helper.contract_from_abi(
+            badger.getSett(settID).address, "SettV3", SettV3.abi
+        )
         token = interface.IERC20(sett.token())
         console.print(f"Sett controller is [yellow]{sett.controller()}[/yellow]")
-        controller = safe.contract(badger.getController(controller_id).address)
+        controller = helper.contract_from_abi(
+            badger.getController(controller_id).address, "Controller", Controller.abi
+        )
         console.print(
             f"Vault for token [green]{token.name()}[/green] ({token.address}) on controller [yellow]{controller.address}[/yellow] set to [green] {settID} [blue]{sett.address}[/blue]"
         )
         controller.setVault(sett.token(), sett)
-    helper.publish()
-
 
 def update_rm(badger, safe, helper):
     rm = safe.contract(badger.badgerRewardsManager.address)
@@ -1047,12 +1045,11 @@ def main():
     badger = connect_badger(load_deployer=True)
 
     if rpc.is_active():
-        dev_multi = ApeSafe(badger.devMultisig.address)
+        dev_multi = ApeSafe(badger.testMultisig.address)
         helper = ApeSafeHelper(badger, dev_multi)
         assert True
     else:
         from helpers.gas_utils import gas_strategies
-
         gas_strategies.set_default(gas_strategies.exponentialScalingFast)
 
     rewardsManagerHelper = BadgerRewardsManagerHelper(badger, helper)
@@ -1067,5 +1064,8 @@ def main():
         DISTRIBUTOR_ROLE, [badger.keeper]
     )
     print_access_control(badger.badgerRewardsManager)
+    # set_withdrawal_fee(badger, helper, ["native.tricrypto"])
+    # set_vaults_on_controller(badger, helper, ['native.tricrypto2'])
+    # set_strategies_on_controller(badger, helper, "experimental", ['native.tricrypto2'])
 
     helper.publish()

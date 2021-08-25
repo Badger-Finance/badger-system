@@ -19,7 +19,9 @@ interface IStrategy {
     function withdrawAll() external returns (uint256);
 
     function balanceOf() external view returns (uint256);
+
     function balanceOfPool() external view returns (uint256);
+
     function balanceOfWant() external view returns (uint256);
 
     function getName() external pure returns (string memory);
@@ -42,5 +44,5 @@ interface IStrategy {
 
     function tend() external;
 
-    function harvest() external;
+    function harvest() external returns (uint256);
 }
