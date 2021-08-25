@@ -92,7 +92,7 @@ def get_harvest_earnings(strategy: Contract, key: str, overrides):
         )
 
     elif is_crv_strategy(key):
-        return 'skip'
+        return "skip"
         # crv_gauge = Contract.from_explorer(strategy.gauge())
         # earnings = crv_gauge.claimable_tokens.call(strategy.address, overrides)
 

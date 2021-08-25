@@ -5,10 +5,15 @@ from helpers.constants import MaxUint256
 from helpers.gnosis_safe import ApeSafeHelper
 from ape_safe import ApeSafe
 
+
 def main():
     dev = connect_account()
     warRoom = WarRoomGatedProxy.at("0xCD3271021e9b35EF862Dd98AFa826b8b5198826d")
-    warRoom.initialize("0xDA25ee226E534d868f0Dd8a459536b03fEE9079b", ["0x29F7F8896Fb913CF7f9949C623F896a154727919"], {'from': dev})
+    warRoom.initialize(
+        "0xDA25ee226E534d868f0Dd8a459536b03fEE9079b",
+        ["0x29F7F8896Fb913CF7f9949C623F896a154727919"],
+        {"from": dev},
+    )
 
     # print_access_control(warRoom)
 

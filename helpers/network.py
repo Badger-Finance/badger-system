@@ -53,4 +53,5 @@ class NetworkManager:
         else:
             return "deploy-multichain.json"
 
+
 network_manager = NetworkManager()

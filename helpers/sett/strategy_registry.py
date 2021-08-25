@@ -65,7 +65,7 @@ name_to_artifact = {
     "BadgerRegistryV1": BadgerRegistryV1,
     "WarRoomGatedProxy": WarRoomGatedProxy,
     "KeeperAccessControl": KeeperAccessControl,
-    "GatedMiniMeController": GatedMiniMeController
+    "GatedMiniMeController": GatedMiniMeController,
 }
 
 

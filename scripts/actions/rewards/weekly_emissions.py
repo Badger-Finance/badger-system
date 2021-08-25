@@ -67,6 +67,7 @@ def set_schedules(logger, schedules):
             schedule.duration,
         )
 
+
 def main():
     badger = connect_badger(load_deployer=True)
 

@@ -45,7 +45,11 @@ def main():
     vesting = helper.contract_from_abi(
         badger.digg.daoDiggTimelock.address, "SimpleTimelock", SimpleTimelock.abi
     )
-    dfd = helper.contract_from_abi(web3.toChecksumAddress("0x20c36f062a31865bed8a5b1e512d9a1a20aa333a"), "IERC20", interface.IERC20.abi)
+    dfd = helper.contract_from_abi(
+        web3.toChecksumAddress("0x20c36f062a31865bed8a5b1e512d9a1a20aa333a"),
+        "IERC20",
+        interface.IERC20.abi,
+    )
     diggToken = helper.contract_from_abi(
         badger.digg.token.address, "IERC20", interface.IERC20.abi
     )

@@ -24,6 +24,7 @@ def deploy_strategy(
     guardian=None,
 ):
     from helpers.registry import registry
+
     curve = registry.curve
     tokens = registry.tokens
     if not governance:

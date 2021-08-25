@@ -8,10 +8,8 @@ from helpers.console_utils import console
 
 contracts_to_approve = ["0xf0f3a1494ae00b5350535b7777abb2f499fc13d4"]
 
-destination_setts = [
-    "native.badger",
-    "native.digg"
-]
+destination_setts = ["native.badger", "native.digg"]
+
 
 def main():
     badger = connect_badger()

@@ -32,7 +32,7 @@ def harvest_all(badger: BadgerSystem, skip, min_profit=0):
 
         before = snap.snap()
         if strategy.keeper() == badger.badgerRewardsManager:
-            keeper = badger.harvester # Use the harvester account if we have the choice
+            keeper = badger.harvester  # Use the harvester account if we have the choice
             # estimated_profit = snap.estimateProfitHarvestViaManager(
             #     key,
             #     strategy,
@@ -46,7 +46,7 @@ def harvest_all(badger: BadgerSystem, skip, min_profit=0):
                     confirm=False,
                 )
         elif strategy.keeper() == badger.keeperAccessControl:
-            keeper = badger.harvester # Use the harvester account if we have the choice
+            keeper = badger.harvester  # Use the harvester account if we have the choice
             # estimated_profit = snap.estimateProfitHarvestViaManager(
             #     key,
             #     strategy,

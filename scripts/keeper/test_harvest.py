@@ -1,5 +1,6 @@
 from brownie import *
 from config.keeper import keeper_config
+
 # from helpers.gas_utils import gas_strategies
 from helpers.registry import registry
 from helpers.sett.SnapshotManager import SnapshotManager
@@ -85,8 +86,7 @@ def main():
         strategy = badger.getStrategy(key)
         gov = accounts.at(strategy.governance(), force=True)
 
-        strategy.setWithdrawalFee(50, {'from': gov})
-        strategy.setAutoCompoundingPerformanceFeeGovernance(0, {'from': gov})
-
+        strategy.setWithdrawalFee(50, {"from": gov})
+        strategy.setAutoCompoundingPerformanceFeeGovernance(0, {"from": gov})
 
     harvest_all(badger, skip)

@@ -19,6 +19,7 @@ console = Console()
 
 wbtc = interface.IERC20(registry.tokens.wbtc)
 
+
 def lp_for_strategy(badger: BadgerSystem, key):
     """
     Add maximum liquidity for associated strategy LP position

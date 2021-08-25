@@ -31,12 +31,17 @@ from tabulate import tabulate
 console = Console()
 pretty.install()
 
+
 def vote_from_governance(badger, vote_ids):
     safe = ApeSafe(badger.devMultisig.address)
     helper = ApeSafeHelper(badger, safe)
 
-    rewardsEscrow = helper.contract_from_abi(badger.rewardsEscrow.address, "RewardsEscrow", RewardsEscrow.abi)
-    teamVesting = helper.contract_from_abi(badger.teamVesting.address, "SmartVesting", SmartVesting.abi)
+    rewardsEscrow = helper.contract_from_abi(
+        badger.rewardsEscrow.address, "RewardsEscrow", RewardsEscrow.abi
+    )
+    teamVesting = helper.contract_from_abi(
+        badger.teamVesting.address, "SmartVesting", SmartVesting.abi
+    )
 
     voting = safe.contract_from_abi(
         badger.daoBadgerTimelock.address, "IVoting", interface.IVoting.abi
@@ -47,8 +52,14 @@ def vote_from_governance(badger, vote_ids):
         web3.toChecksumAddress("0xdc344bfb12522bf3fa58ef0d6b9a41256fc79a1b")
     )
 
-    tokenManager = helper.contract_from_abi(web3.toChecksumAddress("0xD86F07E5D9e391Fae521B4B000b7cE639d167425"), "ITokenManager", interface.ITokenManager.abi)
-    minime = helper.contract_from_abi(badger.token.address, "IMiniMe", interface.IMiniMe.abi)
+    tokenManager = helper.contract_from_abi(
+        web3.toChecksumAddress("0xD86F07E5D9e391Fae521B4B000b7cE639d167425"),
+        "ITokenManager",
+        interface.ITokenManager.abi,
+    )
+    minime = helper.contract_from_abi(
+        badger.token.address, "IMiniMe", interface.IMiniMe.abi
+    )
 
     console.print("before controller", badger.token.controller())
 
@@ -74,9 +85,17 @@ def vote_from_governance(badger, vote_ids):
 
     donor1 = accounts.at("0x394DCfbCf25C5400fcC147EbD9970eD34A474543", force=True)
     donor2 = accounts.at("0xbd9c69654b8f3e5978dfd138b00cb0be29f28ccf", force=True)
-    
-    total = badger.token.balanceOf(voting) + badger.token.balanceOf(rewardsEscrow) + badger.token.balanceOf(teamVesting) + badger.token.balanceOf(donor2) + badger.token.balanceOf(donor1)
-    console.print(f"[yellow]TOTAL[/yellow]", val(total), val(Wei("10500000 ether") - total))
+
+    total = (
+        badger.token.balanceOf(voting)
+        + badger.token.balanceOf(rewardsEscrow)
+        + badger.token.balanceOf(teamVesting)
+        + badger.token.balanceOf(donor2)
+        + badger.token.balanceOf(donor1)
+    )
+    console.print(
+        f"[yellow]TOTAL[/yellow]", val(total), val(Wei("10500000 ether") - total)
+    )
 
     chain.mine()
     assert total > Wei("10500000 ether")
@@ -84,15 +103,15 @@ def vote_from_governance(badger, vote_ids):
     for id in vote_ids:
         console.print(f"[yellow]Vote 1[/yellow]")
         tx = voting.vote(id, True, False)
-        
+
         # print(tx.call_trace(True))
         # chain.mine()
-        
+
         console.print(f"[yellow]Vote 2[/yellow]")
         tx = rewardsEscrow.call(
             aragonVoting, 0, aragonVoting.vote.encode_input(id, True, False)
         )
-        
+
         # print(tx.call_trace(True))
         # chain.mine()
 
@@ -106,14 +125,14 @@ def vote_from_governance(badger, vote_ids):
         tx = teamVesting.call(
             aragonVoting, 0, aragonVoting.vote.encode_input(id, True, False)
         )
-        
+
         # console.log(aragonVoting.getVote(id))
         # yea = aragonVoting.getVote(id)[6]
         # console.log(yea)
         # assert yea >= Wei("10500000 ether")
         # print(tx.call_trace(True))
         chain.mine()
-    
+
     chain.mine()
     chain.sleep(days(3))
     chain.mine()
@@ -127,7 +146,6 @@ def vote_from_governance(badger, vote_ids):
 
     helper.publish()
 
-    
 
 def main():
     badger = connect_badger()

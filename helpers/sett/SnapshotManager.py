@@ -505,7 +505,9 @@ class SnapshotManager:
 
         table.append(["---------------", "--------------------"])
 
-        if self.strategy.keeper() != web3.toChecksumAddress("0xf101Be274FC6cd72CF5fE726fa2e938Ea7401E87"):
+        if self.strategy.keeper() != web3.toChecksumAddress(
+            "0xf101Be274FC6cd72CF5fE726fa2e938Ea7401E87"
+        ):
             console.print("[yellow]This keeper needs to be updated to ACL![/yellow]")
 
         print(tabulate(table, headers=["account", "value"]))

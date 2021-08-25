@@ -227,7 +227,7 @@ def connect_badger(
 
     badger.connect_multisig(badger_deploy["devMultisig"])
     badger.connect_ops_multisig(badger_deploy["opsMultisig"])
-    
+
     if "testMultisig" in badger_deploy:
         badger.connect_test_multisig(badger_deploy["testMultisig"])
 
@@ -597,9 +597,9 @@ class BadgerSystem:
     def deploy_create_2(self, bytecode, salt, overrides):
         console.print(f"[green]Deploying via Create2Deployer....[/green]")
         tx = self.create_2_deployer.deploy(bytecode, salt, overrides)
-        event = tx.events['Deployed'][0]
+        event = tx.events["Deployed"][0]
         console.log(event)
-        return event['addr']
+        return event["addr"]
 
     def deploy_badger_tree(self):
         deployer = self.deployer

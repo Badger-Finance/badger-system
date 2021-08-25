@@ -13,11 +13,14 @@ class RoleRegistry:
     def __init__(self):
         self.roles = {}
 
-        self.roles["DEFAULT_ADMIN_ROLE"] = "0x0000000000000000000000000000000000000000000000000000000000000000"
+        self.roles[
+            "DEFAULT_ADMIN_ROLE"
+        ] = "0x0000000000000000000000000000000000000000000000000000000000000000"
 
     def add_role(self, name):
         encoded = web3.keccak(text=name).hex()
         self.roles[name] = encoded
+
 
 # Approved Contract Roles
 APPROVED_STAKER_ROLE = web3.keccak(text="APPROVED_STAKER_ROLE").hex()

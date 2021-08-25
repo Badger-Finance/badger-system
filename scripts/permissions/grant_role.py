@@ -8,12 +8,15 @@ from scripts.systems.badger_system import connect_badger
 
 accounts = ["0x86cbD0ce0c087b482782c181dA8d191De18C8275"]
 
+
 def main():
     badger = connect_badger()
     safe = ApeSafe(badger.opsMultisig.address)
     helper = ApeSafeHelper(badger, safe)
 
-    contract = helper.contract_from_abi(badger.rewardsLogger.address, "IAccessControl", interface.IAccessControl.abi)
+    contract = helper.contract_from_abi(
+        badger.rewardsLogger.address, "IAccessControl", interface.IAccessControl.abi
+    )
     print_access_control(contract)
 
     for account in accounts:

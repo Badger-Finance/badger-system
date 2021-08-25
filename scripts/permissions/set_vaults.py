@@ -729,9 +729,13 @@ def set_withdrawal_fee(badger, helper, vaults_to_add):
     for key in vaults_to_add:
         console.print(f"Reduce Fees on Strats {key}")
 
-        strategy = helper.contract_from_abi(badger.getStrategy(key).address, "StrategyConvexStakingOptimizer", StrategyConvexStakingOptimizer.abi)
+        strategy = helper.contract_from_abi(
+            badger.getStrategy(key).address,
+            "StrategyConvexStakingOptimizer",
+            StrategyConvexStakingOptimizer.abi,
+        )
         print("withdrawal fee", strategy.withdrawalFee())
-        
+
         assert strategy.paused() == False
 
         console.print(
@@ -945,6 +949,7 @@ def set_strategies_on_controller(badger, helper, controller_id, vaults_to_add):
         assert controller.strategies(want) == strategy.address
         assert strategy.paused() == False
 
+
 def set_vaults_on_controller(badger, helper, vaults_to_add):
     for settID in vaults_to_add:
         sett = helper.contract_from_abi(
@@ -959,6 +964,7 @@ def set_vaults_on_controller(badger, helper, vaults_to_add):
             f"Vault for token [green]{token.name()}[/green] ({token.address}) on controller [yellow]{controller.address}[/yellow] set to [green] {settID} [blue]{sett.address}[/blue]"
         )
         controller.setVault(sett.token(), sett)
+
 
 def update_rm(badger, safe, helper):
     rm = safe.contract(badger.badgerRewardsManager.address)
@@ -1050,6 +1056,7 @@ def main():
         assert True
     else:
         from helpers.gas_utils import gas_strategies
+
         gas_strategies.set_default(gas_strategies.exponentialScalingFast)
 
     rewardsManagerHelper = BadgerRewardsManagerHelper(badger, helper)

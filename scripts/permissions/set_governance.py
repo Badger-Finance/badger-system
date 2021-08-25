@@ -6,6 +6,7 @@ from scripts.systems.badger_system import connect_badger
 from helpers.console_utils import console
 from ape_safe import ApeSafe
 
+
 def main():
     badger = connect_badger()
     multi = badger.opsMultisig
@@ -22,7 +23,9 @@ def main():
             badger.getSett(sett_id).address, "SettV3", SettV3.abi
         )
         strategy = helper.contract_from_abi(
-            badger.getStrategy(sett_id).address, "StrategyCvxCrvHelper", StrategyCvxCrvHelper.abi
+            badger.getStrategy(sett_id).address,
+            "StrategyCvxCrvHelper",
+            StrategyCvxCrvHelper.abi,
         )
 
         console.print(
@@ -36,7 +39,7 @@ def main():
         if sett.governance() == multi:
             sett.setGovernance(gov)
             assert sett.governance() == gov
-            
+
         if strategy.governance() == multi:
             strategy.setGovernance(gov)
             assert strategy.governance() == gov

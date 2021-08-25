@@ -3,6 +3,7 @@ from tabulate import tabulate
 from helpers.console_utils import console
 from helpers.constants import *
 
+
 def print_role_list(contract, role, members, name=""):
     table = []
     if name == "":
@@ -31,7 +32,9 @@ def print_access_control(contract):
 
 
 def main():
-    contracts_to_view = [interface.IAccessControl("0x711a339c002386f9db409ca55b6a35a604ab6cf6")]
+    contracts_to_view = [
+        interface.IAccessControl("0x711a339c002386f9db409ca55b6a35a604ab6cf6")
+    ]
 
     for contract in contracts_to_view:
         print_access_control(contract)

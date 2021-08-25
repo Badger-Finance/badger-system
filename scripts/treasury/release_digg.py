@@ -45,10 +45,7 @@ def main():
 
     snap = BalanceSnapshotter(
         [badger.token, badger.digg.token],
-        [
-            badger.devMultisig,
-            vesting
-        ],
+        [badger.devMultisig, vesting],
     )
     snap.snap()
 

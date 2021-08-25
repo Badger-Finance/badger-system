@@ -9,6 +9,7 @@ from tabulate import tabulate
 
 console = Console()
 
+
 def get_expected_strategy_deposit_location(badger: BadgerSystem, id):
     if id == "native.badger":
         # Rewards Staking
@@ -98,7 +99,6 @@ def earn_all(badger: BadgerSystem, skip):
             snap = SnapshotManager(badger, key)
             before = snap.snap()
 
-            
             if vault.keeper() == badger.keeperAccessControl:
                 keeper = badger.earner
                 snap.settEarnAcl(

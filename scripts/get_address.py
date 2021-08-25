@@ -2,6 +2,7 @@ from brownie import web3
 from eth_utils import is_checksum_address
 import click
 
+
 def get_address(msg: str, default: str = None) -> str:
     val = click.prompt(msg, default=default)
 

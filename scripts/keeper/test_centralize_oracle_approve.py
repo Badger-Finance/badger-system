@@ -32,6 +32,7 @@ from helpers.tx_timer import tx_timer
 
 console = Console()
 
+
 def approveReport(badger: BadgerSystem, account):
     digg = badger.digg
     oracle = CentralizedOracle.at("0x73083058e0f61D3fc7814eEEDc39F9608B4546d7")
@@ -41,26 +42,27 @@ def approveReport(badger: BadgerSystem, account):
     assert payload / 1e18 > 0.75
     assert payload / 1e18 < 1.25
 
-    oracle.approveReport(payload, {'from': account})
+    oracle.approveReport(payload, {"from": account})
 
     chain.mine()
     chain.sleep(hours(2))
     chain.mine()
 
     supplyBefore = digg.token.totalSupply()
-    digg.orchestrator.rebase({'from': account})
+    digg.orchestrator.rebase({"from": account})
     supplyAfter = digg.token.totalSupply()
 
-    print({
-        'supplyBefore': supplyBefore,
-        'supplyAfter': supplyAfter,
-        '%': supplyBefore / supplyAfter,
-    })
+    print(
+        {
+            "supplyBefore": supplyBefore,
+            "supplyAfter": supplyAfter,
+            "%": supplyBefore / supplyAfter,
+        }
+    )
+
 
 def main():
     console.print("[white]===== Approving Report =====[/white]")
     # Connect badger system from file
     badger = connect_badger(load_rebaser=True)
     approveReport(badger, badger.rebaser)
-
-    

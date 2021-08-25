@@ -40,7 +40,6 @@ weekly_schedule = {
     # Convex Helper
     "native.cvx": {"badger": Wei("336 ether"), "digg": to_digg_shares(0)},
     "native.cvxCrv": {"badger": Wei("336 ether"), "digg": to_digg_shares(0)},
-
     # Native Setts
     "native.badger": {
         "badger": Wei("2300 ether") // 2,
