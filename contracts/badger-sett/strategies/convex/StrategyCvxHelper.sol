@@ -203,7 +203,7 @@ contract StrategyCvxHelper is BaseStrategy, CurveSwapper, UniswapSwapper, TokenS
             cvxRewardsPool.stake(cvxToken.balanceOf(address(this)));
         }
 
-        emit Tend(cvxHarvested);
+        emit Harvest(cvxHarvested, block.number);
         return cvxHarvested;
     }
 }
