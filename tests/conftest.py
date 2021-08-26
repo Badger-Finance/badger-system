@@ -62,23 +62,23 @@ def generate_sett_test_config(settsToRun, runTestSetts, runProdSetts=False):
 # ===== Sett + Strategy Test Configuration =====
 
 settsToRun = [
-    "native.unitRenBtc",
-    "native.badger",
-    # "harvest.renCrv", # Harvest.finance's infrastructure changed so earn() is now broken. Will be deprecated. 
-    "native.uniBadgerWbtc",
-    "native.sushiBadgerWbtc",
-    "native.sushiWbtcEth",
-    "native.sushiWbtcIbBtc",
-    # "native.uniWbtcIbBtc",
-    "native.renCrv",
-    "native.sbtcCrv",
-    "native.tbtcCrv",
-    "native.hbtcCrv",
-    "native.pbtcCrv",
-    "native.obtcCrv",
-    "native.bbtcCrv",
-    "native.tricrypto",
-    "native.tricryptoDos",
+    # "native.unitRenBtc",
+    # "native.badger",
+    # # "harvest.renCrv", # Harvest.finance's infrastructure changed so earn() is now broken. Will be deprecated. 
+    # "native.uniBadgerWbtc",
+    # "native.sushiBadgerWbtc",
+    # "native.sushiWbtcEth",
+    # "native.sushiWbtcIbBtc",
+    # # "native.uniWbtcIbBtc",
+    # "native.renCrv",
+    # "native.sbtcCrv",
+    # "native.tbtcCrv",
+    # "native.hbtcCrv",
+    # "native.pbtcCrv",
+    # "native.obtcCrv",
+    # "native.bbtcCrv",
+    # # "native.tricrypto", # Emissions were migrated to tricryptoDos. Is deprecated.
+    # "native.tricryptoDos",
     "native.cvx",
     "native.cvxCrv",
 ]

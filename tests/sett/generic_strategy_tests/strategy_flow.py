@@ -60,6 +60,12 @@ def assert_single_user_harvest_flow(settConfig):
     settKeeper = accounts.at(sett.keeper(), force=True)
     strategyKeeper = accounts.at(strategy.keeper(), force=True)
 
+    # Patch swaping paths for Convex helpers functions before harvests
+    if settConfig["id"] == "native.cvx" or settConfig["id"] == "native.cvxCrv":
+        print("PATHS PATCHED")
+        strategyGov = accounts.at(strategy.governance(), force=True)
+        strategy.patchPaths({"from": strategyGov})
+
     snap = SnapshotManager(badger, settConfig["id"])
 
     deployer = badger.deployer
@@ -231,6 +237,12 @@ def assert_withdraw_other(settConfig):
     randomUser = accounts[6]
     strategyKeeper = accounts.at(strategy.keeper(), force=True)
 
+    # Patch swaping paths for Convex helpers functions before harvests
+    if settConfig["id"] == "native.cvx" or settConfig["id"] == "native.cvxCrv":
+        print("PATHS PATCHED")
+        strategyGov = accounts.at(strategy.governance(), force=True)
+        strategy.patchPaths({"from": strategyGov})
+
     startingBalance = want.balanceOf(deployer)
 
     depositAmount = Wei("1 ether")
@@ -292,6 +304,12 @@ def assert_single_user_harvest_flow_remove_fees(settConfig):
     sett = badger.getSett(settConfig["id"])
     strategy = badger.getStrategy(settConfig["id"])
     want = badger.getStrategyWant(settConfig["id"])
+
+    # Patch swaping paths for Convex helpers functions before harvests
+    if settConfig["id"] == "native.cvx" or settConfig["id"] == "native.cvxCrv":
+        print("PATHS PATCHED")
+        strategyGov = accounts.at(strategy.governance(), force=True)
+        strategy.patchPaths({"from": strategyGov})
 
     deployer = badger.deployer
     randomUser = accounts[6]
