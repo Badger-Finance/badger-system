@@ -244,9 +244,7 @@ def assert_withdraw_other(settConfig):
         strategy.patchPaths({"from": strategyGov})
 
     startingBalance = want.balanceOf(deployer)
-
-    depositAmount = Wei("1 ether")
-
+    depositAmount = startingBalance // 2
     assert startingBalance >= depositAmount
 
     # Deposit
