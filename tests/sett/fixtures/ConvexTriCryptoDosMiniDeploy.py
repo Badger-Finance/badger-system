@@ -3,8 +3,6 @@ from config.badger_config import badger_config, sett_config, digg_config
 from helpers.registry import registry
 from helpers.token_utils import distribute_from_whales
 from brownie import *
-from helpers.proxy_utils import deploy_proxy
-import json
 from helpers.constants import AddressZero
 
 
@@ -20,10 +18,7 @@ class ConvexTriCryptoDosMiniDeploy(SettMiniDeployBase):
     def post_vault_deploy_setup(self, deploy=True):
         if not deploy:
             return
-        whale = accounts.at("0xDeFd8FdD20e0f34115C7018CCfb655796F6B2168", force=True)
-        token = interface.IERC20(sett_config.native.convexTriCryptoDos.params.want)
-        balance = token.balanceOf(whale)
-        token.transfer(self.deployer, balance // 2, {"from": whale})
+        distribute_from_whales(self.deployer, 1, "triCrypto2")
 
     def post_deploy_setup(self, deploy):
         if deploy:

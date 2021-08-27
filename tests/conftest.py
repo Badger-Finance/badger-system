@@ -44,6 +44,7 @@ from tests.sett.fixtures import (
     ConvexOBtcMiniDeploy,
     ConvexBBtcMiniDeploy,
     ConvexTriCryptoMiniDeploy,
+    ConvexTriCryptoDosMiniDeploy,
     HelperCvxMiniDeploy,
     HelperCvxCrvMiniDeploy,
 )
@@ -77,10 +78,10 @@ settsToRun = [
     # "native.pbtcCrv",
     # "native.obtcCrv",
     # "native.bbtcCrv",
-    # # "native.tricrypto", # Emissions were migrated to tricryptoDos. Is deprecated.
-    # "native.tricryptoDos",
-    "native.cvx",
-    "native.cvxCrv",
+    # "native.tricrypto", # Emissions were migrated to tricrypto2. Is deprecated.
+    "native.tricrypto2",
+    # "native.cvx",
+    # "native.cvxCrv",
 ]
 
 mStableSettsToRun = [
@@ -427,6 +428,16 @@ def badger_single_sett(settConfig, deploy=True):
         if settId == "native.tricrypto":
             return ConvexTriCryptoMiniDeploy(
                 "native.tricrypto",
+                "StrategyConvexStakingOptimizer",
+                deployer,
+                strategist=strategist,
+                guardian=guardian,
+                keeper=keeper,
+                governance=governance,
+            ).deploy(deploy=deploy)
+        if settId == "native.tricrypto2":
+            return ConvexTriCryptoDosMiniDeploy(
+                "native.tricrypto2",
                 "StrategyConvexStakingOptimizer",
                 deployer,
                 strategist=strategist,

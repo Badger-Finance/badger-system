@@ -141,6 +141,11 @@ curve_registry = DotMap(
             swap="0x80466c64868E1ab14a1Ddf27A676C3fcBE638Fe5",
             gauge="0x331aF2E331bd619DefAa5DAc6c038f53FCF9F785",
         ),
+        triCryptoDos=DotMap(
+            token="0xc4AD29ba4B3c580e6D59105FFf484999997675Ff",
+            swap="0xD51a44d3FaE010294C616388b506AcdA1bfAAE46",
+            gauge="0x3993d34e7e99Abf6B6f367309975d1360222D446",
+        ),
     ),
     pids=DotMap(
         renCrv=6,
@@ -151,6 +156,7 @@ curve_registry = DotMap(
         obtcCrv=20,
         bbtcCrv=19,
         triCrypto=37,
+        triCryptoDos=38,
     ),
 )
 
@@ -383,6 +389,11 @@ eth_registry.whales = DotMap(
     triCrypto=DotMap(
         whale="0x9f719e0bc35c46236b3f450852b526d84fed514b",
         token="0xcA3d75aC011BF5aD07a98d02f18225F9bD9A6BDF",
+        action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT,
+    ),
+    triCrypto2=DotMap(
+        whale="0x7a16ff8270133f063aab6c9977183d9e72835428",
+        token="0xc4AD29ba4B3c580e6D59105FFf484999997675Ff",
         action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT,
     ),
     cvx=DotMap(
