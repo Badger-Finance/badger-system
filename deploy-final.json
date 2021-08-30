@@ -166,7 +166,9 @@
             "native.tricrypto": "SettV3",
             "native.tricrypto2": "SettV3",
             "native.cvxCrv": "SettV4",
-            "native.cvx": "SettV4"
+            "native.cvx": "SettV4",
+            "native.mstableImBtc": "SettV3",
+            "native.mstableFpMbtcHbtc": "SettV3"
         },
         "strategies": {
             "native.badger": "0x75b8E21BD623012Efb3b69E1B562465A68944eE6",

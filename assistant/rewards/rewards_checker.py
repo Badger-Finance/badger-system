@@ -16,6 +16,8 @@ console = Console()
 
 gas_strategy = GasNowStrategy("rapid")
 
+DROPT_ADDRESS = web3.toChecksumAddress("0x68c269b60c58c4ed50c63b217ba0ec7f8a371920")
+
 
 def get_digg_contract():
     digg_contract = interface.IDigg(DIGG)
@@ -387,6 +389,9 @@ def test_claims(badger: BadgerSystem, startBlock, endBlock, before_file, after_f
 
         badger_diff = badger_claimable - claimed
         digg_diff = digg_claimable - claimed_digg
+
+        digg_contract = get_digg_contract()
+        dropt_contract = interface.IERC20(DROPT_ADDRESS)
 
         print("=== Claim: " + user + " ===")
 
