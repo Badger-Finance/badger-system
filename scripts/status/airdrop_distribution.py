@@ -1,3 +1,4 @@
+from assistant.rewards.aws_utils import upload
 from brownie import *
 from tqdm import tqdm
 from config.badger_config import badger_config
@@ -49,11 +50,19 @@ def main():
             {"from": badger.root_proposer},
         )
 
-        badger.badgerTree.approveRoot(
-            merkleTree["merkleRoot"],
-            rootHash,
-            nextCycle,
-            startBlock,
-            endBlock,
-            {"from": badger.root_approver},
+        upload(
+            contentFileName, merkleTree, publish=False
         )
+
+        # badger.badgerTree.approveRoot(
+        #     merkleTree["merkleRoot"],
+        #     rootHash,
+        #     nextCycle,
+        #     startBlock,
+        #     endBlock,
+        #     {"from": badger.root_approver},
+        # )
+
+        # upload(
+        #     contentFileName, merkleTree, publish=True
+        # )
