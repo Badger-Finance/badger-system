@@ -18,7 +18,7 @@ console = Console()
 
 def main():
     test = False
-    badger = connect_badger(badger_config.prod_json, load_deployer=False)
+    badger = connect_badger(badger_config.prod_json, load_root_proposer=True, load_root_approver=False)
     nextCycle = badger.badgerTree.currentCycle() + 1
     rewards = calc_airdrop_rewards(badger, nextCycle)
     
@@ -57,5 +57,3 @@ def main():
             endBlock,
             {"from": badger.root_approver},
         )
-
-        # test_claims(badger, startBlock, endBlock, currentRewards ,merkleTree)
