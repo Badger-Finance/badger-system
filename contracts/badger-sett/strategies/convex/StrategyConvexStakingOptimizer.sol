@@ -610,6 +610,7 @@ contract StrategyConvexStakingOptimizer is BaseStrategy, CurveSwapper, UniswapSw
         uint256 totalWantAfter = balanceOf();
         require(totalWantAfter >= totalWantBefore, "harvest-total-want-must-not-decrease");
 
+        emit Harvest(wantGained, block.number);
         return wantGained;
     }
 }
