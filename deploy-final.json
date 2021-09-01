@@ -16,7 +16,7 @@
     "testProxyAdmin": "0xB10b3Af646Afadd9C62D663dd5d226B15C25CdFA",
     "dfdBadgerProxyAdmin": "0xbf0e27fdf5ef7519a9540df401cce0a7a4cd75bc",
     "devMultisig": "0xB65cef03b9B89f99517643226d76e286ee999e77",
-    "techMultisig": "0x68bf59ef26f57b9ae9fb08ae849a95a87790b187",
+    "techMultisig": "0x86cbD0ce0c087b482782c181dA8d191De18C8275",
     "opsMultisig": "0x576cD258835C529B54722F84Bb7d4170aA932C64",
     "paymentsMultisig": "0xD4868d98849a58F743787c77738D808376210292",
     "testMultisig": "0x55949f769d0af7453881435612561d109fff07b8",
@@ -33,7 +33,7 @@
         "payments": "0xD4868d98849a58F743787c77738D808376210292",
         "dfd": "0x5b5cF8620292249669e1DCC73B753d01543D6Ac7",
         "test": "0x55949f769d0af7453881435612561d109fff07b8",
-        "tech": "0x68bf59ef26f57b9ae9fb08ae849a95a87790b187",
+        "tech": "0x86cbD0ce0c087b482782c181dA8d191De18C8275",
         "dfdBadgerShared": "0xCF7346A5E41b0821b80D5B3fdc385EEB6Dc59F44"
     },
     "keepers": {
