@@ -8,7 +8,7 @@ from helpers.token_utils import val
 
 console = Console()
 
-DROPT_ADDRESS = web3.toChecksumAddress("0x68c269b60c58c4ed50c63b217ba0ec7f8a371920")
+AIRDROP_TOKEN_ADDRESS = web3.toChecksumAddress("0x7e7E112A68d8D2E221E11047a72fFC1065c38e1a")
 
 def fetch_airdrop(filename):
     with open(filename) as f:
@@ -29,18 +29,18 @@ def process_airdrop(airdrop_data):
     return (output, total)
 
 def calc_airdrop_rewards(badger, nextCycle):
-    raw_data = fetch_airdrop("airdrop/digg-dropt-3.json")
+    raw_data = fetch_airdrop("airdrop/bdigg-airdrop.json")
     (airdrop, total) = process_airdrop(raw_data)
 
     console.log(
-        f"Updating Airdrop to {len(airdrop.items())} accounts with a total value of {val(total)}"
+        f"Pushing Airdrop of token {AIRDROP_TOKEN_ADDRESS} to {len(airdrop.items())} accounts with a total value of {val(total)}"
     )
     rewards = RewardsList(nextCycle, badger.badgerTree)
     rewardsData = {}
     for address, amount in airdrop.items():
         rewards.increase_user_rewards(
             web3.toChecksumAddress(address),
-            web3.toChecksumAddress(DROPT_ADDRESS),
+            web3.toChecksumAddress(AIRDROP_TOKEN_ADDRESS),
             int(amount),
         )
 

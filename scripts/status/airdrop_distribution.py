@@ -9,8 +9,6 @@ from assistant.rewards.rewards_assistant import (
     process_cumulative_rewards,
     fetch_current_rewards_tree,
 )
-from assistant.rewards.rewards_checker import test_claims
-from config.rewards_config import rewards_config
 from assistant.rewards.classes.MerkleTree import rewards_to_merkle_tree
 from assistant.rewards.classes.RewardsLog import rewardsLog
 from assistant.rewards.meta_rewards.airdrop_rewards import calc_airdrop_rewards
@@ -23,7 +21,7 @@ def main():
     nextCycle = badger.badgerTree.currentCycle() + 1
     rewards = calc_airdrop_rewards(badger, nextCycle)
     
-    rewardsLog.save("dropt-airdrop")
+    rewardsLog.save("bdigg-airdrop")
     currentRewards = fetch_current_rewards_tree(badger)
     cumulative_rewards = process_cumulative_rewards(currentRewards, rewards)
 
@@ -34,9 +32,10 @@ def main():
     rootHash = web3.toHex(web3.keccak(text=merkleTree["merkleRoot"]))
 
     contentFileName = (
-        "rewards-" + str(chain.id) + "-" + str(merkleTree["merkleRoot"]) + ".json"
+        "rewards-" + str(chain.id) + "-" + str(rootHash) + ".json"
     )
     console.log("Saving merkle tree as {}".format(contentFileName))
+    print(merkleTree["merkleRoot"], rootHash)
     with open(contentFileName, "w") as f:
         json.dump(merkleTree, f, indent=4)
 
