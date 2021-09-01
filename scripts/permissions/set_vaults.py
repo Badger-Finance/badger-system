@@ -163,6 +163,7 @@ def set_guest_lists(badger, helper, vaults_to_add):
         assert sett.guestList() == guestList
 
 
+
 def initialize_strategies(badger):
     """
     Approve and set strategies on the controller
@@ -966,6 +967,7 @@ def set_vaults_on_controller(badger, helper, vaults_to_add):
         controller.setVault(sett.token(), sett)
 
 
+
 def update_rm(badger, safe, helper):
     rm = safe.contract(badger.badgerRewardsManager.address)
     opsAdmin = safe.contract(badger.opsProxyAdmin.address)
@@ -987,6 +989,7 @@ def set_min(badger, helper, min, setts):
         )
         console.print(f"Set min on {key} {sett.address}")
         sett.setMin(min)
+
 
 
 def set_keeper(badger, helper, keeper, setts):
@@ -1025,6 +1028,7 @@ def switch_proxy_admin(badger, helper, keeper, strategies):
 
         assert badger.opsProxyAdmin.getProxyAdmin(strategy) == badger.opsProxyAdmin
         print(badger.opsProxyAdmin)
+
 
 
 def approve_on_helper_vaults(badger, helper, strategies):

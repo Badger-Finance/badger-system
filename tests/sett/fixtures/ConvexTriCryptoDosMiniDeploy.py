@@ -8,10 +8,10 @@ import json
 from helpers.constants import AddressZero
 
 
-class ConvexTriCryptoMiniDeploy(SettMiniDeployBase):
+class ConvexTriCryptoDosMiniDeploy(SettMiniDeployBase):
     def fetch_params(self):
-        params = sett_config.native.convexTriCrypto.params
-        want = sett_config.native.convexTriCrypto.params.want
+        params = sett_config.native.convexTriCryptoDos.params
+        want = sett_config.native.convexTriCryptoDos.params.want
 
         params.badgerTree = self.badger.badgerTree
 
@@ -20,7 +20,10 @@ class ConvexTriCryptoMiniDeploy(SettMiniDeployBase):
     def post_vault_deploy_setup(self, deploy=True):
         if not deploy:
             return
-        distribute_from_whales(self.deployer, 1)
+        whale = accounts.at("0xDeFd8FdD20e0f34115C7018CCfb655796F6B2168", force=True)
+        token = interface.IERC20(sett_config.native.convexTriCryptoDos.params.want)
+        balance = token.balanceOf(whale)
+        token.transfer(self.deployer, balance // 2, {"from": whale})
 
     def post_deploy_setup(self, deploy):
         if deploy:
@@ -61,7 +64,7 @@ class ConvexTriCryptoMiniDeploy(SettMiniDeployBase):
                     [True, True],
                     {"from": cvxCrvOwner},
                 )  # Strategy added since SettV4.sol currently checks for the sender
-            # instead of receipient for authorization on depositFor()
+                # instead of receipient for authorization on depositFor()
 
             return
 
