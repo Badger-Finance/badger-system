@@ -30,6 +30,7 @@ contract StrategySushiBadgerWbtc is BaseStrategyMultiSwapper {
     using SafeMathUpgradeable for uint256;
 
     address public geyser;
+    address internal breaker;
     address public badger; // BADGER Token
     address public constant wbtc = 0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599; // WBTC Token
     address public constant sushi = 0x6B3595068778DD592e39A122f4f5a5cF09C90fE2; // SUSHI token

@@ -62,6 +62,10 @@ name_to_artifact = {
     "StrategyCvxHelper": StrategyCvxHelper,
     "StrategyCvxCrvHelper": StrategyCvxCrvHelper,
     "StrategyPlaceholder": StrategyPlaceholder,
+    "BadgerRegistryV1": BadgerRegistryV1,
+    "WarRoomGatedProxy": WarRoomGatedProxy,
+    "KeeperAccessControl": KeeperAccessControl,
+    "GatedMiniMeController": GatedMiniMeController,
 }
 
 

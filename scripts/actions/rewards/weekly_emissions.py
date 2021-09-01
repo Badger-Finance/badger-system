@@ -51,7 +51,7 @@ pretty.install()
 === Steps to run ===
 Check WeeklyEmissions.md in this directory
 """
-start = to_timestamp(datetime.datetime(2021, 7, 15, 13, 00))
+start = to_timestamp(datetime.datetime(2021, 8, 19, 12, 00))
 duration = days(7)
 
 

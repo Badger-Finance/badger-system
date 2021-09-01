@@ -48,6 +48,7 @@ new_core_vaults = [
     "native.obtcCrv",
     "native.bbtcCrv",
     "native.tricrypto",
+    "native.tricryptoDos",
 ]
 helper_vaults = ["native.cvxCrv", "native.cvx"]
 vaults_to_run = helper_vaults

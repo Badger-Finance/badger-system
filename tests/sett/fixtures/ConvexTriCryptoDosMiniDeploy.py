@@ -3,6 +3,8 @@ from config.badger_config import badger_config, sett_config, digg_config
 from helpers.registry import registry
 from helpers.token_utils import distribute_from_whales
 from brownie import *
+from helpers.proxy_utils import deploy_proxy
+import json
 from helpers.constants import AddressZero
 
 
@@ -100,6 +102,7 @@ class ConvexTriCryptoDosMiniDeploy(SettMiniDeployBase):
 
         assert self.controller.strategies(self.vault.token()) == self.strategy.address
         assert self.controller.vaults(self.strategy.want()) == self.vault.address
+
 
         if (self.vault.guestList() != AddressZero): 
             # Add users to guestlist

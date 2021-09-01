@@ -245,6 +245,7 @@ def assert_withdraw_other(settConfig):
 
     startingBalance = want.balanceOf(deployer)
     depositAmount = startingBalance // 2
+
     assert startingBalance >= depositAmount
 
     # Deposit

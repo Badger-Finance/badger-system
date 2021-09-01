@@ -55,8 +55,6 @@ def test_claim(badger, user, claim, tokens_to_check):
 
     table = []
 
-    assert tree.merkleRoot() == root
-
     pre = get_token_balances(tokens_to_check, [userAccount])
 
     parsed_amounts = []
@@ -172,6 +170,9 @@ def test_claim(badger, user, claim, tokens_to_check):
     assert cumulative_claimed == claimed_for_token_after
     assert post_amount == pre_amount + expected_claim
 
+DROPT_ADDRESS = web3.toChecksumAddress("0x68c269b60c58c4ed50c63b217ba0ec7f8a371920")
+BDIGG_ADDRESS = web3.toChecksumAddress("0x7e7E112A68d8D2E221E11047a72fFC1065c38e1a")
+
 
 # @pytest.mark.skip()
 def test_rewards_flow():
@@ -184,6 +185,8 @@ def test_rewards_flow():
         badger.digg.token,
         interface.IERC20(registry.sushi.xsushiToken),
         interface.IERC20(registry.harvest.farmToken),
+        interface.IERC20(DROPT_ADDRESS),
+        interface.IERC20(BDIGG_ADDRESS),
     ]
 
     # newLogic = BadgerTree.deploy({"from": badger.deployer})
@@ -208,7 +211,7 @@ def test_rewards_flow():
     #         test_claim(badger, user, claim, tokens_to_check)
 
     retroactive_content_hash = (
-        "0x346ec98585b52d981d43584477e1b831ce32165cb8e0a06d14d236241b36328e"
+        "0xbaeaa8d0117b17479343ddd9dcf769f67ae615f60c72fc1d4336852b5c492d3d"
     )
     retroactive_file_name = "rewards-1-" + retroactive_content_hash + ".json"
 

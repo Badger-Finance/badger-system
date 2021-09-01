@@ -1,10 +1,7 @@
 from assistant.rewards.rewards_checker import val
 from brownie import *
-from brownie.network.gas.strategies import GasNowStrategy
 from config.active_emissions import get_active_rewards_schedule
-from helpers.gas_utils import gas_strategies
 from helpers.registry import registry
-from helpers.sett.SnapshotManager import SnapshotManager
 from helpers.snapshot import diff_numbers_by_key, snap_strategy_balance
 from helpers.utils import shares_to_fragments, to_digg_shares, to_tabulate, tx_wait
 from rich.console import Console
@@ -14,8 +11,6 @@ from scripts.systems.digg_system import connect_digg
 from scripts.systems.sushiswap_system import SushiswapSystem
 from scripts.systems.uniswap_system import UniswapSystem
 from tabulate import tabulate
-
-gas_strategies.set_default(gas_strategies.exponentialScalingFast)
 
 uniswap = UniswapSystem()
 sushiswap = SushiswapSystem()
@@ -52,21 +47,21 @@ def lp_for_strategy_internal(badger, key):
         manager.addLiquidityUniswap(
             badger.token,
             wbtc,
-            {"from": badger.external_harvester, "gas_limit": 2000000},
+            {"from": badger.external_harvester, "gas_limit": 4000000},
         )
     if key == "native.sushiBadgerWbtc":
         manager.addLiquiditySushiswap(
             badger.token,
             wbtc,
-            {"from": badger.external_harvester, "gas_limit": 2000000},
+            {"from": badger.external_harvester, "gas_limit": 4000000},
         )
     if key == "native.uniDiggWbtc":
         manager.addLiquidityUniswap(
-            digg.token, wbtc, {"from": badger.external_harvester, "gas_limit": 2000000}
+            digg.token, wbtc, {"from": badger.external_harvester, "gas_limit": 4000000}
         )
     if key == "native.sushiDiggWbtc":
         manager.addLiquiditySushiswap(
-            digg.token, wbtc, {"from": badger.external_harvester, "gas_limit": 2000000}
+            digg.token, wbtc, {"from": badger.external_harvester, "gas_limit": 4000000}
         )
 
 
@@ -97,7 +92,7 @@ def swap_for_strategy_internal(badger, key, amount):
             badger.token,
             amount,
             [badger.token, registry.tokens.wbtc],
-            {"from": badger.external_harvester, "gas_limit": 1000000},
+            {"from": badger.external_harvester},
         )
         return True
     if key == "native.sushiBadgerWbtc":
@@ -105,7 +100,7 @@ def swap_for_strategy_internal(badger, key, amount):
             badger.token,
             amount,
             [badger.token, registry.tokens.wbtc],
-            {"from": badger.external_harvester, "gas_limit": 1000000},
+            {"from": badger.external_harvester},
         )
         return True
     if key == "native.uniDiggWbtc":
@@ -113,14 +108,14 @@ def swap_for_strategy_internal(badger, key, amount):
             digg.token,
             amount,
             [digg.token, registry.tokens.wbtc],
-            {"from": badger.external_harvester, "gas_limit": 1000000},
+            {"from": badger.external_harvester},
         )
     if key == "native.sushiDiggWbtc":
         manager.swapExactTokensForTokensSushiswap(
             digg.token,
             amount,
             [digg.token, registry.tokens.wbtc],
-            {"from": badger.external_harvester, "gas_limit": 1000000},
+            {"from": badger.external_harvester},
         )
         return True
 
@@ -176,15 +171,15 @@ def main():
     lp_for_strategy(badger, key)
 
     # # ===== native.uniDiggWbtc =====
-    key = "native.uniDiggWbtc"
-    swap_for_strategy(
-        badger,
-        key,
-        shares_to_fragments(
-            rewards.getDistributions(key).getToStakingRewardsDaily("digg") // 2
-        ),
-    )
-    lp_for_strategy(badger, key)
+    # key = "native.uniDiggWbtc"
+    # swap_for_strategy(
+    #     badger,
+    #     key,
+    #     shares_to_fragments(
+    #         rewards.getDistributions(key).getToStakingRewardsDaily("digg") // 2
+    #     ),
+    # )
+    # lp_for_strategy(badger, key)
 
     # # ===== native.sushiDiggWbtc =====
     key = "native.sushiDiggWbtc"

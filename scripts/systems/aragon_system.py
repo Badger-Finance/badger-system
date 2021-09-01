@@ -81,6 +81,13 @@ class AragonSystem:
             artifacts.aragon.Voting["abi"],
         )
 
+    def getTokenManagerAt(self, address):
+        return Contract.from_abi(
+            "TokenManager",
+            web3.toChecksumAddress(address),
+            artifacts.aragon.TokenManager["abi"],
+        )
+
     def deployCompanyDao(self, params, signer):
         """
         Deploy DAO using company template with specified parameters

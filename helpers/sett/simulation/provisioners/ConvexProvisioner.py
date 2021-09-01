@@ -15,6 +15,7 @@ class ConvexProvisioner(BaseProvisioner):
             registry.whales.obtcCrv,
             registry.whales.bbtcCrv,
             registry.whales.triCrypto,
+            registry.whales.triCryptoDos,
         ]
 
     def _distributeWant(self, users) -> None:

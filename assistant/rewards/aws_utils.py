@@ -46,6 +46,9 @@ def download_tree(fileName):
     upload_bucket = "badger-json"
     upload_file_key = "rewards/" + fileName
 
+    # upload_bucket = "badger-merkle-proofs"
+    # upload_file_key = "badger-tree.json"
+
     console.print("Downloading file from s3: " + upload_file_key)
 
     s3_clientobj = s3.get_object(Bucket=upload_bucket, Key=upload_file_key)

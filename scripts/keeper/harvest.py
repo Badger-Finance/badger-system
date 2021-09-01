@@ -1,15 +1,12 @@
 from brownie import *
 from web3.contract import estimate_gas_for_function
 from config.keeper import keeper_config
-from helpers.gas_utils import gas_strategies
 from helpers.registry import registry
 from helpers.sett.SnapshotManager import SnapshotManager
 from helpers.utils import tx_wait, val
 from helpers.console_utils import console
 from scripts.systems.badger_system import BadgerSystem, connect_badger
 from tabulate import tabulate
-
-gas_strategies.set_default_for_active_chain()
 
 
 def harvest_all(badger: BadgerSystem, skip, min_profit=0):
@@ -35,25 +32,40 @@ def harvest_all(badger: BadgerSystem, skip, min_profit=0):
 
         before = snap.snap()
         if strategy.keeper() == badger.badgerRewardsManager:
-            keeper = accounts.at(strategy.keeper())
-            estimated_profit = snap.estimateProfitHarvestViaManager(
-                key,
-                strategy,
-                {"from": keeper, "gas_limit": 2000000, "allow_revert": True},
-                min_profit,
-            )
+            keeper = badger.harvester  # Use the harvester account if we have the choice
+            # estimated_profit = snap.estimateProfitHarvestViaManager(
+            #     key,
+            #     strategy,
+            #     {"from": keeper, "gas_limit": 2000000, "allow_revert": True}
+            # )
+            estimated_profit = 1
             if estimated_profit >= min_profit:
                 snap.settHarvestViaManager(
                     strategy,
                     {"from": keeper, "gas_limit": 2000000, "allow_revert": True},
                     confirm=False,
                 )
+        elif strategy.keeper() == badger.keeperAccessControl:
+            keeper = badger.harvester  # Use the harvester account if we have the choice
+            # estimated_profit = snap.estimateProfitHarvestViaManager(
+            #     key,
+            #     strategy,
+            #     {"from": keeper, "gas_limit": 2000000, "allow_revert": True}
+            # )
+            estimated_profit = 1
+            if estimated_profit >= min_profit:
+                snap.settHarvestAcl(
+                    strategy,
+                    {"from": keeper, "gas_limit": 2000000, "allow_revert": True},
+                    confirm=False,
+                )
         else:
-            estimated_profit = snap.estimateProfitHarvest(
-                key,
-                {"from": keeper, "gas_limit": 2000000, "allow_revert": True},
-                min_profit,
-            )
+            keeper = accounts.at(strategy.keeper())
+            # estimated_profit = snap.estimateProfitHarvest(
+            #     key,
+            #     {"from": keeper, "gas_limit": 2000000, "allow_revert": True}
+            # )
+            estimated_profit = 1
             if estimated_profit >= min_profit:
                 snap.settHarvest(
                     {"from": keeper, "gas_limit": 2000000, "allow_revert": True},

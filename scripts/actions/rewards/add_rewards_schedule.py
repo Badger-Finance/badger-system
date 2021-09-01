@@ -52,7 +52,7 @@ def main():
 
     rest = get_active_rewards_schedule(badger)
 
-    rest.printState("Week ?? - who knows anymore")
+    rest.printState("Week ??")
 
     recipient = accounts.at(expectedMultisig, force=True)
 

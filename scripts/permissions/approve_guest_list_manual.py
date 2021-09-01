@@ -12,6 +12,7 @@ strategies_to_approve = [
     "native.obtcCrv",
     "native.bbtcCrv",
     "native.tricrypto",
+    "native.tricryptoDos",
 ]
 guest_lists_by_id = ["native.cvxCrv", "native.cvx"]
 

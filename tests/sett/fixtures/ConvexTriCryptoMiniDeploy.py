@@ -39,26 +39,28 @@ class ConvexTriCryptoMiniDeploy(SettMiniDeployBase):
             )
 
             # Add rewards address to guestlists
-            cvxGuestlist = VipCappedGuestListBbtcUpgradeable.at(
-                cvxHelperVault.guestList()
-            )
-            cvxCrvGuestlist = VipCappedGuestListBbtcUpgradeable.at(
-                cvxCrvHelperVault.guestList()
-            )
+            list_add = cvxHelperVault.guestList()
+            if list_add != AddressZero:
+                cvxGuestlist = VipCappedGuestListBbtcUpgradeable.at(
+                    cvxHelperVault.guestList()
+                )
+                cvxCrvGuestlist = VipCappedGuestListBbtcUpgradeable.at(
+                    cvxCrvHelperVault.guestList()
+                )
 
-            cvxOwner = accounts.at(cvxGuestlist.owner(), force=True)
-            cvxCrvOwner = accounts.at(cvxCrvGuestlist.owner(), force=True)
+                cvxOwner = accounts.at(cvxGuestlist.owner(), force=True)
+                cvxCrvOwner = accounts.at(cvxCrvGuestlist.owner(), force=True)
 
-            cvxGuestlist.setGuests(
-                [self.controller.rewards(), self.strategy],
-                [True, True],
-                {"from": cvxOwner},
-            )
-            cvxCrvGuestlist.setGuests(
-                [self.controller.rewards(), self.strategy],
-                [True, True],
-                {"from": cvxCrvOwner},
-            )  # Strategy added since SettV4.sol currently checks for the sender
+                cvxGuestlist.setGuests(
+                    [self.controller.rewards(), self.strategy],
+                    [True, True],
+                    {"from": cvxOwner},
+                )
+                cvxCrvGuestlist.setGuests(
+                    [self.controller.rewards(), self.strategy],
+                    [True, True],
+                    {"from": cvxCrvOwner},
+                )  # Strategy added since SettV4.sol currently checks for the sender
             # instead of receipient for authorization on depositFor()
 
             return

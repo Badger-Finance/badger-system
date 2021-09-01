@@ -16,6 +16,8 @@ console = Console()
 
 gas_strategy = GasNowStrategy("rapid")
 
+DROPT_ADDRESS = web3.toChecksumAddress("0x68c269b60c58c4ed50c63b217ba0ec7f8a371920")
+
 
 def get_digg_contract():
     digg_contract = interface.IDigg(DIGG)
@@ -195,7 +197,7 @@ def verify_rewards(badger: BadgerSystem, startBlock, endBlock, before_data, afte
         total_before_token = int(before_data["tokenTotals"].get(token, 0))
         total_after_token = int(after_data["tokenTotals"].get(token, 0))
         print_token_diff_table(
-            name, total_before_token, total_after_token, 20000 * 1e18
+            name, total_before_token, total_after_token, 40000 * 1e18
         )
 
     assert total_after_digg < sanity_digg
@@ -387,6 +389,9 @@ def test_claims(badger: BadgerSystem, startBlock, endBlock, before_file, after_f
 
         badger_diff = badger_claimable - claimed
         digg_diff = digg_claimable - claimed_digg
+
+        digg_contract = get_digg_contract()
+        dropt_contract = interface.IERC20(DROPT_ADDRESS)
 
         print("=== Claim: " + user + " ===")
 

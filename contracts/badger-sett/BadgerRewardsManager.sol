@@ -24,12 +24,25 @@ contract BadgerRewardsManager is AccessControlUpgradeable, ReentrancyGuardUpgrad
     event RevokeStrategy(address recipient);
     event Call(address to, uint256 value, bytes data);
 
+    // Keeper Roles
+    bytes32 public constant KEEPER_ROLE = keccak256("KEEPER_ROLE");
+    bytes32 public constant EARNER_ROLE = keccak256("EARNER_ROLE");
+
+    // External Harvester Roles
     bytes32 public constant SWAPPER_ROLE = keccak256("SWAPPER_ROLE");
     bytes32 public constant DISTRIBUTOR_ROLE = keccak256("DISTRIBUTOR_ROLE");
-    bytes32 public constant KEEPER_ROLE = keccak256("KEEPER_ROLE");
+
+    // Guardian Roles
     bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
     bytes32 public constant UNPAUSER_ROLE = keccak256("UNPAUSER_ROLE");
+
+    // Digg Roles
+    bytes32 public constant REBASER_ROLE = keccak256("REBASER_ROLE");
+
+    // Approved Contract Roles
     bytes32 public constant APPROVED_SETT_ROLE = keccak256("APPROVED_SETT_ROLE");
+    bytes32 public constant APPROVED_STRATEGY_ROLE = keccak256("APPROVED_SETT_ROLE");
+    bytes32 public constant DIGG_ORACLE_ROLE = keccak256("DIGG_ORACLE_ROLE");
 
     function initialize(
         address admin,
@@ -71,8 +84,16 @@ contract BadgerRewardsManager is AccessControlUpgradeable, ReentrancyGuardUpgrad
         require(hasRole(KEEPER_ROLE, msg.sender), "KEEPER_ROLE");
     }
 
+    function _onlyEarner() internal view {
+        require(hasRole(EARNER_ROLE, msg.sender), "EARNER_ROLE");
+    }
+
     function _onlySwapper() internal view {
         require(hasRole(SWAPPER_ROLE, msg.sender), "SWAPPER_ROLE");
+    }
+
+    function _onlyRebaser() internal view {
+        require(hasRole(REBASER_ROLE, msg.sender), "REBASER_ROLE");
     }
 
     function _onlyApprovedStrategies(address recipient) internal view {
@@ -107,6 +128,11 @@ contract BadgerRewardsManager is AccessControlUpgradeable, ReentrancyGuardUpgrad
         _onlyUnpauser();
         _unpause();
     }
+
+    // function updateChainlinkForwarder(address chainlinkForwarder) external {
+    //     _onlyRebaser();
+    //     IChainlinkForwarder(chainlinkForwarder).getThePrice();
+    // }
 
     // ===== Permissioned Functions: Distributor =====
     function transferWant(
@@ -145,6 +171,13 @@ contract BadgerRewardsManager is AccessControlUpgradeable, ReentrancyGuardUpgrad
         _onlyApprovedStrategies(strategy);
 
         IStrategy(strategy).harvest();
+    }
+
+    function earn(address sett) external {
+        _onlyEarner();
+        _onlyApprovedSetts(sett);
+
+        ISett(sett).earn();
     }
 
     // ===== Permissioned Functions: Swapper =====
