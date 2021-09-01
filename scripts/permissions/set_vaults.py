@@ -1051,7 +1051,7 @@ def main():
     badger = connect_badger(load_deployer=True)
 
     if rpc.is_active():
-        dev_multi = ApeSafe(badger.testMultisig.address)
+        dev_multi = ApeSafe(badger.devMultisig.address)
         helper = ApeSafeHelper(badger, dev_multi)
         assert True
     else:
@@ -1061,16 +1061,16 @@ def main():
 
     rewardsManagerHelper = BadgerRewardsManagerHelper(badger, helper)
 
-    rewardsManagerHelper.approve_strategies_on_rewards_manager(all_setts)
-    rewardsManagerHelper.approve_setts_on_rewards_manager(all_setts)
-    rewardsManagerHelper.grant_role_on_rewards_manager(KEEPER_ROLE, [badger.harvester])
-    rewardsManagerHelper.grant_role_on_rewards_manager(EARNER_ROLE, [badger.earner])
+    # rewardsManagerHelper.approve_strategies_on_rewards_manager(all_setts)
+    # rewardsManagerHelper.approve_setts_on_rewards_manager(all_setts)
+    rewardsManagerHelper.grant_role_on_rewards_manager(KEEPER_ROLE, ["0xF8dbb94608E72A3C4cEeAB4ad495ac51210a341e"])
+    rewardsManagerHelper.grant_role_on_rewards_manager(EARNER_ROLE, ["0xF8dbb94608E72A3C4cEeAB4ad495ac51210a341e"])
 
-    rewardsManagerHelper.revoke_role_on_rewards_manager(SWAPPER_ROLE, [badger.keeper])
-    rewardsManagerHelper.revoke_role_on_rewards_manager(
-        DISTRIBUTOR_ROLE, [badger.keeper]
-    )
-    print_access_control(badger.badgerRewardsManager)
+    # rewardsManagerHelper.revoke_role_on_rewards_manager(SWAPPER_ROLE, [badger.keeper])
+    # rewardsManagerHelper.revoke_role_on_rewards_manager(
+    #     DISTRIBUTOR_ROLE, [badger.keeper]
+    # )
+    # print_access_control(badger.badgerRewardsManager)
     # set_withdrawal_fee(badger, helper, ["native.tricrypto"])
     # set_vaults_on_controller(badger, helper, ['native.tricrypto2'])
     # set_strategies_on_controller(badger, helper, "experimental", ['native.tricrypto2'])
