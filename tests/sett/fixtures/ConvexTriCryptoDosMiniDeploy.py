@@ -103,12 +103,13 @@ class ConvexTriCryptoDosMiniDeploy(SettMiniDeployBase):
         assert self.controller.strategies(self.vault.token()) == self.strategy.address
         assert self.controller.vaults(self.strategy.want()) == self.vault.address
 
-
-        if (self.vault.guestList() != AddressZero): 
+        if self.vault.guestList() != AddressZero:
             # Add users to guestlist
             guestlist = VipCappedGuestListBbtcUpgradeable.at(self.vault.guestList())
 
-            owner = accounts.at("0xd41f7006bcb2B3d0F9C5873272Ebed67B37F80Dc", force=True)
+            owner = accounts.at(
+                "0xd41f7006bcb2B3d0F9C5873272Ebed67B37F80Dc", force=True
+            )
 
             addresses = []
             for account in accounts:

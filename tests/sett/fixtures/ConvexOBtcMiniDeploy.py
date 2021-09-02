@@ -37,9 +37,7 @@ class ConvexOBtcMiniDeploy(SettMiniDeployBase):
                 self.strategy.address, {"from": cvxCrvHelperGov}
             )
 
-            if (
-                cvxHelperVault.guestList() != AddressZero
-                ) and (
+            if (cvxHelperVault.guestList() != AddressZero) and (
                 cvxCrvHelperVault.guestList() != AddressZero
             ):
 
@@ -105,8 +103,7 @@ class ConvexOBtcMiniDeploy(SettMiniDeployBase):
         assert self.controller.strategies(self.vault.token()) == self.strategy.address
         assert self.controller.vaults(self.strategy.want()) == self.vault.address
 
-
-        if (self.vault.guestList() != AddressZero): 
+        if self.vault.guestList() != AddressZero:
             # Add actors to guestlist
             guestlist = VipCappedGuestListBbtcUpgradeable.at(self.vault.guestList())
 
@@ -131,7 +128,7 @@ class ConvexOBtcMiniDeploy(SettMiniDeployBase):
                 (3000, 10000, 0, 0, 0),
                 [registry.tokens.bor, registry.tokens.weth, registry.tokens.wbtc],
                 {"from": self.governance},
-        )
+            )
 
     # Setup used for running simulation without deployed strategy:
 

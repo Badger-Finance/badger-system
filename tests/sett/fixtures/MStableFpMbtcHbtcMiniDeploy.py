@@ -116,5 +116,7 @@ class MStableFpMbtcHbtcMiniDeploy(SettMiniDeployBase):
         # Only for local testing
         if deploy:
             # Distribute tokens from whales to deployer (including fPmBtcHBtc, imbtc & mta)
-            distribute_from_whales(self.deployer, 0.2, "fPmBtcHBtc") # distribute 20% as the only whale is staking vault
+            distribute_from_whales(
+                self.deployer, 0.2, "fPmBtcHBtc"
+            )  # distribute 20% as the only whale is staking vault
             distribute_from_whales(self.deployer, 1, "mta")

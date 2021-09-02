@@ -17,7 +17,9 @@ class HarvestMetaFarmMiniDeploy(SettMiniDeployBase):
         self.strategy.setWithdrawalMaxDeviationThreshold(50, {"from": self.governance})
 
         # Strategy must be whitelisted on Harvest's controller
-        harvestController = interface.IHarvestController("0x3cc47874dc50d98425ec79e647d83495637c55e3")
+        harvestController = interface.IHarvestController(
+            "0x3cc47874dc50d98425ec79e647d83495637c55e3"
+        )
         gov = accounts.at(harvestController.governance(), force=True)
 
         harvestController.addToWhitelist(self.strategy.address, {"from": gov})

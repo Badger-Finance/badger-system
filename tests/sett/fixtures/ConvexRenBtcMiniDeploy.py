@@ -38,9 +38,7 @@ class ConvexRenBtcMiniDeploy(SettMiniDeployBase):
                 self.strategy.address, {"from": cvxCrvHelperGov}
             )
 
-            if (
-                cvxHelperVault.guestList() != AddressZero
-                ) and (
+            if (cvxHelperVault.guestList() != AddressZero) and (
                 cvxCrvHelperVault.guestList() != AddressZero
             ):
 

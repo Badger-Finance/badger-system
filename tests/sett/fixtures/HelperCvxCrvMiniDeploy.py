@@ -54,8 +54,7 @@ class HelperCvxCrvMiniDeploy(SettMiniDeployBase):
 
         self.strategy.setCrvCvxCrvPath({"from": self.governance})
 
-        
-        if (self.vault.guestList() != AddressZero): 
+        if self.vault.guestList() != AddressZero:
             # Add actors to guestlist
             guestlist = VipCappedGuestListBbtcUpgradeable.at(self.vault.guestList())
 

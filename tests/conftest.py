@@ -65,7 +65,7 @@ def generate_sett_test_config(settsToRun, runTestSetts, runProdSetts=False):
 settsToRun = [
     # "native.unitRenBtc",
     # "native.badger",
-    # # "harvest.renCrv", # Harvest.finance's infrastructure changed so earn() is now broken. Will be deprecated. 
+    # # "harvest.renCrv", # Harvest.finance's infrastructure changed so earn() is now broken. Will be deprecated.
     # "native.uniBadgerWbtc",
     # "native.sushiBadgerWbtc",
     # "native.sushiWbtcEth",

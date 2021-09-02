@@ -37,9 +37,7 @@ class ConvexPBtcMiniDeploy(SettMiniDeployBase):
                 self.strategy.address, {"from": cvxCrvHelperGov}
             )
 
-            if (
-                cvxHelperVault.guestList() != AddressZero
-                ) and (
+            if (cvxHelperVault.guestList() != AddressZero) and (
                 cvxCrvHelperVault.guestList() != AddressZero
             ):
                 # Add rewards address to guestlists
@@ -104,7 +102,7 @@ class ConvexPBtcMiniDeploy(SettMiniDeployBase):
         assert self.controller.strategies(self.vault.token()) == self.strategy.address
         assert self.controller.vaults(self.strategy.want()) == self.vault.address
 
-        if (self.vault.guestList() != AddressZero): 
+        if self.vault.guestList() != AddressZero:
             # Add actors to guestlist
             guestlist = VipCappedGuestListBbtcUpgradeable.at(self.vault.guestList())
 

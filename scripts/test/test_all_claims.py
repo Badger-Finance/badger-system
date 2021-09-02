@@ -170,6 +170,7 @@ def test_claim(badger, user, claim, tokens_to_check):
     assert cumulative_claimed == claimed_for_token_after
     assert post_amount == pre_amount + expected_claim
 
+
 DROPT_ADDRESS = web3.toChecksumAddress("0x68c269b60c58c4ed50c63b217ba0ec7f8a371920")
 BDIGG_ADDRESS = web3.toChecksumAddress("0x7e7E112A68d8D2E221E11047a72fFC1065c38e1a")
 

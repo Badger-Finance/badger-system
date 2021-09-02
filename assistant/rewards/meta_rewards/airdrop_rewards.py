@@ -8,13 +8,17 @@ from helpers.token_utils import val
 
 console = Console()
 
-AIRDROP_TOKEN_ADDRESS = web3.toChecksumAddress("0x7e7E112A68d8D2E221E11047a72fFC1065c38e1a")
+AIRDROP_TOKEN_ADDRESS = web3.toChecksumAddress(
+    "0x7e7E112A68d8D2E221E11047a72fFC1065c38e1a"
+)
+
 
 def fetch_airdrop(filename):
     with open(filename) as f:
         data = json.load(f)
-    
+
     return data
+
 
 def process_airdrop(airdrop_data):
     output = {}
@@ -25,8 +29,9 @@ def process_airdrop(airdrop_data):
         total += amount_formatted
 
         print(address, val(amount_formatted))
-    
+
     return (output, total)
+
 
 def calc_airdrop_rewards(badger, nextCycle):
     raw_data = fetch_airdrop("airdrop/bdigg-airdrop.json")

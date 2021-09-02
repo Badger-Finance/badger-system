@@ -163,7 +163,6 @@ def set_guest_lists(badger, helper, vaults_to_add):
         assert sett.guestList() == guestList
 
 
-
 def initialize_strategies(badger):
     """
     Approve and set strategies on the controller
@@ -967,7 +966,6 @@ def set_vaults_on_controller(badger, helper, vaults_to_add):
         controller.setVault(sett.token(), sett)
 
 
-
 def update_rm(badger, safe, helper):
     rm = safe.contract(badger.badgerRewardsManager.address)
     opsAdmin = safe.contract(badger.opsProxyAdmin.address)
@@ -989,7 +987,6 @@ def set_min(badger, helper, min, setts):
         )
         console.print(f"Set min on {key} {sett.address}")
         sett.setMin(min)
-
 
 
 def set_keeper(badger, helper, keeper, setts):
@@ -1030,7 +1027,6 @@ def switch_proxy_admin(badger, helper, keeper, strategies):
         print(badger.opsProxyAdmin)
 
 
-
 def approve_on_helper_vaults(badger, helper, strategies):
     cvxHelper = helper.contract_from_abi(
         badger.getSett("native.cvx").address, "SettV4", SettV4.abi
@@ -1067,8 +1063,12 @@ def main():
 
     # rewardsManagerHelper.approve_strategies_on_rewards_manager(all_setts)
     # rewardsManagerHelper.approve_setts_on_rewards_manager(all_setts)
-    rewardsManagerHelper.grant_role_on_rewards_manager(KEEPER_ROLE, ["0xF8dbb94608E72A3C4cEeAB4ad495ac51210a341e"])
-    rewardsManagerHelper.grant_role_on_rewards_manager(EARNER_ROLE, ["0xF8dbb94608E72A3C4cEeAB4ad495ac51210a341e"])
+    rewardsManagerHelper.grant_role_on_rewards_manager(
+        KEEPER_ROLE, ["0xF8dbb94608E72A3C4cEeAB4ad495ac51210a341e"]
+    )
+    rewardsManagerHelper.grant_role_on_rewards_manager(
+        EARNER_ROLE, ["0xF8dbb94608E72A3C4cEeAB4ad495ac51210a341e"]
+    )
 
     # rewardsManagerHelper.revoke_role_on_rewards_manager(SWAPPER_ROLE, [badger.keeper])
     # rewardsManagerHelper.revoke_role_on_rewards_manager(
