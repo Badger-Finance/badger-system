@@ -26,6 +26,7 @@ contract RewardsLogger is AccessControlUpgradeable {
     }
 
     mapping(address => UnlockSchedule[]) public unlockSchedules;
+    mapping(address => UnlockSchedule[]) public autoCompoundingSchedules;
 
     event UnlockScheduleSet(
         address indexed beneficiary,
@@ -48,6 +49,29 @@ contract RewardsLogger is AccessControlUpgradeable {
         uint256 indexed timestamp,
         uint256 indexed blockNumber
     );
+
+    event AutoCompoundingScheduleSet(
+        address indexed beneficiary,
+        address token,
+        uint256 totalAmount,
+        uint256 start,
+        uint256 end,
+        uint256 duration,
+        uint256 indexed timestamp,
+        uint256 indexed blockNumber
+    );
+    event AutoCompoundingScheduleModified(
+        uint256 index,
+        address indexed beneficiary,
+        address token,
+        uint256 totalAmount,
+        uint256 start,
+        uint256 end,
+        uint256 duration,
+        uint256 indexed timestamp,
+        uint256 indexed blockNumber
+    );
+
     event DiggPegRewards(address indexed beneficiary, uint256 response, uint256 rate, uint256 indexed timestamp, uint256 indexed blockNumber);
 
     function initialize(address initialAdmin_, address initialManager_) external initializer {
@@ -64,6 +88,7 @@ contract RewardsLogger is AccessControlUpgradeable {
 
     // ===== Permissioned Functions: Manager =====
 
+    // Tree Emissions
     function setUnlockSchedule(
         address beneficiary,
         address token,
@@ -89,6 +114,32 @@ contract RewardsLogger is AccessControlUpgradeable {
         emit UnlockScheduleModified(index, beneficiary, token, totalAmount, start, end, duration, block.number, block.timestamp);
     }
 
+    // Auto-compounding Emissions
+    function setAutoCompoundingUnlockSchedule(
+        address beneficiary,
+        address token,
+        uint256 totalAmount,
+        uint256 start,
+        uint256 end,
+        uint256 duration
+    ) external onlyManager {
+        autoCompoundingSchedules[beneficiary].push(UnlockSchedule(beneficiary, token, totalAmount, start, end, duration));
+        emit AutoCompoundingScheduleSet(beneficiary, token, totalAmount, start, end, duration, block.number, block.timestamp);
+    }
+
+    function modifyAutoCompoundingUnlockSchedule(
+        uint256 index,
+        address beneficiary,
+        address token,
+        uint256 totalAmount,
+        uint256 start,
+        uint256 end,
+        uint256 duration
+    ) external onlyManager {
+        autoCompoundingSchedules[beneficiary][index] = UnlockSchedule(beneficiary, token, totalAmount, start, end, duration);
+        emit AutoCompoundingScheduleModified(index, beneficiary, token, totalAmount, start, end, duration, block.number, block.timestamp);
+    }
+
     function setDiggPegRewards(
         address beneficiary,
         uint256 response,
@@ -102,9 +153,24 @@ contract RewardsLogger is AccessControlUpgradeable {
         return unlockSchedules[beneficiary];
     }
 
+    /// @dev Return all auto-compounding schedules for a given beneficiary
+    function getAllAutoCompoundingSchedulesFor(address beneficiary) external view returns (UnlockSchedule[] memory) {
+        return autoCompoundingSchedules[beneficiary];
+    }
+
     /// @dev Return all unlock schedules for a given beneficiary + token
     function getUnlockSchedulesFor(address beneficiary, address token) external view returns (UnlockSchedule[] memory) {
         UnlockSchedule[] memory schedules = unlockSchedules[beneficiary];
+        return _filterSchedulesByToken(schedules, token);
+    }
+
+    /// @dev Return all auto-compounding schedules for a given beneficiary + token
+    function getAutoCompoundingSchedulesFor(address beneficiary, address token) external view returns (UnlockSchedule[] memory) {
+        UnlockSchedule[] memory schedules = autoCompoundingSchedules[beneficiary];
+        return _filterSchedulesByToken(schedules, token);
+    }
+
+    function _filterSchedulesByToken(UnlockSchedule[] memory schedules, address token) internal pure returns (UnlockSchedule[] memory) {
         uint256 numMatchingEntries = 0;
 
         // Determine how many matching entries there are
