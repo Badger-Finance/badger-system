@@ -40,7 +40,7 @@ def main():
     """
 
     # Set path to JSON file with the logic contracts' addresses keyed by contract name
-    path = os.getcwd() + "/scripts/multichain/eth_logic.json"
+    path = os.getcwd() + "/scripts/multichain/arbitrum_logic.json"
     with open(path) as f:
         data = json.load(f)
 
