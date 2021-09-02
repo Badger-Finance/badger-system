@@ -97,8 +97,8 @@ def main():
 
     ## DONE
 
-        snap.snap()
-        snap.diff_last_two()
+    snap.snap()
+    snap.diff_last_two()
 
     ## Publish all Txs
     helper.publish()
