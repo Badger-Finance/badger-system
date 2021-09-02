@@ -46,7 +46,7 @@ abstract contract StrategyMStableVaultBase is BaseStrategyMultiSwapper {
 
     event GovMtaSet(uint256 govMta);
 
-    event TokenDistribution(address indexed token, address indexed destination, uint256 amount, uint256 indexed blockNumber, uint256 timestamp);
+    event TreeDistribution(address indexed token, uint256 amount, uint256 indexed blockNumber, uint256 timestamp);
 
     event MStableHarvest(
         uint256 mtaTotal,
@@ -169,7 +169,7 @@ abstract contract StrategyMStableVaultBase is BaseStrategyMultiSwapper {
     }
 
     /// @notice Harvest from strategy mechanics, realizing increase in underlying position
-    function harvest() external whenNotPaused returns (HarvestData memory) {
+    function harvest() external whenNotPaused returns (uint256) {
         _onlyAuthorizedActors();
 
         HarvestData memory harvestData;
@@ -194,7 +194,7 @@ abstract contract StrategyMStableVaultBase is BaseStrategyMultiSwapper {
             (harvestData.mtaFees[0], harvestData.mtaFees[1]) = _processPerformanceFees(mta, harvestData.mtaPostVesting);
             harvestData.mtaPostVestingSentToBadgerTree = harvestData.mtaPostVesting.sub(harvestData.mtaFees[0]).sub(harvestData.mtaFees[1]);
             IERC20Upgradeable(mta).safeTransfer(badgerTree, harvestData.mtaPostVestingSentToBadgerTree);
-            emit TokenDistribution(mta, badgerTree, harvestData.mtaPostVestingSentToBadgerTree, block.number, block.timestamp);
+            emit TreeDistribution(mta, harvestData.mtaPostVestingSentToBadgerTree, block.number, block.timestamp);
         }
 
         // Step 4: convert remainder to LP and reinvest
@@ -242,7 +242,7 @@ abstract contract StrategyMStableVaultBase is BaseStrategyMultiSwapper {
         );
         emit Harvest(harvestData.wantProcessed.sub(_wantBefore), block.number);
 
-        return harvestData;
+        return harvestData.wantProcessed.sub(_wantBefore);
     }
 
     /// ===== Internal Helper Functions =====
