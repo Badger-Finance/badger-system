@@ -2,227 +2,215 @@
 pragma solidity >=0.6.0 <0.7.0;
 pragma experimental ABIEncoderV2;
 
-import "deps/@openzeppelin/contracts-upgradeable/utils/EnumerableSetUpgradeable.sol";
-import "deps/@openzeppelin/contracts-upgradeable/proxy/Initializable.sol";
+import "deps/@openzeppelin/contracts/utils/EnumerableSet.sol";
 
-// Data from Vault
-struct StrategyParams {
-    uint256 performanceFee;
-    uint256 activation;
-    uint256 debtRatio;
-    uint256 minDebtPerHarvest;
-    uint256 maxDebtPerHarvest;
-    uint256 lastReport;
-    uint256 totalDebt;
-    uint256 totalGain;
-    uint256 totalLoss;
-}
 
-interface VaultView {
-    function name() external view returns (string memory);
+contract BadgerRegistry {
+  using EnumerableSet for EnumerableSet.AddressSet;
 
-    function symbol() external view returns (string memory);
+  //@dev is the vault at the experimental, guarded or open stage? Only for Prod Vaults
+  enum VaultStatus { experimental, guarded, open }
 
-    function token() external view returns (address);
+  struct VaultData {
+    string version;
+    VaultStatus status;
+    address[] list;
+  }
 
-    function strategies(address _strategy) external view returns (StrategyParams memory);
+  //@dev Multisig. Vaults from here are considered Production ready
+  address public governance;
+  address public devGovernance; //@notice an address with some powers to make things easier in development
 
-    function pendingGovernance() external view returns (address);
+  //@dev Given an Author Address, and Token, Return the Vault
+  mapping(address => mapping(string => EnumerableSet.AddressSet)) private vaults;
+  mapping(string => address) public addresses;
 
-    function governance() external view returns (address);
+  //@dev Given Version and VaultStatus, returns the list of Vaults in production
+  mapping(string => mapping(VaultStatus => EnumerableSet.AddressSet)) private productionVaults;
 
-    function management() external view returns (address);
+  // Known constants you can use
+  string[] public keys; //@notice, you don't have a guarantee of the key being there, it's just a utility
+  string[] public versions; //@notice, you don't have a guarantee of the key being there, it's just a utility
 
-    function guardian() external view returns (address);
+  event NewVault(address author, string version, address vault);
+  event RemoveVault(address author, string version, address vault);
+  event PromoteVault(address author, string version, address vault, VaultStatus status);
+  event DemoteVault(address author, string version, address vault, VaultStatus status);
 
-    function rewards() external view returns (address);
+  event Set(string key, address at);
+  event AddKey(string key);
+  event AddVersion(string version);
 
-    function withdrawalQueue(uint256 index) external view returns (address);
-}
+  function initialize(address newGovernance) public {
+    require(governance == address(0));
+    governance = newGovernance;
+    devGovernance = address(0);
 
-interface StratView {
-    function name() external view returns (string memory);
+    versions.push("v1"); //For v1
+    versions.push("v2"); //For v2
+  }
 
-    function strategist() external view returns (address);
+  function setGovernance(address _newGov) public {
+    require(msg.sender == governance, "!gov");
+    governance = _newGov;
+  }
 
-    function rewards() external view returns (address);
+  function setDev(address newDev) public {
+    require(msg.sender == governance || msg.sender == devGovernance, "!gov");
+    devGovernance = newDev;
+  }
 
-    function keeper() external view returns (address);
-}
+  //@dev Utility function to add Versions for Vaults, 
+  //@notice No guarantee that it will be properly used
+  function addVersions(string memory version) public {
+    require(msg.sender == governance, "!gov");
+    versions.push(version);
 
-contract BadgerRegistryV1 is Initializable {
-    using EnumerableSetUpgradeable for EnumerableSetUpgradeable.AddressSet;
+    emit AddVersion(version);
+  }
 
-    //@dev Multisig. Vaults from here are considered Production ready
-    address public governance;
 
-    //@dev Given an Author Address, and Token, Return the Vault
-    mapping(address => EnumerableSetUpgradeable.AddressSet) private vaults;
+  //@dev Anyone can add a vault to here, it will be indexed by their address
+  function add(string memory version, address vault) public {
+    bool added = vaults[msg.sender][version].add(vault);
+    if (added) { 
+      emit NewVault(msg.sender, version, vault);
+    }
+  }
 
-    event NewVault(address author, address vault);
-    event RemoveVault(address author, address vault);
-    event PromoteVault(address author, address vault);
+  //@dev Remove the vault from your index
+  function remove(string memory version, address vault) public {
+    bool removed = vaults[msg.sender][version].remove(vault);
+    if (removed) { 
+      emit RemoveVault(msg.sender, version, vault); 
+     }
+  }
 
-    //@dev View Data for each strat we will return
-    struct StratInfo {
-        address at;
-        string name;
-        address strategist;
-        address rewards;
-        address keeper;
-        uint256 performanceFee;
-        uint256 activation;
-        uint256 debtRatio;
-        uint256 minDebtPerHarvest;
-        uint256 maxDebtPerHarvest;
-        uint256 lastReport;
-        uint256 totalDebt;
-        uint256 totalGain;
-        uint256 totalLoss;
+  //@dev Promote a vault to Production
+  //@dev Promote just means indexed by the Governance Address
+  function promote(string memory version, address vault, VaultStatus status) public {
+    require(msg.sender == governance || msg.sender == devGovernance, "!gov");
+
+    VaultStatus actualStatus = status;
+    if(msg.sender == devGovernance) {
+      actualStatus = VaultStatus.experimental;
     }
 
-    /// Vault data we will return for each Vault
-    struct VaultInfo {
-        address at;
-        string name;
-        string symbol;
-        address token;
-        address pendingGovernance; // If this is non zero, this is an attack from the deployer
-        address governance;
-        address rewards;
-        address guardian;
-        address management;
-        StratInfo[] strategies;
+    bool added = productionVaults[version][actualStatus].add(vault);
+
+    // If added remove from old and emit event
+    if (added) { 
+      // also remove from old prod
+      if(uint256(actualStatus) == 2){
+        // Remove from prev2
+        productionVaults[version][VaultStatus(0)].remove(vault);
+        productionVaults[version][VaultStatus(1)].remove(vault);
+      }
+      if(uint256(actualStatus) == 1){
+        // Remove from prev1
+        productionVaults[version][VaultStatus(0)].remove(vault);
+      }
+
+      emit PromoteVault(msg.sender, version, vault, actualStatus); 
+    }
+  }
+
+  function demote(string memory version, address vault, VaultStatus status) public {
+    require(msg.sender == governance || msg.sender == devGovernance, "!gov");
+
+    VaultStatus actualStatus = status;
+    if(msg.sender == devGovernance) {
+      actualStatus = VaultStatus.experimental;
     }
 
-    function initialize(address _governance) public initializer {
-        governance = _governance;
+    bool removed = productionVaults[version][actualStatus].remove(vault);
+
+    if (removed) { 
+      emit DemoteVault(msg.sender, version, vault, status);
+    }
+  }
+
+  /** KEY Management */
+
+  //@dev Set the value of a key to a specific address
+  //@notice e.g. controller = 0x123123 
+  function set(string memory key, address at) public {
+    require(msg.sender == governance, "!gov");
+    _addKey(key);
+    addresses[key] = at;
+    emit Set(key, at);
+  }
+
+  //@dev Retrieve the value of a key
+  function get(string memory key) public view returns (address){
+    return addresses[key];
+  }
+
+  //@dev Add a key to the list of keys
+  //@notice This is used to make it easier to discover keys, 
+  //@notice however you have no guarantee that all keys will be in the list
+  function _addKey(string memory key) internal {
+    //If we find the key, skip
+    bool found = false;
+    for(uint256 x = 0; x < keys.length; x++){
+      // Compare strings via their hash because solidity
+      if(keccak256(bytes(key)) == keccak256(bytes(keys[x]))) {
+        found = true;
+      }
     }
 
-    function setGovernance(address _newGov) public {
-        require(msg.sender == governance, "!gov");
-        governance = _newGov;
+    if(found) {
+      return;
     }
 
-    /// Anyone can add a vault to here, it will be indexed by their address
-    function add(address vault) public {
-        bool added = vaults[msg.sender].add(vault);
-        if (added) {
-            emit NewVault(msg.sender, vault);
-        }
-    }
+    // Else let's add it and emit the event
+    keys.push(key);
 
-    /// Remove the vault from your index
-    function remove(address vault) public {
-        bool removed = vaults[msg.sender].remove(vault);
-        if (removed) {
-            emit RemoveVault(msg.sender, vault);
-        }
-    }
+    emit AddKey(key);
+  }
 
-    //@dev Retrieve a list of all Vault Addresses from the given author
-    function fromAuthor(address author) public view returns (address[] memory) {
-        uint256 length = vaults[author].length();
+  //@dev Retrieve a list of all Vault Addresses from the given author
+  function getVaults(string memory version, address author) public view returns (address[] memory) {
+    uint256 length = vaults[author][version].length();
+
+    address[] memory list = new address[](length);
+    for (uint256 i = 0; i < length; i++) {
+      list[i] = vaults[author][version].at(i);
+    }
+    return list;
+  }
+
+  //@dev Retrieve a list of all Vaults that are in production, based on Version and Status
+  function getFilteredProductionVaults(string memory version, VaultStatus status) public view returns (address[] memory) {
+    uint256 length = productionVaults[version][status].length();
+
+    address[] memory list = new address[](length);
+    for (uint256 i = 0; i < length; i++) {
+      list[i] = productionVaults[version][status].at(i);
+    }
+    return list;
+  }
+
+  function getProductionVaults() public view returns (VaultData[] memory) {
+    uint256 versionsCount = versions.length;
+
+    VaultData[] memory data = new VaultData[](versionsCount * 3);
+
+    for(uint256 x = 0; x < versionsCount; x++) {
+      for(uint256 y = 0; y < 3; y++) {
+        uint256 length = productionVaults[versions[x]][VaultStatus(y)].length();
         address[] memory list = new address[](length);
-        for (uint256 i = 0; i < length; i++) {
-            list[i] = vaults[author].at(i);
+        for(uint256 z = 0; z < length; z++){
+          list[z] = productionVaults[versions[x]][VaultStatus(y)].at(z);
         }
-        return list;
+        data[x * (versionsCount - 1) + y * 2] = VaultData({
+          version: versions[x],
+          status: VaultStatus(y),
+          list: list
+        });
+      }
     }
 
-    //@dev Retrieve a list of all Vaults and the basic Vault info
-    function fromAuthorVaults(address author) public view returns (VaultInfo[] memory) {
-        uint256 length = vaults[author].length();
-
-        VaultInfo[] memory vaultData = new VaultInfo[](length);
-        for (uint256 x = 0; x < length; x++) {
-            VaultView vault = VaultView(vaults[author].at(x));
-            StratInfo[] memory allStrats = new StratInfo[](0);
-
-            VaultInfo memory data = VaultInfo({
-                at: vaults[author].at(x),
-                name: vault.name(),
-                symbol: vault.symbol(),
-                token: vault.token(),
-                pendingGovernance: vault.pendingGovernance(),
-                governance: vault.governance(),
-                rewards: vault.rewards(),
-                guardian: vault.guardian(),
-                management: vault.management(),
-                strategies: allStrats
-            });
-
-            vaultData[x] = data;
-        }
-        return vaultData;
-    }
-
-    //@dev Given the Vault, retrieve all the data as well as all data related to the strategies
-    function fromAuthorWithDetails(address author) public view returns (VaultInfo[] memory) {
-        uint256 length = vaults[author].length();
-        VaultInfo[] memory vaultData = new VaultInfo[](length);
-
-        for (uint256 x = 0; x < length; x++) {
-            VaultView vault = VaultView(vaults[author].at(x));
-
-            // TODO: Strat Info with real data
-            uint256 stratCount = 0;
-            for (uint256 y = 0; y < 20; y++) {
-                if (vault.withdrawalQueue(y) != address(0)) {
-                    stratCount++;
-                }
-            }
-            StratInfo[] memory allStrats = new StratInfo[](stratCount);
-
-            for (uint256 z = 0; z < stratCount; z++) {
-                StratView strat = StratView(vault.withdrawalQueue(z));
-                StrategyParams memory params = vault.strategies(vault.withdrawalQueue(z));
-                StratInfo memory stratData = StratInfo({
-                    at: vault.withdrawalQueue(z),
-                    name: strat.name(),
-                    strategist: strat.strategist(),
-                    rewards: strat.rewards(),
-                    keeper: strat.keeper(),
-                    performanceFee: params.performanceFee,
-                    activation: params.activation,
-                    debtRatio: params.debtRatio,
-                    minDebtPerHarvest: params.minDebtPerHarvest,
-                    maxDebtPerHarvest: params.maxDebtPerHarvest,
-                    lastReport: params.lastReport,
-                    totalDebt: params.totalDebt,
-                    totalGain: params.totalGain,
-                    totalLoss: params.totalLoss
-                });
-                allStrats[z] = stratData;
-            }
-
-            VaultInfo memory data = VaultInfo({
-                at: vaults[author].at(x),
-                name: vault.name(),
-                symbol: vault.symbol(),
-                token: vault.token(),
-                pendingGovernance: vault.pendingGovernance(),
-                governance: vault.governance(),
-                rewards: vault.rewards(),
-                guardian: vault.guardian(),
-                management: vault.management(),
-                strategies: allStrats
-            });
-
-            vaultData[x] = data;
-        }
-
-        return vaultData;
-    }
-
-    //@dev Promote a vault to Production
-    //@dev Promote just means indexed by the Governance Address
-    function promote(address vault) public {
-        require(msg.sender == governance, "!gov");
-        bool promoted = vaults[msg.sender].add(vault);
-
-        if (promoted) {
-            emit PromoteVault(msg.sender, vault);
-        }
-    }
+    return data;
+  }
 }
