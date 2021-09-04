@@ -117,7 +117,7 @@ def test_single_user_harvest_flow(settConfig):
     snap.settWithdraw(depositAmount // 2, {"from": deployer})
 
     # Chain sleeps for more than 6 months to allow for a mta full vesting cycle
-    chain.sleep(days(186))
+    chain.sleep(days(187))
     chain.mine()
 
     # Harvest
