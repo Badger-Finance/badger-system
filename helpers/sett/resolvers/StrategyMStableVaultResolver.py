@@ -22,6 +22,22 @@ class StrategyMStableVaultResolver(StrategyCoreResolver):
         return calls
 
     def confirm_harvest_events(self, before, after, tx):
+        key = "Harvest"
+        assert key in tx.events
+        assert len(tx.events[key]) == 1
+        event = tx.events[key][0]
+
+        keys = [
+            "harvested",
+            "blockNumber"
+        ]
+        for key in keys:
+            assert key in event
+
+        console.print("[blue]== MStable Strat Harvest State ==[/blue]")
+
+        self.printMStableState(event, keys)
+
         key = "MStableHarvest"
         assert key in tx.events
         assert len(tx.events[key]) == 1
@@ -41,6 +57,8 @@ class StrategyMStableVaultResolver(StrategyCoreResolver):
         ]
         for key in keys:
             assert key in event
+
+        console.print("[blue]== MStable Strat MStableHarvest State ==[/blue]")
 
         self.printMStableState(event, keys)
 
@@ -92,17 +110,18 @@ class StrategyMStableVaultResolver(StrategyCoreResolver):
         )
 
         # mtaRecycledToWant = mtaTotal - govFee - mtaPostVesting
-        assert approx(
-            (float(event["mtaRecycledToWant"])),
-            float(event["mtaTotal"])
-            - float(event["mtaSentToVoterProxy"])
-            - float(event["mtaPostVesting"]),
-            1,
-        )
+        # Post vesting, all mta claimed will are processed and distributed (no compunding)
+        if float(event["mtaRecycledToWant"]) > 0:
+            assert approx(
+                (float(event["mtaRecycledToWant"])),
+                float(event["mtaTotal"])
+                - float(event["mtaSentToVoterProxy"])
+                - float(event["mtaPostVesting"]),
+                1,
+            )
 
     def printMStableState(self, event, keys):
         table = []
-        console.print("[blue]== MStable Strat harvest() State ==[/blue]")
         for key in keys:
             if isinstance(event[key], tuple):
                 for index, item in enumerate(event[key]):
