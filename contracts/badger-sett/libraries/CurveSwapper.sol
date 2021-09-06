@@ -8,6 +8,8 @@ import "deps/@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "deps/@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 import "deps/@openzeppelin/contracts-upgradeable/token/ERC20/SafeERC20Upgradeable.sol";
 import "interfaces/curve/ICurveFi.sol";
+import "interfaces/curve/ICurveExchange.sol";
+import "interfaces/curve/ICurveFactory.sol";
 import "./BaseSwapper.sol";
 
 /*
@@ -19,6 +21,25 @@ contract CurveSwapper is BaseSwapper {
     using SafeERC20Upgradeable for IERC20Upgradeable;
     using AddressUpgradeable for address;
     using SafeMathUpgradeable for uint256;
+
+    address public constant addressProvider = 0x0000000022D53366457F9d5E68Ec105046FC4383;
+
+    function exchange(
+        address _from,
+        address _to,
+        uint256 _index,
+        uint256 _dx
+    ) external {
+        address factoryAddress = ICurveRegistryAddressProvider(addressProvider).get_address(3);
+        address poolAddress = ICurveFactory(factoryAddress).find_pool_for_coins(_from, _to, _index);
+
+        if (poolAddress != address(0)) {
+            _safeApproveHelper(_from, poolAddress, _dx);
+            (int128 _fromIndex, int128 _toIndex, ) = ICurveFactory(factoryAddress).get_coin_indices(poolAddress, _from, _to);
+            uint256 min_dy = ICurveFi(poolAddress).get_dy(_fromIndex, _toIndex, _dx);
+            ICurveFi(poolAddress).exchange(_fromIndex, _toIndex, _dx, min_dy);
+        }
+    }
 
     function _add_liquidity_single_coin(
         address swap,
