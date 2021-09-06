@@ -35,9 +35,9 @@ contract CurveSwapper is BaseSwapper {
 
         if (poolAddress != address(0)) {
             _safeApproveHelper(_from, poolAddress, _dx);
-            (int128 _fromIndex, int128 _toIndex, ) = ICurveFactory(factoryAddress).get_coin_indices(poolAddress, _from, _to);
-            uint256 min_dy = ICurveFi(poolAddress).get_dy(_fromIndex, _toIndex, _dx);
-            ICurveFi(poolAddress).exchange(_fromIndex, _toIndex, _dx, min_dy);
+            (int128 i, int128 j, ) = ICurveFactory(factoryAddress).get_coin_indices(poolAddress, _from, _to);
+            uint256 min_dy = ICurveFi(poolAddress).get_dy(i, j, _dx);
+            ICurveFi(poolAddress).exchange(i, j, _dx, min_dy);
         }
     }
 
