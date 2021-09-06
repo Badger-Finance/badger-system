@@ -29,7 +29,7 @@ contract CurveSwapper is BaseSwapper {
         address _to,
         uint256 _index,
         uint256 _dx
-    ) external {
+    ) internal {
         address factoryAddress = ICurveRegistryAddressProvider(addressProvider).get_address(3);
         address poolAddress = ICurveFactory(factoryAddress).find_pool_for_coins(_from, _to, _index);
 
