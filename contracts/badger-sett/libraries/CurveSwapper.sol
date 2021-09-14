@@ -23,21 +23,21 @@ contract CurveSwapper is BaseSwapper {
     using SafeMathUpgradeable for uint256;
 
     address public constant addressProvider = 0x0000000022D53366457F9d5E68Ec105046FC4383;
-
+    uint256 public constant metaPoolFactoryId = 3;
+    
     function exchange(
         address _from,
         address _to,
         uint256 _index,
         uint256 _dx
     ) internal {
-        address factoryAddress = ICurveRegistryAddressProvider(addressProvider).get_address(3);
+        address factoryAddress = ICurveRegistryAddressProvider(addressProvider).get_address(metaPoolFactoryId);
         address poolAddress = ICurveFactory(factoryAddress).find_pool_for_coins(_from, _to, _index);
 
         if (poolAddress != address(0)) {
             _safeApproveHelper(_from, poolAddress, _dx);
             (int128 i, int128 j, ) = ICurveFactory(factoryAddress).get_coin_indices(poolAddress, _from, _to);
-            uint256 min_dy = ICurveFi(poolAddress).get_dy(i, j, _dx);
-            ICurveFi(poolAddress).exchange(i, j, _dx, min_dy);
+            ICurveFi(poolAddress).exchange(i, j, _dx, 0);
         }
     }
 
