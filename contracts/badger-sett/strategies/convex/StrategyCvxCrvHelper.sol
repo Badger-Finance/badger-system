@@ -51,7 +51,9 @@ contract StrategyCvxCrvHelper is BaseStrategy, CurveSwapper, UniswapSwapper, Tok
     CrvDepositor public constant crvDepositor = CrvDepositor(0x8014595F2AB54cD7c604B00E9fb932176fDc86Ae); // Convert CRV -> cvxCRV/ETH SLP
     IBooster public constant booster = IBooster(0xF403C135812408BFbE8713b5A23a04b3D48AAE31);
     IBaseRewardsPool public constant cvxCrvRewardsPool = IBaseRewardsPool(0x3Fe65692bfCD0e6CF84cB1E7d24108E434A7587e);
+
     uint256 public constant MAX_UINT_256 = uint256(-1);
+    uint256 public constant crvCvxCrvPoolIndex = 2;
 
     event HarvestState(uint256 timestamp, uint256 blockNumber);
 
@@ -196,7 +198,8 @@ contract StrategyCvxCrvHelper is BaseStrategy, CurveSwapper, UniswapSwapper, Tok
 
         // 3. Convert CRV -> cvxCRV
         if (crvTended > 0) {
-            _swapExactTokensForTokens(sushiswap, crv, crvTended, getTokenSwapPath(crv, cvxCrv));
+            // _swapExactTokensForTokens(sushiswap, crv, crvTended, getTokenSwapPath(crv, cvxCrv));
+            _exchange(crv, cvxCrv, crvTended, crvCvxCrvPoolIndex, true);
         }
 
         // 4. Sell CVX
