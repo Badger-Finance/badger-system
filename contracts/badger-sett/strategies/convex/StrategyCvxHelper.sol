@@ -127,7 +127,7 @@ contract StrategyCvxHelper is BaseStrategy, CurveSwapper, UniswapSwapper, TokenS
 
     /// @dev Unroll from all strategy positions, and transfer non-core tokens to controller rewards
     function _withdrawAll() internal override {
-        // TODO: Functionality not required for initial migration
+        cvxRewardsPool.withdrawAll(false);
         // Note: All want is automatically withdrawn outside this "inner hook" in base strategy function
     }
 
@@ -169,7 +169,7 @@ contract StrategyCvxHelper is BaseStrategy, CurveSwapper, UniswapSwapper, TokenS
         if (stakedCvxCrv > 0) {
             cvxCrvRewardsPool.withdraw(stakedCvxCrv, true);
         }
-        
+
         // 2. Swap cvxCRV tokens to CVX
         uint256 cvxCrvBalance = cvxCrvToken.balanceOf(address(this));
 
