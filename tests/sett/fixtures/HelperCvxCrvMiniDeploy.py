@@ -20,7 +20,7 @@ class HelperCvxCrvMiniDeploy(SettMiniDeployBase):
 
     def post_deploy_setup(self, deploy):
         if deploy:
-            self.strategy.setCrvCvxCrvPath({"from": self.governance})
+            self.strategy.patchPaths({"from": self.governance})
             return
 
         # Vault uses testMultisig

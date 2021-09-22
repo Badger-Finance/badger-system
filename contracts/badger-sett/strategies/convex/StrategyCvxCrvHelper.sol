@@ -171,13 +171,17 @@ contract StrategyCvxCrvHelper is BaseStrategy, CurveSwapper, UniswapSwapper, Tok
 
     function patchPaths() external {
         _onlyGovernance();
+        address[] memory path = new address[](3);
+        path[0] = cvx;
+        path[1] = weth;
+        path[2] = crv;
+        _setTokenSwapPath(cvx, crv, path);
 
-        address[] memory path = new address[](4);
-        path[0] = cvxCrv;
-        path[1] = crv;
-        path[2] = weth;
-        path[3] = cvx;
-        _setTokenSwapPath(cvxCrv, cvx, path);
+        path = new address[](3);
+        path[0] = usdc;
+        path[1] = weth;
+        path[2] = crv;
+        _setTokenSwapPath(usdc, crv, path);
     }
 
     function harvest() external whenNotPaused returns (uint256 cvxCrvHarvested) {
@@ -193,22 +197,20 @@ contract StrategyCvxCrvHelper is BaseStrategy, CurveSwapper, UniswapSwapper, Tok
             uint256 usdcBalance = usdcToken.balanceOf(address(this));
             require(usdcBalance > 0, "window-tint");
             if (usdcBalance > 0) {
-                _swapExactTokensForTokens(sushiswap, usdc, usdcBalance, getTokenSwapPath(usdc, cvxCrv));
+                _swapExactTokensForTokens(sushiswap, usdc, usdcBalance, getTokenSwapPath(usdc, crv));
             }
         }
 
-        uint256 crvTended = crvToken.balanceOf(address(this));
-
-        // 3. Convert CRV -> cvxCRV
-        if (crvTended > 0) {
-            // _swapExactTokensForTokens(sushiswap, crv, crvTended, getTokenSwapPath(crv, cvxCrv));
-            _exchange(crv, cvxCrv, crvTended, crvCvxCrvPoolIndex, true);
-        }
-
-        // 4. Sell CVX
+        // 3. Sell CVX -> CRV
         uint256 cvxTokenBalance = cvxToken.balanceOf(address(this));
         if (cvxTokenBalance > 0) {
-            _swapExactTokensForTokens(sushiswap, cvx, cvxTokenBalance, getTokenSwapPath(cvx, cvxCrv));
+            _swapExactTokensForTokens(sushiswap, cvx, cvxTokenBalance, getTokenSwapPath(cvx, crv));
+        }
+
+        // 4. Convert CRV -> cvxCRV
+        uint256 crvBalance = crvToken.balanceOf(address(this));
+        if (crvBalance > 0) {
+            _exchange(crv, cvxCrv, crvBalance, crvCvxCrvPoolIndex, true);
         }
 
         // Track harvested + converted coin balance of want
