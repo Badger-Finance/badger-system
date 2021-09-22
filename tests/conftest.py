@@ -88,7 +88,7 @@ settsToRun = [
     # "native.bbtcCrv",
     # "native.tricrypto",
     # "native.tricryptoDos",
-    # "native.cvx",
+    "native.cvx",
     "native.cvxCrv",
 ]
 

@@ -50,7 +50,9 @@ contract StrategyCvxHelper is BaseStrategy, CurveSwapper, UniswapSwapper, TokenS
     IBooster public constant booster = IBooster(0xF403C135812408BFbE8713b5A23a04b3D48AAE31);
     ICvxRewardsPool public constant cvxRewardsPool = ICvxRewardsPool(0xCF50b810E57Ac33B91dCF525C6ddd9881B139332);
     IBaseRewardsPool public constant cvxCrvRewardsPool = IBaseRewardsPool(0x3Fe65692bfCD0e6CF84cB1E7d24108E434A7587e);
+
     uint256 public constant MAX_UINT_256 = uint256(-1);
+    uint256 public constant crvCvxCrvPoolIndex = 2;
 
     event HarvestState(uint256 timestamp, uint256 blockNumber);
 
@@ -113,7 +115,7 @@ contract StrategyCvxHelper is BaseStrategy, CurveSwapper, UniswapSwapper, TokenS
     function isTendable() public override view returns (bool) {
         return false;
     }
-    
+
     /// ===== Internal Core Implementations =====
     function _onlyNotProtectedTokens(address _asset) internal override {
         require(!isProtectedToken(_asset));
@@ -158,23 +160,15 @@ contract StrategyCvxHelper is BaseStrategy, CurveSwapper, UniswapSwapper, TokenS
         if (cvxRewardsPool.earned(address(this)) > 0) {
             cvxRewardsPool.getReward(false);
         }
-    }   
+    }
 
     function patchPaths() external {
         _onlyGovernance();
-        address[] memory path = new address[](4);
-        path[0] = cvx;
+        address[] memory path = new address[](3);
+        path[0] = crv;
         path[1] = weth;
-        path[2] = crv;
-        path[3] = cvxCrv;
-        _setTokenSwapPath(cvx, cvxCrv, path);
-
-        path = new address[](4);
-        path[0] = usdc;
-        path[1] = weth;
-        path[2] = crv;
-        path[3] = cvxCrv;
-        _setTokenSwapPath(usdc, cvxCrv, path);
+        path[2] = cvx;
+        _setTokenSwapPath(crv, cvx, path);
     }
 
     function harvest() external whenNotPaused returns (uint256 cvxHarvested) {
@@ -187,11 +181,16 @@ contract StrategyCvxHelper is BaseStrategy, CurveSwapper, UniswapSwapper, TokenS
             cvxCrvRewardsPool.withdraw(stakedCvxCrv, true);
         }
 
-        // 2. Swap cvxCRV tokens to CVX
+        // 2. Swap cvxCRV tokens to CRV
         uint256 cvxCrvBalance = cvxCrvToken.balanceOf(address(this));
-
         if (cvxCrvBalance > 0) {
-            _swapExactTokensForTokens(sushiswap, cvxCrv, cvxCrvBalance, getTokenSwapPath(cvxCrv, cvx));
+            _exchange(cvxCrv, crv, cvxCrvBalance, crvCvxCrvPoolIndex, true);
+        }
+
+        // 3. Swap CRV tokens to CVX
+        uint256 crvBalance = crvToken.balanceOf(address(this));
+        if (crvBalance > 0) {
+            _swapExactTokensForTokens(sushiswap, crv, crvBalance, getTokenSwapPath(crv, cvx));
         }
 
         // Track harvested + converted coin balance of want

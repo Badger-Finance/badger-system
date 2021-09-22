@@ -20,6 +20,7 @@ class HelperCvxMiniDeploy(SettMiniDeployBase):
 
     def post_deploy_setup(self, deploy):
         if deploy:
+            self.strategy.patchPaths({"from": self.governance})
             return
 
         # Vault uses testMultisig
