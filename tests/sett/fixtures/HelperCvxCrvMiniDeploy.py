@@ -5,6 +5,7 @@ from helpers.token_utils import distribute_from_whales
 from brownie import *
 from helpers.proxy_utils import deploy_proxy
 from scripts.systems.constants import SettType
+from helpers.constants import AddressZero
 
 
 class HelperCvxCrvMiniDeploy(SettMiniDeployBase):
@@ -16,7 +17,7 @@ class HelperCvxCrvMiniDeploy(SettMiniDeployBase):
 
     def post_vault_deploy_setup(self, deploy=True):
         if deploy:
-            distribute_from_whales(self.deployer, 1)
+            distribute_from_whales(self.deployer, 1, "cvxCrv")
 
     def post_deploy_setup(self, deploy):
         if deploy:
@@ -52,25 +53,26 @@ class HelperCvxCrvMiniDeploy(SettMiniDeployBase):
         assert self.controller.strategies(self.vault.token()) == self.strategy.address
         assert self.controller.vaults(self.strategy.want()) == self.vault.address
 
-        # Add actors to guestlist
-        guestlist = VipCappedGuestListBbtcUpgradeable.at(self.vault.guestList())
+        if (self.vault.guestList() != AddressZero): 
+            # Add actors to guestlist
+            guestlist = VipCappedGuestListBbtcUpgradeable.at(self.vault.guestList())
 
-        addresses = []
-        for account in accounts:
-            addresses.append(account.address)
+            addresses = []
+            for account in accounts:
+                addresses.append(account.address)
 
-        # Add actors addresses
-        addresses.append(guestlist.owner())
-        addresses.append(self.governance.address)
-        addresses.append(self.strategist.address)
-        addresses.append(self.keeper.address)
-        addresses.append(self.guardian.address)
-        addresses.append(self.deployer.address)
+            # Add actors addresses
+            addresses.append(guestlist.owner())
+            addresses.append(self.governance.address)
+            addresses.append(self.strategist.address)
+            addresses.append(self.keeper.address)
+            addresses.append(self.guardian.address)
+            addresses.append(self.deployer.address)
 
-        invited = [True] * len(addresses)
+            invited = [True] * len(addresses)
 
-        owner = accounts.at(guestlist.owner(), force=True)
+            owner = accounts.at(guestlist.owner(), force=True)
 
-        guestlist.setGuests(addresses, invited, {"from": owner})
-        guestlist.setUserDepositCap(MaxUint256, {"from": owner})
-        guestlist.setTotalDepositCap(MaxUint256, {"from": owner})
+            guestlist.setGuests(addresses, invited, {"from": owner})
+            guestlist.setUserDepositCap(MaxUint256, {"from": owner})
+            guestlist.setTotalDepositCap(MaxUint256, {"from": owner})

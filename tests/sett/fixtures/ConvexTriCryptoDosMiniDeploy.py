@@ -106,30 +106,31 @@ class ConvexTriCryptoDosMiniDeploy(SettMiniDeployBase):
         assert self.controller.strategies(self.vault.token()) == self.strategy.address
         assert self.controller.vaults(self.strategy.want()) == self.vault.address
 
-        # Add users to guestlist
-        guestlist = VipCappedGuestListBbtcUpgradeable.at(self.vault.guestList())
+        if (self.vault.guestList() != AddressZero): 
+            # Add users to guestlist
+            guestlist = VipCappedGuestListBbtcUpgradeable.at(self.vault.guestList())
 
-        owner = accounts.at("0xd41f7006bcb2B3d0F9C5873272Ebed67B37F80Dc", force=True)
+            owner = accounts.at("0xd41f7006bcb2B3d0F9C5873272Ebed67B37F80Dc", force=True)
 
-        addresses = []
-        for account in accounts:
-            addresses.append(account.address)
+            addresses = []
+            for account in accounts:
+                addresses.append(account.address)
 
-        # Add actors addresses
-        addresses.append(owner.address)
-        addresses.append(self.governance.address)
-        addresses.append(self.strategist.address)
-        addresses.append(self.keeper.address)
-        addresses.append(self.guardian.address)
-        addresses.append(self.deployer.address)
+            # Add actors addresses
+            addresses.append(owner.address)
+            addresses.append(self.governance.address)
+            addresses.append(self.strategist.address)
+            addresses.append(self.keeper.address)
+            addresses.append(self.guardian.address)
+            addresses.append(self.deployer.address)
 
-        invited = [True] * len(addresses)
+            invited = [True] * len(addresses)
 
-        guestlist.setGuests(addresses, invited, {"from": owner})
+            guestlist.setGuests(addresses, invited, {"from": owner})
 
-        # Increase gustlist caps since randomly generated amounts tend to be bigger than current caps
-        guestlist.setTotalDepositCap("5080189446897250400000", {"from": owner})
-        guestlist.setUserDepositCap("5081890446897250400000", {"from": owner})
+            # Increase gustlist caps since randomly generated amounts tend to be bigger than current caps
+            guestlist.setTotalDepositCap("5080189446897250400000", {"from": owner})
+            guestlist.setUserDepositCap("5081890446897250400000", {"from": owner})
 
     # Setup used for running simulation without deployed strategy:
 

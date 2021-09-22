@@ -4,6 +4,7 @@ from helpers.token_utils import distribute_from_whales
 from brownie import *
 from helpers.proxy_utils import deploy_proxy
 from helpers.registry import registry
+from helpers.constants import AddressZero
 
 
 class ConvexOBtcMiniDeploy(SettMiniDeployBase):
@@ -18,7 +19,7 @@ class ConvexOBtcMiniDeploy(SettMiniDeployBase):
     def post_vault_deploy_setup(self, deploy=True):
         if not deploy:
             return
-        distribute_from_whales(self.deployer, 1)
+        distribute_from_whales(self.deployer, 1, "obtcCrv")
 
     def post_deploy_setup(self, deploy):
         if deploy:
@@ -36,28 +37,34 @@ class ConvexOBtcMiniDeploy(SettMiniDeployBase):
                 self.strategy.address, {"from": cvxCrvHelperGov}
             )
 
-            # Add rewards address to guestlists
-            cvxGuestlist = VipCappedGuestListBbtcUpgradeable.at(
-                cvxHelperVault.guestList()
-            )
-            cvxCrvGuestlist = VipCappedGuestListBbtcUpgradeable.at(
-                cvxCrvHelperVault.guestList()
-            )
+            if (
+                cvxHelperVault.guestList() != AddressZero
+                ) and (
+                cvxCrvHelperVault.guestList() != AddressZero
+            ):
 
-            cvxOwner = accounts.at(cvxGuestlist.owner(), force=True)
-            cvxCrvOwner = accounts.at(cvxCrvGuestlist.owner(), force=True)
+                # Add rewards address to guestlists
+                cvxGuestlist = VipCappedGuestListBbtcUpgradeable.at(
+                    cvxHelperVault.guestList()
+                )
+                cvxCrvGuestlist = VipCappedGuestListBbtcUpgradeable.at(
+                    cvxCrvHelperVault.guestList()
+                )
 
-            cvxGuestlist.setGuests(
-                [self.controller.rewards(), self.strategy],
-                [True, True],
-                {"from": cvxOwner},
-            )
-            cvxCrvGuestlist.setGuests(
-                [self.controller.rewards(), self.strategy],
-                [True, True],
-                {"from": cvxCrvOwner},
-            )  # Strategy added since SettV4.sol currently checks for the sender
-            # instead of receipient for authorization on depositFor()
+                cvxOwner = accounts.at(cvxGuestlist.owner(), force=True)
+                cvxCrvOwner = accounts.at(cvxCrvGuestlist.owner(), force=True)
+
+                cvxGuestlist.setGuests(
+                    [self.controller.rewards(), self.strategy],
+                    [True, True],
+                    {"from": cvxOwner},
+                )
+                cvxCrvGuestlist.setGuests(
+                    [self.controller.rewards(), self.strategy],
+                    [True, True],
+                    {"from": cvxCrvOwner},
+                )  # Strategy added since SettV4.sol currently checks for the sender
+                # instead of receipient for authorization on depositFor()
 
             return
 
@@ -98,30 +105,32 @@ class ConvexOBtcMiniDeploy(SettMiniDeployBase):
         assert self.controller.strategies(self.vault.token()) == self.strategy.address
         assert self.controller.vaults(self.strategy.want()) == self.vault.address
 
-        # Add actors to guestlist
-        guestlist = VipCappedGuestListBbtcUpgradeable.at(self.vault.guestList())
 
-        addresses = []
-        for account in accounts:
-            addresses.append(account.address)
+        if (self.vault.guestList() != AddressZero): 
+            # Add actors to guestlist
+            guestlist = VipCappedGuestListBbtcUpgradeable.at(self.vault.guestList())
 
-        # Add actors addresses
-        addresses.append(guestlist.owner())
-        addresses.append(self.governance.address)
-        addresses.append(self.strategist.address)
-        addresses.append(self.keeper.address)
-        addresses.append(self.guardian.address)
-        addresses.append(self.deployer.address)
+            addresses = []
+            for account in accounts:
+                addresses.append(account.address)
 
-        invited = [True] * len(addresses)
+            # Add actors addresses
+            addresses.append(guestlist.owner())
+            addresses.append(self.governance.address)
+            addresses.append(self.strategist.address)
+            addresses.append(self.keeper.address)
+            addresses.append(self.guardian.address)
+            addresses.append(self.deployer.address)
 
-        guestlist.setGuests(addresses, invited, {"from": self.deployer})
+            invited = [True] * len(addresses)
 
-        self.strategy.addExtraRewardsToken(
-            registry.tokens.bor,
-            (3000, 10000, 0, 0, 0),
-            [registry.tokens.bor, registry.tokens.weth, registry.tokens.wbtc],
-            {"from": self.governance},
+            guestlist.setGuests(addresses, invited, {"from": self.deployer})
+
+            self.strategy.addExtraRewardsToken(
+                registry.tokens.bor,
+                (3000, 10000, 0, 0, 0),
+                [registry.tokens.bor, registry.tokens.weth, registry.tokens.wbtc],
+                {"from": self.governance},
         )
 
     # Setup used for running simulation without deployed strategy:

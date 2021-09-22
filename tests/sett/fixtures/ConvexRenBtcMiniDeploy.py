@@ -5,6 +5,7 @@ from helpers.token_utils import distribute_from_whales
 from brownie import *
 from helpers.proxy_utils import deploy_proxy
 import json
+from helpers.constants import AddressZero
 
 
 class ConvexRenBtcMiniDeploy(SettMiniDeployBase):
@@ -19,7 +20,7 @@ class ConvexRenBtcMiniDeploy(SettMiniDeployBase):
     def post_vault_deploy_setup(self, deploy=True):
         if not deploy:
             return
-        distribute_from_whales(self.deployer, 1)
+        distribute_from_whales(self.deployer, 1, "renCrv")
 
     def post_deploy_setup(self, deploy):
         if deploy:
@@ -37,28 +38,34 @@ class ConvexRenBtcMiniDeploy(SettMiniDeployBase):
                 self.strategy.address, {"from": cvxCrvHelperGov}
             )
 
-            # Add rewards address to guestlists
-            cvxGuestlist = VipCappedGuestListBbtcUpgradeable.at(
-                cvxHelperVault.guestList()
-            )
-            cvxCrvGuestlist = VipCappedGuestListBbtcUpgradeable.at(
-                cvxCrvHelperVault.guestList()
-            )
+            if (
+                cvxHelperVault.guestList() != AddressZero
+                ) and (
+                cvxCrvHelperVault.guestList() != AddressZero
+            ):
 
-            cvxOwner = accounts.at(cvxGuestlist.owner(), force=True)
-            cvxCrvOwner = accounts.at(cvxCrvGuestlist.owner(), force=True)
+                # Add rewards address to guestlists
+                cvxGuestlist = VipCappedGuestListBbtcUpgradeable.at(
+                    cvxHelperVault.guestList()
+                )
+                cvxCrvGuestlist = VipCappedGuestListBbtcUpgradeable.at(
+                    cvxCrvHelperVault.guestList()
+                )
 
-            cvxGuestlist.setGuests(
-                [self.controller.rewards(), self.strategy],
-                [True, True],
-                {"from": cvxOwner},
-            )
-            cvxCrvGuestlist.setGuests(
-                [self.controller.rewards(), self.strategy],
-                [True, True],
-                {"from": cvxCrvOwner},
-            )  # Strategy added since SettV4.sol currently checks for the sender
-            # instead of receipient for authorization on depositFor()
+                cvxOwner = accounts.at(cvxGuestlist.owner(), force=True)
+                cvxCrvOwner = accounts.at(cvxCrvGuestlist.owner(), force=True)
+
+                cvxGuestlist.setGuests(
+                    [self.controller.rewards(), self.strategy],
+                    [True, True],
+                    {"from": cvxOwner},
+                )
+                cvxCrvGuestlist.setGuests(
+                    [self.controller.rewards(), self.strategy],
+                    [True, True],
+                    {"from": cvxCrvOwner},
+                )  # Strategy added since SettV4.sol currently checks for the sender
+                # instead of receipient for authorization on depositFor()
 
             return
 
