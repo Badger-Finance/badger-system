@@ -52,6 +52,7 @@ contract StrategyCvxHelper is BaseStrategy, CurveSwapper, UniswapSwapper, TokenS
     IBaseRewardsPool public constant cvxCrvRewardsPool = IBaseRewardsPool(0x3Fe65692bfCD0e6CF84cB1E7d24108E434A7587e);
 
     uint256 public constant MAX_UINT_256 = uint256(-1);
+
     uint256 public constant crvCvxCrvPoolIndex = 2;
 
     event HarvestState(uint256 timestamp, uint256 blockNumber);

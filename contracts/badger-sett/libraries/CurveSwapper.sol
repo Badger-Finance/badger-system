@@ -31,22 +31,6 @@ contract CurveSwapper is BaseSwapper {
         address _from,
         address _to,
         uint256 _dx,
-        uint256 _index
-    ) internal {
-        address poolRegistry = ICurveRegistryAddressProvider(addressProvider).get_address(registryId);
-        address poolAddress = ICurveRegistry(poolRegistry).find_pool_for_coins(_from, _to, _index);
-
-        if (poolAddress != address(0)) {
-            _safeApproveHelper(_from, poolAddress, _dx);
-            (int128 i, int128 j, ) = ICurveRegistry(poolRegistry).get_coin_indices(poolAddress, _from, _to);
-            ICurveFi(poolAddress).exchange(i, j, _dx, 0);
-        }
-    }
-
-    function _exchange(
-        address _from,
-        address _to,
-        uint256 _dx,
         uint256 _index,
         bool _isFactoryPool
     ) internal {
