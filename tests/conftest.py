@@ -87,7 +87,7 @@ settsToRun = [
     # "native.obtcCrv",
     # "native.bbtcCrv",
     # "native.tricrypto",
-    # "native.tricryptoDos",
+    # "native.tricrypto2",
     # "native.cvx",
     # "native.cvxCrv",
 ]
@@ -437,9 +437,9 @@ def badger_single_sett(settConfig, deploy=True):
                 keeper=keeper,
                 governance=governance,
             ).deploy(deploy=deploy)
-        if settId == "native.tricryptoDos":
+        if settId == "native.tricrypto2":
             return ConvexTriCryptoDosMiniDeploy(
-                "native.tricryptoDos",
+                "native.tricrypto2",
                 "StrategyConvexStakingOptimizer",
                 deployer,
                 strategist=strategist,
