@@ -38,6 +38,8 @@ class ConvexRenBtcMiniDeploy(SettMiniDeployBase):
                 self.strategy.address, {"from": cvxCrvHelperGov}
             )
 
+            self.strategy.patchPaths({"from": self.governance})
+
             if (
                 cvxHelperVault.guestList() != AddressZero
                 ) and (

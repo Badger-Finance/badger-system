@@ -137,6 +137,8 @@ contract StrategyConvexStakingOptimizer is BaseStrategy, CurveSwapper, UniswapSw
     uint256 public autoCompoundingBps;
     uint256 public autoCompoundingPerformanceFeeGovernance;
 
+    uint256 public constant crvCvxCrvPoolIndex = 2;
+
     event TreeDistribution(address indexed token, uint256 amount, uint256 indexed blockNumber, uint256 timestamp);
     event PerformanceFeeGovernance(
         address indexed destination,
@@ -214,23 +216,6 @@ contract StrategyConvexStakingOptimizer is BaseStrategy, CurveSwapper, UniswapSw
 
         // Set Swap Paths
         address[] memory path = new address[](3);
-        path[0] = usdc;
-        path[1] = weth;
-        path[2] = cvxCrv;
-        _setTokenSwapPath(usdc, cvxCrv, path);
-
-        path = new address[](2);
-        path[0] = crv;
-        path[1] = cvxCrv;
-        _setTokenSwapPath(crv, cvxCrv, path);
-
-        path = new address[](3);
-        path[0] = cvxCrv;
-        path[1] = weth;
-        path[2] = wbtc;
-        _setTokenSwapPath(cvxCrv, wbtc, path);
-
-        path = new address[](3);
         path[0] = cvx;
         path[1] = weth;
         path[2] = wbtc;
@@ -353,6 +338,21 @@ contract StrategyConvexStakingOptimizer is BaseStrategy, CurveSwapper, UniswapSw
         }
     }
 
+    function patchPaths() external {
+        _onlyGovernance();
+        address[] memory path = new address[](3);
+        path[0] = usdc;
+        path[1] = weth;
+        path[2] = crv;
+        _setTokenSwapPath(usdc, crv, path);
+
+        path = new address[](3);
+        path[0] = crv;
+        path[1] = weth;
+        path[2] = wbtc;
+        _setTokenSwapPath(crv, wbtc, path);
+    }
+
     /// @notice The more frequent the tend, the higher returns will be
     function tend() external whenNotPaused returns (TendData memory) {
         _onlyAuthorizedActors();
@@ -367,7 +367,7 @@ contract StrategyConvexStakingOptimizer is BaseStrategy, CurveSwapper, UniswapSw
 
         // 2. Convert CRV -> cvxCRV
         if (tendData.crvTended > 0) {
-            _swapExactTokensForTokens(sushiswap, crv, tendData.crvTended, getTokenSwapPath(crv, cvxCrv));
+            _exchange(crv, cvxCrv, tendData.crvTended, crvCvxCrvPoolIndex, true);
         }
 
         // Track harvested + converted coins
@@ -415,17 +415,30 @@ contract StrategyConvexStakingOptimizer is BaseStrategy, CurveSwapper, UniswapSw
         harvestData.cvxCrvHarvested = cvxCrvToken.balanceOf(address(this));
         harvestData.cvxHarvsted = cvxToken.balanceOf(address(this));
 
-        // 2. Convert 3CRV -> cvxCRV via USDC
+        // 2. Convert 3CRV -> CRV via USDC
         uint256 threeCrvBalance = threeCrvToken.balanceOf(address(this));
         if (threeCrvBalance > 0) {
             _remove_liquidity_one_coin(threeCrvSwap, threeCrvBalance, 1, 0);
-            _swapExactTokensForTokens(sushiswap, usdc, usdcToken.balanceOf(address(this)), getTokenSwapPath(usdc, cvxCrv));
+            _swapExactTokensForTokens(sushiswap, usdc, usdcToken.balanceOf(address(this)), getTokenSwapPath(usdc, crv));
         }
 
         // 3. Sell 20% of accured rewards for underlying
         if (harvestData.cvxCrvHarvested > 0) {
             uint256 cvxCrvToSell = harvestData.cvxCrvHarvested.mul(autoCompoundingBps).div(MAX_FEE);
-            _swapExactTokensForTokens(sushiswap, cvxCrv, cvxCrvToSell, getTokenSwapPath(cvxCrv, wbtc));
+            // NOTE: Assuming any CRV accumulted is only from the above swap
+            uint256 crvBalance = crvToken.balanceOf(address(this));
+            // NOTE: Asssumes 1:1 CRV/cvxCRV
+            if (cvxCrvToSell > crvBalance) {
+                _exchange(cvxCrv, crv, cvxCrvToSell.sub(crvBalance), crvCvxCrvPoolIndex, true);
+                cvxCrvToSell = crvToken.balanceOf(address(this));
+            }
+            _swapExactTokensForTokens(sushiswap, crv, cvxCrvToSell, getTokenSwapPath(crv, wbtc));
+        }
+
+        // 4. Convert CRV -> cvxCRV
+        uint256 crvBalance = crvToken.balanceOf(address(this));
+        if (crvBalance > 0) {
+            _exchange(crv, cvxCrv, crvBalance, crvCvxCrvPoolIndex, true);
         }
 
         if (harvestData.cvxHarvsted > 0) {
