@@ -86,8 +86,6 @@ contract StrategyConvexStakingOptimizer is BaseStrategy, CurveSwapper, UniswapSw
     // ===== Convex Registry =====
     CrvDepositor public constant crvDepositor = CrvDepositor(0x8014595F2AB54cD7c604B00E9fb932176fDc86Ae); // Convert CRV -> cvxCRV
     IBooster public constant booster = IBooster(0xF403C135812408BFbE8713b5A23a04b3D48AAE31);
-    address public constant cvxCRV_CRV_SLP = 0x33F6DDAEa2a8a54062E021873bCaEE006CdF4007; // cvxCRV/CRV SLP
-    address public constant CVX_ETH_SLP = 0x05767d9EF41dC40689678fFca0608878fb3dE906; // CVX/ETH SLP
     IBaseRewardsPool public baseRewardsPool;
     IBaseRewardsPool public constant cvxCrvRewardsPool = IBaseRewardsPool(0x3Fe65692bfCD0e6CF84cB1E7d24108E434A7587e);
     ICvxRewardsPool public constant cvxRewardsPool = ICvxRewardsPool(0xCF50b810E57Ac33B91dCF525C6ddd9881B139332);
@@ -132,24 +130,12 @@ contract StrategyConvexStakingOptimizer is BaseStrategy, CurveSwapper, UniswapSw
         uint256 numElements;
     }
 
-    event ExtraRewardsTokenSet(
-        address indexed token,
-        uint256 autoCompoundingBps,
-        uint256 autoCompoundingPerfFee,
-        uint256 treeDistributionPerfFee,
-        address tendConvertTo,
-        uint256 tendConvertBps
-    );
-
     EnumerableSetUpgradeable.AddressSet internal extraRewards; // Tokens other than CVX and cvxCRV to process as rewards
     mapping(address => RewardTokenConfig) public rewardsTokenConfig;
     CurvePoolConfig public curvePool;
 
     uint256 public autoCompoundingBps;
     uint256 public autoCompoundingPerformanceFeeGovernance;
-
-    uint256 public constant AUTO_COMPOUNDING_BPS = 2000;
-    uint256 public constant AUTO_COMPOUNDING_PERFORMANCE_FEE = 5000; // Proportion of auto-compounded rewards taken as fee
 
     event TreeDistribution(address indexed token, uint256 amount, uint256 indexed blockNumber, uint256 timestamp);
     event PerformanceFeeGovernance(
@@ -259,44 +245,6 @@ contract StrategyConvexStakingOptimizer is BaseStrategy, CurveSwapper, UniswapSw
     function setPid(uint256 _pid) external {
         _onlyGovernance();
         pid = _pid; // LP token pool ID
-    }
-
-    function addExtraRewardsToken(
-        address _extraToken,
-        RewardTokenConfig memory _rewardsConfig,
-        address[] memory _swapPathToWbtc
-    ) external {
-        _onlyGovernance();
-
-        require(!isProtectedToken(_extraToken)); // We can't process tokens that are part of special strategy logic as extra rewards
-        require(isProtectedToken(_rewardsConfig.tendConvertTo)); // We should only convert to tokens the strategy handles natively for security reasons
-
-        /**
-        === tendConvertTo Attack Vector: Rug rewards via swap ===
-            - Set a token as an extra rewards token
-            - Provide liquidity on that pool (disallow swaps from non-admin to avoid others messing with it)
-            - Convert it to a token on tend that can be rugged by an admin    
-            - Admin steals value    
-        */
-
-        extraRewards.add(_extraToken);
-        rewardsTokenConfig[_extraToken] = _rewardsConfig;
-
-        emit ExtraRewardsTokenSet(
-            _extraToken,
-            _rewardsConfig.autoCompoundingBps,
-            _rewardsConfig.autoCompoundingPerfFee,
-            _rewardsConfig.treeDistributionPerfFee,
-            _rewardsConfig.tendConvertTo,
-            _rewardsConfig.tendConvertBps
-        );
-
-        _setTokenSwapPath(_extraToken, wbtc, _swapPathToWbtc);
-    }
-
-    function removeExtraRewardsToken(address _extraToken) external {
-        _onlyGovernance();
-        extraRewards.remove(_extraToken);
     }
 
     function setAutoCompoundingBps(uint256 _bps) external {
