@@ -1,15 +1,13 @@
-from enum import Enum
+from badger_utils.coingecko_utils import fetch_usd_price
+from brownie import interface
+from rich.console import Console
 
-import requests
-from brownie import Wei, accounts, interface, rpc
 from helpers.constants import *
-from helpers.constants import MaxUint256
-from helpers.gnosis_safe import GnosisSafe, MultisigTxMetadata
+from helpers.gnosis_safe import GnosisSafe
+from helpers.gnosis_safe import MultisigTxMetadata
 from helpers.registry import registry
 from helpers.utils import val
-from rich.console import Console
-from scripts.systems.badger_system import BadgerSystem, connect_badger
-from scripts.systems.uniswap_system import UniswapSystem
+from scripts.systems.badger_system import connect_badger
 
 console = Console()
 
@@ -100,19 +98,6 @@ def transfer_badger(recipient, params):
 def fetch_usd_value(token_address, amount):
     price = fetch_usd_price(address_to_id(token_address))
     return price * amount
-
-
-def fetch_usd_price(token_address):
-    id = address_to_id(token_address)
-    url = "https://api.coingecko.com/api/v3/coins/" + id
-
-    params = "?tickers=false&community_data=false&developer_data=false&sparkline=false"
-
-    r = requests.get(url, params)
-    data = r.json()
-    usd_price = data["market_data"]["current_price"]["usd"]
-    console.print(usd_price)
-    return usd_price
 
 
 def address_to_id(token_address):

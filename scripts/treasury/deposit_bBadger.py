@@ -1,6 +1,8 @@
+from badger_utils.coingecko_utils import fetch_usd_price
+from badger_utils.coingecko_utils import fetch_usd_price_eth
+
 from helpers.token_utils import BalanceSnapshotter
 from ape_safe import ApeSafe
-from helpers.coingecko import fetch_usd_price, fetch_usd_price_eth
 
 from brownie import Wei, accounts, interface, rpc
 from config.badger_config import badger_config

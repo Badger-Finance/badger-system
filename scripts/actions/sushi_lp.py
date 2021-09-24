@@ -1,4 +1,6 @@
 from ape_safe import ApeSafe
+from badger_utils.coingecko_utils import fetch_usd_price
+from badger_utils.coingecko_utils import fetch_usd_price_eth
 from brownie import Wei, accounts, interface, rpc
 from config.badger_config import badger_config
 from dotmap import DotMap
@@ -10,7 +12,6 @@ from scripts.systems.badger_system import BadgerSystem, connect_badger
 from scripts.systems.sushiswap_system import SushiswapSystem
 from tabulate import tabulate
 
-from helpers.coingecko import fetch_usd_price, fetch_usd_price_eth
 from helpers.constants import *
 from helpers.gnosis_safe import (
     GnosisSafe,

@@ -1,12 +1,13 @@
 import json
 import time
 
-from brownie import Wei, web3, chain
+from badger_utils.constants import AddressZero
+from badger_utils.registry import registries
+from badger_utils.time_utils import days_to_seconds
+from brownie import Wei
+from brownie import chain
+from brownie import web3
 from dotmap import DotMap
-from helpers.proxy_utils import deploy_proxy
-from helpers.constants import AddressZero
-from helpers.registry import registries
-from helpers.time_utils import days, to_timestamp
 
 with open("merkle/airdrop.json") as f:
     Airdrop = json.load(f)
@@ -421,8 +422,8 @@ badger_config = DotMap(
     huntParams=DotMap(
         startTime=int(time.time()),
         badgerAmount=badger_total_supply * 10 // 100,
-        gracePeriod=days(2),
-        epochDuration=days(1),
+        gracePeriod=days_to_seconds(2),
+        epochDuration=days_to_seconds(1),
         merkleRoot=Airdrop["merkleRoot"],
         claimReductionPerEpoch=2000,
     ),
@@ -431,12 +432,12 @@ badger_config = DotMap(
     rewardsEscrowBadgerAmount=badger_total_supply * 40 // 100,
     tokenLockParams=DotMap(
         badgerLockAmount=badger_total_supply * 35 // 100,
-        lockDuration=days(30),
+        lockDuration=days_to_seconds(30),
     ),
     teamVestingParams=DotMap(
         startTime=globalStartTime,
-        cliffDuration=days(30),
-        totalDuration=days(365),
+        cliffDuration=days_to_seconds(30),
+        totalDuration=days_to_seconds(365),
     ),
     devMultisigParams=DotMap(
         threshold=1,
@@ -456,7 +457,7 @@ badger_config = DotMap(
         useAgentAsVault=True,
         supportRequired=Wei("0.5 ether"),
         minAcceptanceQuorum=Wei("0.05 ether"),
-        voteDuration=days(3),
+        voteDuration=days_to_seconds(3),
     ),
     geyserParams=DotMap(
         badgerDistributionStart=globalStartTime,
@@ -464,43 +465,43 @@ badger_config = DotMap(
             badger=[
                 DotMap(
                     amount=Wei("45000 ether"),
-                    duration=days(7),
+                    duration=days_to_seconds(7),
                 )
             ],  # 1 week
             uniBadgerWbtc=[
                 DotMap(
                     amount=Wei("65000 ether"),
-                    duration=days(7),
+                    duration=days_to_seconds(7),
                 )  # 1 week
             ],
             bSbtcCrv=[
                 DotMap(
                     amount=Wei("76750 ether"),
-                    duration=days(7),
+                    duration=days_to_seconds(7),
                 )
             ],  # 1 week
             bRenCrv=[
                 DotMap(
                     amount=Wei("76750 ether"),
-                    duration=days(7),
+                    duration=days_to_seconds(7),
                 )
             ],  # 1 week
             bTbtcCrv=[
                 DotMap(
                     amount=Wei("76750 ether"),
-                    duration=days(7),
+                    duration=days_to_seconds(7),
                 )
             ],  # 1 week
             bSuperRenCrvPickle=[
                 DotMap(
                     amount=Wei("76750 ether"),
-                    duration=days(7),
+                    duration=days_to_seconds(7),
                 )  # 1 week
             ],
             bSuperRenCrvHarvest=[
                 DotMap(
                     amount=Wei("76750 ether"),
-                    duration=days(7),
+                    duration=days_to_seconds(7),
                 )  # 1 week
             ],
         ),
@@ -562,24 +563,25 @@ digg_config_test = DotMap(
         threshold=1,
     ),
     tokenLockParams=DotMap(
-        diggAmount=int(total_digg * dao_treasury_pct / 100), lockDuration=days(30)
+        diggAmount=int(total_digg * dao_treasury_pct / 100),
+        lockDuration=days_to_seconds(30),
     ),
     # TODO: Currently a copy of badger config params, needs to be set.
     teamVestingParams=DotMap(
         diggAmount=int(total_digg * team_vesting_pct / 100),
         startTime=diggStartTime,
-        cliffDuration=days(30),
-        totalDuration=days(365),
+        cliffDuration=days_to_seconds(30),
+        totalDuration=days_to_seconds(365),
     ),
     geyserParams=DotMap(
         # TODO: Needs to be set
-        diggDistributionStart=globalStartTime + days(15),
+        diggDistributionStart=globalStartTime + days_to_seconds(15),
         unlockSchedules=DotMap(
             # Setting distribution amt to 25% for now.
             digg=[
                 DotMap(
                     amount=1000 * (10 ** digg_decimals),
-                    duration=days(7),
+                    duration=days_to_seconds(7),
                 )
             ],  # 1 week
         ),
@@ -616,13 +618,14 @@ digg_config = DotMap(
         threshold=1,
     ),
     tokenLockParams=DotMap(
-        diggAmount=int(total_digg * dao_treasury_pct / 100), lockDuration=days(7)
+        diggAmount=int(total_digg * dao_treasury_pct / 100),
+        lockDuration=days_to_seconds(7),
     ),
     teamVestingParams=DotMap(
         diggAmount=int(total_digg * team_vesting_pct / 100),
         startTime=diggStartTime,
-        cliffDuration=days(0),
-        totalDuration=days(365),
+        cliffDuration=days_to_seconds(0),
+        totalDuration=days_to_seconds(365),
     ),
     # TODO: Set this to the prod airdrop root
     airdropRoot="0xe083d1a60e1ca84c995048be8b9b5b4d4e371f31bcbdff8b775cb47502f4108b",
@@ -649,7 +652,9 @@ claw_config = DotMap(
     # This represents the delta in days to be applied to now.
     # Actual param is `expirationTimestamp`.
     # NB: It is recommended by UMA to set expiry @ 10:00 pm UTC on expiry date.
-    expirationTimestampDaysDelta=days(60),  # Rolling w/ 2 month lifespan EMPs.
+    expirationTimestampDaysDelta=days_to_seconds(
+        60
+    ),  # Rolling w/ 2 month lifespan EMPs.
     collateralRequirement=1.2
     * 10 ** 18,  # Default UMA specified min collateral requirement is 1.2.
     disputeBondPercentage=0.1 * 10 ** 18,

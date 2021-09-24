@@ -4,6 +4,7 @@ asttokens==2.0.4
 async-timeout==3.0.1
 attrs==20.3.0
 base58==2.1.0
+badger-utils==0.0.9
 bitarray==1.2.2
 black==20.8b1
 boto3==1.16.38

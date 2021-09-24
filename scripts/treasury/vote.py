@@ -1,7 +1,6 @@
 from ape_safe import ApeSafe
 from brownie import Wei, accounts, interface, rpc
 from config.badger_config import badger_config
-from helpers.coingecko import fetch_usd_price, fetch_usd_price_eth
 from helpers.constants import *
 from helpers.gnosis_safe import (
     GnosisSafe,

@@ -7,7 +7,6 @@ from helpers.token_utils import (
     badger_to_bBadger,
 )
 from ape_safe import ApeSafe
-from helpers.coingecko import fetch_usd_price, fetch_usd_price_eth
 import csv
 
 from brownie import Wei, accounts, interface, rpc
