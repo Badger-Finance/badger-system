@@ -1,29 +1,74 @@
 import brownie
 import pytest
-from brownie import StrategyConvexStakingOptimizer
+from brownie import (
+    StrategyConvexStakingOptimizer,
+    StrategyCvxHelper,
+    StrategyCvxCrvHelper,
+)
 
 from config.badger_config import badger_config
 from scripts.systems.badger_system import connect_badger
+from tests.sett.generic_strategy_tests.strategy_flow import (
+    assert_deposit_withdraw_single_user_flow,
+    assert_single_user_harvest_flow,
+    assert_migrate_single_user,
+    assert_withdraw_other,
+    assert_single_user_harvest_flow_remove_fees,
+)
+from tests.sett.generic_strategy_tests.strategy_permissions import (
+    assert_strategy_action_permissions,
+    assert_strategy_config_permissions,
+    assert_strategy_pausing_permissions,
+    assert_sett_pausing_permissions,
+    assert_sett_config_permissions,
+    assert_controller_permissions,
+)
 
-STRATEGIES = [
-    "native.renCrv",
+CRV_STRATS = [
+    # "native.renCrv",
     "native.sbtcCrv",
-    "native.tbtcCrv",
-    "native.hbtcCrv",
-    "native.pbtcCrv",
-    "native.obtcCrv",
-    "native.bbtcCrv",
-    "native.tricrypto2",
+    # "native.tbtcCrv",
+    # "native.hbtcCrv",
+    # "native.pbtcCrv",
+    # "native.obtcCrv",
+    # "native.bbtcCrv",
+    # "native.tricrypto2",
 ]
+
+HELPER_STRATS = {
+    "native.cvx": {
+        "name": "StrategyCvxHelper",
+        "artifact": StrategyCvxHelper,
+    },
+    "native.cvxCrv": {
+        "name": "StrategyCvxCrvHelper",
+        "artifact": StrategyCvxCrvHelper,
+    },
+}
+
+
+def upgrade_strategy(badger, strategy, name, artifact):
+    # Deploy new logic
+    badger.deploy_logic(name, artifact)
+    logic = badger.logic[name]
+
+    badger.devProxyAdmin.upgrade(
+        strategy,
+        logic,
+        {"from": badger.governanceTimelock},
+    )
+
+
+@pytest.fixture()
+def badger():
+    return connect_badger(badger_config.prod_json)
 
 
 @pytest.mark.parametrize(
     "strategy_key",
-    STRATEGIES,
+    CRV_STRATS,
 )
-def test_upgrade_convex_strats(strategy_key):
-    badger = connect_badger(badger_config.prod_json)
-
+def test_upgraded_crv_strats_storage(badger, strategy_key):
     # NOTE: Ideally should get deployed contract/abi from etherscan,
     #       but Contract.from_explorer() doesn't seem to work
     strategy = badger.getStrategy(strategy_key)
@@ -72,13 +117,69 @@ def test_upgrade_convex_strats(strategy_key):
     )
 
 
-def upgrade_strategy(badger, strategy, name, artifact):
-    # Deploy new logic
-    badger.deploy_logic(name, artifact)
-    logic = badger.logic[name]
+@pytest.mark.skip()
+@pytest.mark.parametrize(
+    "strategy_key",
+    HELPER_STRATS.keys(),
+)
+def test_upgraded_cvx_strat(strategy_key, badger):
+    # NOTE: Ideally should get deployed contract/abi from etherscan,
+    #       but Contract.from_explorer() doesn't seem to work
+    strategy = badger.getStrategy(strategy_key)
 
-    badger.devProxyAdmin.upgrade(
+    upgrade_strategy(
+        badger,
         strategy,
-        logic,
-        {"from": badger.governanceTimelock},
+        HELPER_STRATS[strategy_key]["name"],
+        HELPER_STRATS[strategy_key]["artifact"],
     )
+
+    # Run tests
+    sett_config = {"id": strategy_key, "mode": "test"}
+
+    assert_deposit_withdraw_single_user_flow(sett_config)
+    assert_single_user_harvest_flow(sett_config)
+    assert_migrate_single_user(sett_config)
+    assert_withdraw_other(sett_config)
+    assert_single_user_harvest_flow_remove_fees(sett_config)
+
+    assert_strategy_action_permissions(sett_config)
+    assert_strategy_config_permissions(sett_config)
+    assert_strategy_pausing_permissions(sett_config)
+    assert_sett_pausing_permissions(sett_config)
+    assert_sett_config_permissions(sett_config)
+    assert_controller_permissions(sett_config)
+
+
+@pytest.mark.skip()
+@pytest.mark.parametrize(
+    "strategy_key",
+    CRV_STRATS,
+)
+def test_upgraded_crv_strats(badger, strategy_key):
+    # NOTE: Ideally should get deployed contract/abi from etherscan,
+    #       but Contract.from_explorer() doesn't seem to work
+    strategy = badger.getStrategy(strategy_key)
+
+    upgrade_strategy(
+        badger,
+        strategy,
+        "StrategyStakingConvexOptimizer",
+        StrategyConvexStakingOptimizer,
+    )
+
+    # Run tests
+    sett_config = {"id": strategy_key, "mode": "test"}
+
+    assert_deposit_withdraw_single_user_flow(sett_config)
+    assert_single_user_harvest_flow(sett_config)
+    assert_migrate_single_user(sett_config)
+    assert_withdraw_other(sett_config)
+    assert_single_user_harvest_flow_remove_fees(sett_config)
+
+    assert_strategy_action_permissions(sett_config)
+    assert_strategy_config_permissions(sett_config)
+    assert_strategy_pausing_permissions(sett_config)
+    assert_sett_pausing_permissions(sett_config)
+    assert_sett_config_permissions(sett_config)
+    assert_controller_permissions(sett_config)
