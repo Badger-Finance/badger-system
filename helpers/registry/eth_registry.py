@@ -283,7 +283,7 @@ eth_registry.whales = DotMap(
         action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT,
     ),
     sbtcCrv=DotMap(
-        whale="0x545946fcae98afb4333b788b8f530046eb8ed997",
+        whale="0x7ba7f4773fa7890bad57879f0a1faa0edffb3520",
         token=eth_registry.curve.pools.sbtcCrv.token,
         action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT,
     ),
@@ -398,7 +398,7 @@ eth_registry.whales = DotMap(
         action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT,
     ),
     cvxCrv=DotMap(
-        whale="0xEB5d723D57aa4958C71D7F864E1b5b8746944f4A",
+        whale="0x00f282c40b92bed05f1776cadf1c8b96b9fbaee3",
         token="0x62b9c7356a2dc64a1969e19c23e4f579f9810aa7",
         action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT,
     ),
