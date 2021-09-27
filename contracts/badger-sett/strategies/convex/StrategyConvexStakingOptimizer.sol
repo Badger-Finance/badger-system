@@ -60,6 +60,16 @@ import "../../libraries/TokenSwapPathRegistry.sol";
 
     These position coins will be distributed on harvest
 
+
+    Changelog:
+
+    V1.1
+    * Implemented the _exchange function from the CurveSwapper library to perform the CRV -> cvxCRV and vice versa
+    swaps through curve instead of Sushiswap.
+    * It now swaps 3CRV into CRV instead of cvxCRV. If enough is aquired, it swaps this CRV for wBTC directly and, if not,
+    it swaps some cvxCRV for CRV to compensate.
+    * Removed some unused functions and variables such as the `addExtraRewardsToken` and `removeExtraRewardsToken` functions
+    as well as the obsolete swapping paths.
 */
 contract StrategyConvexStakingOptimizer is BaseStrategy, CurveSwapper, UniswapSwapper, TokenSwapPathRegistry {
     using SafeERC20Upgradeable for IERC20Upgradeable;
@@ -259,7 +269,7 @@ contract StrategyConvexStakingOptimizer is BaseStrategy, CurveSwapper, UniswapSw
 
     /// ===== View Functions =====
     function version() external pure returns (string memory) {
-        return "1.0";
+        return "1.1";
     }
 
     function getName() external override pure returns (string memory) {

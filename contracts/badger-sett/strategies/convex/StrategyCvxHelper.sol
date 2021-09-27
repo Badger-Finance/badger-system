@@ -23,6 +23,13 @@ import "../BaseStrategy.sol";
 /*
     1. Stake cvxCrv
     2. Sell earned rewards into cvxCrv position and restake
+
+    Changelog:
+
+    V1.1
+    * Implemented the _exchange function from the CurveSwapper library to perform the CRV -> cvxCRV swap through
+    curve instead of Sushiswap.
+    * Implemented the _withdrawAll() function
 */
 contract StrategyCvxHelper is BaseStrategy, CurveSwapper, UniswapSwapper, TokenSwapPathRegistry {
     using SafeERC20Upgradeable for IERC20Upgradeable;
@@ -95,7 +102,7 @@ contract StrategyCvxHelper is BaseStrategy, CurveSwapper, UniswapSwapper, TokenS
 
     /// ===== View Functions =====
     function version() external pure returns (string memory) {
-        return "1.0";
+        return "1.1";
     }
 
     function getName() external override pure returns (string memory) {
