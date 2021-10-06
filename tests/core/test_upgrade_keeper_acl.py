@@ -1,7 +1,7 @@
 import brownie
 import json
 import pytest
-from brownie import KeeperAccessControl
+from brownie import KeeperAccessControl, interface
 from dotmap import DotMap
 
 from config.badger_config import badger_config
@@ -34,8 +34,16 @@ def mstable_voter_proxy():
         deployed = DotMap(json.load(f))
         return deployed.mstable.MStableVoterProxy
 
+@pytest.fixture()
+def mStable_strategy():
+    return "0xd409c506742b7f76f164909025ab29a47e06d30a" # imBTC Strategy
 
-def test_upgrade_keeper_acl(badger, mstable_voter_proxy):
+@pytest.fixture()
+def mta():
+    return interface.IERC20("0xa3bed4e1c75d00fa6f4e5e6922db7261b5e9acd2") # mta token
+
+
+def test_upgrade_keeper_acl(badger, mstable_voter_proxy, mta, mStable_strategy):
     # NOTE: Ideally should get deployed contract/abi from etherscan,
     #       but Contract.from_explorer() doesn't seem to work
     keeper_acl = badger.keeperAccessControl
@@ -50,4 +58,8 @@ def test_upgrade_keeper_acl(badger, mstable_voter_proxy):
         KeeperAccessControl,
     )
 
+    before = mta.balanceOf(mStable_strategy)
+
     keeper_acl.harvestMta(mstable_voter_proxy, {"from": KEEPER})
+
+    assert mta.balanceOf(mStable_strategy) > before
