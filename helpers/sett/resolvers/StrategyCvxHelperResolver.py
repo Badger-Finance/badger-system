@@ -11,12 +11,12 @@ class StrategyCvxHelperResolver(StrategyCoreResolver):
 
     # ===== override default =====
     def confirm_harvest_events(self, before, after, tx):
-        key = "Tend"
+        key = "Harvest"
         assert key in tx.events
         assert len(tx.events[key]) == 1
         event = tx.events[key][0]
         keys = [
-            "tended",
+            "harvested",
         ]
         for key in keys:
             assert key in event
