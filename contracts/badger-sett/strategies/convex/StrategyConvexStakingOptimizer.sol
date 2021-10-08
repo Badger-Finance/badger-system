@@ -11,7 +11,6 @@ import "deps/@openzeppelin/contracts-upgradeable/utils/EnumerableSetUpgradeable.
 import "interfaces/uniswap/IUniswapRouterV2.sol";
 import "interfaces/badger/IBadgerGeyser.sol";
 
-import "interfaces/sushi/ISushiChef.sol";
 import "interfaces/uniswap/IUniswapPair.sol";
 import "interfaces/sushi/IxSushi.sol";
 
@@ -99,11 +98,7 @@ contract StrategyConvexStakingOptimizer is BaseStrategy, CurveSwapper, UniswapSw
     IBaseRewardsPool public baseRewardsPool;
     IBaseRewardsPool public constant cvxCrvRewardsPool = IBaseRewardsPool(0x3Fe65692bfCD0e6CF84cB1E7d24108E434A7587e);
     ICvxRewardsPool public constant cvxRewardsPool = ICvxRewardsPool(0xCF50b810E57Ac33B91dCF525C6ddd9881B139332);
-    ISushiChef public constant convexMasterChef = ISushiChef(0x5F465e9fcfFc217c5849906216581a657cd60605);
     address public constant threeCrvSwap = 0xbEbc44782C7dB0a1A60Cb6fe97d0b483032FF1C7;
-
-    uint256 public constant cvxCRV_CRV_SLP_Pid = 0;
-    uint256 public constant CVX_ETH_SLP_Pid = 1;
 
     uint256 public constant MAX_UINT_256 = uint256(-1);
 
@@ -148,6 +143,7 @@ contract StrategyConvexStakingOptimizer is BaseStrategy, CurveSwapper, UniswapSw
     uint256 public autoCompoundingPerformanceFeeGovernance;
 
     uint256 public constant crvCvxCrvPoolIndex = 2;
+    uint256 public constant crvCvxCrvSlippageToleranceBps = 500;
 
     event TreeDistribution(address indexed token, uint256 amount, uint256 indexed blockNumber, uint256 timestamp);
     event PerformanceFeeGovernance(
@@ -176,12 +172,6 @@ contract StrategyConvexStakingOptimizer is BaseStrategy, CurveSwapper, UniswapSw
         uint256 crvTended;
         uint256 cvxTended;
         uint256 cvxCrvTended;
-    }
-
-    struct TokenSwapData {
-        address tokenIn;
-        uint256 totalSold;
-        uint256 wantGained;
     }
 
     event TendState(uint256 crvTended, uint256 cvxTended, uint256 cvxCrvTended);
@@ -377,7 +367,8 @@ contract StrategyConvexStakingOptimizer is BaseStrategy, CurveSwapper, UniswapSw
 
         // 2. Convert CRV -> cvxCRV
         if (tendData.crvTended > 0) {
-            _exchange(crv, cvxCrv, tendData.crvTended, crvCvxCrvPoolIndex, true);
+            uint256 minCvxCrvOut = tendData.crvTended.mul(MAX_FEE.sub(crvCvxCrvSlippageToleranceBps)).div(MAX_FEE);
+            _exchange(crv, cvxCrv, tendData.crvTended, minCvxCrvOut, crvCvxCrvPoolIndex, true);
         }
 
         // Track harvested + converted coins
@@ -429,26 +420,33 @@ contract StrategyConvexStakingOptimizer is BaseStrategy, CurveSwapper, UniswapSw
         uint256 threeCrvBalance = threeCrvToken.balanceOf(address(this));
         if (threeCrvBalance > 0) {
             _remove_liquidity_one_coin(threeCrvSwap, threeCrvBalance, 1, 0);
-            _swapExactTokensForTokens(sushiswap, usdc, usdcToken.balanceOf(address(this)), getTokenSwapPath(usdc, crv));
+            uint256 usdcBalance = usdcToken.balanceOf(address(this));
+            if (usdcBalance > 0) {
+                _swapExactTokensForTokens(sushiswap, usdc, usdcBalance, getTokenSwapPath(usdc, crv));
+            }
         }
 
         // 3. Sell 20% of accured rewards for underlying
         if (harvestData.cvxCrvHarvested > 0) {
-            uint256 cvxCrvToSell = harvestData.cvxCrvHarvested.mul(autoCompoundingBps).div(MAX_FEE);
+            // NOTE: Assumes 1:1 CRV/cvxCRV
+            uint256 crvToSell = harvestData.cvxCrvHarvested.mul(autoCompoundingBps).div(MAX_FEE);
             // NOTE: Assuming any CRV accumulted is only from the above swap
             uint256 crvBalance = crvToken.balanceOf(address(this));
-            // NOTE: Asssumes 1:1 CRV/cvxCRV
-            if (cvxCrvToSell > crvBalance) {
-                _exchange(cvxCrv, crv, cvxCrvToSell.sub(crvBalance), crvCvxCrvPoolIndex, true);
-                cvxCrvToSell = crvToken.balanceOf(address(this));
+            if (crvToSell > crvBalance) {
+                // NOTE: Assumes 1:1 CRV/cvxCRV
+                uint256 cvxCrvToSell = crvToSell.sub(crvBalance);
+                uint256 minCrvOut = cvxCrvToSell.mul(MAX_FEE.sub(crvCvxCrvSlippageToleranceBps)).div(MAX_FEE);
+                _exchange(cvxCrv, crv, cvxCrvToSell, minCrvOut, crvCvxCrvPoolIndex, true);
+                crvToSell = crvToken.balanceOf(address(this));
             }
-            _swapExactTokensForTokens(sushiswap, crv, cvxCrvToSell, getTokenSwapPath(crv, wbtc));
+            _swapExactTokensForTokens(sushiswap, crv, crvToSell, getTokenSwapPath(crv, wbtc));
         }
 
         // 4. Convert CRV -> cvxCRV
         uint256 crvBalance = crvToken.balanceOf(address(this));
         if (crvBalance > 0) {
-            _exchange(crv, cvxCrv, crvBalance, crvCvxCrvPoolIndex, true);
+            uint256 minCvxCrvOut = crvBalance.mul(MAX_FEE.sub(crvCvxCrvSlippageToleranceBps)).div(MAX_FEE);
+            _exchange(crv, cvxCrv, crvBalance, minCvxCrvOut, crvCvxCrvPoolIndex, true);
         }
 
         if (harvestData.cvxHarvsted > 0) {
@@ -579,7 +577,7 @@ contract StrategyConvexStakingOptimizer is BaseStrategy, CurveSwapper, UniswapSw
         }
 
         uint256 totalWantAfter = balanceOf();
-        require(totalWantAfter >= totalWantBefore, "harvest-total-want-must-not-decrease");
+        require(totalWantAfter >= totalWantBefore, "want-decreased");
 
         emit Harvest(wantGained, block.number);
         return wantGained;

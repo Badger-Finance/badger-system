@@ -62,6 +62,7 @@ contract StrategyCvxCrvHelper is BaseStrategy, CurveSwapper, UniswapSwapper, Tok
     uint256 public constant MAX_UINT_256 = uint256(-1);
 
     uint256 public constant crvCvxCrvPoolIndex = 2;
+    uint256 public constant crvCvxCrvSlippageToleranceBps = 500;
 
     event HarvestState(uint256 timestamp, uint256 blockNumber);
 
@@ -113,22 +114,22 @@ contract StrategyCvxCrvHelper is BaseStrategy, CurveSwapper, UniswapSwapper, Tok
         return "1.1";
     }
 
-    function getName() external pure override returns (string memory) {
+    function getName() external override pure returns (string memory) {
         return "StrategyCvxCrvHelper";
     }
 
-    function balanceOfPool() public view override returns (uint256) {
+    function balanceOfPool() public override view returns (uint256) {
         return cvxCrvRewardsPool.balanceOf(address(this));
     }
 
-    function getProtectedTokens() public view override returns (address[] memory) {
+    function getProtectedTokens() public override view returns (address[] memory) {
         address[] memory protectedTokens = new address[](2);
         protectedTokens[0] = want;
         protectedTokens[1] = cvxCrv;
         return protectedTokens;
     }
 
-    function isTendable() public view override returns (bool) {
+    function isTendable() public override view returns (bool) {
         return false;
     }
 
@@ -218,7 +219,8 @@ contract StrategyCvxCrvHelper is BaseStrategy, CurveSwapper, UniswapSwapper, Tok
         // 4. Convert CRV -> cvxCRV
         uint256 crvBalance = crvToken.balanceOf(address(this));
         if (crvBalance > 0) {
-            _exchange(crv, cvxCrv, crvBalance, crvCvxCrvPoolIndex, true);
+            uint256 minCvxCrvOut = crvBalance.mul(MAX_FEE.sub(crvCvxCrvSlippageToleranceBps)).div(MAX_FEE);
+            _exchange(crv, cvxCrv, crvBalance, minCvxCrvOut, crvCvxCrvPoolIndex, true);
         }
 
         // Track harvested + converted coin balance of want

@@ -71,7 +71,7 @@ settsToRun = [
     # "native.sushiWbtcEth",
     # "native.sushiWbtcIbBtc",
     # # "native.uniWbtcIbBtc",
-    # "native.renCrv",
+    "native.renCrv",
     # "native.sbtcCrv",
     # "native.tbtcCrv",
     # "native.hbtcCrv",
@@ -79,7 +79,7 @@ settsToRun = [
     # "native.obtcCrv",
     # "native.bbtcCrv",
     # "native.tricrypto", # Emissions were migrated to tricrypto2. Is deprecated.
-    "native.tricrypto2",
+    # "native.tricrypto2",
     # "native.cvx",
     # "native.cvxCrv",
 ]

@@ -31,6 +31,7 @@ contract CurveSwapper is BaseSwapper {
         address _from,
         address _to,
         uint256 _dx,
+        uint256 _min_dy,
         uint256 _index,
         bool _isFactoryPool
     ) internal {
@@ -40,7 +41,7 @@ contract CurveSwapper is BaseSwapper {
         if (poolAddress != address(0)) {
             _safeApproveHelper(_from, poolAddress, _dx);
             (int128 i, int128 j, ) = ICurveRegistry(poolRegistry).get_coin_indices(poolAddress, _from, _to);
-            ICurveFi(poolAddress).exchange(i, j, _dx, 0);
+            ICurveFi(poolAddress).exchange(i, j, _dx, _min_dy);
         }
     }
 
@@ -67,7 +68,7 @@ contract CurveSwapper is BaseSwapper {
             convertedAmounts[inputPosition] = inputAmount;
             ICurveFi(swap).add_liquidity(convertedAmounts, min_mint_amount);
         } else {
-            revert("Invalid number of amount elements");
+            revert("Bad numPoolElements");
         }
     }
 

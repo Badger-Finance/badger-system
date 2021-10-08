@@ -61,6 +61,7 @@ contract StrategyCvxHelper is BaseStrategy, CurveSwapper, UniswapSwapper, TokenS
     uint256 public constant MAX_UINT_256 = uint256(-1);
 
     uint256 public constant crvCvxCrvPoolIndex = 2;
+    uint256 public constant crvCvxCrvSlippageToleranceBps = 500;
 
     event HarvestState(uint256 timestamp, uint256 blockNumber);
 
@@ -192,7 +193,8 @@ contract StrategyCvxHelper is BaseStrategy, CurveSwapper, UniswapSwapper, TokenS
         // 2. Swap cvxCRV tokens to CRV
         uint256 cvxCrvBalance = cvxCrvToken.balanceOf(address(this));
         if (cvxCrvBalance > 0) {
-            _exchange(cvxCrv, crv, cvxCrvBalance, crvCvxCrvPoolIndex, true);
+            uint256 minCrvOut = cvxCrvBalance.mul(MAX_FEE.sub(crvCvxCrvSlippageToleranceBps)).div(MAX_FEE);
+            _exchange(cvxCrv, crv, cvxCrvBalance, minCrvOut, crvCvxCrvPoolIndex, true);
         }
 
         // 3. Swap CRV tokens to CVX
