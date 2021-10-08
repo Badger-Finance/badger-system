@@ -80,8 +80,8 @@ settsToRun = [
     # "native.bbtcCrv",
     # "native.tricrypto", # Emissions were migrated to tricrypto2. Is deprecated.
     # "native.tricrypto2",
-    # "native.cvx",
-    # "native.cvxCrv",
+    "native.cvx",
+    "native.cvxCrv",
 ]
 
 mStableSettsToRun = [
