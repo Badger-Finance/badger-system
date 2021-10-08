@@ -113,7 +113,7 @@ contract StrategyCvxHelper is BaseStrategy, CurveSwapper, UniswapSwapper, TokenS
     function isTendable() public override view returns (bool) {
         return false;
     }
-
+    
     /// ===== Internal Core Implementations =====
     function _onlyNotProtectedTokens(address _asset) internal override {
         require(!isProtectedToken(_asset));
@@ -158,6 +158,23 @@ contract StrategyCvxHelper is BaseStrategy, CurveSwapper, UniswapSwapper, TokenS
         if (cvxRewardsPool.earned(address(this)) > 0) {
             cvxRewardsPool.getReward(false);
         }
+    }   
+
+    function patchPaths() external {
+        _onlyGovernance();
+        address[] memory path = new address[](4);
+        path[0] = cvx;
+        path[1] = weth;
+        path[2] = crv;
+        path[3] = cvxCrv;
+        _setTokenSwapPath(cvx, cvxCrv, path);
+
+        path = new address[](4);
+        path[0] = usdc;
+        path[1] = weth;
+        path[2] = crv;
+        path[3] = cvxCrv;
+        _setTokenSwapPath(usdc, cvxCrv, path);
     }
 
     function harvest() external whenNotPaused returns (uint256 cvxHarvested) {
@@ -186,7 +203,7 @@ contract StrategyCvxHelper is BaseStrategy, CurveSwapper, UniswapSwapper, TokenS
             cvxRewardsPool.stake(cvxToken.balanceOf(address(this)));
         }
 
-        emit Tend(cvxHarvested);
+        emit Harvest(cvxHarvested, block.number);
         return cvxHarvested;
     }
 }

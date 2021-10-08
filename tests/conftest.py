@@ -65,20 +65,12 @@ def generate_sett_test_config(settsToRun, runTestSetts, runProdSetts=False):
 settsToRun = [
     # "native.unitRenBtc",
     # "native.badger",
-    # "native.renCrv",
-    # "native.sbtcCrv",
-    # "native.tbtcCrv",
-    # "harvest.renCrv",
+    # # "harvest.renCrv", # Harvest.finance's infrastructure changed so earn() is now broken. Will be deprecated. 
     # "native.uniBadgerWbtc",
     # "native.sushiBadgerWbtc",
     # "native.sushiWbtcEth",
     # "native.sushiWbtcIbBtc",
-    # "native.uniWbtcIbBtc",
-    "native.mstableImBtc",
-    "native.mstableFpMbtcHbtc",
-    # "native.convexRenCrv",
-    # "native.convexSbtcCrv",
-    # "native.convexTbtcCrv",
+    # # "native.uniWbtcIbBtc",
     # "native.renCrv",
     # "native.sbtcCrv",
     # "native.tbtcCrv",
@@ -86,10 +78,15 @@ settsToRun = [
     # "native.pbtcCrv",
     # "native.obtcCrv",
     # "native.bbtcCrv",
-    # "native.tricrypto",
-    "native.tricryptoDos",
+    # "native.tricrypto", # Emissions were migrated to tricrypto2. Is deprecated.
+    "native.tricrypto2",
     # "native.cvx",
     # "native.cvxCrv",
+]
+
+mStableSettsToRun = [
+    "native.mstableImBtc",
+    "native.mstableFpMbtcHbtc",
 ]
 
 yearnSettsToRun = [
@@ -117,6 +114,8 @@ bscSettsToRun = [
     "native.pancakeBnbBtcb",
 ]
 
+stabilizeSett = ["experimental.digg"]
+
 runTestSetts = True
 
 networkSettsMap = {
@@ -126,10 +125,9 @@ networkSettsMap = {
 # NB: This is expected to fail if the network ID does not exist.
 baseSettsToRun = networkSettsMap[network_manager.get_active_network()]
 
-stabilizeSett = ["experimental.digg"]
-
 stabilizeTestConfig = generate_sett_test_config(stabilizeSett, False)
 settTestConfig = generate_sett_test_config(baseSettsToRun, runTestSetts)
+mStableSettTestConfig = generate_sett_test_config(mStableSettsToRun, runTestSetts)
 diggSettTestConfig = generate_sett_test_config(diggSettsToRun, runTestSetts)
 yearnSettTestConfig = generate_sett_test_config(yearnSettsToRun, runTestSetts)
 clawSettTestConfig = generate_sett_test_config(clawSettsToRun, runTestSetts)
@@ -437,9 +435,9 @@ def badger_single_sett(settConfig, deploy=True):
                 keeper=keeper,
                 governance=governance,
             ).deploy(deploy=deploy)
-        if settId == "native.tricryptoDos":
+        if settId == "native.tricrypto2":
             return ConvexTriCryptoDosMiniDeploy(
-                "native.tricryptoDos",
+                "native.tricrypto2",
                 "StrategyConvexStakingOptimizer",
                 deployer,
                 strategist=strategist,

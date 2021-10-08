@@ -12,12 +12,12 @@ class StrategyCvxCrvHelperResolver(StrategyCoreResolver):
 
     # ===== override default =====
     def confirm_harvest_events(self, before, after, tx):
-        key = "Tend"
+        key = "Harvest"
         assert key in tx.events
         assert len(tx.events[key]) == 1
         event = tx.events[key][0]
         keys = [
-            "tended",
+            "harvested",
         ]
         for key in keys:
             assert key in event
@@ -39,7 +39,6 @@ class StrategyCvxCrvHelperResolver(StrategyCoreResolver):
         self.confirm_harvest_events(before, after, tx)
 
         super().confirm_harvest(before, after, tx)
-        self.manager.printCompare(before, after)
 
         # Strategy want should increase
         assert after.get("strategy.balanceOf") >= before.get("strategy.balanceOf")

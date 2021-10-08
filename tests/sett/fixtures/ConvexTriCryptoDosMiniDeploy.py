@@ -20,10 +20,7 @@ class ConvexTriCryptoDosMiniDeploy(SettMiniDeployBase):
     def post_vault_deploy_setup(self, deploy=True):
         if not deploy:
             return
-        whale = accounts.at("0xDeFd8FdD20e0f34115C7018CCfb655796F6B2168", force=True)
-        token = interface.IERC20(sett_config.native.convexTriCryptoDos.params.want)
-        balance = token.balanceOf(whale)
-        token.transfer(self.deployer, balance // 2, {"from": whale})
+        distribute_from_whales(self.deployer, 1, "triCrypto2")
 
     def post_deploy_setup(self, deploy):
         if deploy:
@@ -106,30 +103,32 @@ class ConvexTriCryptoDosMiniDeploy(SettMiniDeployBase):
         assert self.controller.strategies(self.vault.token()) == self.strategy.address
         assert self.controller.vaults(self.strategy.want()) == self.vault.address
 
-        # Add users to guestlist
-        guestlist = VipCappedGuestListBbtcUpgradeable.at(self.vault.guestList())
 
-        owner = accounts.at("0xd41f7006bcb2B3d0F9C5873272Ebed67B37F80Dc", force=True)
+        if (self.vault.guestList() != AddressZero): 
+            # Add users to guestlist
+            guestlist = VipCappedGuestListBbtcUpgradeable.at(self.vault.guestList())
 
-        addresses = []
-        for account in accounts:
-            addresses.append(account.address)
+            owner = accounts.at("0xd41f7006bcb2B3d0F9C5873272Ebed67B37F80Dc", force=True)
 
-        # Add actors addresses
-        addresses.append(owner.address)
-        addresses.append(self.governance.address)
-        addresses.append(self.strategist.address)
-        addresses.append(self.keeper.address)
-        addresses.append(self.guardian.address)
-        addresses.append(self.deployer.address)
+            addresses = []
+            for account in accounts:
+                addresses.append(account.address)
 
-        invited = [True] * len(addresses)
+            # Add actors addresses
+            addresses.append(owner.address)
+            addresses.append(self.governance.address)
+            addresses.append(self.strategist.address)
+            addresses.append(self.keeper.address)
+            addresses.append(self.guardian.address)
+            addresses.append(self.deployer.address)
 
-        guestlist.setGuests(addresses, invited, {"from": owner})
+            invited = [True] * len(addresses)
 
-        # Increase gustlist caps since randomly generated amounts tend to be bigger than current caps
-        guestlist.setTotalDepositCap("5080189446897250400000", {"from": owner})
-        guestlist.setUserDepositCap("5081890446897250400000", {"from": owner})
+            guestlist.setGuests(addresses, invited, {"from": owner})
+
+            # Increase gustlist caps since randomly generated amounts tend to be bigger than current caps
+            guestlist.setTotalDepositCap("5080189446897250400000", {"from": owner})
+            guestlist.setUserDepositCap("5081890446897250400000", {"from": owner})
 
     # Setup used for running simulation without deployed strategy:
 

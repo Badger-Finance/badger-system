@@ -103,31 +103,23 @@ contract StrategyCvxCrvHelper is BaseStrategy, CurveSwapper, UniswapSwapper, Tok
         return "1.0";
     }
 
-    function getName() external override pure returns (string memory) {
+    function getName() external pure override returns (string memory) {
         return "StrategyCvxCrvHelper";
     }
 
-    function balanceOfPool() public override view returns (uint256) {
+    function balanceOfPool() public view override returns (uint256) {
         return cvxCrvRewardsPool.balanceOf(address(this));
     }
 
-    function getProtectedTokens() public override view returns (address[] memory) {
+    function getProtectedTokens() public view override returns (address[] memory) {
         address[] memory protectedTokens = new address[](2);
         protectedTokens[0] = want;
         protectedTokens[1] = cvxCrv;
         return protectedTokens;
     }
 
-    function isTendable() public override view returns (bool) {
+    function isTendable() public view override returns (bool) {
         return false;
-    }
-
-    function setCrvCvxCrvPath() external {
-        _onlyGovernance();
-        address[] memory path = new address[](2);
-        path[0] = crv;
-        path[1] = cvxCrv;
-        _setTokenSwapPath(crv, cvxCrv, path);
     }
 
     /// ===== Internal Core Implementations =====
@@ -175,6 +167,28 @@ contract StrategyCvxCrvHelper is BaseStrategy, CurveSwapper, UniswapSwapper, Tok
         }
     }
 
+    function patchPaths() external {
+        _onlyGovernance();
+        address[] memory path = new address[](4);
+        path[0] = cvx;
+        path[1] = weth;
+        path[2] = crv;
+        path[3] = cvxCrv;
+        _setTokenSwapPath(cvx, cvxCrv, path);
+
+        path = new address[](4);
+        path[0] = usdc;
+        path[1] = weth;
+        path[2] = crv;
+        path[3] = cvxCrv;
+        _setTokenSwapPath(usdc, cvxCrv, path);
+
+        path = new address[](2);
+        path[0] = crv;
+        path[1] = cvxCrv;
+        _setTokenSwapPath(crv, cvxCrv, path);
+    }
+
     function harvest() external whenNotPaused returns (uint256 cvxCrvHarvested) {
         _onlyAuthorizedActors();
         // 1. Harvest gains from positions
@@ -214,7 +228,7 @@ contract StrategyCvxCrvHelper is BaseStrategy, CurveSwapper, UniswapSwapper, Tok
             cvxCrvRewardsPool.stake(cvxCrvToken.balanceOf(address(this)));
         }
 
-        emit Tend(cvxCrvHarvested);
+        emit Harvest(cvxCrvHarvested, block.number);
         return cvxCrvHarvested;
     }
 }

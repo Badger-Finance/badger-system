@@ -126,7 +126,7 @@ contract StrategyDiggRewards is BaseStrategy {
         return _amount;
     }
 
-    function harvest() external whenNotPaused returns (HarvestData memory) {
+    function harvest() external whenNotPaused returns (uint256) {
         _onlyAuthorizedActors();
 
         HarvestData memory harvestData;
@@ -156,6 +156,6 @@ contract StrategyDiggRewards is BaseStrategy {
             harvestData.scaledSharesIncrease
         );
 
-        return harvestData;
+        return harvestData.diggIncrease;
     }
 }

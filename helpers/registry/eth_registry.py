@@ -283,7 +283,7 @@ eth_registry.whales = DotMap(
         action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT,
     ),
     sbtcCrv=DotMap(
-        whale="0x282742940ee0b7ed028bb48052bb4922282234da",
+        whale="0x545946fcae98afb4333b788b8f530046eb8ed997",
         token=eth_registry.curve.pools.sbtcCrv.token,
         action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT,
     ),
@@ -293,7 +293,7 @@ eth_registry.whales = DotMap(
         action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT,
     ),
     renCrv=DotMap(
-        whale="0xc280f35eeb97564dfd6bf80722e031d8f5bd82c9",
+        whale="0x647481c033a4a2e816175ce115a0804adf793891",
         token=eth_registry.curve.pools.renCrv.token,
         action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT,
     ),
@@ -318,7 +318,7 @@ eth_registry.whales = DotMap(
         action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT,
     ),
     pbtcCrv=DotMap(
-        whale="0x67031973f76abcd80d8635ee18865813298923b4",
+        whale="0x5a87e9a0a765fe5a69fa6492d3c7838dc1511805",
         token=eth_registry.curve.pools.pbtcCrv.token,
         action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT,
     ),
@@ -373,7 +373,7 @@ eth_registry.whales = DotMap(
         action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT,
     ),
     imbtc=DotMap(
-        whale="0x6e57ff9cec63c54dfa6380f07396917844540468",
+        whale="0xfd3ca26e839bf75870d50613cc20d34a59975c3e",
         token="0x17d8cbb6bce8cee970a4027d1198f6700a7a6c24",
         action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT,
     ),
@@ -383,7 +383,7 @@ eth_registry.whales = DotMap(
         action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT,
     ),
     mta=DotMap(
-        whale="0xf65d53aa6e2e4a5f4f026e73cb3e22c22d75e35c",
+        whale="0xd156122399690b387702d4095dc24a397bcc8af5",
         token="0xa3bed4e1c75d00fa6f4e5e6922db7261b5e9acd2",
         action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT,
     ),
@@ -392,13 +392,18 @@ eth_registry.whales = DotMap(
         token="0xcA3d75aC011BF5aD07a98d02f18225F9bD9A6BDF",
         action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT,
     ),
+    triCrypto2=DotMap(
+        whale="0x7a16ff8270133f063aab6c9977183d9e72835428",
+        token="0xc4AD29ba4B3c580e6D59105FFf484999997675Ff",
+        action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT,
+    ),
     cvx=DotMap(
         whale="0xdd5bc57bf90e6c6b341120e5b38fb6eda8e6481d",
         token="0x4e3fbd56cd56c3e72c1403e103b45db9da5b9d2b",
         action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT,
     ),
     cvxCrv=DotMap(
-        whale="0xca078cb6eb4b80b4ef84751230c49c8ce076c6ff",
+        whale="0x97389c19ff30369a8daaef2298afc2947b4ad362",
         token="0x62b9c7356a2dc64a1969e19c23e4f579f9810aa7",
         action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT,
     ),

@@ -60,6 +60,12 @@ def assert_single_user_harvest_flow(settConfig):
     settKeeper = accounts.at(sett.keeper(), force=True)
     strategyKeeper = accounts.at(strategy.keeper(), force=True)
 
+    # Patch swaping paths for Convex helpers functions before harvests
+    if settConfig["id"] == "native.cvx" or settConfig["id"] == "native.cvxCrv":
+        print("PATHS PATCHED")
+        strategyGov = accounts.at(strategy.governance(), force=True)
+        strategy.patchPaths({"from": strategyGov})
+
     snap = SnapshotManager(badger, settConfig["id"])
 
     deployer = badger.deployer
@@ -231,9 +237,14 @@ def assert_withdraw_other(settConfig):
     randomUser = accounts[6]
     strategyKeeper = accounts.at(strategy.keeper(), force=True)
 
-    startingBalance = want.balanceOf(deployer)
+    # Patch swaping paths for Convex helpers functions before harvests
+    if settConfig["id"] == "native.cvx" or settConfig["id"] == "native.cvxCrv":
+        print("PATHS PATCHED")
+        strategyGov = accounts.at(strategy.governance(), force=True)
+        strategy.patchPaths({"from": strategyGov})
 
-    depositAmount = Wei("1 ether")
+    startingBalance = want.balanceOf(deployer)
+    depositAmount = startingBalance // 2
 
     assert startingBalance >= depositAmount
 
@@ -251,7 +262,7 @@ def assert_withdraw_other(settConfig):
 
     if strategy.isTendable():
         strategy.tend({"from": strategyKeeper})
-    ## Extra sleep because some tend will actually swap
+    ## Extra sleep because some tend will actually swap
     chain.sleep(days(1))
     chain.mine()
     strategy.harvest({"from": strategyKeeper})
@@ -293,6 +304,12 @@ def assert_single_user_harvest_flow_remove_fees(settConfig):
     strategy = badger.getStrategy(settConfig["id"])
     want = badger.getStrategyWant(settConfig["id"])
 
+    # Patch swaping paths for Convex helpers functions before harvests
+    if settConfig["id"] == "native.cvx" or settConfig["id"] == "native.cvxCrv":
+        print("PATHS PATCHED")
+        strategyGov = accounts.at(strategy.governance(), force=True)
+        strategy.patchPaths({"from": strategyGov})
+
     deployer = badger.deployer
     randomUser = accounts[6]
 
@@ -308,10 +325,10 @@ def assert_single_user_harvest_flow_remove_fees(settConfig):
 
     # Deposit
     want.approve(sett, MaxUint256, {"from": deployer})
-    sett.deposit(depositAmount, {"from": deployer})
+    snap.settDeposit(depositAmount, {"from": deployer})
 
     # Earn
-    sett.earn({"from": strategyKeeper})
+    snap.settEarn({"from": strategyKeeper})
 
     chain.sleep(days(0.5))
     chain.mine()
@@ -329,7 +346,9 @@ def assert_single_user_harvest_flow_remove_fees(settConfig):
 
     # Harvesting on the HarvestMetaFarm does not increase the underlying position, it sends rewards to the rewardsTree
     # For HarvestMetaFarm, we expect FARM rewards to be distributed to rewardsTree
-    assert want.balanceOf(controller.rewards()) > 0
+    # native.badger doesn't have fees
+    if settConfig["id"] != "native.badger":
+        assert want.balanceOf(controller.rewards()) > 0
 
     chain.sleep(days(1))
     chain.mine()
@@ -342,7 +361,7 @@ def assert_single_user_harvest_flow_remove_fees(settConfig):
 
     tx = snap.settHarvest({"from": strategyKeeper})
 
-    sett.withdrawAll({"from": deployer})
+    snap.settWithdrawAll({"from": deployer})
 
     endingBalance = want.balanceOf(deployer)
 
