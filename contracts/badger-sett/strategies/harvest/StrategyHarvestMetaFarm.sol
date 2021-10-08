@@ -66,6 +66,8 @@ contract StrategyHarvestMetaFarm is BaseStrategyMultiSwapper {
         uint256 blockNumber
     );
 
+    event TreeDistribution(address indexed token, uint256 amount, uint256 indexed blockNumber, uint256 timestamp);
+
     struct HarvestData {
         uint256 totalFarmHarvested;
         uint256 farmToRewards;
@@ -263,7 +265,7 @@ contract StrategyHarvestMetaFarm is BaseStrategyMultiSwapper {
     /// @notice Harvest from strategy mechanics, realizing increase in underlying position
     /// @notice For this strategy, harvest rewards are sent to rewards tree for distribution rather than converted to underlying
     /// @notice Any APY calculation must consider expected results from harvesting
-    function harvest() external whenNotPaused returns (HarvestData memory) {
+    function harvest() external whenNotPaused returns (uint256) {
         _onlyAuthorizedActors();
 
         HarvestData memory harvestData;
@@ -286,6 +288,7 @@ contract StrategyHarvestMetaFarm is BaseStrategyMultiSwapper {
         // Distribute remaining FARM rewards to rewardsTree
         harvestData.farmToRewards = IERC20Upgradeable(farm).balanceOf(address(this));
         IERC20Upgradeable(farm).transfer(badgerTree, harvestData.farmToRewards);
+        emit TreeDistribution(farm, harvestData.farmToRewards, block.number, block.timestamp);
 
         lastHarvested = now;
 
@@ -299,7 +302,7 @@ contract StrategyHarvestMetaFarm is BaseStrategyMultiSwapper {
             block.number
         );
 
-        return harvestData;
+        return harvestData.totalFarmHarvested;
     }
 
     /// @notice 'Recycle' FARM gained from staking into profit sharing pool for increased APY

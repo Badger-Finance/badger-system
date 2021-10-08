@@ -161,11 +161,7 @@ class ConvexOBtcMiniDeploy(SettMiniDeployBase):
     #         web3.toChecksumAddress(self.badger.devProxyAdmin.address),
     #         contract.initialize.encode_input(
     #             self.governance.address,
-    #             self.strategist.address,
     #             self.controller.address,
-    #             self.keeper.address,
-    #             self.guardian.address,
-    #             [params.want, self.badger.badgerTree,],
     #             params.pid,
     #             [
     #                 params.performanceFeeGovernance,

@@ -6,7 +6,6 @@ from brownie import *
 from helpers.proxy_utils import deploy_proxy
 import json
 from helpers.constants import AddressZero
-# from helpers.registry.artifacts import ProxyAdmin
 
 
 class ConvexRenBtcMiniDeploy(SettMiniDeployBase):

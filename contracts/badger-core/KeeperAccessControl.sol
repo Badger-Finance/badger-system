@@ -4,6 +4,8 @@ pragma solidity 0.6.12;
 import "deps/@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "interfaces/badger/ISett.sol";
 import "interfaces/badger/IStrategy.sol";
+import "interfaces/badger/IStabilizerStrategy.sol";
+import "interfaces/mStable/IMStableVoterProxy.sol";
 
 contract KeeperAccessControl is AccessControlUpgradeable {
     // Keeper Roles
@@ -56,5 +58,15 @@ contract KeeperAccessControl is AccessControlUpgradeable {
     function harvestNoReturn(address strategy) external strategyBalanceCheck(strategy) {
         require(hasRole(HARVESTER_ROLE, msg.sender), "HARVESTER_ROLE");
         IStrategy(strategy).harvest();
+    }
+
+    function harvestMta(address voterProxy) external {
+        require(hasRole(HARVESTER_ROLE, msg.sender), "HARVESTER_ROLE");
+        IMStableVoterProxy(voterProxy).harvestMta();
+    }
+
+    function rebalance(address strategy) external {
+        require(hasRole(HARVESTER_ROLE, msg.sender), "HARVESTER_ROLE");
+        IStabilizerStrategy(strategy).rebalance();
     }
 }

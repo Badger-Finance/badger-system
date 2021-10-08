@@ -373,7 +373,7 @@ eth_registry.whales = DotMap(
         action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT,
     ),
     imbtc=DotMap(
-        whale="0x6e57ff9cec63c54dfa6380f07396917844540468",
+        whale="0xfd3ca26e839bf75870d50613cc20d34a59975c3e",
         token="0x17d8cbb6bce8cee970a4027d1198f6700a7a6c24",
         action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT,
     ),
@@ -383,7 +383,7 @@ eth_registry.whales = DotMap(
         action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT,
     ),
     mta=DotMap(
-        whale="0xf65d53aa6e2e4a5f4f026e73cb3e22c22d75e35c",
+        whale="0xd156122399690b387702d4095dc24a397bcc8af5",
         token="0xa3bed4e1c75d00fa6f4e5e6922db7261b5e9acd2",
         action=WhaleRegistryAction.DISTRIBUTE_FROM_CONTRACT,
     ),

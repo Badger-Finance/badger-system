@@ -116,4 +116,5 @@ class MStableImBtcMiniDeploy(SettMiniDeployBase):
         # Only for local testing
         if deploy:
             # Distribute tokens from whales to deployer (including fPmBtcHBtc, imbtc & mta)
-            distribute_from_whales(self.deployer, 1)
+            distribute_from_whales(self.deployer, 1, "imbtc")
+            distribute_from_whales(self.deployer, 1, "mta")

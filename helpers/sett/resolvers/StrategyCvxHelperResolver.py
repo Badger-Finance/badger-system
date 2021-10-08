@@ -38,7 +38,6 @@ class StrategyCvxHelperResolver(StrategyCoreResolver):
         self.confirm_harvest_events(before, after, tx)
 
         super().confirm_harvest(before, after, tx)
-        self.manager.printCompare(before, after)
 
         # Strategy want should increase
         assert after.get("strategy.balanceOf") >= before.get("strategy.balanceOf")
