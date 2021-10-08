@@ -98,21 +98,34 @@ class ConvexTriCryptoDosMiniDeploy(SettMiniDeployBase):
         timelock = accounts.at("0x21CF9b77F88Adf8F8C98d7E33Fe601DC57bC0893", force=True)
 
         # Add strategy to controller for want
-        self.controller.approveStrategy(
-            self.strategy.want(), self.strategy.address, {"from": self.governance}
-        )
-        self.controller.setStrategy(
-            self.strategy.want(), self.strategy.address, {"from": self.governance}
-        )
+        # Controller already wired-up
+        # self.controller.approveStrategy(
+        #     self.strategy.want(), self.strategy.address, {"from": self.governance}
+        # )
+        # self.controller.setStrategy(
+        #     self.strategy.want(), self.strategy.address, {"from": self.governance}
+        # )
 
         assert self.controller.strategies(self.vault.token()) == self.strategy.address
         assert self.controller.vaults(self.strategy.want()) == self.vault.address
 
-        if (self.vault.guestList() != AddressZero): 
+        # Upgrade strategy
+        proxyAdmin = interface.IProxyAdmin("0x20Dce41Acca85E8222D6861Aa6D23B6C941777bF")
+        timelock = accounts.at("0x21CF9b77F88Adf8F8C98d7E33Fe601DC57bC0893", force=True) # Owner
+
+        proxyAdmin.upgrade(self.strategy.address, "0xead9c2499187e5627dc2f9f75ab74f439c34c6fb", {"from": timelock})
+
+        self.strategy.patchPaths({"from": self.governance})
+        
+
+
+        if self.vault.guestList() != AddressZero:
             # Add users to guestlist
             guestlist = VipCappedGuestListBbtcUpgradeable.at(self.vault.guestList())
 
-            owner = accounts.at("0xd41f7006bcb2B3d0F9C5873272Ebed67B37F80Dc", force=True)
+            owner = accounts.at(
+                "0xd41f7006bcb2B3d0F9C5873272Ebed67B37F80Dc", force=True
+            )
 
             addresses = []
             for account in accounts:
@@ -133,45 +146,3 @@ class ConvexTriCryptoDosMiniDeploy(SettMiniDeployBase):
             # Increase gustlist caps since randomly generated amounts tend to be bigger than current caps
             guestlist.setTotalDepositCap("5080189446897250400000", {"from": owner})
             guestlist.setUserDepositCap("5081890446897250400000", {"from": owner})
-
-    # Setup used for running simulation without deployed strategy:
-
-    # def post_deploy_setup(self, deploy):
-    #     if deploy:
-    #         return
-
-    #     (params, want) = self.fetch_params()
-
-    #     self.controller = interface.IController(self.vault.controller())
-
-    #     contract = StrategyConvexStakingOptimizer.deploy({"from": self.deployer})
-    #     self.strategy = deploy_proxy(
-    #         "StrategyConvexStakingOptimizer",
-    #         StrategyConvexStakingOptimizer.abi,
-    #         contract.address,
-    #         web3.toChecksumAddress(self.badger.devProxyAdmin.address),
-    #         contract.initialize.encode_input(
-    #             self.governance.address,
-    #             self.strategist.address,
-    #             self.controller.address,
-    #             self.keeper.address,
-    #             self.guardian.address,
-    #             [params.want, self.badger.badgerTree,],
-    #             params.pid,
-    #             [
-    #                 params.performanceFeeGovernance,
-    #                 params.performanceFeeStrategist,
-    #                 params.withdrawalFee,
-    #             ],
-    #         ),
-    #         self.deployer,
-    #     )
-
-    #     self.badger.sett_system.strategies[self.key] = self.strategy
-
-    #     assert self.controller.address == self.strategy.controller()
-
-    #     self.controller.approveStrategy(self.strategy.want(), self.strategy.address, {"from": self.governance})
-    #     self.controller.setStrategy(self.strategy.want(), self.strategy.address, {"from": self.governance})
-
-    #     assert self.controller.strategies(self.vault.token()) == self.strategy.address

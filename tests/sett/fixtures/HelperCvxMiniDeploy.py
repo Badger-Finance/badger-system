@@ -43,16 +43,26 @@ class HelperCvxMiniDeploy(SettMiniDeployBase):
         self.controller = interface.IController(self.vault.controller())
 
         # Add strategy to controller for want
-        self.controller.approveStrategy(
-            self.strategy.want(), self.strategy.address, {"from": self.governance}
-        )
-        self.controller.setStrategy(
-            self.strategy.want(), self.strategy.address, {"from": self.governance}
-        )
+        # Already wire-up
+        # self.controller.approveStrategy(
+        #     self.strategy.want(), self.strategy.address, {"from": self.governance}
+        # )
+        # self.controller.setStrategy(
+        #     self.strategy.want(), self.strategy.address, {"from": self.governance}
+        # )
 
         assert self.controller.strategies(self.vault.token()) == self.strategy.address
         assert self.controller.vaults(self.strategy.want()) == self.vault.address
 
+        # Upgrade strategy
+        proxyAdmin = interface.IProxyAdmin("0x20Dce41Acca85E8222D6861Aa6D23B6C941777bF")
+        timelock = accounts.at("0x21CF9b77F88Adf8F8C98d7E33Fe601DC57bC0893", force=True) # Owner
+
+        proxyAdmin.upgrade(self.strategy.address, "0x0281B0E6d94f8f04a0E6af8a901E018542bdCDb6", {"from": timelock})
+
+        self.strategy.patchPaths({"from": self.governance})
+        
+        
 
         if (self.vault.guestList() != AddressZero):
             # Add actors to guestlist

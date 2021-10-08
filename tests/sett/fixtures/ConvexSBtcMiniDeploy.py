@@ -40,12 +40,10 @@ class ConvexSBtcMiniDeploy(SettMiniDeployBase):
 
             self.strategy.patchPaths({"from": self.governance})
 
-            if (
-                cvxHelperVault.guestList() != AddressZero
-                ) and (
+            if (cvxHelperVault.guestList() != AddressZero) and (
                 cvxCrvHelperVault.guestList() != AddressZero
             ):
-                
+
                 # Add rewards address to guestlists
                 cvxGuestlist = VipCappedGuestListBbtcUpgradeable.at(
                     cvxHelperVault.guestList()
@@ -80,6 +78,7 @@ class ConvexSBtcMiniDeploy(SettMiniDeployBase):
                 "StrategyConvexStakingOptimizer"
             ]
         )
+
         self.badger.sett_system.strategies[self.key] = self.strategy
 
         if not (self.vault.controller() == self.strategy.controller()):
@@ -97,15 +96,27 @@ class ConvexSBtcMiniDeploy(SettMiniDeployBase):
         self.controller = interface.IController(self.vault.controller())
 
         # Add strategy to controller for want
-        self.controller.approveStrategy(
-            self.strategy.want(), self.strategy.address, {"from": self.governance}
-        )
-        self.controller.setStrategy(
-            self.strategy.want(), self.strategy.address, {"from": self.governance}
-        )
-        self.controller.setVault(
-            self.strategy.want(), self.vault.address, {"from": self.governance}
-        )
+
+        # Controller already wired-up
+        # self.controller.approveStrategy(
+        #     self.strategy.want(), self.strategy.address, {"from": self.governance}
+        # )
+        # self.controller.setStrategy(
+        #     self.strategy.want(), self.strategy.address, {"from": self.governance}
+        # )
+        # self.controller.setVault(
+        #     self.strategy.want(), self.vault.address, {"from": self.governance}
+        # )
 
         assert self.controller.strategies(self.vault.token()) == self.strategy.address
         assert self.controller.vaults(self.strategy.want()) == self.vault.address
+
+        # Upgrade strategy
+        proxyAdmin = interface.IProxyAdmin("0x20Dce41Acca85E8222D6861Aa6D23B6C941777bF")
+        timelock = accounts.at("0x21CF9b77F88Adf8F8C98d7E33Fe601DC57bC0893", force=True) # Owner
+
+        proxyAdmin.upgrade(self.strategy.address, "0xead9c2499187e5627dc2f9f75ab74f439c34c6fb", {"from": timelock})
+
+        self.strategy.patchPaths({"from": self.governance})
+        
+
