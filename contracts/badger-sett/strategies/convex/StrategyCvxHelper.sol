@@ -61,7 +61,7 @@ contract StrategyCvxHelper is BaseStrategy, CurveSwapper, UniswapSwapper, TokenS
     uint256 public constant MAX_UINT_256 = uint256(-1);
 
     uint256 public constant crvCvxCrvPoolIndex = 2;
-    uint256 public constant crvCvxCrvSlippageToleranceBps = 500;
+    uint256 public crvCvxCrvSlippageToleranceBps;
 
     event HarvestState(uint256 timestamp, uint256 blockNumber);
 
@@ -178,6 +178,11 @@ contract StrategyCvxHelper is BaseStrategy, CurveSwapper, UniswapSwapper, TokenS
         path[1] = weth;
         path[2] = cvx;
         _setTokenSwapPath(crv, cvx, path);
+    }
+
+    function setCrvCvxCrvSlippageToleranceBps(uint256 _sl) external {
+        _onlyGovernance();
+        crvCvxCrvSlippageToleranceBps = _sl;
     }
 
     function harvest() external whenNotPaused returns (uint256 cvxHarvested) {

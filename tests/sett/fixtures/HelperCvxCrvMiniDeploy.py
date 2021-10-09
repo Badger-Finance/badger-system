@@ -22,6 +22,7 @@ class HelperCvxCrvMiniDeploy(SettMiniDeployBase):
     def post_deploy_setup(self, deploy):
         if deploy:
             self.strategy.patchPaths({"from": self.governance})
+            self.strategy.setCrvCvxCrvSlippageToleranceBps(500, {"from": self.governance})
             return
 
         # Vault uses testMultisig
@@ -60,6 +61,7 @@ class HelperCvxCrvMiniDeploy(SettMiniDeployBase):
         proxyAdmin.upgrade(self.strategy.address, "0x3d6994f14fb3781C566d470da6092F96beF5eE03", {"from": timelock})
 
         self.strategy.patchPaths({"from": self.governance})
+        self.strategy.setCrvCvxCrvSlippageToleranceBps(500, {"from": self.governance})
         
 
 

@@ -142,8 +142,8 @@ contract StrategyConvexStakingOptimizer is BaseStrategy, CurveSwapper, UniswapSw
     uint256 public autoCompoundingBps;
     uint256 public autoCompoundingPerformanceFeeGovernance;
 
+    uint256 public crvCvxCrvSlippageToleranceBps;
     uint256 public constant crvCvxCrvPoolIndex = 2;
-    uint256 public constant crvCvxCrvSlippageToleranceBps = 500;
 
     event TreeDistribution(address indexed token, uint256 amount, uint256 indexed blockNumber, uint256 timestamp);
     event PerformanceFeeGovernance(
@@ -250,6 +250,11 @@ contract StrategyConvexStakingOptimizer is BaseStrategy, CurveSwapper, UniswapSw
     function setCurvePoolSwap(address _swap) external {
         _onlyGovernance();
         curvePool.swap = _swap;
+    }
+
+    function setCrvCvxCrvSlippageToleranceBps(uint256 _sl) external {
+        _onlyGovernance();
+        crvCvxCrvSlippageToleranceBps = _sl;
     }
 
     function _initializeApprovals() internal {
