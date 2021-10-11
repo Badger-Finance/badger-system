@@ -221,6 +221,7 @@ contract StrategyConvexStakingOptimizer is BaseStrategy, CurveSwapper, UniswapSw
         path[2] = wbtc;
         _setTokenSwapPath(cvx, wbtc, path);
 
+        path = new address[](3);
         path[0] = usdc;
         path[1] = weth;
         path[2] = crv;
