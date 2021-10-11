@@ -38,7 +38,7 @@ class ConvexTriCryptoMiniDeploy(SettMiniDeployBase):
                 self.strategy.address, {"from": cvxCrvHelperGov}
             )
 
-            self.strategy.patchPaths({"from": self.governance})
+            # self.strategy.patchPaths({"from": self.governance})
 
             # Add rewards address to guestlists
             list_add = cvxHelperVault.guestList()

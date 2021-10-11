@@ -36,8 +36,7 @@ class ConvexHBtcMiniDeploy(SettMiniDeployBase):
                 self.strategy.address, {"from": cvxCrvHelperGov}
             )
 
-            self.strategy.patchPaths({"from": self.governance})
-            self.strategy.setCrvCvxCrvSlippageToleranceBps(500, {"from": self.governance})
+            # self.strategy.patchPaths({"from": self.governance})
 
             if (cvxHelperVault.guestList() != AddressZero) and (
                 cvxCrvHelperVault.guestList() != AddressZero
@@ -112,8 +111,7 @@ class ConvexHBtcMiniDeploy(SettMiniDeployBase):
 
         proxyAdmin.upgrade(self.strategy.address, "0xead9c2499187e5627dc2f9f75ab74f439c34c6fb", {"from": timelock})
 
-        self.strategy.patchPaths({"from": self.governance})
-        self.strategy.setCrvCvxCrvSlippageToleranceBps(500, {"from": self.governance})
+        # self.strategy.patchPaths({"from": self.governance})
         
 
         if self.vault.guestList() != AddressZero:

@@ -64,6 +64,7 @@ def badger():
     return connect_badger(badger_config.prod_json)
 
 
+@pytest.mark.skip("New strategy being deployed instead of an upgrade")
 @pytest.mark.parametrize(
     "strategy_key",
     CRV_STRATS,
@@ -156,35 +157,34 @@ def test_upgraded_helper_strats_storage(strategy_key, badger):
 
 
 # NOTE: Doesn't work
-@pytest.mark.skip()
-@pytest.mark.parametrize(
-    "strategy_key",
-    CRV_STRATS,
-)
-def test_upgraded_convex_strats(badger, strategy_key):
-    # NOTE: Ideally should get deployed contract/abi from etherscan,
-    #       but Contract.from_explorer() doesn't seem to work
-    strategy = badger.getStrategy(strategy_key)
+# @pytest.mark.parametrize(
+#     "strategy_key",
+#     CRV_STRATS,
+# )
+# def test_upgraded_convex_strats(badger, strategy_key):
+#     # NOTE: Ideally should get deployed contract/abi from etherscan,
+#     #       but Contract.from_explorer() doesn't seem to work
+#     strategy = badger.getStrategy(strategy_key)
 
-    upgrade_strategy(
-        badger,
-        strategy,
-        "StrategyStakingConvexOptimizer",
-        StrategyConvexStakingOptimizer,
-    )
+#     upgrade_strategy(
+#         badger,
+#         strategy,
+#         "StrategyStakingConvexOptimizer",
+#         StrategyConvexStakingOptimizer,
+#     )
 
-    # Run tests
-    sett_config = {"id": strategy_key, "mode": "test"}
+#     # Run tests
+#     sett_config = {"id": strategy_key, "mode": "test"}
 
-    assert_deposit_withdraw_single_user_flow(sett_config)
-    assert_single_user_harvest_flow(sett_config)
-    assert_migrate_single_user(sett_config)
-    assert_withdraw_other(sett_config)
-    assert_single_user_harvest_flow_remove_fees(sett_config)
+#     assert_deposit_withdraw_single_user_flow(sett_config)
+#     assert_single_user_harvest_flow(sett_config)
+#     assert_migrate_single_user(sett_config)
+#     assert_withdraw_other(sett_config)
+#     assert_single_user_harvest_flow_remove_fees(sett_config)
 
-    assert_strategy_action_permissions(sett_config)
-    assert_strategy_config_permissions(sett_config)
-    assert_strategy_pausing_permissions(sett_config)
-    assert_sett_pausing_permissions(sett_config)
-    assert_sett_config_permissions(sett_config)
-    assert_controller_permissions(sett_config)
+#     assert_strategy_action_permissions(sett_config)
+#     assert_strategy_config_permissions(sett_config)
+#     assert_strategy_pausing_permissions(sett_config)
+#     assert_sett_pausing_permissions(sett_config)
+#     assert_sett_config_permissions(sett_config)
+#     assert_controller_permissions(sett_config)

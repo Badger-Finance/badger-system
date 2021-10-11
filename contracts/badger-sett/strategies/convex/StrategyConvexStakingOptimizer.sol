@@ -221,9 +221,22 @@ contract StrategyConvexStakingOptimizer is BaseStrategy, CurveSwapper, UniswapSw
         path[2] = wbtc;
         _setTokenSwapPath(cvx, wbtc, path);
 
+        path[0] = usdc;
+        path[1] = weth;
+        path[2] = crv;
+        _setTokenSwapPath(usdc, crv, path);
+
+        path = new address[](3);
+        path[0] = crv;
+        path[1] = weth;
+        path[2] = wbtc;
+        _setTokenSwapPath(crv, wbtc, path);
+
         _initializeApprovals();
         autoCompoundingBps = 2000;
         autoCompoundingPerformanceFeeGovernance = 5000;
+
+        crvCvxCrvSlippageToleranceBps = 500;
     }
 
     /// ===== Permissioned Functions =====
@@ -341,21 +354,6 @@ contract StrategyConvexStakingOptimizer is BaseStrategy, CurveSwapper, UniswapSw
         if (cvxRewardsPool.earned(address(this)) > 0) {
             cvxRewardsPool.getReward(false);
         }
-    }
-
-    function patchPaths() external {
-        _onlyGovernance();
-        address[] memory path = new address[](3);
-        path[0] = usdc;
-        path[1] = weth;
-        path[2] = crv;
-        _setTokenSwapPath(usdc, crv, path);
-
-        path = new address[](3);
-        path[0] = crv;
-        path[1] = weth;
-        path[2] = wbtc;
-        _setTokenSwapPath(crv, wbtc, path);
     }
 
     /// @notice The more frequent the tend, the higher returns will be
