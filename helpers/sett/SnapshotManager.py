@@ -23,6 +23,7 @@ from helpers.sett.resolvers import (
     StrategyDiggLpMetaFarmResolver,
     StrategyUnitProtocolRenbtcResolver,
     StrategyUniGenericLpResolver,
+    StrategyMStableVaultResolver,
     StabilizeStrategyDiggV1Resolver,
     StrategyConvexStakingOptimizerResolver,
     StrategyCvxHelperResolver,
@@ -30,13 +31,8 @@ from helpers.sett.resolvers import (
 )
 from helpers.utils import digg_shares_to_initial_fragments, val
 from scripts.systems.badger_system import BadgerSystem
-from helpers.sett.strategy_earnings import (
-    get_harvest_earnings,
-    get_tend_earnings,
-    get_tend_earnings_manager,
-)
 from helpers.tx_timer import tx_timer
-from helpers.gas_utils import gas_strategies
+# from helpers.gas_utils import gas_strategies # Failing due to GasNow discontinuation
 
 console = Console()
 
@@ -105,6 +101,7 @@ class SnapshotManager:
         self.controller = Controller.at(self.sett.controller())
         self.want = interface.IERC20(self.sett.token())
         self.resolver = self.init_resolver(self.strategy.getName())
+        self.keeperAccessControl = badger.keeperAccessControl
         self.snaps = {}
         self.settSnaps = {}
         self.entities = {}
@@ -191,6 +188,8 @@ class SnapshotManager:
             return StrategyUniGenericLpResolver(self)
         if name == "StabilizeStrategyDiggV1":
             return StabilizeStrategyDiggV1Resolver(self)
+        if name == "StrategyMStableVault":
+            return StrategyMStableVaultResolver(self)
         if name == "StrategyConvexStakingOptimizer":
             return StrategyConvexStakingOptimizerResolver(self)
         if name == "StrategyCvxHelper":
@@ -224,6 +223,19 @@ class SnapshotManager:
         if confirm:
             self.resolver.confirm_tend(before, after, tx)
 
+    def settTendAcl(self, strategy, overrides, confirm=True):
+        user = overrides["from"].address
+        trackedUsers = {"user": user}
+        before = self.snap(trackedUsers)
+
+        tx_timer.start_timer(overrides["from"], "Tend")
+        tx = self.keeperAccessControl.tend(strategy, overrides)
+        tx_timer.end_timer()
+
+        after = self.snap(trackedUsers)
+        if confirm:
+            self.resolver.confirm_tend(before, after, tx)
+
     def settHarvestViaManager(self, strategy, overrides, confirm=True):
         user = overrides["from"].address
         trackedUsers = {"user": user}
@@ -231,6 +243,19 @@ class SnapshotManager:
 
         tx_timer.start_timer(overrides["from"], "Harvest")
         tx = self.badger.badgerRewardsManager.harvest(strategy, overrides)
+        tx_timer.end_timer()
+
+        after = self.snap(trackedUsers)
+        if confirm:
+            self.resolver.confirm_harvest(before, after, tx)
+
+    def settHarvestAcl(self, strategy, overrides, confirm=True):
+        user = overrides["from"].address
+        trackedUsers = {"user": user}
+        before = self.snap(trackedUsers)
+
+        tx_timer.start_timer(overrides["from"], "Harvest")
+        tx = self.keeperAccessControl.harvest(strategy, overrides)
         tx_timer.end_timer()
 
         after = self.snap(trackedUsers)
@@ -274,6 +299,15 @@ class SnapshotManager:
                 before, after, {"user": user, "amount": userBalance}
             )
 
+    def settEarnAcl(self, sett, overrides, confirm=True):
+        user = overrides["from"].address
+        trackedUsers = {"user": user}
+        before = self.snap(trackedUsers)
+        self.keeperAccessControl.earn(sett, overrides)
+        after = self.snap(trackedUsers)
+        if confirm:
+            self.resolver.confirm_earn(before, after, {"user": user})
+
     def settEarn(self, overrides, confirm=True):
         user = overrides["from"].address
         trackedUsers = {"user": user}
@@ -307,99 +341,87 @@ class SnapshotManager:
                 before, after, {"user": user, "amount": userBalance}, tx
             )
 
-    def estimateProfitTendViaManager(self, key, strategy, overrides, min_profit):
-        try:
-            gas_estimate = self.badger.badgerRewardsManager.tend.estimate_gas(
-                strategy, overrides
-            )
-            gas_cost = web3.fromWei(gas_strategies.gas_cost(gas_estimate), "ether")
-            earnings = get_tend_earnings_manager(
-                self.badger, self.strategy, key, overrides
-            )
-            if earnings == "skip":
-                return min_profit
+    # To be uncommented once gas-utils are fixed through badger-utils        
 
-            profit = decimal.Decimal(earnings) - gas_cost
-            console.log(
-                "expected gas cost:",
-                gas_cost,
-                "expected earnings:",
-                earnings,
-                "expected profits",
-                profit,
-            )
-            return profit
-        except:
-            print("profit estimation failed")
-            return min_profit
+    # def estimateProfitTendViaManager(self, key, strategy, overrides):
+    #     gas_estimate = self.badger.badgerRewardsManager.tend.estimate_gas(
+    #         strategy, overrides
+    #     )
+    #     gas_cost = web3.fromWei(gas_strategies.gas_cost(gas_estimate), "ether")
+    #     # earnings = get_tend_earnings_manager(self.badger, self.strategy, key, overrides)
+    #     earnings = "skip"
+    #     if earnings == "skip":
+    #         return 0
 
-    def estimateProfitTend(self, key, overrides, min_profit):
-        try:
-            gas_estimate = self.strategy.tend.estimate_gas(overrides)
-            gas_cost = web3.fromWei(gas_strategies.gas_cost(gas_estimate), "ether")
-            earnings = get_tend_earnings(self.strategy, key, overrides)
-            if earnings == "skip":
-                return min_profit
+    #     profit = decimal.Decimal(earnings) - gas_cost
+    #     console.log(
+    #         "expected gas cost:",
+    #         gas_cost,
+    #         "expected earnings:",
+    #         earnings,
+    #         "expected profits",
+    #         profit,
+    #     )
+    #     return profit
 
-            profit = decimal.Decimal(earnings) - gas_cost
-            console.log(
-                "expected gas cost:",
-                gas_cost,
-                "expected earnings:",
-                earnings,
-                "expected profits",
-                profit,
-            )
-            return profit
-        except:
-            print("profit estimation failed")
-            return min_profit
+    # def estimateProfitTend(self, key, overrides):
+    #     gas_estimate = self.strategy.tend.estimate_gas(overrides)
+    #     gas_cost = web3.fromWei(gas_strategies.gas_cost(gas_estimate), "ether")
+    #     # earnings = get_tend_earnings(self.strategy, key, overrides)
+    #     earnings = "skip"
+    #     if earnings == "skip":
+    #         return 0
 
-    def estimateProfitHarvestViaManager(self, key, strategy, overrides, min_profit):
-        try:
-            gas_estimate = self.badger.badgerRewardsManager.harvest.estimate_gas(
-                strategy, overrides
-            )
-            gas_cost = web3.fromWei(gas_strategies.gas_cost(gas_estimate), "ether")
-            earnings = get_harvest_earnings(self.strategy, key, overrides)
-            if earnings == "skip":
-                return min_profit
+    #     profit = decimal.Decimal(earnings) - gas_cost
+    #     console.log(
+    #         "expected gas cost:",
+    #         gas_cost,
+    #         "expected earnings:",
+    #         earnings,
+    #         "expected profits",
+    #         profit,
+    #     )
+    #     return profit
 
-            profit = decimal.Decimal(earnings) - gas_cost
-            console.log(
-                "expected gas cost:",
-                gas_cost,
-                "expected earnings:",
-                earnings,
-                "expected profits",
-                profit,
-            )
-            return profit
-        except:
-            print("profit estimation failed")
-            return min_profit
+    # def estimateProfitHarvestViaManager(self, key, strategy, overrides):
+    #     gas_estimate = self.badger.badgerRewardsManager.harvest.estimate_gas(
+    #         strategy, overrides
+    #     )
+    #     gas_cost = web3.fromWei(gas_strategies.gas_cost(gas_estimate), "ether")
+    #     earnings = "skip"
+    #     # earnings = get_harvest_earnings(self.strategy, key, overrides)
+    #     if earnings == "skip":
+    #         return 0
 
-    def estimateProfitHarvest(self, key, overrides, min_profit):
-        try:
-            gas_estimate = self.strategy.harvest.estimate_gas(overrides)
-            gas_cost = web3.fromWei(gas_strategies.gas_cost(gas_estimate), "ether")
-            earnings = get_harvest_earnings(self.strategy, key, overrides)
-            if earnings == "skip":
-                return min_profit
+    #     profit = decimal.Decimal(earnings) - gas_cost
+    #     console.log(
+    #         "expected gas cost:",
+    #         gas_cost,
+    #         "expected earnings:",
+    #         earnings,
+    #         "expected profits",
+    #         profit,
+    #     )
+    #     return profit
 
-            profit = decimal.Decimal(earnings) - gas_cost
-            console.log(
-                "expected gas cost:",
-                gas_cost,
-                "expected earnings:",
-                earnings,
-                "expected profits",
-                profit,
-            )
-            return profit
-        except:
-            print("profit estimation failed")
-            return min_profit
+    # def estimateProfitHarvest(self, key, overrides):
+    #     gas_estimate = self.strategy.harvest.estimate_gas(overrides)
+    #     gas_cost = web3.fromWei(gas_strategies.gas_cost(gas_estimate), "ether")
+    #     # earnings = get_harvest_earnings(self.strategy, key, overrides)
+    #     earnings = "skip"
+    #     if earnings == "skip":
+    #         return 0
+
+    #     profit = decimal.Decimal(earnings) - gas_cost
+    #     console.log(
+    #         "expected gas cost:",
+    #         gas_cost,
+    #         "expected earnings:",
+    #         earnings,
+    #         "expected profits",
+    #         profit,
+    #     )
+    #     return profit
 
     def format(self, key, value):
         if type(value) is int:
@@ -484,6 +506,12 @@ class SnapshotManager:
         table.append(["strategy.guardian", self.strategy.guardian()])
 
         table.append(["---------------", "--------------------"])
+
+        if self.strategy.keeper() != web3.toChecksumAddress(
+            "0xf101Be274FC6cd72CF5fE726fa2e938Ea7401E87"
+        ):
+            console.print("[yellow]This keeper needs to be updated to ACL![/yellow]")
+
         print(tabulate(table, headers=["account", "value"]))
 
     def printBasics(self, snap: Snap):

@@ -2,7 +2,6 @@ from helpers.constants import AddressZero
 from brownie import *
 from rich.console import Console
 
-from helpers.registry import registry
 from helpers.proxy_utils import deploy_proxy
 
 console = Console()
@@ -11,9 +10,6 @@ console = Console()
 Sett is a subsystem of badger.
 Requires the BadgerDAO infrastructure & multisig to be deployed
 """
-
-curve = registry.curve
-tokens = registry.tokens
 
 
 def deploy_strategy(
@@ -27,6 +23,10 @@ def deploy_strategy(
     keeper=None,
     guardian=None,
 ):
+    from helpers.registry import registry
+
+    curve = registry.curve
+    tokens = registry.tokens
     if not governance:
         governance = deployer
 
@@ -509,6 +509,62 @@ def deploy_strategy(
                 ],
             ),
             badger.deployer,
+        )
+    if strategyName == "StrategyMStableVaultImbtc":
+        return deploy_proxy(
+            "StrategyMStableVaultImbtc",
+            StrategyMStableVaultImbtc.abi,
+            badger.logic.StrategyMStableVaultImbtc.address,
+            proxyAdmin.address,
+            badger.logic.StrategyMStableVaultImbtc.initialize.encode_input(
+                governance,
+                strategist,
+                controller,
+                keeper,
+                guardian,
+                [
+                    params.want,
+                    params.vault,
+                    badger.mstable.voterproxy.address,
+                    params.lpComponent,
+                    params.badgerTree,
+                ],
+                [
+                    params.performanceFeeGovernance,
+                    params.performanceFeeStrategist,
+                    params.withdrawalFee,
+                    params.govMta,
+                ],
+            ),
+            deployer,
+        )
+    if strategyName == "StrategyMStableVaultFpMbtcHbtc":
+        return deploy_proxy(
+            "StrategyMStableVaultFpMbtcHbtc",
+            StrategyMStableVaultFpMbtcHbtc.abi,
+            badger.logic.StrategyMStableVaultFpMbtcHbtc.address,
+            proxyAdmin.address,
+            badger.logic.StrategyMStableVaultFpMbtcHbtc.initialize.encode_input(
+                governance,
+                strategist,
+                controller,
+                keeper,
+                guardian,
+                [
+                    params.want,
+                    params.vault,
+                    badger.mstable.voterproxy.address,
+                    params.lpComponent,
+                    params.badgerTree,
+                ],
+                [
+                    params.performanceFeeGovernance,
+                    params.performanceFeeStrategist,
+                    params.withdrawalFee,
+                    params.govMta,
+                ],
+            ),
+            deployer,
         )
 
 

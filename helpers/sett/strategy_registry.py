@@ -31,6 +31,8 @@ name_to_artifact = {
     "StrategyPancakeLpOptimizer": StrategyPancakeLpOptimizer,
     "StrategyUnitProtocolRenbtc": StrategyUnitProtocolRenbtc,
     "StrategyUniGenericLp": StrategyUniGenericLp,
+    "StrategyMStableVaultImbtc": StrategyMStableVaultImbtc,
+    "StrategyMStableVaultFpMbtcHbtc": StrategyMStableVaultFpMbtcHbtc,
     "StrategyConvexLpOptimizer": StrategyConvexLpOptimizer,
     "StrategyConvexStakingOptimizer": StrategyConvexStakingOptimizer,
     "StrategyConvexLpOptimizer": StrategyConvexLpOptimizer,
@@ -60,6 +62,10 @@ name_to_artifact = {
     "StrategyCvxHelper": StrategyCvxHelper,
     "StrategyCvxCrvHelper": StrategyCvxCrvHelper,
     "StrategyPlaceholder": StrategyPlaceholder,
+    "BadgerRegistryV1": BadgerRegistryV1,
+    "WarRoomGatedProxy": WarRoomGatedProxy,
+    "KeeperAccessControl": KeeperAccessControl,
+    "GatedMiniMeController": GatedMiniMeController,
 }
 
 

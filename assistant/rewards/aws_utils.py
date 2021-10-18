@@ -46,6 +46,9 @@ def download_tree(fileName):
     upload_bucket = "badger-json"
     upload_file_key = "rewards/" + fileName
 
+    # upload_bucket = "badger-merkle-proofs"
+    # upload_file_key = "badger-tree.json"
+
     console.print("Downloading file from s3: " + upload_file_key)
 
     s3_clientobj = s3.get_object(Bucket=upload_bucket, Key=upload_file_key)
@@ -108,6 +111,20 @@ def upload(fileName, data, bucket="badger-json", publish=True):
         )
 
 
+def download_boosts(test):
+    fileName = "badger-boosts.json"
+    if test:
+        bucket = "badger-staging-merkle-proofs"
+    else:
+        bucket = "badger-merkle-proofs"
+
+    s3_client_obj = s3.get_object(
+        Bucket=bucket,
+        Key=fileName,
+    )
+    return json.loads(s3_client_obj["Body"].read().decode("utf-8"))
+
+
 def upload_boosts(test):
     fileName = "badger-boosts.json"
 
@@ -120,8 +137,28 @@ def upload_boosts(test):
     console.log("✅ Uploaded file to s3://" + bucket + "/" + fileName)
 
 
+def upload_multipliers(test, userMultipliers, settMultipliers):
+
+    boosts = download_boosts(test)
+    boosts["multiplierData"] = settMultipliers
+    for user, multipliers in userMultipliers.items():
+        if user in boosts["userData"]:
+            boosts["userData"][user]["multipliers"] = multipliers
+    with open("badger-boosts.json", "w") as fp:
+        json.dump(boosts, fp)
+
+    upload_boosts(test)
+
+
 def upload_analytics(cycle, data):
     jsonKey = "logs/{}.json".format(cycle)
+    console.log("Uploading file to s3://" + analytics_bucket + "/" + jsonKey)
+    s3.put_object(Body=str(json.dumps(data)), Bucket=analytics_bucket, Key=jsonKey)
+    console.log("✅ Uploaded file to s3://" + analytics_bucket + "/" + jsonKey)
+
+
+def upload_schedules(data):
+    jsonKey = "schedules.json"
     console.log("Uploading file to s3://" + analytics_bucket + "/" + jsonKey)
     s3.put_object(Body=str(json.dumps(data)), Bucket=analytics_bucket, Key=jsonKey)
     console.log("✅ Uploaded file to s3://" + analytics_bucket + "/" + jsonKey)

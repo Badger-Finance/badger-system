@@ -45,21 +45,26 @@ def main():
     vesting = helper.contract_from_abi(
         badger.digg.daoDiggTimelock.address, "SimpleTimelock", SimpleTimelock.abi
     )
-    # dfd = helper.contract_from_abi(registry.token_address_by_key("dfd"), "IERC20", interface.IERC20.abi)
+    dfd = helper.contract_from_abi(
+        web3.toChecksumAddress("0x20c36f062a31865bed8a5b1e512d9a1a20aa333a"),
+        "IERC20",
+        interface.IERC20.abi,
+    )
     diggToken = helper.contract_from_abi(
         badger.digg.token.address, "IERC20", interface.IERC20.abi
     )
 
     transfers = [
-        TransferOp(badger.paymentsMultisig, badger.token, Wei("51222 ether")),
-        # TransferOp(badger.badgerTree, badger.token, Wei("20000 ether")),
-        # TransferOp(badger.badgerTree, dfd, Wei("200000 ether")),
+        # TransferOp(badger.paymentsMultisig, badger.token, Wei("51222 ether")),
+        TransferOp(badger.badgerTree, badger.token, Wei("40000 ether")),
+        TransferOp(badger.badgerTree, diggToken, Wei("1 gwei")),
+        TransferOp(badger.badgerTree, dfd, Wei("96000 ether")),
         # TransferOp(badger.badgerRewardsManager, badger.token, Wei("10000 ether")),
         # TransferOp(badger.badgerRewardsManager, diggToken, Wei("2 gwei")),
     ]
 
     snap = BalanceSnapshotter(
-        [badger.token, badger.digg.token],
+        [badger.token, badger.digg.token, dfd],
         [
             badger.badgerTree,
             badger.badgerRewardsManager,
@@ -88,8 +93,8 @@ def main():
         # Default: Transfer from treasury
         else:
             # Unlock from vesting
-            if token.address == badger.digg.token.address:
-                vesting.release(amount)
+            # if token.address == badger.digg.token.address:
+            #     vesting.release(amount)
             token.transfer(recipient, amount)
 
     snap.snap()

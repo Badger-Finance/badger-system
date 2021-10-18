@@ -32,6 +32,7 @@ from .provisioners import (
     SushiDiggWbtcLpOptimizerProvisioner,
     SushiLpOptimizerProvisioner,
     WbtcIbBtcLpProvisioner,
+    StrategyMStableVaultProvisioner,
     ConvexProvisioner,
     HelperCvxProvisioner,
     HelperCvxCrvProvisioner,
@@ -189,6 +190,8 @@ class SimulationManager:
             return PancakeBDiggBtcbProvisioner(self)
         if settId == "native.sushiWbtcIbBtc":
             return WbtcIbBtcLpProvisioner(self)
+        if settId in ["native.mstableImBtc", "native.mstableFpMbtcHbtc"]:
+            return StrategyMStableVaultProvisioner(self)
         if settId == "native.uniWbtcIbBtc":
             return WbtcIbBtcLpProvisioner(self, isUniswap=True)
         if settId in [
@@ -200,7 +203,7 @@ class SimulationManager:
             "native.obtcCrv",
             "native.bbtcCrv",
             "native.tricrypto",
-            "native.tricryptoDos",
+            "native.tricrypto2",
         ]:
             return ConvexProvisioner(self)
         if settId == "native.cvx":

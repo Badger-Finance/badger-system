@@ -1,7 +1,6 @@
 from helpers.utils import val
 from brownie import *
 from config.keeper import keeper_config
-from helpers.gas_utils import gas_strategies
 from helpers.registry import registry
 from helpers.sett.SnapshotManager import SnapshotManager
 from rich.console import Console
@@ -9,9 +8,6 @@ from scripts.systems.badger_system import BadgerSystem, connect_badger
 from tabulate import tabulate
 
 console = Console()
-
-
-gas_strategies.set_default_for_active_chain()
 
 
 def get_expected_strategy_deposit_location(badger: BadgerSystem, id):
@@ -77,7 +73,6 @@ def earn_preconditions(key, vaultBalance, strategyBalance):
 
 
 def earn_all(badger: BadgerSystem, skip):
-    keeper = badger.deployer
     for key, vault in badger.sett_system.vaults.items():
         if key in skip:
             print("Skip ", key)
@@ -104,12 +99,19 @@ def earn_all(badger: BadgerSystem, skip):
             snap = SnapshotManager(badger, key)
             before = snap.snap()
 
-            keeper = accounts.at(vault.keeper())
-            snap.settEarn(
-                {"from": keeper, "gas_limit": 2000000, "allow_revert": True},
-                confirm=False,
-            )
-
+            if vault.keeper() == badger.keeperAccessControl:
+                keeper = badger.earner
+                snap.settEarnAcl(
+                    vault,
+                    {"from": keeper, "gas_limit": 2000000, "allow_revert": True},
+                    confirm=False,
+                )
+            else:
+                keeper = accounts.at(vault.keeper())
+                snap.settEarn(
+                    {"from": keeper, "gas_limit": 2000000, "allow_revert": True},
+                    confirm=False,
+                )
             after = snap.snap()
             snap.printCompare(before, after)
 

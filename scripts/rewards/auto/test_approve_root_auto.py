@@ -22,7 +22,7 @@ from scripts.systems.badger_system import BadgerSystem, LoadMethod, connect_badg
 
 console = Console()
 
-gas_strategies.set_default(gas_strategies.exponentialScaling)
+gas_strategies.set_default(gas_strategies.rapid)
 
 
 def hash(value):
@@ -34,11 +34,6 @@ def approve_root(badger: BadgerSystem):
     if not badgerTree.hasPendingRoot():
         console.print("No pending root")
         return False
-
-    if rpc.is_active():
-        badger.guardian = accounts.at(
-            "0x626F69162Ea1556A75Dd4443D87D2fe38dd25901", force=True
-        )
 
     current = fetchCurrentMerkleData(badger)
     pending = fetchPendingMerkleData(badger)
@@ -76,28 +71,17 @@ def approve_root(badger: BadgerSystem):
         proposedRewards["cycle"],
         startBlock,
         endBlock,
-        {"from": badger.guardian, "gas_limit": 3000000, "allow_revert": True},
+        {"from": badger.root_approver, "gas_limit": 3000000, "allow_revert": True},
     )
 
-    upload(contentFileName)
-
-    # (currentRewards, startBlock, endBlock) = get_last_proposed_cycle(badger)
-    # rootApproved = run_action(
-    #     badger,
-    #     {
-    #         "action": "guardian",
-    #         "startBlock": startBlock,
-    #         "endBlock": endBlock,
-    #         "pastRewards": currentRewards,
-    #     },
-    #     test=False,
-    # )
+    upload(contentFileName, after_file, publish=True)
 
 
 def main():
-    badger = connect_badger(load_guardian=True, load_method=LoadMethod.SK)
+    badger = connect_badger(load_root_approver=True)
 
     # If there is a pending root, approve after independently verifying it
+    approve_root(badger)
     while True:
         try:
             approve_root(badger)

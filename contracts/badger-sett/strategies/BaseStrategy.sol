@@ -125,19 +125,19 @@ abstract contract BaseStrategy is PausableUpgradeable, SettAccessControl {
 
     function setWithdrawalFee(uint256 _withdrawalFee) external {
         _onlyGovernance();
-        require(_withdrawalFee <= MAX_FEE, "base-strategy/excessive-withdrawal-fee");
+        require(_withdrawalFee <= MAX_FEE, "excessive-fee");
         withdrawalFee = _withdrawalFee;
     }
 
     function setPerformanceFeeStrategist(uint256 _performanceFeeStrategist) external {
         _onlyGovernance();
-        require(_performanceFeeStrategist <= MAX_FEE, "base-strategy/excessive-strategist-performance-fee");
+        require(_performanceFeeStrategist <= MAX_FEE, "excessive-fee");
         performanceFeeStrategist = _performanceFeeStrategist;
     }
 
     function setPerformanceFeeGovernance(uint256 _performanceFeeGovernance) external {
         _onlyGovernance();
-        require(_performanceFeeGovernance <= MAX_FEE, "base-strategy/excessive-governance-performance-fee");
+        require(_performanceFeeGovernance <= MAX_FEE, "excessive-fee");
         performanceFeeGovernance = _performanceFeeGovernance;
     }
 
@@ -148,7 +148,7 @@ abstract contract BaseStrategy is PausableUpgradeable, SettAccessControl {
 
     function setWithdrawalMaxDeviationThreshold(uint256 _threshold) external {
         _onlyGovernance();
-        require(_threshold <= MAX_FEE, "base-strategy/excessive-max-deviation-threshold");
+        require(_threshold <= MAX_FEE, "excessive-threshold");
         withdrawalMaxDeviationThreshold = _threshold;
     }
 
@@ -188,7 +188,7 @@ abstract contract BaseStrategy is PausableUpgradeable, SettAccessControl {
             uint256 diff = _diff(_amount, _postWithdraw);
 
             // Require that difference between expected and actual values is less than the deviation threshold percentage
-            require(diff <= _amount.mul(withdrawalMaxDeviationThreshold).div(MAX_FEE), "base-strategy/withdraw-exceed-max-deviation-threshold");
+            require(diff <= _amount.mul(withdrawalMaxDeviationThreshold).div(MAX_FEE), "withdraw-exceed-max-deviation-threshold");
         }
 
         // Return the amount actually withdrawn if less than amount requested

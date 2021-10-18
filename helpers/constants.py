@@ -8,16 +8,75 @@ DEFAULT_ADMIN_ROLE = (
     "0x0000000000000000000000000000000000000000000000000000000000000000"
 )
 
-TOKEN_LOCKER_ROLE = web3.keccak(text="TOKEN_LOCKER_ROLE").hex()
-ROOT_UPDATER_ROLE = web3.keccak(text="ROOT_UPDATER_ROLE").hex()
-GUARDIAN_ROLE = web3.keccak(text="GUARDIAN_ROLE").hex()
+
+class RoleRegistry:
+    def __init__(self):
+        self.roles = {}
+
+        self.roles[
+            "DEFAULT_ADMIN_ROLE"
+        ] = "0x0000000000000000000000000000000000000000000000000000000000000000"
+
+    def add_role(self, name):
+        encoded = web3.keccak(text=name).hex()
+        self.roles[name] = encoded
+
+
+# Approved Contract Roles
 APPROVED_STAKER_ROLE = web3.keccak(text="APPROVED_STAKER_ROLE").hex()
+APPROVED_SETT_ROLE = web3.keccak(text="APPROVED_SETT_ROLE").hex()
+APPROVED_STRATEGY_ROLE = web3.keccak(text="APPROVED_STRATEGY_ROLE").hex()
+
 PAUSER_ROLE = web3.keccak(text="PAUSER_ROLE").hex()
 UNPAUSER_ROLE = web3.keccak(text="UNPAUSER_ROLE").hex()
-DISTRIBUTOR_ROLE = web3.keccak(text="DISTRIBUTOR_ROLE").hex()
+GUARDIAN_ROLE = web3.keccak(text="GUARDIAN_ROLE").hex()
+
+# BadgerTree Roles
+ROOT_UPDATER_ROLE = web3.keccak(text="ROOT_UPDATER_ROLE").hex()
 ROOT_PROPOSER_ROLE = web3.keccak(text="ROOT_PROPOSER_ROLE").hex()
 ROOT_VALIDATOR_ROLE = web3.keccak(text="ROOT_VALIDATOR_ROLE").hex()
+
+# UnlockSchedule Roles
+TOKEN_LOCKER_ROLE = web3.keccak(text="TOKEN_LOCKER_ROLE").hex()
+
+# Keeper Roles
+KEEPER_ROLE = web3.keccak(text="KEEPER_ROLE").hex()
+EARNER_ROLE = web3.keccak(text="EARNER_ROLE").hex()
+
+# External Harvester Roles
+SWAPPER_ROLE = web3.keccak(text="SWAPPER_ROLE").hex()
+DISTRIBUTOR_ROLE = web3.keccak(text="DISTRIBUTOR_ROLE").hex()
+
 APPROVED_ACCOUNT_ROLE = web3.keccak(text="APPROVED_ACCOUNT_ROLE").hex()
+MANAGER_ROLE = web3.keccak(text="MANAGER_ROLE").hex()
+
+role_registry = RoleRegistry()
+
+role_registry.add_role("APPROVED_STAKER_ROLE")
+role_registry.add_role("APPROVED_SETT_ROLE")
+role_registry.add_role("APPROVED_STRATEGY_ROLE")
+
+role_registry.add_role("PAUSER_ROLE")
+role_registry.add_role("UNPAUSER_ROLE")
+role_registry.add_role("GUARDIAN_ROLE")
+
+role_registry.add_role("ROOT_UPDATER_ROLE")
+role_registry.add_role("ROOT_PROPOSER_ROLE")
+role_registry.add_role("ROOT_VALIDATOR_ROLE")
+
+role_registry.add_role("TOKEN_LOCKER_ROLE")
+
+role_registry.add_role("KEEPER_ROLE")
+role_registry.add_role("EARNER_ROLE")
+role_registry.add_role("HARVESTER_ROLE")
+role_registry.add_role("TENDER_ROLE")
+
+role_registry.add_role("SWAPPER_ROLE")
+role_registry.add_role("DISTRIBUTOR_ROLE")
+
+role_registry.add_role("APPROVED_ACCOUNT_ROLE")
+role_registry.add_role("MANAGER_ROLE")
+
 
 DIGG = "0x798D1bE841a82a273720CE31c822C61a67a601C3"
 BADGER = "0x3472A5A71965499acd81997a54BBA8D852C6E53d"
@@ -66,6 +125,7 @@ NON_NATIVE_SETTS = [
     "native.obtcCrv",
     "native.bbtcCrv",
     "native.tricrypto",
+    "native.tricrypto2",
     "native.cvxCrv",
     "native.cvx",
 ]
@@ -79,6 +139,7 @@ NO_GEYSERS = [
     "native.obtcCrv",
     "native.bbtcCrv",
     "native.tricrypto",
+    "native.tricrypto2",
     "native.cvxCrv",
     "native.cvx",
 ]
@@ -102,8 +163,38 @@ SETT_BOOST_RATIOS = {
     "native.obtcCrv": 1,
     "native.bbtcCrv": 1,
     "native.tricrypto": 1,
-    "native.cvxCrv": 0.1,
-    "native.cvx": 0.1,
+    "native.tricrypto2": 1,
+    "native.cvxCrv": 1,
+    "native.cvx": 1,
 }
 
-CONVEX_SETTS = ["native.hbtcCrv", "native.pbtcCrv", "native.obtcCrv", "native.bbtcCrv"]
+STAKE_RATIO_RANGES = list(
+    [
+        (0, 1),
+        (0.001, 2),
+        (0.0025, 5),
+        (0.005, 10),
+        (0.01, 20),
+        (0.025, 50),
+        (0.05, 100),
+        (0.075, 150),
+        (0.10, 200),
+        (0.15, 300),
+        (0.2, 400),
+        (0.25, 500),
+        (0.3, 600),
+        (0.4, 800),
+        (0.5, 1000),
+        (0.6, 1200),
+        (0.7, 1400),
+        (0.8, 1600),
+        (0.9, 1800),
+        (1, 2000),
+    ]
+)
+REWARDS_BLACKLIST = {
+    "0x19d97d8fa813ee2f51ad4b4e04ea08baf4dffc28": "Badger Vault",
+    "0xb65cef03b9b89f99517643226d76e286ee999e77": "Badger Dev Multisig",
+    "0x8b950f43fcac4931d408f1fcda55c6cb6cbf3096": "Cream bBadger",
+    "0x0a54d4b378c8dbfc7bc93be50c85debafdb87439": "Sushiswap bBadger/Weth",
+}

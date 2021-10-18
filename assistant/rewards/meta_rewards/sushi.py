@@ -3,8 +3,7 @@ from assistant.subgraph.client import fetch_sushi_harvest_events
 from assistant.rewards.classes.RewardsList import RewardsList
 from assistant.rewards.meta_rewards.calc_meta_rewards import calc_rewards
 from assistant.rewards.rewards_utils import combine_rewards
-
-xSushiTokenAddress = "0x8798249c2e607446efb7ad49ec89dd1865ff4272"
+from helpers.constants import XSUSHI
 
 
 def calc_all_sushi_rewards(badger, startBlock, endBlock, nextCycle):
@@ -60,5 +59,5 @@ def calc_sushi_rewards(badger, startBlock, endBlock, nextCycle, events, name):
         nextCycle,
         events,
         name,
-        xSushiTokenAddress,
+        XSUSHI,
     )

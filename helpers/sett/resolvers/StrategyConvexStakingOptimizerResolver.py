@@ -50,6 +50,19 @@ class StrategyConvexStakingOptimizerResolver(StrategyCoreResolver):
             )
             self.printState(event, keys)
 
+        key = "Harvest"
+        assert key in tx.events
+        assert len(tx.events[key]) == 1
+        event = tx.events[key][0]
+        keys = [
+            "harvested",
+        ]
+        for key in keys:
+            assert key in event
+
+        console.print("[blue]== Cvx Helper Strat harvest() State ==[/blue]")
+        self.printState(event, keys)
+
         key = "PerformanceFeeStrategist"
         assert key not in tx.events
         # Strategist performance fee is set to 0
@@ -232,7 +245,6 @@ class StrategyConvexStakingOptimizerResolver(StrategyCoreResolver):
     def add_entity_balances_for_tokens(self, calls, tokenKey, token, entities):
         entities["badgerTree"] = self.manager.strategy.badgerTree()
         entities["strategy"] = self.manager.strategy.address
-        entities["convexMasterChef"] = self.manager.strategy.convexMasterChef()
         entities["cvxCrvRewardsPool"] = self.manager.strategy.cvxCrvRewardsPool()
         entities["cvxRewardsPool"] = self.manager.strategy.cvxRewardsPool()
         entities["baseRewardsPool"] = self.manager.strategy.baseRewardsPool()

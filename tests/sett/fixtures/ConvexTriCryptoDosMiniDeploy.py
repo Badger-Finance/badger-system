@@ -20,10 +20,7 @@ class ConvexTriCryptoDosMiniDeploy(SettMiniDeployBase):
     def post_vault_deploy_setup(self, deploy=True):
         if not deploy:
             return
-        whale = accounts.at("0xDeFd8FdD20e0f34115C7018CCfb655796F6B2168", force=True)
-        token = interface.IERC20(sett_config.native.convexTriCryptoDos.params.want)
-        balance = token.balanceOf(whale)
-        token.transfer(self.deployer, balance // 2, {"from": whale})
+        distribute_from_whales(self.deployer, 1, "triCrypto2")
 
     def post_deploy_setup(self, deploy):
         if deploy:
@@ -40,6 +37,8 @@ class ConvexTriCryptoDosMiniDeploy(SettMiniDeployBase):
             cvxCrvHelperVault.approveContractAccess(
                 self.strategy.address, {"from": cvxCrvHelperGov}
             )
+
+            # self.strategy.patchPaths({"from": self.governance})
 
             # Add rewards address to guestlists
             list_add = cvxHelperVault.guestList()
@@ -68,18 +67,21 @@ class ConvexTriCryptoDosMiniDeploy(SettMiniDeployBase):
 
             return
 
-        # Vault uses testMultisig
-        testMultisig = accounts.at(self.vault.governance(), force=True)
+        # ====== Strategy Migration Implementations ====== #
+        with open(digg_config.prod_json) as f:
+            badger_deploy = json.load(f)
+
+        # Fetch strategy from strategy_registry
+        self.strategy = StrategyConvexStakingOptimizer.at(
+            badger_deploy["sett_system"]["strategies_registry"]["native.tricrypto2"][
+                "StrategyConvexStakingOptimizer"
+            ]
+        )
+        self.badger.sett_system.strategies[self.key] = self.strategy
+        print("Old Strategy:", self.strategy.address)
 
         if not (self.vault.controller() == self.strategy.controller()):
-            # NB: Not all vaults are pauseable.
-            try:
-                if self.vault.paused():
-                    self.vault.unpause({"from": self.testMultisig})
-            except exceptions.VirtualMachineError:
-                pass
-
-            # Change vault's conroller to match the strat's
+            # Change vault's controller to match the strat's
             self.vault.setController(
                 self.strategy.controller(), {"from": self.governance}
             )
@@ -92,83 +94,74 @@ class ConvexTriCryptoDosMiniDeploy(SettMiniDeployBase):
 
         self.controller = interface.IController(self.vault.controller())
 
-        # The timelock is th assigned governance address for the vault and strategy
-        timelock = accounts.at("0x21CF9b77F88Adf8F8C98d7E33Fe601DC57bC0893", force=True)
-
-        # Add strategy to controller for want
-        self.controller.approveStrategy(
-            self.strategy.want(), self.strategy.address, {"from": self.governance}
-        )
-        self.controller.setStrategy(
-            self.strategy.want(), self.strategy.address, {"from": self.governance}
-        )
-
         assert self.controller.strategies(self.vault.token()) == self.strategy.address
         assert self.controller.vaults(self.strategy.want()) == self.vault.address
 
-        # Add users to guestlist
-        guestlist = VipCappedGuestListBbtcUpgradeable.at(self.vault.guestList())
+        # Migrate strategy
+        # ==== Pre-Migration checks ==== #
+        # Balance of Sett (Balance on Sett, Controller and Strategy) is greater than 0
+        initialSettBalance = self.vault.balance()
+        assert initialSettBalance > 0
+        # PPFS before migration
+        ppfs = self.vault.getPricePerFullShare()
 
-        owner = accounts.at("0xd41f7006bcb2B3d0F9C5873272Ebed67B37F80Dc", force=True)
+        controllerGov = accounts.at(self.controller.governance(), force=True)
+        newStrategy = badger_deploy["sett_system"]["strategies_registry"]["native.tricrypto2"][
+                "StrategyConvexStakingOptimizerV1.1"
+            ]
+        self.controller.approveStrategy(
+            self.strategy.want(), newStrategy, {"from": controllerGov}
+        )
+        self.controller.setStrategy(
+            self.strategy.want(), newStrategy, {"from": controllerGov}
+        )
+        assert self.controller.strategies(self.vault.token()) == newStrategy
+        # Balance of old Strategy goes down to 0
+        assert self.strategy.balanceOf() == 0
 
-        addresses = []
-        for account in accounts:
-            addresses.append(account.address)
+        self.strategy = StrategyConvexStakingOptimizer.at(newStrategy)
+        self.badger.sett_system.strategies[self.key] = self.strategy
 
-        # Add actors addresses
-        addresses.append(owner.address)
-        addresses.append(self.governance.address)
-        addresses.append(self.strategist.address)
-        addresses.append(self.keeper.address)
-        addresses.append(self.guardian.address)
-        addresses.append(self.deployer.address)
+        # ==== Post-Migration checks ==== #
+        # Balance of Sett remains the same
+        assert initialSettBalance == self.vault.balance()
 
-        invited = [True] * len(addresses)
+        # Balance of new Strategy starts off at 0
+        assert self.strategy.balanceOf() == 0
+        # PPS remain the same post migration
+        assert ppfs == self.vault.getPricePerFullShare()
 
-        guestlist.setGuests(addresses, invited, {"from": owner})
+        stratGov = accounts.at(self.strategy.governance(), force=True)
 
-        # Increase gustlist caps since randomly generated amounts tend to be bigger than current caps
-        guestlist.setTotalDepositCap("5080189446897250400000", {"from": owner})
-        guestlist.setUserDepositCap("5081890446897250400000", {"from": owner})
+        self.strategy.setController(self.controller.address, {"from": stratGov})
+        assert self.vault.controller() == self.strategy.controller()
+        
+        self.strategy.setGovernance(self.governance.address, {"from": stratGov})
 
-    # Setup used for running simulation without deployed strategy:
+        self.keeper = accounts.at(self.strategy.keeper(), force=True)
+        self.guardian = accounts.at(self.strategy.guardian(), force=True)
+        self.strategist = accounts.at(self.strategy.strategist(), force=True)
 
-    # def post_deploy_setup(self, deploy):
-    #     if deploy:
-    #         return
+        # Run Earn()
+        self.vault.earn({"from": self.governance})
 
-    #     (params, want) = self.fetch_params()
+        # Approve strategy to interact with Helper Vaults:
+        (params, want) = self.fetch_params()
 
-    #     self.controller = interface.IController(self.vault.controller())
+        cvxHelperVault = SettV4.at(params.cvxHelperVault)
+        cvxCrvHelperVault = SettV4.at(params.cvxCrvHelperVault)
 
-    #     contract = StrategyConvexStakingOptimizer.deploy({"from": self.deployer})
-    #     self.strategy = deploy_proxy(
-    #         "StrategyConvexStakingOptimizer",
-    #         StrategyConvexStakingOptimizer.abi,
-    #         contract.address,
-    #         web3.toChecksumAddress(self.badger.devProxyAdmin.address),
-    #         contract.initialize.encode_input(
-    #             self.governance.address,
-    #             self.strategist.address,
-    #             self.controller.address,
-    #             self.keeper.address,
-    #             self.guardian.address,
-    #             [params.want, self.badger.badgerTree,],
-    #             params.pid,
-    #             [
-    #                 params.performanceFeeGovernance,
-    #                 params.performanceFeeStrategist,
-    #                 params.withdrawalFee,
-    #             ],
-    #         ),
-    #         self.deployer,
-    #     )
+        cvxHelperGov = accounts.at(cvxHelperVault.governance(), force=True)
+        cvxCrvHelperGov = accounts.at(cvxCrvHelperVault.governance(), force=True)
 
-    #     self.badger.sett_system.strategies[self.key] = self.strategy
+        cvxHelperVault.approveContractAccess(
+            self.strategy.address, {"from": cvxHelperGov}
+        )
+        cvxCrvHelperVault.approveContractAccess(
+            self.strategy.address, {"from": cvxCrvHelperGov}
+        )
 
-    #     assert self.controller.address == self.strategy.controller()
-
-    #     self.controller.approveStrategy(self.strategy.want(), self.strategy.address, {"from": self.governance})
-    #     self.controller.setStrategy(self.strategy.want(), self.strategy.address, {"from": self.governance})
-
-    #     assert self.controller.strategies(self.vault.token()) == self.strategy.address
+        print("Vault:", self.vault.address)
+        print("Controller:", self.controller.address)
+        print("New Strategy:", self.strategy.address)
+        print("Governance:", self.governance.address)

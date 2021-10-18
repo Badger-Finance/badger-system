@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT
 // File: contracts\interfaces\IPancakeFactory.sol
 
 pragma solidity >=0.5.0;

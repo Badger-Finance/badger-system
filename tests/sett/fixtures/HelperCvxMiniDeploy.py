@@ -5,6 +5,7 @@ from helpers.token_utils import distribute_from_whales
 from brownie import *
 from helpers.proxy_utils import deploy_proxy
 from scripts.systems.constants import SettType
+from helpers.constants import AddressZero
 
 
 class HelperCvxMiniDeploy(SettMiniDeployBase):
@@ -16,10 +17,12 @@ class HelperCvxMiniDeploy(SettMiniDeployBase):
 
     def post_vault_deploy_setup(self, deploy=True):
         if deploy:
-            distribute_from_whales(self.deployer, 1)
+            distribute_from_whales(self.deployer, 1, "cvx")
 
     def post_deploy_setup(self, deploy):
         if deploy:
+            self.strategy.patchPaths({"from": self.governance})
+            self.strategy.setCrvCvxCrvSlippageToleranceBps(500, {"from": self.governance})
             return
 
         # Vault uses testMultisig
@@ -41,35 +44,48 @@ class HelperCvxMiniDeploy(SettMiniDeployBase):
         self.controller = interface.IController(self.vault.controller())
 
         # Add strategy to controller for want
-        self.controller.approveStrategy(
-            self.strategy.want(), self.strategy.address, {"from": self.governance}
-        )
-        self.controller.setStrategy(
-            self.strategy.want(), self.strategy.address, {"from": self.governance}
-        )
+        # Already wire-up
+        # self.controller.approveStrategy(
+        #     self.strategy.want(), self.strategy.address, {"from": self.governance}
+        # )
+        # self.controller.setStrategy(
+        #     self.strategy.want(), self.strategy.address, {"from": self.governance}
+        # )
 
         assert self.controller.strategies(self.vault.token()) == self.strategy.address
         assert self.controller.vaults(self.strategy.want()) == self.vault.address
 
-        # Add actors to guestlist
-        guestlist = VipCappedGuestListBbtcUpgradeable.at(self.vault.guestList())
+        # Upgrade strategy
+        proxyAdmin = interface.IProxyAdmin("0x20Dce41Acca85E8222D6861Aa6D23B6C941777bF")
+        timelock = accounts.at("0x21CF9b77F88Adf8F8C98d7E33Fe601DC57bC0893", force=True) # Owner
 
-        addresses = []
-        for account in accounts:
-            addresses.append(account.address)
+        proxyAdmin.upgrade(self.strategy.address, "0x0281B0E6d94f8f04a0E6af8a901E018542bdCDb6", {"from": timelock})
 
-        # Add actors addresses
-        addresses.append(guestlist.owner())
-        addresses.append(self.governance.address)
-        addresses.append(self.strategist.address)
-        addresses.append(self.keeper.address)
-        addresses.append(self.guardian.address)
-        addresses.append(self.deployer.address)
+        self.strategy.patchPaths({"from": self.governance})
+        self.strategy.setCrvCvxCrvSlippageToleranceBps(500, {"from": self.governance})
+        
+        
 
-        invited = [True] * len(addresses)
+        if (self.vault.guestList() != AddressZero):
+            # Add actors to guestlist
+            guestlist = VipCappedGuestListBbtcUpgradeable.at(self.vault.guestList())
 
-        owner = accounts.at(guestlist.owner(), force=True)
+            addresses = []
+            for account in accounts:
+                addresses.append(account.address)
 
-        guestlist.setGuests(addresses, invited, {"from": owner})
-        guestlist.setUserDepositCap(MaxUint256, {"from": owner})
-        guestlist.setTotalDepositCap(MaxUint256, {"from": owner})
+            # Add actors addresses
+            addresses.append(guestlist.owner())
+            addresses.append(self.governance.address)
+            addresses.append(self.strategist.address)
+            addresses.append(self.keeper.address)
+            addresses.append(self.guardian.address)
+            addresses.append(self.deployer.address)
+
+            invited = [True] * len(addresses)
+
+            owner = accounts.at(guestlist.owner(), force=True)
+
+            guestlist.setGuests(addresses, invited, {"from": owner})
+            guestlist.setUserDepositCap(MaxUint256, {"from": owner})
+            guestlist.setTotalDepositCap(MaxUint256, {"from": owner})

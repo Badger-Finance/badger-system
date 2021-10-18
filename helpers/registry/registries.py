@@ -20,6 +20,7 @@ class ContractSystems(Enum):
     PICKLE = ("pickle",)
     HARVEST = ("harvest",)
     CURVE = ("curve",)
+    MSTABLE = ("mstable",)
     CHAINLINK = ("chainlink",)
     TOKENS = "tokens"
 
@@ -45,6 +46,7 @@ class ContractRegistries:
         network_id = network_manager.get_active_network()
         if not self.has_registry(network_id):
             console.print("[red]Chain ID {} not found[/red]".format(network_id))
+            return {}
         return self.get_registry(network_id)
 
 

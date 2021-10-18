@@ -20,7 +20,7 @@ class ConvexTriCryptoMiniDeploy(SettMiniDeployBase):
     def post_vault_deploy_setup(self, deploy=True):
         if not deploy:
             return
-        distribute_from_whales(self.deployer, 1)
+        distribute_from_whales(self.deployer, 1, "triCrypto")
 
     def post_deploy_setup(self, deploy):
         if deploy:
@@ -37,6 +37,8 @@ class ConvexTriCryptoMiniDeploy(SettMiniDeployBase):
             cvxCrvHelperVault.approveContractAccess(
                 self.strategy.address, {"from": cvxCrvHelperGov}
             )
+
+            # self.strategy.patchPaths({"from": self.governance})
 
             # Add rewards address to guestlists
             list_add = cvxHelperVault.guestList()

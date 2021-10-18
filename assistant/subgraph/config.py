@@ -1,8 +1,8 @@
-subgraph_config = {
-    "tokens": "https://api.thegraph.com/subgraphs/name/darruma/badger-tokens",
-    "setts": "https://api.thegraph.com/subgraphs/name/darruma/badger-setts",
-    "harvests": "https://api.thegraph.com/subgraphs/name/darruma/badger-harvests",
-    "cream_url": "https://api.thegraph.com/subgraphs/name/creamfinancedev/cream-lending",
-    "convex": "https://api.thegraph.com/subgraphs/name/darruma/badger-setts-convex",
-    "harvests": "https://api.thegraph.com/subgraphs/name/darruma/badger-harvests",
+subgraph_ids = {}
+subgraph_urls = {
+    "setts": "https://bgraph-eth.badger.guru/subgraphs/name/swole/setts",
+    "setts_tricrypto": "https://bgraph-eth.badger.guru/subgraphs/name/swole/setts_tricrypto2",
+    "tokens": "https://bgraph-eth.badger.guru/subgraphs/name/swole/tokens",
+    "harvests": "https://bgraph-eth.badger.guru/subgraphs/name/swole/tree-rewards",
+    "nfts": "https://bgraph-eth.badger.guru/subgraphs/name/darruma/badger-nfts",
 }

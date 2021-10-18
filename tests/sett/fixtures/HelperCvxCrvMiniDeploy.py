@@ -5,6 +5,7 @@ from helpers.token_utils import distribute_from_whales
 from brownie import *
 from helpers.proxy_utils import deploy_proxy
 from scripts.systems.constants import SettType
+from helpers.constants import AddressZero
 
 
 class HelperCvxCrvMiniDeploy(SettMiniDeployBase):
@@ -16,10 +17,12 @@ class HelperCvxCrvMiniDeploy(SettMiniDeployBase):
 
     def post_vault_deploy_setup(self, deploy=True):
         if deploy:
-            distribute_from_whales(self.deployer, 1)
+            distribute_from_whales(self.deployer, 1, "cvxCrv")
 
     def post_deploy_setup(self, deploy):
         if deploy:
+            self.strategy.patchPaths({"from": self.governance})
+            self.strategy.setCrvCvxCrvSlippageToleranceBps(500, {"from": self.governance})
             return
 
         # Vault uses testMultisig
@@ -51,27 +54,37 @@ class HelperCvxCrvMiniDeploy(SettMiniDeployBase):
         assert self.controller.strategies(self.vault.token()) == self.strategy.address
         assert self.controller.vaults(self.strategy.want()) == self.vault.address
 
-        self.strategy.setCrvCvxCrvPath({"from": self.governance})
+        # Upgrade strategy
+        proxyAdmin = interface.IProxyAdmin("0x20Dce41Acca85E8222D6861Aa6D23B6C941777bF")
+        timelock = accounts.at("0x21CF9b77F88Adf8F8C98d7E33Fe601DC57bC0893", force=True) # Owner
 
-        # Add actors to guestlist
-        guestlist = VipCappedGuestListBbtcUpgradeable.at(self.vault.guestList())
+        proxyAdmin.upgrade(self.strategy.address, "0x3d6994f14fb3781C566d470da6092F96beF5eE03", {"from": timelock})
 
-        addresses = []
-        for account in accounts:
-            addresses.append(account.address)
+        self.strategy.patchPaths({"from": self.governance})
+        self.strategy.setCrvCvxCrvSlippageToleranceBps(500, {"from": self.governance})
+        
 
-        # Add actors addresses
-        addresses.append(guestlist.owner())
-        addresses.append(self.governance.address)
-        addresses.append(self.strategist.address)
-        addresses.append(self.keeper.address)
-        addresses.append(self.guardian.address)
-        addresses.append(self.deployer.address)
 
-        invited = [True] * len(addresses)
+        if (self.vault.guestList() != AddressZero): 
+            # Add actors to guestlist
+            guestlist = VipCappedGuestListBbtcUpgradeable.at(self.vault.guestList())
 
-        owner = accounts.at(guestlist.owner(), force=True)
+            addresses = []
+            for account in accounts:
+                addresses.append(account.address)
 
-        guestlist.setGuests(addresses, invited, {"from": owner})
-        guestlist.setUserDepositCap(MaxUint256, {"from": owner})
-        guestlist.setTotalDepositCap(MaxUint256, {"from": owner})
+            # Add actors addresses
+            addresses.append(guestlist.owner())
+            addresses.append(self.governance.address)
+            addresses.append(self.strategist.address)
+            addresses.append(self.keeper.address)
+            addresses.append(self.guardian.address)
+            addresses.append(self.deployer.address)
+
+            invited = [True] * len(addresses)
+
+            owner = accounts.at(guestlist.owner(), force=True)
+
+            guestlist.setGuests(addresses, invited, {"from": owner})
+            guestlist.setUserDepositCap(MaxUint256, {"from": owner})
+            guestlist.setTotalDepositCap(MaxUint256, {"from": owner})

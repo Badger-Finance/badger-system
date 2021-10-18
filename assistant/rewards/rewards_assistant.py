@@ -9,10 +9,10 @@ from tqdm import tqdm
 from assistant.rewards.boost import badger_boost
 from assistant.rewards.twap import digg_btc_twap, calculate_digg_allocation
 from assistant.rewards.aws_utils import (
-    download_latest_tree,
+    download_boosts,
     download_tree,
     upload,
-    upload_boosts,
+    upload_multipliers,
 )
 from assistant.rewards.calc_snapshot import calc_snapshot
 from assistant.rewards.meta_rewards.harvest import calc_farm_rewards
@@ -30,11 +30,8 @@ from assistant.rewards.classes.RewardsLog import rewardsLog
 
 from assistant.rewards.rewards_checker import compare_rewards, verify_rewards
 from scripts.systems.badger_system import BadgerSystem
-from helpers.gas_utils import gas_strategies
 from helpers.constants import BCVX, BCVXCRV
 
-gas_strategies.set_default(gas_strategies.exponentialScalingFast)
-gas_strategy = gas_strategies.exponentialScalingFast
 console = Console()
 
 
@@ -42,11 +39,15 @@ def calc_sett_rewards(badger, periodStartBlock, endBlock, cycle, unclaimedReward
     """
     Calculate rewards for each sett, and sum them
     """
-    # ratio = digg_btc_twap(periodStartBlock,endBlock)
-    # diggAllocation = calculate_digg_allocation(ratio)
     rewardsBySett = {}
-    noRewards = ["native.digg", "experimental.digg"]
-    boosts, boostInfo = badger_boost(badger, endBlock)
+    noRewards = [
+        "native.digg",
+        "experimental.digg",
+        "native.mstableImBtc",
+        "native.mstableFpMbtcHbtc",
+    ]
+    test = False
+    boosts = download_boosts(test)["userData"]
     apyBoosts = {}
     multiplierData = {}
     for key, sett in badger.sett_system.vaults.items():
@@ -68,21 +69,7 @@ def calc_sett_rewards(badger, periodStartBlock, endBlock, cycle, unclaimedReward
         rewardsBySett[key] = settRewards
 
     rewards = combine_rewards(list(rewardsBySett.values()), cycle, badger.badgerTree)
-    boostsMetadata = {"multiplierData": multiplierData, "userData": {}}
-
-    for addr, multipliers in apyBoosts.items():
-        boostsMetadata["userData"][addr] = {
-            "boost": boosts.get(addr, 1),
-            "multipliers": multipliers,
-            "nonNativeBalance": boostInfo.get(addr, {}).get("nonNativeBalance", 0),
-            "nativeBalance": boostInfo.get(addr, {}).get("nativeBalance", 0),
-            "stakeRatio": boostInfo.get(addr, {}).get("stakeRatio", 0),
-        }
-
-    with open("badger-boosts.json", "w") as fp:
-        json.dump(boostsMetadata, fp)
-
-    upload_boosts(test=False)
+    upload_multipliers(test, apyBoosts, multiplierData)
 
     return rewards
 
@@ -313,7 +300,7 @@ def rootUpdater(badger, startBlock, endBlock, pastRewards, saveLocalFile, test=F
             rewards_data["merkleTree"]["cycle"],
             rewards_data["merkleTree"]["startBlock"],
             rewards_data["merkleTree"]["endBlock"],
-            {"from": badger.root_proposer, "gas_price": gas_strategy},
+            {"from": badger.root_proposer},
         )
         upload(
             rewards_data["contentFileName"], rewards_data["merkleTree"], publish=False
@@ -361,7 +348,7 @@ def guardian(
             rewards_data["merkleTree"]["cycle"],
             rewards_data["merkleTree"]["startBlock"],
             rewards_data["merkleTree"]["endBlock"],
-            {"from": badger.guardian, "gas_price": gas_strategy},
+            {"from": badger.guardian},
         )
         upload(rewards_data["contentFileName"], rewards_data["merkleTree"]),
 

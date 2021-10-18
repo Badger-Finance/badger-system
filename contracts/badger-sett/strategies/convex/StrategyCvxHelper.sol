@@ -23,6 +23,13 @@ import "../BaseStrategy.sol";
 /*
     1. Stake cvxCrv
     2. Sell earned rewards into cvxCrv position and restake
+
+    Changelog:
+
+    V1.1
+    * Implemented the _exchange function from the CurveSwapper library to perform the CRV -> cvxCRV swap through
+    curve instead of Sushiswap.
+    * Implemented the _withdrawAll() function
 */
 contract StrategyCvxHelper is BaseStrategy, CurveSwapper, UniswapSwapper, TokenSwapPathRegistry {
     using SafeERC20Upgradeable for IERC20Upgradeable;
@@ -50,7 +57,11 @@ contract StrategyCvxHelper is BaseStrategy, CurveSwapper, UniswapSwapper, TokenS
     IBooster public constant booster = IBooster(0xF403C135812408BFbE8713b5A23a04b3D48AAE31);
     ICvxRewardsPool public constant cvxRewardsPool = ICvxRewardsPool(0xCF50b810E57Ac33B91dCF525C6ddd9881B139332);
     IBaseRewardsPool public constant cvxCrvRewardsPool = IBaseRewardsPool(0x3Fe65692bfCD0e6CF84cB1E7d24108E434A7587e);
+
     uint256 public constant MAX_UINT_256 = uint256(-1);
+
+    uint256 public constant crvCvxCrvPoolIndex = 2;
+    uint256 public crvCvxCrvSlippageToleranceBps;
 
     event HarvestState(uint256 timestamp, uint256 blockNumber);
 
@@ -92,7 +103,7 @@ contract StrategyCvxHelper is BaseStrategy, CurveSwapper, UniswapSwapper, TokenS
 
     /// ===== View Functions =====
     function version() external pure returns (string memory) {
-        return "1.0";
+        return "1.1";
     }
 
     function getName() external override pure returns (string memory) {
@@ -127,7 +138,7 @@ contract StrategyCvxHelper is BaseStrategy, CurveSwapper, UniswapSwapper, TokenS
 
     /// @dev Unroll from all strategy positions, and transfer non-core tokens to controller rewards
     function _withdrawAll() internal override {
-        // TODO: Functionality not required for initial migration
+        cvxRewardsPool.withdrawAll(false);
         // Note: All want is automatically withdrawn outside this "inner hook" in base strategy function
     }
 
@@ -160,6 +171,20 @@ contract StrategyCvxHelper is BaseStrategy, CurveSwapper, UniswapSwapper, TokenS
         }
     }
 
+    function patchPaths() external {
+        _onlyGovernance();
+        address[] memory path = new address[](3);
+        path[0] = crv;
+        path[1] = weth;
+        path[2] = cvx;
+        _setTokenSwapPath(crv, cvx, path);
+    }
+
+    function setCrvCvxCrvSlippageToleranceBps(uint256 _sl) external {
+        _onlyGovernance();
+        crvCvxCrvSlippageToleranceBps = _sl;
+    }
+
     function harvest() external whenNotPaused returns (uint256 cvxHarvested) {
         _onlyAuthorizedActors();
         // 1. Harvest gains from positions
@@ -169,12 +194,18 @@ contract StrategyCvxHelper is BaseStrategy, CurveSwapper, UniswapSwapper, TokenS
         if (stakedCvxCrv > 0) {
             cvxCrvRewardsPool.withdraw(stakedCvxCrv, true);
         }
-        
-        // 2. Swap cvxCRV tokens to CVX
-        uint256 cvxCrvBalance = cvxCrvToken.balanceOf(address(this));
 
+        // 2. Swap cvxCRV tokens to CRV
+        uint256 cvxCrvBalance = cvxCrvToken.balanceOf(address(this));
         if (cvxCrvBalance > 0) {
-            _swapExactTokensForTokens(sushiswap, cvxCrv, cvxCrvBalance, getTokenSwapPath(cvxCrv, cvx));
+            uint256 minCrvOut = cvxCrvBalance.mul(MAX_FEE.sub(crvCvxCrvSlippageToleranceBps)).div(MAX_FEE);
+            _exchange(cvxCrv, crv, cvxCrvBalance, minCrvOut, crvCvxCrvPoolIndex, true);
+        }
+
+        // 3. Swap CRV tokens to CVX
+        uint256 crvBalance = crvToken.balanceOf(address(this));
+        if (crvBalance > 0) {
+            _swapExactTokensForTokens(sushiswap, crv, crvBalance, getTokenSwapPath(crv, cvx));
         }
 
         // Track harvested + converted coin balance of want
@@ -186,7 +217,7 @@ contract StrategyCvxHelper is BaseStrategy, CurveSwapper, UniswapSwapper, TokenS
             cvxRewardsPool.stake(cvxToken.balanceOf(address(this)));
         }
 
-        emit Tend(cvxHarvested);
+        emit Harvest(cvxHarvested, block.number);
         return cvxHarvested;
     }
 }

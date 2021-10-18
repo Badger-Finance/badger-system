@@ -8,7 +8,10 @@ from helpers.constants import AddressZero, EmptyBytes32
 from helpers.registry import registry
 from dotmap import DotMap
 from config.badger_config import badger_config, sett_config, badger_total_supply
+from helpers.network import network_manager
+from rich.console import Console
 
+console = Console()
 
 def deploy_badger_minimal(deployer, keeper=None, guardian=None):
 
@@ -25,5 +28,21 @@ def deploy_badger_minimal(deployer, keeper=None, guardian=None):
     badger.deploy_logic("BadgerTree", BadgerTree)
     badger.deploy_rewards_escrow()
     badger.deploy_badger_tree()
+
+
+    # Connect to keeperAccessControl as it is needed for some tests
+    badger_deploy_file = network_manager.get_active_network_badger_deploy()
+
+    badger_deploy = {}
+    console.print(
+        "[grey]Connecting to keeperAccessControl from {}...[/grey]".format(
+            badger_deploy_file
+        )
+    )
+    with open(badger_deploy_file) as f:
+        badger_deploy = json.load(f)
+
+    if "keeperAccessControl" in badger_deploy:
+        badger.connect_keeper_acl(badger_deploy["keeperAccessControl"])
 
     return badger

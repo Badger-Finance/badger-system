@@ -12,8 +12,10 @@ from scripts.systems.badger_system import BadgerSystem, connect_badger
 from scripts.systems.uniswap_system import UniswapSystem
 from helpers.gas_utils import gas_strategies
 
-console = Console()
 gas_strategies.set_default(gas_strategies.exponentialScalingFast)
+
+
+console = Console()
 
 
 def main():
