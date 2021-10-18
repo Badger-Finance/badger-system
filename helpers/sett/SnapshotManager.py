@@ -32,7 +32,7 @@ from helpers.sett.resolvers import (
 from helpers.utils import digg_shares_to_initial_fragments, val
 from scripts.systems.badger_system import BadgerSystem
 from helpers.tx_timer import tx_timer
-from helpers.gas_utils import gas_strategies
+# from helpers.gas_utils import gas_strategies # Failing due to GasNow discontinuation
 
 console = Console()
 
@@ -341,85 +341,87 @@ class SnapshotManager:
                 before, after, {"user": user, "amount": userBalance}, tx
             )
 
-    def estimateProfitTendViaManager(self, key, strategy, overrides):
-        gas_estimate = self.badger.badgerRewardsManager.tend.estimate_gas(
-            strategy, overrides
-        )
-        gas_cost = web3.fromWei(gas_strategies.gas_cost(gas_estimate), "ether")
-        # earnings = get_tend_earnings_manager(self.badger, self.strategy, key, overrides)
-        earnings = "skip"
-        if earnings == "skip":
-            return 0
+    # To be uncommented once gas-utils are fixed through badger-utils        
 
-        profit = decimal.Decimal(earnings) - gas_cost
-        console.log(
-            "expected gas cost:",
-            gas_cost,
-            "expected earnings:",
-            earnings,
-            "expected profits",
-            profit,
-        )
-        return profit
+    # def estimateProfitTendViaManager(self, key, strategy, overrides):
+    #     gas_estimate = self.badger.badgerRewardsManager.tend.estimate_gas(
+    #         strategy, overrides
+    #     )
+    #     gas_cost = web3.fromWei(gas_strategies.gas_cost(gas_estimate), "ether")
+    #     # earnings = get_tend_earnings_manager(self.badger, self.strategy, key, overrides)
+    #     earnings = "skip"
+    #     if earnings == "skip":
+    #         return 0
 
-    def estimateProfitTend(self, key, overrides):
-        gas_estimate = self.strategy.tend.estimate_gas(overrides)
-        gas_cost = web3.fromWei(gas_strategies.gas_cost(gas_estimate), "ether")
-        # earnings = get_tend_earnings(self.strategy, key, overrides)
-        earnings = "skip"
-        if earnings == "skip":
-            return 0
+    #     profit = decimal.Decimal(earnings) - gas_cost
+    #     console.log(
+    #         "expected gas cost:",
+    #         gas_cost,
+    #         "expected earnings:",
+    #         earnings,
+    #         "expected profits",
+    #         profit,
+    #     )
+    #     return profit
 
-        profit = decimal.Decimal(earnings) - gas_cost
-        console.log(
-            "expected gas cost:",
-            gas_cost,
-            "expected earnings:",
-            earnings,
-            "expected profits",
-            profit,
-        )
-        return profit
+    # def estimateProfitTend(self, key, overrides):
+    #     gas_estimate = self.strategy.tend.estimate_gas(overrides)
+    #     gas_cost = web3.fromWei(gas_strategies.gas_cost(gas_estimate), "ether")
+    #     # earnings = get_tend_earnings(self.strategy, key, overrides)
+    #     earnings = "skip"
+    #     if earnings == "skip":
+    #         return 0
 
-    def estimateProfitHarvestViaManager(self, key, strategy, overrides):
-        gas_estimate = self.badger.badgerRewardsManager.harvest.estimate_gas(
-            strategy, overrides
-        )
-        gas_cost = web3.fromWei(gas_strategies.gas_cost(gas_estimate), "ether")
-        earnings = "skip"
-        # earnings = get_harvest_earnings(self.strategy, key, overrides)
-        if earnings == "skip":
-            return 0
+    #     profit = decimal.Decimal(earnings) - gas_cost
+    #     console.log(
+    #         "expected gas cost:",
+    #         gas_cost,
+    #         "expected earnings:",
+    #         earnings,
+    #         "expected profits",
+    #         profit,
+    #     )
+    #     return profit
 
-        profit = decimal.Decimal(earnings) - gas_cost
-        console.log(
-            "expected gas cost:",
-            gas_cost,
-            "expected earnings:",
-            earnings,
-            "expected profits",
-            profit,
-        )
-        return profit
+    # def estimateProfitHarvestViaManager(self, key, strategy, overrides):
+    #     gas_estimate = self.badger.badgerRewardsManager.harvest.estimate_gas(
+    #         strategy, overrides
+    #     )
+    #     gas_cost = web3.fromWei(gas_strategies.gas_cost(gas_estimate), "ether")
+    #     earnings = "skip"
+    #     # earnings = get_harvest_earnings(self.strategy, key, overrides)
+    #     if earnings == "skip":
+    #         return 0
 
-    def estimateProfitHarvest(self, key, overrides):
-        gas_estimate = self.strategy.harvest.estimate_gas(overrides)
-        gas_cost = web3.fromWei(gas_strategies.gas_cost(gas_estimate), "ether")
-        # earnings = get_harvest_earnings(self.strategy, key, overrides)
-        earnings = "skip"
-        if earnings == "skip":
-            return 0
+    #     profit = decimal.Decimal(earnings) - gas_cost
+    #     console.log(
+    #         "expected gas cost:",
+    #         gas_cost,
+    #         "expected earnings:",
+    #         earnings,
+    #         "expected profits",
+    #         profit,
+    #     )
+    #     return profit
 
-        profit = decimal.Decimal(earnings) - gas_cost
-        console.log(
-            "expected gas cost:",
-            gas_cost,
-            "expected earnings:",
-            earnings,
-            "expected profits",
-            profit,
-        )
-        return profit
+    # def estimateProfitHarvest(self, key, overrides):
+    #     gas_estimate = self.strategy.harvest.estimate_gas(overrides)
+    #     gas_cost = web3.fromWei(gas_strategies.gas_cost(gas_estimate), "ether")
+    #     # earnings = get_harvest_earnings(self.strategy, key, overrides)
+    #     earnings = "skip"
+    #     if earnings == "skip":
+    #         return 0
+
+    #     profit = decimal.Decimal(earnings) - gas_cost
+    #     console.log(
+    #         "expected gas cost:",
+    #         gas_cost,
+    #         "expected earnings:",
+    #         earnings,
+    #         "expected profits",
+    #         profit,
+    #     )
+    #     return profit
 
     def format(self, key, value):
         if type(value) is int:
