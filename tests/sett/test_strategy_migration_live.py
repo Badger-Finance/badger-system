@@ -227,6 +227,8 @@ def test_migrate_staking_optimizer(
 
     # ==== Run tests ==== #
 
+    vault.earn({"from": governance})
+
     # distribute_test_assets(strategy_key, deployer)
 
     # sett_config = {"id": strategy_key, "mode": "test"}
@@ -237,12 +239,6 @@ def test_migrate_staking_optimizer(
     # assert_withdraw_other(sett_config)
     # assert_single_user_harvest_flow_remove_fees(sett_config)
 
-    # assert_strategy_action_permissions(sett_config)
-    # assert_strategy_config_permissions(sett_config)
-    # assert_strategy_pausing_permissions(sett_config)
-    # assert_sett_pausing_permissions(sett_config)
-    # assert_sett_config_permissions(sett_config)
-    # assert_controller_permissions(sett_config)
 
 def distribute_test_assets(strategy_key, deployer):
     distribute_test_ether(deployer, Wei("20 ether"))
