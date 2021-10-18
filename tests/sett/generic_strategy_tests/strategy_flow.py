@@ -62,9 +62,10 @@ def assert_single_user_harvest_flow(settConfig):
 
     # Patch swaping paths for Convex helpers functions before harvests
     if settConfig["id"] == "native.cvx" or settConfig["id"] == "native.cvxCrv":
-        print("PATHS PATCHED")
+        print("PATHS PATCHED AND SLIPPAGE TOLERANCE SET")
         strategyGov = accounts.at(strategy.governance(), force=True)
         strategy.patchPaths({"from": strategyGov})
+        strategy.setCrvCvxCrvSlippageToleranceBps(500, {"from": strategyGov})
 
     snap = SnapshotManager(badger, settConfig["id"])
 
@@ -239,9 +240,10 @@ def assert_withdraw_other(settConfig):
 
     # Patch swaping paths for Convex helpers functions before harvests
     if settConfig["id"] == "native.cvx" or settConfig["id"] == "native.cvxCrv":
-        print("PATHS PATCHED")
+        print("PATHS PATCHED AND SLIPPAGE TOLERANCE SET")
         strategyGov = accounts.at(strategy.governance(), force=True)
         strategy.patchPaths({"from": strategyGov})
+        strategy.setCrvCvxCrvSlippageToleranceBps(500, {"from": strategyGov})
 
     startingBalance = want.balanceOf(deployer)
     depositAmount = startingBalance // 2
@@ -306,9 +308,10 @@ def assert_single_user_harvest_flow_remove_fees(settConfig):
 
     # Patch swaping paths for Convex helpers functions before harvests
     if settConfig["id"] == "native.cvx" or settConfig["id"] == "native.cvxCrv":
-        print("PATHS PATCHED")
+        print("PATHS PATCHED AND SLIPPAGE TOLERANCE SET")
         strategyGov = accounts.at(strategy.governance(), force=True)
         strategy.patchPaths({"from": strategyGov})
+        strategy.setCrvCvxCrvSlippageToleranceBps(500, {"from": strategyGov})
 
     deployer = badger.deployer
     randomUser = accounts[6]

@@ -21,6 +21,8 @@ class HelperCvxCrvMiniDeploy(SettMiniDeployBase):
 
     def post_deploy_setup(self, deploy):
         if deploy:
+            self.strategy.patchPaths({"from": self.governance})
+            self.strategy.setCrvCvxCrvSlippageToleranceBps(500, {"from": self.governance})
             return
 
         # Vault uses testMultisig
@@ -52,9 +54,17 @@ class HelperCvxCrvMiniDeploy(SettMiniDeployBase):
         assert self.controller.strategies(self.vault.token()) == self.strategy.address
         assert self.controller.vaults(self.strategy.want()) == self.vault.address
 
-        self.strategy.setCrvCvxCrvPath({"from": self.governance})
+        # Upgrade strategy
+        proxyAdmin = interface.IProxyAdmin("0x20Dce41Acca85E8222D6861Aa6D23B6C941777bF")
+        timelock = accounts.at("0x21CF9b77F88Adf8F8C98d7E33Fe601DC57bC0893", force=True) # Owner
 
+        proxyAdmin.upgrade(self.strategy.address, "0x3d6994f14fb3781C566d470da6092F96beF5eE03", {"from": timelock})
+
+        self.strategy.patchPaths({"from": self.governance})
+        self.strategy.setCrvCvxCrvSlippageToleranceBps(500, {"from": self.governance})
         
+
+
         if (self.vault.guestList() != AddressZero): 
             # Add actors to guestlist
             guestlist = VipCappedGuestListBbtcUpgradeable.at(self.vault.guestList())
