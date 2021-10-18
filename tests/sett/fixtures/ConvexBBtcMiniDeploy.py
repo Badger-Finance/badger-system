@@ -1,5 +1,6 @@
 from tests.sett.fixtures.SettMiniDeployBase import SettMiniDeployBase
-from config.badger_config import sett_config
+from config.badger_config import sett_config, digg_config
+import json
 from helpers.token_utils import distribute_from_whales
 from brownie import *
 from helpers.proxy_utils import deploy_proxy
@@ -66,14 +67,21 @@ class ConvexBBtcMiniDeploy(SettMiniDeployBase):
 
             return
 
+         # ====== Strategy Migration Implementations ====== #
+        with open(digg_config.prod_json) as f:
+            badger_deploy = json.load(f)
+
+        # Fetch strategy from strategy_registry
+        self.strategy = StrategyConvexStakingOptimizer.at(
+            badger_deploy["sett_system"]["strategies_registry"]["native.bbtcCrv"][
+                "StrategyConvexStakingOptimizer"
+            ]
+        )
+        self.badger.sett_system.strategies[self.key] = self.strategy
+        print("Old Strategy:", self.strategy.address)
+
         if not (self.vault.controller() == self.strategy.controller()):
-            # NB: Not all vaults are pauseable.
-            try:
-                if self.vault.paused():
-                    self.vault.unpause({"from": self.governance})
-            except exceptions.VirtualMachineError:
-                pass
-            # Change vault's conroller to match the strat's
+            # Change vault's controller to match the strat's
             self.vault.setController(
                 self.strategy.controller(), {"from": self.governance}
             )
@@ -86,50 +94,74 @@ class ConvexBBtcMiniDeploy(SettMiniDeployBase):
 
         self.controller = interface.IController(self.vault.controller())
 
-        # The timelock is th assigned governance address for the vault and strategy
-        timelock = accounts.at("0x21CF9b77F88Adf8F8C98d7E33Fe601DC57bC0893", force=True)
-
-        # Add strategy to controller for want
-        # Controller already wired-up
-        # self.controller.approveStrategy(
-        #     self.strategy.want(), self.strategy.address, {"from": self.governance}
-        # )
-        # self.controller.setStrategy(
-        #     self.strategy.want(), self.strategy.address, {"from": self.governance}
-        # )
-
-        # Add vault to controller for want
-        # self.controller.setVault(self.vault.token(), self.vault.address, {"from": self.governance})
-
         assert self.controller.strategies(self.vault.token()) == self.strategy.address
         assert self.controller.vaults(self.strategy.want()) == self.vault.address
 
-        # Upgrade strategy
-        proxyAdmin = interface.IProxyAdmin("0x20Dce41Acca85E8222D6861Aa6D23B6C941777bF")
-        timelock = accounts.at("0x21CF9b77F88Adf8F8C98d7E33Fe601DC57bC0893", force=True) # Owner
+        # Migrate strategy
+        # ==== Pre-Migration checks ==== #
+        # Balance of Sett (Balance on Sett, Controller and Strategy) is greater than 0
+        initialSettBalance = self.vault.balance()
+        assert initialSettBalance > 0
+        # PPFS before migration
+        ppfs = self.vault.getPricePerFullShare()
 
-        proxyAdmin.upgrade(self.strategy.address, "0xead9c2499187e5627dc2f9f75ab74f439c34c6fb", {"from": timelock})
+        controllerGov = accounts.at(self.controller.governance(), force=True)
+        newStrategy = badger_deploy["sett_system"]["strategies_registry"]["native.bbtcCrv"][
+                "StrategyConvexStakingOptimizerV1.1"
+            ]
+        self.controller.approveStrategy(
+            self.strategy.want(), newStrategy, {"from": controllerGov}
+        )
+        self.controller.setStrategy(
+            self.strategy.want(), newStrategy, {"from": controllerGov}
+        )
+        assert self.controller.strategies(self.vault.token()) == newStrategy
+        # Balance of old Strategy goes down to 0
+        assert self.strategy.balanceOf() == 0
 
-        # self.strategy.patchPaths({"from": self.governance})
+        self.strategy = StrategyConvexStakingOptimizer.at(newStrategy)
+        self.badger.sett_system.strategies[self.key] = self.strategy
+
+        # ==== Post-Migration checks ==== #
+        # Balance of Sett remains the same
+        assert initialSettBalance == self.vault.balance()
+
+        # Balance of new Strategy starts off at 0
+        assert self.strategy.balanceOf() == 0
+        # PPS remain the same post migration
+        assert ppfs == self.vault.getPricePerFullShare()
+
+        stratGov = accounts.at(self.strategy.governance(), force=True)
+
+        self.strategy.setController(self.controller.address, {"from": stratGov})
+        assert self.vault.controller() == self.strategy.controller()
         
+        self.strategy.setGovernance(self.governance.address, {"from": stratGov})
 
-        if self.vault.guestList() != AddressZero:
-            # Add actors to guestlist
-            guestlist = VipCappedGuestListBbtcUpgradeable.at(self.vault.guestList())
+        self.keeper = accounts.at(self.strategy.keeper(), force=True)
+        self.guardian = accounts.at(self.strategy.guardian(), force=True)
+        self.strategist = accounts.at(self.strategy.strategist(), force=True)
 
-            addresses = []
-            for account in accounts:
-                addresses.append(account.address)
+        # Run Earn()
+        self.vault.earn({"from": self.governance})
 
-            # Add actors addresses
-            addresses.append(guestlist.owner())
-            addresses.append(self.governance.address)
-            addresses.append(self.strategist.address)
-            addresses.append(self.keeper.address)
-            addresses.append(self.guardian.address)
-            addresses.append(self.deployer.address)
+        # Approve strategy to interact with Helper Vaults:
+        (params, want) = self.fetch_params()
 
-            invited = [True] * len(addresses)
+        cvxHelperVault = SettV4.at(params.cvxHelperVault)
+        cvxCrvHelperVault = SettV4.at(params.cvxCrvHelperVault)
 
-            guestlist.setGuests(addresses, invited, {"from": self.deployer})
+        cvxHelperGov = accounts.at(cvxHelperVault.governance(), force=True)
+        cvxCrvHelperGov = accounts.at(cvxCrvHelperVault.governance(), force=True)
 
+        cvxHelperVault.approveContractAccess(
+            self.strategy.address, {"from": cvxHelperGov}
+        )
+        cvxCrvHelperVault.approveContractAccess(
+            self.strategy.address, {"from": cvxCrvHelperGov}
+        )
+
+        print("Vault:", self.vault.address)
+        print("Controller:", self.controller.address)
+        print("New Strategy:", self.strategy.address)
+        print("Governance:", self.governance.address)

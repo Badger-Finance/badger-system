@@ -72,16 +72,16 @@ settsToRun = [
     # "native.sushiWbtcIbBtc",
     # # "native.uniWbtcIbBtc",
     "native.renCrv",
-    # "native.sbtcCrv",
-    # "native.tbtcCrv",
-    # "native.hbtcCrv",
-    # "native.pbtcCrv",
-    # "native.obtcCrv",
-    # "native.bbtcCrv",
+    "native.sbtcCrv",
+    "native.tbtcCrv",
+    "native.hbtcCrv",
+    "native.pbtcCrv",
+    "native.obtcCrv",
+    "native.bbtcCrv",
     # "native.tricrypto", # Emissions were migrated to tricrypto2. Is deprecated.
-    # "native.tricrypto2",
-    "native.cvx",
-    "native.cvxCrv",
+    "native.tricrypto2",
+    # "native.cvx",
+    # "native.cvxCrv",
 ]
 
 mStableSettsToRun = [
