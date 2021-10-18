@@ -1,0 +1,14 @@
+{
+    "BadgerTreeV2": "0xbe82A3259ce427B8bCb54b938b486dC2aF509Cc3",
+    "SimpleTimelock": "0xBDa3AC68e2300B18ce3c8c2796C06058eAcc3947",
+    "Controller": "0x6354E79F21B56C11f48bcD7c451BE456D7102A36",
+    "SettV3": "0x889d5036f2EA5784161090082F3327bb3e433102",
+    "WarRoomGatedProxy": "0x16EaA9f54ACD904cA22873DB2c1E39e76b128Be9",
+    "VipCappedGuestListWrapperUpgradeable": "0xa6aB825f86D9fDaFe9528f34f089A8473A3D85d3",
+    "SimpleWrapperGatedUpgradeable": "0xc0a972a3cf8e52167589694d135abb66409f9b30",
+    "RewardsLogger": "0x96B3f82782a62e4dcCb236F86665C550F6C0b6C0",
+    "VipCappedGuestListBbtcUpgradeable": "0x6D8Bbe75d04725948A84AcFa1C1E91406A5a8ccb",
+    "KeeperAccessControl": "0x56f01aaa5d0ccc4f46ecea41444433c1fc6e96d7",
+    "proxyAdminTimelock": "0xBA77f65a97433d4362Db5c798987d6f0bD28faA3",
+    "proxyAdminDev": "0x20Dce41Acca85E8222D6861Aa6D23B6C941777bF"
+}

@@ -50,7 +50,7 @@ interface StratView {
     function keeper() external view returns (address);
 }
 
-contract BadgerRegistry is Initializable {
+contract BadgerRegistryV2 is Initializable {
     using EnumerableSetUpgradeable for EnumerableSetUpgradeable.AddressSet;
 
     //@dev Multisig. Vaults from here are considered Production ready
