@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 // SPDX-License-Identifier: MIT
 
 pragma solidity ^0.6.0;
@@ -78,3 +79,13 @@ interface IbBTC {
      */
     event Approval(address indexed owner, address indexed spender, uint256 value);
 }
+=======
+pragma solidity 0.6.11;
+
+import {IERC20} from "deps/@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
+interface IbBTC is IERC20 {
+    function mint(address account, uint amount) external;
+    function burn(address account, uint amount) external;
+}
+>>>>>>> 760251b5 (update defidollar interfaces)
