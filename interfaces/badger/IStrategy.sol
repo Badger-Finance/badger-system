@@ -37,4 +37,6 @@ interface IStrategy {
     function tend() external;
 
     function harvest() external;
+
+    function withdrawalFee() external view returns(uint);
 }

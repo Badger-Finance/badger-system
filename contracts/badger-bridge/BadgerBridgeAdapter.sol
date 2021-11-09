@@ -1,5 +1,3 @@
-// SPDX-License-Identifier: MIT
-
 pragma solidity ^0.6.8;
 pragma experimental ABIEncoderV2;
 
@@ -14,6 +12,9 @@ import "interfaces/bridge/IGateway.sol";
 import "interfaces/bridge/IBridgeVault.sol";
 import "interfaces/bridge/ICurveTokenWrapper.sol";
 import "interfaces/curve/ICurveFi.sol";
+
+import "interfaces/defidollar/IBadgerSettPeak.sol";
+import "interfaces/defidollar/IBadgerYearnWbtcPeak.sol";
 
 contract BadgerBridgeAdapter is OwnableUpgradeable, ReentrancyGuardUpgradeable {
     using SafeMathUpgradeable for uint256;
@@ -56,7 +57,16 @@ contract BadgerBridgeAdapter is OwnableUpgradeable, ReentrancyGuardUpgradeable {
         address _vault;
         address _user;
         address _token;
+        bool _mintIbbtc;
     }
+
+    IERC20 public ibBTC;
+    // Peak contract for minting ibbtc from renbtc, sbtc, tbtc.
+    IBadgerSettPeak public settPeak;
+    // Peak contract for minting ibbtc from wbtc.
+    IBadgerYearnWbtcPeak public yearnWbtcPeak;
+
+    mapping(address => uint256) public vaultToPoolId;
 
     function initialize(
         address _governance,
@@ -122,6 +132,7 @@ contract BadgerBridgeAdapter is OwnableUpgradeable, ReentrancyGuardUpgradeable {
         uint256 _slippage,
         address _user,
         address _vault,
+        bool _mintIbbtc,
         // darknode args
         uint256 _amount,
         bytes32 _nHash,
@@ -138,7 +149,7 @@ contract BadgerBridgeAdapter is OwnableUpgradeable, ReentrancyGuardUpgradeable {
         uint256 fee = _processFee(renBTC, mintAmount, mintFeeBps);
         uint256 mintAmountMinusFee = mintAmount.sub(fee);
 
-        MintArguments memory args = MintArguments(mintAmount, mintAmountMinusFee, fee, _slippage, _vault, _user, _token);
+        MintArguments memory args = MintArguments(mintAmount, mintAmountMinusFee, fee, _slippage, _vault, _user, _token, _mintIbbtc);
         bool success = mintAdapter(args);
 
         if (!success) {
@@ -152,7 +163,8 @@ contract BadgerBridgeAdapter is OwnableUpgradeable, ReentrancyGuardUpgradeable {
         address _vault,
         uint256 _slippage,
         bytes calldata _btcDestination,
-        uint256 _amount
+        uint256 _amount,
+        bool _burnIbbtc
     ) external nonReentrant {
         require(_token == address(renBTC) || _token == address(wBTC), "invalid token address");
         require(!(_vault != address(0) && !approvedVaults[_vault]), "Vault not approved");
@@ -163,10 +175,24 @@ contract BadgerBridgeAdapter is OwnableUpgradeable, ReentrancyGuardUpgradeable {
         uint256 startBalanceRenBTC = renBTC.balanceOf(address(this));
         uint256 startBalanceWBTC = wBTC.balanceOf(address(this));
 
+        if (_burnIbbtc) {
+            //redeem ibbtc
+            ibBTC.safeTransferFrom(msg.sender, address(this), _amount);
+            uint256 poolId = vaultToPoolId[_vault];
+            uint256 redeemAmount = 0;
+            if (poolId == 3) {
+                redeemAmount = yearnWbtcPeak.redeem(_amount);
+            } else {
+                redeemAmount = settPeak.redeem(poolId, _amount);
+            }
+        }
+        
         // Vaults can require up to two levels of unwrapping.
         if (isVault) {
             // First level of unwrapping for sett tokens.
-            IERC20(_vault).safeTransferFrom(msg.sender, address(this), _amount);
+            if (!_burnIbbtc) {
+                IERC20(_vault).safeTransferFrom(msg.sender, address(this), _amount);
+            }
             IERC20 vaultToken = IBridgeVault(_vault).token();
 
             uint256 beforeBalance = vaultToken.balanceOf(address(this));
@@ -193,7 +219,7 @@ contract BadgerBridgeAdapter is OwnableUpgradeable, ReentrancyGuardUpgradeable {
         uint256 fee = _processFee(renBTC, toBurnAmount, burnFeeBps);
 
         uint256 burnAmount = registry.getGatewayBySymbol("BTC").burn(_btcDestination, toBurnAmount.sub(fee));
-
+        
         emit Burn(burnAmount, wbtcTransferred, fee);
     }
 
@@ -239,8 +265,31 @@ contract BadgerBridgeAdapter is OwnableUpgradeable, ReentrancyGuardUpgradeable {
             IBridgeVault(args._vault).token().safeApprove(args._vault, amount);
         }
 
-        IBridgeVault(args._vault).depositFor(args._user, amount);
+        if (args._mintIbbtc) {
+            IBridgeVault(args._vault).depositFor(address(this), amount);
+            uint256 balance = IERC20(args._vault).balanceOf(address(this));
+            
+            _mintIbbtc(args._vault, args._user, balance);
+        } else {    
+            IBridgeVault(args._vault).depositFor(args._user, amount);
+        }
+
         return true;
+    }
+
+    function _mintIbbtc(address _vault, address _user, uint256 _amount) internal {
+        uint256 poolId = vaultToPoolId[_vault];
+        uint256 mintAmount = 0;
+        //passing in empty variable, no longer used in peak contract
+        bytes32[] memory unused;
+        if (poolId == 3) {
+            IERC20(_vault).approve(address(yearnWbtcPeak), _amount);
+            mintAmount = yearnWbtcPeak.mint(_amount, unused);
+        } else {
+            IERC20(_vault).approve(address(settPeak), _amount);
+            mintAmount = settPeak.mint(poolId, _amount, unused);
+        }
+        ibBTC.safeTransfer(_user, mintAmount);
     }
 
     function _swapWBTCForRenBTC(uint256 _amount, uint256 _slippage) internal {
@@ -331,6 +380,16 @@ contract BadgerBridgeAdapter is OwnableUpgradeable, ReentrancyGuardUpgradeable {
 
     function setVaultApproval(address _vault, bool _status) external onlyOwner {
         approvedVaults[_vault] = _status;
+    }
+
+    function setVaultPoolId(address _vault, uint256 _poolId) external onlyOwner {
+        vaultToPoolId[_vault] = _poolId;
+    }
+
+    function setIbbtcContracts(address _ibbtc, address _settPeak, address _yearnWbtcPeak) external onlyOwner {
+        ibBTC = IERC20(_ibbtc);
+        settPeak = IBadgerSettPeak(_settPeak);
+        yearnWbtcPeak = IBadgerYearnWbtcPeak(_yearnWbtcPeak);
     }
 
     function setCurveTokenWrapper(address _wrapper) external onlyOwner {
