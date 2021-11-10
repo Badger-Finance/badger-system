@@ -13,7 +13,10 @@ import "../../deps/@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable
 import "../../interfaces/badger/IController.sol";
 import "../../interfaces/erc20/IERC20Detailed.sol";
 import "./SettAccessControlDefended.sol";
+<<<<<<< HEAD
 import "interfaces/yearn/BadgerGuestlistApi.sol";
+=======
+>>>>>>> 33c3f44f (add missing interfaces)
 
 /* 
     Source: https://github.com/iearn-finance/yearn-protocol/blob/develop/contracts/vaults/yVault.sol
@@ -30,6 +33,7 @@ import "interfaces/yearn/BadgerGuestlistApi.sol";
     V1.2
     * Transfer functions are now pausable along with all other non-permissioned write functions
     * All permissioned write functions, with the exception of pause() & unpause(), are pausable as well
+<<<<<<< HEAD
 
     V1.3
     * Add guest list functionality
@@ -37,6 +41,8 @@ import "interfaces/yearn/BadgerGuestlistApi.sol";
 
     V1.4
     * Add depositFor() to deposit on the half of other users. That user will then be blockLocked.
+=======
+>>>>>>> 33c3f44f (add missing interfaces)
 */
 
 contract SettV4 is ERC20Upgradeable, SettAccessControlDefended, PausableUpgradeable {
@@ -58,8 +64,11 @@ contract SettV4 is ERC20Upgradeable, SettAccessControlDefended, PausableUpgradea
 
     address public guardian;
 
+<<<<<<< HEAD
     BadgerGuestListAPI public guestList;
 
+=======
+>>>>>>> 33c3f44f (add missing interfaces)
     event FullPricePerShareUpdated(uint256 value, uint256 indexed timestamp, uint256 indexed blockNumber);
 
     function initialize(
@@ -121,10 +130,17 @@ contract SettV4 is ERC20Upgradeable, SettAccessControlDefended, PausableUpgradea
     /// ===== View Functions =====
 
     function version() public view returns (string memory) {
+<<<<<<< HEAD
         return "1.4";
     }
 
     function getPricePerFullShare() public virtual view returns (uint256) {
+=======
+        return "1.2";
+    }
+
+    function getPricePerFullShare() public view virtual returns (uint256) {
+>>>>>>> 33c3f44f (add missing interfaces)
         if (totalSupply() == 0) {
             return 1e18;
         }
@@ -133,14 +149,22 @@ contract SettV4 is ERC20Upgradeable, SettAccessControlDefended, PausableUpgradea
 
     /// @notice Return the total balance of the underlying token within the system
     /// @notice Sums the balance in the Sett, the Controller, and the Strategy
+<<<<<<< HEAD
     function balance() public virtual view returns (uint256) {
+=======
+    function balance() public view returns (uint256) {
+>>>>>>> 33c3f44f (add missing interfaces)
         return token.balanceOf(address(this)).add(IController(controller).balanceOf(address(token)));
     }
 
     /// @notice Defines how much of the Setts' underlying can be borrowed by the Strategy for use
     /// @notice Custom logic in here for how much the vault allows to be borrowed
     /// @notice Sets minimum required on-hand to keep small withdrawals cheap
+<<<<<<< HEAD
     function available() public virtual view returns (uint256) {
+=======
+    function available() public view virtual returns (uint256) {
+>>>>>>> 33c3f44f (add missing interfaces)
         return token.balanceOf(address(this)).mul(min).div(max);
     }
 
@@ -153,6 +177,7 @@ contract SettV4 is ERC20Upgradeable, SettAccessControlDefended, PausableUpgradea
         _blockLocked();
 
         _lockForBlock(msg.sender);
+<<<<<<< HEAD
         _depositWithAuthorization(_amount, new bytes32[](0));
     }
 
@@ -163,6 +188,9 @@ contract SettV4 is ERC20Upgradeable, SettAccessControlDefended, PausableUpgradea
 
         _lockForBlock(msg.sender);
         _depositWithAuthorization(_amount, proof);
+=======
+        _deposit(_amount);
+>>>>>>> 33c3f44f (add missing interfaces)
     }
 
     /// @notice Convenience function: Deposit entire balance of asset into the Sett, and return corresponding shares to the user
@@ -172,6 +200,7 @@ contract SettV4 is ERC20Upgradeable, SettAccessControlDefended, PausableUpgradea
         _blockLocked();
 
         _lockForBlock(msg.sender);
+<<<<<<< HEAD
         _depositWithAuthorization(token.balanceOf(msg.sender), new bytes32[](0));
     }
 
@@ -205,6 +234,9 @@ contract SettV4 is ERC20Upgradeable, SettAccessControlDefended, PausableUpgradea
 
         _lockForBlock(_recipient);
         _depositForWithAuthorization(_recipient, _amount, proof);
+=======
+        _deposit(token.balanceOf(msg.sender));
+>>>>>>> 33c3f44f (add missing interfaces)
     }
 
     /// @notice No rebalance implementation for lower fees and faster swaps
@@ -227,11 +259,14 @@ contract SettV4 is ERC20Upgradeable, SettAccessControlDefended, PausableUpgradea
 
     /// ===== Permissioned Actions: Governance =====
 
+<<<<<<< HEAD
     function setGuestList(address _guestList) external whenNotPaused {
         _onlyGovernance();
         guestList = BadgerGuestListAPI(_guestList);
     }
 
+=======
+>>>>>>> 33c3f44f (add missing interfaces)
     /// @notice Set minimum threshold of underlying that must be deposited in strategy
     /// @notice Can only be changed by governance
     function setMin(uint256 _min) external whenNotPaused {
@@ -297,12 +332,16 @@ contract SettV4 is ERC20Upgradeable, SettAccessControlDefended, PausableUpgradea
 
     /// @dev Calculate the number of shares to issue for a given deposit
     /// @dev This is based on the realized value of underlying assets between Sett & associated Strategy
+<<<<<<< HEAD
     // @dev deposit for msg.sender
     function _deposit(uint256 _amount) internal {
         _depositFor(msg.sender, _amount);
     }
 
     function _depositFor(address recipient, uint256 _amount) internal virtual {
+=======
+    function _deposit(uint256 _amount) internal virtual {
+>>>>>>> 33c3f44f (add missing interfaces)
         uint256 _pool = balance();
         uint256 _before = token.balanceOf(address(this));
         token.safeTransferFrom(msg.sender, address(this), _amount);
@@ -314,6 +353,7 @@ contract SettV4 is ERC20Upgradeable, SettAccessControlDefended, PausableUpgradea
         } else {
             shares = (_amount.mul(totalSupply())).div(_pool);
         }
+<<<<<<< HEAD
         _mint(recipient, shares);
     }
 
@@ -333,6 +373,9 @@ contract SettV4 is ERC20Upgradeable, SettAccessControlDefended, PausableUpgradea
             require(guestList.authorized(_recipient, _amount, proof), "guest-list-authorization");
         }
         _depositFor(_recipient, _amount);
+=======
+        _mint(msg.sender, shares);
+>>>>>>> 33c3f44f (add missing interfaces)
     }
 
     // No rebalance implementation for lower fees and faster swaps
