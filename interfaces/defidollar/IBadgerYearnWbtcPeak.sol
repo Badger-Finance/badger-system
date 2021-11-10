@@ -11,7 +11,21 @@ interface IBadgerYearnWbtcPeak {
 
     function redeem(uint inAmount) external
         returns (uint outAmount);
+    
+    function calcMint(uint inAmount)
+        external
+        view
+        returns(uint bBTC, uint fee);
 
+    function calcRedeem(uint bBtc)
+        external
+        view
+        returns(uint sett, uint fee, uint max);
+
+<<<<<<< HEAD
     function calcMint(uint inAmount) external view returns(uint bBTC, uint fee);
     function calcRedeem(uint bBtc) external view returns(uint sett, uint fee, uint max);
 }
+=======
+}
+>>>>>>> 760251b525e1ec51b84d3d158b12fe9a0495badd
