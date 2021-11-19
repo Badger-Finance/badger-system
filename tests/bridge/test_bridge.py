@@ -1,7 +1,10 @@
 from os import wait
+import enum
 from sys import version_info
+from eth_typing.evm import Address
 import pytest
 from brownie import (
+    ZERO_ADDRESS,
     accounts,
     interface,
     MockVault,
@@ -16,6 +19,8 @@ from config.badger_config import badger_config
 from scripts.systems.badger_system import connect_badger
 from scripts.systems.bridge_system import connect_bridge
 from scripts.systems.swap_system import connect_swap
+
+from helpers.gnosis_safe import GnosisSafe, MultisigTxMetadata
 
 
 # Curve lp tokens
@@ -65,15 +70,127 @@ BRIDGE_VAULTS = [
     },
 ]
 
+
 #import addresses
 coreContract = registry.defidollar.addresses.core
 ibbtcContract = registry.defidollar.addresses.ibbtc
 peakContract = registry.defidollar.addresses.badgerPeak
 wbtcPeakContract = registry.defidollar.addresses.wbtcPeak
 
+class PeakState(enum.Enum):
+    Extinct = 1
+    Active = 2
+    Dormant = 3
+
 #test mint/burn ibbtc using btokens from badger vaults
 @pytest.mark.parametrize(
-    "vault, poolId", [(BRIDGE_VAULTS[0], 0), (BRIDGE_VAULTS[1], 2), (BRIDGE_VAULTS[2], 1), (BRIDGE_VAULTS[3], 3)], #vaults correspond with poolid on defidollar side
+    "vault, poolId", [(BRIDGE_VAULTS[0], 0)], #vaults correspond with poolid on defidollar side
+)
+
+def test_bridge_ibbtc_and_zap(vault, poolId):
+    badger = connect_badger(badger_config.prod_json)
+    bridge = connect_bridge(badger, badger_config.prod_json)
+    swap = connect_swap(badger_config.prod_json)
+    _upgrade_bridge(badger, bridge)
+    bridge.add_existing_swap(swap)
+    _deploy_bridge_mocks(badger, bridge)
+
+    yearnWbtc = connect_badger("deploy-final.json")
+    wbtcAddr = yearnWbtc.sett_system["vaults"]["yearn.wbtc"]
+
+    renbtc = registry.tokens.renbtc
+
+    slippage = .03
+    amount = 1 * 10**8
+
+    v = vault["address"]
+
+    if poolId == 3:
+        v = wbtcAddr
+
+    _config_bridge(badger, bridge)
+
+    #config_vault_poolid(badger, bridge, v, poolId)
+
+    #Setting contract addresses in adapter
+    #bridge.adapter.setVaultPoolId(v, poolId, {"from": badger.devMultisig})
+    #bridge.adapter.setIbbtcContracts(ibbtcContract, peakContract, wbtcPeakContract, {"from": badger.devMultisig})
+
+    gov1 = interface.ICore(coreContract).owner()
+    interface.ICore(coreContract).setGuestList(ZERO_ADDRESS, {"from": gov1})
+    #interface.ICore(coreContract).setPeakStatus(wbtcPeakContract, PeakState.Active.name, {"from": gov1})
+
+    gov2 = interface.IBadgerSettPeak(peakContract).owner()
+    interface.IBadgerSettPeak(peakContract).approveContractAccess(bridge.adapter, {"from": gov2})
+
+    gov3 = interface.IBadgerYearnWbtcPeak(wbtcPeakContract).owner()
+    interface.IBadgerYearnWbtcPeak(wbtcPeakContract).approveContractAccess(bridge.adapter, {"from": gov3})
+
+    #ibbtc vault permissions
+    gov4 = "0xee8b29aa52dd5ff2559da2c50b1887adee257556"
+    gov4 = "0xB65cef03b9B89f99517643226d76e286ee999e77"
+    #gov4 = ZERO_ADDRESS
+    interface.IBridgeVault("0xaE96fF08771a109dc6650a1BdCa62F2d558E40af").approveContractAccess(bridge.adapter, {"from": gov4})
+
+    bridgeBalanceBefore = interface.IERC20(renbtc).balanceOf(bridge.adapter)
+
+    vault2 = "0xaE96fF08771a109dc6650a1BdCa62F2d558E40af"
+    #vault2 = ZERO_ADDRESS
+
+    #minting
+    accountsBalanceBefore = interface.IERC20(vault2).balanceOf(accounts[0].address)
+    #accountsBalanceBefore = interface.IERC20(ibbtcContract).balanceOf(accounts[0].address)
+    bridge.adapter.mint(
+        vault["inToken"],
+        slippage * 10**4,
+        accounts[0],
+        v,
+        vault2,
+        True,
+        amount,
+        # Darknode args hash/sig optional since gateway is mocked.
+        "",
+        "", 
+        {"from": accounts[0]},
+    )
+    accountsBalanceAfter = interface.IERC20(vault2).balanceOf(accounts[0].address)
+    #accountsBalanceAfter = interface.IERC20(ibbtcContract).balanceOf(accounts[0].address)
+
+    assert accountsBalanceAfter > accountsBalanceBefore
+
+    gatewayBalanceBefore = interface.IERC20(renbtc).balanceOf(bridge.mocks.BTC.gateway)
+    bridgeBalance = interface.IERC20(renbtc).balanceOf(bridge.adapter)
+
+    bridge.adapter.setVaultApproval(vault2, True, {"from": badger.devMultisig})
+
+    #burning
+    interface.IERC20(vault2).approve(bridge.adapter, accountsBalanceAfter, {"from": accounts[0]})
+    interface.IERC20(ibbtcContract).approve(bridge.adapter, accountsBalanceAfter, {"from": accounts[0]})
+    interface.IERC20(renbtc).approve(
+        bridge.mocks.BTC.gateway,
+        amount,
+        {"from": bridge.adapter}
+    )
+    bridge.adapter.burn(
+        vault["inToken"],
+        v,
+        vault2,
+        slippage * 10**4,
+        accounts[0].address,
+        accountsBalanceAfter,
+        True,
+        {"from": accounts[0]},
+    )
+    #assert 0 > 0
+    assert interface.IERC20(vault2).balanceOf(accounts[0].address) == 0
+    assert interface.IERC20(ibbtcContract).balanceOf(accounts[0].address) == 0
+    assert interface.IERC20(renbtc).balanceOf(bridge.adapter) - bridgeBalance < 2
+    assert interface.IERC20(renbtc).balanceOf(bridge.mocks.BTC.gateway) > gatewayBalanceBefore
+
+
+#test mint/burn ibbtc using btokens from badger vaults
+@pytest.mark.parametrize(
+    "vault, poolId", [(BRIDGE_VAULTS[0], 0)], #vaults correspond with poolid on defidollar side
 )
 
 def test_bridge_ibbtc(vault, poolId):
@@ -97,9 +214,13 @@ def test_bridge_ibbtc(vault, poolId):
     if poolId == 3:
         v = wbtcAddr
 
+    _config_bridge(badger, bridge)
+
+    #config_vault_poolid(badger, bridge, v, poolId)
+
     #Setting contract addresses in adapter
-    bridge.adapter.setVaultPoolId(v, poolId, {"from": badger.devMultisig})
-    bridge.adapter.setIbbtcContracts(ibbtcContract, peakContract, wbtcPeakContract, {"from": badger.devMultisig})
+    #bridge.adapter.setVaultPoolId(v, poolId, {"from": badger.devMultisig})
+    #bridge.adapter.setIbbtcContracts(ibbtcContract, peakContract, wbtcPeakContract, {"from": badger.devMultisig})
 
     gov2 = interface.IBadgerSettPeak(peakContract).owner()
     interface.IBadgerSettPeak(peakContract).approveContractAccess(bridge.adapter, {"from": gov2})
@@ -109,6 +230,8 @@ def test_bridge_ibbtc(vault, poolId):
 
     bridgeBalanceBefore = interface.IERC20(renbtc).balanceOf(bridge.adapter)
 
+    vault2 = ZERO_ADDRESS
+
     #minting
     accountsBalanceBefore = interface.IERC20(ibbtcContract).balanceOf(accounts[0].address)
     bridge.adapter.mint(
@@ -116,6 +239,7 @@ def test_bridge_ibbtc(vault, poolId):
         slippage * 10**4,
         accounts[0],
         v,
+        vault2,
         True,
         amount,
         # Darknode args hash/sig optional since gateway is mocked.
@@ -140,6 +264,7 @@ def test_bridge_ibbtc(vault, poolId):
     bridge.adapter.burn(
         vault["inToken"],
         v,
+        vault2,
         slippage * 10**4,
         accounts[0].address,
         accountsBalanceAfter,
@@ -169,6 +294,8 @@ def test_bridge_vault(vault):
     slippage = 0.03
     amount = 1 * 10 ** 8
 
+    vault2 = ZERO_ADDRESS
+
     v = vault["address"]
     # TODO: Can interleave these mints/burns.
     for accIdx in range(10, 12):
@@ -181,6 +308,7 @@ def test_bridge_vault(vault):
                 slippage * 10 ** 4,
                 account.address,
                 v,
+                vault2,
                 False,
                 amount,
                 # Darknode args hash/sig optional since gateway is mocked.
@@ -200,11 +328,12 @@ def test_bridge_vault(vault):
             # NB: In the real world, burns don't require approvals as it's just
             # an internal update the the user's token balance.
             interface.IERC20(registry.tokens.renbtc).approve(
-                bridge.mocks.BTC.gateway, balance, {"from": bridge.adapter}
+                bridge.mocks.BTC.gateway, balance*10, {"from": bridge.adapter}
             )
             bridge.adapter.burn(
                 vault["outToken"],
                 v,
+                vault2,
                 slippage * 10 ** 4,
                 account.address,
                 balance,
@@ -245,6 +374,7 @@ def test_bridge_basic_swap_fail():
                     slippage * 10 ** 4,
                     account.address,
                     AddressZero,  # No vault.
+                    AddressZero,
                     False,
                     amount,
                     # Darknode args hash/sig optional since gateway is mocked.
@@ -300,6 +430,7 @@ def test_bridge_basic():
                 slippage * 10 ** 4,
                 account.address,
                 AddressZero,  # No vault.
+                AddressZero,
                 False,
                 amount,
                 # Darknode args hash/sig optional since gateway is mocked.
@@ -324,6 +455,7 @@ def test_bridge_basic():
             bridge.adapter.burn(
                 wbtc,
                 AddressZero,  # No vault.
+                AddressZero,
                 slippage * 10 ** 4,
                 account.address,
                 balance,
@@ -354,6 +486,7 @@ def test_bridge_sweep():
         beforeBalance = token.balanceOf(badger.devMultisig)
         bridge.adapter.sweep({"from": badger.devMultisig})
         assert token.balanceOf(badger.devMultisig) > beforeBalance
+
 
 
 def _assert_swap_slippage(router, fromToken, toToken, amountIn, slippage):
@@ -413,3 +546,44 @@ def _upgrade_bridge(badger, bridge):
     badger.deploy_logic("CurveTokenWrapper", CurveTokenWrapper)
     logic = badger.logic["CurveTokenWrapper"]
     bridge.adapter.setCurveTokenWrapper(logic, {"from": badger.devMultisig})
+
+def _config_bridge(badger, bridge):
+    yearnWbtc = connect_badger("deploy-final.json")
+    wbtcAddr = yearnWbtc.sett_system["vaults"]["yearn.wbtc"]
+
+    multi = GnosisSafe(badger.devMultisig)
+
+    multi.execute(
+        MultisigTxMetadata(description="add defi dollar contract addresses to adapter contract"),
+        {
+            "to": bridge.adapter.address,
+            "data": bridge.adapter.setIbbtcContracts.encode_input(registry.defidollar.addresses.ibbtc, registry.defidollar.addresses.badgerPeak, registry.defidollar.addresses.wbtcPeak),
+        },
+    )
+
+    for pool in registry.defidollar.pools:
+        multi.execute(
+            MultisigTxMetadata(description="populate vault/poolid dictionary"),
+            {
+                "to": bridge.adapter.address,
+                "data": bridge.adapter.setVaultPoolId.encode_input(pool.sett, pool.id),
+            },
+        )
+
+    multi.execute(
+        MultisigTxMetadata(description="populate vault/poolid dictionary"),
+        {
+            "to": bridge.adapter.address,
+            "data": bridge.adapter.setVaultPoolId.encode_input(wbtcAddr, 3),
+        },
+    )
+
+def config_vault_poolid(badger, bridge, vaultaddr, poolid):
+    multi = GnosisSafe(badger.devMultisig)
+    multi.execute(
+            MultisigTxMetadata(description="populate vault/poolid dictionary"),
+            {
+                "to": bridge.adapter.address,
+                "data": bridge.adapter.setVaultPoolId.encode_input(vaultaddr, poolid),
+            },
+        )
