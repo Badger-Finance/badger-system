@@ -44,25 +44,21 @@ def upgrade_bridge(badger: BadgerSystem, bridge: BridgeSystem) -> str:
 
 def configure_bridge(badger: BadgerSystem, bridge: BridgeSystem):
     """
-    Configures bridge to use curve token wrapper.
+    Configures bridge for ibbtc.
     """
 
     multi = GnosisSafe(badger.devMultisig)
-    id = multi.addTx(
-        MultisigTxMetadata(
-            description="Set curve token wrapper on adapter",
-        ),
-        {
-            "to": bridge.adapter.address,
-            "data": bridge.adapter.setCurveTokenWrapper.encode_input(
-                bridge.curveTokenWrapper.address
-            ),
-        },
-    )
-    multi.executeTx(id)
 
     yearnWbtc = connect_badger("deploy-final.json")
     wbtcAddr = yearnWbtc.sett_system["vaults"]["yearn.wbtc"]
+
+    multi.execute(
+        MultisigTxMetadata(description="set new curvetokenwrapper"),
+        {
+            "to": bridge.adapter.address,
+            "data": bridge.adapter.setCurveTokenWrapper.encode_input("NEW CURVETOKENWRAPPER ADDRESS HERE"),
+        },
+    )
 
     multi.execute(
         MultisigTxMetadata(description="add defi dollar contract addresses to adapter contract"),
@@ -72,22 +68,60 @@ def configure_bridge(badger: BadgerSystem, bridge: BridgeSystem):
         },
     )
 
-    i = 0
-    while i < 3:
+    for pool in registry.defidollar.pools:
         multi.execute(
             MultisigTxMetadata(description="populate vault/poolid dictionary"),
             {
                 "to": bridge.adapter.address,
-                "data": bridge.adapter.setVaultPoolId.encode_input(registry.defidollar.pools[i].id, registry.defidollar.pools[i].sett),
+                "data": bridge.adapter.setVaultPoolId.encode_input(pool.sett, pool.id),
             },
         )
-        i += 1
 
     multi.execute(
         MultisigTxMetadata(description="populate vault/poolid dictionary"),
         {
             "to": bridge.adapter.address,
-            "data": bridge.adapter.setVaultPoolId.encode_input(3, wbtcAddr),
+            "data": bridge.adapter.setVaultPoolId.encode_input(wbtcAddr, 3),
+        },
+    )
+
+    multi.execute(
+        MultisigTxMetadata(description="approve rencrv vault"),
+        {
+            "to": bridge.adapter.address,
+            "data": bridge.adapter.setVaultApproval.encode_input("0x6dEf55d2e18486B9dDfaA075bc4e4EE0B28c1545", True),
+        },
+    )
+
+    multi.execute(
+        MultisigTxMetadata(description="approve sbtccrv vault"),
+        {
+            "to": bridge.adapter.address,
+            "data": bridge.adapter.setVaultApproval.encode_input("0xd04c48A53c111300aD41190D63681ed3dAd998eC", True),
+        },
+    )
+
+    multi.execute(
+        MultisigTxMetadata(description="approve tbtccrv vault"),
+        {
+            "to": bridge.adapter.address,
+            "data": bridge.adapter.setVaultApproval.encode_input("0xb9D076fDe463dbc9f915E5392F807315Bf940334", True),
+        },
+    )
+
+    multi.execute(
+        MultisigTxMetadata(description="approve yearn vault"),
+        {
+            "to": bridge.adapter.address,
+            "data": bridge.adapter.setVaultApproval.encode_input("0x4b92d19c11435614cd49af1b589001b7c08cd4d5", True),
+        },
+    )
+
+    multi.execute(
+        MultisigTxMetadata(description="approve ibbtccrv vault"),
+        {
+            "to": bridge.adapter.address,
+            "data": bridge.adapter.setVaultApproval.encode_input("0xaE96fF08771a109dc6650a1BdCa62F2d558E40af", True),
         },
     )
 
@@ -95,16 +129,16 @@ def configure_bridge(badger: BadgerSystem, bridge: BridgeSystem):
 def main():
     badger = connect_badger(badger_config.prod_json)
     bridge = connect_bridge(badger, badger_config.prod_json)
-    swap = connect_swap(badger_config.prod_json)
+    #swap = connect_swap(badger_config.prod_json)
 
-    upgrade_bridge(badger, bridge)
-    console.print("[orange]Queued bridge adapter update[/orange]")
+    #upgrade_bridge(badger, bridge)
+    #console.print("[orange]Queued bridge adapter update[/orange]")
 
-    upgrade_swap_strategy(badger, swap.strategies.curve, CurveSwapStrategy)
-    console.print("[orange]Queued swap strategy update[/orange]")
+    #upgrade_swap_strategy(badger, swap.strategies.curve, CurveSwapStrategy)
+    #console.print("[orange]Queued swap strategy update[/orange]")
 
-    bridge.deploy_curve_token_wrapper()
+    #bridge.deploy_curve_token_wrapper()
     configure_bridge(badger, bridge)
-    console.print("[orange]Configured bridge to use new curve token wrapper[/orange]")
+    console.print("[orange]Configured bridge[/orange]")
 
     # TODO: Execute bridge update and configure bridge after delay period.

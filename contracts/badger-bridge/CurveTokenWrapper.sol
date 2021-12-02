@@ -10,18 +10,19 @@ import "interfaces/bridge/IBridgeVault.sol";
 import "interfaces/curve/ICurveFi.sol";
 
 // Permissionless curve lp token wrapper contract.
-// RenBTC must be transferred before calling wrap fns.
+// RenBTC or ibBTC must be transferred before calling wrap fns.
 // Wrapped tokens will be transferred back to sender.
 contract CurveTokenWrapper {
     /*
-     * Currently only support curve lp pools that have renBTC as an asset.
-     * We supply liquidity as renBTC to these pools.
+     * Currently only support curve lp pools that have renBTC or ibBTC as an asset.
+     * We supply liquidity as renBTC or ibBTC to these pools.
      * Some lp pools require two deposits as they are a pool of other pool tokens (e.g. tbtc).
      *
      * Currently supported lp pools are:
      * - renbtc
      * - sbtc
      * - tbtc (requires depositng into sbtc lp pool first)
+     * - ibbtc
      *
      * We can consider implementing a generic curve token wrapper that accepts a wrap/unwrap path.
      */
@@ -34,11 +35,14 @@ contract CurveTokenWrapper {
     IERC20 renbtcLpToken = IERC20(0x49849C98ae39Fff122806C06791Fa73784FB3675);
     IERC20 sbtcLpToken = IERC20(0x075b1bb99792c9E1041bA13afEf80C91a1e70fB3);
     IERC20 tbtcLpToken = IERC20(0x64eda51d3Ad40D56b9dFc5554E06F94e1Dd786Fd);
+    IERC20 ibbtc = IERC20(0xc4E15973E6fF2A35cC804c2CF9D2a1b817a8b40F);
+    IERC20 ibbtcLpToken = IERC20(0xFbdCA68601f835b27790D98bbb8eC7f05FDEaA9B);
 
     // Supported pools.
     ICurveFi renbtcPool = ICurveFi(0x93054188d876f558f4a66B2EF1d97d16eDf0895B);
     ICurveFi sbtcPool = ICurveFi(0x7fC77b5c7614E1533320Ea6DDc2Eb61fa00A9714);
     ICurveFi tbtcPool = ICurveFi(0xC25099792E9349C7DD09759744ea681C7de2cb66);
+    ICurveFi ibbtcPool = ICurveFi(0xbba4b444FD10302251d9F5797E763b0d912286A1);
 
     address governance = 0xB65cef03b9B89f99517643226d76e286ee999e77;
 
@@ -61,6 +65,10 @@ contract CurveTokenWrapper {
         if (vaultToken == tbtcLpToken) {
             _addLiquidity(renbtc, sbtcLpToken, sbtcPool, 0, 3);
             toTransfer = _addLiquidity(sbtcLpToken, tbtcLpToken, tbtcPool, 1, 2);
+        }
+
+        if (vaultToken == ibbtcLpToken) {
+            toTransfer = _addLiquidity(ibbtc, ibbtcLpToken, ibbtcPool, 0, 4);
         }
 
         vaultToken.safeTransfer(msg.sender, toTransfer);
@@ -86,11 +94,17 @@ contract CurveTokenWrapper {
             toTransfer = _removeLiquidity(sbtcLpToken, renbtc, sbtcPool, 0);
         }
 
+        if (vaultToken == ibbtcLpToken) {
+            toTransfer = _removeLiquidity(ibbtcLpToken, ibbtc, ibbtcPool, 0);
+            ibbtc.safeTransfer(msg.sender, toTransfer);
+            return;
+        }
+
         renbtc.safeTransfer(msg.sender, toTransfer);
         return;
     }
 
-    // NB: Only supports 2/3 token pools.
+    // NB: Only supports 2/3/4 token pools.
     function _addLiquidity(
         IERC20 _token, // in token
         IERC20 _lpToken, // out token
@@ -115,6 +129,12 @@ contract CurveTokenWrapper {
             _pool.add_liquidity(amounts, 0);
         }
 
+        if (_numTokens == 4) {
+            uint256[4] memory amounts;
+            amounts[_i] = amount;
+            uint256 numLpTokens = _pool.add_liquidity(address(_lpToken), amounts, 0);
+        }
+
         return _lpToken.balanceOf(address(this)).sub(beforeBalance);
     }
 
@@ -127,7 +147,12 @@ contract CurveTokenWrapper {
         uint256 beforeBalance = _token.balanceOf(address(this));
         uint256 amount = _lpToken.balanceOf(address(this));
 
-        _pool.remove_liquidity_one_coin(amount, _i, 0);
+        if (_pool == ibbtcPool) {
+            _lpToken.safeApprove(address(_pool), amount);
+            uint256 temp = _pool.remove_liquidity_one_coin(address(_lpToken), amount, _i, 0);
+        } else {
+            _pool.remove_liquidity_one_coin(amount, _i, 0);
+        }
 
         return _token.balanceOf(address(this)).sub(beforeBalance);
     }
@@ -140,8 +165,9 @@ contract CurveTokenWrapper {
         sweepableTokens[1] = address(renbtcLpToken);
         sweepableTokens[2] = address(sbtcLpToken);
         sweepableTokens[3] = address(tbtcLpToken);
+        sweepableTokens[4] = address(ibbtcLpToken);
 
-        for (uint256 i = 0; i < 4; i++) {
+        for (uint256 i = 0; i < 5; i++) {
             IERC20 token = IERC20(sweepableTokens[i]);
             uint256 balance = token.balanceOf(address(this));
             if (balance > 0) {

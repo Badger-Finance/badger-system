@@ -2,6 +2,20 @@
 pragma solidity >=0.5.0 <0.8.0;
 
 interface ICurveFi {
+    //ibbtc meta pool
+    function add_liquidity(
+        address _pool,
+        uint256[4] calldata amounts,
+        uint256 min_mint_amount
+    ) external returns (uint256 out);
+
+    function remove_liquidity_one_coin(
+        address _pool,
+        uint256 _burn_amount,
+        int128 i,
+        uint256 _min_amount
+    ) external returns (uint256 out);
+
     function get_virtual_price() external returns (uint256 out);
 
     function add_liquidity(
@@ -131,8 +145,10 @@ interface ICurveFi {
     function future_owner() external returns (address out);
 
     function calc_withdraw_one_coin(uint256 _token_amount, int128 _i) external view returns (uint256 out);
-    
-    function calc_token_amount(uint[2] calldata amounts, bool isDeposit) external view returns(uint);
-    function calc_token_amount(uint[3] calldata amounts, bool isDeposit) external view returns(uint);
-    function calc_token_amount(uint[4] calldata amounts, bool isDeposit) external view returns(uint);
+
+    function calc_token_amount(uint256[2] calldata amounts, bool isDeposit) external view returns (uint256);
+
+    function calc_token_amount(uint256[3] calldata amounts, bool isDeposit) external view returns (uint256);
+
+    function calc_token_amount(uint256[4] calldata amounts, bool isDeposit) external view returns (uint256);
 }
