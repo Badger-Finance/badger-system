@@ -159,10 +159,10 @@ contract BadgerBridgeAdapter is OwnableUpgradeable, ReentrancyGuardUpgradeable {
         uint256 _slippage,
         address _user,
         address _vault,
-        address _vault2,
+        address _vault2, // second level vault for minting bCRVibBTC from ibBTC
         bool _mintIbbtc,
-        uint256 _amount,
         // darknode args
+        uint256 _amount,
         bytes32 _nHash,
         bytes calldata _sig
     ) external nonReentrant {
