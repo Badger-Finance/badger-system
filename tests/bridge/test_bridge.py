@@ -110,15 +110,8 @@ def test_bridge_ibbtc_and_zap(vault, poolId):
 
     _config_bridge(badger, bridge)
 
-    #config_vault_poolid(badger, bridge, v, poolId)
-
-    #Setting contract addresses in adapter
-    #bridge.adapter.setVaultPoolId(v, poolId, {"from": badger.devMultisig})
-    #bridge.adapter.setIbbtcContracts(ibbtcContract, peakContract, wbtcPeakContract, {"from": badger.devMultisig})
-
     gov1 = interface.ICore(coreContract).owner()
     interface.ICore(coreContract).setGuestList(ZERO_ADDRESS, {"from": gov1})
-    #interface.ICore(coreContract).setPeakStatus(wbtcPeakContract, PeakState.Active.name, {"from": gov1})
 
     gov2 = interface.IBadgerSettPeak(peakContract).owner()
     interface.IBadgerSettPeak(peakContract).approveContractAccess(bridge.adapter, {"from": gov2})
@@ -126,20 +119,17 @@ def test_bridge_ibbtc_and_zap(vault, poolId):
     gov3 = interface.IBadgerYearnWbtcPeak(wbtcPeakContract).owner()
     interface.IBadgerYearnWbtcPeak(wbtcPeakContract).approveContractAccess(bridge.adapter, {"from": gov3})
 
-    #ibbtc vault permissions
-    gov4 = "0xee8b29aa52dd5ff2559da2c50b1887adee257556"
+    #bCRVibBTC vault permissions
     gov4 = "0xB65cef03b9B89f99517643226d76e286ee999e77"
-    #gov4 = ZERO_ADDRESS
     interface.IBridgeVault("0xaE96fF08771a109dc6650a1BdCa62F2d558E40af").approveContractAccess(bridge.adapter, {"from": gov4})
 
     bridgeBalanceBefore = interface.IERC20(renbtc).balanceOf(bridge.adapter)
 
+    #bCRVibBTC vault
     vault2 = "0xaE96fF08771a109dc6650a1BdCa62F2d558E40af"
-    #vault2 = ZERO_ADDRESS
 
     #minting
     accountsBalanceBefore = interface.IERC20(vault2).balanceOf(accounts[0].address)
-    #accountsBalanceBefore = interface.IERC20(ibbtcContract).balanceOf(accounts[0].address)
     bridge.adapter.mint(
         vault["inToken"],
         slippage * 10**4,
@@ -154,7 +144,6 @@ def test_bridge_ibbtc_and_zap(vault, poolId):
         {"from": accounts[0]},
     )
     accountsBalanceAfter = interface.IERC20(vault2).balanceOf(accounts[0].address)
-    #accountsBalanceAfter = interface.IERC20(ibbtcContract).balanceOf(accounts[0].address)
 
     assert accountsBalanceAfter > accountsBalanceBefore
 
@@ -215,12 +204,6 @@ def test_bridge_ibbtc(vault, poolId):
         v = wbtcAddr
 
     _config_bridge(badger, bridge)
-
-    #config_vault_poolid(badger, bridge, v, poolId)
-
-    #Setting contract addresses in adapter
-    #bridge.adapter.setVaultPoolId(v, poolId, {"from": badger.devMultisig})
-    #bridge.adapter.setIbbtcContracts(ibbtcContract, peakContract, wbtcPeakContract, {"from": badger.devMultisig})
 
     gov2 = interface.IBadgerSettPeak(peakContract).owner()
     interface.IBadgerSettPeak(peakContract).approveContractAccess(bridge.adapter, {"from": gov2})
@@ -577,13 +560,3 @@ def _config_bridge(badger, bridge):
             "data": bridge.adapter.setVaultPoolId.encode_input(wbtcAddr, 3),
         },
     )
-
-def config_vault_poolid(badger, bridge, vaultaddr, poolid):
-    multi = GnosisSafe(badger.devMultisig)
-    multi.execute(
-            MultisigTxMetadata(description="populate vault/poolid dictionary"),
-            {
-                "to": bridge.adapter.address,
-                "data": bridge.adapter.setVaultPoolId.encode_input(vaultaddr, poolid),
-            },
-        )
