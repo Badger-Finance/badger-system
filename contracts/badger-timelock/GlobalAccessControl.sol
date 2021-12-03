@@ -34,8 +34,8 @@ contract GlobalAccessControl is Initializable, AccessControlUpgradeable, Pausabl
         bool public withdrawalsEnabled;
         /**
             Admin manages roles for pausers, unpausers, and blacklist managers
-            Blacklist Manager manages blacklist manager
-            
+            Blacklist Manager manages blacklist
+
         */
 
         // _setRoleAdmin(PAUSER_ROLE, DEFAULT_ADMIN_ROLE);
