@@ -20,34 +20,41 @@ import "deps/@openzeppelin/contracts-upgradeable/utils/EnumerableSetUpgradeable.
 contract GlobalAccessControl is Initializable, AccessControlUpgradeable, PausableUpgradeable {
     using SafeERC20Upgradeable for IERC20Upgradeable;
     using SafeMathUpgradeable for uint256;
-    using EnumerableSetUpgradeable for EnumerableSetUpgradeable.AddressSet;
 
     bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
     bytes32 public constant UNPAUSER_ROLE = keccak256("UNPAUSER_ROLE");
 
+    bytes32 public constant TECH_OPS_ROLE = keccak256("TECH_OPS_ROLE");
+
     bytes32 public constant BLACKLIST_MANAGER_ROLE = keccak256("BLACKLIST_MANAGER_ROLE");
     bytes32 public constant BLACKLISTED_ROLE = keccak256("BLACKLISTED_ROLE");
 
+    event SetTransfersEnabled(bool enabled);
+
     function initialize() external initializer {
         bool public transfersEnabled;
-        bool public depositsEnabled;
-        bool public withdrawalsEnabled;
         /**
             Admin manages roles for pausers, unpausers, and blacklist managers
             Blacklist Manager manages blacklist
-
         */
 
         // _setRoleAdmin(PAUSER_ROLE, DEFAULT_ADMIN_ROLE);
         // _setRoleAdmin(UNPAUSER_ROLE, DEFAULT_ADMIN_ROLE);
         // _setRoleAdmin(BLACKLIST_MANAGER_ROLE, DEFAULT_ADMIN_ROLE);
 
-        _setRoleAdmin(BLACKLISTED_ROLE, BLACKLIST_MANAGER_ROLE);
+        _setRoleAdmin(BLACKLISTED_ROLE, TECH_OPS_ROLE);
         _setupRole(DEFAULT_ADMIN_ROLE, 0xB65cef03b9B89f99517643226d76e286ee999e77);
-        _setupRole(BLACKLIST_MANAGER_ROLE, 0x86cbD0ce0c087b482782c181dA8d191De18C8275);
+
+        _setupRole(TECH_OPS_ROLE, 0x86cbD0ce0c087b482782c181dA8d191De18C8275);
 
         _setupRole(PAUSER_ROLE, 0xB65cef03b9B89f99517643226d76e286ee999e77);
         _setupRole(UNPAUSER_ROLE, 0xB65cef03b9B89f99517643226d76e286ee999e77);
+    }
+
+    function setTransfersEnabled(bool _transfersEnabled) {
+        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "DEFAULT_ADMIN_ROLE");
+        transfersEnabled = _transfersEnabled;
+        emit SetTransfersEnabled(transfersEnabled);
     }
 
     function pause() external {
