@@ -6,8 +6,13 @@ from brownie import (
     accounts,
 )
 
+from helpers.proxy_utils import deploy_proxy
+from dotmap import DotMap
+from helpers.constants import *
+
 from config.badger_config import badger_config, digg_config, sett_config
 from scripts.deploy.deploy_badger import deploy_flow
+from scripts.systems.digg_system import connect_digg
 from scripts.systems.badger_system import connect_badger
 from scripts.systems.badger_minimal import deploy_badger_minimal
 from scripts.systems.digg_minimal import deploy_digg_minimal
@@ -511,6 +516,56 @@ def badger_tree_unit():
 
     return badger
 
+@pytest.fixture(scope="module")
+def rewards_tree_unit():
+    deployer = accounts[0]
+    rootUpdater = accounts[1]
+    guardian = accounts[2]
+
+    badgerTreeLogic = BadgerTree.deploy({"from": deployer})
+    mockTokenLogic = MockToken.deploy({"from": deployer})
+
+    system = DotMap(
+        deployer=accounts[0],
+        rootUpdater=accounts[1],
+        guardian=accounts[2],
+        stakingToken=deploy_proxy(
+            "MockToken",
+            MockToken.abi,
+            mockTokenLogic.address,
+            AddressZero,
+            mockTokenLogic.initialize.encode_input(
+                [deployer.address], [Wei("100000000 ether")]
+            ),
+            deployer,
+        ),
+        rewardsTokens=[],
+    )
+
+    system.badgerTree = deploy_proxy(
+        "BadgerTree",
+        BadgerTree.abi,
+        badgerTreeLogic.address,
+        AddressZero,
+        badgerTreeLogic.initialize.encode_input(deployer, rootUpdater, guardian),
+        deployer,
+    )
+
+    for i in range(0, 4):
+        token = deploy_proxy(
+            "MockToken",
+            MockToken.abi,
+            mockTokenLogic.address,
+            AddressZero,
+            mockTokenLogic.initialize.encode_input(
+                [deployer.address], [Wei("100000000 ether")]
+            ),
+            deployer,
+        )
+        system.rewardsTokens.append(token)
+
+    yield system
+
 
 @pytest.fixture(scope="function")
 def digg_distributor_unit():
@@ -547,7 +602,7 @@ def digg_distributor_prod_unit():
     digg.token = digg.uFragments
 
     badger.add_existing_digg(digg)
-    init_prod_digg(badger, badger.deployer)
+    #init_prod_digg(badger, badger.deployer) #deploy_digg script removed.
     return digg
 
 

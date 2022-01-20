@@ -12,7 +12,7 @@ console = Console()
 
 @pytest.fixture(scope="function", autouse="True")
 def setup(digg_distributor_prod_unit):
-    with open("airdrops/digg-airdrop.json") as f:
+    with open("airdrop/digg-airdrop.json") as f:
         airdrop = json.load(f)
 
     return (digg_distributor_prod_unit, airdrop)

@@ -177,8 +177,8 @@ contract BadgerTreeV2 is Initializable, AccessControlUpgradeable, ICumulativeMul
         bytes32[] calldata merkleProof,
         uint256[] calldata amountsToClaim
     ) external whenNotPaused {
-        // require(cycle <= currentCycle, "Invalid cycle");
-        require(cycle == currentCycle, "Invalid cycle");
+        require(cycle <= currentCycle, "Invalid cycle");
+        //require(cycle == currentCycle, "Invalid cycle");
         _verifyClaimProof(tokens, cumulativeAmounts, index, cycle, merkleProof);
 
         bool claimedAny = false; // User must claim at least 1 token by the end of the function
@@ -279,8 +279,8 @@ contract BadgerTreeV2 is Initializable, AccessControlUpgradeable, ICumulativeMul
     ) internal view {
         // Verify the merkle proof.
         bytes32 node = keccak256(abi.encode(index, msg.sender, cycle, tokens, cumulativeAmounts));
-        // require(MerkleProofUpgradeable.verify(merkleProof, getMerkleRootFor(cycle), node), "Invalid proof");
-        require(MerkleProofUpgradeable.verify(merkleProof, merkleRoot, node), "Invalid proof");
+        require(MerkleProofUpgradeable.verify(merkleProof, getMerkleRootFor(cycle), node), "Invalid proof");
+        //require(MerkleProofUpgradeable.verify(merkleProof, merkleRoot, node), "Invalid proof");
     }
 
     function _getClaimed(address account, address token) internal view returns (uint256) {

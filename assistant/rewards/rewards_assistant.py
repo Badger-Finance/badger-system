@@ -377,3 +377,6 @@ def run_action(badger, args, test, saveLocalFile=True):
 
 def content_hash_to_filename(contentHash):
     return "rewards-" + str(chain.id) + "-" + str(contentHash) + ".json"
+
+def hash(value):
+    return web3.toHex(web3.keccak(text=value))
