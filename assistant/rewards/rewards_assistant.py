@@ -1,3 +1,4 @@
+from helpers.discord import send_message_to_discord
 from assistant.subgraph.client import fetch_wallet_balances
 import json
 from brownie import *
@@ -305,6 +306,18 @@ def rootUpdater(badger, startBlock, endBlock, pastRewards, saveLocalFile, test=F
         upload(
             rewards_data["contentFileName"], rewards_data["merkleTree"], publish=False
         )
+    send_message_to_discord(
+        "**CYCLE PROPOSED AND UPLOADED**",
+        f'Badger Cycle {rewards_data["merkleTree"]["cycle"]} Proposed',
+        [
+            {
+                "name": "Block Info",
+                "value": f'Start: {rewards_data["merkleTree"]["startBlock"]}\nEnd: {rewards_data["merkleTree"]["endBlock"]}',
+                "inline": True,
+            }
+        ],
+        "Badger Cycle Proposer",
+    )
 
     return rewards_data
 
@@ -351,6 +364,19 @@ def guardian(
             {"from": badger.guardian},
         )
         upload(rewards_data["contentFileName"], rewards_data["merkleTree"]),
+
+    send_message_to_discord(
+        "**CYCLE APPROVED AND UPLOADED**",
+        f'Badger Cycle {rewards_data["merkleTree"]["cycle"]} Complete',
+        [
+            {
+                "name": "Block Info",
+                "value": f'Start: {rewards_data["merkleTree"]["startBlock"]}\nEnd: {rewards_data["merkleTree"]["endBlock"]}',
+                "inline": True,
+            }
+        ],
+        "Badger Cycle Approver",
+    )
 
 
 def run_action(badger, args, test, saveLocalFile=True):
