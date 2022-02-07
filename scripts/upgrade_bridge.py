@@ -36,7 +36,7 @@ def upgrade_bridge(badger: BadgerSystem, bridge: BridgeSystem) -> str:
     """
     # adapterLogic = BadgerBridgeAdapter.deploy({"from": badger.deployer})
     adapterLogic = BadgerBridgeAdapter.at("0x21b5daa9c170ed13ef4046b4b528dbe14c9b763a")
-    
+
     return badger.queue_upgrade(
         bridge.adapter.address,
         adapterLogic.address,
@@ -54,10 +54,16 @@ def configure_bridge(badger: BadgerSystem, bridge: BridgeSystem):
     wbtcAddr = yearnWbtc.sett_system["vaults"]["yearn.wbtc"]
 
     multi.execute(
-        MultisigTxMetadata(description="add defi dollar contract addresses to adapter contract"),
+        MultisigTxMetadata(
+            description="add defi dollar contract addresses to adapter contract"
+        ),
         {
             "to": bridge.adapter.address,
-            "data": bridge.adapter.setIbbtcContracts.encode_input(registry.defidollar.addresses.ibbtc, registry.defidollar.addresses.badgerPeak, registry.defidollar.addresses.wbtcPeak),
+            "data": bridge.adapter.setIbbtcContracts.encode_input(
+                registry.defidollar.addresses.ibbtc,
+                registry.defidollar.addresses.badgerPeak,
+                registry.defidollar.addresses.wbtcPeak,
+            ),
         },
     )
 
@@ -87,10 +93,10 @@ def main():
     upgrade_bridge(badger, bridge)
     console.print("[orange]Queued bridge adapter update[/orange]")
 
-    #upgrade_swap_strategy(badger, swap.strategies.curve, CurveSwapStrategy)
-    #console.print("[orange]Queued swap strategy update[/orange]")
+    # upgrade_swap_strategy(badger, swap.strategies.curve, CurveSwapStrategy)
+    # console.print("[orange]Queued swap strategy update[/orange]")
 
-    #bridge.deploy_curve_token_wrapper()
+    # bridge.deploy_curve_token_wrapper()
     configure_bridge(badger, bridge)
     console.print("[orange]Configured bridge for ibbtc[/orange]")
 

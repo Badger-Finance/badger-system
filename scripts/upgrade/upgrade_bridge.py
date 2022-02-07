@@ -65,10 +65,16 @@ def configure_bridge(badger: BadgerSystem, bridge: BridgeSystem):
     wbtcAddr = yearnWbtc.sett_system["vaults"]["yearn.wbtc"]
 
     multi.execute(
-        MultisigTxMetadata(description="add defi dollar contract addresses to adapter contract"),
+        MultisigTxMetadata(
+            description="add defi dollar contract addresses to adapter contract"
+        ),
         {
             "to": bridge.adapter.address,
-            "data": bridge.adapter.setIbbtcContracts.encode_input(registry.defidollar.addresses.ibbtc, registry.defidollar.addresses.badgerPeak, registry.defidollar.addresses.wbtcPeak),
+            "data": bridge.adapter.setIbbtcContracts.encode_input(
+                registry.defidollar.addresses.ibbtc,
+                registry.defidollar.addresses.badgerPeak,
+                registry.defidollar.addresses.wbtcPeak,
+            ),
         },
     )
 
@@ -78,7 +84,9 @@ def configure_bridge(badger: BadgerSystem, bridge: BridgeSystem):
             MultisigTxMetadata(description="populate vault/poolid dictionary"),
             {
                 "to": bridge.adapter.address,
-                "data": bridge.adapter.setVaultPoolId.encode_input(registry.defidollar.pools[i].id, registry.defidollar.pools[i].sett),
+                "data": bridge.adapter.setVaultPoolId.encode_input(
+                    registry.defidollar.pools[i].id, registry.defidollar.pools[i].sett
+                ),
             },
         )
         i += 1
