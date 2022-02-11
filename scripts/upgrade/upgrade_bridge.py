@@ -97,13 +97,19 @@ def main():
     bridge = connect_bridge(badger, badger_config.prod_json)
     swap = connect_swap(badger_config.prod_json)
 
-    upgrade_bridge(badger, bridge)
-    console.print("[orange]Queued bridge adapter update[/orange]")
+    # new proxy deployed at 
+    # https://etherscan.io/address/0xd120b381296aa255e4acd9dc80e032df2223fc6a#writeProxyContract
+    # upgrade_bridge(badger, bridge)
+    # console.print("[orange]Queued bridge adapter update[/orange]")
 
-    upgrade_swap_strategy(badger, swap.strategies.curve, CurveSwapStrategy)
-    console.print("[orange]Queued swap strategy update[/orange]")
+    # not required? this strategy was updated 343 days ago last
+    # upgrade_swap_strategy(badger, swap.strategies.curve, CurveSwapStrategy)
+    # console.print("[orange]Queued swap strategy update[/orange]")
 
-    bridge.deploy_curve_token_wrapper()
+
+    # bridge.deploy_curve_token_wrapper()
+    # deployed https://etherscan.io/address/0x11e8641b706dbe56298e7b7f54823b00f1182d70
+
     configure_bridge(badger, bridge)
     console.print("[orange]Configured bridge to use new curve token wrapper[/orange]")
 
