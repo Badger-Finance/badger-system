@@ -1130,6 +1130,7 @@ class BadgerSystem:
         sett = self.getSett(id)
         return self.queue_upgrade(sett.address, newLogic.address)
 
+<<<<<<< HEAD
     def queue_upgrade_sett_strategy(self, id, newLogic, delay=2 * days(2)) -> str:
         """
         Given new logic, and an id, upgrade the new strategy
@@ -1138,6 +1139,9 @@ class BadgerSystem:
         return self.queue_upgrade(sett.address, newLogic.address)
 
     def queue_upgrade(self, proxyAddress, newLogicAddress, delay=2 * days(2)) -> str:
+=======
+    def queue_upgrade(self, proxyAddress, newLogicAddress, delay=days(3)) -> str:
+>>>>>>> 33c3f44f (add missing interfaces)
         target = self.devProxyAdmin.address
         signature = "upgrade(address,address)"
         data = encode_abi(["address", "address"], [proxyAddress, newLogicAddress])

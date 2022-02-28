@@ -10,6 +10,7 @@ from scripts.systems.bridge_system import BridgeSystem, connect_bridge
 from scripts.systems.badger_system import BadgerSystem, connect_badger
 from scripts.systems.swap_system import connect_swap
 from config.badger_config import badger_config
+from helpers.registry import registry
 
 console = Console()
 
@@ -59,6 +60,44 @@ def configure_bridge(badger: BadgerSystem, bridge: BridgeSystem):
         },
     )
     multi.executeTx(id)
+
+    yearnWbtc = connect_badger("deploy-final.json")
+    wbtcAddr = yearnWbtc.sett_system["vaults"]["yearn.wbtc"]
+
+    multi.execute(
+        MultisigTxMetadata(
+            description="add defi dollar contract addresses to adapter contract"
+        ),
+        {
+            "to": bridge.adapter.address,
+            "data": bridge.adapter.setIbbtcContracts.encode_input(
+                registry.defidollar.addresses.ibbtc,
+                registry.defidollar.addresses.badgerPeak,
+                registry.defidollar.addresses.wbtcPeak,
+            ),
+        },
+    )
+
+    i = 0
+    while i < 3:
+        multi.execute(
+            MultisigTxMetadata(description="populate vault/poolid dictionary"),
+            {
+                "to": bridge.adapter.address,
+                "data": bridge.adapter.setVaultPoolId.encode_input(
+                    registry.defidollar.pools[i].id, registry.defidollar.pools[i].sett
+                ),
+            },
+        )
+        i += 1
+
+    multi.execute(
+        MultisigTxMetadata(description="populate vault/poolid dictionary"),
+        {
+            "to": bridge.adapter.address,
+            "data": bridge.adapter.setVaultPoolId.encode_input(3, wbtcAddr),
+        },
+    )
 
 
 def main():
