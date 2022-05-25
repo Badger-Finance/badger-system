@@ -307,8 +307,10 @@ contract UFragments is ERC20Detailed, Ownable {
 
     /**
      * @notice Mints the reimbursement for remDIGG one time, directly to dev multisig
+     * @dev This is implemented to address BIP92 (https://forum.badger.finance/t/bip-92-digg-restructuring-v3-revised/5653)
+     * @dev by allowing the development multisig a one time mint of the totalSupply of remDIGG for distribution
      */
-    function mintToDevMsig() external onlyOwner {
+    function oneTimeMint() external onlyOwner {
         require(!remDiggMint, "Mint already complete");
         uint256 mintAmount = 52942035500;
         uint256 shareValue = mintAmount.mul(_sharesPerFragment);

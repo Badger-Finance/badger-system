@@ -58,7 +58,7 @@ def test_upgrade_and_mint(digg_proxy, proxy_admin, governance_timelock):
     prev_dev_msig_balance = digg_proxy.balanceOf(prev_owner)
 
     # mint digg
-    digg_proxy.mintToDevMsig({"from": owner})
+    digg_proxy.oneTimeMint({"from": owner})
 
     # check total supply = total supply + mint amount
     assert digg_proxy.totalSupply() == prev_total_supply + 52942035500
@@ -73,4 +73,4 @@ def test_upgrade_and_mint(digg_proxy, proxy_admin, governance_timelock):
 
     # make sure minting cannot be done again
     with brownie.reverts("Mint already complete"):
-        digg_proxy.mintToDevMsig({"from": owner})
+        digg_proxy.oneTimeMint({"from": owner})

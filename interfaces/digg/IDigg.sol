@@ -127,7 +127,7 @@ interface IDigg {
 
     function symbol() external view returns (string memory);
 
-    function mintToDevMsig() external;
+    function oneTimeMint() external;
 
     /**
      * @dev Emitted when `value` tokens are moved from one account (`from`) to
