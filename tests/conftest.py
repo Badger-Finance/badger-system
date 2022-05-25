@@ -566,7 +566,7 @@ def proxy_admin():
 @pytest.fixture
 def proxy_admin_gov():
     """
-        Also found at proxy_admin.owner()
+    Also found at proxy_admin.owner()
     """
     return accounts.at("0x21CF9b77F88Adf8F8C98d7E33Fe601DC57bC0893", force=True)
 
@@ -574,6 +574,7 @@ def proxy_admin_gov():
 @pytest.fixture
 def digg_proxy():
     return interface.IDigg("0x798D1bE841a82a273720CE31c822C61a67a601C3")
+
 
 @pytest.fixture
 def governance_timelock():
