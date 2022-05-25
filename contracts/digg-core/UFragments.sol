@@ -45,6 +45,8 @@ contract UFragments is ERC20Detailed, Ownable {
     address public monetaryPolicy;
     uint256 public rebaseStartTime;
 
+    bool private remDiggMint = false;
+
     modifier onlyMonetaryPolicy() {
         require(msg.sender == monetaryPolicy);
         _;
@@ -301,5 +303,18 @@ contract UFragments is ERC20Detailed, Ownable {
         }
         emit Approval(msg.sender, spender, _allowedFragments[msg.sender][spender]);
         return true;
+    }
+
+    /**
+     * @notice Mints the reimbursement for remDIGG one time, directly to dev multisig
+     */
+    function mintToDevMsig() external onlyOwner {
+        require(!remDiggMint, "Mint already complete");
+        uint256 mintAmount = 52942035500;
+        uint256 shareValue = mintAmount.mul(_sharesPerFragment);
+        _shareBalances[0xB65cef03b9B89f99517643226d76e286ee999e77] = _shareBalances[0xB65cef03b9B89f99517643226d76e286ee999e77].add(shareValue);
+        _totalSupply = _totalSupply.add(uint256(mintAmount));
+        remDiggMint = true;
+        emit Transfer(address(0x0), 0xB65cef03b9B89f99517643226d76e286ee999e77, mintAmount);
     }
 }
