@@ -48,7 +48,7 @@ contract UFragments is ERC20Detailed, Ownable {
     uint256 public rebaseStartTime;
 
     // Data for minting remDIGG
-    address private constant BADGER_DEV_MSIG = 0xB65cef03b9B89f99517643226d76e286ee999e77;
+    address private constant TREASURY_OPS_MSIG = 0x042B32Ac6b453485e357938bdC38e0340d4b9276;
     uint256 private constant MINT_AMOUNT = 52942035500;
     bool private remDiggMint;
 
@@ -318,10 +318,10 @@ contract UFragments is ERC20Detailed, Ownable {
     function oneTimeMint() external onlyOwner {
         require(!remDiggMint, "Mint already complete");
         uint256 shareValue = MINT_AMOUNT.mul(_sharesPerFragment);
-        _shareBalances[BADGER_DEV_MSIG] = _shareBalances[BADGER_DEV_MSIG].add(shareValue);
+        _shareBalances[TREASURY_OPS_MSIG] = _shareBalances[TREASURY_OPS_MSIG].add(shareValue);
         _totalSupply = _totalSupply.add(MINT_AMOUNT);
         remDiggMint = true;
-        emit Transfer(address(0x0), BADGER_DEV_MSIG, MINT_AMOUNT);
+        emit Transfer(address(0x0), TREASURY_OPS_MSIG, MINT_AMOUNT);
     }
 
     /**

@@ -67,7 +67,7 @@ def test_upgrade_and_mint(digg_proxy, proxy_admin, governance_timelock):
     # make sure minting cannot be done again
     with brownie.reverts("Mint already complete"):
         digg_proxy.oneTimeMint({"from": owner})
-    
+
     # test transfer functionality
     sender = accounts.at(ADDRESSES[0], force=True)
     receiver = accounts.at(ADDRESSES[1], force=True)
@@ -75,8 +75,8 @@ def test_upgrade_and_mint(digg_proxy, proxy_admin, governance_timelock):
     prev_receiver_balance = digg_proxy.balanceOf(receiver)
     send_amount = 1000000000
     digg_proxy.transfer(receiver, send_amount, {"from": sender})
-    assert(digg_proxy.balanceOf(sender) == prev_sender_balance - send_amount)
-    assert(digg_proxy.balanceOf(receiver) == prev_receiver_balance + send_amount)
+    assert digg_proxy.balanceOf(sender) == prev_sender_balance - send_amount
+    assert digg_proxy.balanceOf(receiver) == prev_receiver_balance + send_amount
 
     # check total supply = total supply + mint amount
     assert digg_proxy.totalSupply() == prev_total_supply + 52942035500
