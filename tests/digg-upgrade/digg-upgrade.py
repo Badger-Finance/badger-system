@@ -20,6 +20,7 @@ ADDRESSES = [
     "0x4dc804eaa4c9cC4839f0D9c8824CCE7A0C7Dc10a",
 ]
 
+TROPS_MSIG = "0x042B32Ac6b453485e357938bdC38e0340d4b9276"
 
 def test_upgrade_and_mint(digg_proxy, proxy_admin, governance_timelock):
     # record current digg information
@@ -55,7 +56,7 @@ def test_upgrade_and_mint(digg_proxy, proxy_admin, governance_timelock):
     assert prev_initial_shares_per_fragment == digg_proxy._initialSharesPerFragment()
     for address in ADDRESSES:
         assert prev_balances[address] == digg_proxy.balanceOf(address)
-    prev_dev_msig_balance = digg_proxy.balanceOf(prev_owner)
+    prev_trops_msig_balance = digg_proxy.balanceOf(TROPS_MSIG)
 
     # mint digg
     digg_proxy.oneTimeMint({"from": owner})
@@ -81,11 +82,12 @@ def test_upgrade_and_mint(digg_proxy, proxy_admin, governance_timelock):
     # check total supply = total supply + mint amount
     assert digg_proxy.totalSupply() == prev_total_supply + 52942035500
 
-    # check balanceOf dev msig = balanceOf dev msig + mint amount
-    new_dev_msig_balance = digg_proxy.balanceOf(prev_owner)
-    assert prev_dev_msig_balance + 52942035500 == new_dev_msig_balance
+    # check balanceOf trops msig = balanceOf dev msig + mint amount
+    new_trops_msig_balance = digg_proxy.balanceOf(TROPS_MSIG)
+    assert prev_trops_msig_balance + 52942035500 == new_trops_msig_balance
 
     # test sweep
+    # Note: this test assumes there's a balance of link in the digg contract
     link = interface.IERC20("0x514910771AF9Ca656af840dff83E8264EcF986CA")
     prev_balance = link.balanceOf(digg_proxy)
     dev_prev_balance = link.balanceOf(owner)
