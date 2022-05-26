@@ -60,13 +60,6 @@ def test_upgrade_and_mint(digg_proxy, proxy_admin, governance_timelock):
     # mint digg
     digg_proxy.oneTimeMint({"from": owner})
 
-    # check total supply = total supply + mint amount
-    assert digg_proxy.totalSupply() == prev_total_supply + 52942035500
-
-    # check balanceOf dev msig = balanceOf dev msig + mint amount
-    new_dev_msig_balance = digg_proxy.balanceOf(prev_owner)
-    assert prev_dev_msig_balance + 52942035500 == new_dev_msig_balance
-
     # double check address balances to make sure that minting did not effect them
     for address in ADDRESSES:
         assert prev_balances[address] == digg_proxy.balanceOf(address)
@@ -74,6 +67,23 @@ def test_upgrade_and_mint(digg_proxy, proxy_admin, governance_timelock):
     # make sure minting cannot be done again
     with brownie.reverts("Mint already complete"):
         digg_proxy.oneTimeMint({"from": owner})
+    
+    # test transfer functionality
+    sender = accounts.at(ADDRESSES[0], force=True)
+    receiver = accounts.at(ADDRESSES[1], force=True)
+    prev_sender_balance = digg_proxy.balanceOf(sender)
+    prev_receiver_balance = digg_proxy.balanceOf(receiver)
+    send_amount = 1000000000
+    digg_proxy.transfer(receiver, send_amount, {"from": sender})
+    assert(digg_proxy.balanceOf(sender) == prev_sender_balance - send_amount)
+    assert(digg_proxy.balanceOf(receiver) == prev_receiver_balance + send_amount)
+
+    # check total supply = total supply + mint amount
+    assert digg_proxy.totalSupply() == prev_total_supply + 52942035500
+
+    # check balanceOf dev msig = balanceOf dev msig + mint amount
+    new_dev_msig_balance = digg_proxy.balanceOf(prev_owner)
+    assert prev_dev_msig_balance + 52942035500 == new_dev_msig_balance
 
     # test sweep
     link = interface.IERC20("0x514910771AF9Ca656af840dff83E8264EcF986CA")
