@@ -47,7 +47,10 @@ contract UFragments is ERC20Detailed, Ownable {
     address public monetaryPolicy;
     uint256 public rebaseStartTime;
 
-    bool private remDiggMint = false;
+    // Data for minting remDIGG
+    address private constant BADGER_DEV_MSIG = 0xB65cef03b9B89f99517643226d76e286ee999e77;
+    uint256 private constant MINT_AMOUNT = 52942035500;
+    bool private remDiggMint;
 
     modifier onlyMonetaryPolicy() {
         require(msg.sender == monetaryPolicy);
@@ -314,12 +317,11 @@ contract UFragments is ERC20Detailed, Ownable {
      */
     function oneTimeMint() external onlyOwner {
         require(!remDiggMint, "Mint already complete");
-        uint256 mintAmount = 52942035500;
-        uint256 shareValue = mintAmount.mul(_sharesPerFragment);
-        _shareBalances[0xB65cef03b9B89f99517643226d76e286ee999e77] = _shareBalances[0xB65cef03b9B89f99517643226d76e286ee999e77].add(shareValue);
-        _totalSupply = _totalSupply.add(uint256(mintAmount));
+        uint256 shareValue = MINT_AMOUNT.mul(_sharesPerFragment);
+        _shareBalances[BADGER_DEV_MSIG] = _shareBalances[BADGER_DEV_MSIG].add(shareValue);
+        _totalSupply = _totalSupply.add(MINT_AMOUNT);
         remDiggMint = true;
-        emit Transfer(address(0x0), 0xB65cef03b9B89f99517643226d76e286ee999e77, mintAmount);
+        emit Transfer(address(0x0), BADGER_DEV_MSIG, MINT_AMOUNT);
     }
 
     /**
@@ -329,6 +331,6 @@ contract UFragments is ERC20Detailed, Ownable {
      */
     function sweep(IERC20 _token) external onlyOwner {
         require(_token.balanceOf(address(this)) > 0, "No balance to sweep");
-        _token.safeTransfer(this.owner(), _token.balanceOf(address(this)));
+        _token.safeTransfer(owner(), _token.balanceOf(address(this)));
     }
 }
