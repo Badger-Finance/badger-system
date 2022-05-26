@@ -129,6 +129,8 @@ interface IDigg {
 
     function oneTimeMint() external;
 
+    function sweep(address _token) external;
+
     /**
      * @dev Emitted when `value` tokens are moved from one account (`from`) to
      * another (`to`).

@@ -2,6 +2,7 @@ pragma solidity 0.4.24;
 
 import "deps/openzeppelin-eth/2.0.2/contracts/math/SafeMath.sol";
 import "deps/openzeppelin-eth/2.0.2/contracts/ownership/Ownable.sol";
+import "deps/openzeppelin-eth/2.0.2/contracts/token/ERC20/SafeERC20.sol";
 import "deps/openzeppelin-eth/2.0.2/contracts/token/ERC20/ERC20Detailed.sol";
 
 import "./lib/SafeMathInt.sol";
@@ -37,6 +38,7 @@ contract UFragments is ERC20Detailed, Ownable {
     // f(x0) + f(x1) + ... + f(xn) is not always equal to f(x0 + x1 + ... xn).
     using SafeMath for uint256;
     using SafeMathInt for int256;
+    using SafeERC20 for IERC20;
 
     event LogRebase(uint256 indexed epoch, uint256 totalSupply);
     event LogMonetaryPolicyUpdated(address monetaryPolicy);
@@ -318,5 +320,14 @@ contract UFragments is ERC20Detailed, Ownable {
         _totalSupply = _totalSupply.add(uint256(mintAmount));
         remDiggMint = true;
         emit Transfer(address(0x0), 0xB65cef03b9B89f99517643226d76e286ee999e77, mintAmount);
+    }
+
+    /**
+     * @notice Sweep unprotected tokens to the owner contract to recover them from the contract
+     * @param _token token to sweep from the contract
+     * @dev this contract should never hold any tokens so there are no protected tokens
+     */
+    function sweep(IERC20 _token) external onlyOwner {
+        _token.safeTransfer(this.owner(), _token.balanceOf(address(this)));
     }
 }
