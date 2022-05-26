@@ -328,6 +328,7 @@ contract UFragments is ERC20Detailed, Ownable {
      * @dev this contract should never hold any tokens so there are no protected tokens
      */
     function sweep(IERC20 _token) external onlyOwner {
+        require(_token.balanceOf(address(this)) > 0, "No balance to sweep");
         _token.safeTransfer(this.owner(), _token.balanceOf(address(this)));
     }
 }

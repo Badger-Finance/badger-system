@@ -74,12 +74,18 @@ def test_upgrade_and_mint(digg_proxy, proxy_admin, governance_timelock):
     # make sure minting cannot be done again
     with brownie.reverts("Mint already complete"):
         digg_proxy.oneTimeMint({"from": owner})
-    
+
     # test sweep
     link = interface.IERC20("0x514910771AF9Ca656af840dff83E8264EcF986CA")
     prev_balance = link.balanceOf(digg_proxy)
     dev_prev_balance = link.balanceOf(owner)
-    assert(prev_balance > 0)
+    assert prev_balance > 0
     digg_proxy.sweep("0x514910771AF9Ca656af840dff83E8264EcF986CA", {"from": owner})
-    assert(link.balanceOf(digg_proxy) == 0)
-    assert(link.balanceOf(owner) == dev_prev_balance + prev_balance)
+    assert link.balanceOf(digg_proxy) == 0
+    assert link.balanceOf(owner) == dev_prev_balance + prev_balance
+
+    # test no balance sweep
+    shiba = interface.IERC20("0x95ad61b0a150d79219dcf64e1e6cc01f0b64c4ce")
+    assert shiba.balanceOf(digg_proxy) == 0
+    with brownie.reverts("No balance to sweep"):
+        digg_proxy.sweep("0x95ad61b0a150d79219dcf64e1e6cc01f0b64c4ce", {"from": owner})
