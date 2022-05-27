@@ -104,7 +104,9 @@ def test_upgrade_and_mint(digg_proxy, proxy_admin, governance_timelock):
         digg_proxy.sweep("0x95ad61b0a150d79219dcf64e1e6cc01f0b64c4ce", {"from": owner})
 
     # mock monetary policy and attempt rebase
-    monetary_policy = accounts.at("0x327a78D13eA74145cc0C63E6133D516ad3E974c3", force=True)
+    monetary_policy = accounts.at(
+        "0x327a78D13eA74145cc0C63E6133D516ad3E974c3", force=True
+    )
     digg_proxy.toggleRebase({"from": owner})
     with brownie.reverts("Rebase paused"):
         digg_proxy.rebase(100, 50, {"from": monetary_policy})
