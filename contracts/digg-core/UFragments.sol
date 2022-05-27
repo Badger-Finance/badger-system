@@ -58,7 +58,7 @@ contract UFragments is ERC20Detailed, Ownable {
         _;
     }
 
-    bool public rebasePaused;
+    bool private rebasePaused;
     bool private tokenPausedDeprecated;
 
     modifier validRecipient(address to) {
