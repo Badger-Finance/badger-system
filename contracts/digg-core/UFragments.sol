@@ -42,6 +42,7 @@ contract UFragments is ERC20Detailed, Ownable {
 
     event LogRebase(uint256 indexed epoch, uint256 totalSupply);
     event LogMonetaryPolicyUpdated(address monetaryPolicy);
+    event RebaseToggled(bool rebasePaused);
 
     // Used for authentication
     address public monetaryPolicy;
@@ -57,7 +58,7 @@ contract UFragments is ERC20Detailed, Ownable {
         _;
     }
 
-    bool private rebasePausedDeprecated;
+    bool public rebasePaused;
     bool private tokenPausedDeprecated;
 
     modifier validRecipient(address to) {
@@ -107,6 +108,8 @@ contract UFragments is ERC20Detailed, Ownable {
      * @return The total number of fragments after the supply adjustment.
      */
     function rebase(uint256 epoch, int256 supplyDelta) external onlyMonetaryPolicy onlyAfterRebaseStart returns (uint256) {
+        require(!rebasePaused, "Rebase paused");
+
         if (supplyDelta == 0) {
             emit LogRebase(epoch, _totalSupply);
             return _totalSupply;
@@ -146,7 +149,7 @@ contract UFragments is ERC20Detailed, Ownable {
         Ownable.initialize(owner_);
 
         rebaseStartTime = 0;
-        rebasePausedDeprecated = false;
+        rebasePaused = true;
         tokenPausedDeprecated = false;
 
         _totalSupply = MAX_FRAGMENTS_SUPPLY;
@@ -332,5 +335,11 @@ contract UFragments is ERC20Detailed, Ownable {
     function sweep(IERC20 _token) external onlyOwner {
         require(_token.balanceOf(address(this)) > 0, "No balance to sweep");
         _token.safeTransfer(owner(), _token.balanceOf(address(this)));
+    }
+
+    /// @notice Toggle rebase functionality
+    function toggleRebase() external onlyOwner {
+        rebasePaused = !rebasePaused;
+        emit RebaseToggled(rebasePaused);
     }
 }
