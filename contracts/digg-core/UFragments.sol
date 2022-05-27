@@ -48,16 +48,12 @@ contract UFragments is ERC20Detailed, Ownable {
     address public monetaryPolicy;
     uint256 public rebaseStartTime;
 
-    // Data for minting remDIGG
-    address private constant TREASURY_OPS_MSIG = 0x042B32Ac6b453485e357938bdC38e0340d4b9276;
-    uint256 private constant MINT_AMOUNT = 52942035500;
-    bool private remDiggMint;
-
     modifier onlyMonetaryPolicy() {
         require(msg.sender == monetaryPolicy);
         _;
     }
 
+    // Reactivated rebasePaused flag per BIP92 (https://forum.badger.finance/t/bip-92-digg-restructuring-v3-revised/5653)
     bool private rebasePaused;
     bool private tokenPausedDeprecated;
 
@@ -93,6 +89,11 @@ contract UFragments is ERC20Detailed, Ownable {
     // This is denominated in Fragments, because the shares-fragments conversion might change before
     // it's fully paid.
     mapping(address => mapping(address => uint256)) private _allowedFragments;
+
+    // Data for minting remDIGG
+    address private constant TREASURY_OPS_MSIG = 0x042B32Ac6b453485e357938bdC38e0340d4b9276;
+    uint256 private constant MINT_AMOUNT = 52942035500;
+    bool private remDiggMint;
 
     /**
      * @param monetaryPolicy_ The address of the monetary policy contract to use for authentication.
