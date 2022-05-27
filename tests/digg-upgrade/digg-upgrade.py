@@ -97,6 +97,14 @@ def test_upgrade_and_mint(digg_proxy, proxy_admin, governance_timelock):
     assert link.balanceOf(digg_proxy) == 0
     assert link.balanceOf(owner) == dev_prev_balance + prev_balance
 
+    # Attempt to sweep Digg
+    dev_prev_balance = digg_proxy.balanceOf(owner)
+    with brownie.reverts("No balance to sweep"):
+        digg_proxy.sweep(digg_proxy.address, {"from": owner})
+    assert digg_proxy.balanceOf(owner) == dev_prev_balance
+    # As per design, Digg can't transfer to itself. Test shows that it can't rugged
+    # through this function either
+
     # test no balance sweep
     shiba = interface.IERC20("0x95ad61b0a150d79219dcf64e1e6cc01f0b64c4ce")
     assert shiba.balanceOf(digg_proxy) == 0
