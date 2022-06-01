@@ -4,6 +4,7 @@ from brownie import (
     Wei,
     BadgerHunt,
     accounts,
+    interface,
 )
 
 from config.badger_config import badger_config, digg_config, sett_config
@@ -550,3 +551,31 @@ def badger_prod(accounts):
 
     # Distribute Test Assets
     return badger_system
+
+
+@pytest.fixture
+def proxy_admin():
+    """
+     Verify by doing web3.eth.getStorageAt("DIGG_ADDRESS", int(
+        0xb53127684a568b3173ae13b9f8a6016e243e63b6e8ee1178d6a717850b5d6103
+    )).hex()
+    """
+    return interface.IProxyAdmin("0x20dce41acca85e8222d6861aa6d23b6c941777bf")
+
+
+@pytest.fixture
+def proxy_admin_gov():
+    """
+    Also found at proxy_admin.owner()
+    """
+    return accounts.at("0x21CF9b77F88Adf8F8C98d7E33Fe601DC57bC0893", force=True)
+
+
+@pytest.fixture
+def digg_proxy():
+    return interface.IDigg("0x798D1bE841a82a273720CE31c822C61a67a601C3")
+
+
+@pytest.fixture
+def governance_timelock():
+    return accounts.at("0x21CF9b77F88Adf8F8C98d7E33Fe601DC57bC0893", force=True)

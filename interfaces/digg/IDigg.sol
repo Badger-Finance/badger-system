@@ -7,6 +7,10 @@ interface IDigg {
 
     function rebaseStartTime() external view returns (uint256);
 
+    function decimals() external view returns (uint256);
+
+    function owner() external view returns (address);
+
     /**
      * @param monetaryPolicy_ The address of the monetary policy contract to use for authentication.
      */
@@ -118,4 +122,28 @@ interface IDigg {
      * @param subtractedValue The amount of tokens to decrease the allowance by.
      */
     function decreaseAllowance(address spender, uint256 subtractedValue) external returns (bool);
+
+    function name() external view returns (string memory);
+
+    function symbol() external view returns (string memory);
+
+    function oneTimeMint() external;
+
+    function sweep(address _token) external;
+
+    function toggleRebase() external;
+
+    /**
+     * @dev Emitted when `value` tokens are moved from one account (`from`) to
+     * another (`to`).
+     *
+     * Note that `value` may be zero.
+     */
+    event Transfer(address indexed from, address indexed to, uint256 value);
+
+    /**
+     * @dev Emitted when the allowance of a `spender` for an `owner` is set by
+     * a call to {approve}. `value` is the new allowance.
+     */
+    event Approval(address indexed owner, address indexed spender, uint256 value);
 }

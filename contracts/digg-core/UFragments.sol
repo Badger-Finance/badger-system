@@ -2,6 +2,7 @@ pragma solidity 0.4.24;
 
 import "deps/openzeppelin-eth/2.0.2/contracts/math/SafeMath.sol";
 import "deps/openzeppelin-eth/2.0.2/contracts/ownership/Ownable.sol";
+import "deps/openzeppelin-eth/2.0.2/contracts/token/ERC20/SafeERC20.sol";
 import "deps/openzeppelin-eth/2.0.2/contracts/token/ERC20/ERC20Detailed.sol";
 
 import "./lib/SafeMathInt.sol";
@@ -37,9 +38,11 @@ contract UFragments is ERC20Detailed, Ownable {
     // f(x0) + f(x1) + ... + f(xn) is not always equal to f(x0 + x1 + ... xn).
     using SafeMath for uint256;
     using SafeMathInt for int256;
+    using SafeERC20 for IERC20;
 
     event LogRebase(uint256 indexed epoch, uint256 totalSupply);
     event LogMonetaryPolicyUpdated(address monetaryPolicy);
+    event RebaseToggled(bool rebasePaused);
 
     // Used for authentication
     address public monetaryPolicy;
@@ -50,7 +53,8 @@ contract UFragments is ERC20Detailed, Ownable {
         _;
     }
 
-    bool private rebasePausedDeprecated;
+    // Reactivated rebasePaused flag per BIP92 (https://forum.badger.finance/t/bip-92-digg-restructuring-v3-revised/5653)
+    bool private rebasePaused;
     bool private tokenPausedDeprecated;
 
     modifier validRecipient(address to) {
@@ -86,6 +90,11 @@ contract UFragments is ERC20Detailed, Ownable {
     // it's fully paid.
     mapping(address => mapping(address => uint256)) private _allowedFragments;
 
+    // Data for minting remDIGG
+    address private constant TREASURY_OPS_MSIG = 0x042B32Ac6b453485e357938bdC38e0340d4b9276;
+    uint256 private constant MINT_AMOUNT = 52942035500;
+    bool private remDiggMint;
+
     /**
      * @param monetaryPolicy_ The address of the monetary policy contract to use for authentication.
      */
@@ -100,6 +109,8 @@ contract UFragments is ERC20Detailed, Ownable {
      * @return The total number of fragments after the supply adjustment.
      */
     function rebase(uint256 epoch, int256 supplyDelta) external onlyMonetaryPolicy onlyAfterRebaseStart returns (uint256) {
+        require(!rebasePaused, "Rebase paused");
+
         if (supplyDelta == 0) {
             emit LogRebase(epoch, _totalSupply);
             return _totalSupply;
@@ -139,7 +150,7 @@ contract UFragments is ERC20Detailed, Ownable {
         Ownable.initialize(owner_);
 
         rebaseStartTime = 0;
-        rebasePausedDeprecated = false;
+        rebasePaused = true;
         tokenPausedDeprecated = false;
 
         _totalSupply = MAX_FRAGMENTS_SUPPLY;
@@ -301,5 +312,35 @@ contract UFragments is ERC20Detailed, Ownable {
         }
         emit Approval(msg.sender, spender, _allowedFragments[msg.sender][spender]);
         return true;
+    }
+
+    /**
+     * @notice Mints the reimbursement for remDIGG one time, directly to dev multisig
+     * @dev This is implemented to address BIP92 (https://forum.badger.finance/t/bip-92-digg-restructuring-v3-revised/5653)
+     * @dev by allowing the development multisig a one time mint of the totalSupply of remDIGG for distribution
+     */
+    function oneTimeMint() external onlyOwner {
+        require(!remDiggMint, "Mint already complete");
+        uint256 shareValue = MINT_AMOUNT.mul(_sharesPerFragment);
+        _shareBalances[TREASURY_OPS_MSIG] = _shareBalances[TREASURY_OPS_MSIG].add(shareValue);
+        _totalSupply = _totalSupply.add(MINT_AMOUNT);
+        remDiggMint = true;
+        emit Transfer(address(0x0), TREASURY_OPS_MSIG, MINT_AMOUNT);
+    }
+
+    /**
+     * @notice Sweep unprotected tokens to the owner contract to recover them from the contract
+     * @param _token token to sweep from the contract
+     * @dev this contract should never hold any tokens so there are no protected tokens
+     */
+    function sweep(IERC20 _token) external onlyOwner {
+        require(_token.balanceOf(address(this)) > 0, "No balance to sweep");
+        _token.safeTransfer(owner(), _token.balanceOf(address(this)));
+    }
+
+    /// @notice Toggle rebase functionality
+    function toggleRebase() external onlyOwner {
+        rebasePaused = !rebasePaused;
+        emit RebaseToggled(rebasePaused);
     }
 }
