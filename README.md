@@ -116,4 +116,4 @@ You can read more about Badger at our [GitBook](https://app.gitbook.com/@badger-
 
 ### Discussion
 
-To join the community, head over to the [Discord server](https://discord.gg/CMzUcANy).
+To join the community, head over to the [Discord server](https://discord.gg/badgerdao).
